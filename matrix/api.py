@@ -36,6 +36,12 @@ from flask import Blueprint, jsonify, request
 
 from core.http import rate_limit
 
+
+def _kdef(name):
+    """Valor por defecto del kernel (kernel.params del release vigente, paso 9) — import perezoso del motor."""
+    from matrix import engine as _E
+    return getattr(_E, name)
+
 log = logging.getLogger('khipu')
 
 MAX_HOPS_CAP = 12
@@ -364,8 +370,8 @@ def matrix_impact():
     try:
         kw = dict(
             magnitude=_num(body, 'magnitude', 1.0, 0.0, MAGNITUDE_MAX),
-            damping=_num(body, 'damping', 0.6, 0.0, DAMPING_MAX),
-            max_hops=_num(body, 'max_hops', 6, 1, MAX_HOPS_CAP, int),
+            damping=_num(body, 'damping', _kdef('DAMPING'), 0.0, DAMPING_MAX),
+            max_hops=_num(body, 'max_hops', _kdef('MAX_HOPS'), 1, MAX_HOPS_CAP, int),
             rel_weights=_rel_weights(body.get('rel_weights')),
             nonlinear=bool(body.get('nonlinear', False)),   # flag: kernel no-lineal (estrés severo)
         )
@@ -959,8 +965,8 @@ def matrix_factor_fire():
     if not fid:
         return jsonify({'error': 'factor_id requerido'}), 400
     try:
-        damping = _num(body, 'damping', 0.6, 0.0, DAMPING_MAX)
-        max_hops = _num(body, 'max_hops', 6, 1, MAX_HOPS_CAP, int)
+        damping = _num(body, 'damping', _kdef('DAMPING'), 0.0, DAMPING_MAX)
+        max_hops = _num(body, 'max_hops', _kdef('MAX_HOPS'), 1, MAX_HOPS_CAP, int)
         mag_raw = body.get('magnitude')
         magnitude = None if mag_raw is None else _num(body, 'magnitude', 1.0, 0.0, MAGNITUDE_MAX)
     except _BadParam as e:

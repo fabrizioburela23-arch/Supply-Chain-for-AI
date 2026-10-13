@@ -29,6 +29,13 @@ try:
 except Exception:  # noqa: BLE001
     _decisions = None
 
+# INFRA_OPERATIVA paso 10: puerta G1 (SHACL compilado) sobre el ESTADO RESULTANTE, en SOMBRA (solo avisa y registra).
+try:
+    import core.gates as _gates
+    _gates.install()
+except Exception:  # noqa: BLE001
+    _gates = None
+
 
 class OntologyError(ValueError):
     pass
@@ -143,11 +150,14 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
         payload = _dedup_link_payload(session, payload or {}, object_id, target_id, valid_from)
 
     prev_type = _hv_signals.pre_type(session, event_type, object_id) if _hv_signals else None
+    prev_obj = _prev_object_state(session, event_type, object_id) if _gates is not None else None
 
     ev = Event(
         id=uuid.uuid4(), event_type=event_type, object_id=object_id, target_id=target_id,
         payload=payload or {}, valid_from=valid_from, valid_to=valid_to,
         source=source, actor=actor, source_id=source_id, confidence=confidence,
+        # paso 9: κ de configuración (release de gobernanza vigente) con que se escribió el hecho
+        release_hash=_release_hash(),
         # G5c: hora REAL de la escritura (clock_timestamp), no el inicio de la
         # transacción (now()): el replay ordena creaciones y remociones por
         # registro, y con now() dos eventos de la misma transacción —o una
@@ -158,12 +168,48 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
     session.add(ev)
     session.flush()  # para tener ev.recorded_at si hiciera falta, y detectar errores de constraint ya
 
-    _materialize(session, ev)
+    created_link = _materialize(session, ev)
+    if _gates is not None and not session.info.get('kh_gate_skip_g1'):
+        _gate_g1(session, ev, created_link, prev_obj, source_id)
     if _hv_signals is not None:
         _hv_signals.mark(session, ev, prev_type)     # económico → graph_version+1 al confirmar
     if _decisions is not None:
         _decisions.note_event(ev)                    # paso 6: efecto de la decisión en curso (si hay una)
     return ev
+
+
+def _prev_object_state(session, event_type, object_id):
+    """(tipo, props) ANTES del evento para la puerta G1 (mapa de identidad: _materialize lee el mismo objeto)."""
+    if event_type not in (EventType.OBJECT_CREATED.value, EventType.OBJECT_UPDATED.value) or not object_id:
+        return None
+    try:
+        o = session.get(ObjectRecord, object_id)
+    except Exception:  # noqa: BLE001
+        return None
+    return (o.type, dict(o.properties or {})) if o is not None else (None, None)
+
+
+def _gate_g1(session, ev, link, prev_obj, source_id):
+    """Puerta G1 (§3.4) en SOMBRA. Un vínculo nuevo se evalúa YA (su fila no cambia en la transacción); un objeto
+    o un factor se evalúan sobre su estado FINAL — al cerrar la decisión en curso o al confirmar — con el estado
+    previo del PRIMER evento (CrearFactor crea el objeto antes que sus miembros: evaluarlo a mitad daría "sin
+    miembros"). Nunca lanza; el reporte va a la decisión en curso o a audit.gates al confirmar."""
+    try:
+        from core.gates import focus as _gf
+        et = ev.event_type
+        if et == EventType.LINK_CREATED.value and link is not None:
+            _gates.check('ontology.g1.link', _gf.gather_link, session, link, source_id, session=session)
+        if et in (EventType.OBJECT_CREATED.value, EventType.OBJECT_UPDATED.value):
+            prev_type, prev_props = prev_obj if prev_obj else (None, None)
+            new_props = (ev.payload or {}).get('properties') or {}
+            touches = any(k in new_props for k in ('severity', 'activo', 'severity_crisis'))
+            _gates.defer_object(session, ev.object_id, prev_type, prev_props, touches)
+        elif et in (EventType.LINK_CREATED.value, EventType.LINK_REMOVED.value) and ev.object_id:
+            p = ev.payload or {}
+            if (p.get('rel_type') or p.get('type')) == 'affects':
+                _gates.defer_object(session, ev.object_id, _gates.UNCHANGED, _gates.UNCHANGED, False)
+    except Exception:  # noqa: BLE001 — vigilar nunca tumba una escritura
+        pass
 
 
 def _same_weight(a, b):
@@ -335,6 +381,15 @@ def _replay_promotions(session):
     return out
 
 
+def _release_hash():
+    try:
+        from core import governance
+        h = governance.release()[0]
+        return h if h and h != '0' * 64 else None
+    except Exception:  # noqa: BLE001 — anotar nunca tumba una escritura
+        return None
+
+
 def _uuid_str(x):
     try:
         return str(uuid.UUID(str(x)))
@@ -377,6 +432,7 @@ def _materialize(session, ev):
             valid_from=ev.valid_from, valid_to=ev.valid_to, event_id=ev.id,
         )
         session.add(link)
+        return link
 
     elif ev.event_type == EventType.LINK_REMOVED.value:
         if not ev.object_id or not ev.target_id:

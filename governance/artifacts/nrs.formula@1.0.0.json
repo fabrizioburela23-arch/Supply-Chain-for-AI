@@ -1,0 +1,37 @@
+{
+  "id": "nrs.formula",
+  "semver": "1.0.0",
+  "kind": "params",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "geo": {
+      "China": 28,
+      "Taiwan": 25,
+      "Korea": 15,
+      "Japan": 12,
+      "EEUU": 8,
+      "Europa": 10,
+      "Israel": 18
+    },
+    "geo_default": 15,
+    "chain_per_degree": 2.5,
+    "chain_cap": 25,
+    "margin_default": 0.15,
+    "margin_ref": 0.4,
+    "market_cap": 20,
+    "fundamental_cap": 15,
+    "preipo_points": 10,
+    "growth_red_points": 5,
+    "growth_yellow_points": 2,
+    "concentrated": [
+      "Taiwan",
+      "China"
+    ],
+    "concentrated_points": 10,
+    "other_points": 4,
+    "total_cap": 100
+  },
+  "changelog_es": "Bootstrap 1.0.0: constantes de core/world.client_nrs (= computeNRS de app.html, margen acotado a [0,20]).",
+  "changelog_en": "Bootstrap 1.0.0: constants of core/world.client_nrs (= app.html computeNRS, margin clamped to [0,20])."
+}

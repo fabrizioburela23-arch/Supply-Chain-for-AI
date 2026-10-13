@@ -24,11 +24,11 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **28 de 92** (línea 7821), después de [[engine.toast.js]] y antes de [[engine.tour_script.js]].
+Se carga en [[app.html]] en la posición **29 de 93** (línea 7821), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 28)
+- [[app.html]] — lo carga con `<script>` (posición 29)
 
 ## Pruebas que lo cubren
 
@@ -40,6 +40,7 @@ Se carga en [[app.html]] en la posición **28 de 92** (línea 7821), después de
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
 - [[tests.test_khipus_os_server.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight3_toast_tokens.py]]
 - [[tests.test_overnight_ui_dossier_clients.py]]
 - [[tests.test_overnight_ui_portfolios_risk.py]]

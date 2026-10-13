@@ -703,8 +703,57 @@ AGENTS_BY_NAME = {a.name: a for a in AGENTS}
 # ── Ciclo automático (elección de Fabrizio 2026-07-10): las propuestas SEGURAS
 # se aplican solas con actor 'agent:auto' — auditadas y reversibles. Lo que
 # toca dinero (AjustarPosicion) SIEMPRE queda pendiente para el humano.
-SAFE_AUTO = {'AnotarObjeto', 'MarcarRiesgo', 'ProponerVinculo', 'IncorporarEmpresa', 'CrearFactor'}
-AUTO_MIN_CONFIDENCE = 0.55
+# INFRA_OPERATIVA paso 9: qué se aplica SOLO y con qué confianza es POLÍTICA aprobada → artefacto
+# `policy.auto_apply` (1.0.0: AnotarObjeto, MarcarRiesgo, ProponerVinculo, IncorporarEmpresa, CrearFactor; ≥ 0,55).
+# Ampliar SAFE_AUTO es un cambio MAJOR con PIN (§5.2).
+from core import governance as _gov  # noqa: E402
+SAFE_AUTO, AUTO_MIN_CONFIDENCE = _gov.bind(globals(), 'policy.auto_apply', {'SAFE_AUTO': ('safe_auto', set),
+                                           'AUTO_MIN_CONFIDENCE': 'auto_min_confidence'})
+
+
+def _gate_prop(session, agent_name, proposal):
+    """Puerta G-PROP (paso 10, SOMBRA): la acción propuesta (y, si es un vínculo, el vínculo que crearía) contra
+    las formas — action.agent_needs_human, campos desconocidos, autovínculo, relación fuera del vocabulario… El
+    resumen queda en la propuesta (proposed_actions.gate_report) y el reporte completo en el libro (audit.gates).
+    Nunca bloquea ni lanza."""
+    try:
+        import core.gates as _gates
+        from core.gates import focus as _gf
+        from core.gates import report as _gr
+        from ontology.actions import ACTION_CATALOG
+        at = proposal.get('action_type')
+        payload = proposal.get('payload') or {}
+        schema = (ACTION_CATALOG.get(at) or (None, None))[0]
+        principal = {'id': f'agent:{agent_name}', 'kind': 'agent', 'auth': 'agent_registry'}
+        triples, foc = _gf.gather_action(at, payload, principal, schema, None, auto_apply=False,
+                                         ident=f'proposal:{agent_name}:{at}')
+        triples = list(triples)
+        conf = proposal.get('confidence')
+        if conf is not None:      # la confianza de la PROPUESTA es la que decide la aplicación automática
+            triples = [t for t in triples if t[1] != _gf.kh('confidence')] + [(foc, _gf.kh('confidence'),
+                                                                             _gf.num(conf))]
+        if at == 'ProponerVinculo' and payload.get('from_id') and payload.get('to_id'):
+            md = payload.get('metadata') or {}
+            ends = {}
+            for oid in (payload['from_id'], payload['to_id']):
+                o = session.get(ObjectRecord, oid)
+                ends[oid] = {'type': o.type if o is not None else None,
+                             'live': o is not None and not (o.properties or {}).get('retired')}
+            lt, _lf = _gf.link_triples({'id': f'proposal:{agent_name}', 'source': payload['from_id'],
+                                        'target': payload['to_id'], 'rel': payload.get('tipo'),
+                                        'weight': md.get('weight'), 'confidence': md.get('confidence')},
+                                       ends, (), {}, _gf._limits(), _gf._flow_rels())
+            triples += lt
+        rep = _gates.evaluate('ontology.g_prop', triples, foc)
+        if rep is None:
+            return None
+        _gr.record(rep, session=session)
+        return {'schema': rep['schema'], 'mode': rep['mode'], 'outcome': rep['outcome'],
+                'ir_hash': rep['shapes'].get('ir_hash'),
+                'results': [{k: r[k] for k in ('rule', 'severity', 'effective', 'value', 'message')}
+                            for r in rep['results'][:20]]}
+    except Exception:  # noqa: BLE001 — vigilar nunca tumba un agente
+        return None
 
 
 def auto_cycle(session, actor='agent:auto'):
@@ -737,7 +786,7 @@ def auto_cycle(session, actor='agent:auto'):
             from core import identity as _identity        # paso 6: la ficha es de system:auto_apply (§2.5)
             execute_action(session, p.action_type, p.payload, f'{p.agent} → {actor}',
                            principal=_identity.system('auto_apply', declared=p.agent),
-                           correlation_id=f'proposal:{p.id}')
+                           correlation_id=f'proposal:{p.id}', proposal_confidence=p.confidence)
             sp.commit()
             session.refresh(p)
             applied.append({'agent': p.agent, 'action': p.action_type,
@@ -785,7 +834,7 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
                     agent=agent.name, action_type=proposal['action_type'],
                     payload=proposal['payload'], object_id=proposal.get('object_id'),
                     confidence=proposal.get('confidence'), explanation=proposal.get('explanation'),
-                    status='pending',
+                    status='pending', gate_report=_gate_prop(session, agent.name, proposal),
                 )
                 session.add(pa)
                 created += 1

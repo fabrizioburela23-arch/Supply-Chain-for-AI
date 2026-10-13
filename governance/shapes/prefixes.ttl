@@ -1,0 +1,16 @@
+# governance/shapes/prefixes.ttl — prefijos de las formas SHACL de Khipus (docs/INFRA_OPERATIVA.md §3.1).
+# kh:  clases y propiedades del FOCO (core/gates/focus.py arma el grafo foco con estas IRIs)
+# khs: formas (+ la severidad propia khs:RequiresApproval)
+# khr: UNA IRI estable por regla (la que aparece en el GateReport y en decision_violations)
+# Las consultas SPARQL usan khs:Prefixes (sh:declare). Prohibidos VALUES, MINUS y SERVICE (pySHACL los rechaza).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:Prefixes
+  sh:declare [ sh:prefix "kh" ; sh:namespace "https://khipus.ai/ont#"^^xsd:anyURI ] ;
+  sh:declare [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] ;
+  sh:declare [ sh:prefix "xsd" ; sh:namespace "http://www.w3.org/2001/XMLSchema#"^^xsd:anyURI ] .

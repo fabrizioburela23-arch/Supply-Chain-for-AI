@@ -1556,38 +1556,43 @@ const BixbyVoice = {
   _toolLiveSim(params, respond) {
     const n = this._resolveAny(params);
     if (!n) { respond(this._notFound(params.company_name || params.ticker)); return; }
-    const KS = window.KhipuState;
-    if (!KS || !KS.simulate) { respond({ success: false, error: _voiceL('El motor de simulación no está disponible.', 'The simulation engine is not available.') }); return; }
+    const KH = window.KhipuHot;
+    if (!KH || !KH.simulate) { respond({ success: false, error: _voiceL('El motor de simulación no está disponible.', 'The simulation engine is not available.') }); return; }
     const kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(params.kind) >= 0 ? params.kind : 'collapse';
     const dir = kind === 'demand' ? 'up' : 'down';
     const sev = _voiceSimSev(params.severity);
-    let r;
-    try {
-      const shock = {}; shock[n.id] = { salud: 1 - sev / 100 };
-      r = KS.simulate(shock, [], 8, 0.6, false, { direction: dir, kind });
-    } catch (e) { respond({ success: false, error: _voiceL('La simulación falló.', 'The simulation failed.') }); return; }
-    const arr = [];
-    try { r.impact.forEach((v, id) => { if (id !== n.id && v > 0) arr.push({ id, v }); }); } catch (e) {}
-    arr.sort((x, y) => y.v - x.v);
-    const out = { success: true, company: n.label, kind, severity: sev, affected: arr.length,
-      most_impacted: arr.slice(0, 5).map(x => ({ company: this._label(x.id), impact_pct: Math.round(x.v) })),
-      hypothetical: true,
-      note: _voiceL('Escenario hipotético simulado sobre la cadena: no son precios reales.', 'Simulated hypothetical scenario on the chain: not real prices.'),
-      opened: this._title('sim', { id: n.id, kind, severity: sev }, n.label) };
-    try {
-      if (window.xrayComputeWinners) {
-        const o = {}; o[n.id] = 100; arr.forEach(x => { o[x.id] = x.v; });
-        const w = window.xrayComputeWinners(n.id, o) || [];
-        if (w.length) out.winners = w.slice(0, 3).map(x => ({ company: this._label(x.id), gain_pct: x.up }));
+    // EL motor único del servidor (/api/hot/*): la voz dice exactamente lo que muestra la ventana (paso 13)
+    KH.simulate({ targets: [n.id], kind, severity: sev }).then((r) => {
+      if (!r || !r.ok) {
+        respond({ success: false, company: n.label, kind, severity: sev, unsupported: !!(r && r.unsupported),
+          error: (r && r.error) || _voiceL('La simulación falló.', 'The simulation failed.') });
+        return;
       }
-    } catch (e) {}
-    respond(out);
-    this._defer(() => {
-      const ck = this._ck();
-      if (ck && ck.stage) this._osStage('sim', { id: n.id, kind, severity: sev });
-      else this._show('sim', { id: n.id, kind, after: () => { if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); } });
-      this._updateContextSoon();
-    });
+      const arr = [];
+      r.impact.forEach((v, id) => { if (id !== n.id && v > 0) arr.push({ id, v }); });
+      arr.sort((x, y) => y.v - x.v);
+      const out = { success: true, company: n.label, kind, severity: sev, affected: r.reach_1,
+        most_impacted: arr.slice(0, 5).map(x => ({ company: this._label(x.id), impact_pct: Math.round(x.v) })),
+        hypothetical: true, engine_generation: r.view ? r.view.generation : null,
+        note: _voiceL('Escenario hipotético simulado sobre la cadena con el motor del servidor: no son precios reales.',
+          'Simulated hypothetical scenario on the chain with the server engine: not real prices.') + (r.note ? ' ' + r.note : ''),
+        opened: this._title('sim', { id: n.id, kind, severity: sev }, n.label) };
+      try {
+        const w = dir === 'down' ? (KH.rivals([n.id], r.impact, 3) || []) : [];
+        if (w.length) {
+          out.barely_hit_rivals = w.map(x => ({ company: this._label(x.id), hit_pct: Math.round(x.hit) }));
+          out.rivals_note = _voiceL('hit_pct = el daño que recibe cada rival (no es una ganancia): no digas que alguien gana un %.',
+            'hit_pct = the damage each rival takes (not a gain): never say anyone gains a %.');
+        }
+      } catch (e) {}
+      respond(out);
+      this._defer(() => {
+        const ck = this._ck();
+        if (ck && ck.stage) this._osStage('sim', { id: n.id, kind, severity: sev });
+        else this._show('sim', { id: n.id, kind, after: () => { if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); } });
+        this._updateContextSoon();
+      });
+    }, () => respond({ success: false, error: _voiceL('La simulación falló.', 'The simulation failed.') }));
   },
 
   // ── 7) run_agent_simulation: escenario abierto o preset; nunca cierra el OS ──

@@ -67,6 +67,8 @@ def fallback(build=True):
         _raw, sha = source._snapshot_bytes()
     except OSError:
         return None
+    from core.hotviews import signals as _sig
+    sha = (sha, _sig.release_hash()[0])   # el kernel (release de gobernanza) también define la generación
     v = _FB['view']
     if v is not None and _FB['key'] == sha:
         return v

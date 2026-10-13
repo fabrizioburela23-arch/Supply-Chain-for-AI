@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_cleanup_modules_theme_i18n.py"
 lenguaje: "python"
-lineas: 492
+lineas: 498
 aliases: ["tests/test_cleanup_modules_theme_i18n.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_cleanup_modules_theme_i18n.py
 
-> Prueba · capa [[Capa Pruebas]] · 492 líneas · `tests/test_cleanup_modules_theme_i18n.py`
+> Prueba · capa [[Capa Pruebas]] · 498 líneas · `tests/test_cleanup_modules_theme_i18n.py`
 
 ## Qué prueba
 

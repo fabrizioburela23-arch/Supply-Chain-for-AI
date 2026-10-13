@@ -49,6 +49,19 @@
     benefit:    { es: 'se benefician', en: 'benefit' },
     benefLabel: { es: '🟢 Se benefician (recogen el negocio)', en: '🟢 Beneficiaries (pick up the business)' },
     simHintOn:  { es: '⚡ clic en cualquier nodo para simular su caída (según la fecha actual)', en: '⚡ click any node to simulate its collapse (as of the current date)' },
+    // paso 13 (§4.7): las CIFRAS de impacto salen del motor único del servidor (KhipuHot); la cascada de aquí
+    // solo anima el ALCANCE por relaciones vigentes en la fecha (no es impacto)
+    hitSrv:     { es: 'empresas afectadas ≥1 % (motor del servidor)', en: 'companies hit ≥1 % (server engine)' },
+    computing:  { es: 'calculando con el motor del servidor…', en: 'computing with the server engine…' },
+    noEngine:   { es: 'Motor de impacto no disponible.', en: 'Impact engine unavailable.' },
+    shockHead:  { es: 'cae', en: 'falls' },
+    srvLine:    { es: '<b>{n}</b> empresas afectadas ≥1 % según el motor único del servidor (grafo vigente)', en: '<b>{n}</b> companies hit ≥1 % by the single server engine (current graph)' },
+    reachLine:  { es: 'La animación muestra el ALCANCE por relaciones vigentes al {d}: {n} entidades (alcance, no impacto)', en: 'The animation shows the REACH through relations live on {d}: {n} entities (reach, not impact)' },
+    portRisk:   { es: '💼 Tu portafolio golpeado (ponderado por el % de impacto):', en: '💼 Your portfolio hit (weighted by impact %):' },
+    chokeHead:  { es: '🏛 Chokepoints sistémicos', en: '🏛 Systemic chokepoints' },
+    chokeSub:   { es: 'quién arrastra a más si cae · motor del servidor, grafo vigente (la fecha del deslizador no cambia este ranking)', en: 'who drags down the most if it falls · server engine, current graph (the date slider does not change this ranking)' },
+    chokeN:     { es: 'afectadas ≥1 %', en: 'hit ≥1 %' },
+    chokeTip:   { es: 'Clic en cualquiera para su ficha. Orden: suma del impacto que transmite (el mismo número que X-Ray e Insights).', en: 'Click any for its card. Order: total impact it transmits (the same number as X-Ray and Insights).' },
   };
   function _t(k) { const o = _L[k]; return o ? (o[_lang()] || o.es) : k; }
 
@@ -682,8 +695,19 @@
       shown: new Set([originId]),   // crece durante la animación (repintado progresivo)
       benefitShown: new Set(),      // se revela al final
       maxDepth: depth,
-      port: _portfolioAtRisk(affected),
+      srv: null,                    // resultado del motor ÚNICO del servidor (las cifras); null = calculando
+      port: null,
     };
+    const sh = _shock;
+    const KH = window.KhipuHot;
+    const p = KH && KH.simulate ? KH.simulate({ targets: [originId], kind: 'collapse', severity: 100 })
+      : Promise.resolve({ ok: false, error: _t('noEngine') });
+    p.then(r => {
+      if (_shock !== sh) return;                     // llegó tarde: ya se simula otra cosa
+      sh.srv = r || { ok: false, error: _t('noEngine') };
+      sh.port = sh.srv.ok ? _portfolioAtRisk(sh.srv.impact) : null;
+      _updateShockCounter(); _renderImpact();
+    }, () => { if (_shock === sh) { sh.srv = { ok: false, error: _t('noEngine') }; _updateShockCounter(); _renderImpact(); } });
     _animateShock();
   }
 
@@ -783,13 +807,15 @@
   function _updateShockCounter() {
     const el = document.getElementById('tkg-shockcounter'); if (!el) return;
     if (!_shock) { el.style.display = 'none'; el.innerHTML = ''; return; }
-    const hit = _shock.shown.size - 1;
+    // la cifra es la del servidor (reach_1); mientras llega, "…" (nunca el conteo de la cascada de aquí)
+    const srv = _shock.srv;
+    const hit = srv ? (srv.ok ? srv.reach_1 : '—') : '…';
     const ben = _shock.benefitShown ? _shock.benefitShown.size : 0;
     const originLabel = (resolveEntity(_shock.origin) || {}).label || _shock.origin;
     el.style.display = 'block';
     el.innerHTML = `<div style="font-weight:800;color:#fff;font-size:11.5px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">⚡ ${esc(originLabel)}</div>
-      <div style="font-size:22px;font-weight:800;color:#ff6b6b;line-height:1.05;font-family:'JetBrains Mono',monospace">${hit}</div>
-      <div style="font-size:9px;color:#ffc9c9;text-transform:uppercase;letter-spacing:.4px">${_t('affected')}</div>
+      <div style="font-size:22px;font-weight:800;color:#ff6b6b;line-height:1.05;font-family:'JetBrains Mono',monospace">${esc(hit)}</div>
+      <div style="font-size:9px;color:#ffc9c9;text-transform:uppercase;letter-spacing:.4px">${_t('hitSrv')}</div>
       ${ben ? `<div style="font-size:11px;color:#4ade80;margin-top:4px;font-weight:700">+${ben} ${_t('benefit')}</div>` : ''}`;
   }
 
@@ -809,11 +835,13 @@
     const total = out.reduce((s, x) => s + x.value, 0);
     return { holdings: out, total };
   }
-  function _portfolioAtRisk(affected) {
+  // impact: Map(id → % 0-100) del motor del servidor; valor golpeado = Σ valor × % (no "todo o nada")
+  function _portfolioAtRisk(impact) {
     const pf = _portfolio();
-    if (!pf.total) return null;
-    const hit = pf.holdings.filter(h => affected.has(h.id) && h.value > 0);
-    const atRisk = hit.reduce((s, x) => s + x.value, 0);
+    if (!pf.total || !impact || !impact.get) return null;
+    const hit = pf.holdings.filter(h => (impact.get(h.id) || 0) >= 1 && h.value > 0)
+      .map(h => Object.assign({}, h, { pct: impact.get(h.id) }));
+    const atRisk = hit.reduce((s, x) => s + x.value * Math.min(100, x.pct) / 100, 0);
     return { atRisk, total: pf.total, pct: pf.total ? (atRisk / pf.total * 100) : 0, hit };
   }
   const _money = v => v >= 1e9 ? '$' + (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(1) + 'K' : '$' + Math.round(v);
@@ -865,39 +893,35 @@
     </div>`;
   }
 
-  // Chokepoints: para cada nodo, tamaño de su cascada de impacto (centralidad).
+  // Chokepoints: el ranking del motor ÚNICO del servidor (/api/hot/chokepoints, el mismo de Insights y el brief).
+  // Antes había aquí otra cascada binaria con su propio #1 (paso 13: en el navegador no queda motor de contagio).
   function _runChokepoints() {
     const el = document.getElementById('tkg-insights'); if (!el) return;
-    const casSize = id => {
-      const seen = new Set([id]); let fr = [id], depth = 0;
-      while (fr.length && depth < 6) {
-        depth++; const nx = [];
-        fr.forEach(x => (_impactAdj[x] || []).forEach(({ to, fact }) => {
-          if (status(fact, _dateMs) !== 'vigente') return;
-          if (!seen.has(to)) { seen.add(to); nx.push(to); }
-        }));
-        fr = nx;
-      }
-      return seen.size - 1;
-    };
-    const ranked = _allNodeIds.map(id => ({ id, e: resolveEntity(id) || { label: id }, n: casSize(id) }))
-      .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 12);
-    const types = (window.ONTOLOGY && window.ONTOLOGY.types) || {};
+    const box = inner => `<div style="border:1px solid rgba(251,146,60,.35);background:rgba(251,146,60,.06);border-radius:12px;padding:12px 14px">
+      <div style="font-size:13.5px;font-weight:700;color:var(--ink-1);margin-bottom:6px">${_t('chokeHead')} <span style="font-size:11px;color:var(--ink-3);font-weight:400">· ${_t('chokeSub')}</span></div>${inner}</div>`;
     el.style.display = 'block';
-    el.innerHTML = `<div style="border:1px solid rgba(251,146,60,.35);background:rgba(251,146,60,.06);border-radius:12px;padding:12px 14px">
-      <div style="font-size:13.5px;font-weight:700;color:var(--ink-1);margin-bottom:6px">🏛 Chokepoints sistémicos <span style="font-size:11px;color:var(--ink-3);font-weight:400">· quién arrastra a más si cae (${fmtDate(_dateMs)})</span></div>
-      <div style="display:flex;flex-direction:column;gap:3px">${ranked.map((x, i) => {
-        const tm = types[_nodeType[x.id] || 'Company'] || { color: COL.node };
-        return `<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__tkgOpenObj&&window.__tkgOpenObj('${x.id}')">
-          <span style="font-size:11px;color:var(--ink-3);width:18px">${i + 1}.</span>
-          <span style="width:8px;height:8px;border-radius:50%;background:${tm.color};flex-shrink:0"></span>
-          <span style="flex:1;font-size:12px;color:var(--ink-1)">${esc(x.e.label)}</span>
-          <span style="flex-shrink:0;font-size:11px;color:#fb923c;font-weight:700">${x.n} afectados</span>
-          <span style="flex-shrink:0;width:${Math.min(120, x.n * 9)}px;height:5px;background:#fb923c55;border-radius:3px"></span>
-        </div>`;
-      }).join('')}</div>
-      <div style="font-size:10.5px;color:var(--ink-3);margin-top:6px">Clic en cualquiera para su ficha. Tip: mueve la fecha y recalcula — los chokepoints cambian con el tiempo.</div>
-    </div>`;
+    el.innerHTML = box(`<div style="font-size:12px;color:var(--ink-3)">${_t('computing')}</div>`);
+    const KH = window.KhipuHot;
+    const p = KH && KH.chokepoints ? KH.chokepoints({ by: 'sum', limit: 12 }) : Promise.resolve({ ok: false, error: _t('noEngine') });
+    p.then(r => {
+      if (!r || !r.ok) { el.innerHTML = box(`<div style="font-size:12px;color:#fb923c">${esc((r && r.error) || _t('noEngine'))}</div>`); return; }
+      const ranked = ((r.data || {}).chokepoints || []).map(x => ({ id: x.id, n: x.reach_1 || 0,
+        label: (resolveEntity(x.id) || {}).label || x.label || x.id }));
+      const maxN = Math.max(1, ...ranked.map(x => x.n));
+      const types = (window.ONTOLOGY && window.ONTOLOGY.types) || {};
+      const stamp = (KH.stampHTML ? KH.stampHTML(r.view) : '');
+      el.innerHTML = box(`<div style="display:flex;flex-direction:column;gap:3px">${ranked.map((x, i) => {
+          const tm = types[_nodeType[x.id] || 'Company'] || { color: COL.node };
+          return `<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__tkgOpenObj&&window.__tkgOpenObj('${esc(x.id)}')">
+            <span style="font-size:11px;color:var(--ink-3);width:18px">${i + 1}.</span>
+            <span style="width:8px;height:8px;border-radius:50%;background:${tm.color};flex-shrink:0"></span>
+            <span style="flex:1;font-size:12px;color:var(--ink-1)">${esc(x.label)}</span>
+            <span style="flex-shrink:0;font-size:11px;color:#fb923c;font-weight:700">${x.n} ${_t('chokeN')}</span>
+            <span style="flex-shrink:0;width:${Math.round(120 * x.n / maxN)}px;height:5px;background:#fb923c55;border-radius:3px"></span>
+          </div>`;
+        }).join('')}</div>
+        <div style="font-size:10.5px;color:var(--ink-3);margin-top:6px">${_t('chokeTip')} ${stamp}</div>`);
+    });
   }
 
   function _clearShock() { _stopShockAnim(); _shock = null; _updateShockCounter(); _renderImpact(); _refresh(); }
@@ -917,22 +941,28 @@
     if (!el) return;
     if (!_shock) { el.style.display = 'none'; el.innerHTML = ''; if (reset) reset.style.display = 'none'; return; }
     const originLabel = (resolveEntity(_shock.origin) || {}).label || _shock.origin;
-    const total = _shock.affected.size - 1;
+    const reach = _shock.affected.size - 1;
+    const srv = _shock.srv;
     const types = (window.ONTOLOGY && window.ONTOLOGY.types) || {};
     const chips = Object.keys(_shock.byType).map(t => {
       const meta = types[t] || { label: t, color: COL.node };
       return `<span style="font-size:11px;color:${meta.color};background:${meta.color}18;border:1px solid ${meta.color}44;border-radius:12px;padding:2px 8px">${esc(meta.label)}: ${_shock.byType[t]}</span>`;
     }).join(' ');
-    const list = _shock.order.filter(o => o.id !== _shock.origin).slice(0, 18)
-      .map(o => { const e = resolveEntity(o.id) || {}; return `<span title="ola ${o.depth}" style="font-size:11px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:2px 7px">${esc(e.label || o.id)}</span>`; }).join(' ');
-    const extra = _shock.order.length > 19 ? ` <span style="font-size:11px;color:var(--ink-3)">+${_shock.order.length - 19} más</span>` : '';
+    // víctimas y % del SERVIDOR (no de la cascada de aquí)
+    const vic = srv && srv.ok ? (srv.victims || []).filter(v => v.pct >= 1) : [];
+    const list = vic.slice(0, 18)
+      .map(v => { const e = resolveEntity(v.id) || {}; return `<span style="font-size:11px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:2px 7px">${esc(e.label || v.label || v.id)} <b style="color:#ef4444">${Math.round(v.pct)}%</b></span>`; }).join(' ');
+    const extra = vic.length > 18 ? ` <span style="font-size:11px;color:var(--ink-3)">+${vic.length - 18}</span>` : '';
+    const srvLine = !srv ? `<span style="color:var(--ink-3)">${_t('computing')}</span>`
+      : !srv.ok ? `<span style="color:#fb923c">${esc(srv.error || _t('noEngine'))}</span>`
+      : _t('srvLine').replace('{n}', srv.reach_1) + ((window.KhipuHot && window.KhipuHot.stampHTML) ? ' ' + window.KhipuHot.stampHTML(srv.view) : '');
     el.style.display = 'block';
     if (reset) reset.style.display = 'inline-block';
     const port = _shock.port;
     const portHtml = port
       ? `<div style="font-size:12.5px;margin:2px 0 8px;padding:7px 10px;border-radius:8px;background:${port.pct >= 30 ? 'rgba(255,107,92,.12)' : 'rgba(224,178,92,.1)'};border:1px solid ${port.pct >= 30 ? '#FF6B5C55' : '#E0B25C55'}">
-           💼 Tu portafolio en riesgo: <b style="color:${port.pct >= 30 ? '#FF6B5C' : '#E0B25C'}">${_money(port.atRisk)} (${port.pct.toFixed(0)}%)</b>
-           ${port.hit.length ? ` · ${port.hit.slice(0, 6).map(h => esc(h.label)).join(', ')}` : ''}</div>`
+           ${_t('portRisk')} <b style="color:${port.pct >= 30 ? '#FF6B5C' : '#E0B25C'}">${_money(port.atRisk)} (${port.pct.toFixed(0)}%)</b>
+           ${port.hit.length ? ` · ${port.hit.slice(0, 6).map(h => esc(h.label) + ' ' + Math.round(h.pct) + '%').join(', ')}` : ''}</div>`
       : '';
     // Beneficiarios (verde): quién recoge el negocio que suelta el que cae.
     let benefHtml = '';
@@ -944,8 +974,9 @@
         <div style="display:flex;flex-wrap:wrap;gap:5px">${bChips}${bExtra}</div>`;
     }
     el.innerHTML = `<div style="border:1px solid #ef444455;background:#ef44440d;border-radius:12px;padding:12px 14px">
-      <div style="font-size:13.5px;color:var(--ink-1);font-weight:700;margin-bottom:6px">⚡ Shock: <span style="color:#ef4444">${esc(originLabel)}</span> cae en ${fmtDate(_dateMs)}</div>
-      <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px"><b>${total}</b> entidades afectadas en cascada · ${chips}</div>
+      <div style="font-size:13.5px;color:var(--ink-1);font-weight:700;margin-bottom:6px">⚡ Shock: <span style="color:#ef4444">${esc(originLabel)}</span> ${_t('shockHead')} · ${fmtDate(_dateMs)}</div>
+      <div style="font-size:12px;color:var(--ink-2);margin-bottom:4px">${srvLine}</div>
+      <div style="font-size:11px;color:var(--ink-3);margin-bottom:8px">${_t('reachLine').replace('{d}', fmtDate(_dateMs)).replace('{n}', reach)} · ${chips}</div>
       ${portHtml}
       <div style="display:flex;flex-wrap:wrap;gap:5px">${list}${extra}</div>
       ${benefHtml}

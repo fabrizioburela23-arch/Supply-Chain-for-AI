@@ -6,7 +6,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 
 # Índice de variables de entorno
 
-162 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
+160 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
 
 | Variable | La leen | En CLAUDE.md |
 |---|---|---|
@@ -52,7 +52,6 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV COINGECKO_KEY]] | 3 | **no** |
 | [[ENV COMMITTEE_MAX_CONCURRENT]] | 1 | sí |
 | [[ENV COMMITTEE_MAX_SEATS]] | 1 | **no** |
-| [[ENV COMMITTEE_MEMO_TTL_HOURS]] | 1 | sí |
 | [[ENV CSP_ENABLED]] | 1 | **no** |
 | [[ENV CSP_REPORT_ONLY]] | 1 | **no** |
 | [[ENV DATABASE_URL]] | 5 | sí |
@@ -63,10 +62,8 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV DB_STATEMENT_TIMEOUT_MS]] | 1 | sí |
 | [[ENV DECIDE_CONTROL]] | 1 | sí |
 | [[ENV DECIDE_ENABLED]] | 1 | **no** |
-| [[ENV DECIDE_MIN_CONF]] | 1 | **no** |
 | [[ENV DECIDE_SHADOW]] | 1 | sí |
 | [[ENV DECIDE_TIMEOUT_S]] | 1 | sí |
-| [[ENV DECIDE_WAIT_S]] | 1 | **no** |
 | [[ENV ELEVENLABS_AGENT_ID]] | 2 | sí |
 | [[ENV ELEVENLABS_ALLOW_OVERRIDE]] | 1 | sí |
 | [[ENV ELEVENLABS_KEY]] | 3 | sí |
@@ -74,26 +71,27 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV FINNHUB_KEY]] | 3 | sí |
 | [[ENV FINNHUB_WS_KEY]] | 2 | sí |
 | [[ENV FMP_KEY]] | 5 | sí |
-| [[ENV FRAGILITY_CAP]] | 1 | sí |
 | [[ENV GEMINI_FALLBACK_MODEL]] | 1 | sí |
 | [[ENV GEMINI_HOT_S]] | 1 | **no** |
 | [[ENV GEMINI_KEY]] | 2 | sí |
 | [[ENV GEMINI_MODEL]] | 1 | sí |
 | [[ENV GEMINI_THINKING]] | 1 | **no** |
+| [[ENV GITHUB_OUTPUT]] | 1 | **no** |
+| [[ENV GITHUB_STEP_SUMMARY]] | 2 | **no** |
 | [[ENV GOOGLE_API_KEY]] | 2 | **no** |
+| [[ENV GOV_RELEASE]] | 1 | sí |
 | [[ENV GUNICORN_MAX_REQUESTS]] | 1 | sí |
 | [[ENV GUNICORN_MAX_REQUESTS_JITTER]] | 1 | **no** |
 | [[ENV GUNICORN_THREADS]] | 1 | sí |
 | [[ENV HOTVIEWS]] | 1 | sí |
 | [[ENV HOT_WAIT_S]] | 1 | sí |
-| [[ENV IMPORT_BULK_WEIGHT_FACTOR]] | 1 | **no** |
 | [[ENV INSIGHTS_INFLIGHT_WAIT_S]] | 1 | **no** |
 | [[ENV INVESTIGADOR_AUTO]] | 1 | **no** |
 | [[ENV INVESTIGADOR_AUTO_CUTOFF_HORAS]] | 1 | **no** |
 | [[ENV KHIPU_ADMIN_SECRET]] | 2 | sí |
 | [[ENV KHIPU_MCP_TOKEN]] | 2 | sí |
 | [[ENV KHIPU_SCHEDULER]] | 1 | sí |
-| [[ENV KHIPU_URL]] | 2 | **no** |
+| [[ENV KHIPU_URL]] | 3 | **no** |
 | [[ENV LIVE_DEADLINE_S]] | 1 | **no** |
 | [[ENV LOG_JSON]] | 1 | sí |
 | [[ENV MARKETSTACK_KEY]] | 3 | sí |

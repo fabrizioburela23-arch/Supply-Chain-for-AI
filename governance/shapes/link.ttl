@@ -1,0 +1,114 @@
+# governance/shapes/link.ttl — puerta G1 sobre el ESTADO RESULTANTE de un vínculo (docs/INFRA_OPERATIVA.md §3.1).
+# Foco (core/gates/focus.link_triples): el vínculo `a kh:Link` con source/target/relType/weight/confidence/
+# validFrom/validTo/relLabel/evidencedBy; sus extremos (kh:objType, `a kh:LiveObject` si existen y no están
+# retirados); los vínculos INVERSOS vigentes del mismo par (`a kh:LinkRef`); la fuente citada (kh:trust); y los
+# límites de la política (`policy.gates.limits`) como literales: kh:maxWeight, kh:highConfMin, kh:minTrust.
+# Ningún número de política se escribe aquí. Severidad DECLARADA; en el paso 10 (sombra) todo solo avisa.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:LinkShape a sh:NodeShape ;
+  sh:targetClass kh:Link ;
+  sh:name "Vínculo (estado resultante)" ;
+  sh:property khs:LinkRelInVocab, khs:LinkNoSelfLoop, khs:LinkSourceLive, khs:LinkTargetLive,
+              khs:LinkWeightRange, khs:LinkConfidenceRange, khs:LinkValidInterval .
+
+khs:LinkNoSelfLoop a sh:PropertyShape ;
+  sh:path kh:source ; sh:disjoint kh:target ;
+  sh:name "sin autovínculo" ; khs:rule khr:link.no_self_loop ; sh:severity sh:Violation ;
+  sh:message "Un vínculo no puede apuntar a sí mismo ({value} → {value})."@es ,
+             "A link cannot point to itself ({value} → {value})."@en .
+
+khs:LinkSourceLive a sh:PropertyShape ;
+  sh:path kh:source ; sh:minCount 1 ; sh:maxCount 1 ; sh:class kh:LiveObject ;
+  sh:name "proveedor vigente" ; khs:rule khr:link.endpoints_live ; sh:severity sh:Violation ;
+  sh:message "El proveedor {value} no existe o está retirado."@es ,
+             "The supplier {value} does not exist or is retired."@en .
+
+khs:LinkTargetLive a sh:PropertyShape ;
+  sh:path kh:target ; sh:minCount 1 ; sh:maxCount 1 ; sh:class kh:LiveObject ;
+  sh:name "cliente vigente" ; khs:rule khr:link.endpoints_live ; sh:severity sh:Violation ;
+  sh:message "El cliente {value} no existe o está retirado."@es ,
+             "The customer {value} does not exist or is retired."@en .
+
+khs:LinkWeightRange a sh:PropertyShape ;
+  sh:path kh:weight ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 0 ;
+  sh:lessThanOrEquals kh:maxWeight ;
+  sh:name "peso en rango" ; khs:rule khr:link.weight_range ; sh:severity sh:Violation ;
+  sh:message "El peso {value} está fuera de la escala [0, {limit}]."@es ,
+             "The weight {value} is outside the scale [0, {limit}]."@en .
+
+khs:LinkConfidenceRange a sh:PropertyShape ;
+  sh:path kh:confidence ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 1 ;
+  sh:name "confianza en [0,1]" ; khs:rule khr:link.confidence_range ; sh:severity sh:Violation ;
+  sh:message "La confianza {value} debe estar entre 0 y 1 (ya no se recorta en silencio)."@es ,
+             "The confidence {value} must be between 0 and 1 (no longer silently clipped)."@en .
+
+khs:LinkValidInterval a sh:PropertyShape ;
+  sh:path kh:validFrom ; sh:maxCount 1 ; sh:lessThanOrEquals kh:validTo ;
+  sh:name "intervalo de validez" ; khs:rule khr:link.valid_interval ; sh:severity sh:Violation ;
+  sh:message "La validez empieza ({value}) después de terminar."@es ,
+             "Validity starts ({value}) after it ends."@en .
+
+khs:LinkFlowSupplierTypeShape a sh:NodeShape ;
+  sh:targetClass kh:Link ; sh:severity sh:Violation ; khs:rule khr:link.flow_supplier_type ;
+  sh:name "un País o una Política no proveen flujo" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "link.flow_supplier_type@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Un País o una Política ({value}) no puede ser proveedor de una relación de flujo."@es ,
+               "A Country or a Policy ({value}) cannot be the supplier of a flow relation."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:flow true ; kh:source ?value .
+        ?value kh:objType ?t .
+        FILTER (?t = "Country" || ?t = "Policy")
+      }""" ] .
+
+khs:LinkInverseFlowLiveShape a sh:NodeShape ;
+  sh:targetClass kh:Link ; sh:severity sh:Warning ; khs:rule khr:link.inverse_flow_live ;
+  sh:name "ya existe el flujo inverso" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "link.inverse_flow_live@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Ya existe el vínculo INVERSO vigente del mismo tipo ({value}): ¿la dirección está al revés?"@es ,
+               "The live INVERSE link of the same type already exists ({value}): is the direction reversed?"@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:flow true ; kh:source ?s ; kh:target ?t ; kh:relType ?r .
+        ?value a kh:LinkRef ; kh:source ?t ; kh:target ?s ; kh:relType ?r ; kh:live true .
+      }""" ] .
+
+khs:LinkHighConfTrustedSourceShape a sh:NodeShape ;
+  sh:targetClass kh:Link ; sh:severity khs:RequiresApproval ; khs:rule khr:link.high_conf_trusted_source ;
+  sh:name "confianza alta exige fuente confiable" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "link.high_conf_trusted_source@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Un flujo con confianza {value} (≥ {limit}) necesita una fuente con trust ≥ 2: queda para una persona."@es ,
+               "A flow with confidence {value} (≥ {limit}) needs a source with trust ≥ 2: it goes to a person."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:flow true ; kh:confidence ?value ; kh:highConfMin ?min ; kh:minTrust ?mt .
+        FILTER (isNumeric(?value) && isNumeric(?min) && ?value >= ?min)
+        FILTER NOT EXISTS {
+          $this kh:evidencedBy ?src . ?src kh:trust ?tr .
+          FILTER (isNumeric(?tr) && isNumeric(?mt) && ?tr >= ?mt)
+        }
+      }""" ] .
+
+khs:LinkDirectionTextSuspectShape a sh:NodeShape ;
+  sh:targetClass kh:Link ; sh:severity sh:Warning ; khs:rule khr:link.direction_text_suspect ;
+  sh:name "texto de dirección sospechoso" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "link.direction_text_suspect@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "La etiqueta «{value}» dice «usa»: en Khipus la dirección es PROVEEDOR → cliente; revisa el sentido."@es ,
+               "The label \"{value}\" says \"uses\": in Khipus the direction is SUPPLIER → customer; check it."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:relLabel ?value .
+        FILTER (REGEX(STR(?value), "(^|[^a-z0-9áéíóúñ])(usa|uses|utiliza|utilizan|usan)([^a-z0-9áéíóúñ]|$)", "i"))
+      }""" ] .
+
+khs:LinkDatedFactHasSourceShape a sh:NodeShape ;
+  sh:targetClass kh:Link ; sh:severity sh:Warning ; khs:rule khr:link.dated_fact_has_source ;
+  sh:name "hecho fechado con fuente" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "link.dated_fact_has_source@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Un hecho con fecha real debería citar su fuente (documento)."@es ,
+               "A fact with a real date should cite its source (document)."@en ;
+    sh:select """SELECT $this WHERE {
+        $this kh:datedFact true .
+        FILTER NOT EXISTS { $this kh:evidencedBy ?s }
+      }""" ] .

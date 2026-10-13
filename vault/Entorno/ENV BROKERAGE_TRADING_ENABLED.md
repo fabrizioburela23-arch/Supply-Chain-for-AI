@@ -18,6 +18,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_brokerage.py]]
+- [[tests.test_governance_seed_parity.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_security.py]]

@@ -31,11 +31,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **78 de 92** (línea 7937), después de [[nodes.crypto_intel.js]] y antes de [[engine.crypto.js]].
+Se carga en [[app.html]] en la posición **79 de 93** (línea 7937), después de [[nodes.crypto_intel.js]] y antes de [[engine.crypto.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 78)
+- [[app.html]] — lo carga con `<script>` (posición 79)
 - [[engine.crypto.js]] — usa `CRYPTO_INTEL`
 - [[engine.pickers.js]] — usa `CRYPTO_INTEL`
 

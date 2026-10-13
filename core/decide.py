@@ -59,8 +59,15 @@ PROVIDER = 'typesafe'
 TIMEOUT_S = float(os.getenv('DECIDE_TIMEOUT_S') or 6.0)
 # Jev AL MANDO del chat (DECIDE_CONTROL incluye 'chat_gate'): cuánto más se le espera después de la
 # pre-consulta (ya corre en paralelo desde que llega la pregunta) y la confianza mínima para obedecerle.
-CONTROL_WAIT_S = float(os.getenv('DECIDE_WAIT_S') or 1.5)
-MIN_CONF = float(os.getenv('DECIDE_MIN_CONF') or 0.6)
+# INFRA_OPERATIVA paso 9 (D2): la confianza mínima para que Jev MANDE y cuánto se lo espera son POLÍTICA
+# aprobada → artefacto `policy.decide` (1.0.0: 0,6 y 1,5 s). DECIDE_MIN_CONF / DECIDE_WAIT_S ya no fijan números
+# (si contradicen al artefacto, el 🩺 avisa). DECIDE_TIMEOUT_S (tiempo de red) y DECIDE_CONTROL (qué funciones
+# manda Jev, sin números) siguen siendo de operación.
+from core import governance as _gov  # noqa: E402
+(
+    CONTROL_WAIT_S, MIN_CONF, CONTROL_DEFAULT,
+) = _gov.bind(globals(), 'policy.decide', {'CONTROL_WAIT_S': 'control_wait_s', 'MIN_CONF': 'min_conf',
+                                       'CONTROL_DEFAULT': ('control_default', tuple)})
 MAX_STATE_CHARS = 12000
 
 _POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix='decide')
@@ -81,7 +88,7 @@ def shadow_mode():
     return (os.getenv('DECIDE_SHADOW') or 'on').lower() not in ('off', '0', 'false')
 
 
-CONTROL_DEFAULT = ('chat_gate',)        # con clave y DECIDE_CONTROL sin poner: Jev manda en el chat
+# CONTROL_DEFAULT (policy.decide, 1.0.0: ('chat_gate',)): con clave y DECIDE_CONTROL sin poner, Jev manda en el chat
 _CONTROL_OFF = ('off', 'none', '0', 'false', 'no')
 
 

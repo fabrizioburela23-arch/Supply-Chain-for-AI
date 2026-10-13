@@ -37,21 +37,20 @@ from datetime import datetime, time as dtime, timedelta, timezone
 
 from brokerage.alpaca import is_crypto
 
-HARD_MAX_ORDER_USD = 100000.0   # tope absoluto (igual que /api/trade/order)
-MIN_ORDER_USD = 1.0
-DUPLICATE_WINDOW_S = 60
-LIMIT_DEVIATION_PCT = 10.0      # precio límite vs. mercado: más lejos → bloqueo / aviso
-
-PROFILES = {
-    'conservador': {'max_position_pct': 10.0, 'max_order_usd': 1000.0, 'max_daily_usd': 2500.0,
-                    'max_drawdown_stop_pct': 10.0, 'allowed_asset_classes': ['us_equity']},
-    'moderado': {'max_position_pct': 20.0, 'max_order_usd': 5000.0, 'max_daily_usd': 15000.0,
-                 'max_drawdown_stop_pct': 20.0, 'allowed_asset_classes': ['us_equity', 'crypto']},
-    'agresivo': {'max_position_pct': 35.0, 'max_order_usd': 25000.0, 'max_daily_usd': 75000.0,
-                 'max_drawdown_stop_pct': 35.0, 'allowed_asset_classes': ['us_equity', 'crypto']},
-}
+# INFRA_OPERATIVA paso 9: los topes y perfiles son POLÍTICA aprobada → artefacto `policy.broker_risk` del release
+# vigente (governance/artifacts/policy.broker_risk@<semver>.json; manda el aprobado en la base). Ninguno se
+# declara aquí:
+#   HARD_MAX_ORDER_USD  — tope absoluto por orden (1.0.0: US$100.000, igual que /api/trade/order);
+#   MIN_ORDER_USD, DUPLICATE_WINDOW_S, LIMIT_DEVIATION_PCT (precio límite vs. mercado: más lejos → bloqueo/aviso);
+#   PROFILES            — la tabla del docstring (conservador / moderado / agresivo); ASSET_CLASSES.
+from core import governance as _gov  # noqa: E402
+(
+    HARD_MAX_ORDER_USD, MIN_ORDER_USD, DUPLICATE_WINDOW_S, LIMIT_DEVIATION_PCT, PROFILES, ASSET_CLASSES,
+) = _gov.bind(globals(), 'policy.broker_risk', {
+    'HARD_MAX_ORDER_USD': 'hard_max_order_usd', 'MIN_ORDER_USD': 'min_order_usd',
+    'DUPLICATE_WINDOW_S': 'duplicate_window_s', 'LIMIT_DEVIATION_PCT': 'limit_deviation_pct',
+    'PROFILES': 'profiles', 'ASSET_CLASSES': ('asset_classes', tuple)})
 LIMIT_KEYS = ('max_position_pct', 'max_order_usd', 'max_daily_usd', 'max_drawdown_stop_pct')
-ASSET_CLASSES = ('us_equity', 'crypto')
 
 _STOCK_RE = re.compile(r'^[A-Z][A-Z0-9.\-]{0,9}$')
 
@@ -227,6 +226,17 @@ def run_checks(ctx):
             es = '🔴 Cuenta de DINERO REAL bloqueada: este cliente no tiene "dinero real habilitado"'
             en = '🔴 REAL MONEY account blocked: this client does not have "real money enabled"'
         checks.append(_c('mode', ok, es, en))
+        # 2b. INFRA_OPERATIVA paso 7: cadena del libro de decisiones íntegra (o reconocida con PIN). Solo
+        # DINERO REAL: el papel nunca se bloquea por esto. Sin poder comprobarla → bloquea (falla cerrado).
+        lc = ctx.get('ledger_chain')
+        if lc is None:
+            try:
+                from core.ledger import money_gate
+                lc = money_gate()
+            except Exception:  # noqa: BLE001
+                lc = (False, 'No se pudo comprobar la cadena del libro de decisiones: dinero real bloqueado',
+                      'Could not check the decision-ledger chain: real money blocked')
+        checks.append(_c('ledger_chain', bool(lc[0]), lc[1], lc[2]))
 
     # 3. estado del cliente
     st = cl.get('status') or 'active'

@@ -31,11 +31,11 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
-Se carga en [[app.html]] en la posición **80 de 92** (línea 7939), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
+Se carga en [[app.html]] en la posición **81 de 93** (línea 7939), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 80)
+- [[app.html]] — lo carga con `<script>` (posición 81)
 - [[app.html]] — usa `KhipuPortfolios`
 - [[engine.cockpit.js]] — usa `KhipuPortfolios`
 - [[engine.khipu_chat.js]] — usa `KhipuPortfolios`

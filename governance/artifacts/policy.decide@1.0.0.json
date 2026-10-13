@@ -1,0 +1,16 @@
+{
+  "id": "policy.decide",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "min_conf": 0.6,
+    "control_wait_s": 1.5,
+    "control_default": [
+      "chat_gate"
+    ]
+  },
+  "changelog_es": "Bootstrap 1.0.0: umbral de confianza y espera de Jev (core/decide.py). DECIDE_MIN_CONF/DECIDE_WAIT_S ya no fijan números (D2).",
+  "changelog_en": "Bootstrap 1.0.0: Jev confidence threshold and wait (core/decide.py). DECIDE_MIN_CONF/DECIDE_WAIT_S no longer set numbers (D2)."
+}

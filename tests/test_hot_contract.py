@@ -73,6 +73,31 @@ def test_mismo_numero_en_impact_y_en_scenario(snapshot_app):
     assert a['reach_1'] == b['reach_1'] and a['sum_impact'] == b['sum_impact'] and a['by_hop'] == b['by_hop']
 
 
+def test_contrato_que_usa_el_cliente_hotclient(snapshot_app):
+    """engine/hotclient.js (paso 13) depende de esto: top=500 con TODAS las víctimas (el mapa pinta todas), el choque
+    parcial con kind=shock, el mismo alcance en un escenario de una fuente, 'up' → 400 con param='direction' (el
+    cliente lo dice honestamente) y la revalidación 304 con el ETag que guarda."""
+    c = snapshot_app
+    r = c.get('/api/hot/impact/TSMC?top=500')
+    d = r.get_json()
+    assert d['data']['affected'] == len(d['data']['victims']) <= 500             # nada recortado
+    assert d['view']['generation'] and r.headers['ETag'] == '"impact:%s"' % d['view']['generation']
+    assert all(v['hop'] >= 1 for v in d['data']['victims'])                       # película por salto (statematrix.frames)
+    r2 = c.get('/api/hot/impact/TSMC?top=500', headers={'If-None-Match': r.headers['ETag']})
+    assert r2.status_code == 304 and r2.headers.get('ETag') == r.headers['ETag']
+    p = c.get('/api/hot/impact/TSMC?top=500&severity=60&kind=shock').get_json()['data']
+    assert p['severity'] == 60 and p['reach_1'] < d['data']['reach_1'] and p['precomputed'] is False
+    sc = c.post('/api/hot/scenario', json={'shocks': [{'id': 'TSMC', 'magnitude': 1}], 'factors': 'active',
+                                           'direction': 'down', 'top': 500}).get_json()['data']
+    assert sc['reach_1'] == d['data']['reach_1']
+    assert {v['id']: v['pct'] for v in sc['victims']} == {v['id']: v['pct'] for v in d['data']['victims']}
+    up = c.post('/api/hot/scenario', json={'shocks': ['Nvidia'], 'direction': 'up'})
+    assert up.status_code == 400 and up.get_json()['param'] == 'direction'
+    # chokepoints por Σ (lo que muestran Insights y el brief) traen etiqueta y los dos alcances
+    ck = c.get('/api/hot/chokepoints?by=sum&limit=1').get_json()['data']['chokepoints'][0]
+    assert {'id', 'label', 'reach_1', 'reach_10', 'sum_impact'} <= set(ck) and ck['id'] == 'TSMC'
+
+
 def test_etag_y_304(snapshot_app):
     c = snapshot_app
     r = c.get('/api/hot/impact/TSMC')

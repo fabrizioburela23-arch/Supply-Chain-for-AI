@@ -22,10 +22,6 @@ migración a matrices dispersas + centralidad.
 
 - [[matrix.engine.py]]
 
-## Variables de entorno que fija o nombra
-
-[[ENV IMPORT_BULK_WEIGHT_FACTOR]]
-
 ## Mencionado en sesiones de trabajo
 
 - [[Sesión 2026-07-19 — Motor de matrices DISPERSAS + centralidad]]

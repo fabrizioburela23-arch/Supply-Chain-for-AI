@@ -1,0 +1,47 @@
+{
+  "id": "kernel.params",
+  "semver": "1.0.0",
+  "kind": "params",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "rel_weights": {
+      "supply": 1.0,
+      "cloud": 0.9,
+      "fab": 1.0,
+      "license": 0.5,
+      "partner": 0.3,
+      "invest": 0.25,
+      "deploy": 0.4,
+      "owns": 0.6,
+      "ppa": 0.7
+    },
+    "sole_link_floor": 6.0,
+    "fragility_cap": 2.5,
+    "bulk_weight_factor": 0.5,
+    "bulk_sources": [
+      "gleif",
+      "wikidata"
+    ],
+    "unverified_conf": 0.3,
+    "magnitude": 1.0,
+    "damping": 0.6,
+    "max_hops": 6,
+    "threshold": 0.01,
+    "severity_divisor": 5.0,
+    "factor_latent_severity": 1.0,
+    "pagerank_alpha": 0.85,
+    "supplier_rels": [
+      "supply",
+      "fab",
+      "cloud",
+      "license",
+      "ppa"
+    ],
+    "tensor_n_peers": 15,
+    "tensor_w_peers": 0.7,
+    "tensor_w_cat": 0.3
+  },
+  "changelog_es": "Bootstrap 1.0.0 con los valores de hoy (paso 9). Nota retroactiva: el peso de \"license\" bajó de 0,8 a 0,5, aprobado por Fabrizio el 2026-10-06 (antes solo constaba en un comentario de engine/statematrix.js). SOLE_LINK_FLOOR=6 aprobado el 2026-10-06. Los α por relación son espejo de ontology/vocabulary.json (scripts/build_governance.py --check exige que coincidan).",
+  "changelog_en": "Bootstrap 1.0.0 with today's values (step 9). Retroactive note: the \"license\" weight went from 0.8 to 0.5, approved by Fabrizio on 2026-10-06 (previously only in a comment in engine/statematrix.js). SOLE_LINK_FLOOR=6 approved on 2026-10-06. Per-relation α mirror ontology/vocabulary.json (scripts/build_governance.py --check requires them to match)."
+}

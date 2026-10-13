@@ -1,0 +1,851 @@
+{
+  "id": "ontology.shapes",
+  "semver": "1.0.0",
+  "kind": "shapes",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "ir_hash": "ed21dd761951bc274774e539a6f357bb67df277896a66daa9b41f838ab4dc7b4",
+    "source_sha": "7992c4ffe72f0af820f28a46ddd33fffb790880e8322cf8a5429d71234e4a1ba",
+    "ir": {
+      "ir_hash": "ed21dd761951bc274774e539a6f357bb67df277896a66daa9b41f838ab4dc7b4",
+      "rules": [
+        "khr:action.agent_needs_human",
+        "khr:action.auto_apply_allowed",
+        "khr:action.no_unknown_fields",
+        "khr:action.principal_authenticated",
+        "khr:action.retraction_has_reason",
+        "khr:action.risk_level_range",
+        "khr:decision.kind_in_vocab",
+        "khr:decision.money_executed_not_blocked",
+        "khr:decision.principal_typed",
+        "khr:decision.quotes_have_asof_src",
+        "khr:decision.release_present",
+        "khr:factor.coef_range",
+        "khr:factor.has_live_members",
+        "khr:factor.noop",
+        "khr:factor.not_retired",
+        "khr:factor.severity_scale",
+        "khr:link.confidence_range",
+        "khr:link.dated_fact_has_source",
+        "khr:link.direction_text_suspect",
+        "khr:link.endpoints_live",
+        "khr:link.flow_supplier_type",
+        "khr:link.high_conf_trusted_source",
+        "khr:link.inverse_flow_live",
+        "khr:link.no_self_loop",
+        "khr:link.rel_in_vocab",
+        "khr:link.valid_interval",
+        "khr:link.weight_range",
+        "khr:object.margin_range",
+        "khr:object.numeric_props",
+        "khr:object.type_immutable",
+        "khr:object.type_in_vocab"
+      ],
+      "schema": "shapes-ir/1",
+      "shapes": [
+        {
+          "iri": "khs:ActionAgentNeedsHumanShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "action.agent_needs_human@1",
+              "iri": "khs:ActionAgentNeedsHumanShape",
+              "msg_en": "An agent proposes \"{value}\", which is not auto-applicable: it waits for your approval.",
+              "msg_es": "Un agente propone «{value}», que no es de aplicación automática: queda para tu aprobación.",
+              "name": "lo que propone un agente fuera de SAFE_AUTO espera a una persona",
+              "rule": "khr:action.agent_needs_human",
+              "select": "SELECT $this ?value WHERE { $this kh:principalKind \"agent\" ; kh:actionType ?value . FILTER NOT EXISTS { $this kh:safeAutoType ?value } }",
+              "severity": "khs:RequiresApproval"
+            }
+          ],
+          "target": "kh:ActionRequest"
+        },
+        {
+          "iri": "khs:ActionAutoApplyAllowedShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "action.auto_apply_allowed@1",
+              "iri": "khs:ActionAutoApplyAllowedShape",
+              "msg_en": "\"{value}\" cannot be applied automatically (outside SAFE_AUTO or confidence below {limit}).",
+              "msg_es": "«{value}» no puede aplicarse solo (fuera de SAFE_AUTO o con confianza menor que {limit}).",
+              "name": "aplicación automática permitida",
+              "rule": "khr:action.auto_apply_allowed",
+              "select": "SELECT $this ?value WHERE { $this kh:autoApply true ; kh:actionType ?value . OPTIONAL { $this kh:confidence ?c } OPTIONAL { $this kh:autoMinConfidence ?min } FILTER (NOT EXISTS { $this kh:safeAutoType ?value } || !BOUND(?c) || (isNumeric(?c) && isNumeric(?min) && ?c < ?min)) }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:ActionRequest"
+        },
+        {
+          "iri": "khs:ActionRetractionHasReasonShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "action.retraction_has_reason@1",
+              "iri": "khs:ActionRetractionHasReasonShape",
+              "msg_en": "A retraction should say why.",
+              "msg_es": "Una retracción debería decir por qué.",
+              "name": "una retracción explica por qué",
+              "rule": "khr:action.retraction_has_reason",
+              "select": "SELECT $this WHERE { $this kh:actionType \"RetractarVinculo\" . FILTER NOT EXISTS { $this kh:reason ?r . FILTER (STRLEN(STR(?r)) > 0) } }",
+              "severity": "sh:Warning"
+            }
+          ],
+          "target": "kh:ActionRequest"
+        },
+        {
+          "iri": "khs:ActionShape",
+          "props": [
+            {
+              "constraints": [
+                {
+                  "kind": "maxCount",
+                  "value": 0
+                }
+              ],
+              "iri": "khs:ActionNoUnknownFields",
+              "msg_en": "The action carries fields its schema does not know (they would be silently ignored).",
+              "msg_es": "La acción trae campos que su esquema no conoce (se ignorarían en silencio).",
+              "name": "sin campos desconocidos",
+              "path": "kh:unknownField",
+              "rule": "khr:action.no_unknown_fields",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "in",
+                  "value": [
+                    "pin",
+                    "mcp_token",
+                    "oauth",
+                    "agent_registry",
+                    "scheduler"
+                  ]
+                },
+                {
+                  "kind": "minCount",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:ActionPrincipalAuthenticated",
+              "msg_en": "The actor is not authenticated ({value}): a typed-in name identifies nobody.",
+              "msg_es": "Quien actúa no está autenticado ({value}): un nombre escrito a mano no identifica a nadie.",
+              "name": "quien actúa está autenticado",
+              "path": "kh:principalAuth",
+              "rule": "khr:action.principal_authenticated",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                },
+                {
+                  "kind": "minInclusive",
+                  "value": 0
+                },
+                {
+                  "kind": "maxInclusive",
+                  "value": 100
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:ActionRiskLevelRange",
+              "msg_en": "The risk level {value} must be between 0 and 100.",
+              "msg_es": "El nivel de riesgo {value} debe estar entre 0 y 100.",
+              "name": "nivel de riesgo 0-100",
+              "path": "kh:nivel",
+              "rule": "khr:action.risk_level_range",
+              "severity": "sh:Violation"
+            }
+          ],
+          "sparql": [],
+          "target": "kh:ActionRequest"
+        },
+        {
+          "iri": "khs:DecisionMoneyExecutedNotBlockedShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "decision.money_executed_not_blocked@1",
+              "iri": "khs:DecisionMoneyExecutedNotBlockedShape",
+              "msg_en": "An order ({value}) was executed although a gate blocked it.",
+              "msg_es": "Una orden ({value}) quedó ejecutada aunque una puerta la bloqueaba.",
+              "name": "dinero ejecutado sin bloqueo",
+              "rule": "khr:decision.money_executed_not_blocked",
+              "select": "SELECT $this ?value WHERE { $this kh:kind ?value ; kh:status \"executed\" ; kh:verdict \"block\" . FILTER (STRSTARTS(?value, \"order.\")) }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:Decision"
+        },
+        {
+          "iri": "khs:DecisionQuotesHaveAsofSrcShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "decision.quotes_have_asof_src@1",
+              "iri": "khs:DecisionQuotesHaveAsofSrcShape",
+              "msg_en": "A quote used ({value}) does not say when or where it is from.",
+              "msg_es": "Una cotización usada ({value}) no dice de cuándo ni de dónde es.",
+              "name": "cotizaciones con fecha y fuente",
+              "rule": "khr:decision.quotes_have_asof_src",
+              "select": "SELECT $this ?value WHERE { $this kh:quote ?q . ?q kh:ticker ?value . FILTER NOT EXISTS { ?q kh:asOf ?a ; kh:src ?s } }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:Decision"
+        },
+        {
+          "iri": "khs:DecisionReleasePresentShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "decision.release_present@1",
+              "iri": "khs:DecisionReleasePresentShape",
+              "msg_en": "The decision does not record which rules release was in force (it could not be replayed).",
+              "msg_es": "La decisión no anota qué release de reglas regía (no se podría repetir).",
+              "name": "con release de gobernanza",
+              "rule": "khr:decision.release_present",
+              "select": "SELECT $this WHERE { $this a kh:Decision . FILTER NOT EXISTS { $this kh:releaseHash ?h . FILTER (STRLEN(STR(?h)) = 64 && ?h != \"0000000000000000000000000000000000000000000000000000000000000000\") } }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:Decision"
+        },
+        {
+          "iri": "khs:DecisionShape",
+          "props": [
+            {
+              "constraints": [
+                {
+                  "kind": "in",
+                  "value": [
+                    "alert.fire",
+                    "alert.rule",
+                    "approval.deny",
+                    "approval.grant",
+                    "audit.gates",
+                    "audit.replay",
+                    "chat.answer",
+                    "chat.route",
+                    "claim.status",
+                    "committee.portfolio_advice",
+                    "committee.run",
+                    "governance.activate",
+                    "governance.propose",
+                    "governance.ratify",
+                    "governance.validate",
+                    "insight.snapshot",
+                    "ledger.chain_ack",
+                    "ledger.chain_break",
+                    "ledger.lineage_break",
+                    "mcp.tool_call",
+                    "ontology.action",
+                    "ontology.bulk_import",
+                    "ontology.news_ingest",
+                    "ontology.raw_event",
+                    "order.cancel",
+                    "order.confirm",
+                    "order.expire",
+                    "order.preview",
+                    "order.submit",
+                    "policy.change",
+                    "proposal.auto_apply",
+                    "proposal.create",
+                    "reconcile.apply",
+                    "reconcile.plan",
+                    "reconcile.rollback",
+                    "research.job",
+                    "research.run",
+                    "retention.purge",
+                    "simulation.save",
+                    "trade.agent_signal",
+                    "whatif.factor_fire",
+                    "whatif.shock"
+                  ]
+                },
+                {
+                  "kind": "minCount",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:DecisionKindInVocab",
+              "msg_en": "The decision kind \"{value}\" is not in the closed vocabulary (ledger.kinds).",
+              "msg_es": "El tipo de decisión «{value}» no está en el vocabulario cerrado (ledger.kinds).",
+              "name": "tipo de decisión del vocabulario",
+              "path": "kh:kind",
+              "rule": "khr:decision.kind_in_vocab",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "in",
+                  "value": [
+                    "human",
+                    "agent",
+                    "system",
+                    "external_ai"
+                  ]
+                },
+                {
+                  "kind": "minCount",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:DecisionPrincipalTyped",
+              "msg_en": "The decision has no typed principal ({value}).",
+              "msg_es": "La decisión no tiene un principal tipado ({value}).",
+              "name": "principal tipado",
+              "path": "kh:principalKind",
+              "rule": "khr:decision.principal_typed",
+              "severity": "sh:Violation"
+            }
+          ],
+          "sparql": [],
+          "target": "kh:Decision"
+        },
+        {
+          "iri": "khs:FactorCoefRangeShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "factor.coef_range@1",
+              "iri": "khs:FactorCoefRangeShape",
+              "msg_en": "A member coefficient {value} must be in (0, {limit}] (0 = no effect: remove it).",
+              "msg_es": "El coeficiente {value} de un miembro debe estar en (0, {limit}] (0 = no afecta: quítalo).",
+              "name": "coeficiente de miembro en (0, máx]",
+              "rule": "khr:factor.coef_range",
+              "select": "SELECT $this ?value WHERE { $this kh:membership ?m ; kh:maxCoef ?mx . ?m kh:coef ?value . FILTER (isNumeric(?value) && isNumeric(?mx) && !(?value > 0 && ?value <= ?mx)) }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:Factor"
+        },
+        {
+          "iri": "khs:FactorHasLiveMembersShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "factor.has_live_members@1",
+              "iri": "khs:FactorHasLiveMembersShape",
+              "msg_en": "The factor has no live member: it modulates nothing.",
+              "msg_es": "El factor no tiene ningún miembro vigente: no modula nada.",
+              "name": "factor con miembros vigentes",
+              "rule": "khr:factor.has_live_members",
+              "select": "SELECT $this WHERE { $this a kh:Factor . FILTER NOT EXISTS { $this kh:retired true } FILTER NOT EXISTS { $this kh:membership ?m . ?m kh:live true } }",
+              "severity": "sh:Warning"
+            }
+          ],
+          "target": "kh:Factor"
+        },
+        {
+          "iri": "khs:FactorNoopShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "factor.noop@1",
+              "iri": "khs:FactorNoopShape",
+              "msg_en": "The change leaves the factor as it was (severity {value}, same state): it does nothing.",
+              "msg_es": "El cambio deja el factor igual (severidad {value} y mismo estado): no hace nada.",
+              "name": "cambio sin efecto",
+              "rule": "khr:factor.noop",
+              "select": "SELECT $this ?value WHERE { $this kh:touchesSeverity true ; kh:severity ?value ; kh:prevSeverity ?p ; kh:active ?a ; kh:prevActive ?pa . FILTER (?value = ?p && ?a = ?pa) }",
+              "severity": "sh:Info"
+            }
+          ],
+          "target": "kh:Factor"
+        },
+        {
+          "iri": "khs:FactorNotRetiredShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "factor.not_retired@1",
+              "iri": "khs:FactorNotRetiredShape",
+              "msg_en": "The factor is retired: it cannot be active (recreate it with CrearFactor).",
+              "msg_es": "El factor está retirado: no puede quedar activo (recréalo con CrearFactor).",
+              "name": "un factor retirado no se activa",
+              "rule": "khr:factor.not_retired",
+              "select": "SELECT $this WHERE { $this kh:retired true ; kh:active true . }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:Factor"
+        },
+        {
+          "iri": "khs:FactorShape",
+          "props": [
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                },
+                {
+                  "kind": "minInclusive",
+                  "value": 0
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                },
+                {
+                  "kind": "lessThanOrEquals",
+                  "value": "kh:severityScale"
+                }
+              ],
+              "iri": "khs:FactorSeverityCrisisScale",
+              "msg_en": "The crisis severity {value} is outside the 0-{limit} scale.",
+              "msg_es": "La severidad de crisis {value} está fuera de la escala 0-{limit}.",
+              "name": "severidad de crisis en la escala",
+              "path": "kh:severityCrisis",
+              "rule": "khr:factor.severity_scale",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                },
+                {
+                  "kind": "minInclusive",
+                  "value": 0
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                },
+                {
+                  "kind": "lessThanOrEquals",
+                  "value": "kh:severityScale"
+                }
+              ],
+              "iri": "khs:FactorSeverityScale",
+              "msg_en": "The severity {value} is outside the 0-{limit} scale.",
+              "msg_es": "La severidad {value} está fuera de la escala 0-{limit}.",
+              "name": "severidad en la escala",
+              "path": "kh:severity",
+              "rule": "khr:factor.severity_scale",
+              "severity": "sh:Violation"
+            }
+          ],
+          "sparql": [],
+          "target": "kh:Factor"
+        },
+        {
+          "iri": "khs:LinkDatedFactHasSourceShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "link.dated_fact_has_source@1",
+              "iri": "khs:LinkDatedFactHasSourceShape",
+              "msg_en": "A fact with a real date should cite its source (document).",
+              "msg_es": "Un hecho con fecha real debería citar su fuente (documento).",
+              "name": "hecho fechado con fuente",
+              "rule": "khr:link.dated_fact_has_source",
+              "select": "SELECT $this WHERE { $this kh:datedFact true . FILTER NOT EXISTS { $this kh:evidencedBy ?s } }",
+              "severity": "sh:Warning"
+            }
+          ],
+          "target": "kh:Link"
+        },
+        {
+          "iri": "khs:LinkDirectionTextSuspectShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "link.direction_text_suspect@1",
+              "iri": "khs:LinkDirectionTextSuspectShape",
+              "msg_en": "The label \"{value}\" says \"uses\": in Khipus the direction is SUPPLIER → customer; check it.",
+              "msg_es": "La etiqueta «{value}» dice «usa»: en Khipus la dirección es PROVEEDOR → cliente; revisa el sentido.",
+              "name": "texto de dirección sospechoso",
+              "rule": "khr:link.direction_text_suspect",
+              "select": "SELECT $this ?value WHERE { $this kh:relLabel ?value . FILTER (REGEX(STR(?value), \"(^|[^a-z0-9áéíóúñ])(usa|uses|utiliza|utilizan|usan)([^a-z0-9áéíóúñ]|$)\", \"i\")) }",
+              "severity": "sh:Warning"
+            }
+          ],
+          "target": "kh:Link"
+        },
+        {
+          "iri": "khs:LinkFlowSupplierTypeShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "link.flow_supplier_type@1",
+              "iri": "khs:LinkFlowSupplierTypeShape",
+              "msg_en": "A Country or a Policy ({value}) cannot be the supplier of a flow relation.",
+              "msg_es": "Un País o una Política ({value}) no puede ser proveedor de una relación de flujo.",
+              "name": "un País o una Política no proveen flujo",
+              "rule": "khr:link.flow_supplier_type",
+              "select": "SELECT $this ?value WHERE { $this kh:flow true ; kh:source ?value . ?value kh:objType ?t . FILTER (?t = \"Country\" || ?t = \"Policy\") }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:Link"
+        },
+        {
+          "iri": "khs:LinkHighConfTrustedSourceShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "link.high_conf_trusted_source@1",
+              "iri": "khs:LinkHighConfTrustedSourceShape",
+              "msg_en": "A flow with confidence {value} (≥ {limit}) needs a source with trust ≥ 2: it goes to a person.",
+              "msg_es": "Un flujo con confianza {value} (≥ {limit}) necesita una fuente con trust ≥ 2: queda para una persona.",
+              "name": "confianza alta exige fuente confiable",
+              "rule": "khr:link.high_conf_trusted_source",
+              "select": "SELECT $this ?value WHERE { $this kh:flow true ; kh:confidence ?value ; kh:highConfMin ?min ; kh:minTrust ?mt . FILTER (isNumeric(?value) && isNumeric(?min) && ?value >= ?min) FILTER NOT EXISTS { $this kh:evidencedBy ?src . ?src kh:trust ?tr . FILTER (isNumeric(?tr) && isNumeric(?mt) && ?tr >= ?mt) } }",
+              "severity": "khs:RequiresApproval"
+            }
+          ],
+          "target": "kh:Link"
+        },
+        {
+          "iri": "khs:LinkInverseFlowLiveShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "link.inverse_flow_live@1",
+              "iri": "khs:LinkInverseFlowLiveShape",
+              "msg_en": "The live INVERSE link of the same type already exists ({value}): is the direction reversed?",
+              "msg_es": "Ya existe el vínculo INVERSO vigente del mismo tipo ({value}): ¿la dirección está al revés?",
+              "name": "ya existe el flujo inverso",
+              "rule": "khr:link.inverse_flow_live",
+              "select": "SELECT $this ?value WHERE { $this kh:flow true ; kh:source ?s ; kh:target ?t ; kh:relType ?r . ?value a kh:LinkRef ; kh:source ?t ; kh:target ?s ; kh:relType ?r ; kh:live true . }",
+              "severity": "sh:Warning"
+            }
+          ],
+          "target": "kh:Link"
+        },
+        {
+          "iri": "khs:LinkShape",
+          "props": [
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                },
+                {
+                  "kind": "minInclusive",
+                  "value": 0
+                },
+                {
+                  "kind": "maxInclusive",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:LinkConfidenceRange",
+              "msg_en": "The confidence {value} must be between 0 and 1 (no longer silently clipped).",
+              "msg_es": "La confianza {value} debe estar entre 0 y 1 (ya no se recorta en silencio).",
+              "name": "confianza en [0,1]",
+              "path": "kh:confidence",
+              "rule": "khr:link.confidence_range",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "disjoint",
+                  "value": "kh:target"
+                }
+              ],
+              "iri": "khs:LinkNoSelfLoop",
+              "msg_en": "A link cannot point to itself ({value} → {value}).",
+              "msg_es": "Un vínculo no puede apuntar a sí mismo ({value} → {value}).",
+              "name": "sin autovínculo",
+              "path": "kh:source",
+              "rule": "khr:link.no_self_loop",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "in",
+                  "value": [
+                    "about",
+                    "affects",
+                    "cloud",
+                    "deploy",
+                    "evidenced_by",
+                    "fab",
+                    "invest",
+                    "justified_by",
+                    "license",
+                    "owns",
+                    "partner",
+                    "ppa",
+                    "published_by",
+                    "reports_on",
+                    "supply"
+                  ]
+                },
+                {
+                  "kind": "minCount",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:LinkRelInVocab",
+              "msg_en": "The relation \"{value}\" is not in ontology/vocabulary.json.",
+              "msg_es": "La relación «{value}» no está en ontology/vocabulary.json.",
+              "name": "relación del vocabulario",
+              "path": "kh:relType",
+              "rule": "khr:link.rel_in_vocab",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "minCount",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                },
+                {
+                  "kind": "class",
+                  "value": "kh:LiveObject"
+                }
+              ],
+              "iri": "khs:LinkSourceLive",
+              "msg_en": "The supplier {value} does not exist or is retired.",
+              "msg_es": "El proveedor {value} no existe o está retirado.",
+              "name": "proveedor vigente",
+              "path": "kh:source",
+              "rule": "khr:link.endpoints_live",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "minCount",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                },
+                {
+                  "kind": "class",
+                  "value": "kh:LiveObject"
+                }
+              ],
+              "iri": "khs:LinkTargetLive",
+              "msg_en": "The customer {value} does not exist or is retired.",
+              "msg_es": "El cliente {value} no existe o está retirado.",
+              "name": "cliente vigente",
+              "path": "kh:target",
+              "rule": "khr:link.endpoints_live",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                },
+                {
+                  "kind": "lessThanOrEquals",
+                  "value": "kh:validTo"
+                }
+              ],
+              "iri": "khs:LinkValidInterval",
+              "msg_en": "Validity starts ({value}) after it ends.",
+              "msg_es": "La validez empieza ({value}) después de terminar.",
+              "name": "intervalo de validez",
+              "path": "kh:validFrom",
+              "rule": "khr:link.valid_interval",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                },
+                {
+                  "kind": "minInclusive",
+                  "value": 0
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                },
+                {
+                  "kind": "lessThanOrEquals",
+                  "value": "kh:maxWeight"
+                }
+              ],
+              "iri": "khs:LinkWeightRange",
+              "msg_en": "The weight {value} is outside the scale [0, {limit}].",
+              "msg_es": "El peso {value} está fuera de la escala [0, {limit}].",
+              "name": "peso en rango",
+              "path": "kh:weight",
+              "rule": "khr:link.weight_range",
+              "severity": "sh:Violation"
+            }
+          ],
+          "sparql": [],
+          "target": "kh:Link"
+        },
+        {
+          "iri": "khs:ObjectShape",
+          "props": [
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                },
+                {
+                  "kind": "minInclusive",
+                  "value": -1
+                },
+                {
+                  "kind": "maxInclusive",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:ObjectMarginRange",
+              "msg_en": "The margin {value} must be a fraction between -1 and 1.",
+              "msg_es": "El margen {value} debe ser una fracción entre -1 y 1.",
+              "name": "margen en [-1, 1]",
+              "path": "kh:margin",
+              "rule": "khr:object.margin_range",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                }
+              ],
+              "iri": "khs:ObjectSeverityCrisisNumeric",
+              "msg_en": "The crisis severity \"{value}\" must be a number.",
+              "msg_es": "La severidad de crisis «{value}» debe ser un número.",
+              "name": "severidad de crisis numérica",
+              "path": "kh:severityCrisis",
+              "rule": "khr:object.numeric_props",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "datatype",
+                  "value": "xsd:decimal"
+                }
+              ],
+              "iri": "khs:ObjectSeverityNumeric",
+              "msg_en": "The severity \"{value}\" must be a number (the matrix engine expects a number).",
+              "msg_es": "La severidad «{value}» debe ser un número (el motor de matrices espera un número).",
+              "name": "severidad numérica",
+              "path": "kh:severity",
+              "rule": "khr:object.numeric_props",
+              "severity": "sh:Violation"
+            },
+            {
+              "constraints": [
+                {
+                  "kind": "in",
+                  "value": [
+                    "Annotation",
+                    "Company",
+                    "Country",
+                    "Decision",
+                    "Energy",
+                    "Factor",
+                    "Material",
+                    "NewsItem",
+                    "Org",
+                    "Policy",
+                    "PositionAdjustment",
+                    "Product",
+                    "Seat",
+                    "Simulation",
+                    "Source",
+                    "Supercycle",
+                    "Tech",
+                    "Thesis"
+                  ]
+                },
+                {
+                  "kind": "minCount",
+                  "value": 1
+                },
+                {
+                  "kind": "maxCount",
+                  "value": 1
+                }
+              ],
+              "iri": "khs:ObjectTypeInVocab",
+              "msg_en": "The type \"{value}\" is not in ontology/vocabulary.json (it is silently left out of the graph).",
+              "msg_es": "El tipo «{value}» no está en ontology/vocabulary.json (se excluye del grafo en silencio).",
+              "name": "tipo de objeto del vocabulario",
+              "path": "kh:type",
+              "rule": "khr:object.type_in_vocab",
+              "severity": "sh:Warning"
+            }
+          ],
+          "sparql": [],
+          "target": "kh:Object"
+        },
+        {
+          "iri": "khs:ObjectTypeImmutableShape",
+          "props": [],
+          "sparql": [
+            {
+              "impl": "object.type_immutable@1",
+              "iri": "khs:ObjectTypeImmutableShape",
+              "msg_en": "An object's type does not change (it would become {value}): create another object and merge.",
+              "msg_es": "El tipo de un objeto no cambia (pasaría a {value}): crea otro objeto y fusiónalos.",
+              "name": "el tipo no cambia",
+              "rule": "khr:object.type_immutable",
+              "select": "SELECT $this ?value WHERE { $this kh:type ?value ; kh:prevType ?p . FILTER (?p != ?value) }",
+              "severity": "sh:Violation"
+            }
+          ],
+          "target": "kh:Object"
+        }
+      ],
+      "source_sha": "7992c4ffe72f0af820f28a46ddd33fffb790880e8322cf8a5429d71234e4a1ba"
+    }
+  },
+  "changelog_es": "Bootstrap 1.0.0 de las formas SHACL (paso 10): 31 reglas de vínculo, objeto, factor, acción y decisión, compiladas desde governance/shapes/*.ttl. Rigen en SOMBRA (policy.gates).",
+  "changelog_en": "Bootstrap 1.0.0 of the SHACL shapes (step 10): 31 link, object, factor, action and decision rules compiled from governance/shapes/*.ttl. They run in SHADOW (policy.gates)."
+}

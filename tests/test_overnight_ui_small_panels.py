@@ -157,9 +157,9 @@ def test_insights_api_ids_y_ventana_del_os():
 
 def test_insights_textos_bilingues():
     s = SRC['insights.js']
-    for es, en in (("'topología'", "'topology'"), ("'simular su caída'", "'simulate its fall'"), ("'abrir X-Ray'", "'open X-Ray'"),
+    for es, en in (("'motor del servidor · Σ impacto'", "'server engine · Σ impact'"), ("'abrir X-Ray'", "'open X-Ray'"),
                    ("'tu cartera'", "'your portfolio'"), ("'panorama sectorial'", "'sector overview'"), ("'concentración'", "'concentration'"),
-                   ("'matriz · ponderado'", "'matrix · weighted'"), ("'ver onda de impacto'", "'see the impact wave'"),
+                   ("'factores activos'", "'active factors'"), ("'ver onda de impacto'", "'see the impact wave'"),
                    ("'Generando lecturas de la red…'", "'Generating network readings…'"),
                    ("'Sin lecturas por ahora — el grafo aún carga.'", "'No readings yet — the graph is still loading.'"),
                    ("label: 'RIESGO'", "label_en: 'RISK'"), ("label: 'OPORTUNIDAD'", "label_en: 'OPPORTUNITY'")):
@@ -202,9 +202,14 @@ window.NODES = [{ id: 'a', label: 'Alpha', country: 'Taiwan', cat: 'foundry', ma
                 { id: 'b', label: 'Beta', country: 'China', cat: 'foundry', margin: 0.3, growth: '🟡' },
                 { id: 'c', label: 'Gamma', country: 'USA', cat: 'foundry', margin: 0.1, growth: '' }];
 window.NODE_BY_ID = { a: NODES[0], b: NODES[1], c: NODES[2] };
-window.computeDownstream = id => new Set(id === 'a' ? ['b', 'c'] : []);
 window.computeNRS = id => ({ a: 30, b: 70, c: 50 })[id];
 global.fetch = () => Promise.resolve({ ok: false });
+// paso 13 INFRA_OPERATIVA: los cuellos de botella los da el motor del servidor por window.KhipuHot (aquí, un doble)
+const V = { generation: 'g0.r0.c0.snapshot', graph_version: 0, source: 'snapshot', age_ms: 1000 };
+window.KhipuHot = { chokepoints: () => Promise.resolve({ ok: true, view: V, data: { chokepoints: [
+    { id: 'a', label: 'Alpha', reach_1: 2, reach_10: 1, sum_impact: 0.8 }, { id: 'b', label: 'Beta', reach_1: 1, reach_10: 0, sum_impact: 0.1 }] } }),
+  factors: () => Promise.resolve({ ok: true, view: V, data: { factors: [{ id: 'f1', label: 'Sequía' }] } }),
+  stampHTML: () => '<span class="kh-hot-stamp">g0</span>' };
 ''' + SRC['insights.js'] + r'''
 (async () => {
   window.renderKhipuInsights(); await wait(30);
@@ -217,10 +222,11 @@ global.fetch = () => Promise.resolve({ ok: false });
     assert '#00E0FF' not in o['html'] and 'rgba(15,21,34' not in o['html']
     assert '.kd-win[data-kind="insights"] .bcp-icard' in o['css']
     if lang == 'en':
-        assert 'is the biggest single point of failure' in o['html'] and 'simulate its fall' in o['html'] and 'OPPORTUNITY' in o['html']
-        assert 'arrastra' not in o['html']
+        assert 'Biggest chokepoint of the network: <b>Alpha</b>' in o['html'] and 'see the impact wave' in o['html'] and 'OPPORTUNITY' in o['html']
+        assert 'golpea' not in o['html'] and 'external factor(s)' in o['html']
     else:
-        assert 'es el mayor punto único de fallo' in o['html'] and 'simular su caída' in o['html'] and 'OPORTUNIDAD' in o['html']
+        assert 'Mayor cuello de botella de la red: <b>Alpha</b>' in o['html'] and 'ver onda de impacto' in o['html'] and 'OPORTUNIDAD' in o['html']
+    assert 'kh-hot-stamp' in o['html'] and "explainMetric('impact_sum')" in o['html']
 
 
 @pytest.mark.skipif(not NODE, reason='requiere node')

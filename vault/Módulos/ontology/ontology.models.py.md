@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/models.py"
 lenguaje: "python"
-lineas: 192
+lineas: 197
 aliases: ["ontology/models.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/models.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 192 líneas · `ontology/models.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 197 líneas · `ontology/models.py`
 
 ## Para qué sirve
 
@@ -23,11 +23,12 @@ esquema SQLAlchemy de la ontología.
 - clase `ObjectRecord` — Estado materializado ACTUAL de un objeto (empresa, tecnología, política…). `properties` acumula el último valor conocido de cada campo. _(línea 78)_
 - clase `LinkRecord` — Vínculo materializado. `valid_to IS NULL` = vigente ahora mismo (según el conocimiento más reciente). Varias filas pueden existir para el … _(línea 91)_
 - clase `ProposedAction` — Fase 3 — cola de aprobación. Un agente observa la ontología, detecta una señal y PROPONE una Acción del catálogo (ontology/actions.py); … _(línea 117)_
-- clase `InsightSnapshot` — Track B — historial de /api/matrix/insights. _(línea 141)_
-- clase `Alert` — Fase 4 — regla de alerta. rule = {entity, metric, op, value} para precio/NRS, o {region, event_type} para noticias por región. _(línea 176)_
+- clase `InsightSnapshot` — Track B — historial de /api/matrix/insights. _(línea 144)_
+- clase `Alert` — Fase 4 — regla de alerta. rule = {entity, metric, op, value} para precio/NRS, o {region, event_type} para noticias por región. _(línea 179)_
 
 ## Depende de
 
+- [[ontology.governance_models.py]] — importa `governance_models`
 - [[ontology.ledger_models.py]] — importa `ledger_models`
 
 ## Lo usan
@@ -43,6 +44,7 @@ esquema SQLAlchemy de la ontología.
 - [[ontology.api.py]] — lo importa
 - [[ontology.bulk_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
+- [[ontology.governance_models.py]] — lo importa
 - [[ontology.ingest_news.py]] — lo importa
 - [[ontology.ledger_models.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
@@ -57,13 +59,15 @@ esquema SQLAlchemy de la ontología.
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 38 pruebas (lista abajo)._
+_Además lo importan 42 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_agent_dudosos.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_committee_os_narr.py]]
+- [[tests.test_gates_resulting_state.py]]
+- [[tests.test_governance.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
@@ -71,6 +75,7 @@ _Además lo importan 38 pruebas (lista abajo)._
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
+- [[tests.test_ledger_anchor.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
@@ -97,5 +102,6 @@ _Además lo importan 38 pruebas (lista abajo)._
 - [[tests.test_repair_research.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_research.py]]
+- [[tests.test_review_infra_c.py]]
 - [[tests.test_security.py]]
 - [[tests.test_tensor_autolink.py]]

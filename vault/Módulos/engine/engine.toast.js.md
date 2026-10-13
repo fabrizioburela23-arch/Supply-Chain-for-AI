@@ -24,7 +24,7 @@ NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que 
 
 - [[app.html]] — usa `LANG`, `_tradeFetch`, `_tradeStatusInfo`
 
-Se carga en [[app.html]] en la posición **27 de 92** (línea 7820), después de [[engine.loading.js]] y antes de [[engine.agents_registry.js]].
+Se carga en [[app.html]] en la posición **27 de 93** (línea 7819), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
 
 ## Lo usan
 
@@ -55,6 +55,7 @@ Se carga en [[app.html]] en la posición **27 de 92** (línea 7820), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]
 - [[tests.test_overnight3_toast_tokens.py]]
 - [[tests.test_voice_os_client.py]]

@@ -238,7 +238,8 @@ for _mod, _bp_name in (('core.world', 'world_bp'), ('research.committee_api', 'c
                        ('core.space', 'space_bp'), ('core.portfolio_ai', 'portfolio_ai_bp'),
                        ('core.khipu_chat', 'khipu_chat_bp'),
                        ('core.portfolio_reports_api', 'portfolio_reports_bp'), ('core.decide_api', 'decide_bp'),
-                       ('core.ledger_api', 'ledger_bp')):   # INFRA_OPERATIVA paso 6: libro de decisiones /api/ledger/*
+                       ('core.ledger_api', 'ledger_bp'),    # INFRA_OPERATIVA paso 6: libro de decisiones /api/ledger/*
+                       ('core.governance_api', 'governance_bp')):   # paso 9: registro de gobernanza /api/governance/*
     try:
         app.register_blueprint(getattr(_importlib.import_module(_mod), _bp_name))
     except Exception as _e:  # noqa: BLE001
@@ -527,8 +528,16 @@ try:
         if _ledger_db_on():
             from core import ledger as _ledger
             _sched.register('ledger_seal', _ledger.seal_job, every_s=_ledger.SEAL_EVERY_S, run_at_start=True)
+            # paso 7: ancla diaria (una fila por día; GET /api/ledger/anchor la publica y GitHub Actions la guarda)
+            # + detección de restauración (linaje). Cada hora: si el ancla del día ya existe, no hace nada.
+            _sched.register('ledger_anchor', _ledger.anchor_job, every_s=3600, run_at_start=True)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: ledger_seal no registrado (%s)', type(_e).__name__)
+    try:   # INFRA_OPERATIVA paso 9: release de gobernanza vigente (la base manda; barato: 2 consultas indexadas)
+        from core import governance as _gov_mod
+        _sched.register('governance_refresh', _gov_mod.refresh_job, every_s=60, run_at_start=False)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: governance_refresh no registrado (%s)', type(_e).__name__)
     try:   # O1: humo 5 min tras cada arranque (= tras cada deploy) y luego 1×/día, guardado en ops_checks
         from core.ops_check import scheduled as _ops_scheduled, FIRST_AFTER_BOOT_S as _OPS_FIRST
         _sched.register('ops_daily_check', _ops_scheduled, every_s=_OPS_FIRST, run_at_start=False)
@@ -963,9 +972,16 @@ def api_vocabulary():
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': f'vocabulario no disponible: {str(e)[:120]}'}), 500
     resp = jsonify(snap)
-    # Cambia poco → cacheable, pero versionado para invalidar al editarlo.
+    # Cambia poco → cacheable, pero versionado para invalidar al editarlo. GV-07 (paso 9): el ETag es el HASH del
+    # artefacto `ontology.schema` del release vigente (antes "vocab-1" fijo: un vocabulario editado sin subir la
+    # versión no invalidaba ningún caché).
     resp.headers['Cache-Control'] = 'public, max-age=300'
-    resp.headers['ETag'] = f'"vocab-{snap.get("version", 0)}"'
+    try:
+        from core import governance as _g
+        resp.headers['ETag'] = f'"vocab-{_g.artifact_hash_of("ontology.schema")[:16]}"'
+        resp.headers['X-Khipu-Release'] = _g.release()[0][:16]
+    except Exception:  # noqa: BLE001
+        resp.headers['ETag'] = f'"vocab-{snap.get("version", 0)}"'
     return resp
 
 
@@ -1418,6 +1434,69 @@ def _diag_ontologia():
                           _db_error_fix(red), configured=True, ok=False)
 
 
+def _diag_gobernanza():
+    """Tarjeta 🩺 del registro de gobernanza (paso 9) y de la cadena del libro (paso 7): release vigente, si falta
+    ratificarlo con PIN, variables de entorno que ya no mandan (D2) y si el dinero real está bloqueado."""
+    try:
+        from core import governance
+        st = governance.status()
+        es, en = governance.explain('es'), governance.explain('en')
+        ok = not st['env_warnings'] and not st['db_error'] and not st.get('repo_fallback')
+        fix = None
+        if st.get('repo_fallback'):
+            fix = ('propón un release que incluya ' + ', '.join(sorted(st['repo_fallback'])) + ' y apruébalo con tu '
+                   'PIN (hasta entonces sus números salen del repositorio y cada decisión lo anota).',
+                   'propose a release that includes ' + ', '.join(sorted(st['repo_fallback'])) + ' and approve it '
+                   'with your PIN (until then its numbers come from the repository and every decision notes it).')
+        for w in st['env_warnings']:
+            es += ' ' + w['es']
+            en += ' ' + w['en']
+        if st['db_error']:
+            es += f" Error al leer el release de la base: {st['db_error'][:120]} (sigue el anterior)."
+            en += f" Error reading the release from the database: {st['db_error'][:120]} (the previous one stays)."
+        if st['needs_ratification'] and fix is None:
+            fix = ('ratifica el release una vez: 🩺 → Gobernanza → «Ratificar» con tu PIN (no bloquea nada).',
+                   'ratify the release once: 🩺 → Governance → "Ratify" with your PIN (it blocks nothing).')
+        chain = None
+        try:
+            from ontology.db import ontology_available
+            if ontology_available():
+                from core import ledger
+                chain = ledger.chain_state()
+                if chain.get('broken'):
+                    ok = False
+                    es += ' CADENA DEL LIBRO ROTA: el dinero real está bloqueado hasta reconocerla con PIN.'
+                    en += ' LEDGER CHAIN BROKEN: real money is blocked until it is acknowledged with the PIN.'
+                    fix = ('revisa qué cambió (🩺 → Libro → Verificar) y reconócelo con tu PIN: POST /api/ledger/chain_ack.',
+                           'check what changed (🩺 → Ledger → Verify) and acknowledge it with your PIN: '
+                           'POST /api/ledger/chain_ack.')
+        except Exception:  # noqa: BLE001
+            chain = None
+        try:   # paso 10: puertas en sombra (modo, reglas, avisos desde el arranque)
+            import core.gates as _gates
+            gs = _gates.status()
+            n_warn = sum((gs.get('stats') or {}).get('by_rule', {}).values())
+            if not gs.get('available') and gs.get('mode') != 'off':
+                ok = False
+                es += f" Puertas NO disponibles: {gs.get('error') or 'sin IR'}."
+                en += f" Gates UNAVAILABLE: {gs.get('error') or 'no IR'}."
+            else:
+                es += (f" Puertas en {'SOMBRA' if gs['mode'] == 'shadow' else 'APAGADAS (KHIPU_GATES=off)'}: "
+                       f"{gs.get('rules', 0)} reglas, {n_warn} aviso(s) desde el arranque.")
+                en += (f" Gates in {'SHADOW' if gs['mode'] == 'shadow' else 'OFF (KHIPU_GATES=off)'}: "
+                       f"{gs.get('rules', 0)} rules, {n_warn} warning(s) since start.")
+        except Exception:  # noqa: BLE001
+            gs = None
+        return _diag_card(es, en, fix, configured=True, ok=ok, release=st['release_hash'][:16],
+                          gates_mode=(gs or {}).get('mode'),
+                          semver=st['semver'], label=st['label'], ratified=st['ratified'],
+                          env_warnings=[w['env'] for w in st['env_warnings']],
+                          chain_broken=bool(chain and chain.get('broken')))
+    except Exception as e:  # noqa: BLE001
+        return _diag_card('Registro de gobernanza no disponible: ' + type(e).__name__,
+                          'Governance registry unavailable: ' + type(e).__name__, configured=True, ok=False)
+
+
 def _diag_hot_views():
     """Línea del 🩺 para las vistas rápidas (INFRA_OPERATIVA paso 4): generación, edad, ms de construcción,
     atraso y registro append-only. (texto ES, texto EN, dict)."""
@@ -1758,6 +1837,7 @@ def diagnostics():
         'fmp':        _diag_fmp(),
         'grafo':      _diag_grafo(),
         'ontologia':  _diag_ontologia(),
+        'gobernanza': _diag_gobernanza(),
         'alpaca':     _diag_alpaca(),
     }
     # R1: proveedores de IA en pausa por error definitivo (sin saldo, clave, modelo)
@@ -2287,7 +2367,9 @@ def _alpaca_hdrs():
 _trade_auth = _require_pin
 
 # ── Validación de órdenes de la cuenta de la casa (auditoría #8/#9) ──────────
-MAX_ORDER_USD = 100000.0           # tope por orden (notional o qty × precio)
+# tope por orden (notional o qty × precio) = el del corretaje: artefacto `policy.broker_risk` (paso 9, D2)
+from core import governance as _gov  # noqa: E402
+(MAX_ORDER_USD,) = _gov.bind(globals(), 'policy.broker_risk', {'MAX_ORDER_USD': 'hard_max_order_usd'})
 # Base 1-10 (acciones ≤ 5 + clase; cripto hasta RENDER…) + clase opcional
 # '.B' + par cripto '/USD'. Sin puntos sueltos: 'X.', '.', '..' no pasan.
 _TRADE_SYM_RE = re.compile(r'^[A-Z0-9]{1,10}(\.[A-Z0-9]{1,3})?(/[A-Z]{3,5})?$')
@@ -2338,6 +2420,21 @@ def _house_trading_enabled():
     except Exception:  # noqa: BLE001 — sin el paquete brokerage, se lee el env igual
         return (os.getenv('BROKERAGE_TRADING_ENABLED', 'on') or 'on').strip().lower() in \
             ('on', '1', 'true', 'yes', 'si', 'sí')
+
+
+def _house_ledger_block():
+    """INFRA_OPERATIVA paso 7: con la cadena del libro de decisiones ROTA (sin reconocer con PIN) la cuenta de la
+    casa en DINERO REAL no envía órdenes (tampoco cierres); el papel sigue. None = puede seguir."""
+    if _paper():
+        return None
+    try:
+        from core.ledger import money_gate
+        ok, es, en = money_gate()
+    except Exception:  # noqa: BLE001 — falla cerrado
+        ok, es, en = False, 'No se pudo comprobar la cadena del libro de decisiones', 'Could not check the ledger chain'
+    if ok:
+        return None
+    return jsonify({'error': es, 'error_en': en, 'code': 'ledger_chain_broken'}), 423
 
 
 def _trading_halted_response():
@@ -2653,6 +2750,10 @@ def trade_close():
     if not _house_trading_enabled():
         _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'blocked_kill_switch'})
         return _trading_halted_response()
+    _lb = _house_ledger_block()
+    if _lb is not None:
+        _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'blocked_ledger_chain'})
+        return _lb
     from urllib.parse import quote as _q
     path_sym = _q(symbol.replace('/', ''), safe='')   # Alpaca usa BTCUSD en el path de posiciones
     try:
@@ -2790,6 +2891,10 @@ def trade_order():
     if not _house_trading_enabled():
         _trade_audit('trade_order', dict(summary, outcome='blocked_kill_switch'))
         return _trading_halted_response()
+    _lb = _house_ledger_block()
+    if _lb is not None:
+        _trade_audit('trade_order', dict(summary, outcome='blocked_ledger_chain'))
+        return _lb
     body = {'symbol': ticker, 'side': side, 'type': otype, 'time_in_force': tif, 'client_order_id': coid}
     if notional is not None:
         body['notional'] = f'{notional:.2f}'
@@ -4277,7 +4382,7 @@ War-room presets (5; HYPOTHETICAL — outcomes come from running the simulation,
 - Never quote a price, market cap, NRS or valuation from memory — use the tools. When a figure comes with a date or a source and it matters, say it ("al cierre de ayer", "según el catálogo").
 - You are a financial analyst first, voice assistant second. Give real insight, not just navigation.
 - ACT FIRST, TALK SECOND: on almost every request, call the right tool immediately, then narrate what appeared on screen with 1-3 sentences of real insight. Never ask permission to open a window or look something up (orders are the exception: they always need the confirmation above).
-- "What if…" questions → run_live_simulation, then narrate: how many companies are affected, the 2-3 biggest victims and who wins, USING THE % THE SIMULATION RETURNED — always say they are simulated estimates of a hypothetical scenario, never real prices.
+- "What if…" questions → run_live_simulation, then narrate: how many companies are affected and the 2-3 biggest victims, USING THE % THE SIMULATION RETURNED — always say they are simulated estimates of a hypothetical scenario, never real prices. If it returns barely_hit_rivals, you may say those rivals are barely hit (hit_pct is the DAMAGE they take, not a gain): NEVER state a gain % or say anyone "wins X %".
 - Multi-agent and war-room narration: describe the cascade ("TSMC absorbe el primer golpe, luego caen los fabless…"), the consensus and where the agents disagreed.
 - Confirm actions naturally and briefly: "Te la abrí al lado del chat…", "Mira el mapa — se tiñe en rojo…".
 - Be concise (2-3 sentences of analysis) — no over-explanation.
@@ -4383,8 +4488,9 @@ def _bixby_client_tools():
           ['company_a', 'company_b']),
         T('run_live_simulation', 'HYPOTHETICAL what-if on the live supply-chain matrices: what happens to the network '
           'if one company collapses, booms, suffers a price shock or is sanctioned. Opens the simulation window and '
-          'returns how many companies are affected, the most impacted (with %) and who wins. Always present the % as '
-          'simulated estimates of a hypothetical scenario, never as real prices.',
+          'returns how many companies are affected, the most impacted (with %) and, for falls, the rivals that are '
+          'barely hit (barely_hit_rivals.hit_pct = the damage they take, NOT a gain; never state a gain %). Always '
+          'present the % as simulated estimates of a hypothetical scenario, never as real prices.',
           dict(company, kind=E(('collapse', 'demand', 'price', 'sanction'),
                                'collapse = the company falls · demand = demand boom · price = price shock · '
                                'sanction = sanctions (default collapse)'),

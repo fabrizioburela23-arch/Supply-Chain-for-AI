@@ -1,18 +1,23 @@
 ---
 tipo: "variable"
 capa: "Infraestructura"
-nombre: "DECIDE_MIN_CONF"
+nombre: "GITHUB_STEP_SUMMARY"
 documentada: false
 tags: ["capa/infraestructura", "tipo/variable"]
 ---
 
-# DECIDE_MIN_CONF
+# GITHUB_STEP_SUMMARY
 
 > Variable de entorno · se configura en Railway (Variables). Aquí solo el **nombre**, nunca el valor.
 
 ## La leen
 
-- [[core.decide.py]]
+- [[scripts.fetch_ledger_anchor.py]]
+- `.github/workflows/smoke-mcp.yml` (despliegue)
+
+## Pruebas que la fijan o nombran
+
+- [[tests.test_ledger_anchor.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

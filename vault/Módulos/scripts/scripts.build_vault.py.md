@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "scripts/build_vault.py"
 lenguaje: "python"
-lineas: 3476
+lineas: 3478
 aliases: ["scripts/build_vault.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # scripts/build_vault.py
 
-> Módulo · capa [[Capa Infraestructura]] · 3.476 líneas · `scripts/build_vault.py`
+> Módulo · capa [[Capa Infraestructura]] · 3.478 líneas · `scripts/build_vault.py`
 
 ## Para qué sirve
 
@@ -18,68 +18,68 @@ BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 
 ## API pública
 
-- `capa_de(path)` _(línea 226)_
-- `safe_name(s, limit=…)` — Nombre de archivo válido en Windows/macOS/Linux y como [ [enlace] ] de Obsidian. _(línea 236)_
-- `prose(s)` — Texto tomado de las fuentes → Markdown seguro (sin enlaces, etiquetas ni HTML accidentales). _(línea 250)_
-- `cell(s)` _(línea 264)_
-- `code(s)` _(línea 268)_
-- `tcode(s)` — código dentro de una tabla _(línea 273)_
-- `link(name)` _(línea 278)_
-- `first_paragraph(text, limit=…)` _(línea 282)_
-- `strip_self_path(p, path)` — Quita el prefijo «ruta — » con el que empiezan casi todos los docstrings/cabeceras. _(línea 291)_
-- `fm(d)` — Front matter YAML (cadenas en JSON, que es YAML válido). _(línea 302)_
-- `miles(n)` _(línea 318)_
-- clase `JSScan` — code = fuente sin comentarios (con cadenas); code_ns = además sin el TEXTO de las cadenas (quedan comillas vacías; el código dentro de \${…} … _(línea 343)_
-- `js_identifiers(code_text, skip_keys=…)` — (identificadores sueltos, identificadores leídos como window.X). skip_keys: sin las claves de objetos. _(línea 483)_
-- `js_local_decls(code_text)` _(línea 505)_
-- `js_header(text)` — Primer comentario del archivo (cabecera) → texto plano. _(línea 517)_
-- `analyze_py(path, text)` _(línea 611)_
-- `dyn_module_refs(root, strings=…)` — Textos que nombran un módulo para importarlo en tiempo de ejecución (importación «dinámica»). _(línea 810)_
-- `inventory()` _(línea 868)_
-- clase `Model` _(línea 922)_
-- `endpoint_ref(s)` — Literal que parece una ruta HTTP de Khipus → forma normalizada, o None. _(línea 953)_
-- `match_routes(ref, routes_by_path, prefix=…)` — Rutas que un literal puede estar llamando. Exacto; o (prefix=True) prefijo si el literal termina en '/' (se concatena algo) o es una base … _(línea 984)_
-- `build_model()` _(línea 1009)_
-- `js_concat_chains(code)` — Concatenaciones que arman una ruta RELATIVA: '/clients/' + id + '/audit' → '/clients/◊/audit' y API + '/status' → '◊/status'. Un texto en … _(línea 1367)_
-- `relative_refs(chains)` — Rutas relativas limpias ('/clients/◊/audit') a partir de las cadenas armadas. _(línea 1438)_
-- `parse_claude_env_block(text)` _(línea 1524)_
-- `env_documented(M, name)` _(línea 1553)_
-- `env_is_read(M, name)` — ¿Alguien la lee? (directo, por patrón f'PREFIJO_{x}' o en despliegue) _(línea 1563)_
-- `parse_sessions(text)` _(línea 1657)_
-- `api_group_layer(M, g, rs)` _(línea 1794)_
-- `api_group(path)` _(línea 1804)_
-- `route_is_external(path)` _(línea 1815)_
-- `derive(M)` _(línea 1821)_
-- `capa_link(key)` _(línea 1888)_
-- `capa_note_name(key)` _(línea 1892)_
-- `env_note(nm)` _(línea 1896)_
-- `tags_for(layer, tipo)` _(línea 1900)_
-- `note_module(M, p)` _(línea 1922)_
-- `note_api_group(M, g)` _(línea 2206)_
-- `note_mcp_tools(M)` _(línea 2225)_
-- `note_api_index(M)` _(línea 2242)_
-- `note_env(M, nm)` _(línea 2255)_
-- `note_env_index(M)` _(línea 2293)_
-- `note_session(M, s, prev, nxt)` _(línea 2305)_
-- `note_session_index(M)` _(línea 2329)_
-- `note_test_index(M)` _(línea 2340)_
-- `note_layer(M, key)` _(línea 2355)_
-- `note_home(M)` _(línea 2398)_
-- `note_howto(M)` _(línea 2442)_
-- `note_report(M, R)` _(línea 2510)_
-- `report_data(M)` _(línea 2611)_
-- `note_sw(M, R)` _(línea 2728)_
-- `note_path(M, p)` _(línea 2747)_
-- `graph_data(M)` _(línea 2752)_
-- `graph_json_text(G)` _(línea 2782)_
-- `map_html(M, G)` _(línea 2796)_
-- `obsidian_files()` _(línea 2820)_
-- `merge_obsidian_config(rel, old_text, new_text)` — Configuración de Obsidian que YA existe → lo que hay que escribir (None = no tocar). _(línea 2856)_
-- `build_vault()` — → dict {ruta relativa dentro de vault/: texto} _(línea 2890)_
-- `existing_owned(vault_dir)` _(línea 2945)_
-- `diff_vault(out, vault_dir)` — Diferencias entre lo generado y vault/. La configuración de Obsidian solo tiene que EXISTIR: Obsidian la reescribe cuando la persona mueve … _(línea 2961)_
-- `write_vault(out, vault_dir)` _(línea 2981)_
-- `main(argv=…)` _(línea 3014)_
+- `capa_de(path)` _(línea 228)_
+- `safe_name(s, limit=…)` — Nombre de archivo válido en Windows/macOS/Linux y como [ [enlace] ] de Obsidian. _(línea 238)_
+- `prose(s)` — Texto tomado de las fuentes → Markdown seguro (sin enlaces, etiquetas ni HTML accidentales). _(línea 252)_
+- `cell(s)` _(línea 266)_
+- `code(s)` _(línea 270)_
+- `tcode(s)` — código dentro de una tabla _(línea 275)_
+- `link(name)` _(línea 280)_
+- `first_paragraph(text, limit=…)` _(línea 284)_
+- `strip_self_path(p, path)` — Quita el prefijo «ruta — » con el que empiezan casi todos los docstrings/cabeceras. _(línea 293)_
+- `fm(d)` — Front matter YAML (cadenas en JSON, que es YAML válido). _(línea 304)_
+- `miles(n)` _(línea 320)_
+- clase `JSScan` — code = fuente sin comentarios (con cadenas); code_ns = además sin el TEXTO de las cadenas (quedan comillas vacías; el código dentro de \${…} … _(línea 345)_
+- `js_identifiers(code_text, skip_keys=…)` — (identificadores sueltos, identificadores leídos como window.X). skip_keys: sin las claves de objetos. _(línea 485)_
+- `js_local_decls(code_text)` _(línea 507)_
+- `js_header(text)` — Primer comentario del archivo (cabecera) → texto plano. _(línea 519)_
+- `analyze_py(path, text)` _(línea 613)_
+- `dyn_module_refs(root, strings=…)` — Textos que nombran un módulo para importarlo en tiempo de ejecución (importación «dinámica»). _(línea 812)_
+- `inventory()` _(línea 870)_
+- clase `Model` _(línea 924)_
+- `endpoint_ref(s)` — Literal que parece una ruta HTTP de Khipus → forma normalizada, o None. _(línea 955)_
+- `match_routes(ref, routes_by_path, prefix=…)` — Rutas que un literal puede estar llamando. Exacto; o (prefix=True) prefijo si el literal termina en '/' (se concatena algo) o es una base … _(línea 986)_
+- `build_model()` _(línea 1011)_
+- `js_concat_chains(code)` — Concatenaciones que arman una ruta RELATIVA: '/clients/' + id + '/audit' → '/clients/◊/audit' y API + '/status' → '◊/status'. Un texto en … _(línea 1369)_
+- `relative_refs(chains)` — Rutas relativas limpias ('/clients/◊/audit') a partir de las cadenas armadas. _(línea 1440)_
+- `parse_claude_env_block(text)` _(línea 1526)_
+- `env_documented(M, name)` _(línea 1555)_
+- `env_is_read(M, name)` — ¿Alguien la lee? (directo, por patrón f'PREFIJO_{x}' o en despliegue) _(línea 1565)_
+- `parse_sessions(text)` _(línea 1659)_
+- `api_group_layer(M, g, rs)` _(línea 1796)_
+- `api_group(path)` _(línea 1806)_
+- `route_is_external(path)` _(línea 1817)_
+- `derive(M)` _(línea 1823)_
+- `capa_link(key)` _(línea 1890)_
+- `capa_note_name(key)` _(línea 1894)_
+- `env_note(nm)` _(línea 1898)_
+- `tags_for(layer, tipo)` _(línea 1902)_
+- `note_module(M, p)` _(línea 1924)_
+- `note_api_group(M, g)` _(línea 2208)_
+- `note_mcp_tools(M)` _(línea 2227)_
+- `note_api_index(M)` _(línea 2244)_
+- `note_env(M, nm)` _(línea 2257)_
+- `note_env_index(M)` _(línea 2295)_
+- `note_session(M, s, prev, nxt)` _(línea 2307)_
+- `note_session_index(M)` _(línea 2331)_
+- `note_test_index(M)` _(línea 2342)_
+- `note_layer(M, key)` _(línea 2357)_
+- `note_home(M)` _(línea 2400)_
+- `note_howto(M)` _(línea 2444)_
+- `note_report(M, R)` _(línea 2512)_
+- `report_data(M)` _(línea 2613)_
+- `note_sw(M, R)` _(línea 2730)_
+- `note_path(M, p)` _(línea 2749)_
+- `graph_data(M)` _(línea 2754)_
+- `graph_json_text(G)` _(línea 2784)_
+- `map_html(M, G)` _(línea 2798)_
+- `obsidian_files()` _(línea 2822)_
+- `merge_obsidian_config(rel, old_text, new_text)` — Configuración de Obsidian que YA existe → lo que hay que escribir (None = no tocar). _(línea 2858)_
+- `build_vault()` — → dict {ruta relativa dentro de vault/: texto} _(línea 2892)_
+- `existing_owned(vault_dir)` _(línea 2947)_
+- `diff_vault(out, vault_dir)` — Diferencias entre lo generado y vault/. La configuración de Obsidian solo tiene que EXISTIR: Obsidian la reescribe cuando la persona mueve … _(línea 2963)_
+- `write_vault(out, vault_dir)` _(línea 2983)_
+- `main(argv=…)` _(línea 3016)_
 
 **Internas** (empiezan con `_`): `_read`, `_lines`, `_is_object_key`, `_const_str`, `_render_str`, `_call_name`, `_sig`, `_loop_names`, `_assign_names`, `_module_names`, `_resolve_import`, `_segs`, `_seg_ok`, `_window_aliases`, `_analyze_js`, `_str_uses`, `_analyze_html`, `_md_purpose`, `_mcp_tools`, `_mentions`, `_build_edges`, `_flink`, `_route_line`, `_callers_cell`, `_api_sections`, `_dep_sections`, `_endpoint_sections`, `_env_sections`, `_data_sections`, `_page_sections`, `_doc_sections`, `_test_sections`, `_dump_cfg`, `_managed_group`, `_owned`
 

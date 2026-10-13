@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 4991
+lineas: 5007
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.991 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.007 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -29,6 +29,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.crypto.js]] — usa `KhipuCrypto`
 - [[engine.desktop.js]] — usa `KhipuDesk`
+- [[engine.explain.js]] — usa `explainMetric`
 - [[engine.fincard.js]] — usa `openFinCard`
 - [[engine.guide.js]] — usa `initGuiaTab`
 - [[engine.khipu_chat.js]] — usa `KhipuChat`
@@ -44,18 +45,17 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
-- [[engine.statematrix.js]] — usa `KhipuState`
 - [[engine.temporal-graph.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[engine.voice.js]] — usa `BixbyVoice`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
-- [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayComputeWinners`, `xrayEnsureStyles`
+- [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **84 de 92** (línea 7943), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **85 de 93** (línea 7943), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 84)
+- [[app.html]] — lo carga con `<script>` (posición 85)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
 - [[engine.command_center.js]] — usa `BixbyCockpit`, `_openBrokerConfirm`, `_parseTradeCommand`
@@ -98,6 +98,7 @@ Se carga en [[app.html]] en la posición **84 de 92** (línea 7943), después de
 - [[tests.test_khipus_os_integration.py]]
 - [[tests.test_khipus_os_shell.py]]
 - [[tests.test_live_labels_misc.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight2_fixer_review.py]]
 - [[tests.test_overnight2_scenes_tokens.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]

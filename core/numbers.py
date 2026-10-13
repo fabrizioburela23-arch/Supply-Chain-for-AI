@@ -681,25 +681,38 @@ def evidence_numbers(evidence):
 # ════════════════════════════════════════════════════════════════════════════
 # Comparación
 # ════════════════════════════════════════════════════════════════════════════
+# INFRA_OPERATIVA paso 9: las tolerancias por tipo de cifra son POLÍTICA aprobada → artefacto
+# `policy.numbers_guard` del release vigente (los números del docstring de arriba son los de la 1.0.0).
+from core import governance as _gov  # noqa: E402
+(
+    _TOL_MONEY_BIG, _TOL_PRICE, _TOL_PCT, _TOL_OTHER, _TOL_MORE_THAN, _TOL_LESS_THAN,
+) = _gov.bind(globals(), 'policy.numbers_guard', {
+    '_TOL_MONEY_BIG': 'money_big', '_TOL_PRICE': 'price', '_TOL_PCT': 'pct', '_TOL_OTHER': 'other',
+    '_TOL_MORE_THAN': 'more_than', '_TOL_LESS_THAN': 'less_than'})
+
+
 def _tol(kind, c, half, approx):
     """Tolerancia ABSOLUTA para comparar una cifra con el dato c (ver docstring).
     Con "~/unos/alrededor de/roughly" el piso RELATIVO se ensancha (3 % precio, 5 % magnitud
     grande): "alrededor de 180 USD" por 182,40 es un redondeo legítimo, no una cifra inventada."""
     a = abs(c)
-    if kind == 'money_big':
-        return max(0.05 * a, min(half, 0.15 * a)) if approx else max(0.01 * a, min(half, 0.10 * a))
-    if kind == 'price':
-        return max(0.03 * a, min(half, 0.05 * a)) if approx else max(0.005 * a, min(half, 0.02 * a))
+    if kind in ('money_big', 'price'):
+        t = _TOL_MONEY_BIG if kind == 'money_big' else _TOL_PRICE
+        return (max(t['approx_floor'] * a, min(half, t['approx_cap'] * a)) if approx
+                else max(t['floor'] * a, min(half, t['cap'] * a)))
     if kind == 'pct':
-        return max(2 * half, 0.10 * a, 0.5) if approx else max(half, 0.005 * a, 0.05)
-    return max(half, 0.10 * a) if approx else max(half, 0.01 * a)      # múltiplo / indicador
+        t = _TOL_PCT
+        return (max(t['approx_half_mult'] * half, t['approx_rel'] * a, t['approx_abs']) if approx
+                else max(half, t['floor_rel'] * a, t['floor_abs']))
+    t = _TOL_OTHER                                                            # múltiplo / indicador
+    return max(half, t['approx_floor'] * a) if approx else max(half, t['floor'] * a)
 
 
 def _pct_ok(v, half, a):
     """Porcentaje SIN "~": v es el REDONDEO de a (|a−v| ≤ media unidad) o su TRUNCADO a la precisión
     mostrada (v ≤ a < v + una unidad: "55 %" por 55,8), con piso de 0,05 pp / 0,5 % relativo.
     Antes era ±1 unidad simétrica: "95 %" y "93 %" pasaban por un dato de 94 %."""
-    floor = max(0.005 * a, 0.05)
+    floor = max(_TOL_PCT['floor_rel'] * a, _TOL_PCT['floor_abs'])
     return -max(half, floor) - 1e-9 <= a - v < max(2 * half, floor) - 1e-9
 
 
@@ -712,9 +725,9 @@ def _close(m, v, half, c, sign, kind):
         return False
     a = abs(c)
     if m.ineq == 'gt':
-        return v * 0.99 <= a <= v * 2.0
+        return v * _TOL_MORE_THAN['low'] <= a <= v * _TOL_MORE_THAN['high']
     if m.ineq == 'lt':
-        return v * 0.5 <= a <= v * 1.01
+        return v * _TOL_LESS_THAN['low'] <= a <= v * _TOL_LESS_THAN['high']
     if kind == 'pct' and not m.approx:
         return _pct_ok(v, half, a)
     return abs(a - v) <= _tol(kind, c, half, m.approx) + 1e-12

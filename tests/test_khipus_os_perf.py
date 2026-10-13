@@ -21,6 +21,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NODE = shutil.which('node')
 HTML = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
 BRIEF = open(os.path.join(ROOT, 'engine', 'brief.js'), encoding='utf-8').read()
+HOTCLIENT = open(os.path.join(ROOT, 'engine', 'hotclient.js'), encoding='utf-8').read()
 
 
 def _grab(rx):
@@ -286,7 +287,7 @@ const wait = ms => new Promise(r => realSetTimeout(r, ms));
 
 def _brief_js(scenario, session=None, fetch_js='u => ({ ok: false })'):
     js = (_BRIEF_PRELUDE.replace('__SS__', json.dumps(session or {})).replace('__FETCH__', '(' + fetch_js + ')') +
-          '\n' + scenario.split('/*LOAD*/')[0] + '\n' + BRIEF + '\n(async () => { const out = {};\n' +
+          '\n' + scenario.split('/*LOAD*/')[0] + '\n' + HOTCLIENT + '\n' + BRIEF + '\n(async () => { const out = {};\n' +
           scenario.split('/*LOAD*/')[1] + '\nprocess.stdout.write(JSON.stringify(out), () => process.exit(0)); })()'
           '.catch(e => { console.error(e && e.stack || e); process.exit(1); });')
     r = subprocess.run([NODE, '-e', js], capture_output=True, text=True, timeout=30)
@@ -311,9 +312,9 @@ def test_brief_no_se_abre_solo_sobre_khipus_os_pero_si_a_pedido():
     assert o['auto'] is False and o['fetchedAtBoot'] == [] and o['downstreamAtBoot'] == 0
     assert o['allowed'] is False
     assert o['onDemand'] is True
-    assert o['downstream'] == 3                                    # sin motor de matrices → cálculo local
-    assert 'El mayor punto único de fallo hoy es <b>B</b>' in o['cards']
-    assert o['src'].startswith('Fuente: grafo de Khipus, calculado en tu navegador')
+    # paso 13 INFRA_OPERATIVA: sin el motor del servidor NO hay cuello de botella calculado en el navegador
+    assert o['downstream'] == 0 and 'cuello de botella' not in o['cards'].lower()
+    assert o['src'].startswith('Cuello de botella no disponible')
 
 
 @pytest.mark.skipif(not NODE, reason='requiere node')
@@ -327,13 +328,17 @@ def test_brief_vista_clasica_se_abre_y_usa_la_matriz_sin_recorrer_las_empresas()
       out.downstream = downstreamCalls; out.fetched = fetched.slice();
       out.cards = els['brief-cards'] && els['brief-cards'].innerHTML; out.src = els['brief-src'] && els['brief-src'].textContent;
     ''', session={'kh_os_classic': '1'},
-        fetch_js="u => (u.indexOf('/api/matrix/metrics') === 0 ? { ok: true, json: () => Promise.resolve("
-                 "{ chokepoints_top25: [{ id: 'c', cascade_size: 7 }], factors_active: [] }) } : { ok: false })")
+        fetch_js="u => (u.indexOf('/api/hot/chokepoints') === 0 ? { ok: true, status: 200, json: () => Promise.resolve("
+                 "{ data: { chokepoints: [{ id: 'c', label: 'C', reach_1: 7, reach_10: 2, sum_impact: 1.5 }] }, "
+                 "view: { generation: 'g3.rA.c1.pg', graph_version: 3, source: 'pg', age_ms: 2000 } }) } : "
+                 "u.indexOf('/api/hot/factors') === 0 ? { ok: true, status: 200, json: () => Promise.resolve("
+                 "{ data: { factors: [] }, view: { generation: 'g3.rA.c1.pg', graph_version: 3, source: 'pg', age_ms: 2000 } }) } : { ok: false })")
     assert o['auto'] is True
-    assert o['downstream'] == 0                                    # el servidor ya trajo el chokepoint
-    assert '/api/matrix/metrics' in o['fetched'] and any(u.startswith('/api/committee/board') for u in o['fetched'])
-    assert 'Network chokepoint (matrix engine): <b>C</b>' in o['cards'] and 'drags down <b>7</b> companies' in o['cards']
-    assert o['src'].startswith('Source: Khipus matrix engine (ontology)')
+    assert o['downstream'] == 0                                    # el navegador no recorre las empresas
+    assert '/api/hot/chokepoints?by=sum&limit=1' in o['fetched'] and '/api/hot/factors' in o['fetched']
+    assert '/api/matrix/metrics' not in o['fetched'] and any(u.startswith('/api/committee/board') for u in o['fetched'])
+    assert 'Biggest chokepoint of the network: <b>C</b>' in o['cards'] and 'it hits <b>7</b> companies (≥1%)' in o['cards']
+    assert o['src'].startswith('Source: Khipus single engine (server) · g3 · database · 2 s ago')
 
 
 def test_brief_textos_bilingues_y_sobre_el_os():

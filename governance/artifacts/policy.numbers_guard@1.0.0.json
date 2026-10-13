@@ -1,0 +1,42 @@
+{
+  "id": "policy.numbers_guard",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "money_big": {
+      "floor": 0.01,
+      "cap": 0.1,
+      "approx_floor": 0.05,
+      "approx_cap": 0.15
+    },
+    "price": {
+      "floor": 0.005,
+      "cap": 0.02,
+      "approx_floor": 0.03,
+      "approx_cap": 0.05
+    },
+    "pct": {
+      "floor_rel": 0.005,
+      "floor_abs": 0.05,
+      "approx_half_mult": 2,
+      "approx_rel": 0.1,
+      "approx_abs": 0.5
+    },
+    "other": {
+      "floor": 0.01,
+      "approx_floor": 0.1
+    },
+    "more_than": {
+      "low": 0.99,
+      "high": 2.0
+    },
+    "less_than": {
+      "low": 0.5,
+      "high": 1.01
+    }
+  },
+  "changelog_es": "Bootstrap 1.0.0: tolerancias por tipo de cifra de core/numbers._tol/_pct_ok/_close (bloque 0).",
+  "changelog_en": "Bootstrap 1.0.0: per-figure-kind tolerances from core/numbers._tol/_pct_ok/_close (block 0)."
+}

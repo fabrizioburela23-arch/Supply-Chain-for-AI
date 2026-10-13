@@ -3,12 +3,23 @@
 # correr con un token que pueda dar órdenes.
 # Para activarlo: GitHub → Settings → Secrets and variables → Actions →
 # New repository secret → KHIPU_MCP_TOKEN = un token kmcp_ de scope "read"
-# (Khipus → 🩺 Sistema → 🤖 Conectar IAs). Sin el secreto, el trabajo no hace nada.
+# (Khipus → 🩺 Sistema → 🤖 Conectar IAs). Sin el secreto, el humo no hace nada.
+#
+# INFRA_OPERATIVA paso 7 (decisión D7): ANCLA DIARIA del libro de decisiones. Cada día (y tras cada push)
+# este trabajo baja GET /api/ledger/anchor — PÚBLICO, solo {day, head_seal, head_hash}, ningún contenido — y
+# la guarda FUERA de la base: como artefacto del run (ledger-anchor-<día>, 90 días) y en el resumen del
+# trabajo (el historial de Actions la conserva). Es la defensa contra alguien con acceso total a la base que
+# desactive los disparadores y reescriba todo de forma coherente: el hash guardado aquí ya no coincidiría.
+# No necesita secretos (usa la variable KHIPU_URL o la URL pública de producción).
 name: smoke-mcp
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '23 6 * * *'        # todos los días 06:23 UTC (después de que el reloj del servidor ancle el día)
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -20,6 +31,7 @@ jobs:
           python-version: '3.11'
       - run: pip install requests==2.33.1
       - name: Humo del MCP (solo lectura)
+        if: github.event_name != 'schedule'
         env:
           KHIPU_MCP_TOKEN: ${{ secrets.KHIPU_MCP_TOKEN }}
           KHIPU_URL: ${{ vars.KHIPU_URL }}
@@ -27,3 +39,16 @@ jobs:
           if [ -z "$KHIPU_MCP_TOKEN" ]; then echo "Sin el secreto KHIPU_MCP_TOKEN: humo omitido."; exit 0; fi
           sleep 150
           python scripts/smoke_mcp.py --retries 4
+      - name: Ancla diaria del libro de decisiones (D7)
+        id: anchor
+        env:
+          KHIPU_URL: ${{ vars.KHIPU_URL }}
+        run: python scripts/fetch_ledger_anchor.py --out ledger-anchor.json --summary "$GITHUB_STEP_SUMMARY"
+      - name: Guardar el ancla como artefacto del run
+        if: steps.anchor.outputs.day != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-anchor-${{ steps.anchor.outputs.day }}-${{ github.run_id }}
+          path: ledger-anchor.json
+          retention-days: 90
+          if-no-files-found: ignore

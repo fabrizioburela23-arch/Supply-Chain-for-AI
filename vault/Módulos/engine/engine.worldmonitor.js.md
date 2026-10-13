@@ -30,11 +30,11 @@ WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **53 de 92** (línea 7897), después de [[engine.riskreport.js]] y antes de [[engine.spacemonitor.js]].
+Se carga en [[app.html]] en la posición **54 de 93** (línea 7897), después de [[engine.riskreport.js]] y antes de [[engine.spacemonitor.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 53)
+- [[app.html]] — lo carga con `<script>` (posición 54)
 - [[app.html]] — usa `KhipuWorld`
 - [[engine.khipu_chat.js]] — usa `KhipuWorld`
 

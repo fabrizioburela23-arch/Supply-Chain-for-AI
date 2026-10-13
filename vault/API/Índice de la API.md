@@ -6,7 +6,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 
 # Índice de la API
 
-232 rutas HTTP en 58 grupos + 23 herramientas MCP.
+239 rutas HTTP en 59 grupos + 23 herramientas MCP.
 
 | Grupo | Rutas | Definidas en |
 |---|---|---|
@@ -28,20 +28,21 @@ tags: ["capa/mcp-api", "tipo/indice"]
 | [[API findossier]] | 1 | [[server.py]] |
 | [[API fundamentals]] | 1 | [[server.py]] |
 | [[API geo]] | 1 | [[core.geosit.py]] |
+| [[API governance]] | 3 | [[core.governance_api.py]] |
 | [[API grafo]] | 2 | [[server.py]] |
 | [[API health]] | 1 | [[server.py]] |
 | [[API insiders]] | 1 | [[server.py]] |
 | [[API investors]] | 1 | [[server.py]] |
 | [[API ipo_calendar]] | 1 | [[server.py]] |
 | [[API khipu]] | 3 | [[core.khipu_chat.py]] |
-| [[API ledger]] | 4 | [[core.ledger_api.py]] |
+| [[API ledger]] | 7 | [[core.ledger_api.py]] |
 | [[API macro]] | 1 | [[server.py]] |
 | [[API market]] | 4 | [[server.py]] |
 | [[API marketstack]] | 1 | [[server.py]] |
 | [[API matrix]] | 11 | [[matrix.api.py]] |
 | [[API mcp]] | 6 | [[mcp_server.api.py]] |
 | [[API news]] | 3 | [[core.portfolio_reports_api.py]], [[server.py]] |
-| [[API ontology]] | 33 | [[ontology.api.py]] |
+| [[API ontology]] | 34 | [[ontology.api.py]] |
 | [[API ops]] | 2 | [[core.ops_check.py]] |
 | [[API options]] | 1 | [[server.py]] |
 | [[API portfolio]] | 4 | [[server.py]] |

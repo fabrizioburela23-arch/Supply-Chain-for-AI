@@ -11,7 +11,12 @@ import time
 
 import numpy as np
 
-DEFAULT_KERNEL = {'magnitude': 1.0, 'damping': 0.6, 'max_hops': 6, 'threshold': 0.01}
+
+
+def default_kernel():
+    """Parámetros del kernel con que se construyó la vista (kernel.params del release vigente, paso 9)."""
+    from matrix import engine as E
+    return {'magnitude': E.MAGNITUDE, 'damping': E.DAMPING, 'max_hops': E.MAX_HOPS, 'threshold': E.THRESHOLD}
 
 
 class ImpactView:
@@ -26,7 +31,7 @@ def build(core):
     from matrix import engine as E
     t0 = time.perf_counter()
     v = ImpactView()
-    v.kernel = dict(DEFAULT_KERNEL, method='propagate@1')
+    v.kernel = dict(default_kernel(), method='propagate@1')
     # mismas fuentes que compute_metrics: nodos con algún peso de entrada o salida
     v.sources = [oid for oid, i in core.idx.items() if not (core.out_w[i] == 0 and core.in_w[i] == 0)]
     res = E.propagate_many(core.mats, core.idx, core.ids, v.sources, frag=core.frag, dt=core.dt)
@@ -132,7 +137,7 @@ def status(v):
             'top_by_sum': v.by_sum[:5], 'top_by_count': v.by_count[:5]}
 
 
-def scenario(core, x0, factors='active', damping=0.6, max_hops=6, threshold=0.01, top=50):
+def scenario(core, x0, factors='active', damping=None, max_hops=None, threshold=None, top=50):
     """Choque con varias fuentes y magnitudes (vector inicial x0) con el MISMO kernel en lote.
     factors: 'active' (fragilidad de la vista) | 'none' | lista de ids de factores activos."""
     from matrix import engine as E

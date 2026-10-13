@@ -1,0 +1,14 @@
+{
+  "id": "ontology.schema",
+  "semver": "1.0.0",
+  "kind": "schema",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "vocabulary_file": "ontology/vocabulary.json",
+    "vocabulary_sha256": "e20f5e67d7f4d933530b530f6273dd0be29e5338f96e7a1546543c90f73282ee",
+    "vocabulary_version": 1
+  },
+  "changelog_es": "Bootstrap 1.0.0: el vocabulario vigente (tipos de objeto/relación, flags, fuentes) por su hash; el ETag de /api/vocabulary es el hash de este artefacto.",
+  "changelog_en": "Bootstrap 1.0.0: the current vocabulary (object/relation types, flags, sources) by hash; the /api/vocabulary ETag is this artifact's hash."
+}

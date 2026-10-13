@@ -1,0 +1,19 @@
+{
+  "id": "policy.auto_apply",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "safe_auto": [
+      "AnotarObjeto",
+      "CrearFactor",
+      "IncorporarEmpresa",
+      "MarcarRiesgo",
+      "ProponerVinculo"
+    ],
+    "auto_min_confidence": 0.55
+  },
+  "changelog_es": "Bootstrap 1.0.0: SAFE_AUTO y AUTO_MIN_CONFIDENCE de ontology/agents.py (D6 sin respuesta: sin cambios).",
+  "changelog_en": "Bootstrap 1.0.0: SAFE_AUTO and AUTO_MIN_CONFIDENCE from ontology/agents.py (D6 unanswered: unchanged)."
+}

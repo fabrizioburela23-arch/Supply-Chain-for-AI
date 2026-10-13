@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-06"
-ruta: "docs/ESTADO.md#L332"
+ruta: "docs/ESTADO.md#L366"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-06 (iv) — JEV AL MANDO DEL CHAT (sw v248)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 332 (12 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 366 (12 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

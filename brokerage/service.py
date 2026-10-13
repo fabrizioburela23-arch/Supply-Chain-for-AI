@@ -754,6 +754,13 @@ def _evaluate(session, rec, spec, exclude_id=None, include_pending=False):
         'unresolved_order': _unresolved(session, rec.id, sym, side, exclude_id=exclude_id),
         'market_open': mo, 'clock_source': csrc,
     }
+    if rec.mode == 'live':        # paso 7: cadena rota sin reconocer → el dinero real no se mueve (papel sigue)
+        try:
+            from core.ledger import money_gate
+            ctx['ledger_chain'] = money_gate()
+        except Exception:  # noqa: BLE001 — falla cerrado
+            ctx['ledger_chain'] = (False, 'No se pudo comprobar la cadena del libro de decisiones: dinero real '
+                                          'bloqueado', 'Could not check the decision-ledger chain: real money blocked')
     return {'checks': _risk.run_checks(ctx), 'price': price, 'est': est, 'psrc': psrc, 'alp': alp,
             'ref': ref, 'rsrc': rsrc}
 

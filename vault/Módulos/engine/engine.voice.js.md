@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "engine/voice.js"
 lenguaje: "javascript"
-lineas: 3027
+lineas: 3032
 aliases: ["engine/voice.js"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # engine/voice.js
 
-> Módulo · capa [[Capa Voz]] · 3.027 líneas · `engine/voice.js`
+> Módulo · capa [[Capa Voz]] · 3.032 líneas · `engine/voice.js`
 
 ## Para qué sirve
 
@@ -37,19 +37,18 @@ De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`,
 - [[engine.oswindows.js]] — usa `KhipuOSWin`
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
-- [[engine.statematrix.js]] — usa `KhipuState`
 - [[engine.toast.js]] — usa `KhipuToast`
-- [[engine.xray.js]] — usa `openXRay`, `xrayComputeWinners`
+- [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **34 de 92** (línea 7827), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **35 de 93** (línea 7827), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 34)
+- [[app.html]] — lo carga con `<script>` (posición 35)
 - [[app.html]] — usa `BixbyVoice`
 - [[engine.cockpit.js]] — usa `BixbyVoice`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
 - [[engine.command_center.js]] — usa `BixbyVoice`
@@ -72,12 +71,14 @@ Se carga en [[app.html]] en la posición **34 de 92** (línea 7827), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_client_hardening.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_overnight3_fixer_voice_race.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_overnight_voice_client.py]]
 - [[tests.test_overnight_voice_server.py]]
+- [[tests.test_review_infra_c.py]]
 - [[tests.test_server_smoke.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour.py]]

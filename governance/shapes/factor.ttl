@@ -1,0 +1,73 @@
+# governance/shapes/factor.ttl — puerta G1 sobre el ESTADO RESULTANTE de un Factor (hiperarista).
+# Foco (core/gates/focus.factor_triples): `a kh:Factor` con kh:severity/kh:severityCrisis, kh:active, kh:retired,
+# kh:prevSeverity/kh:prevActive (antes del evento), kh:touchesSeverity, kh:severityScale y kh:maxCoef (límites
+# de `policy.gates`), y sus miembros vigentes como nodos kh:Membership (kh:member, kh:coef, kh:live).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:FactorShape a sh:NodeShape ;
+  sh:targetClass kh:Factor ;
+  sh:name "Factor (estado resultante)" ;
+  sh:property khs:FactorSeverityScale, khs:FactorSeverityCrisisScale .
+
+khs:FactorSeverityScale a sh:PropertyShape ;
+  sh:path kh:severity ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 0 ;
+  sh:lessThanOrEquals kh:severityScale ;
+  sh:name "severidad en la escala" ; khs:rule khr:factor.severity_scale ; sh:severity sh:Violation ;
+  sh:message "La severidad {value} está fuera de la escala 0-{limit}."@es ,
+             "The severity {value} is outside the 0-{limit} scale."@en .
+
+khs:FactorSeverityCrisisScale a sh:PropertyShape ;
+  sh:path kh:severityCrisis ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 0 ;
+  sh:lessThanOrEquals kh:severityScale ;
+  sh:name "severidad de crisis en la escala" ; khs:rule khr:factor.severity_scale ; sh:severity sh:Violation ;
+  sh:message "La severidad de crisis {value} está fuera de la escala 0-{limit}."@es ,
+             "The crisis severity {value} is outside the 0-{limit} scale."@en .
+
+khs:FactorNotRetiredShape a sh:NodeShape ;
+  sh:targetClass kh:Factor ; sh:severity sh:Violation ; khs:rule khr:factor.not_retired ;
+  sh:name "un factor retirado no se activa" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "factor.not_retired@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El factor está retirado: no puede quedar activo (recréalo con CrearFactor)."@es ,
+               "The factor is retired: it cannot be active (recreate it with CrearFactor)."@en ;
+    sh:select """SELECT $this WHERE {
+        $this kh:retired true ; kh:active true .
+      }""" ] .
+
+khs:FactorCoefRangeShape a sh:NodeShape ;
+  sh:targetClass kh:Factor ; sh:severity sh:Violation ; khs:rule khr:factor.coef_range ;
+  sh:name "coeficiente de miembro en (0, máx]" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "factor.coef_range@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El coeficiente {value} de un miembro debe estar en (0, {limit}] (0 = no afecta: quítalo)."@es ,
+               "A member coefficient {value} must be in (0, {limit}] (0 = no effect: remove it)."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:membership ?m ; kh:maxCoef ?mx .
+        ?m kh:coef ?value .
+        FILTER (isNumeric(?value) && isNumeric(?mx) && !(?value > 0 && ?value <= ?mx))
+      }""" ] .
+
+khs:FactorHasLiveMembersShape a sh:NodeShape ;
+  sh:targetClass kh:Factor ; sh:severity sh:Warning ; khs:rule khr:factor.has_live_members ;
+  sh:name "factor con miembros vigentes" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "factor.has_live_members@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El factor no tiene ningún miembro vigente: no modula nada."@es ,
+               "The factor has no live member: it modulates nothing."@en ;
+    sh:select """SELECT $this WHERE {
+        $this a kh:Factor .
+        FILTER NOT EXISTS { $this kh:retired true }
+        FILTER NOT EXISTS { $this kh:membership ?m . ?m kh:live true }
+      }""" ] .
+
+khs:FactorNoopShape a sh:NodeShape ;
+  sh:targetClass kh:Factor ; sh:severity sh:Info ; khs:rule khr:factor.noop ;
+  sh:name "cambio sin efecto" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "factor.noop@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El cambio deja el factor igual (severidad {value} y mismo estado): no hace nada."@es ,
+               "The change leaves the factor as it was (severity {value}, same state): it does nothing."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:touchesSeverity true ; kh:severity ?value ; kh:prevSeverity ?p ; kh:active ?a ; kh:prevActive ?pa .
+        FILTER (?value = ?p && ?a = ?pa)
+      }""" ] .

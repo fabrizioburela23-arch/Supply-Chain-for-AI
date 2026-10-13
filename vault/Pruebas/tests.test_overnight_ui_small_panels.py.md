@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight_ui_small_panels.py"
 lenguaje: "python"
-lineas: 248
+lineas: 254
 aliases: ["tests/test_overnight_ui_small_panels.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight_ui_small_panels.py
 
-> Prueba · capa [[Capa Pruebas]] · 248 líneas · `tests/test_overnight_ui_small_panels.py`
+> Prueba · capa [[Capa Pruebas]] · 254 líneas · `tests/test_overnight_ui_small_panels.py`
 
 ## Qué prueba
 

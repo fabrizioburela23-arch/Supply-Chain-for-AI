@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/live.js"
 lenguaje: "javascript"
-lineas: 140
+lineas: 138
 aliases: ["engine/live.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/live.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 140 líneas · `engine/live.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 138 líneas · `engine/live.js`
 
 ## Para qué sirve
 
@@ -22,15 +22,14 @@ MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de 
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `_appVersion`, `_invalidateNRS`, `_showUpdatePill`, `_tradeFetch`
-- [[engine.insights.js]] — usa `renderKhipuInsights`
+- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `_appVersion`, `_showUpdatePill`, `_tradeFetch`
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **85 de 92** (línea 7944), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
+Se carga en [[app.html]] en la posición **86 de 93** (línea 7944), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 85)
+- [[app.html]] — lo carga con `<script>` (posición 86)
 - [[engine.voice.js]] — usa `KhipuLive`
 - [[engine.xray.js]] — usa `KhipuLive`
 
@@ -41,6 +40,7 @@ Se carga en [[app.html]] en la posición **85 de 92** (línea 7944), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_infra.py]]
+- [[tests.test_no_client_engine.py]]
 
 ## Mencionado en sesiones de trabajo
 

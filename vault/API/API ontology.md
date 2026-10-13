@@ -1,13 +1,13 @@
 ---
 tipo: "api"
 capa: "Ontología y grafo temporal"
-rutas: 33
+rutas: 34
 tags: ["capa/ontologia", "tipo/api"]
 ---
 
 # API ontology
 
-> 33 rutas · definidas en [[ontology.api.py]] · prefijo `/api/ontology`
+> 34 rutas · definidas en [[ontology.api.py]] · prefijo `/api/ontology`
 
 Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
@@ -30,6 +30,7 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `POST` | `/api/ontology/events` | `events_create` | [[ontology.api.py]] | 1 prueba |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | [[ontology.api.py]] | 1 prueba |
 | `GET` | `/api/ontology/feed` | `global_feed_route` | [[ontology.api.py]] | [[app.html]], [[engine.khipu_lang.js]], 1 prueba |
+| `GET` | `/api/ontology/gates` | `gates_status` | [[ontology.api.py]] | — |
 | `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] | — |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[ontology.api.py]] | [[engine.khipu_lang.js]] |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[ontology.api.py]] | [[app.html]], [[engine.temporal-graph.js]], 3 pruebas |

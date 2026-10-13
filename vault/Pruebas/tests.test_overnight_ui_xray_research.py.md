@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight_ui_xray_research.py"
 lenguaje: "python"
-lineas: 316
+lineas: 321
 aliases: ["tests/test_overnight_ui_xray_research.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight_ui_xray_research.py
 
-> Prueba · capa [[Capa Pruebas]] · 316 líneas · `tests/test_overnight_ui_xray_research.py`
+> Prueba · capa [[Capa Pruebas]] · 321 líneas · `tests/test_overnight_ui_xray_research.py`
 
 ## Qué prueba
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "brokerage/service.py"
 lenguaje: "python"
-lineas: 1530
+lineas: 1537
 aliases: ["brokerage/service.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # brokerage/service.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.530 líneas · `brokerage/service.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.537 líneas · `brokerage/service.py`
 
 ## Para qué sirve
 
@@ -37,20 +37,20 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - `reference_price(alp, symbol, positions)` — (precio, fuente) de MERCADO para estimar montos — nunca inventado: posición en Alpaca → último trade de Alpaca → Finnhub. (None, None) si … _(línea 627)_
 - `market_clock(alp)` _(línea 654)_
 - `daily_used(session, client_id)` — Público (lo lee el comité): US\$ comprados hoy por el cliente. _(línea 677)_
-- `order_dict(row, client_name=…)` _(línea 852)_
-- `preview_order(session, client_id, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, source=…, requested_by=…, proposal_id=…, rationale=…)` _(línea 875)_
-- `confirm_order(session, preview_id, approved_by, source=…)` _(línea 1147)_
-- `approve_preview(session, preview_id, approved_by)` — Aprobación HUMANA (la ruta exige PIN) de una propuesta de MCP/comité. _(línea 1201)_
-- `reject_preview(session, preview_id, actor, reason=…)` _(línea 1220)_
-- `pending_approvals(session)` _(línea 1244)_
-- `list_orders(session, client_id=…, status=…, limit=…)` _(línea 1262)_
-- `get_order(session, order_id)` _(línea 1275)_
-- `cancel_order(session, order_id, actor)` _(línea 1318)_
-- `sync_orders(session, client_id=…, actor=…)` — Actualiza desde Alpaca el estado de las órdenes abiertas, y reconcilia por client_order_id las que quedaron con estado desconocido (sin id … _(línea 1366)_
-- `oauth_start(session, client_id, env=…, actor=…)` _(línea 1412)_
-- `oauth_callback(session, state, code, error=…)` — Valida el `state` (firmado, de un solo uso, < 15 min), canjea el código y guarda el token CIFRADO. Devuelve {ok, client_id, client_name, … _(línea 1439)_
-- `public_status()` — Lo único que se muestra SIN PIN. _(línea 1496)_
-- `status_info()` — Detalle de configuración (va detrás del PIN: revela la postura de seguridad). _(línea 1501)_
+- `order_dict(row, client_name=…)` _(línea 859)_
+- `preview_order(session, client_id, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, source=…, requested_by=…, proposal_id=…, rationale=…)` _(línea 882)_
+- `confirm_order(session, preview_id, approved_by, source=…)` _(línea 1154)_
+- `approve_preview(session, preview_id, approved_by)` — Aprobación HUMANA (la ruta exige PIN) de una propuesta de MCP/comité. _(línea 1208)_
+- `reject_preview(session, preview_id, actor, reason=…)` _(línea 1227)_
+- `pending_approvals(session)` _(línea 1251)_
+- `list_orders(session, client_id=…, status=…, limit=…)` _(línea 1269)_
+- `get_order(session, order_id)` _(línea 1282)_
+- `cancel_order(session, order_id, actor)` _(línea 1325)_
+- `sync_orders(session, client_id=…, actor=…)` — Actualiza desde Alpaca el estado de las órdenes abiertas, y reconcilia por client_order_id las que quedaron con estado desconocido (sin id … _(línea 1373)_
+- `oauth_start(session, client_id, env=…, actor=…)` _(línea 1419)_
+- `oauth_callback(session, state, code, error=…)` — Valida el `state` (firmado, de un solo uso, < 15 min), canjea el código y guarda el token CIFRADO. Devuelve {ok, client_id, client_name, … _(línea 1446)_
+- `public_status()` — Lo único que se muestra SIN PIN. _(línea 1503)_
+- `status_info()` — Detalle de configuración (va detrás del PIN: revela la postura de seguridad). _(línea 1508)_
 
 **Internas** (empiezan con `_`): `_now`, `_iso`, `_f`, `_aware`, `_err`, `_not_found`, `_Bad`, `_sha`, `_who`, `_connected`, `_expire_open`, `_account_changed`, `_lookup`, `_client_rec`, `_name_taken`, `_clean_limits`, `_clean_mandate`, `_valid_cred`, `_enc_key_error`, `_read_account`, `_read_positions`, `_touch_hwm`, `_paper_mismatch`, `_daily_used`, `_recent_duplicate`, `_unresolved`, `_evaluate`, `_summaries`, `_spec`, `_apply_alpaca`, `_mark_committee`, `_notify_closed`, `_definitive_reject`, `_committee_memo_ok`, `_execute`, `_lock`, `_expired`, `_expire_row`, `_needs_human`, `_names`, `_age_s`, `_reconcile_unknown`
 
@@ -62,6 +62,7 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - [[brokerage.risk.py]] — importa `risk`
 - [[core.config.py]] — importa `FINNHUB`
 - [[core.identity.py]] — importa `identity`
+- [[core.ledger.py]] — importa `money_gate`
 - [[core.quotes.py]] — importa `_fetch_quote_raw`
 - [[ontology.db.py]] — importa `ontology_available`
 - [[research.committee.py]] — importa `committee`, `mark_executed`, `memo_allows_order`

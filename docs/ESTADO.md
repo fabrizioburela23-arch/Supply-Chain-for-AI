@@ -9,6 +9,40 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-13 (c) — INFRAESTRUCTURA OPERATIVA, PASOS 7, 9, 10 y 13 (ancla, gobernanza, puertas SHACL en sombra, un kernel en el cliente) — sw v260
+
+- Paso 7: ancla diaria del libro (`ledger_anchors`, `/api/ledger/anchor` público, artefacto diario de GitHub Actions);
+  ruptura de la cadena → decisión `ledger.chain_break` y SOLO el dinero real queda bloqueado hasta un reconocimiento
+  con PIN (`/api/ledger/chain_ack`); papel nunca se bloquea. Base restaurada → `ledger.lineage_break` (no bloquea).
+- Paso 9: 11 artefactos de gobernanza 1.0.0 con los valores de hoy (kernel, NRS, riesgo del broker, comité, guardián,
+  auto-aplicación, Jev, puertas, tipos del libro, esquema y formas). El código lee sus números de `core/governance`.
+  Paridad: 0 diferencias (969 choques, NRS de todos los nodos, comité, riesgo, tolerancias). Primer arranque con base
+  = release 1.0.0 SIN ratificar ("db-unratified") → Fabrizio lo ratifica con PIN (POST /api/governance/ratify; botón en
+  la UI llega con el paso 24-25). Las variables numéricas viejas (FRAGILITY_CAP, IMPORT_BULK_WEIGHT_FACTOR,
+  DECIDE_MIN_CONF, DECIDE_WAIT_S, COMMITTEE_MEMO_TTL_HOURS) ya no cambian números (D2): el 🩺 avisa si siguen puestas.
+- Paso 10: 31 reglas SHACL (TTL) compiladas a validadores de 61-117 µs (p95); en SOMBRA: nada se rechaza, todo queda en
+  `decision_violations` con explicación ES/EN. Conformidad con pySHACL: 0 diferencias en 7.500 casos aleatorios + 36
+  casos de un solo defecto. Lo que ya avisa en el catálogo real (insumo del paso 11): 1.557 vínculos de flujo con
+  confianza alta sin fuente de confianza, 85 hechos fechados sin fuente, 58 relaciones fuera del vocabulario (alberga,
+  invierte, energiza, compite…), 38 etiquetas "usa/uses", 26 flujos inversos vivos, 12 márgenes fuera de [-1, 1]. Los
+  58 + 12 son ERRORES reales del catálogo → lista de revisión para Fabrizio (bloque 5).
+- Paso 13: el navegador ya no tiene motor de contagio propio; todas las pantallas leen /api/hot/* (engine/hotclient.js)
+  → el mismo número en el mapa, X-Ray, Cabina, simulación en vivo, voz, insights, brief, segundo cerebro y Grafo
+  Temporal (TSMC: 318 empresas golpeadas ≥1 %, antes cada pantalla daba otro). Los "ganadores" ahora son rivales poco
+  golpeados con su % de daño real (antes un "+%" inventado). El auge de demanda no muestra cifras hasta que el kernel
+  propague hacia arriba (paso 12, PROP-17).
+- Revisión (3 lentes): 14 hallazgos, 13 arreglados con prueba (un cambio de release no reconstruía las vistas; G2 marcaba
+  toda auto-aplicación segura; semver evitable con 'initial'; >20 sellos reconocidos ocultaban manipulaciones nuevas;
+  borrar sellos y re-sellar no chocaba con el ancla; StressAI decía "0 afectadas" mientras esperaba; la voz prometía
+  "quién gana" con %; el Grafo Temporal tenía su propio motor; el mapa pintaba como colapsada toda empresa ≥1 %; el
+  sello de antigüedad se congelaba; sin tope de tiempo en hotclient). 1 diferido: el texto "trust ≥ 2" de una forma va
+  en la próxima versión de ontology.shapes (una prueba avisa si la política cambia).
+- Simulación de la actualización de producción (base creada con el código publicado 0db0279 → código nuevo): arranque
+  0,9 s, 11 artefactos + 1 release + 2 decisiones de gobernanza, verify 4.177 sellos OK antes y después, ancla creada,
+  `money_gate` = permitido, linaje OK, acción y auto-vínculo (aviso en sombra) OK, segundo arranque idempotente.
+
+---
+
 # SESIÓN 2026-10-13 (b) — INFRAESTRUCTURA OPERATIVA, PASOS 5, 6 y 8 (identidad, libro de decisiones, un solo grafo) — sw v258
 
 - Paso 5: el PIN identifica a `op:fabrizio`; el nombre tecleado es solo etiqueta; canal por cabecera; MCP/agentes/reloj

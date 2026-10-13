@@ -57,14 +57,17 @@ from ontology import vocabulary as vocab
 
 log = logging.getLogger('khipu')
 
-DAMPING = 0.6
-MAX_HOPS = 6
-THRESHOLD = 0.01
-# Relaciones que hacen a alguien PROVEEDOR (concentración / países): ni propiedad ni despliegue
-SUPPLIER_RELS = ('supply', 'fab', 'cloud', 'license', 'ppa')
+# INFRA_OPERATIVA paso 9: los números del tensor salen de `kernel.params` (el MISMO kernel que matrix/engine):
+#   DAMPING, MAX_HOPS, THRESHOLD — propagación de daño (= propagate);
+#   SUPPLIER_RELS — relaciones que hacen a alguien PROVEEDOR (concentración / países): ni propiedad ni despliegue;
+#   W_PEERS, W_CAT — mezcla pares/categoría de suggest_links; N_PEERS — pares (medido con evaluate(), 3 semillas:
+#   4→0.31 · 8→0.41 · 15→0.44 · 30→0.43).
+from core import governance as _gov  # noqa: E402
+DAMPING, MAX_HOPS, THRESHOLD, SUPPLIER_RELS, W_PEERS, W_CAT, N_PEERS = _gov.bind(globals(), 'kernel.params', {
+    'DAMPING': 'damping', 'MAX_HOPS': 'max_hops', 'THRESHOLD': 'threshold',
+    'SUPPLIER_RELS': ('supplier_rels', tuple), 'W_PEERS': 'tensor_w_peers', 'W_CAT': 'tensor_w_cat',
+    'N_PEERS': 'tensor_n_peers'})
 FEATURES = ('log_cap', 'n_suppliers', 'n_customers', 'supplier_hhi', 'log_down_cap', 'up_exposure')
-W_PEERS, W_CAT = 0.7, 0.3
-N_PEERS = 15             # medido con evaluate() (3 semillas): 4→0.31 · 8→0.41 · 15→0.44 · 30→0.43
 
 _LOCK = threading.Lock()
 _MODEL = {'m': None, 'key': None}

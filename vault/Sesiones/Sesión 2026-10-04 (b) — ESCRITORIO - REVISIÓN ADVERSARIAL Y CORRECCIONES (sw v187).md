@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L963"
+ruta: "docs/ESTADO.md#L997"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (b) — ESCRITORIO: REVISIÓN ADVERSARIAL Y CORRECCIONES (sw v187)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 963 (31 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 997 (31 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

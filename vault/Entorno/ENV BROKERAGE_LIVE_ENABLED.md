@@ -17,6 +17,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_brokerage.py]]
+- [[tests.test_ledger_anchor.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_phase3.py]]
 

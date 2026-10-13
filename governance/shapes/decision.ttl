@@ -1,0 +1,57 @@
+# governance/shapes/decision.ttl — meta-puerta G8 del libro de decisiones (core/decisions.record).
+# Foco (core/gates/focus.decision_triples): `a kh:Decision` con kh:kind, kh:status, kh:principalKind,
+# kh:releaseHash, kh:verdict (veredicto combinado de las puertas) y cada cotización del manifiesto como nodo
+# kh:Quote (kh:ticker, kh:asOf, kh:src).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:DecisionShape a sh:NodeShape ;
+  sh:targetClass kh:Decision ;
+  sh:name "Decisión del libro" ;
+  sh:property khs:DecisionKindInVocab, khs:DecisionPrincipalTyped .
+
+khs:DecisionPrincipalTyped a sh:PropertyShape ;
+  sh:path kh:principalKind ; sh:minCount 1 ; sh:maxCount 1 ;
+  sh:in ( "human" "agent" "system" "external_ai" ) ;
+  sh:name "principal tipado" ; khs:rule khr:decision.principal_typed ; sh:severity sh:Violation ;
+  sh:message "La decisión no tiene un principal tipado ({value})."@es ,
+             "The decision has no typed principal ({value})."@en .
+
+khs:DecisionReleasePresentShape a sh:NodeShape ;
+  sh:targetClass kh:Decision ; sh:severity sh:Violation ; khs:rule khr:decision.release_present ;
+  sh:name "con release de gobernanza" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "decision.release_present@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "La decisión no anota qué release de reglas regía (no se podría repetir)."@es ,
+               "The decision does not record which rules release was in force (it could not be replayed)."@en ;
+    sh:select """SELECT $this WHERE {
+        $this a kh:Decision .
+        FILTER NOT EXISTS {
+          $this kh:releaseHash ?h .
+          FILTER (STRLEN(STR(?h)) = 64 && ?h != "0000000000000000000000000000000000000000000000000000000000000000")
+        }
+      }""" ] .
+
+khs:DecisionQuotesHaveAsofSrcShape a sh:NodeShape ;
+  sh:targetClass kh:Decision ; sh:severity sh:Violation ; khs:rule khr:decision.quotes_have_asof_src ;
+  sh:name "cotizaciones con fecha y fuente" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "decision.quotes_have_asof_src@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Una cotización usada ({value}) no dice de cuándo ni de dónde es."@es ,
+               "A quote used ({value}) does not say when or where it is from."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:quote ?q . ?q kh:ticker ?value .
+        FILTER NOT EXISTS { ?q kh:asOf ?a ; kh:src ?s }
+      }""" ] .
+
+khs:DecisionMoneyExecutedNotBlockedShape a sh:NodeShape ;
+  sh:targetClass kh:Decision ; sh:severity sh:Violation ; khs:rule khr:decision.money_executed_not_blocked ;
+  sh:name "dinero ejecutado sin bloqueo" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "decision.money_executed_not_blocked@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Una orden ({value}) quedó ejecutada aunque una puerta la bloqueaba."@es ,
+               "An order ({value}) was executed although a gate blocked it."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:kind ?value ; kh:status "executed" ; kh:verdict "block" .
+        FILTER (STRSTARTS(?value, "order."))
+      }""" ] .

@@ -59,25 +59,29 @@ DISCLAIMER_EN = ('Proposal from an AUTOMATED committee of AI agents: requires hu
                  'It is not personalized financial advice or an individual recommendation; it can be wrong. '
                  'Investing involves risk of loss.')
 
-# peso de cada horizonte en la convicción global (INTRADAY no mueve decisiones de inversión)
-HZ_WEIGHTS = {'INTRADAY': 0.0, 'SHORT_TERM': 0.20, 'MEDIUM_TERM': 0.35, 'LONG_TERM': 0.35, 'STRUCTURAL': 0.10}
 HZ_ORDER = ('SHORT_TERM', 'MEDIUM_TERM', 'LONG_TERM', 'STRUCTURAL', 'INTRADAY')
-W0 = 1.0                 # "peso de la duda": con poca evidencia la convicción se acerca a 0
-PRIOR_REL = 0.5          # fiabilidad neutral (sin historial) → multiplicador ×1
-CONTRA_PENALTY = 0.5     # hasta −50 % si TODA la evidencia del horizonte está en contradicción
-BUY_T, TRIM_T, SELL_T = 35.0, -20.0, -50.0
-OVERWEIGHT = 1.25        # posición > 125 % del objetivo → recortar (riesgo)
-UNDERWEIGHT = 0.8        # posición < 80 % del objetivo y convicción alta → aumentar
-MIN_CLAIMS = 2
-# C6/C7 (misión de reparación 2026-10-04): mientras un analista no tenga ≥ MIN_N
-# calificaciones finales, el memo dice "no validado" y el tamaño se reduce a la
-# mitad; sin quórum (fundamental + 3 de 4) el comité NO delibera: DATOS INSUFICIENTES.
-UNVALIDATED_FACTOR = 0.5
-REQUIRED_AGENTS = ('fundamental',)
-QUORUM_POOL = ('fundamental', 'news', 'technical', 'supply_chain')
-MIN_AGENTS = 3
-DEFAULT_MANDATE = {'risk_budget_pct': 2.0, 'max_position_pct': 10.0, 'min_vol_pct': 10.0}
-REVIEW_DAYS = {'INTRADAY': 7, 'SHORT_TERM': 30, 'MEDIUM_TERM': 90, 'LONG_TERM': 120, 'STRUCTURAL': 180}
+# INFRA_OPERATIVA paso 9: los umbrales y pesos del comité son POLÍTICA aprobada → artefacto `policy.committee` del
+# release vigente (governance/artifacts/policy.committee@<semver>.json). Ninguno se declara aquí:
+#   HZ_WEIGHTS          — peso de cada horizonte en la convicción global (INTRADAY no mueve decisiones);
+#   W0                  — "peso de la duda": con poca evidencia la convicción se acerca a 0;
+#   PRIOR_REL           — fiabilidad neutral (sin historial) → multiplicador ×1;
+#   CONTRA_PENALTY      — hasta −50 % si TODA la evidencia del horizonte está en contradicción;
+#   BUY_T, TRIM_T, SELL_T — umbrales de decisión; OVERWEIGHT / UNDERWEIGHT — recortar / aumentar vs. el objetivo;
+#   MIN_CLAIMS; C6/C7 (misión de reparación 2026-10-04): mientras un analista no tenga ≥ MIN_N calificaciones
+#   finales el memo dice "no validado" y el tamaño se multiplica por UNVALIDATED_FACTOR; sin quórum
+#   (REQUIRED_AGENTS + MIN_AGENTS de QUORUM_POOL) el comité NO delibera: DATOS INSUFICIENTES;
+#   DEFAULT_MANDATE, REVIEW_DAYS (revisión por horizonte).
+from core import governance as _gov  # noqa: E402
+(
+    HZ_WEIGHTS, W0, PRIOR_REL, CONTRA_PENALTY, BUY_T, TRIM_T, SELL_T, OVERWEIGHT, UNDERWEIGHT, MIN_CLAIMS,
+    UNVALIDATED_FACTOR, REQUIRED_AGENTS, QUORUM_POOL, MIN_AGENTS, DEFAULT_MANDATE, REVIEW_DAYS,
+) = _gov.bind(globals(), 'policy.committee', {
+    'HZ_WEIGHTS': 'hz_weights', 'W0': 'w0', 'PRIOR_REL': 'prior_rel', 'CONTRA_PENALTY': 'contra_penalty',
+    'BUY_T': 'buy_threshold', 'TRIM_T': 'trim_threshold', 'SELL_T': 'sell_threshold',
+    'OVERWEIGHT': 'overweight', 'UNDERWEIGHT': 'underweight', 'MIN_CLAIMS': 'min_claims',
+    'UNVALIDATED_FACTOR': 'unvalidated_factor', 'REQUIRED_AGENTS': ('required_agents', tuple),
+    'QUORUM_POOL': ('quorum_pool', tuple), 'MIN_AGENTS': 'min_agents', 'DEFAULT_MANDATE': 'default_mandate',
+    'REVIEW_DAYS': 'review_days'})
 ACTIONABLE = {'BUY': 'buy', 'ADD': 'buy', 'TRIM': 'sell', 'SELL': 'sell'}
 SIGN = {'positive': 1, 'negative': -1, 'neutral': 0, 'mixed': 0}
 DECISION_LABEL = {
@@ -138,10 +142,9 @@ def _now():
 
 
 def _ttl_hours():
-    try:
-        return max(1.0, float(os.getenv('COMMITTEE_MEMO_TTL_HOURS', '72')))
-    except (TypeError, ValueError):
-        return 72.0
+    """Vigencia de un memo (`policy.committee.memo_ttl_hours`; 1.0.0: 72 h). La variable COMMITTEE_MEMO_TTL_HOURS
+    ya NO fija el número (D2): si contradice al artefacto, el 🩺 avisa."""
+    return max(1.0, float(_gov.param('policy.committee', 'memo_ttl_hours')))
 
 
 # ════════════════════════════════════════════════════════════════════════════

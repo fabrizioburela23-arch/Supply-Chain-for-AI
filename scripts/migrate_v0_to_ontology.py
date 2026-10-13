@@ -434,7 +434,9 @@ def _migrate_graph(nodes, links, ontology_objects, temporal_facts, init_schema, 
 # real. Viven en 1.0 y su nivel de crisis queda en `severity_crisis`, que es
 # lo que disparan /api/matrix/factor/fire (what-if) y la Acción ActivarFactor
 # (persistente). OJO con la escala: el documento usa 0-10, no 0-5.
-FACTOR_LATENT_SEVERITY = 1.0
+# Paso 9: el número vive en el artefacto `kernel.params.factor_latent_severity` (core/governance).
+from core import governance as _gov  # noqa: E402
+FACTOR_LATENT_SEVERITY = _gov.param('kernel.params', 'factor_latent_severity')
 
 
 def _restore_factors_and_seats(s, known_ids, log=print):

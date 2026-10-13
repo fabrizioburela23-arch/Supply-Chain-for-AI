@@ -2,14 +2,14 @@
    engine/brief.js — BRIEF MATINAL (te recibe con la inteligencia del día)
    Al abrir la app (una vez al día, descartable), un overlay NEXUS resume:
    el mayor chokepoint, la empresa de mayor riesgo, factores externos activos
-   y una oportunidad. Reutiliza el motor de matrices (o topología cliente) y,
+   y una oportunidad. Reutiliza el motor único del servidor y,
    opcional, una línea narrada por IA (gasto moderado). No molesta: 1×/día,
    fácil de cerrar, y un botón ❓ para reabrirlo.
    KHIPUS OS (2026-10-06): NO se abre solo encima de Khipus OS (la app arranca en el
    OS salvo "Vista clásica"); queda a pedido (window._briefOpen, paleta ⌘K). Así el
-   arranque no gasta CPU (cadena de caída de 949 empresas) ni una llamada de IA que
-   compite con la primera pregunta del usuario. Al abrirse: primero el motor de
-   matrices; el cálculo local solo si el servidor no lo tiene, y en porciones.
+   arranque no gasta una llamada de IA que compite con la primera pregunta del
+   usuario. El cuello de botella sale SOLO del motor único del servidor
+   (/api/hot/chokepoints, paso 13 INFRA_OPERATIVA): sin él se dice, no se calcula aquí.
    ============================================================================ */
 (function () {
   'use strict';
@@ -149,27 +149,6 @@
     setTimeout(function () { if (window.jumpTo) window.jumpTo(id); }, 100);
   };
 
-  // ── el mayor punto único de fallo, calculado EN TU NAVEGADOR (respaldo sin servidor) ──
-  // computeDownstream recorre todos los vínculos por cada empresa (~949 × 2.500): va en porciones
-  // de ~12 ms para no congelar la pantalla (antes era UNA tarea larga de ~0,3 s; >1 s en un móvil).
-  function clientChokepoint() {
-    return new Promise(function (resolve) {
-      var NODES = window.NODES || [];
-      if (typeof window.computeDownstream !== 'function' || !NODES.length) { resolve(null); return; }
-      var best = null, i = 0;
-      (function step() {
-        var t0 = Date.now();
-        for (; i < NODES.length && Date.now() - t0 < 12; i++) {
-          var a = 0;
-          try { var r = window.computeDownstream(NODES[i].id); a = (r instanceof Set ? r.size : (r || []).length); } catch (e) {}
-          if (!best || a > best.a) best = { id: NODES[i].id, a: a };
-        }
-        if (i < NODES.length) setTimeout(step, 0);
-        else resolve(best && best.a > 0 ? best : null);
-      })();
-    });
-  }
-
   // riesgo alto (cartera o universo) — NRS memoizado, barato
   function riskCard() {
     if (typeof window.computeNRS !== 'function') return null;
@@ -190,44 +169,39 @@
     try { return new Date().toLocaleTimeString(isEn() ? 'en' : 'es', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
   }
 
-  // ── construir las tarjetas: motor de matrices primero (servidor); si no está, el cálculo
-  //    local (en porciones). La pizarra del comité va EN PARALELO. → {cards, src} ──
+  // ── construir las tarjetas: el motor ÚNICO del servidor (/api/hot/chokepoints + /api/hot/factors vía
+  //    engine/hotclient.js, también sin DATABASE_URL con el catálogo). Sin él NO hay tarjeta de cuello de
+  //    botella (nunca otro número calculado en el navegador). La pizarra del comité va EN PARALELO. → {cards, src} ──
   function build() {
-    var metricsP = fetch('/api/matrix/metrics').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    var KH = window.KhipuHot;
+    var chokeP = KH ? KH.chokepoints({ by: 'sum', limit: 1 }) : Promise.resolve({ ok: false, error: L('Motor de impacto no disponible.', 'Impact engine unavailable.') });
+    var factP = KH ? KH.factors() : Promise.resolve({ ok: false });
     var boardP = conclusionsCard().catch(function () { return null; });
     var risk = null;
     try { risk = riskCard(); } catch (e) { risk = null; }
-    return metricsP.then(function (m) {
-      var top = m && m.chokepoints_top25 && m.chokepoints_top25[0];
-      var shockP = top
-        ? Promise.resolve({ kind: 'shock', node: top.id,
-            text: L('Chokepoint de la red (motor de matrices): <b>', 'Network chokepoint (matrix engine): <b>') + esc(nm(top.id)) +
-              L('</b> concentra el riesgo estructural — arrastra a <b>', '</b> concentrates the structural risk — it drags down <b>') +
-              esc(top.cascade_size) + L('</b> empresas.', '</b> companies.') })
-        : clientChokepoint().then(function (best) {
-            return best ? { kind: 'shock', node: best.id,
-              text: L('El mayor punto único de fallo hoy es <b>', "Today's biggest single point of failure is <b>") + esc(nm(best.id)) +
-                L('</b>: su caída arrastraría a <b>', '</b>: its fall would drag down <b>') + best.a + L(' empresas</b>.', ' companies</b>.') } : null;
-          });
-      return shockP.then(function (shock) {
-        var cards = [];
-        if (shock) cards.push(shock);
-        if (risk) cards.push(risk);
-        if (m && m.factors_active && m.factors_active.length) {
-          cards.push({ kind: 'factor',
-            text: '<b>' + m.factors_active.length + '</b> ' + L('factor(es) externo(s) modulando la red: ', 'external factor(s) shaping the network: ') +
-              esc(m.factors_active.slice(0, 2).join(', ')) + '.' });
-        }
-        // Fuente y hora SIEMPRE a la vista (ninguna cifra sin procedencia)
-        var src = top
-          ? L('Fuente: motor de matrices de Khipus (ontología)', 'Source: Khipus matrix engine (ontology)') +
-            (m.stale ? L(' · última lectura guardada', ' · last saved reading') : ' · ' + hhmm())
-          : L('Fuente: grafo de Khipus, calculado en tu navegador', 'Source: Khipus graph, computed in your browser') + ' · ' + hhmm();
-        return boardP.then(function (cc) {
-          cards = cards.slice(0, 4);
-          if (cc) cards.splice(1, 0, cc);
-          return { cards: cards.slice(0, 5), src: src };
-        });
+    return Promise.all([chokeP, factP]).then(function (res) {
+      var cpR = res[0], fR = res[1];
+      var top = cpR.ok && cpR.data && cpR.data.chokepoints && cpR.data.chokepoints[0];
+      var cards = [];
+      if (top) cards.push({ kind: 'shock', node: top.id,
+        text: L('Mayor cuello de botella de la red: <b>', 'Biggest chokepoint of the network: <b>') + esc(top.label || nm(top.id)) +
+          L('</b> — si cae, golpea a <b>', '</b> — if it falls it hits <b>') + esc(top.reach_1) + L('</b> empresas (≥1 %), <b>', '</b> companies (≥1%), <b>') +
+          esc(top.reach_10) + L('</b> de ellas fuerte (≥10 %).', '</b> of them hard (≥10%).') });
+      if (risk) cards.push(risk);
+      var f = (fR.ok && fR.data && fR.data.factors) || [];
+      if (f.length) {
+        cards.push({ kind: 'factor',
+          text: '<b>' + f.length + '</b> ' + L('factor(es) externo(s) modulando la red: ', 'external factor(s) shaping the network: ') +
+            esc(f.slice(0, 2).map(function (x) { return x.label || x.id; }).join(', ')) + '.' });
+      }
+      // Fuente, versión del grafo y hora SIEMPRE a la vista (ninguna cifra sin procedencia)
+      var src = top
+        ? L('Fuente: motor único de Khipus (servidor) · ', 'Source: Khipus single engine (server) · ') + KH.stamp(cpR.view)
+        : L('Cuello de botella no disponible: ', 'Chokepoint unavailable: ') + ((cpR && cpR.error) || '') + ' · ' + hhmm();
+      return boardP.then(function (cc) {
+        cards = cards.slice(0, 4);
+        if (cc) cards.splice(1, 0, cc);
+        return { cards: cards.slice(0, 5), src: src };
       });
     });
   }

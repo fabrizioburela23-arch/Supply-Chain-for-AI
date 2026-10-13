@@ -1,0 +1,43 @@
+# governance/shapes/object.ttl — puerta G1 sobre el ESTADO RESULTANTE de un objeto (ObjectCreated/Updated).
+# Foco (core/gates/focus.object_triples): `a kh:Object` con kh:type (y kh:prevType si ya existía), kh:margin,
+# kh:severity, kh:severityCrisis. Números como xsd:decimal; un valor no numérico queda como texto (y la regla lo ve).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:ObjectShape a sh:NodeShape ;
+  sh:targetClass kh:Object ;
+  sh:name "Objeto (estado resultante)" ;
+  sh:property khs:ObjectTypeInVocab, khs:ObjectMarginRange, khs:ObjectSeverityNumeric,
+              khs:ObjectSeverityCrisisNumeric .
+
+khs:ObjectMarginRange a sh:PropertyShape ;
+  sh:path kh:margin ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive -1 ; sh:maxInclusive 1 ;
+  sh:name "margen en [-1, 1]" ; khs:rule khr:object.margin_range ; sh:severity sh:Violation ;
+  sh:message "El margen {value} debe ser una fracción entre -1 y 1."@es ,
+             "The margin {value} must be a fraction between -1 and 1."@en .
+
+khs:ObjectSeverityNumeric a sh:PropertyShape ;
+  sh:path kh:severity ; sh:datatype xsd:decimal ;
+  sh:name "severidad numérica" ; khs:rule khr:object.numeric_props ; sh:severity sh:Violation ;
+  sh:message "La severidad «{value}» debe ser un número (el motor de matrices espera un número)."@es ,
+             "The severity \"{value}\" must be a number (the matrix engine expects a number)."@en .
+
+khs:ObjectSeverityCrisisNumeric a sh:PropertyShape ;
+  sh:path kh:severityCrisis ; sh:datatype xsd:decimal ;
+  sh:name "severidad de crisis numérica" ; khs:rule khr:object.numeric_props ; sh:severity sh:Violation ;
+  sh:message "La severidad de crisis «{value}» debe ser un número."@es ,
+             "The crisis severity \"{value}\" must be a number."@en .
+
+khs:ObjectTypeImmutableShape a sh:NodeShape ;
+  sh:targetClass kh:Object ; sh:severity sh:Violation ; khs:rule khr:object.type_immutable ;
+  sh:name "el tipo no cambia" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "object.type_immutable@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El tipo de un objeto no cambia (pasaría a {value}): crea otro objeto y fusiónalos."@es ,
+               "An object's type does not change (it would become {value}): create another object and merge."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:type ?value ; kh:prevType ?p .
+        FILTER (?p != ?value)
+      }""" ] .

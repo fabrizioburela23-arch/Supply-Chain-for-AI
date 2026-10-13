@@ -1,0 +1,27 @@
+# governance/shapes/vocab.generated.ttl — GENERADO por scripts/build_shapes.py --write. NO EDITAR A MANO.
+# Fuente: ontology/vocabulary.json (tipos de objeto y de relación) y core/decisions.KINDS (artefacto ledger.kinds).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:LinkRelInVocab a sh:PropertyShape ;
+  sh:path kh:relType ; sh:minCount 1 ; sh:maxCount 1 ;
+  sh:in ( "about" "affects" "cloud" "deploy" "evidenced_by" "fab" "invest" "justified_by" "license" "owns" "partner" "ppa" "published_by" "reports_on" "supply" ) ;
+  sh:name "relación del vocabulario" ; khs:rule khr:link.rel_in_vocab ; sh:severity sh:Violation ;
+  sh:message "La relación «{value}» no está en ontology/vocabulary.json."@es ,
+             "The relation \"{value}\" is not in ontology/vocabulary.json."@en .
+
+khs:ObjectTypeInVocab a sh:PropertyShape ;
+  sh:path kh:type ; sh:minCount 1 ; sh:maxCount 1 ;
+  sh:in ( "Annotation" "Company" "Country" "Decision" "Energy" "Factor" "Material" "NewsItem" "Org" "Policy" "PositionAdjustment" "Product" "Seat" "Simulation" "Source" "Supercycle" "Tech" "Thesis" ) ;
+  sh:name "tipo de objeto del vocabulario" ; khs:rule khr:object.type_in_vocab ; sh:severity sh:Warning ;
+  sh:message "El tipo «{value}» no está en ontology/vocabulary.json (se excluye del grafo en silencio)."@es ,
+             "The type \"{value}\" is not in ontology/vocabulary.json (it is silently left out of the graph)."@en .
+
+khs:DecisionKindInVocab a sh:PropertyShape ;
+  sh:path kh:kind ; sh:minCount 1 ; sh:maxCount 1 ;
+  sh:in ( "alert.fire" "alert.rule" "approval.deny" "approval.grant" "audit.gates" "audit.replay" "chat.answer" "chat.route" "claim.status" "committee.portfolio_advice" "committee.run" "governance.activate" "governance.propose" "governance.ratify" "governance.validate" "insight.snapshot" "ledger.chain_ack" "ledger.chain_break" "ledger.lineage_break" "mcp.tool_call" "ontology.action" "ontology.bulk_import" "ontology.news_ingest" "ontology.raw_event" "order.cancel" "order.confirm" "order.expire" "order.preview" "order.submit" "policy.change" "proposal.auto_apply" "proposal.create" "reconcile.apply" "reconcile.plan" "reconcile.rollback" "research.job" "research.run" "retention.purge" "simulation.save" "trade.agent_signal" "whatif.factor_fire" "whatif.shock" ) ;
+  sh:name "tipo de decisión del vocabulario" ; khs:rule khr:decision.kind_in_vocab ; sh:severity sh:Violation ;
+  sh:message "El tipo de decisión «{value}» no está en el vocabulario cerrado (ledger.kinds)."@es ,
+             "The decision kind \"{value}\" is not in the closed vocabulary (ledger.kinds)."@en .

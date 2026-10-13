@@ -84,7 +84,7 @@ def lag(g):
     else:
         lag_v = max(0, int(k.get('v') or 0) - g.graph_version)
     st = builder.state()
-    stale = bool(lag_v > 0 or (st.get('last_error_at') or 0) > g.built_ts)
+    stale = bool(lag_v > 0 or (st.get('last_error_at') or 0) > g.built_ts or not builder.release_current(g))
     return lag_v, stale
 
 

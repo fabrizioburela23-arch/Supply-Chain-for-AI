@@ -4,8 +4,8 @@
    - anatomía (sector, país, precio en vivo, fundamentales)
    - NRS descompuesto término a término (auditabilidad Palantir) + ranking
    - los HILOS entrantes/salientes con peso, clicables → saltan al mapa
-   - simulación de impacto INSTANTÁNEA (motor de estados client-side KhipuState,
-     ~7ms; el servidor /api/matrix/impact solo refina después si está)
+   - simulación de impacto con el motor ÚNICO del servidor (/api/hot/impact vía window.KhipuHot,
+     precalculado: una sola cifra, la misma que la Cabina, la voz y el mapa; paso 13 INFRA_OPERATIVA)
 
    Dos modos de render sobre el MISMO HTML (buildXRayHTML):
    - cajón lateral (#xray, 560px) — abre desde el mapa
@@ -466,11 +466,11 @@
     }, PRICE_MS);
   }
 
-  function renderVictims(root, id, n, impacts, note) {
-    var arr = Object.keys(impacts)
-      .filter(function (k) { return k !== id; })
-      .map(function (k) { return { id: k, v: impacts[k] }; })
-      .sort(function (a, b) { return b.v - a.v; });
+  // res = KhipuHot.simulate(...) — TODAS las cifras salen del kernel único del servidor (/api/hot/*)
+  function renderVictims(root, id, n, res) {
+    var arr = [];
+    res.impact.forEach(function (v, k) { if (k !== id && v > 0) arr.push({ id: k, v: v }); });
+    arr.sort(function (a, b) { return b.v - a.v; });
     var totalCap = 0, portHit = 0;
     var pos = (window.MKT && window.MKT.pos) || {};
     arr.forEach(function (x) {
@@ -490,57 +490,36 @@
         '<span class="vbar"><i style="width:' + Math.round(x.v) + '%"></i></span>' +
         '<span class="vp xr-mono">' + Math.round(x.v) + '%</span></div>';
     }).join('');
-    var winners = computeWinners(id, impacts);
-    var winHTML = winners.length ? '<div class="xr-h win" style="margin:14px 0 6px">' + L('Quién gana ↑', 'Who wins ↑') + '</div>' +
+    // rivales del mismo rubro poco golpeados (cifra = su golpe según el servidor; ningún % de ganancia inventado)
+    var winners = window.KhipuHot ? window.KhipuHot.rivals([id], res.impact, 4) : [];
+    var winHTML = winners.length ? '<div class="xr-h win" style="margin:14px 0 6px">' + L('Quién podría ganar ↑ (rivales poco golpeados)', 'Who could gain ↑ (barely hit rivals)') + '</div>' +
       winners.map(function (w) {
-        var node = window.NODE_BY_ID[w.id];
+        var node = window.NODE_BY_ID[w.id]; if (!node) return '';
         return '<div class="xr-victim win" role="button" tabindex="0" onclick="window._xrayJump(\'' + esc(w.id) + '\')">' +
           '<span class="xr-dot" style="background:' + sectorColor(node.cat) + '"></span>' +
           '<span class="vn">' + esc(node.label) + '</span>' +
-          '<span class="vbar"><i style="width:' + w.up * 2 + '%"></i></span>' +
-          '<span class="vp xr-mono">+' + w.up + '%</span></div>';
+          '<span class="vp xr-mono">' + L('golpe ', 'hit ') + Math.round(w.hit) + '%</span></div>';
       }).join('') : '';
     var el = root.querySelector('#xr-impact');
     if (!el) return;
+    var note = L('ⓘ motor único del servidor (mismo número en todas las pantallas) · ', 'ⓘ single server engine (same number on every screen) · ') +
+      (window.KhipuHot ? window.KhipuHot.stampHTML(res.view) : '') +
+      ' <span role="button" tabindex="0" onclick="window.explainMetric&&window.explainMetric(\'impact_sum\')" style="cursor:help;opacity:.75">?</span>';
     el.innerHTML =
       '<div class="impact-grid" style="margin-bottom:11px">' +
-        '<div class="icell hot"><b>' + arr.length + '</b><span>' + L('empresas', 'companies') + '</span></div>' +
+        '<div class="icell hot"><b>' + res.reach_1 + '</b><span>' + L('empresas (≥1 %)', 'companies (≥1%)') + '</span></div>' +
         '<div class="icell hot"><b>$' + (totalCap >= 1000 ? (totalCap / 1000).toFixed(1) + 'T' : Math.round(totalCap) + 'B') + '</b><span>' + L('cap expuesta', 'exposed cap') + '</span></div>' +
         '<div class="icell hot"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>' +
       '</div>' +
       '<div class="xr-h bad" style="margin:2px 0 6px">' + L('Quién sufre ↓', 'Who suffers ↓') + '</div>' + top + winHTML +
-      (note ? '<div class="xr-lin" style="margin-top:8px">' + note + '</div>' : '');
+      '<div class="xr-lin" style="margin-top:8px">' + note + '</div>';
   }
 
-  // rivales (misma categoría) poco afectados que capturan la demanda huérfana
-  function computeWinners(shockId, impacts) {
-    var dn = window.NODE_BY_ID[shockId]; if (!dn) return [];
-    var damaged = [];
-    Object.keys(impacts).forEach(function (k) { if (impacts[k] >= 40) damaged.push({ id: k, v: impacts[k] }); });
-    var gains = {};
-    damaged.forEach(function (d) {
-      var d0 = window.NODE_BY_ID[d.id]; if (!d0) return;
-      (window.NODES || []).forEach(function (n) {
-        if (n.id === d.id || n.cat !== d0.cat) return;
-        if ((impacts[n.id] || 0) > 15) return;
-        gains[n.id] = (gains[n.id] || 0) + d.v / 100;
-      });
-    });
-    return Object.keys(gains).map(function (id) { return { id: id, up: Math.min(45, Math.round(gains[id] * 14)) }; })
-      .filter(function (x) { return x.up >= 5; }).sort(function (a, b) { return b.up - a.up; }).slice(0, 4);
-  }
-
-  // impacto INSTANTÁNEO con el motor de estados client-side (KhipuState, ~7ms)
-  function impactViaState(id) {
-    if (!window.KhipuState || !window.KhipuState.simulate) return null;
-    try {
-      var shock = {}; shock[id] = { salud: 0 };
-      var r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: 'down', kind: 'collapse' });
-      if (!r || !r.impact) return null;
-      var obj = {}; obj[id] = 100;
-      r.impact.forEach(function (v, k) { if (k !== id && v > 0) obj[k] = v; });
-      return obj;
-    } catch (e) { return null; }
+  // UNA sola llamada al motor del servidor (antes: tres motores distintos —uno del navegador, el del servidor y una
+  // cascada binaria con un porcentaje FIJO inventado— daban tres números en la misma pantalla, PROP-04)
+  function impactOf(id) {
+    if (!window.KhipuHot) return Promise.resolve({ ok: false, error: L('Motor de impacto no disponible.', 'Impact engine unavailable.') });
+    return window.KhipuHot.simulate({ targets: [id], kind: 'collapse', severity: 100 });
   }
 
   function _usdB(v) { return v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + Math.round(v) + 'B'; }
@@ -582,42 +561,20 @@
   }
 
   function loadImpact(root, id, n) {
-    // 1) INSTANTÁNEO: motor de estados en el navegador (adiós "tarda mucho")
-    var instant = impactViaState(id);
-    var shown = !!(instant && Object.keys(instant).length > 1);
-    if (shown) renderVictims(root, id, n, instant, L('ⓘ motor de estados en vivo (instantáneo)', 'ⓘ live state engine (instant)'));
-    // Cierre SIEMPRE con un mensaje: antes, si nadie caía detrás (p.ej. la
-    // Reserva Federal, 0 vínculos de suministro) o el servidor respondía sin
-    // impactos, la sección se quedaba en "Calculando propagación…" para siempre.
-    function finish() {
-      if (shown) return;
+    impactOf(id).then(function (res) {
       var el = root.querySelector('#xr-impact');
-      if (typeof window.computeDownstream === 'function') {
-        try {
-          var affected = window.computeDownstream(id);
-          var list = affected instanceof Set ? Array.from(affected) : (affected || []);
-          if (list.length) {
-            var impacts = {}; impacts[id] = 100;
-            list.forEach(function (aid) { impacts[aid] = 55; });
-            renderVictims(root, id, n, impacts, L('ⓘ estimación local', 'ⓘ local estimate'));
-            return;
-          }
-        } catch (e) {}
+      if (!el) return;
+      if (!res || !res.ok) {
+        el.innerHTML = '<div class="xr-loading">' + esc((res && res.error) || L('No se pudo calcular el impacto.', 'Could not compute the impact.')) + '</div>';
+        return;
       }
-      if (el) el.innerHTML = '<div class="xr-loading">' + L(
+      if (res.reach_1 > 0) { renderVictims(root, id, n, res); return; }
+      // cierre SIEMPRE con un mensaje (antes se quedaba en "Calculando propagación…")
+      el.innerHTML = '<div class="xr-loading">' + L(
         'Su caída no arrastra a ninguna empresa por la cadena de suministro. Si es un actor macro (banco central, regulador), su efecto se simula con los factores sistémicos (FACTOR LIST).',
-        'Its failure does not drag any company down the supply chain. If it is a macro actor (central bank, regulator), its effect is simulated through systemic factors (FACTOR LIST).') + '</div>';
-    }
-    // 2) refinar en segundo plano con el motor de matrices del servidor (si está)
-    fetch('/api/matrix/impact', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ shock: [id] }),
-    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      if (d && d.impacts && Object.keys(d.impacts).length > 1) {
-        shown = true;
-        renderVictims(root, id, n, d.impacts, L('ⓘ motor de matrices (servidor · ponderado)', 'ⓘ matrix engine (server · weighted)'));
-      } else finish();
-    }).catch(finish);
+        'Its failure does not drag any company down the supply chain. If it is a macro actor (central bank, regulator), its effect is simulated through systemic factors (FACTOR LIST).') +
+        ' ' + (window.KhipuHot ? window.KhipuHot.stampHTML(res.view) : '') + '</div>';
+    });
   }
 
   // filas clicables (hilos, quién sufre/gana) con role="button": Enter/Espacio = clic (teclado).
@@ -703,8 +660,7 @@
   window.buildXRayHTML = buildXRayHTML;
   window.wireXRay = wire;
   window.xrayEnsureStyles = ensureStyles;
-  window.xrayImpactViaState = impactViaState;
-  window.xrayComputeWinners = computeWinners;
+  window.xrayImpact = impactOf;
 
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
 })();

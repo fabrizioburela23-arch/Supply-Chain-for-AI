@@ -3632,8 +3632,12 @@ function _refreshStylesCore(){
     return;
   }
   if(stressId){
-    nodeSel.classed('node-collapsed', d=>stressAffected.has(d.id))
-      .style('opacity', d=> d.id===stressId?1 : stressAffected.has(d.id)? .1 : .92);
+    /* gris "colapsada" SOLO para las muy golpeadas (≥ STRESS_DEAD_PCT); las demás afectadas se atenúan según su %
+       (antes una empresa al 1 % se veía igual de muerta que Nvidia al 100 %) */
+    const sp=id=>stressPct.get(id)||0;
+    nodeSel.classed('node-collapsed', d=>d.id!==stressId && sp(d.id)>=STRESS_DEAD_PCT)
+      .style('opacity', d=> d.id===stressId?1 : sp(d.id)>=STRESS_DEAD_PCT? .1
+        : stressAffected.has(d.id)? Math.max(.3, .92-sp(d.id)/STRESS_DEAD_PCT*.6) : .92);
     nodeSel.select('.n-core').classed('failed', d=>d.id===stressId);
     nodeSel.select('.n-ring').classed('failed-ring', d=>d.id===stressId);
     linkSel
@@ -3696,73 +3700,52 @@ function deselect(){
 }
 
 /* ===================== Stress-Test (Simulador de Colapso) ===================== */
-/* v7.1 · Modelo de propagación realista (antes: cualquier proveedor que caía mataba
-   a TODOS sus clientes en cadena, por cualquier tipo de vínculo → todo colapsaba).
-   Ahora:
-   - Solo cascada por vínculos de DEPENDENCIA de suministro: supply, fab, license, cloud.
-     Se excluyen invest, deploy y partner (este último incluye competencia, no dependencia).
-   - Una empresa colapsa solo si pierde ≥ COLLAPSE_THRESHOLD del peso de sus dependencias
-     entrantes (modela redundancia de proveedores), o si pierde un proveedor único crítico
-     (fab/supply de peso ≥ CRITICAL_WEIGHT, p. ej. su única foundry).
-   Esto evita que un nodo profundo (Toto, Ajinomoto…) colapse media cadena, y revela los
-   verdaderos cuellos de botella (Zeiss→ASML→TSMC). */
-const DEP_TYPES = new Set(['supply','fab','license','cloud']);
-const COLLAPSE_THRESHOLD = 0.5;
-const CRITICAL_WEIGHT = 5;
+/* Paso 13 INFRA_OPERATIVA (2026-10-13): el banner de colapso usa el motor ÚNICO del servidor
+   (/api/hot/impact vía engine/hotclient.js, window.KhipuHot) — el MISMO número que el X-Ray, la Cabina,
+   la voz y los Insights. Aquí había una cascada binaria propia (umbral 50 % / peso crítico 5) que daba
+   otra cifra (PROP-03): se borró. Afectadas = las que reciben ≥1 % del golpe (reach_1 del servidor). */
+let stressSeq=0, stressRes=null, stressPct=new Map();
+const STRESS_DEAD_PCT=40;   /* % del golpe desde el que el mapa pinta la empresa como colapsada */
 
-function depInWeight(){
-  const tot={};
-  for(const l of LINKS){ if(!DEP_TYPES.has(l.type)) continue; const t=lid(l.target); tot[t]=(tot[t]||0)+l.w; }
-  return tot;
-}
-
-function computeDownstream(id){
-  const totalIn = depInWeight();
-  const failed = new Set([id]);
-  let changed = true;
-  while(changed){
-    changed = false;
-    const lost={}, crit={};
-    for(const l of LINKS){
-      if(!DEP_TYPES.has(l.type)) continue;
-      const s=lid(l.source), t=lid(l.target);
-      if(failed.has(s) && !failed.has(t)){
-        lost[t]=(lost[t]||0)+l.w;
-        if(l.w>=CRITICAL_WEIGHT && (l.type==='fab'||l.type==='supply')) crit[t]=true;
-      }
-    }
-    for(const tid in lost){
-      if(failed.has(tid)) continue;
-      if(crit[tid] || lost[tid]/(totalIn[tid]||1) >= COLLAPSE_THRESHOLD){ failed.add(tid); changed=true; }
-    }
-  }
-  failed.delete(id);
-  return failed;
-}
-
-/* Texto del banner — distingue el caso resiliente (0 dependientes) */
+/* Texto del banner — distingue el caso resiliente (0 afectadas) y dice de qué versión del grafo sale */
 function stressText(d){
-  const c=stressAffected.size;
-  if(c===0) return t('st_msg_safe').replace('{n}',`<b>${esc(d.label)}</b>`);
-  const pct=Math.round(c/(NODES.length-1)*100);
-  return t('st_msg').replace('{n}',`<b>${esc(d.label)}</b>`).replace('{c}',`<b>${c}</b>`).replace('{p}',pct);
+  const r=stressRes;
+  if(!r) return t('st_wait').replace('{n}',`<b>${esc(d.label)}</b>`);
+  if(!r.ok) return t('st_err').replace('{n}',`<b>${esc(d.label)}</b>`).replace('{e}',esc(r.error||''));
+  const stamp=(window.KhipuHot&&window.KhipuHot.stampHTML)?' '+window.KhipuHot.stampHTML(r.view):'';
+  const c=r.reach_1;
+  if(c===0) return t('st_msg_safe').replace('{n}',`<b>${esc(d.label)}</b>`)+stamp;
+  const pct=Math.round(c/Math.max(1,NODES.length-1)*100);
+  return t('st_msg').replace('{n}',`<b>${esc(d.label)}</b>`).replace('{c}',`<b>${c}</b>`).replace('{p}',pct)+stamp;
 }
 
 function activateStress(id){
   const d=NODE_BY_ID[id]; if(!d) return;
   stressId=id;
   selected=id; window._selectedNode=id;
-  stressAffected=computeDownstream(id);
+  stressAffected=new Set(); stressRes=null; stressPct=new Map();
+  const seq=++stressSeq;
   nodeSel.select('.n-core').attr('r',n=>n.id===id?computeNodeRadius(n.id)+3:computeNodeRadius(n.id));
   document.getElementById('stress-text').innerHTML=stressText(d);
   document.getElementById('stress-banner').classList.add('show');
   refreshStyles();
   renderDetail(id);
   if(typeof onStressMobile==='function') onStressMobile();
+  const p=window.KhipuHot?window.KhipuHot.simulate({targets:[id],kind:'collapse',severity:100})
+    :Promise.resolve({ok:false,error:LANG==='en'?'Impact engine unavailable.':'Motor de impacto no disponible.'});
+  return p.then(r=>{
+    if(seq!==stressSeq||stressId!==id) return r;   /* llegó tarde: ya se simula otra empresa */
+    stressRes=r;
+    stressAffected=new Set(r.ok?r.victims.filter(v=>v.pct>=1).map(v=>v.id):[]);
+    stressPct=new Map(r.ok?r.victims.filter(v=>v.pct>=1).map(v=>[v.id,v.pct]):[]);
+    document.getElementById('stress-text').innerHTML=stressText(d);
+    refreshStyles();
+    return r;
+  });
 }
 
 function clearStress(){
-  stressId=null; stressAffected=new Set();
+  stressId=null; stressAffected=new Set(); stressRes=null; stressPct=new Map(); stressSeq++;
   document.getElementById('stress-banner').classList.remove('show');
   refreshStyles();
   if(selected) renderDetail(selected);
@@ -4629,8 +4612,10 @@ es: {
   search_ph:'Buscar empresa o ticker…',
   hint:'<span>Clic → detalle</span><span>·</span><span><b>Alt+Clic → simular colapso</b></span><span>·</span><span>Scroll → zoom</span>',
   mhint:'👆 Toca una empresa para ver su detalle', mtb_head:'Buscar y filtrar',
-  st_msg:'Colapso simulado: {n} — {c} empresas dependientes aguas abajo ({p}% de la cadena)',
-  st_msg_safe:'Colapso simulado: {n} — la cadena lo absorbe: sin dependientes críticos aguas abajo (sus clientes tienen proveedores alternativos)',
+  st_msg:'Colapso simulado: {n} — {c} empresas afectadas aguas abajo (≥1 % del golpe; {p}% de la cadena)',
+  st_msg_safe:'Colapso simulado: {n} — la cadena lo absorbe: ninguna empresa recibe ≥1 % del golpe',
+  st_wait:'Colapso simulado: {n} — calculando con el motor del servidor…',
+  st_err:'Colapso simulado: {n} — {e}',
   st_restore:'⟲ Restaurar cadena',
   lg_stages:'Etapas de la cadena', lg_countries:'Países',
   pf_both:'Cartera 1 + Cartera 2', pf_c1:'Cartera 1 (corto plazo)', pf_c2:'Cartera 2 (mediano plazo)',
@@ -4698,8 +4683,10 @@ en: {
   search_ph:'Search company or ticker…',
   hint:'<span>Click → details</span><span>·</span><span><b>Alt+Click → simulate collapse</b></span><span>·</span><span>Scroll → zoom</span>',
   mhint:'👆 Tap a company to see its details', mtb_head:'Search & filter',
-  st_msg:'Simulated collapse: {n} — {c} dependent companies downstream ({p}% of the chain)',
-  st_msg_safe:'Simulated collapse: {n} — the chain absorbs it: no critical downstream dependents (its customers have alternative suppliers)',
+  st_msg:'Simulated collapse: {n} — {c} companies affected downstream (≥1% of the hit; {p}% of the chain)',
+  st_msg_safe:'Simulated collapse: {n} — the chain absorbs it: no company receives ≥1% of the hit',
+  st_wait:'Simulated collapse: {n} — computing with the server engine…',
+  st_err:'Simulated collapse: {n} — {e}',
   st_restore:'⟲ Restore chain',
   lg_stages:'Chain stages', lg_countries:'Countries',
   pf_both:'Portfolio 1 + Portfolio 2', pf_c1:'Portfolio 1 (short term)', pf_c2:'Portfolio 2 (medium term)',
@@ -7119,22 +7106,34 @@ const V8earnings = {
 /* ════════════════ §J · ANÁLISIS DE IMPACTO IA TRAS STRESS-TEST (Feature 9) ════════════════ */
 const _activateStress = activateStress;
 activateStress = function(id){
-  _activateStress(id);
+  const p=_activateStress(id);
   try{
     const bar=$('stress-banner'); if(bar && !$('stress-ai-btn') && Keys.has('claude')){
       const btn=document.createElement('button'); btn.id='stress-ai-btn'; btn.textContent=t('stress_ai');
-      btn.onclick=()=>StressAI.run(id); bar.appendChild(btn);
+      btn.onclick=()=>StressAI.run(stressId); bar.appendChild(btn);   /* la empresa simulada AHORA (el botón se reusa) */
     }
   }catch(e){}
+  return p;
 };
 const StressAI = {
   async run(id){
+    const d=NODE_BY_ID[id]; if(!d) return;
+    /* Sin el resultado del motor del servidor (todavía calculando, sin conexión, 503/429…) NO se llama a la IA:
+       antes el prompt decía "afectadas (0): ninguna" y la IA escribía un análisis tranquilizador inventado. */
+    const r=stressRes;
+    if(!(r && r.ok && stressId===id)){
+      const msg = !r ? (LANG==='en'?'The server engine is still computing this collapse; try again in a moment.'
+                                   :'El motor del servidor todavía está calculando este colapso; prueba en un momento.')
+                     : (LANG==='en'?'There is no engine result to analyze: ':'No hay resultado del motor para analizar: ')+(r.error||'');
+      showAIFloat(`<div class="ai-card-body"><div class="ai-err">${esc(msg)}</div></div>`);
+      return;
+    }
     const btn=$('stress-ai-btn'); if(btn){ btn.disabled=true; btn.textContent=t('stress_ai_loading'); }
-    const d=NODE_BY_ID[id];
-    const aff=[...stressAffected].slice(0,40).map(x=>{ const n=NODE_BY_ID[x]; return n?(n.label+' ('+catLabel(n.cat)+')'):x; }).join(', ');
-    const posAff=[...stressAffected].filter(x=>MKT.pos[x]).map(x=>NODE_BY_ID[x]?NODE_BY_ID[x].label:x);
+    const vic=(r.victims||[]).filter(v=>v.pct>=1).sort((a,b)=>b.pct-a.pct);
+    const aff=vic.slice(0,40).map(v=>{ const n=NODE_BY_ID[v.id]; return (n?(n.label+' ('+catLabel(n.cat)+')'):v.id)+' '+Math.round(v.pct)+'%'; }).join(', ');
+    const posAff=vic.filter(v=>MKT.pos[v.id]).map(v=>(NODE_BY_ID[v.id]?NODE_BY_ID[v.id].label:v.id)+' '+Math.round(v.pct)+'%');
     const prompt=`El usuario simuló el colapso de ${d.label} en la cadena de valor global de semiconductores e IA.
-Empresas afectadas aguas abajo (${stressAffected.size}): ${aff||'ninguna'}.
+Empresas afectadas aguas abajo según el motor de impacto del servidor (${vic.length}; % = parte del golpe que recibe cada una): ${aff||'ninguna'}.
 ${posAff.length?('El inversor tiene posiciones en: '+posAff.join(', ')+'.'):'El inversor no tiene posiciones afectadas.'}
 ¿Qué significaría este colapso para: (1) la cadena de producción de chips (impacto en meses), (2) las empresas de IA más perjudicadas, (3) el portafolio del inversor? Responde en ${LANG==='en'?'English':'español'}, máximo 200 palabras, lenguaje de inversor, no técnico.`;
     try{
@@ -7818,6 +7817,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <!-- Khipu Finance Engine -->
 <script src="engine/loading.js"></script>
 <script src="engine/toast.js"></script>
+<script src="engine/hotclient.js"></script>
 <script src="engine/agents_registry.js"></script>
 <script src="engine/tour_script.js"></script>
 <script src="engine/mascot.js"></script>
@@ -8720,20 +8720,32 @@ function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, 
   // unidad: 'pct' = % de valor estimado por los agentes; 'sev' = severidad
   // 0-100 del motor estructural (sin IA, misma matemática que el servidor)
   let unit = 'pct';
-  if (!Object.keys(finalImpacts).length && impactSource !== 'none') {
-    const fb = _wrFallbackCascade(rankedNodes, selectedEdges, finalCascade, reportText, presetId);
-    finalImpacts = fb.impacts;
-    finalCascade = fb.cascade;
+  const needStructural = !Object.keys(finalImpacts).length && impactSource !== 'none';
+  if (needStructural) {
+    // motor ÚNICO del servidor (/api/hot/scenario, factores activos): la sala de guerra ya no corre su
+    // propia propagación con otros parámetros (PROP-11). Se pinta cuando llega la respuesta.
     unit = 'sev';
     impactSource = impactSource || 'structural';
+    _wrFallbackCascade(rankedNodes, selectedEdges, finalCascade, reportText, presetId).then(fb => {
+      if (!document.getElementById('wr-canvas') || canvas !== document.getElementById('wr-canvas')) return;
+      const srcEl2 = document.getElementById('wr-src');
+      if (fb.error && srcEl2) srcEl2.textContent = ' ' + fb.error;
+      else if (srcEl2 && window.KhipuHot) srcEl2.textContent = srcEl2.textContent + ' ' + window.KhipuHot.stamp(fb.view);
+      _wrFinish(canvas, nodePos, selectedEdges, fb.cascade, fb.impacts, unit, priceTrajs, reportText, presetId, debate, scenarioTitle);
+    });
   }
   const srcEl = document.getElementById('wr-src');
   if (srcEl) srcEl.textContent = impactSource === 'none'
     ? WL(' Sin impactos: el escenario no nombra ninguna empresa.', ' No impacts: the scenario names no company.')
     : impactSource === 'agents'
     ? WL(' Impactos: agentes de IA (' + ((debate && debate.model) || 'IA') + '), cada uno con su razón.', ' Impacts: AI agents (' + ((debate && debate.model) || 'AI') + '), each with its rationale.')
-    : WL(' Impactos: motor estructural del grafo (sin IA) — severidad 0-100 del golpe, no % de precio.', ' Impacts: structural graph engine (no AI) — hit severity 0-100, not % price.');
+    : WL(' Impactos: motor único del servidor (sin IA, factores activos) — severidad 0-100 del golpe, no % de precio.', ' Impacts: single server engine (no AI, active factors) — hit severity 0-100, not % price.');
 
+  if (needStructural) return;   // _wrFinish lo hace cuando responde el servidor
+  _wrFinish(canvas, nodePos, selectedEdges, finalCascade, finalImpacts, unit, priceTrajs, reportText, presetId, debate, scenarioTitle);
+}
+
+function _wrFinish(canvas, nodePos, selectedEdges, finalCascade, finalImpacts, unit, priceTrajs, reportText, presetId, debate, scenarioTitle) {
   // Start animation
   _wrStartAnimation(canvas, nodePos, selectedEdges, finalCascade, finalImpacts, unit);
 
@@ -8792,12 +8804,11 @@ function _wrComputeLayout(W, H, nodes) {
   return nodePos;
 }
 
-// BFS cascade from seed nodes when the engine provides no impact data
+// Cascada ESTRUCTURAL cuando los agentes no dieron impactos → Promise<{impacts, cascade, view?, error?}>
 function _wrFallbackCascade(nodes, edges, initialCascade, reportText, presetId) {
-  // Motor ESTRUCTURAL determinista (sin IA, sin azar): los nodos semilla se
-  // "golpean" y el daño se propaga por el grafo con KhipuState — la MISMA
-  // matemática que matrix/engine.py. Resultado: severidad 0-100 por empresa.
-  // (Antes: impactos con Math.random → cifras inventadas; corregido 2026-09-29.)
+  // Motor ESTRUCTURAL determinista (sin IA, sin azar): los nodos semilla se golpean y el daño se propaga
+  // con EL kernel del servidor (/api/hot/scenario, factores activos, parámetros del servidor). Resultado:
+  // severidad 0-100 por empresa. (2026-09-29: sin Math.random; 2026-10-13: sin motor propio en el navegador.)
   const impacts = {}, cascade = [];
   const NBI = window.NODE_BY_ID || {};
   const seedIds = new Set(initialCascade.filter(id => NBI[id]).slice(0, 8));
@@ -8823,18 +8834,14 @@ function _wrFallbackCascade(nodes, edges, initialCascade, reportText, presetId) 
       if (id) seedIds.add(id);
     });
   }
-  if (!seedIds.size) return { impacts, cascade };
-  const shocks = {};
-  seedIds.forEach(id => { shocks[id] = { salud: 0.2 }; });
-  let res = null;
-  try { res = window.KhipuState && window.KhipuState.simulate(shocks, null, 4, 0.85, false, {}); } catch (e) { res = null; }
-  if (res && res.impact && res.impact.size) {
+  if (!seedIds.size) return Promise.resolve({ impacts, cascade });
+  if (!window.KhipuHot) return Promise.resolve({ impacts, cascade, error: window.LANG === 'en' ? 'Impact engine unavailable.' : 'Motor de impacto no disponible.' });
+  return window.KhipuHot.simulate({ targets: [...seedIds], kind: 'collapse', severity: 100 }).then(res => {
+    if (!res.ok) return { impacts, cascade, error: res.error };   // sin servidor no hay cifra (nunca una inventada)
     [...res.impact.entries()].filter(([, v]) => v >= 2).sort((x, y) => y[1] - x[1]).slice(0, 60)
       .forEach(([id, v]) => { impacts[id] = v; cascade.push(id); });
-  } else {
-    seedIds.forEach(id => { impacts[id] = 80; cascade.push(id); });
-  }
-  return { impacts, cascade };
+    return { impacts, cascade, view: res.view };
+  });
 }
 
 // Start RAF cascade animation

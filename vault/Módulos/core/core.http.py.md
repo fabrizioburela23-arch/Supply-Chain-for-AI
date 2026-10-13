@@ -36,6 +36,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[core.agents_api.py]] — lo importa
 - [[core.ai.py]] — lo importa
 - [[core.decide_api.py]] — lo importa
+- [[core.governance_api.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
 - [[core.news_feed.py]] — lo importa
@@ -63,7 +64,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 21 pruebas (lista abajo)._
+_Además lo importan 23 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -107,6 +108,7 @@ _Además lo importan 21 pruebas (lista abajo)._
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_mcp.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_overnight_fixes_review.py]]
@@ -117,6 +119,7 @@ _Además lo importan 21 pruebas (lista abajo)._
 - [[tests.test_repair_ontology_review.py]]
 - [[tests.test_repair_ops.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_review_infra_c.py]]
 - [[tests.test_security.py]]
 - [[tests.test_voice_tour.py]]
 

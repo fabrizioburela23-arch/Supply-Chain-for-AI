@@ -33,10 +33,12 @@ _Nada interno._
 
 - [[ontology.vocabulary.py]] — lo nombra por su ruta
 - [[scripts.audit_graph.py]] — lo nombra por su ruta
+- [[scripts.build_governance.py]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_gates_ir_fresh.py]]
 
 ## Mencionado en sesiones de trabajo
 

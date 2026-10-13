@@ -1,27 +1,23 @@
 ---
 tipo: "variable"
 capa: "Infraestructura"
-nombre: "IMPORT_BULK_WEIGHT_FACTOR"
-documentada: false
+nombre: "GOV_RELEASE"
+documentada: true
 tags: ["capa/infraestructura", "tipo/variable"]
 ---
 
-# IMPORT_BULK_WEIGHT_FACTOR
+# GOV_RELEASE
 
 > Variable de entorno · se configura en Railway (Variables). Aquí solo el **nombre**, nunca el valor.
 
 ## La leen
 
-- [[matrix.engine.py]]
+- [[core.governance.py]]
 
 ## Pruebas que la fijan o nombran
 
-- [[tests.test_matrix_sparse.py]]
+- [[tests.test_governance.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 
-**No** — falta en [[Doc CLAUDE]].
-
-## Mencionada en sesiones
-
-- [[Sesión 2026-07-19 — Motor de matrices DISPERSAS + centralidad]]
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].

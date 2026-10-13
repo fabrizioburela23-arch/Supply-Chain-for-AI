@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "scripts/migrate_v0_to_ontology.py"
 lenguaje: "python"
-lineas: 501
+lineas: 503
 aliases: ["scripts/migrate_v0_to_ontology.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # scripts/migrate_v0_to_ontology.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 501 líneas · `scripts/migrate_v0_to_ontology.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 503 líneas · `scripts/migrate_v0_to_ontology.py`
 
 ## Para qué sirve
 
@@ -30,6 +30,7 @@ Fase 1: migra data/grafo_v0.json (el snapshot congelado en Fase 0) a la ontolog�
 
 ## Depende de
 
+- [[core.governance.py]] — importa `governance`
 - [[core.pin.py]] — importa `in_production`
 - [[ontology.db.py]] — importa `_get_engine`, `init_schema`, `ontology_available`, `session_scope`
 - [[ontology.models.py]] — importa `Base`

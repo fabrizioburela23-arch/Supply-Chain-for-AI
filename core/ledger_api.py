@@ -3,7 +3,12 @@
   GET /api/ledger/status              público: conteo, cabeza de la cadena, estado del sellador (sin cuerpos)
   GET /api/ledger/decisions           ?kind=&principal=&status=&entity=&since=&limit=
   GET /api/ledger/decision/<id>       ?blobs=1 (solo operador) · ?lang=es|en
-  GET /api/ledger/verify              ?from_seal=&limit=   — SOLO operador (PIN)
+  GET /api/ledger/verify              ?from_seal=&limit=   — SOLO operador (PIN); una ruptura queda en el libro
+  GET /api/ledger/anchor              PÚBLICO: solo {day, head_seal, head_hash} de la última ancla diaria (paso 7;
+                                      el GitHub Action smoke-mcp.yml la guarda fuera de la base — D7)
+  GET /api/ledger/chain               público: ¿cadena rota? ¿dinero real bloqueado? (sin cuerpos)
+  POST /api/ledger/chain_ack          SOLO operador (PIN): reconoce la ruptura → decisión ledger.chain_ack y el
+                                      dinero real vuelve a operar
 
 Acceso: con el PIN de operador (X-Trade-Pin, core/pin — estricto en producción) se ven los CUERPOS (manifiesto,
 sujeto, salida, referencias, resultados, blobs). Sin PIN, un resumen REDACTADO (ids, kind, estado, tipo de
@@ -155,6 +160,73 @@ def ledger_verify():
         return jsonify({'error': 'parámetro inválido', 'error_en': 'invalid parameter'}), 400
     try:
         from core import ledger
-        return jsonify(ledger.verify(from_seal=from_seal, limit=limit))
+        out = ledger.verify(from_seal=from_seal, limit=limit, record_break=True)
+        out.pop('broken_keys', None)        # la lista completa es interna (dedupe de rupturas); va el total
+        return jsonify(out)
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
+
+
+@ledger_bp.route('/anchor')
+@rate_limit(60, 60)
+def ledger_anchor():
+    """Ancla diaria PÚBLICA: SOLO la cabeza de la cadena (ningún contenido). Sin ancla todavía → anchor:null."""
+    if not _db():
+        return _unavailable()
+    try:
+        from core import ledger
+        a = ledger.latest_anchor()
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
+    if a is None:
+        return jsonify({'available': True, 'day': None, 'head_seal': None, 'head_hash': None, 'pending': True})
+    resp = jsonify({'available': True, 'day': a['day'], 'head_seal': a['head_seal'], 'head_hash': a['head_hash']})
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
+@ledger_bp.route('/chain')
+@rate_limit(60, 60)
+def ledger_chain():
+    if not _db():
+        return _unavailable()
+    try:
+        from core import ledger
+        st = ledger.chain_state()
+        ok, es, en = ledger.money_gate()
+        return jsonify({'broken': st['broken'], 'since': st['since'], 'pending_ack': len(st['open_breaks']),
+                        'real_money_allowed': ok, 'message': es, 'message_en': en})
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
+
+
+@ledger_bp.route('/chain_ack', methods=['POST'])
+@rate_limit(6, 60)
+def ledger_chain_ack():
+    """Reconocer la cadena rota (PIN estricto, persona). Cuerpo: {note?, break_id?}."""
+    if not _db():
+        return _unavailable()
+    from core import pin
+    err = pin.pin_error(where='ledger_ack', strict=True)
+    if err:
+        return err
+    body = request.get_json(silent=True) or {}
+    try:
+        from core import identity, ledger
+        from ontology.db import session_scope
+        principal = identity.principal_from_request(declared=body.get('actor'))
+        with session_scope() as s:
+            out = ledger.chain_ack(s, principal, note=body.get('note'), break_id=body.get('break_id'))
+        ledger._invalidate_chain()
+        return jsonify({'ok': True, **out})
+    except PermissionError as e:
+        return jsonify({'error': str(e), 'error_en': 'acknowledging requires a person authenticated with the PIN',
+                        'code': 'forbidden'}), 403
+    except LookupError as e:
+        return jsonify({'error': str(e), 'error_en': 'there is no pending chain break to acknowledge',
+                        'code': 'nothing_to_ack'}), 404
+    except ValueError as e:
+        return jsonify({'error': str(e), 'error_en': 'that break was already acknowledged',
+                        'code': 'already_acked'}), 409
     except Exception as e:  # noqa: BLE001
         return _err(e)

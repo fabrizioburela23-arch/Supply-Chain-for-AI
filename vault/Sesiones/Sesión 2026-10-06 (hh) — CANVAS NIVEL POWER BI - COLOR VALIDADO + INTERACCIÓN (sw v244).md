@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-06"
-ruta: "docs/ESTADO.md#L417"
+ruta: "docs/ESTADO.md#L451"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-06 (hh) — CANVAS NIVEL POWER BI: COLOR VALIDADO + INTERACCIÓN (sw v244)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 417 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 451 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

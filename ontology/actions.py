@@ -773,7 +773,22 @@ def _subject(action_type, validated):
     return subj
 
 
-def execute_action(session, action_type, payload, actor, principal=None, *, meta=None, correlation_id=None):
+def _gate_g2(session, action_type, payload, principal, schema, validated, ctx, proposal_confidence=None):
+    """Puerta G2 (paso 10, SOMBRA): la acción + quién la pide (principal autenticado, campos desconocidos que
+    Pydantic ignoraría en silencio, aplicación automática permitida, agente que necesita a una persona, nivel de
+    riesgo, retracción con motivo). Solo avisa y queda en las violaciones de esta decisión. Nunca lanza."""
+    try:
+        import core.gates as _gates
+        from core.gates import focus as _gf
+        _gates.check('ontology.g2.action', _gf.gather_action, action_type, payload, principal, schema, validated,
+                     auto_apply=getattr(principal, 'id', '') == 'system:auto_apply', ident=str(ctx.id),
+                     confidence=proposal_confidence, session=session)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def execute_action(session, action_type, payload, actor, principal=None, *, meta=None, correlation_id=None,
+                   proposal_confidence=None):
     """Punto de entrada único: valida con el esquema del catálogo y ejecuta.
     Lanza ActionError/ValidationError si algo no es válido — nunca escribe a
     medias (el caller hace rollback si esto lanza, vía session_scope).
@@ -783,7 +798,8 @@ def execute_action(session, action_type, payload, actor, principal=None, *, meta
     (Acción desconocida, entrada inválida, error de dominio) deja una ficha 'rejected' en una sesión autónoma
     que sobrevive al rollback del caller. `actor` es el texto que se escribe en events.actor; `principal`
     (core/identity) es QUIÉN actúa — sin él, el del contexto (scheduler, MCP) o `legacy:<actor>`.
-    `meta` (dict opcional) recibe {'decision_id': …}."""
+    `meta` (dict opcional) recibe {'decision_id': …}. `proposal_confidence`: la confianza de la PROPUESTA que se
+    aplica (auto_cycle la compara con AUTO_MIN_CONFIDENCE; la puerta G2 debe ver la misma, no la del payload)."""
     from core import decisions, identity
     if principal is None:
         principal = identity.current() or identity.legacy(actor)
@@ -802,6 +818,7 @@ def execute_action(session, action_type, payload, actor, principal=None, *, meta
             raise ActionError(f'Entrada inválida para {action_type}: {e.errors()}') from e
         if not actor or not str(actor).strip():
             raise ActionError('actor es requerido — toda Acción queda atribuida a alguien')
+        _gate_g2(session, action_type, payload, principal, schema, validated, ctx, proposal_confidence)
         ctx.subject = _subject(action_type, validated)
         ctx.extra['impl'] = {'action': f'{action_type}@1'}
         result = handler(session, validated, actor)

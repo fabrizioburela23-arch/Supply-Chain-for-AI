@@ -9,11 +9,11 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.570 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.556 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[core.world.py]] — 2.083 líneas · WORLD MONITOR geopolítico: /api/world/\*.
+- [[core.world.py]] — 2.097 líneas · WORLD MONITOR geopolítico: /api/world/\*.
 - [[core.company_data.py]] — 1.332 líneas · estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del mundo (Dossier, 2026-09-28).
 - [[engine.worldmonitor.js]] — 1.326 líneas · WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 - [[engine.spacemonitor.js]] — 1.324 líneas · SPACE MONITOR (pestaña 🚀 Espacio).
@@ -26,15 +26,15 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[core.geosit.py]] — 433 líneas · Sala de Situación geopolítica: /api/geo/\*.
 - [[engine.geo_coords.js]] — 396 líneas · Coordenadas geográficas para los globos 3D (Khipu Finance) Los nodos NO traen lat/long: solo `country` (EEUU, Japon, "Estados Unidos (HQ Denver, …
 - [[engine.termdata.js]] — 359 líneas · PANEL DE DATOS de la Terminal (feedback de Fabrizio: "te pedí que la terminal tuviera muchas más tablas" + "para muchas decía upstream 402 pero no …
-- [[engine.brief.js]] — 327 líneas · BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez al día, descartable), un overlay NEXUS resume: el mayor chokepoint, la …
 - [[core.gdelt_events.py]] — 307 líneas · conflicto / protestas / sanciones EN VIVO desde la base de EVENTOS de GDELT 2.0 (archivos crudos cada 15 minutos, públicos y sin clave).
+- [[engine.brief.js]] — 301 líneas · BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez al día, descartable), un overlay NEXUS resume: el mayor chokepoint, la …
 - [[core.country_geo.py]] — 222 líneas · coordenadas de referencia por PAÍS (la capital), para capas que solo dicen "qué país" (avisos de viaje del Departamento de Estado, cortes de …
 - [[core.live_facts.py]] — 204 líneas · DATOS EN VIVO para toda llamada de IA.
 - [[core.providers.base.py]] — 201 líneas · Phase 1 · M3: el contrato de los proveedores.
 - [[core.gpr.py]] — 186 líneas · Índice de RIESGO GEOPOLÍTICO (GPR) de Caldara & Iacoviello (Junta de la Reserva Federal), EN VIVO y gratuito: https://www.matteoiacoviello.com/gpr.htm
 - [[core.providers.market.py]] — 159 líneas · Phase 1 · M3: adapters de datos de mercado.
 - [[core.news_feed.py]] — 151 líneas · NOTICIAS DE TU CARTERA, con fecha y sin repetir lo viejo.
-- [[engine.live.js]] — 140 líneas · MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de insights: cuando llegan precios nuevos, invalida el NRS y re-dibuja …
+- [[engine.live.js]] — 138 líneas · MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de insights: cuando llegan precios nuevos, invalida el NRS y re-dibuja …
 - [[core.live_caps.py]] — 127 líneas · capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[core.providers.coingecko.py]] — 123 líneas · adapter de cripto (CoinGecko API v3, tier gratuito).
 - [[core.live_fundamentals.py]] — 114 líneas · FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
@@ -45,8 +45,8 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
+| usa a | [[Capa Infraestructura]] | 20 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 20 |
-| usa a | [[Capa Infraestructura]] | 19 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
 | la usa | [[Capa Infraestructura]] | 12 |
 | la usa | [[Capa Chat y agentes]] | 10 |
@@ -56,11 +56,11 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |
-| usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 4 |
 | la usa | [[Capa Investigación]] | 3 |
 | la usa | [[Capa MCP y API]] | 3 |
 | la usa | [[Capa Ontología y grafo temporal]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
 | la usa | [[Capa Voz]] | 2 |
+| usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 2 |
 | usa a | [[Capa Investigación]] | 1 |
 | usa a | [[Capa Voz]] | 1 |

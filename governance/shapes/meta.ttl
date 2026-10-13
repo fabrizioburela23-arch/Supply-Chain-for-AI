@@ -1,0 +1,28 @@
+# governance/shapes/meta.ttl — META-formas: validan las FORMAS de Khipus (no los datos). Las corre la prueba de
+# conformidad con pySHACL sobre el grafo de formas (scripts/build_shapes.py hace los mismos chequeos en Python):
+# toda forma de propiedad y toda forma con SPARQL lleva sh:name, khs:rule, sh:severity y sh:message en ES y EN.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+
+khs:MetaPropertyShape a sh:NodeShape ;
+  sh:targetSubjectsOf sh:path ;
+  sh:property [ sh:path sh:name ; sh:minCount 1 ] ;
+  sh:property [ sh:path khs:rule ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+  sh:property [ sh:path sh:severity ; sh:minCount 1 ; sh:maxCount 1 ;
+                sh:in ( sh:Violation sh:Warning sh:Info khs:RequiresApproval ) ] ;
+  sh:property [ sh:path sh:message ; sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "es" "en" ) ] .
+
+khs:MetaSparqlShape a sh:NodeShape ;
+  sh:targetSubjectsOf sh:sparql ;
+  sh:property [ sh:path sh:name ; sh:minCount 1 ] ;
+  sh:property [ sh:path khs:rule ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+  sh:property [ sh:path sh:severity ; sh:minCount 1 ; sh:maxCount 1 ;
+                sh:in ( sh:Violation sh:Warning sh:Info khs:RequiresApproval ) ] ;
+  sh:property [ sh:path sh:sparql ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+khs:MetaSparqlConstraint a sh:NodeShape ;
+  sh:targetObjectsOf sh:sparql ;
+  sh:property [ sh:path khs:impl ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[a-z_]+\\.[a-z_]+@[0-9]+$" ] ;
+  sh:property [ sh:path sh:select ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [ sh:path sh:message ; sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "es" "en" ) ] .

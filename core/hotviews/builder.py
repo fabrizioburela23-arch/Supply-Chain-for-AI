@@ -46,9 +46,35 @@ def _on_signal(name, version, ids):
         _ensure_thread()
 
 
+def _on_release_change(old, new):
+    """Gobernanza cambió el release vigente (governance._swap ya re-asignó E.DAMPING, pesos, tope…): la
+    generación publicada se armó con el kernel VIEJO → reconstruir. Hasta entonces `lag()` la marca stale y
+    `current()` espera la nueva (antes /api/hot/impact seguía con el kernel viejo y /api/hot/scenario con el
+    nuevo, ambos con el sello viejo)."""
+    try:
+        from core.hotviews import hot
+        hot.reset()                      # la generación privada del snapshot y lo derivado también eran del viejo
+    except Exception:  # noqa: BLE001
+        pass
+    _on_signal('release', None, None)
+
+
 def _install():
+    from core import governance
     from core.hotviews import signals
     signals.subscribe(_on_signal)
+    governance.on_release_change(_on_release_change)
+
+
+def release_current(g):
+    """¿La generación `g` se armó con el release de gobernanza VIGENTE? (en memoria, sin SQL)."""
+    if g is None:
+        return False
+    try:
+        from core.hotviews import signals
+        return g.release == signals.release_hash()[0]
+    except Exception:  # noqa: BLE001
+        return True
 
 
 _install()
@@ -192,7 +218,7 @@ def request_build():
 
 
 def _satisfies(g, min_version, lineage):
-    if g is None:
+    if g is None or not release_current(g):
         return False
     if min_version is None:
         return True
@@ -247,6 +273,10 @@ def current(timeout=2.0):
     ninguna, espera la primera hasta `timeout` s."""
     from core.hotviews import registry
     g = registry.generation()
+    if g is not None and not release_current(g):
+        # cambió el release de gobernanza: esperar la generación con el kernel nuevo (si no llega a tiempo, la
+        # vieja sale marcada stale por lag())
+        return ensure(None, None, timeout) or g
     if g is not None:
         if _ST['eager'] is False and registry.lag(g)[0]:
             request_build()                  # modo perezoso: la lectura pide ponerse al día (no espera)

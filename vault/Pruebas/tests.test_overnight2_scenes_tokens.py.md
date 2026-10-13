@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight2_scenes_tokens.py"
 lenguaje: "python"
-lineas: 426
+lineas: 430
 aliases: ["tests/test_overnight2_scenes_tokens.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight2_scenes_tokens.py
 
-> Prueba · capa [[Capa Pruebas]] · 426 líneas · `tests/test_overnight2_scenes_tokens.py`
+> Prueba · capa [[Capa Pruebas]] · 430 líneas · `tests/test_overnight2_scenes_tokens.py`
 
 ## Qué prueba
 

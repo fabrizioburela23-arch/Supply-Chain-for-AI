@@ -53,6 +53,7 @@ _Nada interno._
 - [[tests.test_graph_audit.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_graph.py]]

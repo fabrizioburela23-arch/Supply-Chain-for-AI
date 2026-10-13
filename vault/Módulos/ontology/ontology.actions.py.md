@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/actions.py"
 lenguaje: "python"
-lineas: 825
+lineas: 842
 aliases: ["ontology/actions.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/actions.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 825 líneas · `ontology/actions.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 842 líneas · `ontology/actions.py`
 
 ## Para qué sirve
 
@@ -53,13 +53,14 @@ Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usu
 - `retirar_factor(session, inp, actor)` — Expira la hiperarista: cierra los 'affects' vigentes (valid_to) y marca el Factor como expirado. Reversible en el sentido bitemporal (la … _(línea 650)_
 - `activar_factor(session, inp, actor)` — Persistente: cambia `severity` en las props del Factor. El motor lo lee en active_factors() y el caché de matrices se invalida solo (la … _(línea 677)_
 - `desactivar_factor(session, inp, actor)` — Revierte ActivarFactor. Vuelve a `severity_latente`; si el factor nunca se activó por esta vía (p.ej. venía de la ingesta multicapa) cae a … _(línea 713)_
-- `execute_action(session, action_type, payload, actor, principal=…, meta=…, correlation_id=…)` — Punto de entrada único: valida con el esquema del catálogo y ejecuta. Lanza ActionError/ValidationError si algo no es válido — nunca … _(línea 776)_
-- `list_actions(session, actor=…, action_type=…, object_id=…, limit=…)` — Para el panel '📋 Registro': timeline de ActionExecuted, filtrable. _(línea 813)_
+- `execute_action(session, action_type, payload, actor, principal=…, meta=…, correlation_id=…, proposal_confidence=…)` — Punto de entrada único: valida con el esquema del catálogo y ejecuta. Lanza ActionError/ValidationError si algo no es válido — nunca … _(línea 790)_
+- `list_actions(session, actor=…, action_type=…, object_id=…, limit=…)` — Para el panel '📋 Registro': timeline de ActionExecuted, filtrable. _(línea 830)_
 
-**Internas** (empiezan con `_`): `_log_action`, `_decision_marks`, `_cite`, `_require_object`, `_resolver_vinculo`, `_link_by_id`, `_proponer_por_tensor`, `_require_factor`, `_subject`
+**Internas** (empiezan con `_`): `_log_action`, `_decision_marks`, `_cite`, `_require_object`, `_resolver_vinculo`, `_link_by_id`, `_proponer_por_tensor`, `_require_factor`, `_subject`, `_gate_g2`
 
 ## Depende de
 
+- [[core.__init__.py]] — importa `core.gates`, `focus`
 - [[core.decisions.py]] — importa `decisions`
 - [[core.identity.py]] — importa `identity`
 - [[matrix.tensor.py]] — importa `tensor`
@@ -73,11 +74,14 @@ Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usu
 - [[ontology.api.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 
-_Además lo importan 20 pruebas (lista abajo)._
+_Además lo importan 24 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.gates_cases.py]]
 - [[tests.test_docs_facts.py]]
+- [[tests.test_gates_resulting_state.py]]
+- [[tests.test_governance.py]]
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_investigador.py]]
@@ -96,6 +100,7 @@ _Además lo importan 20 pruebas (lista abajo)._
 - [[tests.test_repair_ontology.py]]
 - [[tests.test_repair_ontology_review.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_review_infra_c.py]]
 - [[tests.test_tensor_autolink.py]]
 
 ## Mencionado en sesiones de trabajo

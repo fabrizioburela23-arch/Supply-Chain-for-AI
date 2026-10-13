@@ -1,0 +1,295 @@
+{
+ "committee": {
+  "conv_sha": "1493c4cc85ec920f13c7ffde3b69b6002a211e8d0359ccb68155dce09a503313",
+  "decide_sha": "aaa5d055735f60acbb98a7955116aa2f2d972a21799717c627d8576669050029",
+  "mandate_default": {
+   "allowed_symbols": [],
+   "blocked_symbols": [],
+   "daily_remaining_usd": null,
+   "from_client": false,
+   "max_daily_usd": null,
+   "max_order_usd": null,
+   "max_position": 0.1,
+   "min_vol": 0.1,
+   "risk_budget": 0.02
+  },
+  "quorum": [
+   {
+    "min_agents": 3,
+    "missing_required": [],
+    "n_present": 3,
+    "ok": true,
+    "pool": [
+     "fundamental",
+     "news",
+     "technical",
+     "supply_chain"
+    ],
+    "reason_en": null,
+    "reason_es": null,
+    "required": [
+     "fundamental"
+    ],
+    "to_run": [
+     "supply_chain"
+    ]
+   },
+   {
+    "min_agents": 3,
+    "missing_required": [
+     "fundamental"
+    ],
+    "n_present": 3,
+    "ok": false,
+    "pool": [
+     "fundamental",
+     "news",
+     "technical",
+     "supply_chain"
+    ],
+    "reason_en": "no analyst quorum: the fundamental analyst is missing",
+    "reason_es": "sin quórum de analistas: falta el analista fundamental",
+    "required": [
+     "fundamental"
+    ],
+    "to_run": [
+     "fundamental"
+    ]
+   },
+   {
+    "min_agents": 3,
+    "missing_required": [
+     "fundamental"
+    ],
+    "n_present": 0,
+    "ok": false,
+    "pool": [
+     "fundamental",
+     "news",
+     "technical",
+     "supply_chain"
+    ],
+    "reason_en": "no analyst quorum: the fundamental analyst is missing; only 0 of 4 analysts weighed in (minimum 3)",
+    "reason_es": "sin quórum de analistas: falta el analista fundamental; solo 0 de 4 analistas opinaron (mínimo 3)",
+    "required": [
+     "fundamental"
+    ],
+    "to_run": [
+     "fundamental",
+     "news",
+     "technical",
+     "supply_chain"
+    ]
+   }
+  ],
+  "sizing_sha": "c12c574fbac12f824887f2ba07c9b065abcd426b08177a90106ed955493c1cff",
+  "targets": [
+   0.1,
+   0.05,
+   0.09999999999999999,
+   0.049999999999999996,
+   0.024999999999999998,
+   0.012499999999999999
+  ],
+  "ttl": 72.0
+ },
+ "kernel": {
+  "eff_weight": [
+   2.0,
+   0.6,
+   1.25,
+   2.5,
+   0.5,
+   6.0,
+   0.3,
+   [
+    "gleif",
+    "wikidata"
+   ]
+  ],
+  "flow_sha": "2e2080b66ea573c996bb07ae797e52e7614b45ef2bc222a641206cef2f0c9d0b",
+  "frag_crisis_max": 2.5,
+  "frag_crisis_sha": "d605e4cf9a0d310a06a7dce719757958dde90d866ef538e8427ccc6f7f0df7ac",
+  "frag_sha": "3a2f117ca83ed10c15b5b5c4ee61147ec8df55945199e5c11b26a0d00b657c09",
+  "impact_nnz": 10953,
+  "impact_sha": "9631c3f474e66792e607defbc772a9281556b4d38aa0db9208069cd08a0c328e",
+  "n": 969,
+  "propagate": {
+   "01AI:False": [
+    "40f998fb94fdf4a236572091ce8589dbb9b370a1132d30f96e8c7b405ff4a358",
+    0
+   ],
+   "01AI:True": [
+    "40f998fb94fdf4a236572091ce8589dbb9b370a1132d30f96e8c7b405ff4a358",
+    0
+   ],
+   "CenturyAluminum:False": [
+    "d525a36ad8706dbdae1cc02551dc5921ea7e109f5b7e15e5355ad1c027ceceee",
+    1
+   ],
+   "CenturyAluminum:True": [
+    "3ca5d53c20ae8cae35750062d61d77b824e4fe7349b3c7e0e7912c7e1d5e88b1",
+    1
+   ],
+   "GrupoMexico:False": [
+    "ed8aab2d54299338ba6c6c12d5b8b36e1705ccb605e54a32512fe36a4e20cb3a",
+    2
+   ],
+   "GrupoMexico:True": [
+    "7eeff1e1dc57cbb8b3ca7dafa67b81d01a8923626c3aa1543781162b8e24e3e7",
+    2
+   ],
+   "NRGEnergy:False": [
+    "ff4d27dc6d6048e018674336b3e6a05794a71c1c28ec8b1eb8f6796870ab0489",
+    8
+   ],
+   "NRGEnergy:True": [
+    "76be98159cb7baf4341388b521515617d4f9ff4e96fbce89d8217dee939206da",
+    8
+   ],
+   "RussianRailways:False": [
+    "4120114ab913ee141eae159f6e993954660fa573f3ee215154e38d4802ffa71d",
+    7
+   ],
+   "RussianRailways:True": [
+    "94f8eb5909214b5ab9b4bfc7c676cd54d58c7b53dcca8c0a6e19d96b25a17485",
+    7
+   ],
+   "Voiceflow:False": [
+    "5c27a7dadfb531fe14c9f0608e701a4651502a96501f01d8cb238b240c64c4fd",
+    0
+   ],
+   "Voiceflow:True": [
+    "5c27a7dadfb531fe14c9f0608e701a4651502a96501f01d8cb238b240c64c4fd",
+    0
+   ]
+  },
+  "rho": {
+   "damping": 0.6,
+   "damping_rho": 0.726431,
+   "method": "eigs",
+   "rho": 1.210718,
+   "stable": true
+  },
+  "tensor": [
+   0.6,
+   6,
+   0.01,
+   [
+    "supply",
+    "fab",
+    "cloud",
+    "license",
+    "ppa"
+   ],
+   15
+  ],
+  "top_by_sum": [
+   "TSMC",
+   "Nvidia",
+   "Amazon",
+   "ARM",
+   "Microsoft",
+   "PDF_Solutions",
+   "Palantir",
+   "ASML",
+   "Synopsys",
+   "Intel",
+   "CBCTaiwan",
+   "Alphabet",
+   "Vanguard",
+   "SpaceX",
+   "OpenAI"
+  ]
+ },
+ "nrs": {
+  "all_sha": "22865a717a8f7af38f8420691603713fadbcac13159d640efb0f68371d4689a4",
+  "grid_sha": "3d832763dfcda6640813c27b1cd36630cd3e69ea510c7ea7e2bdb1eb33b2547a",
+  "grid_sum": 23460,
+  "n": 937,
+  "sample": {
+   "01AI": 66,
+   "ABB_Robotics": 31,
+   "ACM_Research": 27,
+   "ADIA": 32,
+   "ADNOC": 37,
+   "AECOM": 27,
+   "AEP": 29,
+   "AESCorp": 35,
+   "AGC": 34,
+   "AMAT": 42,
+   "AMD": 46,
+   "AMEC": 55,
+   "APMTerminals": 27,
+   "ARM": 44,
+   "ASE": 64,
+   "ASMInt": 33,
+   "ASML": 47,
+   "ASN": 52,
+   "AST_SpaceMobile": 40,
+   "Achronix": 43,
+   "AdaniConneX": 40,
+   "AdaniPorts": 22,
+   "Addepar": 40,
+   "Adept": 47,
+   "AdvancedEnergy": 28
+  }
+ },
+ "numbers": {
+  "check_sha": "ddef4574dc647a30d634e2fbc7b968de756da1e5647448fd5e1b2c8e84fdb6fe",
+  "tol_sha": "ba4116bbe7254c7cf36486cf69fef86d65b93eed445fd252d7d430f5399c8909",
+  "tol_sum": 5301000000178.48
+ },
+ "policies": {
+  "auto_min_conf": 0.55,
+  "jev": [
+   0.6,
+   1.5,
+   [
+    "chat_gate"
+   ]
+  ],
+  "safe_auto": [
+   "AnotarObjeto",
+   "CrearFactor",
+   "IncorporarEmpresa",
+   "MarcarRiesgo",
+   "ProponerVinculo"
+  ]
+ },
+ "risk": {
+  "checks_sha": "2fda239111def5b7be0b7d6c55955349202334d596a34ce43f21036a7c439c25",
+  "consts": [
+   100000.0,
+   1.0,
+   60,
+   10.0
+  ],
+  "limits": [
+   {
+    "max_daily_usd": 2500.0,
+    "max_drawdown_stop_pct": 10.0,
+    "max_order_usd": 100000.0,
+    "max_position_pct": 10.0
+   },
+   {
+    "max_daily_usd": 15000.0,
+    "max_drawdown_stop_pct": 20.0,
+    "max_order_usd": 100000.0,
+    "max_position_pct": 20.0
+   },
+   {
+    "max_daily_usd": 75000.0,
+    "max_drawdown_stop_pct": 35.0,
+    "max_order_usd": 100000.0,
+    "max_position_pct": 35.0
+   },
+   {
+    "max_daily_usd": 15000.0,
+    "max_drawdown_stop_pct": 20.0,
+    "max_order_usd": 100000.0,
+    "max_position_pct": 20.0
+   }
+  ]
+ }
+}

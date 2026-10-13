@@ -273,8 +273,12 @@ window.LINKS = []; window.SECTORS9 = { cloud_ia: { label: 'IA', color: '#4C8DF6'
 window.computeNRS = function () { return 40; };
 window.buildXRayHTML = function (id) { return '<div class="xr-name">' + id + '</div>'; };
 window.wireXRay = function () {};
-window.KhipuState = { simulate: function () { return { impact: new Map([['AMD', 40], ['TSMC', 25]]) }; } };
-window.xrayComputeWinners = function () { return [{ id: 'AMD', up: 12 }]; };
+// paso 13 INFRA_OPERATIVA: el motor único del servidor por window.KhipuHot (aquí, un doble)
+window.KhipuHot = { simulate: function () { return Promise.resolve({ ok: true, direction: 'down', severity: 100, targets: ['TSMC'],
+    impact: new Map([['TSMC', 100], ['AMD', 40], ['Nvidia', 25]]), reach_1: 2, reach_10: 2,
+    view: { generation: 'g0.r0.c0.snapshot', graph_version: 0, source: 'snapshot', age_ms: 1000 } }); },
+  rivals: function () { return [{ id: 'AMD', hit: 3 }]; }, stamp: function () { return 'g0'; },
+  stampHTML: function () { return '<span class="kh-hot-stamp">g0</span>'; } };
 window._tradePinStored = function () { return '1234'; };
 window._tradeFetch = function (u, o) { return fetch(u, o); };
 window._tradeAccountInfo = function () { return Promise.resolve({ equity: 101234.56, cash: 40210.1, buying_power: 80420.2, paper: true }); };

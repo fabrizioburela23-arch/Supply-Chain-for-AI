@@ -28,11 +28,11 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[engine.pickers.js]] — usa `KhipuPick`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **61 de 92** (línea 7905), después de [[engine.sync.js]] y antes de [[engine.mcpconnect.js]].
+Se carga en [[app.html]] en la posición **62 de 93** (línea 7905), después de [[engine.sync.js]] y antes de [[engine.mcpconnect.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 61)
+- [[app.html]] — lo carga con `<script>` (posición 62)
 - [[app.html]] — usa `KhipuClients`
 - [[engine.cockpit.js]] — usa `KhipuClients`
 - [[engine.committee.js]] — usa `KhipuClients`

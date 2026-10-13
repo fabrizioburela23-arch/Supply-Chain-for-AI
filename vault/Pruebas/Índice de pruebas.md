@@ -6,12 +6,13 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-142 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+151 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
 | [[tests.__init__.py]] | 0 | 0 |
 | [[tests.conftest.py]] | 0 | 1 |
+| [[tests.gates_cases.py]] | 0 | 4 |
 | [[tests.js.localcharts_intents.js]] | 0 | 1 |
 | [[tests.js.localcharts_pfperf.js]] | 0 | 1 |
 | [[tests.test_agent_dudosos.py]] | 2 | 5 |
@@ -46,11 +47,16 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_decide.py]] | 8 | 3 |
 | [[tests.test_docs_facts.py]] | 4 | 5 |
 | [[tests.test_entities.py]] | 13 | 4 |
+| [[tests.test_gates_conformance.py]] | 5 | 2 |
+| [[tests.test_gates_ir_fresh.py]] | 7 | 6 |
+| [[tests.test_gates_resulting_state.py]] | 11 | 10 |
 | [[tests.test_gdelt_events.py]] | 4 | 2 |
+| [[tests.test_governance.py]] | 19 | 16 |
+| [[tests.test_governance_seed_parity.py]] | 7 | 12 |
 | [[tests.test_gpr.py]] | 3 | 2 |
 | [[tests.test_graph_api.py]] | 15 | 8 |
 | [[tests.test_graph_audit.py]] | 7 | 5 |
-| [[tests.test_hot_contract.py]] | 9 | 7 |
+| [[tests.test_hot_contract.py]] | 10 | 8 |
 | [[tests.test_hot_invalidation.py]] | 7 | 7 |
 | [[tests.test_hot_review_fixes.py]] | 12 | 8 |
 | [[tests.test_hot_views_parity.py]] | 7 | 8 |
@@ -65,10 +71,11 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_khipus_os_fixes_shell.py]] | 11 | 3 |
 | [[tests.test_khipus_os_fixes_windows.py]] | 10 | 4 |
 | [[tests.test_khipus_os_integration.py]] | 5 | 7 |
-| [[tests.test_khipus_os_perf.py]] | 16 | 6 |
+| [[tests.test_khipus_os_perf.py]] | 16 | 7 |
 | [[tests.test_khipus_os_server.py]] | 24 | 14 |
 | [[tests.test_khipus_os_shell.py]] | 13 | 4 |
 | [[tests.test_khipus_os_windows.py]] | 19 | 4 |
+| [[tests.test_ledger_anchor.py]] | 10 | 9 |
 | [[tests.test_ledger_chain.py]] | 7 | 7 |
 | [[tests.test_ledger_core.py]] | 15 | 12 |
 | [[tests.test_ledger_privacy.py]] | 6 | 7 |
@@ -82,6 +89,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_matrix_sparse.py]] | 19 | 1 |
 | [[tests.test_mcp.py]] | 60 | 19 |
 | [[tests.test_merge_graph_alias.py]] | 1 | 2 |
+| [[tests.test_no_client_engine.py]] | 14 | 24 |
 | [[tests.test_numbers_guard.py]] | 6 | 2 |
 | [[tests.test_ontology.py]] | 12 | 8 |
 | [[tests.test_ontology_actions.py]] | 17 | 5 |
@@ -130,6 +138,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_repair_risk.py]] | 10 | 1 |
 | [[tests.test_repair_world.py]] | 7 | 2 |
 | [[tests.test_research.py]] | 23 | 15 |
+| [[tests.test_review_infra_c.py]] | 16 | 18 |
 | [[tests.test_risk_easy.py]] | 5 | 4 |
 | [[tests.test_risk_options.py]] | 6 | 3 |
 | [[tests.test_scenario_live.py]] | 1 | 1 |
@@ -143,7 +152,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_vault.py]] | 19 | 1 |
 | [[tests.test_verified_valuations.py]] | 1 | 2 |
 | [[tests.test_vocabulary.py]] | 12 | 3 |
-| [[tests.test_voice_os_client.py]] | 33 | 10 |
+| [[tests.test_voice_os_client.py]] | 34 | 11 |
 | [[tests.test_voice_os_server.py]] | 10 | 4 |
 | [[tests.test_voice_tour.py]] | 19 | 11 |
 | [[tests.test_voice_tour_client.py]] | 25 | 11 |

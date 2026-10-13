@@ -2,9 +2,13 @@
    engine/livesim.js — SIMULACIÓN EN VIVO v3 (abierta, no cerrada)
    Constructor de escenarios: eliges el TIPO de golpe (corte↓, demanda↑,
    precio, sanción) y el OBJETIVO (preset, sector entero, país entero, o las
-   empresas que tú elijas). Los nodos y conexiones reaccionan en tiempo real
-   (~7ms → 60fps): rojo=daño, verde=auge. Stats en $, ganadores, desglose por
-   sector, ▶ película de la cascada. Botón "◉ En vivo".
+   empresas que tú elijas). Los nodos y conexiones reaccionan: rojo=daño.
+   Las cifras salen del motor ÚNICO del servidor (/api/hot/* vía engine/hotclient.js,
+   factores activos incluidos; paso 13 INFRA_OPERATIVA): las mismas que el X-Ray,
+   la Cabina y la voz. Aquí solo queda el estado VISUAL (película por salto con
+   window.KhipuState.frames). Stats en $, rivales poco golpeados, desglose por
+   sector, ▶ película de la cascada. Botón "◉ En vivo". El auge de demanda (hacia
+   proveedores) todavía no lo calcula el servidor: se dice, sin cifras inventadas.
    KHIPUS OS (2026-10-11): botón y panel llevan .kos-themed → tokens --os-* de
    engine/cockpit.js (claro = body sin .dark, oscuro = body.dark); el valor tras
    la coma de cada var() es el respaldo (la piel NEXUS vieja). El tinte de cada
@@ -17,6 +21,7 @@
   // bilingüe (regla del proyecto): idioma activo = window.LANG → eco_lang
   function isEn() { var l = window.LANG; if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } } return l === 'en'; }
   function L(es, en) { return isEn() ? en : es; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   // tipos de golpe → {direction, kind} para el motor
   var TYPES = [
@@ -35,24 +40,7 @@
     { id: 'ia',      es: 'Boom IA',  en: 'AI boom',   shock: ['Nvidia'], type: 'demanda' },
   ];
 
-  var active = false, typeId = 'corte', targets = ['TSMC'], severity = 100, factors = [], raf = 0;
-  // Track B (gap de cableado detectado en la auditoría): factors estaba SIEMPRE
-  // vacío — el server aplicaba los Factor reales de la ontología y el motor
-  // cliente los ignoraba. Ahora se traen de /api/matrix/factors (mismo esquema
-  // {id,label,severity,members:{id:coef}} que consume KhipuState.simulate).
-  var _factorsAt = 0;
-  function refreshFactors() {
-    var now = Date.now();
-    if (now - _factorsAt < 120000) return;   // 2 min de caché — no martillar
-    _factorsAt = now;
-    try {
-      var base = (typeof BASE !== 'undefined' && BASE) ? BASE : '';
-      fetch(base + '/api/matrix/factors').then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (d && d.available && Array.isArray(d.factors)) factors = d.factors;
-        }).catch(function () {});
-    } catch (e) {}
-  }
+  var active = false, typeId = 'corte', targets = ['TSMC'], severity = 100, raf = 0, runSeq = 0;
   var playing = false, playTimer = 0, lastResult = null, addMode = false;
 
   function T() { return TYPES.find(function (t) { return t.id === typeId; }) || TYPES[0]; }
@@ -129,32 +117,40 @@
     if (window._liveTintLinks) window._liveTintLinks(impactMap, dir);
   }
 
-  function computeWinners(impact) {
-    var damaged = [];
-    impact.forEach(function (v, id) { if (v >= 40) damaged.push({ id: id, v: v }); });
-    var gains = new Map();
-    damaged.forEach(function (d) {
-      var dn = window.NODE_BY_ID[d.id]; if (!dn) return;
-      (window.NODES || []).forEach(function (n) {
-        if (n.id === d.id || n.cat !== dn.cat) return;
-        if ((impact.get(n.id) || 0) > 15) return;
-        gains.set(n.id, (gains.get(n.id) || 0) + d.v / 100);
-      });
-    });
-    var arr = [];
-    gains.forEach(function (g, id) { arr.push({ id: id, up: Math.min(45, Math.round(g * 14)) }); });
-    return arr.filter(function (x) { return x.up >= 4; }).sort(function (a, b) { return b.up - a.up; }).slice(0, 5);
+  // sin cifras: el motor del servidor no respondió o no calcula este tipo de golpe → se DICE, no se inventa
+  function clearPanel(msg) {
+    ['ls-sect', 'ls-vict', 'ls-win'].forEach(function (k) { var el = document.getElementById(k); if (el) el.innerHTML = ''; });
+    var st = document.getElementById('ls-stats');
+    if (st) { st.style.display = 'block'; st.innerHTML = '<div class="ls-msg ls-err">' + esc(msg) + '</div>'; }
   }
 
   function run() {
-    if (!window.KhipuState || !targets.length) return;
+    if (!targets.length) return;
     var ty = T();
-    var shocks = {};
-    targets.forEach(function (id) { shocks[id] = { salud: 1 - severity / 100 }; });
-    refreshFactors();   // los Factor reales de la ontología modulan la sim en vivo
-    var r = window.KhipuState.simulate(shocks, factors, 8, 0.6, true, { direction: ty.dir, kind: ty.kind });
+    var seq = ++runSeq;
+    if (!window.KhipuHot) { clearPanel(L('Motor de simulación no disponible.', 'Simulation engine unavailable.')); return; }
+    var read = document.getElementById('ls-read');
+    if (read) read.innerHTML = tDesc(ty) + ' · <b class="ls-c" style="--ls-c:' + ty.tint + '">' + esc(targets.slice(0, 3).map(nm).join(', ')) + (targets.length > 3 ? '…' : '') + '</b> ' + L('al', 'at') + ' ' + severity + '% · ' + L('calculando…', 'computing…');
+    window.KhipuHot.simulate({ targets: targets, kind: ty.kind, severity: severity }).then(function (r) {
+      if (seq !== runSeq) return;   // llegó tarde: ya se pidió otro escenario
+      paintResult(ty, r);
+    });
+  }
+
+  function paintResult(ty, r) {
+    var read = document.getElementById('ls-read');
+    var head = tDesc(ty) + ' · <b class="ls-c" style="--ls-c:' + ty.tint + '">' + esc(targets.slice(0, 3).map(nm).join(', ')) + (targets.length > 3 ? '…' : '') + '</b> ' + L('al', 'at') + ' ' + severity + '%';
+    if (!r || !r.ok) {
+      lastResult = null;
+      if (window._liveResetColors) window._liveResetColors();
+      if (read) read.innerHTML = head;
+      clearPanel((r && r.error) || L('No se pudo simular.', 'Could not simulate.'));
+      return;
+    }
     lastResult = r;
-    paint(r.impact, ty.dir);
+    paint(r.impact, r.direction);
+    if (read) read.innerHTML = head + (r.note ? '<div class="ls-msg" style="margin-top:3px">' + esc(r.note) + '</div>' : '') +
+      '<div style="margin-top:3px">' + window.KhipuHot.stampHTML(r.view) + '</div>';
 
     var arr = [], capExp = 0, sectorDmg = {}, pos = (window.MKT && window.MKT.pos) || {}, portTotal = 0, portHit = 0;
     r.impact.forEach(function (v, id) {
@@ -166,13 +162,13 @@
     });
     Object.keys(pos).forEach(function (id) { portTotal++; portHit += (r.impact.get(id) || 0); });
     arr.sort(function (a, b) { return b.v - a.v; });
-    var isUp = ty.dir === 'up';
+    var isUp = r.direction === 'up';
 
     var stats = document.getElementById('ls-stats');
-    if (stats) stats.innerHTML =
-      '<div class="ls-cell"><b class="ls-c" style="--ls-c:' + ty.tint + '">' + arr.length + '</b><span>' + (isUp ? L('benefician', 'benefit') : L('afectadas', 'affected')) + '</span></div>' +
+    if (stats) { stats.style.display = ''; stats.innerHTML =
+      '<div class="ls-cell"><b class="ls-c" style="--ls-c:' + ty.tint + '">' + r.reach_1 + '</b><span>' + (isUp ? L('benefician', 'benefit') : L('afectadas ≥1 %', 'affected ≥1%')) + '</span></div>' +
       '<div class="ls-cell"><b class="ls-c" style="--ls-c:' + ty.tint + '">' + fmtB(capExp) + '</b><span>' + L('cap movida', 'cap moved') + '</span></div>' +
-      '<div class="ls-cell"><b class="' + (isUp ? 'ls-up' : 'ls-down') + '">' + (portTotal ? (isUp ? '+' : '−') + Math.round(portHit / portTotal) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>';
+      '<div class="ls-cell"><b class="' + (isUp ? 'ls-up' : 'ls-down') + '">' + (portTotal ? (isUp ? '+' : '−') + Math.round(portHit / portTotal) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>'; }
 
     var sect = document.getElementById('ls-sect');
     if (sect && window.SECTORS9) {
@@ -188,30 +184,26 @@
 
     var vict = document.getElementById('ls-vict');
     if (vict) vict.innerHTML = arr.slice(0, 6).map(function (x) {
-      return '<div class="ls-v" onclick="window.jumpTo&&window.jumpTo(\'' + x.id + '\')"><span>' + nm(x.id) + '</span>' +
+      return '<div class="ls-v" onclick="window.jumpTo&&window.jumpTo(\'' + esc(x.id) + '\')"><span>' + esc(nm(x.id)) + '</span>' +
         '<span class="p ls-c" style="--ls-c:' + ty.tint + '">' + (isUp ? '+' : '−') + Math.round(x.v) + '%</span></div>';
     }).join('') || '<div class="ls-msg">—</div>';
 
-    // segunda columna: ganadores (solo en golpes a la baja)
+    // segunda columna: rivales del mismo rubro poco golpeados según el servidor (sin % de ganancia inventado)
     var win = document.getElementById('ls-win'), winH = document.getElementById('ls-winh');
     if (win) {
-      if (isUp) { if (winH) winH.textContent = L('Cadena arriba', 'Upstream chain'); win.innerHTML = '<div class="ls-msg">' + L('el auge sube a proveedores', 'the boom flows up to suppliers') + '</div>'; }
-      else {
-        if (winH) winH.textContent = L('Ganadores ↑', 'Winners ↑');
-        var winners = computeWinners(r.impact);
-        win.innerHTML = winners.map(function (x) {
-          return '<div class="ls-v" onclick="window.jumpTo&&window.jumpTo(\'' + x.id + '\')"><span>' + nm(x.id) + '</span>' +
-            '<span class="p up">↑' + x.up + '%</span></div>';
-        }).join('') || '<div class="ls-msg">' + L('sin ganadores claros', 'no clear winners') + '</div>';
-      }
+      if (winH) winH.textContent = S('win');
+      var winners = isUp ? [] : window.KhipuHot.rivals(targets, r.impact, 5);
+      win.innerHTML = winners.map(function (x) {
+        return '<div class="ls-v" onclick="window.jumpTo&&window.jumpTo(\'' + esc(x.id) + '\')"><span>' + esc(nm(x.id)) + '</span>' +
+          '<span class="p up">' + L('golpe ', 'hit ') + Math.round(x.hit) + '%</span></div>';
+      }).join('') || '<div class="ls-msg">' + L('sin rivales claros', 'no clear rivals') + '</div>';
     }
-    var read = document.getElementById('ls-read');
-    if (read) read.innerHTML = tDesc(ty) + ' · <b class="ls-c" style="--ls-c:' + ty.tint + '">' + targets.slice(0, 3).map(nm).join(', ') + (targets.length > 3 ? '…' : '') + '</b> ' + L('al', 'at') + ' ' + severity + '%';
   }
 
+  // el servidor calcula: se le pide UNA vez cuando el deslizador se detiene (no en cada píxel; respeta su límite)
   function schedule() {
-    if (raf) { cancelAnimationFrame(raf); clearTimeout(raf); }
-    raf = (typeof document !== 'undefined' && document.hidden) ? setTimeout(run, 16) : requestAnimationFrame(run);
+    if (raf) clearTimeout(raf);
+    raf = setTimeout(run, 250);
   }
 
   // ── objetivos ──
@@ -232,9 +224,10 @@
 
   // ── película ──
   function playCascade() {
-    if (!lastResult || !lastResult.frames) { run(); if (!lastResult || !lastResult.frames) return; }
+    if (!lastResult || !window.KhipuState || !window.KhipuState.frames) { run(); return; }
     stopCascade(); playing = true;
-    var frames = lastResult.frames, dir = lastResult.direction, k = 0;
+    var frames = window.KhipuState.frames(lastResult), dir = lastResult.direction, k = 0;
+    if (!frames.length) { stopCascade(); return; }
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var btn = document.getElementById('ls-playbtn'), hopEl = document.getElementById('ls-hop');
     if (btn) btn.textContent = L('■ Detener', '■ Stop');
@@ -259,7 +252,7 @@
     var btn = document.getElementById('ls-btn'), panel = document.getElementById('ls-panel');
     btn.classList.toggle('on', active); panel.classList.toggle('show', active);
     btn.innerHTML = active ? '<span>◉</span> ' + L('En vivo', 'Live') + ' · ON' : '<span>◉</span> ' + L('En vivo', 'Live');
-    if (active) { applyLang();  window.KhipuState && window.KhipuState.build(); schedule(); }
+    if (active) { applyLang(); schedule(); }
     else { stopCascade(); addMode = false; if (window._liveResetColors) window._liveResetColors(); }
   }
 
@@ -282,7 +275,7 @@
     add: ['＋ añadir empresa seleccionada', '＋ add selected company'],
     sev: ['Severidad', 'Severity'],
     vict: ['Más afectadas', 'Most affected'],
-    win: ['Ganadores ↑', 'Winners ↑'],
+    win: ['Rivales poco golpeados', 'Barely hit rivals'],
     play: ['▶ Reproducir cascada', '▶ Play cascade'],
     save: ['💾 Guardar', '💾 Save'],
     hist: ['📁 Historial', '📁 History'],
@@ -368,7 +361,8 @@
   }
 
   function saveSim() {
-    if (!lastResult) { run(); if (!lastResult) return; }
+    var btn0 = document.getElementById('ls-savebtn');
+    if (!lastResult) { if (btn0) { btn0.textContent = L('⚠ nada que guardar', '⚠ nothing to save'); setTimeout(function () { btn0.textContent = S('save'); }, 1600); } return; }
     var ty = T();
     var top = [];
     lastResult.impact.forEach(function (v, id) { if (targets.indexOf(id) < 0) top.push({ id: id, v: v }); });
@@ -381,7 +375,8 @@
         actor: window.khipuActor ? window.khipuActor() : 'usuario',   // EL helper único (engine/toast.js)
         name: tDesc(ty) + ' · ' + targets.slice(0, 2).map(nm).join(', ') + (targets.length > 2 ? '…' : ''),
         targets: targets, kind: ty.kind, direction: ty.dir, severity: severity,
-        affected: top.length, top: top.slice(0, 8),
+        affected: lastResult.reach_1, top: top.slice(0, 8),
+        engine_generation: lastResult.view ? lastResult.view.generation : null,
       }),
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (btn) { btn.textContent = d && d.id ? L('✓ Guardada', '✓ Saved') : L('⚠ requiere Postgres', '⚠ requires Postgres'); setTimeout(function () { btn.textContent = S('save'); }, 1600); }

@@ -54,8 +54,9 @@ KINDS = frozenset((
     'whatif.shock', 'whatif.factor_fire', 'simulation.save', 'insight.snapshot',
     'chat.route', 'chat.answer', 'mcp.tool_call',
     'reconcile.plan', 'reconcile.apply', 'reconcile.rollback',
-    'policy.change', 'governance.propose', 'governance.validate', 'governance.activate',
-    'retention.purge', 'ledger.lineage_break', 'ledger.chain_ack', 'audit.replay', 'audit.gates',
+    'policy.change', 'governance.propose', 'governance.validate', 'governance.activate', 'governance.ratify',
+    'retention.purge', 'ledger.lineage_break', 'ledger.chain_break', 'ledger.chain_ack', 'audit.replay',
+    'audit.gates',
 ))
 SYNC_PREFIXES = ('order.', 'approval.', 'ontology.', 'proposal.', 'committee.', 'research.', 'claim.', 'alert.rule',
                  'reconcile.', 'policy.', 'governance.', 'trade.', 'audit.', 'retention.', 'ledger.')
@@ -159,6 +160,14 @@ def stamp():
         out['graph_lineage'] = k.get('lineage')
         rel, label = signals.release_hash()
         out['release_hash'], out['release_label'] = rel, label
+    except Exception:  # noqa: BLE001
+        pass
+    try:   # paso 9: qué versión de cada artefacto regía (manifest/1 → release.semver)
+        from core import governance
+        out['release_semver'] = {a: v['semver'] for a, v in sorted(governance.active().artifacts.items())}
+        fb = governance.fallbacks()   # artefactos que el release de la base no trae (leídos del repo, sin aprobar)
+        if fb:
+            out['release_fallback'] = fb
     except Exception:  # noqa: BLE001
         pass
     return out
@@ -300,7 +309,9 @@ def _manifest(ctx, lineage_id, rejected=False):
     m = {'schema': SCHEMA, 'valid_at': ctx.valid_at.isoformat(),
          'knowledge': {'graph_version': st['graph_version'], 'graph_lineage': st['graph_lineage'],
                        'lineage_id': str(lineage_id), 'source': 'pg'},
-         'release': {'hash': st['release_hash'], 'label': st['release_label']},
+         'release': {'hash': st['release_hash'], 'label': st['release_label'],
+                     **({'semver': st['release_semver']} if st.get('release_semver') else {}),
+                     **({'fallback': st['release_fallback']} if st.get('release_fallback') else {})},
          'code_sha': st['code_sha'],
          'principal': {'id': ctx.principal.id, 'kind': ctx.principal.kind, 'auth': ctx.principal.auth,
                        'channel': ctx.principal.channel},
@@ -420,6 +431,22 @@ def _lineage(session=None):
     return ledger.lineage_id()
 
 
+def _g8(ctx, status):
+    """Meta-puerta G8 (paso 10, SOMBRA): la ficha misma cumple decision.ttl (kind del vocabulario, principal
+    tipado, release presente, cotizaciones con fecha y fuente, dinero ejecutado sin bloqueo). Lo que encuentre
+    queda en las violaciones de ESTA decisión. Nunca lanza."""
+    try:
+        from core import gates
+        from core.gates import focus as gf
+        from core.gates import report as gr
+        triples, foc = gf.gather_decision(ctx, status)
+        rep = gates.evaluate('ledger.g8', triples, foc)
+        if rep is not None and rep['results']:
+            gr.attach(ctx, rep)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def record(session, ctx, *, status='executed', output=None, expires_at=None):
     """Escribe la decisión. sync: en la MISMA sesión que el efecto (si falla, lanza y el caller revierte todo).
     async: sesión autónoma, nunca lanza (lo perdido se cuenta)."""
@@ -430,6 +457,7 @@ def record(session, ctx, *, status='executed', output=None, expires_at=None):
     if expires_at is not None:
         ctx.expires_at = expires_at
     ctx.status = status
+    _g8(ctx, status)
     t0 = time.perf_counter()
     if ctx.durability == 'async':
         try:
@@ -503,6 +531,7 @@ def record_rejection(ctx, status='rejected', error=None, report=None):
         return ctx.id
     if report is not None:
         ctx.gate(report)
+    _g8(ctx, status)
     out = {'error': safe_error(error)} if error is not None else (ctx.output or None)
 
     def _do(s):
@@ -553,6 +582,12 @@ def decision_scope(kind, principal, *, session, subject=None, durability=None, p
         if session is not None and ctx.durability == 'sync':
             _set_guc(session, str(ctx.id))
         yield ctx
+        if session is not None:     # paso 10: puertas G1 diferidas (objetos/factores) sobre el estado FINAL
+            try:
+                from core import gates as _gates
+                _gates.flush_deferred(session)
+            except Exception:  # noqa: BLE001
+                pass
     except BaseException as e:
         _CTX.reset(tok)
         tok = None

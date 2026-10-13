@@ -11,6 +11,8 @@ el mismo `Base` de la ontología para que `init_schema` (create_all) las cree y 
   decision_violations índice consultable de los veredictos de las puertas (paso 10+)
   ledger_seals        UNA cadena de hashes sobre events, kh_tx_versions, decisions, refs, outcomes y broker_audit
   ledger_meta         linaje (cluster_id + primer txid): detecta restauraciones de la base
+  ledger_anchors      ancla diaria (paso 7): cabeza de la cadena por día; GET /api/ledger/anchor la publica y el
+                      GitHub Action smoke-mcp.yml la guarda FUERA de la base (artefacto + resumen del run)
 
 Todas (salvo blobs, que tienen su guardia de purga) son APPEND-ONLY en la base: core/ledger_ddl les pone
 `kh_append_only()`. Los índices especiales (GIN de subject, únicos parciales con expresión) y los disparadores
@@ -20,8 +22,8 @@ también viven en core/ledger_ddl.
 vieja se compila como bigint + txid_current() (core/ledger_ddl.detect_xid8 corre ANTES de create_all).
 """
 from sqlalchemy import (
-    CHAR, BigInteger, CheckConstraint, Column, DateTime, ForeignKey, Identity, Index, Integer, LargeBinary,
-    PrimaryKeyConstraint, SmallInteger, String, Text, text,
+    CHAR, BigInteger, Boolean, CheckConstraint, Column, Date, DateTime, ForeignKey, Identity, Index, Integer,
+    LargeBinary, PrimaryKeyConstraint, SmallInteger, String, Text, text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.compiler import compiles
@@ -204,5 +206,21 @@ class LedgerMeta(Base):
     note = Column(Text, nullable=True)
 
 
+class LedgerAnchor(Base):
+    """Ancla diaria (paso 7, §2.8): la cabeza de la cadena de sellos de ese día (UTC) en ese linaje, con el
+    resultado de la verificación previa. Append-only. La copia EXTERNA (GitHub Actions) es la única defensa
+    contra un superusuario que desactive los disparadores y reescriba todo de forma coherente."""
+    __tablename__ = 'ledger_anchors'
+    id = Column(BigInteger, Identity(always=True), primary_key=True)
+    day = Column(Date, nullable=False)                      # día UTC (reloj de la base)
+    head_seal = Column(BigInteger, nullable=False)
+    head_hash = Column(CHAR(64), nullable=False)
+    lineage_id = Column(UUID(as_uuid=True), nullable=False)
+    verified = Column(Boolean, nullable=True)                # verify() antes de anclar (None = no se pudo)
+    checked = Column(BigInteger, nullable=True)              # filas re-leídas por esa verificación
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=_NOW)
+    __table_args__ = (Index('ux_anchor_day_lineage', 'day', 'lineage_id', unique=True),)
+
+
 LEDGER_TABLES = ('decisions', 'decision_refs', 'decision_outcomes', 'decision_violations', 'ledger_seals',
-                 'ledger_meta')
+                 'ledger_meta', 'ledger_anchors')

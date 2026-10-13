@@ -703,7 +703,21 @@ def _js_round(x):
     return int(math.floor(x + 0.5))
 
 
-_NRS_GEO = {'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18}
+# INFRA_OPERATIVA paso 9: TODAS las constantes de la fórmula NRS salen del artefacto `nrs.formula` del release
+# vigente (governance/artifacts/nrs.formula@<semver>.json; la misma tabla vive aún en app.html computeNRS y
+# tests/test_cleanup_nrs_parity.py exige el mismo número). Los alias de abajo son ORTOGRAFÍA (no números).
+from core import governance as _gov  # noqa: E402
+(
+    _NRS_GEO, _NRS_GEO_DEFAULT, _NRS_CHAIN_PER_DEGREE, _NRS_CHAIN_CAP, _NRS_MARGIN_DEFAULT, _NRS_MARGIN_REF,
+    _NRS_MARKET_CAP, _NRS_FUNDAMENTAL_CAP, _NRS_PREIPO, _NRS_GROWTH_RED, _NRS_GROWTH_YELLOW, _NRS_CONCENTRATED,
+    _NRS_CONC_HIGH, _NRS_CONC_LOW, _NRS_TOTAL_CAP,
+) = _gov.bind(globals(), 'nrs.formula', {
+    '_NRS_GEO': 'geo', '_NRS_GEO_DEFAULT': 'geo_default', '_NRS_CHAIN_PER_DEGREE': 'chain_per_degree',
+    '_NRS_CHAIN_CAP': 'chain_cap', '_NRS_MARGIN_DEFAULT': 'margin_default', '_NRS_MARGIN_REF': 'margin_ref',
+    '_NRS_MARKET_CAP': 'market_cap', '_NRS_FUNDAMENTAL_CAP': 'fundamental_cap', '_NRS_PREIPO': 'preipo_points',
+    '_NRS_GROWTH_RED': 'growth_red_points', '_NRS_GROWTH_YELLOW': 'growth_yellow_points',
+    '_NRS_CONCENTRATED': ('concentrated', tuple), '_NRS_CONC_HIGH': 'concentrated_points',
+    '_NRS_CONC_LOW': 'other_points', '_NRS_TOTAL_CAP': 'total_cap'})
 # 2026-10-05: los países del catálogo se escriben de varias formas ("Japón", "Japon", "Corea", "Estados
 # Unidos", "Taiwán"…) y la tabla solo reconocía "Japan"/"Korea"/"EEUU": Japón y Corea caían al 15 por
 # defecto y las de EE.UU. escritas "Estados Unidos" sumaban 15 en vez de 8. MISMA tabla en app.html.
@@ -723,18 +737,18 @@ def nrs_country(country):
 
 
 def nrs_geo(country):
-    return _NRS_GEO.get(nrs_country(country), 15)
+    return _NRS_GEO.get(nrs_country(country), _NRS_GEO_DEFAULT)
 
 
 def nrs_concentrated(country):
-    return nrs_country(country) in ('Taiwan', 'China')
+    return nrs_country(country) in _NRS_CONCENTRATED
 
 
 def client_nrs(node, degree):
     """MISMA fórmula que computeNRS() de app.html (margen acotado a [0,20] desde 2026-10-05: antes una
     empresa sin ganancias — OpenAI, margen muy negativo — daba NRS 100)."""
     geo = nrs_geo(node.get('country'))
-    chain = min(25, degree * 2.5)
+    chain = min(_NRS_CHAIN_CAP, degree * _NRS_CHAIN_PER_DEGREE)
     margin = node.get('margin')
     try:   # 2026-10-05: el margen REAL (core/live_fundamentals) manda sobre el del catálogo, como en el cliente
         from core.live_fundamentals import live_margin
@@ -743,15 +757,15 @@ def client_nrs(node, degree):
     except Exception:  # noqa: BLE001
         pass
     try:
-        margin = 0.15 if margin is None else float(margin)
+        margin = _NRS_MARGIN_DEFAULT if margin is None else float(margin)
     except (TypeError, ValueError):
-        margin = 0.15
-    market = max(0, min(20, _js_round((1 - min(1, margin / 0.4)) * 20)))
+        margin = _NRS_MARGIN_DEFAULT
+    market = max(0, min(_NRS_MARKET_CAP, _js_round((1 - min(1, margin / _NRS_MARGIN_REF)) * _NRS_MARKET_CAP)))
     growth = str(node.get('growth') or '').lower()
-    fundamental = min(15, (10 if node.get('preipo') else 0) +
-                      (5 if '🔴' in growth else 2 if '🟡' in growth else 0))
-    conc = 10 if nrs_concentrated(node.get('country')) else 4
-    return min(100, max(0, _js_round(geo + chain + market + fundamental + conc)))
+    fundamental = min(_NRS_FUNDAMENTAL_CAP, (_NRS_PREIPO if node.get('preipo') else 0) +
+                      (_NRS_GROWTH_RED if '🔴' in growth else _NRS_GROWTH_YELLOW if '🟡' in growth else 0))
+    conc = _NRS_CONC_HIGH if nrs_concentrated(node.get('country')) else _NRS_CONC_LOW
+    return min(_NRS_TOTAL_CAP, max(0, _js_round(geo + chain + market + fundamental + conc)))
 
 
 _GRAPH = {'data': None}

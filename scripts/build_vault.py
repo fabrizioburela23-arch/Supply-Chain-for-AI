@@ -126,7 +126,7 @@ REGLAS_CAPA = [
     # Cuantitativo
     ('matrix/*', 'cuant'), ('core/risk_report.py', 'cuant'), ('core/options.py', 'cuant'),
     ('core/scenario_engine.py', 'cuant'), ('core/sim_agents.py', 'cuant'), ('core/screener.py', 'cuant'),
-    ('engine/statematrix.js', 'cuant'), ('engine/livesim.js', 'cuant'), ('engine/matrixview.js', 'cuant'),
+    ('engine/statematrix.js', 'cuant'), ('engine/hotclient.js', 'cuant'), ('engine/livesim.js', 'cuant'), ('engine/matrixview.js', 'cuant'),
     ('engine/insights.js', 'cuant'), ('engine/riskreport.js', 'cuant'), ('engine/compare.js', 'cuant'),
     ('sim/*', 'cuant'),
     # Dinero
@@ -151,6 +151,8 @@ REGLAS_CAPA = [
     # Infraestructura
     ('server.py', 'infra'), ('security_audit.py', 'infra'), ('sw.js', 'infra'), ('core/*', 'infra'),
     ('scripts/__init__.py', 'infra'), ('scripts/build_vault.py', 'infra'),
+    ('scripts/build_governance.py', 'infra'), ('scripts/build_shapes.py', 'infra'),
+    ('scripts/fetch_ledger_anchor.py', 'infra'),
     ('engine/aispend.js', 'infra'), ('engine/sync.js', 'infra'),
     # Interfaz
     ('app.html', 'interfaz'), ('engine/*', 'interfaz'),

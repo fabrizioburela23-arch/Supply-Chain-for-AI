@@ -161,7 +161,9 @@ UNVERIFIED_RX = re.compile(r'no verificad|no revisad|\bposible(mente)?|sin confi
 # nodes/merge_graph.js (UNVERIFIED_QUALIFIER_RX) — cambiar las dos.
 UNVERIFIED_QUALIFIER_RX = re.compile(
     r'(%|porcentaje|cifra|monto|participaci[oó]n)[^.;]{0,30}?no verificad[oa]s?|posibles? duplicad[oa]s?', re.I)
-UNVERIFIED_CONF = 0.3
+# Confianza de un vínculo "no verificado": número del kernel → artefacto `kernel.params.unverified_conf` (paso 9).
+from core import governance as _gov  # noqa: E402
+(UNVERIFIED_CONF,) = _gov.bind(globals(), 'kernel.params', {'UNVERIFIED_CONF': 'unverified_conf'})
 
 
 def text_says_unverified(text):

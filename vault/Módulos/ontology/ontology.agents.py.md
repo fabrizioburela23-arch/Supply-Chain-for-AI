@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/agents.py"
 lenguaje: "python"
-lineas: 927
+lineas: 976
 aliases: ["ontology/agents.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/agents.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 927 líneas · `ontology/agents.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 976 líneas · `ontology/agents.py`
 
 ## Para qué sirve
 
@@ -26,24 +26,26 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - clase `RadarEmpresas` _(línea 274)_
 - clase `TejedorHiperaristas` — Teje HIPERARISTAS: cuando detecta en noticias un golpe SISTÉMICO que toca a VARIAS empresas del grafo a la vez (sanción, escasez de un … _(línea 344)_
 - clase `InvestigadorAutonomo` — Dos caminos: manual (endpoint /agents/investigar, SIEMPRE disponible) o reactivo (Annotations recientes de otros agentes — gateado por … _(línea 492)_
-- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 710)_
-- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 762)_
-- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 806)_
-- `evaluate_alert(session, rule)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). _(línea 877)_
-- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 912)_
+- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 759)_
+- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 811)_
+- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 855)_
+- `evaluate_alert(session, rule)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). _(línea 926)_
+- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 961)_
 
-**Internas** (empiezan con `_`): `_utcnow`, `_recently_proposed`, `_ai_explain`, `_compute_server_nrs`, `_slug`, `_get_live_price`
+**Internas** (empiezan con `_`): `_utcnow`, `_recently_proposed`, `_ai_explain`, `_compute_server_nrs`, `_slug`, `_gate_prop`, `_get_live_price`
 
 ## Depende de
 
+- [[core.__init__.py]] — importa `core.gates`, `focus`, `report`
 - [[core.ai.py]] — importa `_ai_complete`, `_extract_json`
 - [[core.config.py]] — importa `FINNHUB`, `INVESTIGADOR_AUTO`, `INVESTIGADOR_AUTO_CUTOFF_HORAS`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `UMBRAL_ESCRITURA`, `resolve`
+- [[core.governance.py]] — importa `governance`
 - [[core.identity.py]] — importa `identity`
 - [[core.quotes.py]] — importa `_fetch_quote_raw`
 - [[core.websearch.py]] — importa `_web_search_available`, `web_search`
 - [[core.world.py]] — importa `client_nrs`
-- [[ontology.actions.py]] — importa `execute_action`
+- [[ontology.actions.py]] — importa `ACTION_CATALOG`, `execute_action`
 - [[ontology.models.py]] — importa `Alert`, `Event`, `LinkRecord`, `ObjectRecord`, `ProposedAction`
 - [[ontology.vocabulary.py]] — importa `vocabulary`
 
@@ -53,19 +55,22 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - [[ontology.api.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 
-_Además lo importan 9 pruebas (lista abajo)._
+_Además lo importan 12 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_agent_dudosos.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_docs_facts.py]]
+- [[tests.test_gates_resulting_state.py]]
+- [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_investigador.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]
 - [[tests.test_repair_graph.py]]
+- [[tests.test_review_infra_c.py]]
 
 ## Mencionado en sesiones de trabajo
 

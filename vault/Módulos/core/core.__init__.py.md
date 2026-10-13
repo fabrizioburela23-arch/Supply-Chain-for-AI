@@ -37,10 +37,15 @@ _Nada interno._
 - [[matrix.engine.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
+- [[ontology.actions.py]] — lo importa
+- [[ontology.agents.py]] — lo importa
+- [[ontology.api.py]] — lo importa
+- [[ontology.bulk_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.service.py]] — lo importa
 - [[research.context.py]] — lo importa
 - [[research.router.py]] — lo importa
+- [[scripts.build_shapes.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_supply_chain` → [[API herramientas MCP]]
@@ -48,14 +53,22 @@ _Nada interno._
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 15 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.gates_cases.py]]
+- [[tests.test_gates_conformance.py]]
+- [[tests.test_gates_ir_fresh.py]]
+- [[tests.test_gates_resulting_state.py]]
+- [[tests.test_governance.py]]
+- [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_review_infra_c.py]]
 - [[tests.test_tensor.py]]

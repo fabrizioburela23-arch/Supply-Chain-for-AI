@@ -324,8 +324,14 @@ window.NODE_META = { TSMC: { mktcap_b: 900 }, Nvidia: { mktcap_b: 4400, mktcap_l
 window.computeNRS = function (id) { return id === 'TSMC' ? 72 : 30; };
 window.computeNRSBreakdown = function () { return { terms: [{ key: 'Geopolítica', val: 22, max: 30, hot: true }, { key: 'Cadena', val: 10, max: 25, hot: false }] }; };
 window.MKT = { quotes: {}, pos: {} };
-window.KhipuState = { build: function () {}, idsInSector: function () { return ['TSMC']; }, idsInCountry: function () { return ['TSMC']; },
-  simulate: function () { var m = new Map([['TSMC', 100], ['Nvidia', 70], ['Amazon', 30]]); return { impact: m, frames: [m], direction: 'down' }; } };
+window.KhipuState = { idsInSector: function () { return ['TSMC']; }, idsInCountry: function () { return ['TSMC']; },
+  frames: function (r) { return [r.impact]; } };
+// paso 13 INFRA_OPERATIVA: las cifras las da el motor del servidor por window.KhipuHot (aquí, un doble)
+window.KhipuHot = { simulate: function () { var m = new Map([['TSMC', 100], ['Nvidia', 70], ['Amazon', 30]]);
+    return Promise.resolve({ ok: true, kind: 'collapse', direction: 'down', severity: 100, targets: ['TSMC'], impact: m,
+      victims: [{ id: 'Nvidia', pct: 70, hop: 1 }, { id: 'Amazon', pct: 30, hop: 2 }], reach_1: 2, reach_10: 2, sum_impact: 1,
+      view: { generation: 'g0.r0.c0.snapshot', graph_version: 0, source: 'snapshot', age_ms: 1000 } }); },
+  rivals: function () { return []; }, stamp: function () { return 'g0'; }, stampHTML: function () { return '<span class="kh-hot-stamp">g0</span>'; } };
 try { localStorage.setItem('kh_cryptoview', 'list'); } catch (e) {}
 </script></body></html>"""
 

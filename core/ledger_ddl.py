@@ -28,7 +28,8 @@ log = logging.getLogger('khipu')
 # libro de decisiones (ontology/ledger_models.py). decision_blobs tiene su propia guardia (purga por retención).
 APPEND_ONLY_TABLES = ('events', 'kh_tx_versions', 'hot_view_builds',
                       'decisions', 'decision_refs', 'decision_outcomes', 'decision_violations',
-                      'ledger_seals', 'ledger_meta')
+                      'ledger_seals', 'ledger_meta', 'ledger_anchors',
+                      'gov_artifacts', 'gov_releases')
 
 # Tablas con txid/seq añadidos como columnas tardías (ontology/db._COLUMNAS_TARDIAS): aquí solo el DEFAULT.
 TXID_SEQ_TABLES = ('events', 'broker_audit')

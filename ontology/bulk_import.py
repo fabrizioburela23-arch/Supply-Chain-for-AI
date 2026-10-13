@@ -131,6 +131,22 @@ def import_links_bulk(session, records, provenance, batch_size=1000,
         if ext:
             seen.add(('ext', provenance, str(ext)))
 
+    # INFRA_OPERATIVA paso 10 (G-BULK, SOMBRA): el lote aceptado contra las formas de vínculo en UNA pasada
+    # compilada (17 ms / 1.000 vínculos frente a 204 s de pySHACL); G1 no se repite vínculo por vínculo.
+    gate = _gate_bulk(session, accepted, existing_ids, valid_from)
+    session.info['kh_gate_skip_g1'] = True
+    try:
+        created, skipped, batches = _apply_accepted(session, accepted, seen, provenance, valid_from, actor,
+                                                    batch_size)
+    finally:
+        session.info.pop('kh_gate_skip_g1', None)
+    return {'gate': gate, 'input': len(accepted) + len(quarantined), 'created': created,
+            'skipped_duplicates': skipped, 'quarantined': quarantined,
+            'quarantined_count': len(quarantined), 'batches': batches,
+            'provenance': provenance}
+
+
+def _apply_accepted(session, accepted, seen, provenance, valid_from, actor, batch_size):
     created, skipped, batches = 0, 0, 0
     batch = []
     for rec in accepted:
@@ -148,11 +164,35 @@ def import_links_bulk(session, records, provenance, batch_size=1000,
     if batch:
         created += _flush_batch(session, batch, provenance, valid_from, actor)
         batches += 1
+    return created, skipped, batches
 
-    return {'input': len(accepted) + len(quarantined), 'created': created,
-            'skipped_duplicates': skipped, 'quarantined': quarantined,
-            'quarantined_count': len(quarantined), 'batches': batches,
-            'provenance': provenance}
+
+def _gate_bulk(session, accepted, existing_ids, valid_from):
+    """G-BULK: un reporte para todo el lote (resumen en la respuesta; detalle en el libro). Nunca lanza."""
+    try:
+        import core.gates as _gates
+        from core.gates import focus as _gf
+        from core.gates import report as _gr
+        triples = []
+        foc = None
+        lim, flow = _gf._limits(), _gf._flow_rels()
+        for n, rec in enumerate(accepted):
+            ends = {x: {'type': None, 'live': x in existing_ids} for x in (rec['source'], rec['target'])}
+            t, f = _gf.link_triples({'id': f"bulk:{rec.get('external_id') or n}", 'source': rec['source'],
+                                     'target': rec['target'], 'rel': rec['rel_type'], 'weight': rec['weight'],
+                                     'confidence': (rec.get('properties') or {}).get('confidence'),
+                                     'valid_from': valid_from}, ends, (), {}, lim, flow)
+            triples += t
+            foc = foc or f
+        rep = _gates.evaluate('ontology.g_bulk', list(dict.fromkeys(triples)), None)
+        if rep is None:
+            return None
+        _gr.record(rep, session=session)
+        by_rule = _gr.by_rule_of(rep)          # conteo completo (también lo que pasó de MAX_RESULTS)
+        return {'mode': rep['mode'], 'outcome': rep['outcome'], 'checked': len(accepted), 'by_rule': by_rule,
+                'truncated': rep.get('truncated', 0), 'latency_us': rep.get('latency_us')}
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _flush_batch(session, batch, provenance, valid_from, actor):

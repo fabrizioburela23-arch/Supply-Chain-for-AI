@@ -3,18 +3,18 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/statematrix.js"
 lenguaje: "javascript"
-lineas: 234
+lineas: 73
 aliases: ["engine/statematrix.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/statematrix.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 234 líneas · `engine/statematrix.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 73 líneas · `engine/statematrix.js`
 
 ## Para qué sirve
 
-MOTOR DE ESTADOS REACTIVO (client-side, 60 fps) El "sistema nervioso" de Khipus: cada empresa tiene un VECTOR DE ESTADO (signos vitales); las MATRICES DE ACOPLAMIENTO (una por tipo de relación) son su entorno; un KERNEL reactivo re-adapta los valores cuando algo cambia.
+ESTADO VISUAL de la simulación (solo animación; SIN matemática de contagio) Paso 13 de INFRA_OPERATIVA (2026-10-13): el navegador ya NO propaga choques. Aquí había un segundo motor (máximo por "eslabón más débil", 8 iteraciones, sin umbral ni tope de fragilidad) que daba otros números que el servidor para la misma caída (PROP-01/02/12, G5-03). Ahora TODA cifra de impacto la da el kernel único del servidor por /api/hot/\* (engine/hotclient.js, window.KhipuHot). Este archivo solo convierte ese resultado en ESTADO VISUAL: · frames(res) la "película" de la cascada por SALTO (el `hop` que manda el servidor), para animar el mapa · baseline(id) signos vitales de presentación …
 
 ## API pública (globales que define)
 
@@ -22,23 +22,20 @@ MOTOR DE ESTADOS REACTIVO (client-side, 60 fps) El "sistema nervioso" de Khipus:
 
 ## Depende de
 
-- [[app.html]] — usa `LINKS`, `MKT`, `computeNRS`
+- [[app.html]] — usa `MKT`, `NODE_BY_ID`, `computeNRS`, `quotePx`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`
 
-Se carga en [[app.html]] en la posición **65 de 92** (línea 7924), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
+Se carga en [[app.html]] en la posición **66 de 93** (línea 7924), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 65)
-- [[app.html]] — usa `KhipuState`
-- [[engine.cockpit.js]] — usa `KhipuState`
+- [[app.html]] — lo carga con `<script>` (posición 66)
 - [[engine.compare.js]] — usa `KhipuState`
 - [[engine.livesim.js]] — usa `KhipuState`
-- [[engine.voice.js]] — usa `KhipuState`
-- [[engine.xray.js]] — usa `KhipuState`
 
 ## Pruebas que lo cubren
 
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour_client.py]]

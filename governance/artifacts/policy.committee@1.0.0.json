@@ -1,0 +1,51 @@
+{
+  "id": "policy.committee",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "hz_weights": {
+      "INTRADAY": 0.0,
+      "SHORT_TERM": 0.2,
+      "MEDIUM_TERM": 0.35,
+      "LONG_TERM": 0.35,
+      "STRUCTURAL": 0.1
+    },
+    "w0": 1.0,
+    "prior_rel": 0.5,
+    "contra_penalty": 0.5,
+    "buy_threshold": 35.0,
+    "trim_threshold": -20.0,
+    "sell_threshold": -50.0,
+    "overweight": 1.25,
+    "underweight": 0.8,
+    "min_claims": 2,
+    "unvalidated_factor": 0.5,
+    "required_agents": [
+      "fundamental"
+    ],
+    "quorum_pool": [
+      "fundamental",
+      "news",
+      "technical",
+      "supply_chain"
+    ],
+    "min_agents": 3,
+    "default_mandate": {
+      "risk_budget_pct": 2.0,
+      "max_position_pct": 10.0,
+      "min_vol_pct": 10.0
+    },
+    "review_days": {
+      "INTRADAY": 7,
+      "SHORT_TERM": 30,
+      "MEDIUM_TERM": 90,
+      "LONG_TERM": 120,
+      "STRUCTURAL": 180
+    },
+    "memo_ttl_hours": 72.0
+  },
+  "changelog_es": "Bootstrap 1.0.0: umbrales BUY/TRIM/SELL, pesos por horizonte, quórum, factor \"no validado\" y mandato por defecto de research/committee.py.",
+  "changelog_en": "Bootstrap 1.0.0: BUY/TRIM/SELL thresholds, horizon weights, quorum, \"unvalidated\" factor and default mandate from research/committee.py."
+}

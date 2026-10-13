@@ -35,11 +35,12 @@ FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
 - [[research.agent_skills.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_nrs_parity.py]]
+- [[tests.test_governance_seed_parity.py]]
 - [[tests.test_live_fundamentals.py]]
 
 ## Mencionado en sesiones de trabajo

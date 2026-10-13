@@ -163,6 +163,25 @@ def status():
         return jsonify({'configured': True, 'ok': False, 'detail': str(e)[:200]}), 500
 
 
+@ontology_bp.route('/gates')
+@rate_limit(60, 60)
+def gates_status():
+    """Puertas de validación (INFRA_OPERATIVA paso 10): modo (sombra), versión e ir_hash de las formas, reglas,
+    cuántas veces avisó cada regla desde el arranque y la latencia p50/p95 de la puerta compilada. No necesita base."""
+    try:
+        import core.gates as gates
+        st = gates.status()
+        st['explain'] = {
+            'es': ('Modo SOMBRA: las reglas solo AVISAN y quedan en el libro de decisiones; nada se rechaza todavía.'
+                   if st['mode'] == 'shadow' else 'Puertas APAGADAS por el interruptor de emergencia KHIPU_GATES=off.'),
+            'en': ('SHADOW mode: rules only WARN and are recorded in the decision ledger; nothing is rejected yet.'
+                   if st['mode'] == 'shadow' else 'Gates OFF via the KHIPU_GATES=off emergency switch.')}
+        return jsonify(st)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'available': False, 'error': 'puertas no disponibles', 'error_en': 'gates unavailable',
+                        'detail': type(e).__name__}), 503
+
+
 @ontology_bp.route('/objects')
 @_require_db
 def objects_list():
@@ -285,7 +304,9 @@ def _proposal_to_dict(p):
     return {'id': str(p.id), 'agent': p.agent, 'action_type': p.action_type, 'payload': p.payload,
             'object_id': p.object_id, 'confidence': p.confidence, 'explanation': p.explanation,
             'status': p.status, 'created_at': p.created_at.isoformat() if p.created_at else None,
-            'resolved_at': p.resolved_at.isoformat() if p.resolved_at else None, 'resolved_by': p.resolved_by}
+            'resolved_at': p.resolved_at.isoformat() if p.resolved_at else None, 'resolved_by': p.resolved_by,
+            # paso 10 (G-PROP): qué reglas NO cumpliría esta propuesta (en sombra: solo aviso) — para quien aprueba
+            'gate_report': getattr(p, 'gate_report', None)}
 
 
 @ontology_bp.route('/agents/run', methods=['POST'])

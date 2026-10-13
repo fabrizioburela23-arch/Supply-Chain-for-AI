@@ -50,11 +50,9 @@
     var sig = quotesSig();
     if (!sig || sig === lastSig) return;
     lastSig = sig;
-    if (window._invalidateNRS) window._invalidateNRS();
-    var panel = document.getElementById('analysis-panel');
-    if (panel && panel.offsetParent !== null && window.renderKhipuInsights) {
-      try { window.renderKhipuInsights(); } catch (e) {}
-    }
+    // El NRS NO depende del precio (una sola fórmula: _nrsTerms / core/world.client_nrs) y los Insights
+    // (cuellos de botella del motor del servidor, NRS, geografía) tampoco: un tick de precio ya no limpia el
+    // NRS ni recalcula las lecturas (INFRA_OPERATIVA §4.5, señal `quotes`; antes ~575 ms por tick, MAP 1 #9).
     pulse();
   }
 

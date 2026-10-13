@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "engine/temporal-graph.js"
 lenguaje: "javascript"
-lineas: 1466
+lineas: 1497
 aliases: ["engine/temporal-graph.js"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # engine/temporal-graph.js
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.466 líneas · `engine/temporal-graph.js`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.497 líneas · `engine/temporal-graph.js`
 
 ## Para qué sirve
 
@@ -32,11 +32,11 @@ Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada h
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **44 de 92** (línea 7837), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
+Se carga en [[app.html]] en la posición **45 de 93** (línea 7837), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 44)
+- [[app.html]] — lo carga con `<script>` (posición 45)
 - [[app.html]] — usa `initTKGTab`
 - [[engine.cockpit.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.command_center.js]] — usa `__tkgOpenObj`
@@ -61,6 +61,7 @@ Se carga en [[app.html]] en la posición **44 de 92** (línea 7837), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_review_infra_c.py]]
 
 ## Mencionado en sesiones de trabajo
 

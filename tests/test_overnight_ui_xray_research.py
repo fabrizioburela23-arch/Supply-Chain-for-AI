@@ -102,7 +102,7 @@ def test_texto_semantico_con_tokens_ink_y_movimiento_reducido():
 
 def test_api_publica_e_ids_del_xray_se_conservan():
     for api in ('window.openXRay', 'window.buildXRayHTML', 'window.wireXRay', 'window.xrayEnsureStyles',
-                'window.xrayImpactViaState', 'window.xrayComputeWinners', 'window._xrayJump', 'window._xrayClose',
+                'window.xrayImpact', 'window._xrayJump', 'window._xrayClose',
                 'window._xrayShock', 'window._xrayTKG', 'window._xrayCompare'):
         assert api + ' =' in XRAY, api
     for frag in ("'xray-ov'", 'id="xray"', 'id="xr-px"', 'id="xr-lin"', 'id="xr-impact"', 'id="xr-struct"', "'xray-styles'",
@@ -202,11 +202,14 @@ if (WHAT === 'research') {
   ctx.NODE_META = { Nvidia: { founded: 1993, employees: 36000, mktcap_b: 4400 } };
   ctx.computeNRSBreakdown = () => ({ total: 64, terms: [{ key: 'Cadena', detail: 'grado 2', val: 20, max: 25, hot: true }, { key: 'Margen', detail: '60%', val: 0, max: 20 }] });
   ctx.computeNRS = () => 50;
-  ctx.KhipuState = { simulate: () => ({ impact: new Map([['OpenAI', 70], ['AMD', 2]]) }) };
+  // paso 13 INFRA_OPERATIVA: el impacto lo da el motor del servidor por window.KhipuHot (aquí, un doble)
+  ctx.KhipuHot = { simulate: () => Promise.resolve({ ok: true, impact: new Map([['Nvidia', 100], ['OpenAI', 70], ['AMD', 2]]),
+      reach_1: 2, reach_10: 1, view: { generation: 'g0.r0.c0.snapshot', graph_version: 0, source: 'snapshot', age_ms: 900 } }),
+    rivals: () => [{ id: 'AMD', hit: 2 }], stampHTML: () => '<span class="kh-hot-stamp">g0 · catálogo</span>' };
   ctx.KhipuResearch = { open: () => {} }; ctx.KhipuCommittee = { open: () => {} }; ctx._openSecondBrain = () => {};
   ctx.openFinCard = () => {}; ctx.openCompare = () => {}; ctx.__tkgOpenObj = () => {};
   vm.runInContext(fs.readFileSync(ROOT + '/engine/xray.js', 'utf8'), ctx);
-  out.apis = ['openXRay', 'buildXRayHTML', 'wireXRay', 'xrayEnsureStyles', 'xrayImpactViaState', 'xrayComputeWinners',
+  out.apis = ['openXRay', 'buildXRayHTML', 'wireXRay', 'xrayEnsureStyles', 'xrayImpact',
               '_xrayJump', '_xrayClose', '_xrayShock', '_xrayTKG', '_xrayCompare'].filter(k => typeof ctx[k] === 'function');
   ctx.openXRay('Nvidia');
   out.ovClass = (byId['xray-ov'] || {})._cls;
@@ -294,8 +297,8 @@ def test_investigacion_en_ingles_y_sin_mascot_js():
 @needs_node
 def test_xray_cajon_y_escenario_con_tokens():
     o = _run('xray')
-    assert sorted(o['apis']) == sorted(['openXRay', 'buildXRayHTML', 'wireXRay', 'xrayEnsureStyles', 'xrayImpactViaState',
-                                        'xrayComputeWinners', '_xrayJump', '_xrayClose', '_xrayShock', '_xrayTKG', '_xrayCompare'])
+    assert sorted(o['apis']) == sorted(['openXRay', 'buildXRayHTML', 'wireXRay', 'xrayEnsureStyles', 'xrayImpact',
+                                        '_xrayJump', '_xrayClose', '_xrayShock', '_xrayTKG', '_xrayCompare'])
     assert 'kos-themed' in o['ovClass'] and 'class="xray-scope"' in o['ovHtml']
     d = o['drawer']
     # botones de verdad + mascotas para los agentes (Comité, Investigación IA, Análisis IA)
@@ -309,6 +312,8 @@ def test_xray_cajon_y_escenario_con_tokens():
     # onda de impacto: celdas "hot" y víctimas con role=button; sin verdes/rojos fijos
     imp = o['impact']
     assert 'icell hot' in imp and 'xr-victim" role="button"' in imp and '#FF4D6A' not in imp and '#2BE38B' not in imp
+    # cifras del servidor con su generación (sin el 55 % fijo ni otro motor): 2 afectadas ≥1 %, sello visible
+    assert '<b>2</b><span>empresas (≥1 %)</span>' in imp and 'kh-hot-stamp' in imp and '70%' in imp
     # estructura: concentración "alta" con el token de texto rojo
     assert 'var(--os-bad-ink' in o['struct'] and '#E8EDFB' not in o['struct']
     assert 'xr-cols' in o['full']

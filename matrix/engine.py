@@ -46,19 +46,29 @@ log = logging.getLogger('matrix.engine')
 # un sector se hace en el JSON, no editando código. Los valores por defecto del
 # registro son EXACTAMENTE los históricos (mismo orden → misma aritmética).
 from ontology import vocabulary as vocab
+from core import governance as _gov
 
 REL_TYPES = vocab.relation_types()
 SYMMETRIC = vocab.symmetric_relations()
 
-# Pesos por tipo para la propagación de DAÑO operativo: perder a tu proveedor
-# de fab pega más que perder a un inversor. Ajustables por request.
-DEFAULT_REL_WEIGHTS = vocab.relation_weights()
-
-# Fuentes de importación EN BULTO (capa ancha Wikidata/GLEIF): sus relaciones
-# binarias no traen un peso equivalente al de las relaciones curadas a mano, así
-# que reciben un peso descontado y parametrizable (spec §"Ponderación de datos
-# importados en bulto"). Se marca la procedencia en LinkRecord.properties.source.
-BULK_SOURCES = {'wikidata', 'gleif'}
+# INFRA_OPERATIVA paso 9: TODOS los números del kernel salen del artefacto `kernel.params` del release vigente
+# (governance/artifacts/kernel.params@<semver>.json; manda el aprobado en la base). `_gov.bind` asigna estas
+# constantes y las vuelve a asignar si cambia el release. Ninguna se vuelve a declarar aquí:
+#   DEFAULT_REL_WEIGHTS — α por tipo para la propagación de DAÑO operativo (perder a tu proveedor de fab pega más
+#                         que perder a un inversor; ajustables por request). Espejo de vocabulary.json (--check).
+#   BULK_SOURCES        — importación EN BULTO (Wikidata/GLEIF): peso descontado por bulk_weight_factor().
+#   UNVERIFIED_CONF     — confianza de un link "no verificado" (G4c).
+#   SOLE_LINK_FLOOR     — piso de normalización por columna (ver _dependency_matrix).
+#   DAMPING, MAX_HOPS, THRESHOLD, MAGNITUDE — valores por defecto de propagate (y de propagate_many/bands).
+#   SEVERITY_DIVISOR    — fragilidad f = 1 + Σ coef·(severity / SEVERITY_DIVISOR), acotada por fragility_cap().
+(
+    DEFAULT_REL_WEIGHTS, BULK_SOURCES, UNVERIFIED_CONF, SOLE_LINK_FLOOR, DAMPING, MAX_HOPS, THRESHOLD, MAGNITUDE,
+    SEVERITY_DIVISOR, PAGERANK_ALPHA,
+) = _gov.bind(globals(), 'kernel.params', {
+    'DEFAULT_REL_WEIGHTS': 'rel_weights', 'BULK_SOURCES': ('bulk_sources', set),
+    'UNVERIFIED_CONF': 'unverified_conf', 'SOLE_LINK_FLOOR': 'sole_link_floor', 'DAMPING': 'damping',
+    'MAX_HOPS': 'max_hops', 'THRESHOLD': 'threshold', 'MAGNITUDE': 'magnitude',
+    'SEVERITY_DIVISOR': 'severity_divisor', 'PAGERANK_ALPHA': 'pagerank_alpha'})
 
 
 def _utcnow():
@@ -76,14 +86,10 @@ def _use_sparse():
 
 
 def bulk_weight_factor():
-    """Factor de descuento para links importados en bulto (default 0.5 = 50%
-    del peso de una relación curada del mismo tipo). Parametrizable, NO
-    hardcodeado: env IMPORT_BULK_WEIGHT_FACTOR ∈ [0,1]."""
-    try:
-        v = float(os.getenv('IMPORT_BULK_WEIGHT_FACTOR', '0.5'))
-    except (TypeError, ValueError):
-        v = 0.5
-    return min(1.0, max(0.0, v))
+    """Factor de descuento para links importados en bulto (1.0.0: 0.5 = 50 % del peso de una relación curada
+    del mismo tipo), acotado a [0,1]. Sale de `kernel.params` (paso 9). La variable IMPORT_BULK_WEIGHT_FACTOR ya
+    NO fija el número (decisión D2): si contradice al artefacto, el 🩺 avisa (core/governance.env_warnings)."""
+    return min(1.0, max(0.0, float(_gov.param('kernel.params', 'bulk_weight_factor'))))
 
 
 # Confianza de un link sin fuente que la respalde (G4c): el texto curado dice
@@ -93,9 +99,6 @@ def bulk_weight_factor():
 # de que existiera ese campo (y no se puede re-migrar), pero guardó el texto en
 # properties.rel_label: se lee con la MISMA regex para que el descuento rija
 # también allí sin tocar eventos.
-UNVERIFIED_CONF = vocab.UNVERIFIED_CONF
-
-
 def link_confidence(props):
     """properties → confianza 0-1 o None (= sin dato, no se descuenta).
     Orden: confidence declarada > confirmado por una persona (status) / verified=true
@@ -354,16 +357,12 @@ def _iso_or_none(v):
 
 
 def fragility_cap():
-    """Tope de fragilidad POR NODO (env FRAGILITY_CAP, default 2.5). Con decenas
-    de Factores latentes activos a la vez, la suma sin tope pone el sistema en
-    régimen saturado (todo impacto = 100%, ρ supercrítico) y las cascadas dejan
-    de informar. 2.5 deja expresar UNA crisis completa (severity alta) sobre el
-    fondo latente, pero impide el escenario irreal 'todas las crisis a la vez'."""
-    try:
-        v = float(os.getenv('FRAGILITY_CAP', '2.5'))
-        return v if v >= 1.0 else 2.5
-    except (TypeError, ValueError):
-        return 2.5
+    """Tope de fragilidad POR NODO (`kernel.params.fragility_cap`; 1.0.0: 2.5). Con decenas de Factores latentes
+    activos a la vez, la suma sin tope pone el sistema en régimen saturado (todo impacto = 100%, ρ supercrítico)
+    y las cascadas dejan de informar. 2.5 deja expresar UNA crisis completa (severity alta) sobre el fondo latente,
+    pero impide el escenario irreal 'todas las crisis a la vez'. La variable FRAGILITY_CAP ya NO fija el número
+    (D2): si contradice al artefacto, el 🩺 avisa. Nunca < 1 (1 = sin fragilidad)."""
+    return max(1.0, float(_gov.param('kernel.params', 'fragility_cap')))
 
 
 def fragility(idx, factors):
@@ -377,7 +376,7 @@ def fragility(idx, factors):
     for factor in factors or []:
         for oid, coef in factor['members'].items():
             if oid in idx:
-                f[idx[oid]] += coef * (factor['severity'] / 5.0)
+                f[idx[oid]] += coef * (factor['severity'] / SEVERITY_DIVISOR)
     np.minimum(f, fragility_cap(), out=f)
     return f
 
@@ -394,12 +393,11 @@ def modulate(mats, idx, factors):
     return {r: _scale_cols(m, f) for r, m in mats.items()}
 
 
-# Peso "crítico" del catálogo (escala 1-6). La columna de cada tipo se normaliza por
-# max(suma, SOLE_LINK_FLOOR): un proveedor ÚNICO en su tipo transmite según SU peso (6 = todo,
-# 2 = un tercio) en vez del 100 % por el solo hecho de ser único. 2026-10-06, aprobado por
-# Fabrizio: PDF Solutions (licencia, peso 2) salía como el mayor riesgo de TSMC y Palantir/ARM
-# como el de Microsoft. Mismo piso en engine/statematrix.js.
-SOLE_LINK_FLOOR = 6.0
+# SOLE_LINK_FLOOR (kernel.params; 1.0.0: 6.0) = peso "crítico" del catálogo (escala 1-6). La columna de cada tipo
+# se normaliza por max(suma, SOLE_LINK_FLOOR): un proveedor ÚNICO en su tipo transmite según SU peso (6 = todo,
+# 2 = un tercio) en vez del 100 % por el solo hecho de ser único. 2026-10-06, aprobado por Fabrizio: PDF
+# Solutions (licencia, peso 2) salía como el mayor riesgo de TSMC y Palantir/ARM como el de Microsoft. Desde el
+# paso 13 (2026-10-13) el navegador ya NO propaga: lee estas cifras de /api/hot/* (engine/hotclient.js).
 
 
 def _dependency_matrix(mats, rel_weights=None):
@@ -425,8 +423,14 @@ def _dependency_matrix(mats, rel_weights=None):
     return T
 
 
-def propagate(mats, idx, ids, shock_ids, magnitude=1.0, damping=0.6,
-              max_hops=6, threshold=0.01, rel_weights=None, frag=None,
+def _kp(magnitude=None, damping=None, max_hops=None, threshold=None):
+    """Valores por defecto del kernel (kernel.params del release vigente) para lo que el caller no fijó."""
+    return (MAGNITUDE if magnitude is None else magnitude, DAMPING if damping is None else damping,
+            MAX_HOPS if max_hops is None else max_hops, THRESHOLD if threshold is None else threshold)
+
+
+def propagate(mats, idx, ids, shock_ids, magnitude=None, damping=None,
+              max_hops=None, threshold=None, rel_weights=None, frag=None,
               nonlinear=False, eps=None, dt=None):
     """EL kernel de propagación: shock en `shock_ids` → impacto 0..1 por nodo.
 
@@ -444,6 +448,7 @@ def propagate(mats, idx, ids, shock_ids, magnitude=1.0, damping=0.6,
       damping·ρ(T)<1 la convergencia geométrica está garantizada).
     - dt: Tᵀ ya calculada (dependency_transpose) para quien propaga MUCHOS choques sobre las mismas
       matrices (compute_metrics): antes se reconstruía por cada nodo — O(N·R·N²), ~30 s."""
+    magnitude, damping, max_hops, threshold = _kp(magnitude, damping, max_hops, threshold)
     n = len(ids)
     DT = dt if dt is not None else _transpose_csr(_dependency_matrix(mats, rel_weights))
     fvec = frag if frag is not None else np.ones(n)
@@ -478,7 +483,7 @@ def propagate(mats, idx, ids, shock_ids, magnitude=1.0, damping=0.6,
     return impacts, order
 
 
-def propagate_block(DT, frag, X0, damping=0.6, max_hops=6, threshold=0.01, nonlinear=False):
+def propagate_block(DT, frag, X0, damping=None, max_hops=None, threshold=None, nonlinear=False):
     """EL MISMO kernel que `propagate`, en LOTE: cada columna de X0 (n×k) es un choque independiente.
     Las operaciones son las del bucle, en el mismo orden y elemento a elemento (csr @ matriz acumula cada
     (i, k) en el mismo orden que csr @ vector), así que el resultado es IDÉNTICO al de `propagate` columna
@@ -486,6 +491,7 @@ def propagate_block(DT, frag, X0, damping=0.6, max_hops=6, threshold=0.01, nonli
     first_hop n×k int8: salto en que cada nodo se alcanzó por primera vez; 0 = origen o no alcanzado).
     No implementa `eps` (corte por convergencia): en lote cada columna corre hasta max_hops o hasta
     quedar en cero (una columna en cero sigue en cero: Tᵀ·0 = 0)."""
+    _m, damping, max_hops, threshold = _kp(None, damping, max_hops, threshold)
     X0 = np.asarray(X0, dtype=float)
     if X0.ndim == 1:
         X0 = X0[:, None]
@@ -510,12 +516,13 @@ def propagate_block(DT, frag, X0, damping=0.6, max_hops=6, threshold=0.01, nonli
     return total, first
 
 
-def propagate_many(mats, idx, ids, sources, magnitude=1.0, damping=0.6, max_hops=6, threshold=0.01,
+def propagate_many(mats, idx, ids, sources, magnitude=None, damping=None, max_hops=None, threshold=None,
                    rel_weights=None, frag=None, nonlinear=False, dt=None, chunk=128):
     """Choques de UN nodo para cada id de `sources`, en lote (vistas rápidas, INFRA_OPERATIVA §4.4).
     Devuelve {source_id: (impacts, hops)} con `impacts` EXACTAMENTE como `propagate(...)[0]` (dict id→pct
     redondeado igual: round(float(min(1, x))·100, 2)) y `hops` = {id: salto de primera llegada} (lo mismo
     que {o['id']: o['hop']} de la cascada de `propagate`). 46 ms en lote contra 268-357 ms del bucle (MAP 3)."""
+    magnitude, damping, max_hops, threshold = _kp(magnitude, damping, max_hops, threshold)
     n = len(ids)
     DT = dt if dt is not None else _transpose_csr(_dependency_matrix(mats, rel_weights))
     cols = [idx[s] for s in sources if s in idx]
@@ -558,7 +565,8 @@ def propagate_bands(mats, idx, ids, shock_ids, n_samples=200, seed=0,
     point, order = propagate(mats, idx, ids, shock_ids, frag=base_frag, **kw)
     samples = np.zeros((max(1, int(n_samples)), n))
     for s in range(samples.shape[0]):
-        mag = float(kw.get('magnitude', 1.0)) * float(max(0.0, rng.normal(1.0, mag_sigma)))
+        mag = float(MAGNITUDE if kw.get('magnitude') is None else kw['magnitude']) * \
+            float(max(0.0, rng.normal(1.0, mag_sigma)))
         fs = base_frag * rng.normal(1.0, frag_sigma, size=n)
         fs = np.maximum(fs, 0.0)
         kw2 = dict(kw)
@@ -578,7 +586,7 @@ def propagate_bands(mats, idx, ids, shock_ids, n_samples=200, seed=0,
 
 
 # ── centralidad (PageRank) + estabilidad sistémica (radio espectral) ────────
-def pagerank(agg, alpha=0.85, tol=1e-10, max_iter=200, personalization=None):
+def pagerank(agg, alpha=None, tol=1e-10, max_iter=200, personalization=None):
     """PageRank ponderado sobre el grafo de DEPENDENCIA (agg.T): un nodo es
     central si MUCHOS (transitivamente) dependen de él — alinea con el
     chokepoint_rank existente. Se usa PageRank (no eigenvector centrality pura)
@@ -590,6 +598,7 @@ def pagerank(agg, alpha=0.85, tol=1e-10, max_iter=200, personalization=None):
     redistribuyendo su masa al vector de teleportación (tratamiento estándar).
     `personalization`: vector de teleportación NO uniforme (Personalized
     PageRank — centralidad relativa a un portafolio); si None, uniforme."""
+    alpha = PAGERANK_ALPHA if alpha is None else alpha
     A = _transpose_csr(agg)                      # grafo de dependencia (customer→supplier)
     n = A.shape[0]
     if n == 0:
@@ -621,7 +630,7 @@ def pagerank(agg, alpha=0.85, tol=1e-10, max_iter=200, personalization=None):
     return pr
 
 
-def spectral_radius(mats, factors=None, idx=None, rel_weights=None, damping=0.6):
+def spectral_radius(mats, factors=None, idx=None, rel_weights=None, damping=None):
     """ρ(T): radio espectral de la matriz de transmisión EFECTIVA por hop
     (incluida la modulación por fragilidad si hay Factores activos). El operador
     de un hop es M = damping·diag(frag)·Tᵀ; se reporta ρ(diag(frag)·Tᵀ) = ρ(T).
@@ -635,6 +644,7 @@ def spectral_radius(mats, factors=None, idx=None, rel_weights=None, damping=0.6)
     M ≥ 0 (todo no-negativo) ⇒ por Perron-Frobenius el autovalor dominante es
     real no-negativo. Se intenta scipy.sparse.linalg.eigs (LM); si falla o el
     grafo es diminuto, se usa power iteration (robusto para matrices ≥ 0)."""
+    damping = DAMPING if damping is None else damping
     D = _dependency_matrix(mats, rel_weights)
     T = _transpose_csr(D)                         # Tᵀ (transmisión efectiva)
     n = T.shape[0]

@@ -6,8 +6,9 @@ Dos niveles:
    bróker…): las 17 herramientas, TODOS los nombres retirados como alias, recortes de citas, sin nombres internos,
    dinero en dos pasos (nada se envía sin confirmed=true; DINERO REAL cuando la cuenta es real), CONTEXT_UPDATE.
 2. La Cabina REAL en Chromium (Playwright) con voice.js + cockpit.js + khipu_chat.js + desktop.js + statematrix.js:
-   una pregunta hablada se ve en el chat del centro (burbuja 🎙 + respuesta), un auge de demanda mueve la cadena
-   con la MISMA intensidad que dijo la voz y «Ver en el mapa» ya no cierra Khipus OS.
+   una pregunta hablada se ve en el chat del centro (burbuja 🎙 + respuesta), la voz dice el MISMO número que la
+   ventana (motor único del servidor, /api/hot/*; el auge de demanda aún no se calcula y se dice) y «Ver en el
+   mapa» ya no cierra Khipus OS.
 Se salta lo que necesite `node` o Chromium si no están.
 """
 import json
@@ -177,13 +178,17 @@ function osFakes(E, o) {
   W.__reply = { answer: '**Nvidia** depende de TSMC [E1] y de HBM [S2, S3].', agents_used: [{ agent: 'khipu', ok: true }, { agent: 'cadena', ok: true }, { agent: 'radar', ok: false }],
     sources: [1, 2, 3, 4, 5, 6, 7].map(i => ({ label: 'Fuente ' + i, as_of: '2026-10-1' + (i % 10), url: 'https://s/' + i })),
     tools_used: [{ name: 'get_supply_chain' }], actions: [{ type: 'open_xray', arg: 'nvidia' }] };
-  W.KhipuState = { simulate: (shock, f, it, d, t, opts) => {
-    rec.sim.push([shock, opts]);
-    const id = Object.keys(shock)[0], hit = 1 - shock[id].salud, m = new Map();
-    m.set(id, 100 * hit);
-    if (hit > 0) { m.set('amd', 30 * hit); m.set('openai', 10 * hit); m.set('msft', 0); }
-    return { impact: m, state: new Map() };
-  } };
+  // paso 13 INFRA_OPERATIVA: el motor del servidor por window.KhipuHot (doble); el auge de demanda aún no lo calcula
+  W.KhipuHot = { simulate: (o) => {
+    rec.sim.push(o);
+    if (o.kind === 'demand') return Promise.resolve({ ok: false, code: 'unsupported_direction', unsupported: true,
+      error: 'El auge de demanda hacia los proveedores todavía no lo calcula el motor único del servidor. No mostramos cifras inventadas.' });
+    const id = o.targets[0], hit = o.severity / 100, m = new Map();
+    m.set(id, o.severity);
+    if (hit > 0) { m.set('amd', 30 * hit); m.set('openai', 10 * hit); }
+    return Promise.resolve({ ok: true, kind: o.kind, direction: 'down', severity: o.severity, targets: [id], impact: m,
+      reach_1: hit > 0 ? 2 : 0, note: o.kind === 'price' ? 'intensidad transmitida' : '', view: { generation: 'g0.rA.c1.snapshot' } });
+  }, rivals: () => [{ id: 'msft', hit: 0 }] };
   W._runAgentSim = (sc, seeds, lang) => { rec.agentSim.push([sc, seeds, lang]); return Promise.resolve({ ok: true, narrative: 'El **suministro** cae [E1].',
     impacts: [{ label: 'TSMC', pct: -30, rationale: 'Planta parada [S1]' }], agents: [{ name: 'Gobierno' }] }); };
   W._openDeepResearch = (id, lang) => { rec.thesis.push([id, lang]); return Promise.resolve({ thesis: 'Tesis **fuerte** [E1].', sector: 'Semis', competitors: ['AMD', { name: 'Intel' }],
@@ -272,10 +277,13 @@ async function main() {
     R.cmpStage = rec.stage.slice();
     // run_live_simulation
     rec.stage.length = 0; rec.sim.length = 0;
-    R.sim = (await call(E, ws, 'run_live_simulation', { company_name: 'NVIDIA', kind: 'demand', severity: 60 })).body;
+    R.sim = (await call(E, ws, 'run_live_simulation', { company_name: 'NVIDIA', kind: 'price', severity: 60 })).body;
     R.simShock = rec.sim.slice(); R.simStage = rec.stage.slice();
+    rec.stage.length = 0; rec.sim.length = 0;
+    R.simUp = (await call(E, ws, 'run_live_simulation', { company_name: 'NVIDIA', kind: 'demand', severity: 60 })).body;
+    R.simUpShock = rec.sim.slice(); R.simUpStage = rec.stage.slice();
     R.sevs = {};
-    for (const sv of [0, 250, 'abc', -5, 1, 33.4]) { rec.sim.length = 0; const b = (await call(E, ws, 'run_live_simulation', { company_name: 'nvidia', severity: sv })).body; R.sevs[String(sv)] = [b.severity, rec.sim[0][0].nvidia.salud, b.kind]; }
+    for (const sv of [0, 250, 'abc', -5, 1, 33.4]) { rec.sim.length = 0; const b = (await call(E, ws, 'run_live_simulation', { company_name: 'nvidia', severity: sv })).body; R.sevs[String(sv)] = [b.severity, rec.sim[0].severity, b.kind]; }
     // agent sim
     rec.agentSim.length = 0;
     R.asim = (await call(E, ws, 'run_agent_simulation', { preset: 'taiwan_conflict' })).body;
@@ -569,19 +577,29 @@ def test_compare_tie_and_lower_risk(R):
 
 
 # ── 6) run_live_simulation ──
-def test_live_sim_demand_has_damage_and_same_severity_in_window(R):
+def test_live_sim_uses_the_server_engine_and_same_severity_in_window(R):
     s = R['sim']
-    assert s['success'] and s['kind'] == 'demand' and s['severity'] == 60 and s['hypothetical'] is True
+    assert s['success'] and s['kind'] == 'price' and s['severity'] == 60 and s['hypothetical'] is True
     assert s['affected'] == 2 and s['most_impacted'][0] == {'company': 'AMD', 'impact_pct': 18}
-    shock, opts = R['simShock'][0]
-    assert abs(shock['nvidia']['salud'] - 0.4) < 1e-9 and opts == {'direction': 'up', 'kind': 'demand'}
-    assert R['simStage'] == [['sim', {'id': 'nvidia', 'kind': 'demand', 'severity': 60}]]
-    assert s['opened'] == 'Auge de demanda · NVIDIA'
+    assert s['engine_generation'] == 'g0.rA.c1.snapshot' and 'intensidad transmitida' in s['note']
+    assert s['barely_hit_rivals'] == [{'company': 'Microsoft', 'hit_pct': 0}]           # sin % de ganancia inventado
+    assert R['simShock'][0] == {'targets': ['nvidia'], 'kind': 'price', 'severity': 60}
+    assert R['simStage'] == [['sim', {'id': 'nvidia', 'kind': 'price', 'severity': 60}]]
+    assert s['opened'] == 'Shock de precio · NVIDIA'
     sv = R['sevs']
-    assert sv['0'][0] == 100 and sv['0'][1] == 0 and sv['0'][2] == 'collapse'
+    assert sv['0'][0] == 100 and sv['0'][1] == 100 and sv['0'][2] == 'collapse'
     assert sv['250'][0] == 100 and sv['abc'][0] == 100 and sv['-5'][0] == 100 and sv['1'][0] == 1 and sv['33.4'][0] == 33
+    assert sv['33.4'][1] == 33
     e = R['simEn']
     assert e['kind'] == 'sanction' and e['severity'] == 40 and e['opened'] == 'Sanction · TSMC'
+
+
+def test_live_sim_demand_boom_is_honest_without_numbers(R):
+    u = R['simUp']
+    assert u['success'] is False and u['unsupported'] is True and u['kind'] == 'demand' and u['severity'] == 60
+    assert 'No mostramos cifras inventadas' in u['error'] and 'most_impacted' not in u and 'affected' not in u
+    assert R['simUpShock'][0] == {'targets': ['nvidia'], 'kind': 'demand', 'severity': 60}
+    assert R['simUpStage'] == []                                      # no abre una ventana con números
 
 
 # ── 7) run_agent_simulation ──
@@ -755,7 +773,8 @@ def test_retired_aliases_map_to_closest_new_handler(R):
     top = _alias(R, 'get_nrs_top10')['body']['highest_risk']
     assert top[0] == {'company': 'TSMC', 'nrs': 71} and len(top) == 5
     st = _alias(R, 'run_stress_test')
-    assert st['sim'][0][0] == {'nvidia': {'salud': 0}} and st['body']['kind'] == 'collapse' and st['body']['severity'] == 100
+    assert st['sim'][0] == {'targets': ['nvidia'], 'kind': 'collapse', 'severity': 100}
+    assert st['body']['kind'] == 'collapse' and st['body']['severity'] == 100
     assert _alias(R, 'run_simulation')['asim'][0][0].startswith('Crisis en Taiwán.')
     assert _alias(R, 'deep_research')['th'] == [['nvidia', 'es']]
     assert _alias(R, 'deep_analysis')['surf'] == [['deep', 'cobre']]
@@ -825,6 +844,32 @@ def browser():
         b.close()
 
 
+HOT_VIEW = {'name': 'impact', 'generation': 'g7.rA.c1.pg', 'graph_version': 7, 'source': 'pg', 'age_ms': 4000, 'stale': False}
+
+
+def _hot_reply(route, path):
+    """/api/hot/* con el contrato del servidor (paso 13): impacto del motor único; 'up' aún no → 400 direction."""
+    req = route.request
+    if path == '/api/hot/scenario':
+        body = json.loads(req.post_data or '{}')
+        if body.get('direction') == 'up':
+            return route.fulfill(status=400, content_type='application/json', body=json.dumps(
+                {'error': "direction 'up' todavía no está disponible", 'error_en': "direction 'up' is not available yet", 'param': 'direction'}))
+    if path.startswith('/api/hot/impact/'):
+        oid = path.rsplit('/', 1)[1]
+        m = re.search(r'severity=(\d+)', req.url)
+        k = int(m.group(1)) / 100 if m else 1.0
+        vict = [v for v in ({'id': 'OpenAI', 'label': 'OpenAI', 'pct': round(60 * k, 2), 'hop': 1},
+                            {'id': 'Microsoft', 'label': 'Microsoft', 'pct': round(30 * k, 2), 'hop': 1},
+                            {'id': 'AMD', 'label': 'AMD', 'pct': round(2 * k, 2), 'hop': 2}) if v['id'] != oid]
+        data = {'id': oid, 'severity': round(k * 100), 'affected': len(vict), 'reach_1': sum(1 for v in vict if v['pct'] >= 1),
+                'reach_10': sum(1 for v in vict if v['pct'] >= 10), 'sum_impact': round(sum(v['pct'] for v in vict) / 100, 4),
+                'by_hop': {'1': 2, '2': 1}, 'victims': vict}
+        return route.fulfill(status=200, content_type='application/json', body=json.dumps({'data': data, 'view': HOT_VIEW}),
+                             headers={'ETag': '"impact:%s"' % HOT_VIEW['generation'], 'X-Khipu-Graph-Version': '7'})
+    return route.fulfill(status=503, content_type='application/json', body='{"error":"sin servidor"}')
+
+
 def _page(browser, lang='es'):
     c = browser.new_context(viewport={'width': 1440, 'height': 900}, service_workers='block')
     seen = []
@@ -836,13 +881,16 @@ def _page(browser, lang='es'):
         if path == '/api/khipu/chat':
             seen.append(json.loads(route.request.post_data or '{}'))
             return route.fulfill(status=200, content_type='application/json', body=json.dumps(REPLY))
+        if path.startswith('/api/hot/'):
+            return _hot_reply(route, path)
         return route.fulfill(status=503, content_type='application/json', body='{"error":"sin servidor"}')
     c.route('http://khipu.test/**', handler)
     pg = c.new_page()
     errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('http://khipu.test/')
-    for p in ('toast.js', 'agents_registry.js', 'mascot.js', 'desktop.js', 'khipu_chat.js', 'statematrix.js', 'voice.js', 'cockpit.js'):
+    for p in ('toast.js', 'agents_registry.js', 'hotclient.js', 'mascot.js', 'desktop.js', 'khipu_chat.js', 'statematrix.js',
+              'voice.js', 'cockpit.js'):
         pg.add_script_tag(content=_r('engine', p))
     pg.evaluate('BixbyCockpit.open()')
     pg.wait_for_timeout(250)
@@ -883,27 +931,37 @@ def test_navegador_pregunta_hablada_se_ve_en_el_chat_del_centro(browser):
     c.close()
 
 
-def test_navegador_auge_de_demanda_mueve_la_cadena_con_la_misma_intensidad(browser):
+def test_navegador_la_voz_y_la_ventana_dicen_el_mismo_numero_del_motor_del_servidor(browser):
     c, pg, errs, _ = _page(browser)
-    body = pg.evaluate(_CALL, ['run_live_simulation', {'company_name': 'Nvidia', 'kind': 'demand', 'severity': 60}])
-    assert body['success'] and body['severity'] == 60 and body['affected'] > 0
-    assert body['opened'] == 'Auge de demanda · Nvidia'
+    body = pg.evaluate(_CALL, ['run_live_simulation', {'company_name': 'Nvidia', 'kind': 'price', 'severity': 60}])
+    assert body['success'] and body['severity'] == 60 and body['affected'] == 3 and body['engine_generation'] == 'g7.rA.c1.pg'
+    assert body['opened'] == 'Shock de precio · Nvidia'
+    assert body['most_impacted'][0] == {'company': 'OpenAI', 'impact_pct': 36}            # 60 % × 0,6 del servidor
     pg.wait_for_timeout(300)
     w = pg.evaluate("""() => { const w = document.querySelector('.kd-win[data-kind="sim"]'); if (!w) return null;
-      const sev = w.querySelector('.kos-sim-sev'), stat = w.querySelector('.bcp-stat b');
+      const sev = w.querySelector('.kos-sim-sev'), stat = w.querySelector('.kos-sim-reach'), st = w.querySelector('.kos-sim-stamp');
       const task = [...document.querySelectorAll('.kd-task .tx')].map(x => x.textContent);
-      return { title: w.querySelector('.kd-name').textContent, sev: sev && sev.getAttribute('data-sev'), affected: stat && stat.textContent, task }; }""")
+      return { title: w.querySelector('.kd-name').textContent, sev: sev && sev.getAttribute('data-sev'), affected: stat && stat.textContent,
+               stamp: st && st.textContent, task }; }""")
     assert w, 'no se abrió la ventana de la simulación'
-    assert w['title'] == 'Auge de demanda · Nvidia' and w['sev'] == '60'
-    assert int(w['affected']) == body['affected'] > 0                       # antes: 0 ("Sin propagación") en un auge
-    assert 'Auge de demanda · Nvidia' in w['task']                          # la barra de tareas dice el tipo
-    # «Ver en el mapa»: ya NO cierra Khipus OS — abre la ventana del grafo y re-colorea
-    pg.evaluate("() => window._cockpitMapSim('Nvidia', 'demand', 60)")
+    assert w['title'] == 'Shock de precio · Nvidia' and w['sev'] == '60'
+    assert int(w['affected']) == body['affected'] == 3                         # la voz dice lo que muestra la ventana
+    assert w['stamp'].startswith('g7 · base')                                  # versión del grafo y edad, discreto
+    assert 'Shock de precio · Nvidia' in w['task']
+    # «Ver en el mapa»: NO cierra Khipus OS — abre la ventana del grafo y re-colorea con la MISMA respuesta
+    pg.evaluate("() => window._cockpitMapSim('Nvidia', 'price', 60)")
     pg.wait_for_timeout(600)
     assert pg.evaluate('BixbyCockpit.isOpen()') is True
     assert pg.evaluate("""() => !!document.querySelector('.kd-win[data-kind="graph"]')""") is True
     rc = pg.evaluate('window.__recolor')
-    assert rc and rc[-1]['dir'] == 'up' and rc[-1]['n'] > 1
+    assert rc and rc[-1]['dir'] == 'down' and rc[-1]['n'] == 4             # Nvidia + 3 del servidor
+    # auge de demanda: el servidor aún no lo calcula → se dice, sin cifras ni ventana con números
+    n0 = len(rc)
+    up = pg.evaluate(_CALL, ['run_live_simulation', {'company_name': 'Nvidia', 'kind': 'demand', 'severity': 60}])
+    assert up['success'] is False and up['unsupported'] is True and 'No mostramos cifras inventadas' in up['error']
+    pg.evaluate("() => window._cockpitMapSim('Nvidia', 'demand', 60)")
+    pg.wait_for_timeout(600)
+    assert len(pg.evaluate('window.__recolor')) == n0                          # nada que pintar
     assert not errs, errs
     c.close()
 

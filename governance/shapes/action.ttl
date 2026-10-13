@@ -1,0 +1,70 @@
+# governance/shapes/action.ttl — puerta G2 (execute_action, antes del handler) y G-PROP (propuestas de agentes).
+# Foco (core/gates/focus.action_triples): `a kh:ActionRequest` con kh:actionType, kh:principalKind/Auth/Id,
+# kh:autoApply (aplicación automática), kh:confidence, kh:nivel, kh:reason, un kh:unknownField por cada campo
+# que el esquema Pydantic no conoce, y la política `policy.auto_apply` como literales (kh:safeAutoType,
+# kh:autoMinConfidence).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:ActionShape a sh:NodeShape ;
+  sh:targetClass kh:ActionRequest ;
+  sh:name "Acción de la ontología" ;
+  sh:property khs:ActionPrincipalAuthenticated, khs:ActionNoUnknownFields, khs:ActionRiskLevelRange .
+
+khs:ActionPrincipalAuthenticated a sh:PropertyShape ;
+  sh:path kh:principalAuth ; sh:minCount 1 ; sh:maxCount 1 ;
+  sh:in ( "pin" "mcp_token" "oauth" "agent_registry" "scheduler" ) ;
+  sh:name "quien actúa está autenticado" ; khs:rule khr:action.principal_authenticated ; sh:severity sh:Violation ;
+  sh:message "Quien actúa no está autenticado ({value}): un nombre escrito a mano no identifica a nadie."@es ,
+             "The actor is not authenticated ({value}): a typed-in name identifies nobody."@en .
+
+khs:ActionNoUnknownFields a sh:PropertyShape ;
+  sh:path kh:unknownField ; sh:maxCount 0 ;
+  sh:name "sin campos desconocidos" ; khs:rule khr:action.no_unknown_fields ; sh:severity sh:Violation ;
+  sh:message "La acción trae campos que su esquema no conoce (se ignorarían en silencio)."@es ,
+             "The action carries fields its schema does not know (they would be silently ignored)."@en .
+
+khs:ActionRiskLevelRange a sh:PropertyShape ;
+  sh:path kh:nivel ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 100 ;
+  sh:name "nivel de riesgo 0-100" ; khs:rule khr:action.risk_level_range ; sh:severity sh:Violation ;
+  sh:message "El nivel de riesgo {value} debe estar entre 0 y 100."@es ,
+             "The risk level {value} must be between 0 and 100."@en .
+
+khs:ActionAutoApplyAllowedShape a sh:NodeShape ;
+  sh:targetClass kh:ActionRequest ; sh:severity sh:Violation ; khs:rule khr:action.auto_apply_allowed ;
+  sh:name "aplicación automática permitida" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "action.auto_apply_allowed@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "«{value}» no puede aplicarse solo (fuera de SAFE_AUTO o con confianza menor que {limit})."@es ,
+               "\"{value}\" cannot be applied automatically (outside SAFE_AUTO or confidence below {limit})."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:autoApply true ; kh:actionType ?value .
+        OPTIONAL { $this kh:confidence ?c }
+        OPTIONAL { $this kh:autoMinConfidence ?min }
+        FILTER (NOT EXISTS { $this kh:safeAutoType ?value } || !BOUND(?c)
+                || (isNumeric(?c) && isNumeric(?min) && ?c < ?min))
+      }""" ] .
+
+khs:ActionAgentNeedsHumanShape a sh:NodeShape ;
+  sh:targetClass kh:ActionRequest ; sh:severity khs:RequiresApproval ; khs:rule khr:action.agent_needs_human ;
+  sh:name "lo que propone un agente fuera de SAFE_AUTO espera a una persona" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "action.agent_needs_human@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Un agente propone «{value}», que no es de aplicación automática: queda para tu aprobación."@es ,
+               "An agent proposes \"{value}\", which is not auto-applicable: it waits for your approval."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:principalKind "agent" ; kh:actionType ?value .
+        FILTER NOT EXISTS { $this kh:safeAutoType ?value }
+      }""" ] .
+
+khs:ActionRetractionHasReasonShape a sh:NodeShape ;
+  sh:targetClass kh:ActionRequest ; sh:severity sh:Warning ; khs:rule khr:action.retraction_has_reason ;
+  sh:name "una retracción explica por qué" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "action.retraction_has_reason@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Una retracción debería decir por qué."@es ,
+               "A retraction should say why."@en ;
+    sh:select """SELECT $this WHERE {
+        $this kh:actionType "RetractarVinculo" .
+        FILTER NOT EXISTS { $this kh:reason ?r . FILTER (STRLEN(STR(?r)) > 0) }
+      }""" ] .

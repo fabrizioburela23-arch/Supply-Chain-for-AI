@@ -38,7 +38,6 @@ _KNOWN = {'v': 0, 'lineage': None, 'at': None, 'via': None, 'ids': (), 'n_ids': 
 _SUBSCRIBERS = []
 _INSTALLED = [False]
 _READY = {'ok': None, 'at': 0.0}
-_RELEASE = {}
 _STATS = {'bumps': 0, 'signals': 0, 'notifies': 0, 'polls': 0, 'poll_changes': 0, 'listen_errors': 0,
           'skipped_not_ready': 0, 'last_bump_ms': None}
 _LISTENER = {'thread': None, 'stop': False, 'connected': False, 'last_error': None}
@@ -121,38 +120,12 @@ def mark(session, ev, prev_type=None):
 
 # ── release (κ de configuración) ────────────────────────────────────────────
 def release_hash():
-    """(sha256, etiqueta). Hasta el registro de gobernanza (paso 9) el release es el del REPOSITORIO,
-    sin aprobar: hash canónico de los parámetros del kernel que hoy fijan los números (vocabulario,
-    SOLE_LINK_FLOOR, tope de fragilidad, descuentos y valores por defecto de propagate). El CÓDIGO no entra
-    (cada deploy pediría aprobación); los parámetros sí."""
-    if _RELEASE.get('hash'):
-        return _RELEASE['hash'], _RELEASE['label']
-    body = {}
-    try:
-        from ontology import vocabulary as vocab
-        with open(vocab._path(), 'rb') as fh:
-            body['vocabulary_sha'] = hashlib.sha256(fh.read()).hexdigest()
-    except Exception:  # noqa: BLE001
-        body['vocabulary_sha'] = None
-    try:
-        import inspect
-
-        from matrix import engine as E
-        sig = inspect.signature(E.propagate)
-        body.update({
-            'sole_link_floor': E.SOLE_LINK_FLOOR, 'fragility_cap': E.fragility_cap(),
-            'bulk_weight_factor': E.bulk_weight_factor(), 'unverified_conf': E.UNVERIFIED_CONF,
-            'rel_weights': dict(sorted(E.DEFAULT_REL_WEIGHTS.items())),
-            'damping': sig.parameters['damping'].default, 'max_hops': sig.parameters['max_hops'].default,
-            'threshold': sig.parameters['threshold'].default, 'bulk_sources': sorted(E.BULK_SOURCES),
-        })
-    except Exception:  # noqa: BLE001
-        pass
-    canon = json.dumps(body, sort_keys=True, separators=(',', ':'), default=str).encode()
-    _RELEASE['hash'] = hashlib.sha256(canon).hexdigest()
-    _RELEASE['label'] = 'repo-unapproved'
-    _RELEASE['body'] = body
-    return _RELEASE['hash'], _RELEASE['label']
+    """(sha256, etiqueta) del release VIGENTE de gobernanza (core/governance, paso 9): el de la base si está
+    (`db` ratificado · `db-unratified` el bootstrap · `db-selected` elegido por GOV_RELEASE/<ARTEFACTO>), o el del
+    repositorio sin aprobar (`repo-unapproved`). release_hash = sha256({artifact_id: hash}): el CÓDIGO no entra
+    (cada deploy pediría aprobación); los parámetros sí. Sin SQL (en memoria)."""
+    from core import governance
+    return governance.release()
 
 
 # ── estado de la base ───────────────────────────────────────────────────────

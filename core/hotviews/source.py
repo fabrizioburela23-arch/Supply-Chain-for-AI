@@ -30,7 +30,12 @@ from dataclasses import dataclass, field
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SNAPSHOT_PATH = os.path.join(ROOT, 'data', 'grafo_v0.json')
 FACTORS_PATH = os.path.join(ROOT, 'data', 'multicapa_factors_seats.json')
-FACTOR_LATENT_SEVERITY = 1.0          # = scripts/migrate_v0_to_ontology.FACTOR_LATENT_SEVERITY
+# severidad LATENTE de los factores sistémicos (= scripts/migrate_v0_to_ontology.FACTOR_LATENT_SEVERITY):
+# número del kernel → artefacto `kernel.params.factor_latent_severity` (paso 9)
+from core import governance as _gov  # noqa: E402
+(
+    FACTOR_LATENT_SEVERITY,
+) = _gov.bind(globals(), 'kernel.params', {'FACTOR_LATENT_SEVERITY': 'factor_latent_severity'})
 
 
 @dataclass

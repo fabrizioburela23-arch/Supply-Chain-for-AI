@@ -42,6 +42,7 @@ verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[brokerage.api.py]] — lo importa
 - [[core.decide_api.py]] — lo importa
 - [[core.decisions.py]] — lo importa
+- [[core.governance_api.py]] — lo importa
 - [[core.http.py]] — lo importa
 - [[core.identity.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
@@ -55,7 +56,7 @@ verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 11 pruebas (lista abajo)._
+_Además lo importan 13 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -68,7 +69,9 @@ _Además lo importan 11 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_governance.py]]
 - [[tests.test_infra.py]]
+- [[tests.test_ledger_anchor.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ops_identity.py]]

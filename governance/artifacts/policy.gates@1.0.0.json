@@ -1,0 +1,20 @@
+{
+  "id": "policy.gates",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "mode": "shadow",
+    "severity_overrides": {},
+    "limits": {
+      "max_weight": 6.0,
+      "severity_scale": 10.0,
+      "high_conf_min": 0.5,
+      "min_trust": 2,
+      "max_member_coef": 1.0
+    }
+  },
+  "changelog_es": "Bootstrap 1.0.0 de las puertas (paso 10): modo SOMBRA — toda regla solo AVISA y queda en decision_violations con su GateReport/1; la severidad declarada (bloquear/aprobación) se aplicará en el paso 11 con una versión MAJOR y PIN. Límites que las formas leen como literales del foco: peso ≤ 6 (escala de hoy), escala de severidad de factores 0-10 (BRECHAS #5), confianza ≥ 0,5 exige fuente con trust ≥ 2, coeficiente de miembro de un factor en (0, 1].",
+  "changelog_en": "Gates bootstrap 1.0.0 (step 10): SHADOW mode — every rule only WARNS and is recorded in decision_violations with its GateReport/1; the declared severity (block/approval) will apply in step 11 with a MAJOR version and PIN. Limits the shapes read as focus literals: weight ≤ 6 (today's scale), factor severity scale 0-10 (BRECHAS #5), confidence ≥ 0.5 requires a source with trust ≥ 2, factor member coefficient in (0, 1]."
+}

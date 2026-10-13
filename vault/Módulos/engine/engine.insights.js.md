@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/insights.js"
 lenguaje: "javascript"
-lineas: 360
+lineas: 342
 aliases: ["engine/insights.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/insights.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 360 líneas · `engine/insights.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 342 líneas · `engine/insights.js`
 
 ## Para qué sirve
 
@@ -22,29 +22,27 @@ INSIGHTS AUTOMÁTICOS (Etapa 5, piel NEXUS) Genera tarjetas de lectura desde la 
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeDownstream`, `computeNRS`, `jumpTo`, `sectorName` y 1 más
+- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `sectorName`, `switchTab`
+- [[engine.explain.js]] — usa `explainMetric`
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **64 de 92** (línea 7923), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
+Se carga en [[app.html]] en la posición **65 de 93** (línea 7923), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 64)
+- [[app.html]] — lo carga con `<script>` (posición 65)
 - [[app.html]] — usa `renderInsightsHistory`, `renderKhipuInsights`
-- [[engine.live.js]] — usa `renderKhipuInsights`
 - [[engine.resolve.js]] — usa `renderKhipuInsights`
 
 ## Endpoints que llama
 
-- `GET /api/matrix/<rel_type>` → [[matrix.api.py]] ([[API matrix]])
 - `GET /api/matrix/insights/history` → [[matrix.api.py]] ([[API matrix]])
-- `GET /api/matrix/metrics` → [[matrix.api.py]] ([[API matrix]])
-- `GET /api/matrix/status` → [[matrix.api.py]] ([[API matrix]])
 
 ## Pruebas que lo cubren
 
 - [[tests.test_live_labels_misc.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight2_scenes_tokens.py]]
 - [[tests.test_overnight_ui_small_panels.py]]
 

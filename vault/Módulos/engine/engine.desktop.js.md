@@ -25,11 +25,11 @@ ESCRITORIO KHIPU (K1, 2026-10-04)
 - [[app.html]] — usa `LANG`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **83 de 92** (línea 7942), después de [[engine.khipu_chat.js]] y antes de [[engine.cockpit.js]].
+Se carga en [[app.html]] en la posición **84 de 93** (línea 7942), después de [[engine.khipu_chat.js]] y antes de [[engine.cockpit.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 83)
+- [[app.html]] — lo carga con `<script>` (posición 84)
 - [[engine.cockpit.js]] — usa `KhipuDesk`
 - [[engine.khipu_chat.js]] — usa `KhipuDesk`
 - [[engine.voice.js]] — usa `KhipuDesk`
@@ -40,6 +40,7 @@ Se carga en [[app.html]] en la posición **83 de 92** (línea 7942), después de
 - [[tests.test_khipus_os_fixes_shell.py]]
 - [[tests.test_khipus_os_integration.py]]
 - [[tests.test_khipus_os_shell.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight2_fixer_review.py]]
 - [[tests.test_overnight2_scenes_tokens.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]

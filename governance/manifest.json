@@ -1,0 +1,144 @@
+{
+  "schema": "gov-manifest/1",
+  "_doc": "GENERADO por scripts/build_governance.py --write: no editar a mano. El release del repositorio es una PROPUESTA; manda el aprobado en la base (core/governance.py).",
+  "release": {
+    "semver": "1.0.0",
+    "release_hash": "b0a06509a0fe9a15bc62dc950f3a7b80b142027555bb70127697a97ef1ecaae3",
+    "artifacts": {
+      "kernel.params": {
+        "semver": "1.0.0",
+        "hash": "0b5a9d403d594388a99b54ab8cd927ede2542eb91bcd14f3178882b417b27e95",
+        "file": "artifacts/kernel.params@1.0.0.json"
+      },
+      "ledger.kinds": {
+        "semver": "1.0.0",
+        "hash": "f84215a4b41e994196117bb63497de513f52f4b9bd7770c8a7d1c2a68b88240c",
+        "file": "artifacts/ledger.kinds@1.0.0.json"
+      },
+      "nrs.formula": {
+        "semver": "1.0.0",
+        "hash": "9a8222249e6e7ae9177792c061b629c97e3141eab30005a07cd537e1e267f458",
+        "file": "artifacts/nrs.formula@1.0.0.json"
+      },
+      "ontology.schema": {
+        "semver": "1.0.0",
+        "hash": "1dd27c488d3e23d10722f2522f9a1dfa684c912ee96ddf09bbb673b2e766717b",
+        "file": "artifacts/ontology.schema@1.0.0.json"
+      },
+      "ontology.shapes": {
+        "semver": "1.0.0",
+        "hash": "b9e14751f8f6c9ac89af686ba3bf76250ad19ef1f399cf03eb18305a9b7e7955",
+        "file": "artifacts/ontology.shapes@1.0.0.json"
+      },
+      "policy.auto_apply": {
+        "semver": "1.0.0",
+        "hash": "51b9f7e525f9e60925a7f235a58397016b353f95aa98196e5970e9f7e68a899a",
+        "file": "artifacts/policy.auto_apply@1.0.0.json"
+      },
+      "policy.broker_risk": {
+        "semver": "1.0.0",
+        "hash": "a8e1908516e5778566bf543e063a904867858794af6a64b7b549d1a7196df522",
+        "file": "artifacts/policy.broker_risk@1.0.0.json"
+      },
+      "policy.committee": {
+        "semver": "1.0.0",
+        "hash": "dc7ccfd7e7a79c36c6220e92f462e90104d651498de12a72edbdebe884a793a2",
+        "file": "artifacts/policy.committee@1.0.0.json"
+      },
+      "policy.decide": {
+        "semver": "1.0.0",
+        "hash": "2570d63f8533ea952ac1bd4d60e3f3525a503537fe2d4109ae88d32c51e3719f",
+        "file": "artifacts/policy.decide@1.0.0.json"
+      },
+      "policy.gates": {
+        "semver": "1.0.0",
+        "hash": "41b503bfc0b489c34b31b4956247f03ae9428ff9cf0a8af1705cea08e8051eb0",
+        "file": "artifacts/policy.gates@1.0.0.json"
+      },
+      "policy.numbers_guard": {
+        "semver": "1.0.0",
+        "hash": "e494eb4ecb110892e0723d960493ce0580b0522ff37128fda5cf538bba7f1f2e",
+        "file": "artifacts/policy.numbers_guard@1.0.0.json"
+      }
+    }
+  },
+  "available": [
+    {
+      "id": "kernel.params",
+      "semver": "1.0.0",
+      "hash": "0b5a9d403d594388a99b54ab8cd927ede2542eb91bcd14f3178882b417b27e95",
+      "change_kind": "initial",
+      "file": "artifacts/kernel.params@1.0.0.json"
+    },
+    {
+      "id": "ledger.kinds",
+      "semver": "1.0.0",
+      "hash": "f84215a4b41e994196117bb63497de513f52f4b9bd7770c8a7d1c2a68b88240c",
+      "change_kind": "initial",
+      "file": "artifacts/ledger.kinds@1.0.0.json"
+    },
+    {
+      "id": "nrs.formula",
+      "semver": "1.0.0",
+      "hash": "9a8222249e6e7ae9177792c061b629c97e3141eab30005a07cd537e1e267f458",
+      "change_kind": "initial",
+      "file": "artifacts/nrs.formula@1.0.0.json"
+    },
+    {
+      "id": "ontology.schema",
+      "semver": "1.0.0",
+      "hash": "1dd27c488d3e23d10722f2522f9a1dfa684c912ee96ddf09bbb673b2e766717b",
+      "change_kind": "initial",
+      "file": "artifacts/ontology.schema@1.0.0.json"
+    },
+    {
+      "id": "ontology.shapes",
+      "semver": "1.0.0",
+      "hash": "b9e14751f8f6c9ac89af686ba3bf76250ad19ef1f399cf03eb18305a9b7e7955",
+      "change_kind": "initial",
+      "file": "artifacts/ontology.shapes@1.0.0.json"
+    },
+    {
+      "id": "policy.auto_apply",
+      "semver": "1.0.0",
+      "hash": "51b9f7e525f9e60925a7f235a58397016b353f95aa98196e5970e9f7e68a899a",
+      "change_kind": "initial",
+      "file": "artifacts/policy.auto_apply@1.0.0.json"
+    },
+    {
+      "id": "policy.broker_risk",
+      "semver": "1.0.0",
+      "hash": "a8e1908516e5778566bf543e063a904867858794af6a64b7b549d1a7196df522",
+      "change_kind": "initial",
+      "file": "artifacts/policy.broker_risk@1.0.0.json"
+    },
+    {
+      "id": "policy.committee",
+      "semver": "1.0.0",
+      "hash": "dc7ccfd7e7a79c36c6220e92f462e90104d651498de12a72edbdebe884a793a2",
+      "change_kind": "initial",
+      "file": "artifacts/policy.committee@1.0.0.json"
+    },
+    {
+      "id": "policy.decide",
+      "semver": "1.0.0",
+      "hash": "2570d63f8533ea952ac1bd4d60e3f3525a503537fe2d4109ae88d32c51e3719f",
+      "change_kind": "initial",
+      "file": "artifacts/policy.decide@1.0.0.json"
+    },
+    {
+      "id": "policy.gates",
+      "semver": "1.0.0",
+      "hash": "41b503bfc0b489c34b31b4956247f03ae9428ff9cf0a8af1705cea08e8051eb0",
+      "change_kind": "initial",
+      "file": "artifacts/policy.gates@1.0.0.json"
+    },
+    {
+      "id": "policy.numbers_guard",
+      "semver": "1.0.0",
+      "hash": "e494eb4ecb110892e0723d960493ce0580b0522ff37128fda5cf538bba7f1f2e",
+      "change_kind": "initial",
+      "file": "artifacts/policy.numbers_guard@1.0.0.json"
+    }
+  ]
+}

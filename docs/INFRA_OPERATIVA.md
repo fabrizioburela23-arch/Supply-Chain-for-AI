@@ -1143,6 +1143,8 @@ Todas corren sin red. Las que necesitan base se saltan sin `DATABASE_URL`; en CI
 
 **Criterio de orden:** primero lo que da más auditoría y velocidad con menos riesgo. Los pasos 1 a 10 no necesitan ninguna decisión de Fabrizio.
 
+**Avance (2026-10-13):** hechos y publicados los pasos 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 y 13 (detalle en `docs/ESTADO.md`). El paso 9 dejó el release 1.0.0 *sin ratificar* (Fabrizio lo ratifica con PIN; no bloquea nada).
+
 | # | Paso | Pilar | Necesita de Fabrizio |
 |---|---|---|---|
 | 1 | `events` append-only + `txid`/`seq`/`release_hash` + índice parcial | Decisiones/Gobernanza (base) | — |

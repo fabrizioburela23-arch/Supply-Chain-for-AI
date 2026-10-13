@@ -8,7 +8,7 @@ multicapa 2026-08-02: energía, materiales, macro_credito, inmobiliario,
 logistica). ~70 Factores sistémicos LATENTES (severity 1.0) con
 `severity_crisis` en props — se disparan como what-if vía
 `POST /api/matrix/factor/fire`, nunca dejarlos todos en severidad de crisis
-(satura: ρ 2.63). Tope FRAGILITY_CAP=2.5 por nodo en matrix/engine.py.
+(satura: ρ 2.63). Tope FRAGILITY_CAP=2.5 por nodo (artefacto `kernel.params` de governance/, leído por matrix/engine.py).
 Desplegado en Railway (push a `main` auto-deploya, ~2 min).
 
 **Al iniciar una sesión de trabajo: lee `docs/ESTADO.md`** — es la memoria
@@ -49,6 +49,34 @@ UN SOLO GRAFO — `core/hotviews/hot.graph()`: los 12 lectores del servidor (wor
 semantic, portfolio_ai, research/router|context, tensor, MCP, chat) leen la generación vigente (Postgres o snapshot);
 solo reconcile lee el catálogo a propósito. Desde Postgres se EXCLUYEN vínculos propuestos/rechazados y los hechos
 temporales migrados. Ψ del tensor = kernel restringido a FLUJO (sin socios/inversores) hasta el paso 12.
+**PASOS 7, 9, 10 y 13 (2026-10-13)**: ANCLA — `ledger_anchors` (1 fila/día UTC, tarea `ledger_anchor`), `GET
+/api/ledger/anchor` PÚBLICO (solo día/sello/hash) que smoke-mcp.yml guarda cada día como artefacto de Actions (D7);
+`verify` compara las últimas anclas con los sellos (`anchor_mismatch`); una ruptura registra `ledger.chain_break` y
+BLOQUEA SOLO DINERO REAL (`ledger.money_gate()`: brokerage preview/confirm de cuentas live + /api/trade/order|close de la
+casa en vivo → 423 `ledger_chain_broken`; papel nunca) hasta `POST /api/ledger/chain_ack` con PIN; sin base o con
+estado ilegible = no hay dinero real (falla cerrado); `check_lineage` detecta una base restaurada. GOBERNANZA —
+`governance/artifacts/*.json` (11 artefactos 1.0.0 con los valores de HOY: kernel.params, nrs.formula,
+policy.broker_risk|committee|numbers_guard|auto_apply|decide|gates, ledger.kinds, ontology.schema|shapes) +
+`governance/manifest.json` (los mantiene `scripts/build_governance.py`; `--check` en CI exige semver honesto y espejos
+con vocabulary.json/decisions.KINDS/IR) + tablas append-only `gov_artifacts`/`gov_releases` + `core/governance.py`
+(`param(aid, key)`, bootstrap 1.0.0 SIN ratificar en el primer arranque con base, `ratify` con PIN → decisión
+`governance.ratify`, refresco cada 60 s) + `/api/governance/active|status|ratify`. Editar un artefacto/TTL/vocabulario
+SIN subir versión = el import falla (CI lo atrapa). Env SOLO elige un release aprobado (D2: `GOV_RELEASE`,
+`KERNEL_PARAMS=<semver>`…); `FRAGILITY_CAP`, `IMPORT_BULK_WEIGHT_FACTOR`, `DECIDE_MIN_CONF`, `DECIDE_WAIT_S` y
+`COMMITTEE_MEMO_TTL_HOURS` ya NO cambian números (el 🩺 avisa). Paridad 0 diferencias
+(tests/test_governance_seed_parity.py + tests/golden/). Un cambio de release reconstruye las vistas rápidas. PUERTAS
+SHACL EN SOMBRA — `governance/shapes/*.ttl` (31 reglas) → `scripts/build_shapes.py` → `compiled.ir.json` →
+`core/gates/` (solo stdlib, p95 61-117 µs) en G1 apply_event, G2 execute_action, G-PROP propuestas de agentes
+(`proposed_actions.gate_report`), G-BULK importación y G8 decisiones; TODO solo avisa y queda en
+`decision_violations` (GateReport/1 ES/EN; sin decisión en curso → una `audit.gates` por transacción);
+`GET /api/ontology/gates`; `KHIPU_GATES=off` = solo emergencia. pySHACL/rdflib SOLO en requirements-dev.txt (CI:
+conformidad 0 diferencias en ≥1.000 focos). UN KERNEL EN EL CLIENTE — `engine/hotclient.js` (`window.KhipuHot`:
+`simulate`, `scenario`, `chokepoints`, `factors`, `rivals`, `stamp`; caché por generación + ETag, 8 s de tope,
+errores bilingües, demanda `'up'` = mensaje honesto SIN cifras hasta PROP-17); borrados computeDownstream,
+clientInsights/clientChokepoint, el 55 % fijo del X-Ray y el 4/0,85 de la sala de guerra; X-Ray, Cabina, livesim, voz
+(`run_live_simulation` con `engine_generation`), insights, brief, secondbrain y el Grafo Temporal muestran el MISMO
+número que /api/hot/impact (TSMC: 318 empresas ≥1 %). "Ganadores" = rivales poco golpeados con su % de DAÑO (nunca un
+% de ganancia). tests/test_no_client_engine.py lo vigila.
 
 ## Arquitectura
 
@@ -87,8 +115,9 @@ temporales migrados. Ψ del tensor = kernel restringido a FLUJO (sin socios/inve
   `api.py` (blueprint /api/matrix/*: status, /<rel_type>, POST /impact,
   /metrics, POST /insights, GET /insights/history, POST /factor/fire).
   Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503. `SOLE_LINK_FLOOR=6` (2026-10-06): la
-  columna de cada tipo se normaliza por max(suma, 6) — un proveedor único transmite según su peso;
-  el MISMO piso vive en engine/statematrix.js (cambiar los dos juntos).
+  columna de cada tipo se normaliza por max(suma, 6) — un proveedor único transmite según su peso.
+  Los números del kernel viven en `governance/artifacts/kernel.params@*.json` (paso 9); el navegador
+  NO propaga (paso 13): lee /api/hot/* con engine/hotclient.js.
   `tensor.py` + `tensor_api.py` (ONTOLOGÍA NIVEL 2, 2026-10-06, sin BD): tensor de flujo R×N×N,
   influencia Ψ (misma semántica que propagate), métricas por empresa (concentración, países de
   proveedores, cap. aguas abajo en riesgo, fuentes de riesgo, comparables) y `suggest_links` para
@@ -135,7 +164,8 @@ temporales migrados. Ψ del tensor = kernel restringido a FLUJO (sin socios/inve
   globales). Clases de botones kd-b-* ≠ estados kd-min/kd-max. kh_desk_mode=off
   = Cabina clásica (no quitar: red de seguridad). Visión: será el ÚNICO interfaz.
   REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
-  (motor de estados reactivo cliente, MISMA matemática que matrix/engine.py),
+  (desde el paso 13 SOLO estado visual: `frames()` = película salto a salto con el `hop` del servidor,
+  `baseline()`; NADA de propagación — las cifras salen de `window.KhipuHot`, engine/hotclient.js),
   livesim.js (simulación en vivo sobre el mapa), layers.js (capas del mapa),
   insights.js (tarjetas #an-insights), brief.js (brief matinal). Todos leen
   window.NODES/LINKS/computeNRS/SECTORS9 y degradan sin DATABASE_URL.
@@ -394,7 +424,7 @@ temporales migrados. Ψ del tensor = kernel restringido a FLUJO (sin socios/inve
   merge (`linkTrust` en nodes/merge_graph.js: texto "no verificado/no revisado/
   posible/sin confirmar" → 0.3/false; un 6.º elemento `{conf, verified, since}`
   en la fila del catálogo manda). El snapshot los exporta; `matrix/engine.py
-  _eff_weight` y `engine/statematrix.js` multiplican el peso por conf; el MCP
+  _eff_weight` multiplica el peso por conf (el navegador ya no propaga, paso 13); el MCP
   (`_link_trust`) los deriva del texto si el snapshot aún no los trae.
 - **Proveedor/cliente = solo FLUJO (G4a)**: `get_company.top_suppliers/
   top_customers` y `get_supply_chain.edges` excluyen partner/invest (van en
@@ -534,7 +564,7 @@ DATABASE_URL                              ← Ontología (Postgres en Railway)
 RESEARCH_DAILY_BUDGET_USD, RESEARCH_AUTO_EVENTS, RESEARCH_MODEL_DEFAULT  ← Phase 2
 RESEARCH_ANOMALY_PCT (8), RESEARCH_ANOMALY_MAX (3)  ← movimientos anómalos → investigación auto
 RESEARCH_EARNINGS_MAX (5)  ← resultados trimestrales (Finnhub, requiere FINNHUB_KEY) → investigación auto
-RESEARCH_OUTCOME_BAND (0.02), RESEARCH_CALIBRATION_K (10), COMMITTEE_MAX_CONCURRENT, COMMITTEE_MEMO_TTL_HOURS  ← Phase 3
+RESEARCH_OUTCOME_BAND (0.02), RESEARCH_CALIBRATION_K (10), COMMITTEE_MAX_CONCURRENT  ← Phase 3 (COMMITTEE_MEMO_TTL_HOURS ya no: vive en policy.committee)
 BROKERAGE_ENC_KEY (Fernet; OBLIGATORIA para guardar llaves de clientes), BROKERAGE_TRADING_ENABLED (on),
 BROKERAGE_LIVE_ENABLED (off), BROKERAGE_AUTO_APPROVE_PAPER (off), BROKERAGE_APPROVAL_TTL_MIN,
 ALPACA_OAUTH_CLIENT_ID / ALPACA_OAUTH_CLIENT_SECRET / ALPACA_OAUTH_REDIRECT_URI  ← corretaje multi-cliente
@@ -554,6 +584,8 @@ RESEARCH_BUSY_RETRIES (4)  ← R2: esperas ante "IA ocupada" (3/6/12/24 s) antes
 RESEARCH_PARALLEL (2; nunca más que los cupos de fondo), RESEARCH_JOB_CONCURRENCY (2), RESEARCH_STALE_MIN (30), RESEARCH_RESUME_MAX (3)  ← R3/R5: cola de investigación
 KHIPU_SCHEDULER (on; off en tests)  ← R5: reloj del servidor (core/scheduler.py) para lo diario
 HOTVIEWS (on), HOT_WAIT_S (2), HOTVIEWS_COALESCE_S (1), HOTVIEWS_LISTEN (on)  ← vistas rápidas (core/hotviews)
+GOV_RELEASE (vacío = el vigente de la base), <ARTEFACTO>=<semver> p. ej. KERNEL_PARAMS  ← SOLO eligen un release aprobado (D2)
+KHIPU_GATES (on; 'off' = emergencia: apaga las puertas SHACL en sombra)
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)

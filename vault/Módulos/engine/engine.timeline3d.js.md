@@ -27,11 +27,11 @@ El Grafo Temporal en 3D, donde la PROFUNDIDAD ES EL TIEMPO.
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **45 de 92** (línea 7838), después de [[engine.temporal-graph.js]] y antes de [[engine.maptime.js]].
+Se carga en [[app.html]] en la posición **46 de 93** (línea 7838), después de [[engine.temporal-graph.js]] y antes de [[engine.maptime.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 45)
+- [[app.html]] — lo carga con `<script>` (posición 46)
 - [[engine.temporal-graph.js]] — usa `KhipuTimeline3D`
 
 ## Pruebas que lo cubren

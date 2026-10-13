@@ -132,6 +132,9 @@ class ProposedAction(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     resolved_by = Column(String(120), nullable=True)
+    # INFRA_OPERATIVA paso 10 (G-PROP): GateReport/1 resumido de la propuesta (en sombra: solo avisa) para que la
+    # persona que aprueba vea qué reglas no cumpliría. Columna tardía (ontology/db._COLUMNAS_TARDIAS).
+    gate_report = Column(JSONB, nullable=True)
 
     __table_args__ = (
         Index('ix_proposed_status_agent', 'status', 'agent'),
@@ -190,3 +193,5 @@ class Alert(Base):
 # INFRA_OPERATIVA paso 6: el libro de decisiones vive en el MISMO Base (create_all lo crea en init_schema y las
 # pruebas lo limpian con drop_all). Al final del módulo: ledger_models importa `Base` de aquí.
 from ontology import ledger_models as _ledger_models  # noqa: E402,F401
+# INFRA_OPERATIVA paso 9: registro de gobernanza (gov_artifacts, gov_releases), también append-only.
+from ontology import governance_models as _governance_models  # noqa: E402,F401

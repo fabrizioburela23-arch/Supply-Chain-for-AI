@@ -1,0 +1,9 @@
+# requirements-dev.txt — SOLO pruebas/CI (nunca en la imagen de producción: el Dockerfile instala requirements.txt).
+#     pip install -r requirements.txt -r requirements-dev.txt -c constraints.txt
+#
+# INFRA_OPERATIVA paso 10 (docs/INFRA_OPERATIVA.md §3.3): pySHACL es el ORÁCULO de las puertas. En producción las
+# formas corren COMPILADAS (core/gates, solo biblioteca estándar, 0,01-0,3 ms); en CI tests/test_gates_conformance.py
+# compara el evaluador compilado con pySHACL sobre ≥ 1.000 focos aleatorios (0 diferencias) y
+# scripts/build_shapes.py recompila governance/shapes/*.ttl con rdflib. Versiones exactas en constraints.txt.
+pyshacl>=0.40.1
+rdflib>=7.6.0

@@ -31,11 +31,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **40 de 92** (línea 7833), después de [[nodes.temporal_seed_facts.js]] y antes de [[nodes.ontology.js]].
+Se carga en [[app.html]] en la posición **41 de 93** (línea 7833), después de [[nodes.temporal_seed_facts.js]] y antes de [[nodes.ontology.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 40)
+- [[app.html]] — lo carga con `<script>` (posición 41)
 - [[engine.maptime.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[engine.temporal-graph.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[engine.timeline3d.js]] — usa `TEMPORAL_SEED_FACTS`

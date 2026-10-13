@@ -6,9 +6,12 @@
    - factores externos activos (hiperaristas)
    - concentración geográfica
 
-   Fuente preferida: /api/matrix/metrics + /impact (ponderado, server).
-   Fallback 100% cliente (computeDownstream + computeNRS) si no hay
-   DATABASE_URL — así SIEMPRE hay insights, con nota honesta.
+   Cuellos de botella y factores: SIEMPRE del motor único del servidor
+   (/api/hot/chokepoints ordenado por Σ impacto y /api/hot/factors vía
+   engine/hotclient.js — funciona también sin DATABASE_URL con el catálogo).
+   El navegador ya no calcula cascadas (paso 13 INFRA_OPERATIVA: antes ~575 ms
+   síncronos por tick y otro número que el servidor). Riesgo NRS, oportunidades,
+   sectores y geografía son lecturas del catálogo (no propagan nada).
    Rellena #an-insights (el slot que existía vacío) y expone
    window.renderKhipuInsights() para el botón "Recalcular".
    ============================================================================ */
@@ -142,27 +145,11 @@
     setTimeout(function () { if (window.jumpTo) window.jumpTo(id); }, 90);
   };
 
-  // ── generación cliente (siempre disponible) ──
-  function clientInsights() {
+  // ── lecturas del catálogo (NRS, crecimiento, país): no propagan nada ──
+  function catalogReadings() {
     var out = [];
-    var NODES = window.NODES || [], LINKS = window.LINKS || [];
+    var NODES = window.NODES || [];
     if (!NODES.length) return out;
-
-    // 1) chokepoints por tamaño de cascada (computeDownstream)
-    if (typeof window.computeDownstream === 'function') {
-      var casc = NODES.map(function (n) {
-        var aff = 0;
-        try { var r = window.computeDownstream(n.id); aff = (r instanceof Set ? r.size : (r || []).length); } catch (e) {}
-        return { id: n.id, aff: aff };
-      }).filter(function (x) { return x.aff > 0; }).sort(function (a, b) { return b.aff - a.aff; });
-      if (casc.length) {
-        var top = casc[0];
-        out.push({ kind: 'shock', tag: L('topología', 'topology'), nodes: casc.slice(0, 4).map(function (x) { return x.id; }),
-          text: '<b>' + esc(nm(top.id)) + '</b>' + L(' es el mayor punto único de fallo: si cae, arrastra a <b>', ' is the biggest single point of failure: if it falls, it drags down <b>') +
-            top.aff + L(' empresas</b> del grafo.', ' companies</b> in the graph.'),
-          action: "window._insShock('" + top.id + "')", actionLabel: L('simular su caída', 'simulate its fall') });
-      }
-    }
 
     // 2) riesgo NRS alto (foco en cartera si hay posiciones)
     if (typeof window.computeNRS === 'function') {
@@ -237,30 +224,33 @@
     return out;
   }
 
-  // ── enriquecimiento server (motor de matrices) ──
+  // ── cuellos de botella y factores: el motor único del servidor (/api/hot/*) ──
   function serverInsights() {
-    return Promise.all([
-      fetch('/api/matrix/metrics').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
-      fetch('/api/matrix/status').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
-    ]).then(function (res) {
-      var metrics = res[0], status = res[1];
-      if (!metrics || !metrics.chokepoints_top25) return null;
+    var KH = window.KhipuHot;
+    if (!KH) return Promise.resolve({ cards: [], error: L('Motor de impacto no disponible.', 'Impact engine unavailable.') });
+    return Promise.all([KH.chokepoints({ by: 'sum', limit: 5 }), KH.factors()]).then(function (res) {
+      var cpR = res[0], fR = res[1];
       var out = [];
-      var cp = metrics.chokepoints_top25;
+      var cp = (cpR.ok && cpR.data && cpR.data.chokepoints) || [];
       if (cp.length) {
-        out.push({ kind: 'shock', tag: L('matriz · ponderado', 'matrix · weighted'), nodes: cp.slice(0, 4).map(function (x) { return x.id; }),
-          text: L('Chokepoints reales de la red: <b>', 'Real chokepoints of the network: <b>') + esc(nm(cp[0].id)) + L('</b> arrastra a <b>', '</b> drags down <b>') +
-            cp[0].cascade_size + L('</b> empresas; le siguen ', '</b> companies; next come ') +
-            cp.slice(1, 3).map(function (x) { return esc(nm(x.id)); }).join(L(' y ', ' and ')) + '.',
-          action: "window._insShock('" + cp[0].id + "')", actionLabel: L('ver onda de impacto', 'see the impact wave') });
+        var c0 = cp[0];
+        out.push({ kind: 'shock', tag: L('motor del servidor · Σ impacto', 'server engine · Σ impact'), nodes: cp.slice(0, 4).map(function (x) { return x.id; }),
+          text: L('Mayor cuello de botella de la red: <b>', 'Biggest chokepoint of the network: <b>') + esc(c0.label || nm(c0.id)) +
+            L('</b> — si cae, golpea a <b>', '</b> — if it falls it hits <b>') + c0.reach_1 + L('</b> empresas (≥1 %), <b>', '</b> companies (≥1%), <b>') +
+            c0.reach_10 + L('</b> de ellas fuerte (≥10 %); impacto total ', '</b> of them hard (≥10%); total impact ') +
+            (Math.round((+c0.sum_impact || 0) * 10) / 10).toLocaleString(isEn() ? 'en' : 'es') +
+            L(' empresas equivalentes. Le siguen ', ' company-equivalents. Next come ') +
+            cp.slice(1, 3).map(function (x) { return esc(x.label || nm(x.id)); }).join(L(' y ', ' and ')) + '. ' +
+            '<span onclick="window.explainMetric&&window.explainMetric(\'impact_sum\')" style="cursor:help;opacity:.7">ⓘ</span> ' + KH.stampHTML(cpR.view),
+          action: "window._insShock('" + c0.id + "')", actionLabel: L('ver onda de impacto', 'see the impact wave') });
       }
-      if (status && status.active_factors && status.active_factors.length) {
-        var f = status.active_factors;
-        out.push({ kind: 'factor', tag: L('hiperaristas activas', 'active hyperedges'), nodes: [],
+      var f = (fR.ok && fR.data && fR.data.factors) || [];
+      if (f.length) {
+        out.push({ kind: 'factor', tag: L('factores activos', 'active factors'), nodes: [],
           text: '<b>' + f.length + '</b>' + L(' factor(es) externo(s) modulando la red ahora: ', ' external factor(s) shaping the network now: ') +
-            f.slice(0, 3).map(function (x) { return esc(x.label); }).join(', ') + '.' });
+            f.slice(0, 3).map(function (x) { return esc(x.label || x.id); }).join(', ') + '.' });
       }
-      return out;
+      return { cards: out, error: cpR.ok ? null : cpR.error };
     });
   }
 
@@ -274,19 +264,11 @@
     if (!el) return;
     themeRoot(el); ensureStyles();
     el.innerHTML = '<div class="ins-msg" style="font-style:italic">' + L('Generando lecturas de la red…', 'Generating network readings…') + '</div>';
-    var base = clientInsights();
+    var base = catalogReadings();
     serverInsights().then(function (srv) {
-      var list;
-      if (srv && srv.length) {
-        // el server manda en chokepoints/factores; el cliente aporta riesgo+geo
-        var noShock = base.filter(function (b) { return b.kind !== 'shock'; });
-        list = srv.concat(noShock);
-      } else {
-        list = base;
-        if (base.length) list.push({ kind: 'oport', tag: L('sugerencia', 'suggestion'), nodes: [],
-          text: L('Configura <b>DATABASE_URL</b> en Railway para insights ponderados por el motor de matrices (impacto real, no estimación de topología).',
-            'Set <b>DATABASE_URL</b> on Railway for insights weighted by the matrix engine (real impact, not a topology estimate).') });
-      }
+      var list = (srv.cards || []).concat(base);
+      // sin el motor del servidor NO hay cuello de botella (nunca otro número calculado aquí): se dice
+      if (!srv.cards.length && srv.error) list.unshift({ kind: 'shock', tag: L('motor del servidor', 'server engine'), nodes: [], text: esc(srv.error) });
       el.innerHTML = list.length ? list.map(card).join('')
         : '<div class="ins-msg">' + L('Sin lecturas por ahora — el grafo aún carga.', 'No readings yet — the graph is still loading.') + '</div>';
     });

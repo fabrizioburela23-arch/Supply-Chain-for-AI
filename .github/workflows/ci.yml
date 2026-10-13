@@ -8,6 +8,7 @@
 # con DATABASE_URL=…/khipus_test (sin ella ~300 pruebas de ontología se saltan).
 # Las pruebas con navegador (Playwright/Chromium) se SALTAN solas aquí: no se instala
 # Playwright (pytest.importorskip) — ver tests/test_block0_ci.py.
+# INFRA_OPERATIVA paso 10: además se instala requirements-dev.txt (pySHACL + rdflib, oráculo de las puertas).
 # No toca el humo del MCP (smoke-mcp.yml), que sigue corriendo DESPUÉS del deploy.
 name: ci
 on:
@@ -50,11 +51,20 @@ jobs:
           cache: pip
           cache-dependency-path: |
             requirements.txt
+            requirements-dev.txt
             constraints.txt
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
       - name: Dependencias (versiones exactas, igual que el Dockerfile)
         run: pip install -r requirements.txt -c constraints.txt
+      # INFRA_OPERATIVA paso 10: pySHACL + rdflib = ORÁCULO de las puertas (solo CI; la imagen no los lleva).
+      # Con CI=true, tests/test_gates_conformance.py FALLA si no están (no se salta en silencio).
+      - name: Dependencias de pruebas (oráculo SHACL)
+        run: pip install -r requirements-dev.txt -c constraints.txt
+      - name: Formas y gobernanza al día (TTL → IR compilado, artefactos == manifest)
+        run: |
+          python scripts/build_shapes.py --check
+          python scripts/build_governance.py --check
       - name: Pruebas
         run: pytest tests/ -q

@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/INFRA_OPERATIVA.md"
 lenguaje: "markdown"
-lineas: 1303
+lineas: 1305
 aliases: ["docs/INFRA_OPERATIVA.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/INFRA_OPERATIVA.md
 
-> Documento · capa [[Capa Documentación]] · 1.303 líneas · `docs/INFRA_OPERATIVA.md`
+> Documento · capa [[Capa Documentación]] · 1.305 líneas · `docs/INFRA_OPERATIVA.md`
 
 ## De qué trata
 
@@ -30,6 +30,8 @@ Infraestructura operativa de Khipus: decisiones, puertas, vistas rápidas y gobe
 - [[core.decide.py]]
 - [[core.decisions.py]]
 - [[core.entities.py]]
+- [[core.governance.py]]
+- [[core.governance_api.py]]
 - [[core.identity.py]]
 - [[core.khipu_chat.py]]
 - [[core.ledger.py]]
@@ -53,6 +55,7 @@ Infraestructura operativa de Khipus: decisiones, puertas, vistas rápidas y gobe
 - [[engine.cockpit.js]]
 - [[engine.crypto.js]]
 - [[engine.explain.js]]
+- [[engine.hotclient.js]]
 - [[engine.insights.js]]
 - [[engine.live.js]]
 - [[engine.livesim.js]]
@@ -90,16 +93,25 @@ Infraestructura operativa de Khipus: decisiones, puertas, vistas rápidas y gobe
 - [[research.outcomes.py]]
 - [[research.router.py]]
 - [[research.runner.py]]
+- [[scripts.build_governance.py]]
+- [[scripts.build_shapes.py]]
 - [[scripts.migrate_v0_to_ontology.py]]
 - [[server.py]]
 - [[sw.js]]
 - [[tests.test_brokerage.py]]
+- [[tests.test_gates_conformance.py]]
+- [[tests.test_gates_ir_fresh.py]]
+- [[tests.test_gates_resulting_state.py]]
+- [[tests.test_governance.py]]
+- [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_ledger_anchor.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_events_append_only.py]]
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_identity.py]]

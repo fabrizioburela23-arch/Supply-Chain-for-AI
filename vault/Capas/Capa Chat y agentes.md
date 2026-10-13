@@ -9,7 +9,7 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 
 > El cerebro conversacional de Khipu, los agentes con su rol, el portero Jev y el lenguaje de comandos.
 
-**15 archivos · 9.518 líneas.** Volver al [[00 Mapa de Khipus]].
+**15 archivos · 9.525 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -23,7 +23,7 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 - [[research.agent_skills.py]] — 400 líneas · HABILIDADES PROPIAS de cada agente (2026-10-06).
 - [[engine.khipu_lang.js]] — 376 líneas · Fase 4 del roadmap de ontología: lenguaje de comandos KHIPU, corto y componible: &lt;ENTIDAD> &lt;FUNCIÓN> [ARGS]. Se intenta ANTES de mandar el …
 - [[core.canvas_spec.py]] — 366 líneas · Canvas IA: criterio de tipo de gráfico + validación.
-- [[core.decide.py]] — 349 líneas · JEV (TypeSafe AI, modelo "System One"): DECISIONES, no texto.
+- [[core.decide.py]] — 356 líneas · JEV (TypeSafe AI, modelo "System One"): DECISIONES, no texto.
 - [[research.ask_agent.py]] — 301 líneas · PREGUNTARLE A UN ANALISTA dentro de la conversación.
 - [[core.semantic.py]] — 149 líneas · CAPA 2 (PRECONSCIENTE): el grafo semántico activo.
 - [[engine.canvas-data.js]] — 72 líneas · Enriquecimiento de Canvas IA con datos en vivo (Khipu) Detecta empresas/tickers mencionados en una consulta y trae precios REALES de Finnhub (vía …
@@ -33,7 +33,7 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 20 |
+| usa a | [[Capa Infraestructura]] | 21 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 20 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 16 |
 | usa a | [[Capa Ontología y grafo temporal]] | 10 |

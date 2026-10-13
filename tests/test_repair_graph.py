@@ -372,25 +372,25 @@ def test_g4c_matrices_descuentan_la_confianza_declarada(db):
     assert as_of['supply'][idx2['Fx'], idx2['Tx']] == pytest.approx(0.3)
 
 
-def test_g4c_statematrix_cliente_pesa_la_confianza_como_el_servidor():
-    script = r'''
-const P = JSON.parse(require('fs').readFileSync(0, 'utf8'));
-const { KhipuStateCore } = require(P.root + '/engine/statematrix.js');
-const core = new KhipuStateCore({
-  nodes: [{ id: 'A' }, { id: 'B' }, { id: 'C' }, { id: 'D' }],
-  links: [{ source: 'A', target: 'C', w: 2, type: 'supply', conf: 0.5 },
-          { source: 'B', target: 'C', w: 2, type: 'supply' },
-          { source: 'A', target: 'D', w: 2, type: 'supply', verified: false }],
-  baselineFn: () => ({ salud: 1 }),
-});
-process.stdout.write(JSON.stringify({ C: core.incoming[core.idx.C], D: core.incoming[core.idx.D] }));
-'''
-    out = _node(script, {'root': ROOT})
-    ws = {e['i']: e['w'] for e in out['C']}
-    # 2026-10-06 (SOLE_LINK_FLOOR = 6): la columna se normaliza por max(suma, 6) → la confianza cuenta
-    # también para un proveedor único (antes "único = todo", aunque el vínculo fuera dudoso)
-    assert ws[0] == pytest.approx(1 / 6) and ws[1] == pytest.approx(2 / 6)   # 1 vs 2, sobre el piso 6
-    assert out['D'][0]['w'] == pytest.approx(0.6 / 6)                       # único y dudoso (2×0.3): poco
+def test_g4c_el_kernel_unico_pesa_la_confianza_y_el_cliente_no_propaga():
+    """Paso 13 INFRA_OPERATIVA: el navegador ya no tiene motor (engine/statematrix.js solo anima); la confianza del
+    vínculo la pesa EL kernel del servidor. Mismos números que exigía la prueba vieja del cliente."""
+    import numpy as np
+
+    from matrix import engine as E
+    idx = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+    w = lambda raw, conf=None: E._eff_weight(raw, 'curated', conf)
+    mats = E.build_matrices_from_triples([('A', 'C', 'supply', w(2, 0.5)), ('B', 'C', 'supply', w(2)),
+                                          ('A', 'D', 'supply', w(2, 0.3))], idx, sparse=False)[0]
+    T = E._dependency_matrix(mats)
+    T = np.asarray(T.todense() if hasattr(T, 'todense') else T)
+    crit = E.DEFAULT_REL_WEIGHTS['supply']
+    floor = E.SOLE_LINK_FLOOR
+    # la columna se normaliza por max(suma, piso): la confianza cuenta también para un proveedor único
+    assert T[0, 2] == pytest.approx(1 / floor * crit) and T[1, 2] == pytest.approx(2 / floor * crit)
+    assert T[0, 3] == pytest.approx(0.6 / floor * crit)                    # único y dudoso (2×0.3): poco
+    sm = open(os.path.join(ROOT, 'engine', 'statematrix.js'), encoding='utf-8').read()
+    assert 'KhipuStateCore' not in sm and 'confOf' not in sm and 'SOLE_LINK_FLOOR' not in sm
 
 
 # ════════════════════════════════════════════════════════════════════════════

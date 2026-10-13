@@ -144,6 +144,8 @@ _COLUMNAS_TARDIAS = (
     # INFRA_OPERATIVA paso 6 — broker_audit entra a la cadena de sellos: txid/seq (DEFAULT en core/ledger_ddl)
     ('broker_audit', 'txid', 'XID8'),
     ('broker_audit', 'seq', 'BIGINT'),
+    # INFRA_OPERATIVA paso 10 — G-PROP: el GateReport de la propuesta queda adjunto para quien la apruebe
+    ('proposed_actions', 'gate_report', 'JSONB'),
 )
 
 
@@ -246,6 +248,11 @@ def init_schema(retries=6, delay=2.0):
                 _hv_signals.on_schema_init()
             except Exception:  # noqa: BLE001
                 pass
+            try:   # paso 9: registro de gobernanza (artefactos del repo + release 1.0.0 si la base no tiene)
+                from core import governance as _gov
+                _gov.bootstrap_db(engine)
+            except Exception as e:  # noqa: BLE001
+                log.warning('init_schema: gobernanza no inicializada (%s)', type(e).__name__)
 
             if intento > 1:
                 log.warning('init_schema: OK en el intento %d (la base tardó en arrancar)', intento)

@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 683
+lineas: 715
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 683 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 715 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -31,6 +31,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.decide.py]]
 - [[core.decisions.py]]
 - [[core.entities.py]]
+- [[core.governance.py]]
 - [[core.http.py]]
 - [[core.identity.py]]
 - [[core.khipu_chat.py]]
@@ -85,6 +86,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[engine.globe.js]]
 - [[engine.graph3d.js]]
 - [[engine.guide.js]]
+- [[engine.hotclient.js]]
 - [[engine.hypergraph.js]]
 - [[engine.insights.js]]
 - [[engine.khipu_chat.js]]
@@ -150,7 +152,9 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[research.router.py]]
 - [[research.runner.py]]
 - [[scripts.audit_graph.py]]
+- [[scripts.build_governance.py]]
 - [[scripts.build_listing_status.py]]
+- [[scripts.build_shapes.py]]
 - [[scripts.build_vault.py]]
 - [[scripts.export_graph_v0.js]]
 - [[scripts.migrate_v0_to_ontology.py]]
@@ -164,7 +168,9 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_governance_seed_parity.py]]
 - [[tests.test_graph_audit.py]]
+- [[tests.test_no_client_engine.py]]
 - [[tests.test_vault.py]]
 
 ## Mencionado en sesiones de trabajo

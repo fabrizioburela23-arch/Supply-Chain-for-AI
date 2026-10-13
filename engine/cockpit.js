@@ -12,7 +12,7 @@
    xray.js detecta que la cabina está abierta y lo pinta aquí, no en el cajón.
 
    Depende de (todos ya cargados antes que este archivo):
-     window.buildXRayHTML / wireXRay (xray.js) · KhipuState (statematrix.js) ·
+     window.buildXRayHTML / wireXRay (xray.js) · KhipuHot (hotclient.js: motor único del servidor) ·
      registerBixbyOrb (app.html) · BixbyVoice (voice.js) · KHIPU (khipu_lang.js)
    ============================================================================ */
 (function () {
@@ -2526,12 +2526,27 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var kindLabel = { collapse: L('Corte / caída', 'Outage / collapse'), demand: L('Auge de demanda', 'Demand boom'), price: L('Shock de precio', 'Price shock'), sanction: L('Sanción', 'Sanction') }[kind];
     // tinte de la escena: relleno vivo (barras, puntos) + tinta AA (cifras y títulos)
     var tint = dir === 'up' ? OS.good : OS.bad, tintInk = dir === 'up' ? OS.goodInk : OS.badInk;
-    if (!window.KhipuState || !window.KhipuState.simulate) { s.innerHTML = backBar() + '<div class="bcp-loading">' + L('Motor de simulación no disponible', 'Simulation engine unavailable') + '</div>'; return; }
-    // el shock es la intensidad del evento en TODOS los tipos (salud 0..1 = 1 − severidad): antes el auge de
-    // demanda pasaba salud 100 → el motor lo recortaba a 1 = sin daño → "Sin propagación" siempre
-    var shock = {}; shock[n.id] = { salud: 1 - sev / 100 };
-    var r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: dir, kind: kind });
-    var impacts = {}; if (r && r.impact) r.impact.forEach(function (v, k) { if (k !== n.id && v > 0) impacts[k] = v; });
+    if (!window.KhipuHot) { s.innerHTML = backBar() + '<div class="bcp-loading">' + L('Motor de simulación no disponible', 'Simulation engine unavailable') + '</div>'; return; }
+    // TODAS las cifras salen del kernel único del servidor (/api/hot/*, factores activos incluidos): las mismas
+    // que el X-Ray, la voz y el mapa para la misma caída (paso 13 INFRA_OPERATIVA; antes un motor propio aquí)
+    var token = {}; s._simToken = token;
+    s.innerHTML = backBar(L('Simulación', 'Simulation')) + '<div class="bcp-loading">' + L('Calculando con el motor del servidor…', 'Computing with the server engine…') + '</div>';
+    window.KhipuHot.simulate({ targets: [n.id], kind: kind, severity: sev }).then(function (r) {
+      if (s._simToken !== token) return;   // la ventana ya muestra otra simulación
+      _stageSimPaint(s, n, kind, dir, sev, kindLabel, tint, tintInk, r);
+    });
+  }
+
+  function _stageSimPaint(s, n, kind, dir, sev, kindLabel, tint, tintInk, r) {
+    if (!r || !r.ok) {
+      s.innerHTML = backBar(L('Simulación', 'Simulation')) +
+        '<div class="bcp-inner"><div class="bcp-simhd"><span class="big">' + esc(n.label) + '</span>' +
+          '<span class="kind" style="color:' + tintInk + ';' + _tint(tint, 14) + '">' + esc(kindLabel) + '</span>' +
+          '<span class="sub kos-sim-sev" data-sev="' + sev + '">' + L('Intensidad ', 'Intensity ') + sev + '%</span></div>' +
+        '<div class="bcp-loading still kos-sim-err" style="padding:16px">' + esc((r && r.error) || L('No se pudo simular.', 'Could not simulate.')) + '</div></div>';
+      return;
+    }
+    var impacts = {}; r.impact.forEach(function (v, k) { if (k !== n.id && v > 0) impacts[k] = v; });
     var arr = Object.keys(impacts).map(function (k) { return { id: k, v: impacts[k] }; }).sort(function (a, b) { return b.v - a.v; });
 
     // desglose por sector
@@ -2541,8 +2556,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       .sort(function (a, b) { return b.avg - a.avg; }).slice(0, 8);
     var SLAB = window.SECTORS9 || {};
 
-    // ganadores
-    var winners = window.xrayComputeWinners ? window.xrayComputeWinners(n.id, (function () { var o = {}; o[n.id] = 100; arr.forEach(function (x) { o[x.id] = x.v; }); return o; })()) : [];
+    // rivales del mismo rubro poco golpeados según el servidor (sin % de ganancia inventado)
+    var winners = (dir === 'down' && window.KhipuHot) ? window.KhipuHot.rivals([n.id], r.impact, 4) : [];
 
     var victimRows = arr.slice(0, 12).map(function (x) {
       var nd = window.NODE_BY_ID[x.id]; if (!nd) return '';
@@ -2558,8 +2573,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       return '<div class="bcp-row" onclick="window.BixbyCockpit.stage(\'xray\',\'' + esc(w.id) + '\')">' +
         '<span class="bcp-dot" style="background:' + OS.good + '"></span>' +
         '<span class="nm">' + esc(nd.label) + '</span>' +
-        '<span class="bar"><i style="width:' + (w.up * 2) + '%;background:' + OS.good + '"></i></span>' +
-        '<span class="pv" style="color:' + OS.goodInk + '">+' + w.up + '%</span></div>';
+        '<span class="pv" style="color:' + OS.goodInk + '">' + L('golpe ', 'hit ') + Math.round(w.hit) + '%</span></div>';
     }).join('') : '<div class="bcp-loading still" style="padding:10px">—</div>';
 
     var secRowsHTML = secRows.map(function (x) {
@@ -2575,16 +2589,18 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
         '<div class="bcp-simhd"><span class="big">' + esc(n.label) + '</span>' +
           '<span class="kind" style="color:' + tintInk + ';' + _tint(tint, 14) + '">' + esc(kindLabel) + '</span>' +
           '<span class="sub kos-sim-sev" data-sev="' + sev + '">' + L('Intensidad ', 'Intensity ') + sev + '%</span>' +
-          '<span class="sub">' + arr.length + ' ' + L('empresas movidas', 'companies moved') + '</span>' +
+          '<span class="sub">' + r.reach_1 + ' ' + L('empresas movidas (≥1 %)', 'companies moved (≥1%)') + '</span>' +
+          '<span class="sub kos-sim-stamp">' + window.KhipuHot.stampHTML(r.view) +
+            ' <span role="button" tabindex="0" onclick="window.explainMetric&&window.explainMetric(\'impact_sum\')" style="cursor:help">?</span></span>' +
           '<button type="button" class="bcp-back" style="margin-left:auto" onclick="window._cockpitMapSim(\'' + esc(n.id) + '\',\'' + kind + '\',' + sev + ')">⚡ ' + L('Ver en el mapa', 'See on the map') + '</button></div>' +
         '<div class="bcp-grid3">' +
-          '<div class="bcp-stat"><b style="color:' + tintInk + '">' + arr.length + '</b><span>' + L('empresas afectadas', 'companies affected') + '</span></div>' +
+          '<div class="bcp-stat"><b class="kos-sim-reach" style="color:' + tintInk + '">' + r.reach_1 + '</b><span>' + L('empresas afectadas (≥1 %)', 'companies affected (≥1%)') + '</span></div>' +
           '<div class="bcp-stat"><b style="color:' + tintInk + '">' + (arr[0] ? Math.round(arr[0].v) + '%' : '—') + '</b><span>' + L('golpe máximo', 'max hit') + '</span></div>' +
-          '<div class="bcp-stat"><b style="color:' + OS.goodInk + '">' + winners.length + '</b><span>' + L('ganadores', 'winners') + '</span></div>' +
+          '<div class="bcp-stat"><b style="color:' + OS.goodInk + '">' + winners.length + '</b><span>' + L('rivales', 'rivals') + '</span></div>' +
         '</div>' +
         '<div class="bcp-two">' +
           '<div><div class="bcp-lh" style="color:' + tintInk + '">' + (dir === 'up' ? L('Quién se beneficia ↑', 'Who benefits ↑') : L('Quién sufre ↓', 'Who suffers ↓')) + '</div>' + victimRows + '</div>' +
-          '<div><div class="bcp-lh" style="color:' + OS.goodInk + '">' + L('Quién gana ↑ (rivales)', 'Who gains ↑ (rivals)') + '</div>' + winRows +
+          '<div><div class="bcp-lh" style="color:' + OS.goodInk + '">' + L('Quién podría ganar ↑ (rivales poco golpeados)', 'Who could gain ↑ (barely hit rivals)') + '</div>' + winRows +
             '<div class="bcp-lh" style="margin-top:18px">' + L('Por sector', 'By sector') + '</div>' + secRowsHTML + '</div>' +
         '</div>' +
       '</div>';
@@ -4246,16 +4262,16 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var n = resolveNode(id); if (!n) return false;
     kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(kind) >= 0 ? kind : 'collapse';
     var dir = kind === 'demand' ? 'up' : 'down';
-    var sev = _simSev(severity), r = null;
-    try {
-      var shock = {}; shock[n.id] = { salud: 1 - sev / 100 };
-      r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: dir, kind: kind });
-    } catch (e) { r = null; }
+    var sev = _simSev(severity);
+    // MISMA simulación que la ventana (mismo pedido al motor del servidor → misma caché → mismos números)
+    var simP = window.KhipuHot ? window.KhipuHot.simulate({ targets: [n.id], kind: kind, severity: sev }) : Promise.resolve(null);
     if (!open) openCockpit();
     stage('graph', n.id);
     // el mapa se asienta y centra (stageGraph ~220 ms); después se pinta la onda
     setTimeout(function () {
-      try { if (r && r.impact && window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); } catch (e) {}
+      simP.then(function (r) {
+        try { if (r && r.ok && r.impact && window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); } catch (e) {}
+      });
     }, 420);
     return true;
   };

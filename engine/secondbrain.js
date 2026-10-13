@@ -5,7 +5,7 @@
 //   5. Red (betweenness + cascada + desglose NRS)
 //
 // Depende de app.html: NODE_BY_ID, NODE_META, MKT, quotePx, DataLayer, computeNRS, NRS_FLOW_TYPES,
-//   getBetweenness, computeDownstream, LINKS, NODES, lid, esc, fmtN, fmtPct,
+//   getBetweenness, KhipuHot (engine/hotclient.js: impacto del motor único), LINKS, NODES, lid, esc, fmtN, fmtPct,
 //   relTime, sentiment, nf, today, catColor/getCatColorHex, BASE
 
 // Bilingüe (limpieza 2026-10-11: era solo español): textos con L(es, en) según window.LANG / eco_lang.
@@ -198,7 +198,6 @@ class SecondBrain {
     const bc = (typeof getBetweenness === 'function') ? getBetweenness() : {};
     const inDeg = new Set(LINKS.filter(l => lid(l.target) === nodeId && _sbFlow(l)).map(l => lid(l.source))).size;
     const outDeg = new Set(LINKS.filter(l => lid(l.source) === nodeId && _sbFlow(l)).map(l => lid(l.target))).size;
-    const cascade = (typeof computeDownstream === 'function') ? computeDownstream(nodeId) : new Set();
     const nrs = this._nrsInfo(nodeId);
     // Desglose NRS = el MISMO de computeNRSBreakdown (app.html _nrsTerms; limpieza 2026-10-11: aquí había
     // una 6.ª copia de la fórmula con el margen sin acotar y el país sin normalizar → no sumaba el NRS mostrado)
@@ -223,10 +222,19 @@ class SecondBrain {
             </div></div>`).join('')}
       </div>
       <div><h4 style="font-size:12px;margin:0 0 4px">${_sbL('Si colapsa…', 'If it collapses…')}</h4>
-        <p style="font-size:12.5px;color:var(--ink-2);margin-bottom:8px">${cascade.size} ${_sbL('empresas afectadas', 'companies affected')} (${Math.round(cascade.size / NODES.length * 100)}% ${_sbL('de la cadena', 'of the chain')})</p>
+        <p class="sb-cascade" style="font-size:12.5px;color:var(--ink-2);margin-bottom:8px">${_sbL('Calculando con el motor del servidor…', 'Computing with the server engine…')}</p>
         <button onclick="window.activateStress&&window.activateStress('${nodeId}')" style="padding:8px 12px;border:1px solid var(--down,#FF6577);border-radius:8px;background:var(--surface);color:var(--down,#FF6577);cursor:pointer;font-size:12px">💥 ${_sbL('Ver cascada en el grafo', 'See the cascade on the graph')}</button>
       </div>
     `;
+    // "si colapsa…" = el MISMO número que el X-Ray, la Cabina y el banner del mapa (motor único del servidor)
+    const p = el.querySelector('.sb-cascade');
+    if (!p) return;
+    if (!window.KhipuHot) { p.textContent = _sbL('Motor de impacto no disponible.', 'Impact engine unavailable.'); return; }
+    const r = await window.KhipuHot.simulate({ targets: [nodeId], kind: 'collapse', severity: 100 });
+    if (p.isConnected === false) return;
+    if (!r.ok) { p.textContent = r.error; return; }
+    const total = Math.max(1, (NODES.length || 1) - 1);
+    p.innerHTML = `${r.reach_1} ${_sbL('empresas afectadas (≥1 %)', 'companies affected (≥1%)')} (${Math.round(r.reach_1 / total * 100)}% ${_sbL('de la cadena', 'of the chain')}) · ${r.reach_10} ${_sbL('fuerte (≥10 %)', 'hard (≥10%)')} ${window.KhipuHot.stampHTML(r.view)}`;
   }
 }
 

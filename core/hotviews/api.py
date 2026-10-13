@@ -19,6 +19,12 @@ from flask import Blueprint, jsonify, request
 
 from core.http import rate_limit
 
+
+def _kdef(name):
+    """Valor por defecto del kernel (kernel.params del release vigente, paso 9) — import perezoso del motor."""
+    from matrix import engine as _E
+    return getattr(_E, name)
+
 hot_bp = Blueprint('hot', __name__, url_prefix='/api/hot')
 
 WARM_WAIT_S = 2.0
@@ -214,10 +220,10 @@ def hot_scenario():
     factors = body.get('factors', 'active')
     if not (factors in ('active', 'none') or (isinstance(factors, list) and all(isinstance(x, str) for x in factors))):
         return _bad('factors', "factors: 'active', 'none' o lista de ids", "factors: 'active', 'none' or a list of ids")
-    damping, bad = _num(body.get('damping'), 0.6, 0.0, 0.95, 'damping')
+    damping, bad = _num(body.get('damping'), _kdef('DAMPING'), 0.0, 0.95, 'damping')
     if bad:
         return bad
-    hops, bad = _num(body.get('max_hops'), 6, 1, 12, 'max_hops')
+    hops, bad = _num(body.get('max_hops'), _kdef('MAX_HOPS'), 1, 12, 'max_hops')
     if bad:
         return bad
     top, bad = _num(body.get('top'), 50, 1, TOP_CAP, 'top')
@@ -228,6 +234,6 @@ def hot_scenario():
     if not body.get('full'):
         sc.pop('impacts', None)            # el vector completo solo si se pide (full: true)
     data = {'shocks': used, 'unknown_ids': unknown, 'factors': factors, 'direction': direction,
-            'params': {'damping': damping, 'max_hops': int(hops), 'threshold': 0.01},
+            'params': {'damping': damping, 'max_hops': int(hops), 'threshold': _kdef('THRESHOLD')},
             'compute_ms': round((time.perf_counter() - t0) * 1000, 3), **sc}
     return envelope('impact', data, g, etag=False)
