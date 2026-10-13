@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ai_usage.py"
 lenguaje: "python"
-lineas: 553
+lineas: 654
 aliases: ["core/ai_usage.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ai_usage.py
 
-> Módulo · capa [[Capa Infraestructura]] · 553 líneas · `core/ai_usage.py`
+> Módulo · capa [[Capa Infraestructura]] · 654 líneas · `core/ai_usage.py`
 
 ## Para qué sirve
 
@@ -18,27 +18,30 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 
 ## API pública
 
-- clase `AIBudgetError` — Se alcanzó un límite de gasto: la llamada NO se hace (no cobra). _(línea 89)_
-- `price_for(provider, model)` — (entrada, salida) USD por 1M tokens. Prefijo más largo que calce. _(línea 116)_
-- `cost_of(provider, model, tin, tout)` _(línea 132)_
-- `ai_context(feature=…, who=…)` _(línea 139)_
-- `meter()` — Suma los tokens REALES que record() anota en ESTE hilo mientras dura el bloque (incluido el "pensamiento" que el proveedor cobra como … _(línea 152)_
-- `current()` _(línea 179)_
-- `bind(fn)` — Envuelve fn para que, al correr en OTRO hilo (ThreadPoolExecutor), herede la función/quién del hilo que la creó. _(línea 199)_
-- `default_settings()` _(línea 226)_
-- `settings()` _(línea 233)_
-- `save_settings(values, actor)` _(línea 251)_
-- `check(provider, max_tokens=…)` — Antes de cada llamada: ¿se pasó algún límite? → AIBudgetError (no se llama). _(línea 328)_
-- `record(provider, model, tin, tout, ok=…, ms=…, estimated=…)` — Después de cada respuesta del proveedor (también las que se descartan: se cobraron igual). _(línea 364)_
-- `estimate_tokens(text)` _(línea 387)_
-- `flush()` _(línea 392)_
-- `report(days=…, lang=…)` _(línea 442)_
-- `anthropic_cost_report()` — Costo REAL facturado por Anthropic este mes (Usage & Cost Admin API). Requiere ANTHROPIC_ADMIN_KEY (sk-ant-admin…, solo organizaciones). … _(línea 506)_
+- clase `AIBudgetError` — Se alcanzó un límite de gasto: la llamada NO se hace (no cobra). _(línea 95)_
+- `price_for(provider, model)` — (entrada, salida) USD por 1M tokens. Prefijo más largo que calce. _(línea 143)_
+- `cache_price_for(provider, model)` — (escritura, lectura) de caché, USD por 1M tokens (L4-06): los de la fila de PRICES o, si no los trae, los multiplicadores del proveedor … _(línea 148)_
+- `cost_of(provider, model, tin, tout, cache_read=…, cache_write=…)` — Costo estimado. `tin` = TODOS los tokens de entrada; `cache_read`/`cache_write` son la parte de ellos que se leyó de / se escribió en la … _(línea 158)_
+- `ai_context(feature=…, who=…)` _(línea 173)_
+- `meter()` — Suma los tokens REALES que record() anota en ESTE hilo mientras dura el bloque (incluido el "pensamiento" que el proveedor cobra como … _(línea 186)_
+- `current()` _(línea 221)_
+- `bind(fn)` — Envuelve fn para que, al correr en OTRO hilo (ThreadPoolExecutor), herede la función/quién del hilo que la creó. _(línea 241)_
+- `default_settings()` _(línea 279)_
+- `settings()` _(línea 286)_
+- `save_settings(values, actor)` _(línea 304)_
+- `check(provider, max_tokens=…)` — Antes de cada llamada: ¿se pasó algún límite? → AIBudgetError (no se llama). _(línea 386)_
+- `record(provider, model, tin, tout, ok=…, ms=…, estimated=…, cache_read=…, cache_write=…)` — Después de cada respuesta del proveedor (también las que se descartan: se cobraron igual). `tin` = TODOS los tokens de entrada; … _(línea 422)_
+- `estimate_tokens(text)` _(línea 452)_
+- `flush()` _(línea 457)_
+- `report(days=…, lang=…)` _(línea 507)_
+- `anthropic_cost_report()` — Costo REAL facturado por Anthropic este mes (Usage & Cost Admin API). Requiere ANTHROPIC_ADMIN_KEY (sk-ant-admin…, solo organizaciones). … _(línea 607)_
 
-**Internas** (empiezan con `_`): `_now`, `_today`, `_prices`, `_meter_add`, `_env_float`, `_add`, `_load_from_db`, `_spent`, `_ensure_writer`, `_agg_db`, `_reset_for_tests`
+**Internas** (empiezan con `_`): `_now`, `_today`, `_prices`, `_price_row`, `_meter_add`, `_env_float`, `_add`, `_load_from_db`, `_spent`, `_ensure_writer`, `_agg_db`, `_cache_totals`, `_reset_for_tests`
 
 ## Depende de
 
+- [[core.ai_calls.py]] — importa `ai_calls`
+- [[core.decision_sites.py]] — importa `decision_sites`
 - [[core.logjson.py]] — importa `current_fields`, `event`, `log_context`
 - [[ontology.db.py]] — importa `ontology_available`, `session_scope`
 - [[research.models.py]] — importa `AISetting`, `AIUsage`
@@ -46,6 +49,7 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 ## Lo usan
 
 - [[core.ai.py]] — lo importa
+- [[core.ai_calls.py]] — lo importa
 - [[core.decide.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
@@ -60,7 +64,7 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 - [[research.runner.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 13 pruebas (lista abajo)._
 
 ## Endpoints que llama
 
@@ -85,12 +89,15 @@ _Además lo importan 10 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_ai_calls.py]]
 - [[tests.test_ai_gemini_fast.py]]
 - [[tests.test_ai_usage.py]]
+- [[tests.test_ai_usage_cache.py]]
 - [[tests.test_block0_numbers.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_decide.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_repair_logs.py]]

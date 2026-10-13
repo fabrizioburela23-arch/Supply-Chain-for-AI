@@ -108,6 +108,30 @@ historia con huecos >12 días = incompleta; relleno de 5 años SOLO con PIN, rea
 `/api/prices/*`, `/api/instruments/review` + 🩺 "📈 Historia de precios" (engine/pricehist.js). Riesgo: cierres
 ajustados alineados por fecha, FX diario por fecha, beta de Dimson para bolsas que cierran a otra hora; RSI de Wilder.
 `/v1/*` sigue con su cálculo (decisión #12 pendiente).
+**PASOS 18-21 Y BLOQUES 4-5 (2026-10-13)**: DECISIONES EN CADA SITIO — `core/decision_sites.py` (ayudantes: principal,
+huellas, citar política, `reserve_id`, trabajo después de la respuesta con `decisions.submit_async`): committee.run (en la
+MISMA transacción que el memo) + approval.grant/deny + puerta G5 (`governance/shapes/committee.ttl`, 7 reglas, sombra;
+corre cuando se active ontology.shapes 4.0.0), committee.portfolio_advice, policy.change (límites de clientes y de IA con
+valor anterior), research.job/research.run/claim.status (falsadores y calificaciones → decision_outcomes), proposal.create /
+proposal.auto_apply (D6: igual que hoy, policy.auto_apply 1.0.0), alert.rule (dueño en HMAC) y alert.fire (máx 1 cada
+10 min por alerta), chat.answer (async: [F#], fuentes con as_of, herramientas, modelo; texto solo como blob de 90 días),
+chat.route de Jev (decision_shadow.key = HMAC), mcp.tool_call (principal mcp:<id>, HMAC de argumentos, hash del resultado,
+solo el código de error), whatif.shock / whatif.factor_fire / insight.snapshot. Sin libro → la acción se deshace (503
+ledger_unavailable). AI_CALLS (paso 21) — `core/ai_calls.py`: UNA fila por pedido a la IA escrita SOLO desde core/ai.py
+(`_ai_complete_raw` y `_complete_single`, que usa research/llm.CoreProvider), en cola con hilo escritor (0,02 ms en el hilo
+del pedido); system/prompt/salida como blobs por hash; tabla append-only y SELLADA. CACHÉ DE PROMPT (L4-06): Claude
+`cache_control` en system ≥2.000 caracteres; ai_usage separa cache_read/cache_write con sus precios (`cache_price_for`).
+MOTOR DE CONTEXTO (bloque 4) — `core/context_engine.py`: UN detector de entidades (se reconstruye por graph_version; países
+y palabras comunes no son empresas), R(v|Q), empaquetado con presupuesto y tabla [F#]; lo usan chat, live_facts, semantic,
+research/context (fuentes una vez por job, noticias 10 min). Contrato MCP `mcp_server/contract.py`: `detail`
+(summary|standard|full) + `max_chars` (12.000 por defecto) en TODA herramienta, recorte marcado (`truncated`,
+`over_budget`; series de tiempo conservan lo más NUEVO); get_supply_chain Nvidia prof. 2: 112k → 10k caracteres.
+Operaciones nuevas `mcp_server/ops.py` (solo lectura): run_scenario, get_subgraph, get_exposure, find_similar_entities,
+calculate_correlation, get_history. LISTAS DE REVISIÓN (bloque 5) — `scripts/build_graph_review.py` →
+docs/REVISION_GRAFO.md + docs/revision_grafo.json (cada ítem con `mark: null` y las acciones que se aplicarían; NADA
+aplicado): 27 vínculos con fecha, 17 direcciones que el texto contradice (ratchet `text_direction` en audit_graph), escala de
+pesos (462 con peso 1), 58 verbos fuera del vocabulario + 12 márgenes, 200 vínculos pesados sin fecha. Puertas compiladas:
+69 reglas.
 
 ## Arquitectura
 

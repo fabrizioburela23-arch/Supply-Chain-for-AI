@@ -338,6 +338,9 @@ class AIUsage(Base):
     estimated = Column(Boolean, nullable=False, default=False)      # tokens estimados (proveedor no los dio)
     ok = Column(Boolean, nullable=False, default=True)
     ms = Column(Integer, nullable=True)
+    # L4-06 (2026-10-13): parte de tokens_in leída de / escrita en la caché de prompts del proveedor
+    cache_read = Column(Integer, nullable=True, default=0)
+    cache_write = Column(Integer, nullable=True, default=0)
 
 
 class AISetting(Base):

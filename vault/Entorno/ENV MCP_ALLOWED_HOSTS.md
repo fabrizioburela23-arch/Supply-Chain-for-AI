@@ -16,6 +16,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## Pruebas que la fijan o nombran
 
+- [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_repair_ops.py]]
 

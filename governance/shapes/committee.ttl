@@ -1,0 +1,74 @@
+# governance/shapes/committee.ttl — puerta G5 del comité de inversión (docs/INFRA_OPERATIVA.md §3.1, §3.4; paso 18).
+# Foco (core/gates/focus.memo_triples ← research/committee: memo propuesto o a punto de aprobarse): `a kh:CommitteeMemo`
+# con la decisión, el tamaño calculado y su tope del mandato, la edad del memo y su caducidad (policy.committee
+# memo_ttl_hours), y DOS clases condicionales que el mapeo añade al foco:
+#   · kh:UnvalidatedMemo   — ningún analista llega a las calificaciones mínimas (C6): el tamaño debe ir a la MITAD
+#                            (kh:maxUnvalidatedWeightPct = min(crudo, tope) × policy.committee unvalidated_factor,
+#                            calculado en el mapeo, con 0,001 de holgura de redondeo) y el memo debe decirlo;
+#   · kh:MemoWithoutQuorum — hay conclusiones pero falta el quórum (C7: fundamental + 3 de 4): DATOS INSUFICIENTES,
+#                            ninguna decisión accionable y sin presidente IA.
+# Ningún número de política se escribe aquí: entran como literales del foco desde el release vigente.
+# Modo SOMBRA (policy.gates mode=shadow): todo solo avisa y queda en la decisión committee.run / approval.*.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:CommitteeMemoShape a sh:NodeShape ;
+  sh:targetClass kh:CommitteeMemo ;
+  sh:name "Memo del comité de inversión" ;
+  sh:property khs:MemoManifestComplete, khs:MemoSizeLeMandate, khs:MemoNotExpired .
+
+khs:MemoManifestComplete a sh:PropertyShape ;
+  sh:path kh:decision ; sh:minCount 1 ; sh:maxCount 1 ;
+  sh:in ( "BUY" "ADD" "HOLD" "TRIM" "SELL" "AVOID" ) ;
+  sh:name "memo con una decisión del vocabulario" ; khs:rule khr:memo.manifest_complete ; sh:severity sh:Violation ;
+  sh:message "El memo no trae una decisión válida ({value}): no se puede aprobar."@es ,
+             "The memo does not carry a valid decision ({value}): it cannot be approved."@en .
+
+khs:MemoSizeLeMandate a sh:PropertyShape ;
+  sh:path kh:targetWeightPct ; sh:lessThanOrEquals kh:maxPositionPct ;
+  sh:name "tamaño dentro del mandato" ; khs:rule khr:memo.size_le_mandate ; sh:severity sh:Violation ;
+  sh:message "El peso objetivo del memo ({value} %) supera el máximo por posición del mandato ({limit} %)."@es ,
+             "The memo's target weight ({value}%) exceeds the mandate's per-position maximum ({limit}%)."@en .
+
+khs:MemoNotExpired a sh:PropertyShape ;
+  sh:path kh:ageHours ; sh:lessThanOrEquals kh:ttlHours ;
+  sh:name "memo vigente" ; khs:rule khr:memo.not_expired ; sh:severity sh:Violation ;
+  sh:message "El memo tiene {value} h y caduca a las {limit} h: los precios cambiaron, vuelve a correr el comité."@es ,
+             "The memo is {value} h old and expires at {limit} h: prices changed, run the committee again."@en .
+
+khs:UnvalidatedMemoShape a sh:NodeShape ;
+  sh:targetClass kh:UnvalidatedMemo ;
+  sh:name "Memo sin historial validado" ;
+  sh:property khs:MemoUnvalidatedHalf, khs:MemoUnvalidatedLabel .
+
+khs:MemoUnvalidatedHalf a sh:PropertyShape ;
+  sh:path kh:targetWeightPct ; sh:lessThanOrEquals kh:maxUnvalidatedWeightPct ;
+  sh:name "sin validar: tamaño a la mitad" ; khs:rule khr:memo.unvalidated_half ; sh:severity sh:Violation ;
+  sh:message "Sin historial validado el peso objetivo debe ir a la mitad (máx. {limit} %), pero es {value} %."@es ,
+             "Without a validated track record the target weight must be halved (max {limit}%), but it is {value}%."@en .
+
+khs:MemoUnvalidatedLabel a sh:PropertyShape ;
+  sh:path kh:sizingUnvalidated ; sh:minCount 1 ; sh:in ( true ) ;
+  sh:name "sin validar: el memo lo dice" ; khs:rule khr:memo.unvalidated_label ; sh:severity sh:Warning ;
+  sh:message "El tamaño del memo no está marcado como «no validado» ({value}) aunque ningún analista tiene historial suficiente."@es ,
+             "The memo's size is not marked \"not validated\" ({value}) although no analyst has enough track record."@en .
+
+khs:MemoWithoutQuorumShape a sh:NodeShape ;
+  sh:targetClass kh:MemoWithoutQuorum ;
+  sh:name "Memo sin quórum de analistas" ;
+  sh:property khs:MemoQuorum, khs:MemoQuorumNoAi .
+
+khs:MemoQuorum a sh:PropertyShape ;
+  sh:path kh:decision ; sh:in ( "HOLD" "AVOID" ) ;
+  sh:name "sin quórum no hay decisión accionable" ; khs:rule khr:memo.quorum ; sh:severity sh:Violation ;
+  sh:message "Sin quórum de analistas (DATOS INSUFICIENTES) el memo no puede decidir «{value}»."@es ,
+             "Without an analyst quorum (INSUFFICIENT DATA) the memo cannot decide \"{value}\"."@en .
+
+khs:MemoQuorumNoAi a sh:PropertyShape ;
+  sh:path kh:aiUsed ; sh:in ( false ) ;
+  sh:name "sin quórum no se consulta al presidente IA" ; khs:rule khr:memo.quorum_no_ai ; sh:severity sh:Warning ;
+  sh:message "Sin quórum de analistas el presidente IA no debía consultarse (se consultó: {value})."@es ,
+             "Without an analyst quorum the AI chair should not be consulted (it was: {value})."@en .

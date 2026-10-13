@@ -63,14 +63,18 @@ def _with_schema(fn):
         return fn()
 
 
-def _run_async(memo_id, eid, actor, client_id):
+def _run_async(memo_id, eid, actor, client_id, who=None):
     """Corre el comité en un hilo. El cupo (acquire_run_slot) ya se tomó: se
-    libera al terminar, pase lo que pase."""
+    libera al terminar, pase lo que pase. `who` = el principal de la petición (paso 18: la decisión
+    committee.run es de quien la pidió, no del hilo)."""
     def _work():
+        from contextlib import nullcontext
+
+        from core import identity
         from research.committee import fail_memo, progress_clear, progress_set, release_run_slot, run_committee
         progress_set(memo_id, 'claims')
         try:
-            with session_scope() as s:
+            with (identity.use(who) if who is not None else nullcontext()), session_scope() as s:
                 run_committee(s, eid, actor, client_id=client_id, memo_id=memo_id)
         except Exception as e:  # noqa: BLE001
             log.warning('committee %s: %s', memo_id, e)
@@ -150,7 +154,8 @@ def run():
             with session_scope() as s:
                 return create_placeholder(s, eid, actor, client_id).id
         mid = _with_schema(_ph)
-        _run_async(mid, eid, actor, client_id)
+        from core import identity
+        _run_async(mid, eid, actor, client_id, identity.principal_from_request(declared=actor))
         started = True
     except Exception as e:  # noqa: BLE001
         log.warning('committee run: %s', e)
@@ -228,8 +233,36 @@ def _decide(memo_id, fn):
     # no el texto libre del cuerpo — ese texto acababa en broker_orders.approved_by y broker_audit.actor.
     from core import identity
     actor = identity.principal_from_request(declared=_actor(body)).id
-    with session_scope() as s:
-        out = fn(s, memo_id, actor, body)
+    # revisión paso 18: con BROKERAGE_AUTO_APPROVE_PAPER la aprobación ENVÍA la orden (papel) dentro de la ficha
+    # approval.grant, que se escribe al salir. Si el libro o el guardado fallan DESPUÉS del envío, el estado es
+    # DESCONOCIDO (mismo trato que brokerage/api.guarded) — nunca un 500 genérico ni "no pasó nada".
+    try:
+        from brokerage import service as _bs
+    except Exception:  # noqa: BLE001
+        _bs = None
+    if _bs is not None:
+        _bs.send_trace_begin()
+    try:
+        with session_scope() as s:
+            out = fn(s, memo_id, actor, body)
+    except Exception as e:  # noqa: BLE001
+        sent = _bs.send_trace() if _bs is not None else None
+        if sent:
+            _bs.record_unknown_after_send(sent, actor, type(e).__name__, source='committee', client_id=None)
+            return jsonify({'ok': False, 'code': 'unknown_state', 'client_order_id': sent[-1],
+                            'error': 'La orden se envió a Alpaca pero no se pudo guardar su resultado: estado '
+                                     'DESCONOCIDO. Revisa las órdenes antes de repetir',
+                            'error_en': 'The order was sent to Alpaca but its result could not be saved: state '
+                                        'UNKNOWN. Check the orders before repeating'}), 502
+        if type(e).__name__ == 'LedgerUnavailable':      # sin decisión no hay aprobación (D4)
+            log.error('committee %s: libro de decisiones no disponible (%s)', memo_id, e)
+            return jsonify({'ok': False, 'code': 'ledger_unavailable',
+                            'error': 'El libro de decisiones no está disponible: no se hizo nada',
+                            'error_en': 'The decision ledger is unavailable: nothing was done'}), 503
+        log.warning('committee decide %s: %s', memo_id, e)
+        return jsonify({'ok': False, 'error': 'no se pudo registrar la decisión del comité',
+                        'error_en': 'could not record the committee decision',
+                        'detail': f'{type(e).__name__}: {str(e).splitlines()[0][:200] if str(e) else ""}'}), 500
     code = 200 if out.get('ok') else {'not_found': 404, 'expired': 409, 'bad_status': 409, 'order_sent': 409,
                                       'preview_failed': 409, 'confirm_failed': 409, 'not_tradable': 409,
                                       'brokerage_unavailable': 409, 'withdraw_failed': 409}.get(out.get('code'), 400)
@@ -274,7 +307,20 @@ def portfolio_committee():
             out['explanation'] = pa.explain(out, lang)
     if out.get('ok') and body.get('save', True):
         _register_portfolio_analysis(out, body, lang)
+    _record_advice(out, positions, profile, lang, body.get('actor'))
     return jsonify(out), (200 if out.get('ok') else 422)
+
+
+def _record_advice(a, positions, profile, lang, actor=None):
+    """Paso 18: committee.portfolio_advice en el libro, DESPUÉS de responder (consejo: no escribe nada del dominio,
+    así que la ficha no suma latencia). El dueño va como hash (X-Khipu-Owner → on_behalf_of). Nunca rompe."""
+    try:
+        from core import decision_sites
+        decision_sites.portfolio_advice(a, positions=positions, profile=profile, lang=lang,
+                                        saved_id=(a or {}).get('saved_id'),
+                                        actor=str(actor or '').strip()[:120] or None)
+    except Exception as e:  # noqa: BLE001
+        log.warning('portfolio advice ledger: %s', type(e).__name__)
 
 
 def _attach_geo(a):
@@ -480,6 +526,8 @@ def portfolio_ask():
         _attach_geo(a)
         if body.get('save', True) and committee_mode:
             _register_portfolio_analysis(a, {'source_label': label}, lang)
+        if committee_mode:
+            _record_advice(a, positions, profile, lang, who)
         hist = body.get('history') if isinstance(body.get('history'), list) else []
         try:
             req = kc.validate_request({'message': q, 'history': hist, 'lang': lang})

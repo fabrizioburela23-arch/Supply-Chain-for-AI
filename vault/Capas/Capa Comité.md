@@ -9,14 +9,14 @@ tags: ["capa/comite", "tipo/capa"]
 
 > El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera.
 
-**8 archivos · 6.581 líneas.** Volver al [[00 Mapa de Khipus]].
+**8 archivos · 6.677 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[research.committee.py]] — 2.286 líneas · PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
+- [[research.committee.py]] — 2.328 líneas · PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - [[engine.committee.js]] — 1.239 líneas · PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
-- [[research.outcomes.py]] — 716 líneas · PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
-- [[research.committee_api.py]] — 691 líneas · blueprint /api/committee/\* (PHASE 3).
+- [[research.committee_api.py]] — 739 líneas · blueprint /api/committee/\* (PHASE 3).
+- [[research.outcomes.py]] — 722 líneas · PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
 - [[engine.pfcommittee.js]] — 550 líneas · 💼 COMITÉ DE CARTERA (pestaña "Mi cartera" del Comité)
 - [[research.debate.py]] — 385 líneas · DEBATE CON IA del comité (cada puesto razona de verdad).
 - [[core.portfolio_advisor.py]] — 368 líneas · COMITÉ DE CARTERA: analiza una cartera completa y da ACCIONES CONCRETAS como consejo (reducir, vender, añadir, diversificar).
@@ -26,19 +26,19 @@ tags: ["capa/comite", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 16 |
+| usa a | [[Capa Infraestructura]] | 19 |
 | usa a | [[Capa Investigación]] | 15 |
 | la usa | [[Capa Chat y agentes]] | 9 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 8 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 6 |
 | usa a | [[Capa Ontología y grafo temporal]] | 6 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
 | la usa | [[Capa Investigación]] | 3 |
+| la usa | [[Capa MCP y API]] | 3 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 3 |
-| la usa | [[Capa MCP y API]] | 2 |
-| la usa | [[Capa Infraestructura]] | 1 |
+| la usa | [[Capa Infraestructura]] | 2 |
 | la usa | [[Capa Voz]] | 1 |

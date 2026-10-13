@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L42"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2 (kernel 2.0.0 con PIN, fichas rápidas, un camino de órdenes, historia de precios) — sw v261
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (37 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 42 (37 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -24,4 +24,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 [[ENV BROKERAGE_LIVE_ENABLED]], [[ENV PRICES_EOD]]
 
-← más antigua: [[Sesión 2026-10-13 (c) — INFRAESTRUCTURA OPERATIVA, PASOS 7, 9, 10 y 13]]
+← más antigua: [[Sesión 2026-10-13 (c) — INFRAESTRUCTURA OPERATIVA, PASOS 7, 9, 10 y 13]] · más nueva: [[Sesión 2026-10-13 (e) — PASOS 18-21 Y BLOQUES 4-5]] →

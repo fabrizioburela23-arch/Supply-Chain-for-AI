@@ -646,8 +646,15 @@ def agents_proposal_approve(proposal_id):
                 return err
             payload = {**(p.payload or {}), **edits}
             combined_actor = f'{p.agent} → aprobado por {principal.id}'[:120]
-            result = execute_action(s, p.action_type, payload, combined_actor, principal=principal, meta=meta,
-                                    correlation_id=f'proposal:{pid}')
+            # paso 19: approval.grant (persona con PIN) sobre el proposal.create; la Acción queda como hija
+            from core import decision_sites as _ds
+            from core import identity
+            with identity.use(principal), _ds.approval(
+                    s, 'grant', target_kind='proposal.create', target_ref=('proposal', pid),
+                    parent_id=_ds.proposal_parent(s, pid), note=({'edits': edits} if edits else None),
+                    subject={'action_type': p.action_type}):
+                result = execute_action(s, p.action_type, payload, combined_actor, principal=principal, meta=meta,
+                                        correlation_id=f'proposal:{pid}')
             return jsonify({'status': 'ok', 'result': result, 'decision_id': meta.get('decision_id'),
                             'principal': principal.id})
     except ActionError as e:
@@ -666,11 +673,21 @@ def agents_proposal_reject(proposal_id):
     principal, pid, err = _proposal_actor_and_id(body, proposal_id)
     if err:
         return err
-    with session_scope() as s:
-        _p, err = _claim_proposal(s, pid, 'rejected', principal.id)
-        if err:
-            return err
-        return jsonify({'status': 'ok'})
+    try:
+        with session_scope() as s:
+            _p, err = _claim_proposal(s, pid, 'rejected', principal.id)
+            if err:
+                return err
+            from core import decision_sites as _ds        # paso 19: approval.deny sobre el proposal.create
+            from core import identity
+            with identity.use(principal), _ds.approval(s, 'deny', target_kind='proposal.create',
+                                                        target_ref=('proposal', pid),
+                                                        parent_id=_ds.proposal_parent(s, pid),
+                                                        subject={'action_type': _p.action_type}):
+                pass
+            return jsonify({'status': 'ok'})
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
 
 
 @ontology_bp.route('/agents/brief')
@@ -729,11 +746,16 @@ def alerts_create():
                         'error_en': "'rule' must be an object and 'owner' a string"}), 400
     if not (rule.get('metric') in ('price', 'nrs', 'news_region') or rule.get('event_type')):
         return jsonify({'error': "rule.metric debe ser 'price'|'nrs'|'news_region'"}), 400
-    with session_scope() as s:
-        a = Alert(owner=owner, rule=rule, channel=body.get('channel', 'browser'), is_active=True)
-        s.add(a)
-        s.flush()
-        return jsonify({'status': 'ok', 'alert': _alert_to_dict(a)})
+    from core import decision_sites as _ds
+    try:
+        with session_scope() as s:
+            a = Alert(owner=owner, rule=rule, channel=body.get('channel', 'browser'), is_active=True)
+            s.add(a)
+            s.flush()
+            _ds.alert_rule(s, a, 'create')        # paso 19: alert.rule (sync; el dueño solo como hash)
+            return jsonify({'status': 'ok', 'alert': _alert_to_dict(a)})
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
 
 
 @ontology_bp.route('/alerts/<alert_id>', methods=['DELETE'])
@@ -746,12 +768,17 @@ def alerts_delete(alert_id):
         aid = _uuid.UUID(alert_id)
     except ValueError:
         return jsonify({'error': 'alert_id inválido'}), 400
-    with session_scope() as s:
-        a = s.get(Alert, aid)
-        if not a:
-            return jsonify({'error': 'no encontrada'}), 404
-        s.delete(a)
-        return jsonify({'status': 'ok'})
+    from core import decision_sites as _ds
+    try:
+        with session_scope() as s:
+            a = s.get(Alert, aid)
+            if not a:
+                return jsonify({'error': 'no encontrada'}), 404
+            _ds.alert_rule(s, a, 'delete')        # paso 19: la baja también queda (con la regla que se borra)
+            s.delete(a)
+            return jsonify({'status': 'ok'})
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
 
 
 @ontology_bp.route('/alerts/check', methods=['GET'])

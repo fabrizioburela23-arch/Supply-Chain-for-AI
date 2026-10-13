@@ -37,6 +37,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 ## Lo usan
 
 - [[core.agents_api.py]] — lo importa
+- [[core.context_engine.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.live_caps.py]] — lo importa
 - [[core.live_facts.py]] — lo importa
@@ -44,6 +45,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.space.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
+- [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
@@ -55,8 +57,10 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - [[research.outcomes.py]] — lo importa
 - [[research.router.py]] — lo importa
 - [[research.runner.py]] — lo importa
+- herramienta MCP `calculate_correlation` → [[API herramientas MCP]]
 - herramienta MCP `get_committee_memo` → [[API herramientas MCP]]
 - herramienta MCP `get_company` → [[API herramientas MCP]]
+- herramienta MCP `get_history` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 - herramienta MCP `get_research` → [[API herramientas MCP]]
 - herramienta MCP `get_supply_chain` → [[API herramientas MCP]]
@@ -64,11 +68,12 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_committee_os_narr.py]]
+- [[tests.test_context_engine.py]]
 - [[tests.test_entities.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_review2.py]]

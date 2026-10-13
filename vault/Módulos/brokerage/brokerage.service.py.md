@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "brokerage/service.py"
 lenguaje: "python"
-lineas: 2238
+lineas: 2262
 aliases: ["brokerage/service.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # brokerage/service.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 2.238 líneas · `brokerage/service.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 2.262 líneas · `brokerage/service.py`
 
 ## Para qué sirve
 
@@ -28,40 +28,40 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - `list_clients(session)` _(línea 302)_
 - `get_client(session, client_id)` _(línea 334)_
 - `create_client(session, name, email=…, notes=…, mode=…, risk_profile=…, limits=…, mandate=…, actor=…)` _(línea 375)_
-- `update_client(session, client_id, patch, actor=…)` _(línea 403)_
-- `pause_client(session, client_id, actor=…)` _(línea 481)_
-- `resume_client(session, client_id, actor=…)` _(línea 485)_
-- `make_alpaca(rec)` — AlpacaClient para el cliente (los tests lo sustituyen por uno falso). _(línea 492)_
-- `set_credentials(session, client_id, api_key, api_secret, env=…, actor=…, verify=…)` _(línea 534)_
-- `account_snapshot(session, client_id)` _(línea 621)_
-- `reference_price(alp, symbol, positions)` — (precio, fuente) de MERCADO para estimar montos — nunca inventado: posición en Alpaca → último trade de Alpaca → Finnhub. (None, None) si … _(línea 644)_
-- `market_clock(alp)` _(línea 671)_
-- `daily_used(session, client_id)` — Público (lo lee el comité): US\$ comprados hoy por el cliente. _(línea 694)_
-- `order_dict(row, client_name=…)` _(línea 892)_
-- `checks_report(checks, focus_id, ev=…, policy_mode=…)` — run_checks → el veredicto que RIGE, en la forma de DecisionCtx.gate (decision_violations). Los controles en sombra y los avisos quedan como … _(línea 991)_
-- `order_gate(rec, spec, ev, order_id, source, channel=…, channel_proof=…, policy_changed=…, acc=…, ctx=…)` — Puerta G3 (order.ttl) en SOMBRA: hechos de run_checks + reglas nuevas → GateReport/1 adjunto a la decisión. Nunca bloquea ni lanza (paso … _(línea 1036)_
-- `preview_order(session, client_id, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, source=…, requested_by=…, proposal_id=…, rationale=…, client_order_id=…, time_in_force=…, channel=…, channel_proof=…, checks_mode=…, parent_decision_id=…, reuse_eval=…)` _(línea 1167)_
-- `send_trace_begin()` — Empieza a anotar (en ESTE hilo) los client_order_id que llegan a tocar Alpaca. Lo usan quienes envuelven house_order/house_close en su … _(línea 1329)_
-- `send_trace()` — Los client_order_id enviados a Alpaca desde send_trace_begin() en este hilo (lista vacía si ninguno). _(línea 1337)_
-- `record_unknown_after_send(coids, actor, error_name, source=…, client_id=…)` — Rastro DURABLE (sesión propia, append-only) de una orden que salió hacia Alpaca pero cuya transacción se revirtió: el reintento con el … _(línea 1342)_
-- `confirm_order(session, preview_id, approved_by, source=…, channel_proof=…)` _(línea 1617)_
-- `approve_preview(session, preview_id, approved_by)` — Aprobación HUMANA (la ruta exige PIN) de una propuesta de MCP/comité/agente. _(línea 1681)_
-- `reject_preview(session, preview_id, actor, reason=…)` _(línea 1702)_
-- `pending_approvals(session)` _(línea 1727)_
-- `list_orders(session, client_id=…, status=…, limit=…)` _(línea 1745)_
-- `get_order(session, order_id)` _(línea 1758)_
-- `cancel_order(session, order_id, actor)` — Cancela (antes o después de enviarla) y deja la decisión order.cancel (hija de order.submit si la hay). _(línea 1805)_
-- `sync_orders(session, client_id=…, actor=…)` — Actualiza desde Alpaca el estado de las órdenes abiertas, y reconcilia por client_order_id las que quedaron con estado desconocido (sin id … _(línea 1870)_
-- `poll_fills_job()` — Tarea del reloj (core/scheduler, system:broker_fills): si hay órdenes abiertas, las sincroniza con Alpaca → broker_fills + … _(línea 1917)_
-- `house_order(session, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, time_in_force=…, client_order_id=…, source=…, channel=…, requested_by=…, rationale=…, channel_proof=…, checks_mode=…, parent_decision_id=…)` — UNA orden de la cuenta de la casa = preview_order(HOUSE_ID) + confirm_order en la misma llamada (la persona ya confirmó en el diálogo de la … _(línea 1967)_
-- `house_close(session, symbol, client_order_id=…, channel=…, requested_by=…, source=…)` — Cerrar UNA posición completa (1-clic «CLOSE») = orden de mercado por TODA la cantidad que hay (venta si es larga, compra si es corta) por … _(línea 2075)_
-- `crypto_pair(sym)` — 'BTCUSD' (símbolo de posición de Alpaca) → 'BTC/USD' (símbolo de orden). _(línea 2107)_
-- `oauth_start(session, client_id, env=…, actor=…)` _(línea 2119)_
-- `oauth_callback(session, state, code, error=…)` — Valida el `state` (firmado, de un solo uso, < 15 min), canjea el código y guarda el token CIFRADO. Devuelve {ok, client_id, client_name, … _(línea 2146)_
-- `public_status()` — Lo único que se muestra SIN PIN. _(línea 2203)_
-- `status_info()` — Detalle de configuración (va detrás del PIN: revela la postura de seguridad). _(línea 2208)_
+- `update_client(session, client_id, patch, actor=…)` _(línea 424)_
+- `pause_client(session, client_id, actor=…)` _(línea 505)_
+- `resume_client(session, client_id, actor=…)` _(línea 509)_
+- `make_alpaca(rec)` — AlpacaClient para el cliente (los tests lo sustituyen por uno falso). _(línea 516)_
+- `set_credentials(session, client_id, api_key, api_secret, env=…, actor=…, verify=…)` _(línea 558)_
+- `account_snapshot(session, client_id)` _(línea 645)_
+- `reference_price(alp, symbol, positions)` — (precio, fuente) de MERCADO para estimar montos — nunca inventado: posición en Alpaca → último trade de Alpaca → Finnhub. (None, None) si … _(línea 668)_
+- `market_clock(alp)` _(línea 695)_
+- `daily_used(session, client_id)` — Público (lo lee el comité): US\$ comprados hoy por el cliente. _(línea 718)_
+- `order_dict(row, client_name=…)` _(línea 916)_
+- `checks_report(checks, focus_id, ev=…, policy_mode=…)` — run_checks → el veredicto que RIGE, en la forma de DecisionCtx.gate (decision_violations). Los controles en sombra y los avisos quedan como … _(línea 1015)_
+- `order_gate(rec, spec, ev, order_id, source, channel=…, channel_proof=…, policy_changed=…, acc=…, ctx=…)` — Puerta G3 (order.ttl) en SOMBRA: hechos de run_checks + reglas nuevas → GateReport/1 adjunto a la decisión. Nunca bloquea ni lanza (paso … _(línea 1060)_
+- `preview_order(session, client_id, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, source=…, requested_by=…, proposal_id=…, rationale=…, client_order_id=…, time_in_force=…, channel=…, channel_proof=…, checks_mode=…, parent_decision_id=…, reuse_eval=…)` _(línea 1191)_
+- `send_trace_begin()` — Empieza a anotar (en ESTE hilo) los client_order_id que llegan a tocar Alpaca. Lo usan quienes envuelven house_order/house_close en su … _(línea 1353)_
+- `send_trace()` — Los client_order_id enviados a Alpaca desde send_trace_begin() en este hilo (lista vacía si ninguno). _(línea 1361)_
+- `record_unknown_after_send(coids, actor, error_name, source=…, client_id=…)` — Rastro DURABLE (sesión propia, append-only) de una orden que salió hacia Alpaca pero cuya transacción se revirtió: el reintento con el … _(línea 1366)_
+- `confirm_order(session, preview_id, approved_by, source=…, channel_proof=…)` _(línea 1641)_
+- `approve_preview(session, preview_id, approved_by)` — Aprobación HUMANA (la ruta exige PIN) de una propuesta de MCP/comité/agente. _(línea 1705)_
+- `reject_preview(session, preview_id, actor, reason=…)` _(línea 1726)_
+- `pending_approvals(session)` _(línea 1751)_
+- `list_orders(session, client_id=…, status=…, limit=…)` _(línea 1769)_
+- `get_order(session, order_id)` _(línea 1782)_
+- `cancel_order(session, order_id, actor)` — Cancela (antes o después de enviarla) y deja la decisión order.cancel (hija de order.submit si la hay). _(línea 1829)_
+- `sync_orders(session, client_id=…, actor=…)` — Actualiza desde Alpaca el estado de las órdenes abiertas, y reconcilia por client_order_id las que quedaron con estado desconocido (sin id … _(línea 1894)_
+- `poll_fills_job()` — Tarea del reloj (core/scheduler, system:broker_fills): si hay órdenes abiertas, las sincroniza con Alpaca → broker_fills + … _(línea 1941)_
+- `house_order(session, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, time_in_force=…, client_order_id=…, source=…, channel=…, requested_by=…, rationale=…, channel_proof=…, checks_mode=…, parent_decision_id=…)` — UNA orden de la cuenta de la casa = preview_order(HOUSE_ID) + confirm_order en la misma llamada (la persona ya confirmó en el diálogo de la … _(línea 1991)_
+- `house_close(session, symbol, client_order_id=…, channel=…, requested_by=…, source=…)` — Cerrar UNA posición completa (1-clic «CLOSE») = orden de mercado por TODA la cantidad que hay (venta si es larga, compra si es corta) por … _(línea 2099)_
+- `crypto_pair(sym)` — 'BTCUSD' (símbolo de posición de Alpaca) → 'BTC/USD' (símbolo de orden). _(línea 2131)_
+- `oauth_start(session, client_id, env=…, actor=…)` _(línea 2143)_
+- `oauth_callback(session, state, code, error=…)` — Valida el `state` (firmado, de un solo uso, < 15 min), canjea el código y guarda el token CIFRADO. Devuelve {ok, client_id, client_name, … _(línea 2170)_
+- `public_status()` — Lo único que se muestra SIN PIN. _(línea 2227)_
+- `status_info()` — Detalle de configuración (va detrás del PIN: revela la postura de seguridad). _(línea 2232)_
 
-**Internas** (empiezan con `_`): `_now`, `_iso`, `_f`, `_aware`, `_err`, `_not_found`, `_Bad`, `_sha`, `_who`, `_connected`, `_expire_open`, `_account_changed`, `_lookup`, `_client_rec`, `_name_taken`, `_clean_limits`, `_clean_mandate`, `_valid_cred`, `_enc_key_error`, `_read_account`, `_read_positions`, `_touch_hwm`, `_paper_mismatch`, `_daily_used`, `_recent_duplicate`, `_unresolved`, `_evaluate`, `_summaries`, `_spec`, `_principal`, `_meta`, `_set_meta`, `_uuid_or_none`, `_release_hash`, `_requires_approval`, `_rule_for`, `_account_view`, `_gate_limits`, `_decision_inputs`, `_close`, `_after`, `_status_outcome`, `_record_fill`, `_apply_alpaca`, `_mark_committee`, `_notify_closed`, `_definitive_reject`, `_committee_memo_ok`, `_send`, `_finish_send`, `_execute`, `_lock`, `_expired`, `_expire_row`, `_needs_human`, `_approval_decision`, `_confirm_ctx`, `_names`, `_age_s`, `_reconcile_unknown` y 5 más
+**Internas** (empiezan con `_`): `_now`, `_iso`, `_f`, `_aware`, `_err`, `_not_found`, `_Bad`, `_sha`, `_who`, `_connected`, `_expire_open`, `_account_changed`, `_lookup`, `_client_rec`, `_name_taken`, `_clean_limits`, `_clean_mandate`, `_policy_snapshot`, `_policy_change`, `_valid_cred`, `_enc_key_error`, `_read_account`, `_read_positions`, `_touch_hwm`, `_paper_mismatch`, `_daily_used`, `_recent_duplicate`, `_unresolved`, `_evaluate`, `_summaries`, `_spec`, `_principal`, `_meta`, `_set_meta`, `_uuid_or_none`, `_release_hash`, `_requires_approval`, `_rule_for`, `_account_view`, `_gate_limits`, `_decision_inputs`, `_close`, `_after`, `_status_outcome`, `_record_fill`, `_apply_alpaca`, `_mark_committee`, `_notify_closed`, `_definitive_reject`, `_committee_memo_ok`, `_send`, `_finish_send`, `_execute`, `_lock`, `_expired`, `_expire_row`, `_needs_human`, `_approval_decision`, `_confirm_ctx`, `_names` y 7 más
 
 ## Depende de
 
@@ -71,6 +71,7 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - [[brokerage.risk.py]] — importa `risk`
 - [[core.__init__.py]] — importa `account`, `focus`, `gates`, `report`
 - [[core.config.py]] — importa `FINNHUB`
+- [[core.decision_sites.py]] — importa `decision_sites`
 - [[core.decisions.py]] — importa `decisions`
 - [[core.governance.py]] — importa `governance`
 - [[core.identity.py]] — importa `identity`
@@ -89,6 +90,7 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - [[mcp_server.oauth.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[research.committee.py]] — lo importa
+- [[research.committee_api.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `cancel_order` → [[API herramientas MCP]]
 - herramienta MCP `get_account` → [[API herramientas MCP]]
@@ -99,7 +101,7 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 12 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -111,7 +113,9 @@ _Además lo importan 10 pruebas (lista abajo)._
 - [[tests.test_brokerage.py]]
 - [[tests.test_gates_orders_parity.py]]
 - [[tests.test_ledger_callsites.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_order_single_path.py]]

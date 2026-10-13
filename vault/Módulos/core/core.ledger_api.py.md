@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ledger_api.py"
 lenguaje: "python"
-lineas: 232
+lineas: 238
 aliases: ["core/ledger_api.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ledger_api.py
 
-> Módulo · capa [[Capa Infraestructura]] · 232 líneas · `core/ledger_api.py`
+> Módulo · capa [[Capa Infraestructura]] · 238 líneas · `core/ledger_api.py`
 
 ## Para qué sirve
 
@@ -19,17 +19,18 @@ lectura del libro de decisiones: /api/ledger/\* (docs/INFRA_OPERATIVA.md §2.9; 
 ## API pública
 
 - `ledger_status()` _(línea 74)_
-- `ledger_decisions()` _(línea 89)_
-- `ledger_decision(decision_id)` _(línea 121)_
-- `ledger_verify()` _(línea 149)_
-- `ledger_anchor()` — Ancla diaria PÚBLICA: SOLO la cabeza de la cadena (ningún contenido). Sin ancla todavía → anchor:null. _(línea 172)_
-- `ledger_chain()` _(línea 190)_
-- `ledger_chain_ack()` — Reconocer la cadena rota (PIN estricto, persona). Cuerpo: {note?, break_id?}. _(línea 205)_
+- `ledger_decisions()` _(línea 95)_
+- `ledger_decision(decision_id)` _(línea 127)_
+- `ledger_verify()` _(línea 155)_
+- `ledger_anchor()` — Ancla diaria PÚBLICA: SOLO la cabeza de la cadena (ningún contenido). Sin ancla todavía → anchor:null. _(línea 178)_
+- `ledger_chain()` _(línea 196)_
+- `ledger_chain_ack()` — Reconocer la cadena rota (PIN estricto, persona). Cuerpo: {note?, break_id?}. _(línea 211)_
 
 **Internas** (empiezan con `_`): `_db`, `_unavailable`, `_operator`, `_require_operator`, `_err`
 
 ## Depende de
 
+- [[core.ai_calls.py]] — importa `ai_calls`
 - [[core.decisions.py]] — importa `decisions`, `stats`
 - [[core.http.py]] — importa `rate_limit`
 - [[core.identity.py]] — importa `identity`

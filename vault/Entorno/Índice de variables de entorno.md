@@ -54,7 +54,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV COMMITTEE_MAX_SEATS]] | 1 | **no** |
 | [[ENV CSP_ENABLED]] | 1 | **no** |
 | [[ENV CSP_REPORT_ONLY]] | 1 | **no** |
-| [[ENV DATABASE_URL]] | 5 | sí |
+| [[ENV DATABASE_URL]] | 6 | sí |
 | [[ENV DB_CONNECT_TIMEOUT_S]] | 1 | **no** |
 | [[ENV DB_MAX_OVERFLOW]] | 1 | sí |
 | [[ENV DB_POOL_SIZE]] | 1 | sí |

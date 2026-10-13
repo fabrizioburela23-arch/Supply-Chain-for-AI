@@ -45,10 +45,13 @@ REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_report.py]] — lo importa
 - [[core.prices_api.py]] — lo importa
+- [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[research.committee.py]] — lo importa
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
+- herramienta MCP `calculate_correlation` → [[API herramientas MCP]]
+- herramienta MCP `get_history` → [[API herramientas MCP]]
 - herramienta MCP `get_risk_report` → [[API herramientas MCP]]
 
 _Además lo importan 5 pruebas (lista abajo)._

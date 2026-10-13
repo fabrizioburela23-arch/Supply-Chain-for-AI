@@ -156,14 +156,15 @@ class CoreProvider(LLMProvider):
         if paused:
             raise LLMError(f"{self.provider} en pausa hasta {paused['until_hhmm']} UTC ({paused['reason_es']}) / "
                            f"paused until {paused['until_hhmm']} UTC ({paused['reason_en']})")
+        # paso 21 (revisión): por core/ai._complete_single → una fila de ai_calls por pedido (antes ninguna)
         if self.provider == 'claude':
             tier = 'deep' if self.model in (None, 'deep') else 'fast'
             model = self.model if self.model not in (None, 'deep', 'fast') else None
-            text, used = prov[1](system, prompt, max_tokens, tier, model=model)
+            text, used = ai._complete_single('claude', system, prompt, max_tokens, tier, model=model)
         elif self.provider == 'gemini':
-            text, used = prov[1](system, prompt, max_tokens, 'deep', json_mode=True)
+            text, used = ai._complete_single('gemini', system, prompt, max_tokens, 'deep', json_mode=True)
         else:
-            text, used = prov[1](system, prompt, max_tokens, 'deep')
+            text, used = ai._complete_single(self.provider, system, prompt, max_tokens, 'deep')
         if not text or not text.strip():
             raise LLMError(f'{self.provider}: respuesta vacía')
         return text, used

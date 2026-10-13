@@ -7,7 +7,7 @@ como prefijo: varios casos pueden ir en UN grafo de datos para pySHACL sin mezcl
 import random
 from datetime import datetime, timezone
 
-KINDS = ('link', 'object', 'factor', 'action', 'decision', 'order')
+KINDS = ('link', 'object', 'factor', 'action', 'decision', 'order', 'memo')
 LIMITS = {'max_weight': 6.0, 'severity_scale': 10.0, 'high_conf_min': 0.5, 'min_trust': 2, 'max_member_coef': 1.0}
 
 
@@ -138,8 +138,27 @@ def order_case(rng, n):
     return f
 
 
+def memo_case(rng, n):
+    """Hechos de un memo del comité (core/decision_sites.memo_facts): decisión, validación, tamaño, edad, quórum."""
+    pick = rng.choice
+    raw = pick([None, 3.0, 5.304, 12.0])
+    mx = pick([None, 10.0, 5.0])
+    validated = pick([True, False, None])
+    full = min(raw, mx) if raw is not None and mx is not None else None
+    target = pick([None, 0, 2.652, 5.0, 6.0, 11.0] + ([round(full / 2, 3), full] if full is not None else []))
+    return {'id': f'c{n}_M', 'decision': pick(['BUY', 'ADD', 'HOLD', 'TRIM', 'SELL', 'AVOID', 'WAIT', None]),
+            'quant_decision': pick(['BUY', 'HOLD', None]), 'decision_code': pick([None, None, 'INSUFFICIENT_DATA']),
+            'validated': validated, 'sizing_unvalidated': pick([None, True, False]),
+            'target_weight_pct': target, 'max_position_pct': mx,
+            'max_unvalidated_weight_pct': (round(full * 0.5, 4) + 0.001) if (validated is False and full is not None)
+            else pick([None, None, 1.0]),
+            'age_hours': pick([None, 0, 1.5, 71.9, 72, 80]), 'ttl_hours': pick([None, 72, 24]),
+            'quorum_ok': pick([None, True, False]), 'n_claims': pick([None, 0, 2, 5]),
+            'ai_used': pick([True, False])}
+
+
 def random_cases(seed, n):
-    """[(kind, entrada)] — n casos repartidos entre los 6 focos."""
+    """[(kind, entrada)] — n casos repartidos entre los 7 focos."""
     rng = random.Random(seed)
     rels, otypes, flow, kinds = _vocab()
     out = []
@@ -155,6 +174,8 @@ def random_cases(seed, n):
             out.append(('action', action_case(rng, i)))
         elif k == 'order':
             out.append(('order', order_case(rng, i)))
+        elif k == 'memo':
+            out.append(('memo', memo_case(rng, i)))
         else:
             out.append(('decision', decision_case(rng, i, kinds)))
     return out
@@ -173,6 +194,8 @@ def triples_of(kind, inp):
         return F.action_triples(inp)
     if kind == 'order':
         return F.order_triples(inp)
+    if kind == 'memo':
+        return F.memo_triples(inp)
     return F.decision_triples(inp)
 
 
@@ -314,5 +337,27 @@ def single_defect_cases():
         O('khr:order.ai_origin_needs_human', origin='mcp'),
         O('khr:order.voice_readback', channel='voice'),
         O('khr:order.policy_changed_since_preview', policy_changed=True),
+    ]
+    # memo del comité limpio (BUY validado, dentro del mandato, recién hecho) y un defecto por regla (G5, paso 18)
+    mbase = {'id': 'X_M', 'decision': 'BUY', 'quant_decision': 'BUY', 'decision_code': None, 'validated': True,
+             'sizing_unvalidated': False, 'target_weight_pct': 5.304, 'max_position_pct': 10.0,
+             'max_unvalidated_weight_pct': None, 'age_hours': 0.1, 'ttl_hours': 72, 'quorum_ok': True,
+             'n_claims': 6, 'ai_used': True}
+    unv = {'validated': False, 'sizing_unvalidated': True, 'target_weight_pct': 2.652,
+           'max_unvalidated_weight_pct': 2.653}
+
+    def M(rule, **kw):
+        return (rule, 'memo', dict(mbase, **kw))
+    cases += [
+        M(None),
+        M(None, **unv),
+        M(None, decision='HOLD', decision_code='INSUFFICIENT_DATA', quorum_ok=False, ai_used=False),
+        M('khr:memo.manifest_complete', decision='WAIT'),
+        M('khr:memo.size_le_mandate', target_weight_pct=12.5),
+        M('khr:memo.not_expired', age_hours=80),
+        M('khr:memo.unvalidated_half', **dict(unv, target_weight_pct=5.304, max_position_pct=10.0)),
+        M('khr:memo.unvalidated_label', **dict(unv, sizing_unvalidated=False)),
+        M('khr:memo.quorum', quorum_ok=False, ai_used=False),
+        M('khr:memo.quorum_no_ai', decision='HOLD', decision_code='INSUFFICIENT_DATA', quorum_ok=False),
     ]
     return cases

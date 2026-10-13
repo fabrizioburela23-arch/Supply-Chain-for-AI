@@ -91,7 +91,8 @@ REGISTRY = {}
 
 def tool(name, title, scope, description, properties=None, required=None, read_only=True,
          destructive=False, idempotent=True, open_world=False):
-    schema = {'type': 'object', 'properties': properties or {}, 'additionalProperties': False}
+    from mcp_server.contract import COMMON_PROPS     # detail / max_chars en TODAS las herramientas (L4-08)
+    schema = {'type': 'object', 'properties': dict(properties or {}, **COMMON_PROPS), 'additionalProperties': False}
     if required:
         schema['required'] = list(required)
 
@@ -208,8 +209,9 @@ def trading_enabled():
     return os.getenv('MCP_TRADING_ENABLED', 'on').strip().lower() not in ('off', '0', 'false', 'no')
 
 
-def call(name, args, ctx):
-    """→ dict (éxito). Lanza ToolError (isError) o InvalidParams (-32602)."""
+def call(name, args, ctx, shape=False):
+    """→ dict (éxito). Lanza ToolError (isError) o InvalidParams (-32602). shape=True (el servidor MCP): aplica el
+    contrato común (detail / max_chars / as_of / truncated…, mcp_server/contract.py); el chat lo llama crudo."""
     t = REGISTRY.get(name)
     if t is None:
         raise KeyError(name)
@@ -225,9 +227,13 @@ def call(name, args, ctx):
             and not _auth.allow(p, 'trade', lim['trade_per_hour'], 3600):
         raise ToolError('rate limit: too many trading actions this hour for this token', code='rate_limited')
     clean = validate(t.input_schema, args or {})
+    from mcp_server import contract as _contract
+    clean, detail, max_chars = _contract.split_common(clean)
     res = t.handler(ctx, **clean)
     if not isinstance(res, dict):
         res = {'result': res}
+    if shape:
+        res = _contract.apply(name, res, detail, max_chars, question=clean.get('question'))
     return res
 
 
@@ -1383,15 +1389,20 @@ def t_run_research(ctx, entity, depth='STANDARD', only_missing=False):
     return out
 
 
-def _run_committee_async(memo_id, eid, actor, client_id, release=None):
+def _run_committee_async(memo_id, eid, actor, client_id, release=None, who=None):
     """Corre el comité en un hilo. El cupo (acquire_run_slot) ya se tomó: `release`
-    lo libera al terminar, pase lo que pase (mismo contrato que committee_api._run_async)."""
+    lo libera al terminar, pase lo que pase (mismo contrato que committee_api._run_async).
+    `who` = el principal de la petición (mcp:<token>): los contextvars no cruzan threading.Thread, así que se
+    re-instala en el hilo — si no, committee.run quedaba como system:committee (revisión paso 18)."""
     def _work():
+        from contextlib import nullcontext
+
+        from core import identity
         from ontology.db import session_scope
         try:
             from research.committee import fail_memo, run_committee
             try:
-                with session_scope() as s:
+                with (identity.use(who) if who is not None else nullcontext()), session_scope() as s:
                     run_committee(s, eid, actor, client_id=client_id, memo_id=memo_id)
             except Exception as e:  # noqa: BLE001
                 log.warning('mcp committee %s: %s', memo_id, e)
@@ -1473,7 +1484,12 @@ def t_run_committee(ctx, entity, client_id=None):
             with session_scope() as s:
                 return cm.create_placeholder(s, r['id'], p.actor, cid).id
         mid = _auth.with_schema(_ph)
-        _run_committee_async(mid, r['id'], p.actor, cid, release=release)
+        try:
+            from core import identity as _idn
+            who = _idn.current()
+        except Exception:  # noqa: BLE001
+            who = None
+        _run_committee_async(mid, r['id'], p.actor, cid, release=release, who=who)
         started = True
     finally:
         if not started and release is not None:
@@ -1763,3 +1779,8 @@ def _entity_ids_for(eid):
         return entity_ids_for(eid) or [eid]
     except Exception:  # noqa: BLE001
         return [eid]
+
+
+# Operaciones v2 que faltaban (BRECHAS L4-09): run_scenario, get_subgraph, get_exposure, find_similar_entities,
+# calculate_correlation, get_history — se registran en el MISMO REGISTRY al importar el módulo.
+from mcp_server import ops as _ops  # noqa: E402,F401

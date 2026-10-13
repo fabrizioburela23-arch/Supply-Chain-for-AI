@@ -33,6 +33,7 @@ Se carga en [[app.html]] en la posición **19 de 95** (línea 1454), después de
 - [[app.html]] — lo carga con `<script>` (posición 19)
 - [[app.html]] — usa `buildKhipusGraph`
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
+- [[scripts.link_origins.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 

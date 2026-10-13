@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Investigación"
 ruta: "research/llm.py"
 lenguaje: "python"
-lineas: 301
+lineas: 302
 aliases: ["research/llm.py"]
 tags: ["capa/investigacion", "tipo/modulo"]
 ---
 
 # research/llm.py
 
-> Módulo · capa [[Capa Investigación]] · 301 líneas · `research/llm.py`
+> Módulo · capa [[Capa Investigación]] · 302 líneas · `research/llm.py`
 
 ## Para qué sirve
 
@@ -23,9 +23,9 @@ abstracción de proveedor de modelos (no acoplada a nadie).
 - clase `LLMError` — `meta` (opcional): tokens ya gastados antes de fallar — el presupuesto los cuenta (R5). _(línea 78)_
 - clase `LLMProvider` _(línea 86)_
 - clase `CoreProvider` — Un proveedor de core/ai.py (claude|gemini|nvidia), sin cascada interna. _(línea 136)_
-- clase `FakeProvider` — Para tests: devuelve respuestas guionadas (texto o callable(prompt)). _(línea 172)_
-- `route_for(agent_type)` _(línea 207)_
-- clase `RoutedProvider` — Cascada de proveedores para UN agente: si uno falla (red, clave, modelo retirado o salida inválida tras reintentos) pasa al siguiente. _(línea 213)_
+- clase `FakeProvider` — Para tests: devuelve respuestas guionadas (texto o callable(prompt)). _(línea 173)_
+- `route_for(agent_type)` _(línea 208)_
+- clase `RoutedProvider` — Cascada de proveedores para UN agente: si uno falla (red, clave, modelo retirado o salida inválida tras reintentos) pasa al siguiente. _(línea 214)_
 
 **Internas** (empiezan con `_`): `_busy_retries`, `_busy_wait_s`, `_sleep`, `_BusyExhausted`, `_meter`, `_parse_route`
 
@@ -41,7 +41,7 @@ abstracción de proveedor de modelos (no acoplada a nadie).
 - [[research.debate.py]] — lo importa
 - [[research.runner.py]] — lo importa
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 10 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -51,7 +51,11 @@ _Además lo importan 6 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_ai_calls.py]]
+- [[tests.test_ai_usage_cache.py]]
 - [[tests.test_committee_os_narr.py]]
+- [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_repair_committee.py]]

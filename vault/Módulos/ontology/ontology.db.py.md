@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/db.py"
 lenguaje: "python"
-lineas: 271
+lineas: 274
 aliases: ["ontology/db.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/db.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 271 líneas · `ontology/db.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 274 líneas · `ontology/db.py`
 
 ## Para qué sirve
 
@@ -21,8 +21,8 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - `ontology_available()` _(línea 20)_
 - `get_session_factory()` _(línea 104)_
 - `session_scope()` — Sesión con commit/rollback automático. Uso: with session_scope() as s: ... _(línea 110)_
-- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 155)_
-- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 178)_
+- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 158)_
+- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 181)_
 
 **Internas** (empiezan con `_`): `_normalize_url`, `_env_int`, `_engine_kwargs`, `_get_engine`
 
@@ -42,8 +42,10 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[brokerage.api.py]] — lo importa
 - [[brokerage.service.py]] — lo importa
 - [[core.agents_api.py]] — lo importa
+- [[core.ai_calls.py]] — lo importa
 - [[core.ai_usage.py]] — lo importa
 - [[core.decide.py]] — lo importa
+- [[core.decision_sites.py]] — lo importa
 - [[core.decisions.py]] — lo importa
 - [[core.geosit.py]] — lo importa
 - [[core.governance.py]] — lo importa
@@ -70,6 +72,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[research.health.py]] — lo importa
 - [[research.runner.py]] — lo importa
 - [[scripts.audit_graph.py]] — lo importa
+- [[scripts.build_graph_review.py]] — lo importa
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[scripts.reconcile_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
@@ -91,7 +94,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 56 pruebas (lista abajo)._
+_Además lo importan 62 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -105,7 +108,9 @@ _Además lo importan 56 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_agent_dudosos.py]]
+- [[tests.test_ai_calls.py]]
 - [[tests.test_ai_usage.py]]
+- [[tests.test_ai_usage_cache.py]]
 - [[tests.test_ask_agent.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_cleanup_server.py]]
@@ -127,9 +132,12 @@ _Además lo importan 56 pruebas (lista abajo)._
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_ledger_anchor.py]]
 - [[tests.test_ledger_callsites.py]]
+- [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_no_client_engine.py]]
@@ -161,6 +169,7 @@ _Además lo importan 56 pruebas (lista abajo)._
 - [[tests.test_repair_review2.py]]
 - [[tests.test_research.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_review_lists.py]]
 - [[tests.test_risk_on_history.py]]
 - [[tests.test_security.py]]
 - [[tests.test_tensor_autolink.py]]

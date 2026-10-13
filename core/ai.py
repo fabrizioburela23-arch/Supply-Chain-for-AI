@@ -455,6 +455,23 @@ def claude_ping_kwargs(model):
     return {k: v for k, v in first.items() if k == 'thinking'}
 
 
+# BRECHAS L4-06 (2026-10-13): CACHÉ DE PROMPTS de Anthropic. El system es el prefijo ESTABLE de cada función (las
+# reglas del chat, del analista, del comité + NUMBERS_RULE): se marca con cache_control y los pedidos siguientes
+# con el mismo system lo LEEN de la caché (~0,1× del precio de entrada, más rápido). Lo variable (pregunta, datos,
+# DATOS EN VIVO) va en el mensaje, DESPUÉS del punto de caché. Prefijos cortos no se marcan (por debajo del mínimo
+# del modelo —512 a 4.096 tokens— Anthropic no cachea y no cobra nada extra; 2.000 caracteres ≈ 500 tokens).
+# La respuesta NO cambia: es el mismo texto; solo cambia cómo se cobra.
+CLAUDE_CACHE_MIN_CHARS = 2000
+
+
+def claude_system(system):
+    """`system` para messages.create: texto plano si es corto; un bloque con cache_control si es largo."""
+    system = system or ''
+    if len(system) < CLAUDE_CACHE_MIN_CHARS:
+        return system
+    return [{'type': 'text', 'text': system, 'cache_control': {'type': 'ephemeral'}}]
+
+
 def _complete_claude(system, prompt, max_tokens, tier='fast', model=None, timeout_s=None):
     def _call():
         _usage().check('claude', max_tokens)          # límite de gasto: no se llama (ni se cobra)
@@ -504,12 +521,13 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None, 
         # R2: 429/5xx/529 se reintentan con backoff + jitter (AI_TRANSIENT_RETRIES
         # intentos en total); timeouts y 4xx definitivos salen a la primera.
         msg = _retry_transient(lambda: _send(kw), _transient, 'claude')
-        try:   # gasto: tokens REALES que reporta Anthropic (incluida la caché)
+        try:   # gasto: tokens REALES que reporta Anthropic; la caché (L4-06) leída/escrita va APARTE, a su precio
             u = getattr(msg, 'usage', None)
-            tin = (getattr(u, 'input_tokens', 0) or 0) + (getattr(u, 'cache_creation_input_tokens', 0) or 0) \
-                + int((getattr(u, 'cache_read_input_tokens', 0) or 0) * 0.1)
+            cw = int(getattr(u, 'cache_creation_input_tokens', 0) or 0)
+            cr = int(getattr(u, 'cache_read_input_tokens', 0) or 0)
+            tin = int(getattr(u, 'input_tokens', 0) or 0) + cw + cr
             _usage().record('claude', getattr(msg, 'model', kw.get('model')), tin, getattr(u, 'output_tokens', 0) or 0,
-                            ms=(time.monotonic() - t0) * 1000, estimated=u is None)
+                            ms=(time.monotonic() - t0) * 1000, estimated=u is None, cache_read=cr, cache_write=cw)
         except Exception:  # noqa: BLE001
             pass
         return msg
@@ -517,7 +535,7 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None, 
     # para elegir el mejor modelo POR TAREA (p.ej. claude-opus-4-8 en la capa
     # proactiva, donde el juicio importa más que la latencia).
     tier_model = AI_MODEL_DEEP if tier == 'deep' else AI_MODEL_FAST
-    base = dict(max_tokens=max_tokens, system=system or '',
+    base = dict(max_tokens=max_tokens, system=claude_system(system),
                 messages=[{'role': 'user', 'content': prompt or ''}])
     # Lista de modelos Claude a probar EN ORDEN. Si la key no tiene acceso al
     # modelo pedido, caemos a otro modelo Claude que SÍ funcione (haiku) — SIEMPRE
@@ -790,9 +808,11 @@ def _gemini_once(model, system, prompt, max_tokens, tier='fast', json_mode=False
     data = r.json() or {}
     try:   # gasto: usageMetadata de Google (el "pensamiento" se cobra como salida)
         um = data.get('usageMetadata') or {}
+        # L4-06: caché IMPLÍCITA de Google (sin marcar nada): cachedContentTokenCount es la parte del prompt que se
+        # leyó de la caché — se mide y se cobra aparte
         _usage().record('gemini', model, um.get('promptTokenCount') or _usage().estimate_tokens(body['contents'][0]['parts'][0]['text']),
                         (um.get('candidatesTokenCount') or 0) + (um.get('thoughtsTokenCount') or 0),
-                        estimated=not um)
+                        estimated=not um, cache_read=um.get('cachedContentTokenCount') or 0)
     except Exception:  # noqa: BLE001
         pass
     cands = data.get('candidates') or []
@@ -929,6 +949,11 @@ def ai_route_state():
     return out
 
 
+def _nullctx(v):
+    from contextlib import nullcontext
+    return nullcontext(v)
+
+
 def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True, want_json=False,
                  timeout_s=None, live_facts=True):
     """Llamada de IA con GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito:
@@ -957,25 +982,98 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
     except Exception:  # noqa: BLE001 — el contexto de uso nunca rompe la llamada
         pass
     sys2 = (system or '') + NUMBERS_RULE
-    text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
-    bad = unsupported_in(text, source, kinds)
-    if bad:
-        log.warning('guardián de cifras: %s sin respaldo → reintento', bad)
-        try:
-            fb = (prompt + '\n\nTU RESPUESTA ANTERIOR USÓ CIFRAS QUE NO ESTÁN EN LOS DATOS: ' + ', '.join(bad) +
-                  '. Reescribe la respuesta completa (mismo formato) usando SOLO cifras de los datos dados, '
-                  'o sin esas cifras.')
-            text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
-            bad2 = unsupported_in(text2, source, kinds)
-            if len(bad2) <= len(bad):
-                text, used, bad = text2, used2, bad2
-        except Exception as e:  # noqa: BLE001
-            log.warning('guardián de cifras: reintento falló (%s)', str(e)[:80])
-        text = mark_unsupported(text, bad, kinds, facts=source)
+    aic = _aicalls()
+    with (aic.held() if aic is not None else _nullctx([])) as rows:   # paso 21: veredicto del guardián por fila
+        text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
+        n_first = len(rows)
+        bad = unsupported_in(text, source, kinds)
+        verdict = {'kinds': list(kinds), 'unsupported': len(bad), 'retried': False, 'marked': 0}
+        if bad:
+            log.warning('guardián de cifras: %s sin respaldo → reintento', bad)
+            verdict['retried'] = True
+            try:
+                fb = (prompt + '\n\nTU RESPUESTA ANTERIOR USÓ CIFRAS QUE NO ESTÁN EN LOS DATOS: ' + ', '.join(bad) +
+                      '. Reescribe la respuesta completa (mismo formato) usando SOLO cifras de los datos dados, '
+                      'o sin esas cifras.')
+                text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
+                bad2 = unsupported_in(text2, source, kinds)
+                verdict['unsupported_retry'] = len(bad2)
+                if len(bad2) <= len(bad):
+                    text, used, bad = text2, used2, bad2
+                    verdict['used'] = 'retry'
+            except Exception as e:  # noqa: BLE001
+                log.warning('guardián de cifras: reintento falló (%s)', str(e)[:80])
+            verdict['marked'] = len(bad)
+            text = mark_unsupported(text, bad, kinds, facts=source)
+        verdict['outcome'] = 'pass' if not verdict['unsupported'] else ('fixed' if not verdict['marked'] else 'marked')
+        for i, r in enumerate(rows):
+            r['guardian'] = dict(verdict, attempt='first' if i < n_first else 'retry')
     return text, used
 
 
+def _aicalls():
+    try:
+        from core import ai_calls
+        return ai_calls
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, want_json=False, timeout_s=None):
+    """La cascada de proveedores (`_cascade`) + su fila en el registro `ai_calls` (paso 21, GV-11): prompt_sha,
+    system_sha, textos como blobs, modelo REAL, tokens (caché aparte), costo, latencia, decision_id. La fila se
+    arma en memoria y se escribe en segundo plano (core/ai_calls): no suma latencia. Los pings del 🩺 (≤ 4 tokens),
+    "IA ocupada" y el tope de gasto no llaman a nadie → no dejan fila."""
+    aic = None if _small(max_tokens) else _aicalls()
+    if aic is None:
+        return _cascade(system, prompt, max_tokens, tier, model, want_json, timeout_s)
+    rec = aic.begin(system, prompt, tier=tier, max_tokens=max_tokens, want_json=want_json, model=model)
+    with _usage().meter() as acc:
+        try:
+            text, used = _cascade(system, prompt, max_tokens, tier, model, want_json, timeout_s)
+        except AIBusyError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            if not (type(e).__name__ == 'AIBudgetError' and not acc.get('calls')):
+                aic.submit(aic.finish(rec, acc=acc, ok=False, error=_redact(e, 220)))
+            raise
+    aic.submit(aic.finish(rec, text=text, used=used, acc=acc))
+    return text, used
+
+
+def _complete_single(provider, system, prompt, max_tokens=1500, tier='deep', *, model=None, json_mode=False):
+    """UN proveedor, sin cascada (research/llm.CoreProvider: analistas, contradicciones, debate y presidente
+    del comité) + su fila en `ai_calls` igual que `_ai_complete_raw` (revisión del paso 21: estos pedidos, los
+    más caros, no dejaban fila). No toca el semáforo ni el corta-circuito: eso lo decide quien llama."""
+    prov = _AI_PROVIDERS.get(provider)
+    if not prov:
+        raise RuntimeError(f'proveedor desconocido: {provider}')
+
+    def _call():
+        if provider == 'claude':
+            return prov[1](system, prompt, max_tokens, tier, model=model)
+        if provider == 'gemini':
+            return prov[1](system, prompt, max_tokens, tier, json_mode=json_mode)
+        return prov[1](system, prompt, max_tokens, tier)
+    aic = None if _small(max_tokens) else _aicalls()
+    if aic is None:
+        return _call()
+    rec = aic.begin(system, prompt, tier=tier, max_tokens=max_tokens, want_json=json_mode, model=model)
+    rec['route']['single'] = provider
+    with _usage().meter() as acc:
+        try:
+            text, used = _call()
+        except AIBusyError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            if not (type(e).__name__ == 'AIBudgetError' and not acc.get('calls')):
+                aic.submit(aic.finish(rec, acc=acc, ok=False, error=_redact(e, 220), tried=[provider]))
+            raise
+    aic.submit(aic.finish(rec, text=text, used=used, acc=acc, ok=bool(text and str(text).strip())))
+    return text, used
+
+
+def _cascade(system, prompt, max_tokens=1000, tier='fast', model=None, want_json=False, timeout_s=None):
     """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
     pasa al siguiente. Devuelve (texto, etiqueta_modelo).
 

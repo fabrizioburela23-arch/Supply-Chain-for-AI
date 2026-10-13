@@ -158,8 +158,28 @@ prohibe prohíbe exportar importar exports imports export import ban bans deja d
 companies mercado market precio precios china eeuu estados unidos taiwan taiwán corea japón japon europa'''.split())
 
 
+# "<A> bloquea/invade/ataca/sanciona a <B>": el país GOLPEADO es B (revisión 2026-10-13: "China blockades
+# Taiwan" sembraba el choque en las empresas chinas y TSMC quedaba con 0 %). En pasiva ("Taiwán es bloqueado
+# por China") el verbo va seguido de "por/by" y el golpeado sigue siendo el primero.
+_AGGRESSION_RX = re.compile(r'bloque\w*|blockad\w*|invad\w*|invasi\w*|atac\w*|attack\w*|sancion\w*|sanction\w*|'
+                            r'embarg\w*|asedi\w*|sieg\w*|cerc[ao]\w*|cuts? off|corta\w*', re.I)
+_PASSIVE_RX = re.compile(r'\b(?:por|by)\s*$', re.I)
+
+
+def _disrupted(t, found, event):
+    """Clave del país que RECIBE la disrupción (el actor, salvo "<A> <verbo de agresión> <B>" → B)."""
+    if not found:
+        return None
+    if event == 'disruption' and len(found) > 1:
+        a_pos, b_pos = found[0][0], found[1][0]
+        between = t[a_pos:b_pos]
+        if _AGGRESSION_RX.search(between) and not _PASSIVE_RX.search(between):
+            return found[1][1]
+    return found[0][1]
+
+
 def detect(scenario):
-    """{'themes':[...], 'actor':key|None, 'actor_es','actor_en', 'event':str}"""
+    """{'themes':[...], 'actor':key|None, 'actor_es','actor_en', 'event':str, 'disrupted':key|None}"""
     t = scenario or ''
     themes = [th for th in THEMES if re.search(th['rx'], t, re.I)]
     # HBM ya implica memoria: no dupliques el tema genérico
@@ -169,7 +189,7 @@ def detect(scenario):
     actor = found[0][1:] if found else None
     target = found[1][1:] if len(found) > 1 else None      # "EE.UU. impone aranceles a chips de Taiwán"
     event = next((k for k, rx in EVENTS if re.search(rx, t, re.I)), 'disruption')
-    return {'themes': themes, 'actor': actor[0] if actor else None,
+    return {'themes': themes, 'actor': actor[0] if actor else None, 'disrupted': _disrupted(t, found, event),
             'actor_es': actor[1] if actor else None, 'actor_en': actor[2] if actor else None,
             'target': target[0] if target else None, 'target_es': target[1] if target else None,
             'target_en': target[2] if target else None, 'event': event}
@@ -257,8 +277,9 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
         producers = tp or top_local(target)
     if not producers:
         producers = text_search(scenario, snap)
-    if not producers and actor:
-        producers = top_local(actor)          # "¿y si Taiwán es bloqueado?" → sus empresas clave
+    victim = det.get('disrupted') or actor     # "China bloquea Taiwán" → Taiwán recibe el golpe
+    if not producers and victim:
+        producers = top_local(victim)         # "¿y si Taiwán es bloqueado?" → sus empresas clave
     producers = list(dict.fromkeys(producers))[:8]
     if not producers:
         return None
@@ -294,8 +315,8 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
         note_en = 'Demand boost or support: producers and their suppliers benefit.'
     else:   # disrupción: si hay país, sus empresas clave también reciben el golpe
         hit = list(producers)
-        if actor and not det['themes']:
-            local = sorted((i for i, n in by_id.items() if _in_actor(n, actor)),
+        if victim and not det['themes']:
+            local = sorted((i for i, n in by_id.items() if _in_actor(n, victim)),
                            key=lambda i: -deg.get(i, 0))[:6]
             hit = list(dict.fromkeys(hit + local))[:8]
         note_es = 'Disrupción de oferta: el golpe va de los afectados a sus clientes (falta de suministro) y a sus proveedores (menos pedidos).'
@@ -424,7 +445,8 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
     t3_en = ('Months 2-6: ' + (f"their suppliers ({', '.join(sup)}) adjust orders; " if sup else '') +
              'governments respond (subsidies, controls or retaliation) and the market reprices the risk.')
     return {
-        'theme_es': theme_es, 'theme_en': theme_en, 'actor': actor, 'actor_es': det['actor_es'],
+        'theme_es': theme_es, 'theme_en': theme_en, 'actor': actor, 'disrupted': det.get('disrupted'),
+        'actor_es': det['actor_es'],
         'actor_en': det['actor_en'], 'event': event, 'producers': producers, 'hit': hit, 'benefit': benefit,
         'mechanism_es': note_es, 'mechanism_en': note_en, 'impacts': impacts,
         'summary': {'n_hit': sum(1 for x in impacts if x['sev'] < 0),

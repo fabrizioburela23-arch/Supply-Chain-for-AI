@@ -796,10 +796,13 @@ def auto_cycle(session, actor='agent:auto'):
             if claimed != 1:
                 sp.rollback()
                 continue
+            from core import decision_sites as _ds
             from core import identity as _identity        # paso 6: la ficha es de system:auto_apply (§2.5)
-            execute_action(session, p.action_type, p.payload, f'{p.agent} → {actor}',
-                           principal=_identity.system('auto_apply', declared=p.agent),
-                           correlation_id=f'proposal:{p.id}', proposal_confidence=p.confidence)
+            # paso 19: proposal.auto_apply (cita policy.auto_apply 1.0.0; D6 sin respuesta) → la Acción es su hija
+            with _ds.proposal_auto_apply(session, p, min_conf=AUTO_MIN_CONFIDENCE):
+                execute_action(session, p.action_type, p.payload, f'{p.agent} → {actor}',
+                               principal=_identity.system('auto_apply', declared=p.agent),
+                               correlation_id=f'proposal:{p.id}', proposal_confidence=p.confidence)
             sp.commit()
             session.refresh(p)
             applied.append({'agent': p.agent, 'action': p.action_type,
@@ -843,13 +846,19 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
                     proposal = None
                 if not proposal:
                     continue
-                pa = ProposedAction(
-                    agent=agent.name, action_type=proposal['action_type'],
-                    payload=proposal['payload'], object_id=proposal.get('object_id'),
-                    confidence=proposal.get('confidence'), explanation=proposal.get('explanation'),
-                    status='pending', gate_report=_gate_prop(session, agent.name, proposal),
-                )
-                session.add(pa)
+                # paso 19: proposal.create (sync, en el SAVEPOINT del agente): sin ficha no hay propuesta; la
+                # puerta G-PROP (sombra) queda en ESTA decisión
+                from core import decision_sites as _ds
+                with _ds.proposal_create(session, agent.name, proposal) as done:
+                    pa = ProposedAction(
+                        agent=agent.name, action_type=proposal['action_type'],
+                        payload=proposal['payload'], object_id=proposal.get('object_id'),
+                        confidence=proposal.get('confidence'), explanation=proposal.get('explanation'),
+                        status='pending', gate_report=_gate_prop(session, agent.name, proposal),
+                    )
+                    session.add(pa)
+                    session.flush()
+                    done(pa)
                 created += 1
             sp.commit()
             summary[agent.name] = {'ok': True, 'signals': len(signals), 'proposals': created,
@@ -1001,9 +1010,18 @@ def check_alerts(session, owner=None):
         vals = _ai.values(session, [a.rule for a in alerts])
     except Exception:  # noqa: BLE001
         vals = None
+    from core.decision_sites import alert_fire_due  # una ficha alert.fire por alerta cada 10 min, no por sondeo
+    to_ledger = []
     for a in alerts:
         fired, value, detail = evaluate_alert(session, a.rule, values=vals)
         if fired:
+            prev = a.last_fired_at
             a.last_fired_at = _utcnow()
             fired_now.append({'id': str(a.id), 'rule': a.rule, 'value': value, 'detail': detail})
+            if alert_fire_due(a.id, prev, a.last_fired_at):
+                to_ledger.append({'alert_id': str(a.id), 'owner': a.owner, 'rule': a.rule, 'value': value,
+                                  'detail': detail})
+    if to_ledger:     # paso 19: alert.fire (async, DESPUÉS de responder) — la historia que last_fired_at pisaba
+        from core import decision_sites as _ds
+        _ds.alert_fires(to_ledger)
     return fired_now

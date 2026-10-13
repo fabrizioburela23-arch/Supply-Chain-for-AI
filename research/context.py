@@ -15,6 +15,8 @@ Cada fuente externa (noticias, web) entra como DATO; el render lo envuelve en
 Los "fetchers" son inyectables para tests (sin red).
 """
 import re
+import threading
+import time
 from datetime import datetime, timezone
 
 from core.entities import get_index
@@ -194,10 +196,78 @@ def _fetch_mcap(symbol):
     return fetch_market_cap_yahoo(symbol)
 
 
+# L4-11: caché CORTA (10 min, solo resultados no vacíos) para las noticias de GDELT y Finnhub — un mismo titular no se
+# vuelve a pedir por cada analista / pregunta seguida (y las fuentes no nos bloquean por repetir)
+NEWS_TTL_S = 600
+_NEWS_CACHE = {}
+_NEWS_LOCK = threading.Lock()
+
+
+def _ttl(name, fn):
+    def inner(*a):
+        key = (name,) + tuple(a)
+        now = time.time()
+        with _NEWS_LOCK:
+            hit = _NEWS_CACHE.get(key)
+            if hit and now - hit[0] < NEWS_TTL_S:
+                return list(hit[1])
+        val = fn(*a)
+        if val:
+            with _NEWS_LOCK:
+                _NEWS_CACHE[key] = (now, list(val))
+                if len(_NEWS_CACHE) > 500:
+                    for k in sorted(_NEWS_CACHE, key=lambda k: _NEWS_CACHE[k][0])[:100]:
+                        _NEWS_CACHE.pop(k, None)
+        return val
+    inner.__wrapped__ = fn
+    return inner
+
+
 DEFAULT_FETCHERS = {'profile': _fetch_profile, 'financials': _fetch_financials,
-                    'news': _fetch_news, 'company_news': _fetch_company_news, 'web': _fetch_web, 'candles': _fetch_candles,
+                    'news': _ttl('news', _fetch_news), 'company_news': _ttl('company_news', _fetch_company_news),
+                    'web': _fetch_web, 'candles': _fetch_candles,
                     'mcap': _fetch_mcap, 'sec_filings': _fetch_sec_filings,
                     'sec_sections': _fetch_sec_sections}
+
+
+def pooled_fetchers(fetchers=None):
+    """POOL DE EVIDENCIA de un job (L4-11): los analistas que corren en paralelo sobre la MISMA empresa comparten lo
+    que se trae — cada (fuente, argumentos) se pide UNA vez (una sola llamada en vuelo; los demás hilos esperan su
+    resultado). Antes: 8 analistas → 8 pedidos de noticias de GDELT y 8 de Finnhub para la misma empresa.
+    Un fallo NO se memoriza (el siguiente analista reintenta)."""
+    base = dict(DEFAULT_FETCHERS, **{k: v for k, v in (fetchers or {}).items() if callable(v)})
+    memo, lock = {}, threading.Lock()
+
+    def wrap(name, fn):
+        def inner(*a):
+            try:
+                key = (name,) + tuple(a)
+                hash(key)
+            except TypeError:
+                return fn(*a)
+            with lock:
+                ent = memo.get(key)
+                owner = ent is None
+                if owner:
+                    ent = memo[key] = {'ev': threading.Event(), 'val': None, 'ok': False}
+            if owner:
+                try:
+                    ent['val'] = fn(*a)
+                    ent['ok'] = True
+                finally:
+                    if not ent['ok']:
+                        with lock:
+                            memo.pop(key, None)
+                    ent['ev'].set()
+                return ent['val']
+            ent['ev'].wait(30)
+            if ent['ok']:
+                return ent['val']
+            return fn(*a)
+        return inner
+    out = {k: wrap(k, v) for k, v in base.items()}
+    out['_pooled'] = True
+    return out
 
 
 def _reliability_for_url(url):
@@ -225,11 +295,39 @@ def graph_version():
 
 class ContextBuilder:
     def __init__(self, fetchers=None, session=None):
-        self.f = dict(DEFAULT_FETCHERS, **(fetchers or {}))
+        self.f = dict(DEFAULT_FETCHERS, **{k: v for k, v in (fetchers or {}).items() if callable(v)})
         self.session = session
 
     # ── grafo: vecinos acotados (evita explosión combinatoria) ───────────────
     def subgraph(self, entity_id, max_nodes=12, max_depth=1, rel_types=None, min_weight=0):
+        """Vecinos por RELEVANCIA (core/context_engine, L4-01/L4-10): PageRank personalizado desde la empresa sobre
+        el grafo de flujo × importancia sistémica × confianza, con los dos lados de la cadena y el 2.º salto según
+        presupuesto. rel_types = tipos de FLUJO → solo flujo; None → también socios/inversores (pares de la
+        valuación relativa). Respaldo: el recorrido por peso × confianza de siempre."""
+        try:
+            from ontology.vocabulary import flow_relation_types
+            flow = set(flow_relation_types())
+            if rel_types is None or set(rel_types) <= flow:
+                return self._subgraph_ce(entity_id, max_nodes, max_depth, rel_types is None, min_weight)
+        except Exception as e:  # noqa: BLE001
+            import logging
+            logging.getLogger('khipu').info('research subgraph (motor de contexto): %s', type(e).__name__)
+        return self._subgraph_legacy(entity_id, max_nodes, max_depth, rel_types, min_weight)
+
+    def _subgraph_ce(self, entity_id, max_nodes, max_depth, include_partners, min_weight):
+        from core import context_engine as ce
+        nodes = get_index()['nodos']
+        sg = ce.subgraph([entity_id], depth=max(1, max_depth), budget_chars=400 * max(1, max_nodes),
+                         include_partners=include_partners, min_weight=float(min_weight or 0), max_nodes=max_nodes)
+        edges = [{'source': e['source'], 'target': e['target'], 'type': e.get('type'), 'w': e.get('w'),
+                  'rel': (e.get('rel') or '')[:140], 'verified': e.get('conf', 1.0) >= 1.0}
+                 for e in sg['edges']][:max_nodes * 2]
+        neigh = [{'id': n['id'], 'label': (nodes.get(n['id']) or {}).get('label', n['label']),
+                  'country': (nodes.get(n['id']) or {}).get('country'), 'cat': (nodes.get(n['id']) or {}).get('cat')}
+                 for n in sg['nodes'] if n['id'] != entity_id][:max_nodes]
+        return {'nodes': neigh, 'edges': edges, 'tail': sg.get('tail'), 'counts': sg.get('counts')}
+
+    def _subgraph_legacy(self, entity_id, max_nodes=12, max_depth=1, rel_types=None, min_weight=0):
         from core.hotviews import hot
         idx = get_index()
         snap_links = hot.graph().links          # paso 8: el grafo vigente (misma generación que el índice)
@@ -515,10 +613,16 @@ class ContextBuilder:
                 for e in sub['edges'][:15]:
                     lines.append(f"{lbl.get(e['source'], e['source'])} → {lbl.get(e['target'], e['target'])} "
                                  f"({e['type']}, peso {e['w']}{', NO VERIFICADO' if not e['verified'] else ''})"
-                                 f"{': ' + e['rel'] if e['rel'] else ''}")
-                add('graph', f'Relaciones de suministro (proveedor → cliente) de {node.get("label")} en el grafo Khipus',
-                    ' | '.join(lines), reference=f'khipus:graph:{entity_id}', reliability=0.6,
-                    source_kind='internal')
+                                 f"{': ' + e['rel'][:90] if e['rel'] else ''}")
+                tail = sub.get('tail') or {}
+                if tail.get('omitted_edges'):
+                    # L4-10: lo que quedó afuera se DICE (antes: corte a 700 caracteres sin aviso)
+                    ctry = ', '.join(c['country'] for c in (tail.get('top_countries_by_weight') or [])[:3])
+                    lines.append(f"otros {tail['omitted_edges']} vínculos fuera de este resumen"
+                                 + (f" (sobre todo con contrapartes de {ctry})" if ctry else ''))
+                add('graph', f'Relaciones de suministro (proveedor → cliente) de {node.get("label")} en el grafo Khipus, '
+                    'ordenadas por relevancia', ' | '.join(lines), reference=f'khipus:graph:{entity_id}', reliability=0.6,
+                    source_kind='internal', max_chars=2200)
 
         prior = self._prior_claims(entity_id, agent_type)
         return {

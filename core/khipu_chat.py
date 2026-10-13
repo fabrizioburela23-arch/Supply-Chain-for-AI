@@ -276,6 +276,8 @@ def _schema_sig(schema):
     parts = []
     req = set(schema.get('required') or [])
     for k, v in (schema.get('properties') or {}).items():
+        if k in ('detail', 'max_chars'):        # contrato común del MCP (mcp_server/contract.py): no aplica al chat
+            continue
         t = v.get('type') or 'any'
         if v.get('enum'):
             t = '|'.join(str(e) for e in v['enum'])
@@ -949,7 +951,8 @@ Usa ids de empresa de los resultados (o el nombre exacto)."""
 
 
 _CHAT_DROP_KEYS = {'edge_semantics', 'explain', 'figures_note', 'figures_note_es', 'as_of_note', 'provenance_note',
-                   'provenance_note_es', 'valid_from_note_es', 'valid_from_note_en', 'convention'}
+                   'provenance_note_es', 'valid_from_note_es', 'valid_from_note_en', 'convention',
+                   'ranking', 'related_note', 'r'}     # (motor de contexto: el orden ya es el de relevancia)
 # niveles de compactación: (largo máx. de texto, tope de listas, tope de `related`)
 _CHAT_LEVELS = ((220, None, None), (140, 25, 8), (100, 12, 6))
 
@@ -1003,7 +1006,19 @@ def _compact_for_chat(v, level=0, depth=0, root=None):
     return v
 
 
-def _fmt_result(res):
+def _fmt_result(res, question=None):
+    if isinstance(res, dict) and res.get('root') and isinstance(res.get('edges'), list) and len(json.dumps(
+            res, ensure_ascii=False, default=str, separators=(',', ':'))) > MAX_TOOL_RESULT_CHARS:
+        # L4-10: la cadena se recorta por RELEVANCIA R(e|Q) (motor de contexto), con los 2 saltos y la cola resumida —
+        # antes por niveles/posición: a 2 saltos sobrevivían 12 de 282 aristas, todas de 1 salto y sin decir qué faltaba
+        try:
+            from core.context_engine import pack_supply_chain
+            res = _compact_for_chat(pack_supply_chain(res, question=question,
+                                                      budget_chars=int(MAX_TOOL_RESULT_CHARS * 0.5)), 1)
+            res['nodes'] = [{k: n.get(k) for k in ('id', 'label', 'symbol', 'hop', 'country') if n.get(k) is not None}
+                            for n in res.get('nodes') or [] if isinstance(n, dict)]
+        except Exception:  # noqa: BLE001
+            pass
     txt = json.dumps(res, ensure_ascii=False, default=str, separators=(',', ':'))
     level = 0
     while len(txt) > MAX_TOOL_RESULT_CHARS and level < len(_CHAT_LEVELS):
@@ -1012,6 +1027,106 @@ def _fmt_result(res):
     if len(txt) > MAX_TOOL_RESULT_CHARS:
         txt = txt[:MAX_TOOL_RESULT_CHARS] + '…[truncated]'
     return txt
+
+
+# ── motor de contexto en el chat (BRECHAS L4-01/L4-05/L4-07) ─────────────────────────────────────────────────
+_ID_ARGS = ('id_or_ticker', 'id', 'entity', 'company')
+DEEP_GATHER_NOTE = ('MODO ANÁLISIS: la respuesta final la redacta otro paso (un modelo de análisis) con TODO lo '
+                    'consultado. Tú solo junta los datos con herramientas; cuando tengas lo necesario responde '
+                    'exactamente {"final":{"answer":"LISTO","actions":[...]}} (acciones de pantalla si ayudan) sin '
+                    'redactar la respuesta.')
+_READY = ('listo', 'ready')
+
+
+def is_ready_marker(ans):
+    """True si el modelo rápido solo avisó que juntó los datos (ruta de análisis, L4-07) en vez de redactar."""
+    return str(ans or '').strip().strip('.!').strip().lower() in _READY
+
+
+def _cache_key(tool, args):
+    """Clave de la caché por petición: ids de empresa CANÓNICOS ('nvidia' = 'Nvidia' = 'NVDA') y sin argumentos
+    iguales a su valor por defecto (L4-05: antes la ficha pre-consultada y la pedida por el modelo eran 2 claves)."""
+    a = dict(args) if isinstance(args, dict) else {}
+    a.pop('detail', None)
+    a.pop('max_chars', None)
+    for k in _ID_ARGS:
+        v = a.get(k)
+        if isinstance(v, str) and v.strip():
+            try:
+                from core.context_engine import canon
+                cid = canon(v)
+            except Exception:  # noqa: BLE001
+                cid = None
+            if cid:
+                a[k] = cid
+    try:
+        t = _mcp().REGISTRY.get(tool)
+        props = (t.input_schema.get('properties') or {}) if t is not None else {}
+        for k in list(a):
+            if k in props and 'default' in props[k] and a[k] == props[k]['default']:
+                a.pop(k)
+    except Exception:  # noqa: BLE001
+        pass
+    return str(tool) + json.dumps(a, sort_keys=True, default=str)
+
+
+def _facts_book():
+    try:
+        from core.context_engine import FactBook
+        return FactBook()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+_REF_RX = re.compile(r'ver \[(F\d+)\] \(mismo resultado\)')
+_FID_RX = re.compile(r'\[(F\d+)\]')
+
+
+def _trim_scratch(lines, budget):
+    """Recorta los resultados de herramientas al presupuesto por ENTRADAS enteras (de la más vieja a la más
+    nueva), sin sacar nunca un hecho [F#] que una línea posterior cita con «ver [F#]» (L4-05: antes se cortaba
+    por caracteres desde la cabeza y la cita quedaba apuntando a un dato que ya no estaba). Si aun así no entra,
+    sale lo citado también y la cita se reescribe (ya no dice «ver arriba»). → texto."""
+    total = sum(len(x) + 1 for x in lines)
+    if total <= budget:
+        return '\n'.join(lines)
+    refs = set(_REF_RX.findall('\n'.join(lines)))
+
+    def fid(x):
+        m = _FID_RX.match(x)
+        return m.group(1) if m else None
+    keep = list(lines)
+    i = 0
+    while total > budget and i < len(keep) - 1:          # 1) lo viejo NO citado
+        if fid(keep[i]) in refs:
+            i += 1
+            continue
+        total -= len(keep.pop(i)) + 1
+    gone = set()
+    while total > budget and len(keep) > 1:               # 2) si no alcanza, también lo citado (de lo más viejo)
+        x = keep.pop(0)
+        total -= len(x) + 1
+        if fid(x):
+            gone.add(fid(x))
+    if gone:
+        keep = [_REF_RX.sub(lambda m: ('ya consultado (resultado recortado por espacio)' if m.group(1) in gone
+                                       else m.group(0)), x) for x in keep]
+    txt = '\n'.join(keep)
+    if len(txt) > budget:                                 # una sola entrada enorme: su cola, como antes
+        txt = txt[-budget:]
+    return '…[resultados antiguos recortados]\n' + txt
+
+
+def _fact_prefix(fb, tool, entity, ok, res, key):
+    """'[F#] ' — el id del hecho que este resultado aporta (fuente + as_of en `facts` de la respuesta)."""
+    if fb is None:
+        return ''
+    try:
+        from core.context_engine import result_source
+        src, as_of = result_source(res)
+    except Exception:  # noqa: BLE001
+        src, as_of = None, None
+    return f'[{fb.add(tool if ok else str(tool) + ":error", entity=entity, source=src, as_of=as_of, key=key)}] '
 
 
 def _args_summary(args):
@@ -1059,15 +1174,9 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
     if live:
         parts.append(live.strip())
     if scratch:
-        body, used = [], 0
-        for i, s_ in enumerate(scratch, 1):
-            line = f'[{i}] {s_}'
-            used += len(line)
-            body.append(line)
-        txt = '\n'.join(body)
-        if used > MAX_SCRATCH_CHARS:
-            txt = '…[resultados antiguos recortados]\n' + txt[-MAX_SCRATCH_CHARS:]
-        parts.append('RESULTADOS DE HERRAMIENTAS (de esta respuesta):\n' + txt)
+        body = [s_ if s_.startswith('[F') else f'[{i}] {s_}'      # [F#] = id del hecho (motor de contexto)
+                for i, s_ in enumerate(scratch, 1)]
+        parts.append('RESULTADOS DE HERRAMIENTAS (esta respuesta):\n' + _trim_scratch(body, MAX_SCRATCH_CHARS))
     ents = _entities_in(message)
     q = f'PREGUNTA ACTUAL DEL USUARIO (responde EXACTAMENTE esto): {message}'
     if ents:
@@ -1223,7 +1332,7 @@ def synthesize(message, history, lang, context, scratch, timeout, tier='fast'):
     if context.get('portfolio_notes'):
         parts.append('INFORME DE LA CARTERA:\n' + str(context['portfolio_notes'])[:3000])
     if scratch:
-        parts.append('DATOS CONSULTADOS:\n' + '\n'.join(scratch)[-MAX_SCRATCH_CHARS:])
+        parts.append('DATOS CONSULTADOS:\n' + _trim_scratch(list(scratch), MAX_SCRATCH_CHARS))
     parts.append(f'Responde en {"inglés" if lang == "en" else "español"}.')
     t0 = time.monotonic()
     fut = _submit_ai(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, tier,
@@ -1322,9 +1431,9 @@ def company_summary(c, lang):
 
 def _entities_in(message):
     ids = []
-    try:
-        from core.live_facts import detect_entities
-        ids = detect_entities(message, limit=3)
+    try:   # EL detector (core/context_engine.detect, L4-01): el mismo del MCP, la investigación y los datos en vivo
+        from core.context_engine import detect
+        ids = detect(message, limit=3)
     except Exception:  # noqa: BLE001
         ids = []
     if not ids:
@@ -2270,6 +2379,16 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
     GET /api/khipu/chat/progress/<req_id> mientras la respuesta se arma."""
     rid = valid_req_id(req_id)
     progress_begin(rid)
+    # paso 20: la ficha `chat.answer` se reserva AHORA (las llamadas de IA de esta pregunta la citan, core/ai_calls)
+    # y se escribe DESPUÉS de responder, en el hilo del libro (core/decisions.submit_async): 0 ms para el usuario
+    dec_id, ai_ids, principal = uuid.uuid4(), [], _chat_principal()
+    try:
+        from core import ai_calls as _aic
+        attr = _aic.attribute(dec_id, ai_ids)
+    except Exception:  # noqa: BLE001
+        from contextlib import nullcontext
+        attr = nullcontext()
+    attr.__enter__()
     try:
         gate = None
         try:
@@ -2283,17 +2402,94 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
         out.setdefault('router', {'by': 'default'})
         if gate is not None:
             try:
-                _decide.chat_gate_finish(gate, out, message)
+                _decide.chat_gate_finish(gate, out, message, correlation_id=rid)
             except Exception:  # noqa: BLE001
                 pass
     finally:
+        attr.__exit__(None, None, None)
         progress_end(rid)
     # contrato Khipus OS (solo se AGREGAN campos): siempre presentes
     out['req_id'] = rid or out.get('req_id') or uuid.uuid4().hex[:16]
     out.setdefault('entities', [])
     out.setdefault('agents_used', [])
     out.setdefault('cards', {})
+    ledger_answer(dec_id, principal, message, lang, out, ai_ids)
     return out
+
+
+def _chat_principal():
+    """QUIÉN preguntó (core/identity): op:fabrizio con PIN verificado, si no ui:anon con el dueño como hash."""
+    try:
+        from dataclasses import replace
+
+        from core import identity
+        p = identity.principal_from_request()
+        return replace(p, channel='chat') if p.channel == 'api' else p
+    except Exception:  # noqa: BLE001
+        return None
+
+
+_F_RX = re.compile(r'\[F(\d{1,3})\]')
+
+
+def ledger_answer(dec_id, principal, message, lang, out, ai_ids):
+    """Ficha `chat.answer` (async, §2.5): hechos [F#] con fuente y as_of, fuentes con su as_of, agentes, herramientas
+    (nombre, ok, ms y la HUELLA de sus argumentos), modelo, ruta y las llamadas de IA. NUNCA el texto del usuario:
+    el mensaje va como HMAC (core/decisions.pii_hmac); la respuesta (texto de la IA) como blob de 90 días (D3).
+    Solo se ENCOLA aquí; el hilo del libro la arma y la escribe. Nunca lanza."""
+    try:
+        from core import decisions
+    except Exception:  # noqa: BLE001
+        return False
+    if principal is None:
+        return False
+    snap = {k: out.get(k) for k in ('answer', 'answer_source', 'model', 'steps', 'degraded', 'router', 'req_id',
+                                    'elapsed_ms', 'as_of', 'facts')}
+    snap['sources'] = list(out.get('sources') or [])
+    snap['tools'] = [dict(t) for t in (out.get('tools_used') or []) if isinstance(t, dict)]
+    snap['agents'] = [dict(a) for a in (out.get('agents_used') or []) if isinstance(a, dict)]
+    snap['entities'] = list(out.get('entities') or [])
+
+    def build():
+        ctx = decisions.DecisionCtx('chat.answer', principal, subject={
+            'entity_ids': [str(e.get('id') if isinstance(e, dict) else e)[:80] for e in snap['entities']][:10]},
+            correlation_id=snap.get('req_id'))
+        ctx.id = dec_id
+        ctx.private_text('message', message, lang)
+        ans = str(snap.get('answer') or '')
+        ctx.extra['answer_blob'] = ctx.blob('chat_answer', {'answer': ans}, retention='standard_90d')
+        facts = []
+        for f in snap.get('facts') or []:      # [F#] del motor de contexto (si viene en la respuesta)
+            if isinstance(f, dict):
+                facts.append({k: f.get(k) for k in ('id', 'source', 'as_of', 'entity', 'kind') if f.get(k) is not None})
+        cited = sorted({int(x) for x in _F_RX.findall(ans)})
+        ctx.extra['facts'] = {'cited': cited[:60], 'given': facts[:80]}
+        for f in facts:
+            if f.get('id'):
+                ctx.evidence('fact', str(f['id'])[:120], as_of=None, source=f.get('source'),
+                             as_of_text=f.get('as_of'))
+        ctx.extra['sources'] = [{'label': str(x.get('label') or '')[:120], 'as_of': x.get('as_of'),
+                                 'url_sha': decisions.sha256_hex(x['url'].encode()) if x.get('url') else None}
+                                for x in snap['sources'] if isinstance(x, dict)][:20]
+        ctx.extra['tools'] = [{'name': t.get('name'), 'ok': bool(t.get('ok')), 'ms': t.get('ms'),
+                               'args_sha': decisions.sha256_hex(str(t.get('args_summary') or '').encode())}
+                              for t in snap['tools']][:20]
+        for i, t in enumerate(snap['tools'][:20]):
+            ctx.evidence('tool_result', f"{t.get('name')}:{snap.get('req_id')}:{i}"[:128], ok=bool(t.get('ok')))
+        ctx.extra['agents_used'] = [{'agent': a.get('agent'), 'tools': a.get('tools'), 'ok': a.get('ok'),
+                                     'source': a.get('source'), 'as_of': a.get('as_of')} for a in snap['agents']][:12]
+        for cid in ai_ids[:40]:
+            ctx.ai_call(cid)
+        m = ctx.model or {}
+        m['model'] = snap.get('model')
+        ctx.model = m
+        ctx.output = {'answer_source': snap.get('answer_source'), 'answer_len': len(ans),
+                      'answer_sha': decisions.sha256_hex(ans.encode('utf-8')), 'steps': snap.get('steps'),
+                      'degraded': snap.get('degraded'), 'elapsed_ms': snap.get('elapsed_ms'),
+                      'router': snap.get('router'), 'n_ai_calls': len(ai_ids), 'lang': lang}
+        ctx.status = 'answered'          # una respuesta de respaldo también es una respuesta (output.degraded lo dice)
+        return ctx
+    return decisions.submit_async(build)
 
 
 def _mention_route(message, history, lang, context, req_id=None, gate=None):
@@ -2425,6 +2621,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
     scratch, results, tools_used, sources = [], [], [], []
     calls = []          # (herramienta, args, ok, resultado) en orden → agents_used / cards / entities
     cache = {}
+    facts = _facts_book()   # hechos [F#] de esta respuesta (motor de contexto): fuente + as_of de cada resultado
     model = None
     ai_calls = 0
     reason = None
@@ -2433,6 +2630,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
     repaired = False
     rounds = 0
     ai_slow = False
+    deep_failed = False
 
     def done(answer, actions, answer_source='ai'):
         out = {'answer': str(answer or '').strip()[:MAX_ANSWER], 'actions': validate_actions(actions),
@@ -2441,6 +2639,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                'steps': ai_calls, 'elapsed_ms': int((time.monotonic() - t0) * 1000), 'as_of': _now_iso()}
         out.update(enrich_answer(message, calls, context, req_id))
         out['router'] = router
+        if facts is not None:
+            out['facts'] = facts.public()
         return out
 
     router = {'by': 'default'}
@@ -2505,7 +2705,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                 ok, res = fut.result()
             except Exception:  # noqa: BLE001
                 continue
-            key = 'get_company' + json.dumps({'id_or_ticker': nid, 'include_live': True}, sort_keys=True, default=str)
+            key = _cache_key('get_company', {'id_or_ticker': nid, 'include_live': True})
             cache[key] = (ok, res)
             results.append(('get_company', ok, res))
             calls.append(('get_company', {'id_or_ticker': nid, 'include_live': True}, ok, res))
@@ -2513,8 +2713,9 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                                **({} if ok else {'error': _clip(res.get('error'), 160)})})
             if ok:
                 _collect_sources('get_company', res, sources, lang)
-            scratch.append(f'get_company({json.dumps({"id_or_ticker": nid}, ensure_ascii=False)}) → '
-                           + ('' if ok else 'ERROR: ') + _fmt_result(res))
+            scratch.append(_fact_prefix(facts, 'get_company', nid, ok, res, key)
+                           + f'get_company({json.dumps({"id_or_ticker": nid}, ensure_ascii=False)}) → '
+                           + ('' if ok else 'ERROR: ') + _fmt_result(res, message))
     # JEV AL MANDO (DECIDE_CONTROL=chat_gate): ya pensó en paralelo con la pre-consulta → elige el camino más
     # barato que alcanza. Sin Jev / sin confianza → camino de siempre.
     plan = None
@@ -2549,6 +2750,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
             break
         force_final = rounds >= steps_max or remaining < FINAL_RESERVE_S
         prompt = build_prompt(message, history, lang, context, scratch, steps_max - rounds, force_final, feedback, live=live)
+        if deep_final and not force_final:
+            prompt += '\n\n' + DEEP_GATHER_NOTE      # L4-07: el profundo escribe UNA sola vez
         feedback = None
         progress_phase(req_id, 'thinking')
         try:
@@ -2593,6 +2796,11 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                 if deep['answer']:
                     model = deep['model'] or model
                     return done(deep['answer'], deep['actions'] or payload.get('actions'))
+                if is_ready_marker(ans):
+                    # el rápido solo juntó datos (no redactó) y el profundo no llegó → redacción rápida de respaldo
+                    deep_failed = True
+                    reason = 'bad_output'
+                    break
             return done(ans, payload.get('actions'))
         if force_final:
             reason = 'budget'
@@ -2602,7 +2810,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         # ── ejecutar herramientas (en paralelo, con caché por petición) ──
         pending = []
         for c in payload:
-            key = c['tool'] + json.dumps(c['args'], sort_keys=True, default=str)
+            key = _cache_key(c['tool'], c['args'])
             if key in cache:
                 ok, res = cache[key]
                 progress_add(req_id, c['tool'], c['args'], state='done' if ok else 'error')
@@ -2622,7 +2830,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                 else:
                     ok, res = False, {'error': 'the data source did not answer in time'}
                 ms = int((time.monotonic() - started) * 1000)
-                cache[c['tool'] + json.dumps(c['args'], sort_keys=True, default=str)] = (ok, res)
+                cache[_cache_key(c['tool'], c['args'])] = (ok, res)
                 progress_set(req_id, h, 'done' if ok else 'error')
             results.append((c['tool'], ok, res))
             calls.append((c['tool'], c['args'], ok, res))
@@ -2630,8 +2838,16 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                                'ms': ms, **({} if ok else {'error': _clip(res.get('error'), 160)})})
             if ok:
                 _collect_sources(c['tool'], res, sources, lang)
-            scratch.append(f'{c["tool"]}({json.dumps(c["args"], ensure_ascii=False, default=str)}) → '
-                           + ('' if ok else 'ERROR: ') + _fmt_result(res))
+            ckey = _cache_key(c['tool'], c['args'])
+            seen_fid = facts.get(ckey) if facts is not None else None
+            if seen_fid:
+                # L4-05: el mismo resultado ya está en el prompt (p. ej. la ficha pre-consultada) → no se pega 2 veces
+                scratch.append(f'{c["tool"]}({json.dumps(c["args"], ensure_ascii=False, default=str)}) → ya consultado '
+                               f'arriba: ver [{seen_fid}] (mismo resultado)')
+                continue
+            scratch.append(_fact_prefix(facts, c['tool'], _result_entity(c['tool'], c['args'], res), ok, res, ckey)
+                           + f'{c["tool"]}({json.dumps(c["args"], ensure_ascii=False, default=str)}) → '
+                           + ('' if ok else 'ERROR: ') + _fmt_result(res, message))
     # El AGENTE intercede SIEMPRE que haya IA: si el protocolo falló o se acabó el
     # tiempo de rondas, redacta la respuesta en prosa con lo ya consultado. La
     # plantilla sin IA queda solo para cuando la IA no responde de verdad.
@@ -2642,7 +2858,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         progress_phase(req_id, 'writing')
         try:
             ans, m, tried_deep = None, None, False
-            if deep_final:
+            if deep_final and not deep_failed:
                 # análisis: redacta el modelo PROFUNDO con su propia ventana (hasta el techo de la petición, dejando
                 # DEEP_FAST_RESERVE_S para la redacción rápida de siempre si el profundo no llega)
                 deep_left = min(DEEP_FINAL_TIMEOUT_S, _hard_end(t0, budget, client_end) - time.monotonic() - DEEP_FAST_RESERVE_S)

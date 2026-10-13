@@ -30,6 +30,7 @@ APPEND_ONLY_TABLES = ('events', 'kh_tx_versions', 'hot_view_builds',
                       'decisions', 'decision_refs', 'decision_outcomes', 'decision_violations',
                       'ledger_seals', 'ledger_meta', 'ledger_anchors',
                       'gov_artifacts', 'gov_releases',
+                      'ai_calls',              # paso 21: cada pedido a la IA (lo escribe solo core/ai.py)
                       'broker_fills',          # paso 16: avances de ejecución observados en Alpaca
                       # BRECHAS bloque 2: la memoria de los números (ontology/history_models.py)
                       'prices_eod', 'price_adjustments', 'fx_daily', 'metrics_eod', 'positions_eod')

@@ -35,11 +35,12 @@ tablas del servidor MCP.
 - [[mcp_server.oauth.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_infra.py]]
+- [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_ops.py]]

@@ -412,6 +412,8 @@ def _mcp_post_body(principal, ip):
             _auth.write_audit(principal, method=audit.get('method'), tool=audit.get('tool'),
                               args=audit.get('args'), status=audit.get('status', 'ok'), error=audit.get('error'),
                               latency_ms=(time.monotonic() - t0) * 1000, ip=ip, session_id=ctx.session_id)
+            if audit.get('method') == 'tools/call':
+                ledger_tool_call(audit, resp, ctx.session_id, (time.monotonic() - t0) * 1000)
         if resp is not None:
             responses.append(resp)
     if limited:
@@ -426,6 +428,59 @@ def _mcp_post_body(principal, ip):
         if init_ok:
             headers['Mcp-Session-Id'] = _new_session(principal, ctx.protocol_version)
     return _rpc_http(responses if batch else responses[0], 200, headers)
+
+
+def ledger_tool_call(audit, resp, session_id=None, latency_ms=None):
+    """Ficha `mcp.tool_call` (paso 20, §2.5; cierra MAP 2 #15): quién (mcp:<token_id>, del token), qué herramienta,
+    la HUELLA de los argumentos (sha + nombres de los campos; nunca los valores: pueden traer texto libre) y la
+    HUELLA del resultado (sha del JSON devuelto; nunca el resultado). Async: se encola y la escribe el hilo del
+    libro (no suma latencia a la IA conectada). Las órdenes que proponga una IA ya dejan su propia ficha sync
+    (order.preview en brokerage.service); esta es la de la LLAMADA. Nunca lanza."""
+    try:
+        from core import decisions, identity
+        p = identity.current()
+        if p is None:
+            return False
+        tool = audit.get('tool')
+        args = audit.get('args') if isinstance(audit.get('args'), dict) else {}
+        t = _tools.REGISTRY.get(tool) if isinstance(tool, str) else None
+        scope = getattr(t, 'scope', None)
+        status = audit.get('status', 'ok')
+    except Exception:  # noqa: BLE001
+        return False
+
+    def build():
+        body = (resp or {}).get('result') if isinstance(resp, dict) and 'result' in resp else (resp or {}).get('error')
+        try:
+            raw = decisions.canonical(body)
+        except Exception:  # noqa: BLE001 — algo no serializable (NaN…): la huella del texto
+            raw = str(body).encode('utf-8')
+        rsha = decisions.sha256_hex(raw)
+        is_error = bool(isinstance(body, dict) and body.get('isError')) or status != 'ok'
+        ctx = decisions.DecisionCtx('mcp.tool_call', p, subject={'tool': str(tool or '')[:60], 'scope': scope},
+                                    correlation_id=session_id)
+        ctx.evidence('tool_result', f'{str(tool)[:40]}:{rsha[:16]}', ref_hash=rsha)
+        # revisión §2.7: los VALORES de los argumentos pueden ser texto personal → huella CON CLAVE (pii_hmac; un
+        # sha sin clave de "NVDA" se adivina) y del error solo su CÓDIGO (el mensaje repite el argumento:
+        # 'entity not found …: "<texto>"'). El mensaje completo sigue solo en la auditoría MCP del token.
+        try:
+            args_digest = decisions.pii_hmac(decisions.canonical(args).decode('utf-8')) if args else None
+        except Exception:  # noqa: BLE001
+            args_digest = None
+        ctx.extra['tool_call'] = {'tool': tool, 'scope': scope, 'arg_keys': sorted(str(k)[:40] for k in args)[:30],
+                                  'args_hmac': args_digest}
+        err_code = audit.get('error_code') or (status if audit.get('error') else None)
+        ctx.output = {'status': status, 'is_error': is_error, 'result_sha': rsha,
+                      'result_bytes': len(raw),
+                      'latency_ms': round(latency_ms, 1) if latency_ms is not None else None,
+                      **({'error_code': str(err_code)[:60]} if err_code else {})}
+        ctx.status = 'executed' if not is_error else ('rejected' if status in ('denied', 'invalid', 'rate_limited')
+                                                      else 'failed')
+        return ctx
+    try:
+        return decisions.submit_async(build)
+    except Exception:  # noqa: BLE001
+        return False
 
 
 # ── administración (PIN) ────────────────────────────────────────────────────

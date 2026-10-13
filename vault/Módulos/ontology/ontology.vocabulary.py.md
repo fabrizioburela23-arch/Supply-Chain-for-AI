@@ -47,6 +47,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 
 ## Lo usan
 
+- [[core.context_engine.py]] — lo importa
 - [[core.scenario_engine.py]] — lo importa
 - [[core.semantic.py]] — lo importa
 - [[core.world.py]] — lo importa
@@ -67,13 +68,14 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 12 pruebas (lista abajo)._
+_Además lo importan 13 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_context_engine.py]]
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_seed_parity.py]]

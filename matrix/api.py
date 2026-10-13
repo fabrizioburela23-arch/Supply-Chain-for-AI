@@ -281,6 +281,36 @@ def _with_view(payload, name, g, stale=None):
     return resp
 
 
+def ledger_whatif(kind, params, impacts, g=None, extra=None):
+    """Ficha `whatif.shock` / `whatif.factor_fire` (paso 20, §2.5; GV-10): un qué-pasaría-si que la persona LANZÓ
+    (botón, comando, chat — no al pasar el ratón): los parámetros del pedido (request_params: choques, factores,
+    damping, saltos, pesos propios…), la generación de vistas y el release usados, y la salida como top-50 + la
+    huella (content_sha) del vector completo. Async: se encola y la escribe el hilo del libro (0 ms al usuario).
+    D3: es de 90 días. Nunca lanza."""
+    try:
+        from core import decisions, identity
+        principal = identity.principal_from_request()
+        gen = getattr(g, 'id', None)
+    except Exception:  # noqa: BLE001
+        return False
+    impacts = dict(impacts or {})
+
+    def build():
+        ctx = decisions.DecisionCtx(kind, principal, subject={
+            'entity_ids': [str(x)[:80] for x in (params.get('shock') or params.get('members') or [])][:20],
+            **({'factor_id': params['factor_id']} if params.get('factor_id') else {})})
+        ctx.params(**{k: v for k, v in params.items() if k not in ('members',)})
+        sha = decisions.sha256_hex(impacts)
+        if gen:
+            ctx.read_view('impact', gen, content_sha=sha)
+        top = sorted(impacts.items(), key=lambda kv: (-float(kv[1] or 0), kv[0]))[:50]
+        ctx.output = {'top': [[k, v] for k, v in top], 'n': len(impacts), 'content_sha': sha,
+                      'generation': gen, **(extra or {})}
+        ctx.status = 'executed'
+        return ctx
+    return decisions.submit_async(build)
+
+
 @matrix_bp.get('/status')
 def matrix_status():
     scope = _db()
@@ -439,6 +469,11 @@ def matrix_impact():
                     'reason': 'busy',
                     'error': 'Motor ocupado con otro cálculo pesado: bandas omitidas, reintenta en un minuto',
                     'error_en': 'Engine busy with another heavy computation: bands skipped, retry in a minute'}
+    ledger_whatif('whatif.shock', {'shock': shock_ids, 'as_of': as_of, 'magnitude': kw['magnitude'],
+                                   'damping': kw['damping'], 'max_hops': kw['max_hops'],
+                                   'rel_weights': kw['rel_weights'], 'nonlinear': kw['nonlinear'],
+                                   'n_samples': n_samples, 'seed': seed, 'endpoint': '/api/matrix/impact'},
+                  impacts, g, {'affected': out['affected']})
     if as_of is not None:
         return jsonify(out)          # viaje en el tiempo: fuera de las vistas (V7 AsOf llega en el paso 23)
     return _with_view(out, 'impact', g)
@@ -762,8 +797,23 @@ def _insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock, meta=None
     # el tope, la plantilla (sin IA) — y esa respuesta degradada no se cachea
     # ni entra al historial, para no "pegarle" la plantilla al resto.
     ai_ok = _compute_allowed('matrix_insights_ai', INSIGHTS_AI_PER_IP)
+    import uuid as _uuid
+    ins_dec, ins_ai = _uuid.uuid4(), []      # paso 20: la ficha insight.snapshot cita las llamadas de IA que narraron
+    # revisión: solo se atribuye cuando la ficha SE VA A ESCRIBIR (lectura del estado real con clave estable). Un
+    # shock manual, un viaje en el tiempo o una base sin versión no escriben insight.snapshot → sus filas de
+    # ai_calls quedan sin decision_id en vez de apuntar a una ficha que nunca existe.
+    persistable = not manual_shock and as_of is None and not str(epoch).startswith('vol-')
     if ai_ok:
-        insights, model = _narrate_insights(situation, lang, tier)
+        from contextlib import nullcontext
+        _attr = nullcontext()
+        if persistable:
+            try:
+                from core import ai_calls as _aic
+                _attr = _aic.attribute(ins_dec, ins_ai)
+            except Exception:  # noqa: BLE001
+                pass
+        with _attr:
+            insights, model = _narrate_insights(situation, lang, tier)
     else:
         insights, model = _fallback_insights(situation, lang), 'plantilla'
     situation_fresh = any(f['fresh'] for f in situation['factors'])
@@ -777,7 +827,7 @@ def _insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock, meta=None
         # historial = lecturas del estado REAL: ni shocks manuales ni viajes en
         # el tiempo (as_of) — cada as_of distinto dejaba una fila nueva.
         if as_of is None:
-            _persist_insight(scope, epoch, as_of, lang, payload)
+            _persist_insight(scope, epoch, as_of, lang, payload, ledger=(ins_dec, ins_ai))
     return payload
 
 
@@ -798,7 +848,7 @@ def _insights_tier(requested):
                     'tier_note_en': 'deep requires the operator PIN — fast was used'}
 
 
-def _persist_insight(scope, epoch, as_of, lang, payload):
+def _persist_insight(scope, epoch, as_of, lang, payload, ledger=None):
     """Guarda el insight en el historial, UNA fila por versión del grafo (clave graph_key en la columna
     `graph_epoch`, que conserva su nombre por compatibilidad; dedupe = (versión+release, as_of, lang)).
 
@@ -817,17 +867,63 @@ def _persist_insight(scope, epoch, as_of, lang, payload):
                 InsightSnapshot.lang == lang,
             ).limit(1)).first()
             if dup:
-                return
-            s.add(InsightSnapshot(
-                graph_epoch=str(epoch), as_of=as_of, lang=lang,
-                trigger=(payload.get('trigger') or '')[:300],
-                affected=int(payload.get('affected') or 0),
-                situation=payload.get('situation') or {},
-                insights=payload.get('insights'),
-                model=(payload.get('model') or '')[:60],
-            ))
+                dup_id = dup.id
+            else:
+                dup_id = None
+                snap = InsightSnapshot(
+                    graph_epoch=str(epoch), as_of=as_of, lang=lang,
+                    trigger=(payload.get('trigger') or '')[:300],
+                    affected=int(payload.get('affected') or 0),
+                    situation=payload.get('situation') or {},
+                    insights=payload.get('insights'),
+                    model=(payload.get('model') or '')[:60],
+                )
+                s.add(snap)
+                s.flush()
+                snap_id = snap.id
     except Exception:  # noqa: BLE001
         log.warning('no se pudo guardar el insight en el historial', exc_info=True)
+        if ledger and ledger[1]:      # la narración ya citó la ficha reservada: que exista (sin fila de historial)
+            ledger_insight(None, epoch, lang, payload, ledger, persisted=False)
+        return
+    if dup_id is not None:
+        # misma versión del grafo ya narrada: no hay fila nueva, pero ESTA narración ya citó la ficha reservada en
+        # ai_calls → se escribe igual (persisted=false, apunta a la fila vigente) para que el id exista
+        if ledger and ledger[1]:
+            ledger_insight(dup_id, epoch, lang, payload, ledger, persisted=False)
+        return
+    ledger_insight(snap_id, epoch, lang, payload, ledger)
+
+
+def ledger_insight(snap_id, graph_key, lang, payload, ledger=None, persisted=True):
+    """Ficha `insight.snapshot` (paso 20, async): UNA por fila nueva del historial (ya deduplicado por
+    (versión del grafo + release, as_of, lang), GV-02): qué lo disparó, cuántas empresas, el modelo que lo narró,
+    las llamadas de IA y la huella del contenido. Nunca lanza; 0 ms al usuario (se encola).
+    `persisted=False`: una narración con IA que no dejó fila nueva (misma versión ya narrada, o el historial no se
+    pudo guardar) — se escribe igual porque sus filas de ai_calls ya citan este id (revisión del paso 21)."""
+    try:
+        from core import decisions, identity
+        dec_id, ai_ids = ledger if ledger else (None, [])
+        p = identity.system('insights')
+        content = {k: payload.get(k) for k in ('situation', 'insights', 'trigger', 'affected', 'model')}
+    except Exception:  # noqa: BLE001
+        return False
+
+    def build():
+        ctx = decisions.DecisionCtx('insight.snapshot', p, subject={'graph_key': str(graph_key)[:64], 'lang': lang})
+        if dec_id is not None:
+            ctx.id = dec_id
+        if snap_id is not None:
+            ctx.effect('insight', str(snap_id))
+        for cid in (ai_ids or [])[:20]:
+            ctx.ai_call(cid)
+        ctx.model = dict(ctx.model or {}, model=content.get('model'))
+        ctx.output = {'snapshot_id': snap_id, 'trigger': (content.get('trigger') or '')[:200],
+                      'affected': content.get('affected'), 'content_sha': decisions.sha256_hex(content),
+                      'persisted': bool(persisted)}
+        ctx.status = 'recorded'
+        return ctx
+    return decisions.submit_async(build)
 
 
 @matrix_bp.get('/insights/history')
@@ -1031,6 +1127,11 @@ def matrix_factor_fire():
     rho_cri = spectral_radius(mats, factors_crisis, idx, damping=damping)
     top = sorted(((k, v) for k, v in impacts.items() if k not in target['members']),
                  key=lambda x: -x[1])[:15]
+    ledger_whatif('whatif.factor_fire', {'factor_id': fid, 'members': list(shock_ids), 'severity_crisis': crisis,
+                                         'magnitude': magnitude, 'damping': damping, 'max_hops': max_hops,
+                                         'fire_mode': 'member_coef' if member_coef else 'legacy',
+                                         'endpoint': '/api/matrix/factor/fire'},
+                  impacts, g, {'rho_crisis': rho_cri.get('rho')})
     return _with_view({
         'factor': {'id': fid, 'label': target['label'],
                    'severity_latente': target['severity'],

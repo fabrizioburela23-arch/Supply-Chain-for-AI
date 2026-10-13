@@ -98,6 +98,7 @@ Infraestructura operativa de Khipus: decisiones, puertas, vistas rápidas y gobe
 - [[scripts.migrate_v0_to_ontology.py]]
 - [[server.py]]
 - [[sw.js]]
+- [[tests.test_ai_calls.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_gates_conformance.py]]
 - [[tests.test_gates_ir_fresh.py]]

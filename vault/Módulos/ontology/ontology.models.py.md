@@ -61,11 +61,12 @@ esquema SQLAlchemy de la ontología.
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 46 pruebas (lista abajo)._
+_Además lo importan 50 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_agent_dudosos.py]]
+- [[tests.test_ai_calls.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_gates_resulting_state.py]]
@@ -80,9 +81,12 @@ _Además lo importan 46 pruebas (lista abajo)._
 - [[tests.test_ingest_news.py]]
 - [[tests.test_ledger_anchor.py]]
 - [[tests.test_ledger_callsites.py]]
+- [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_ontology.py]]

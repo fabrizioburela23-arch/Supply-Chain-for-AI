@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "core/live_facts.py"
 lenguaje: "python"
-lineas: 204
+lineas: 93
 aliases: ["core/live_facts.py"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # core/live_facts.py
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 204 líneas · `core/live_facts.py`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 93 líneas · `core/live_facts.py`
 
 ## Para qué sirve
 
@@ -18,14 +18,15 @@ DATOS EN VIVO para toda llamada de IA.
 
 ## API pública
 
-- `detect_entities(text, limit=…)` — Ids del grafo mencionados en `text`, en orden de aparición. _(línea 110)_
-- `live_facts_block(text)` — Bloque de texto para anexar al prompt, o '' si no aplica/falla. _(línea 178)_
+- `detect_entities(text, limit=…)` — Ids del grafo mencionados en `text`, en orden de aparición. Delega en EL detector del motor de contexto (core/context_engine.detect, … _(línea 23)_
+- `live_facts_block(text)` — Bloque de texto para anexar al prompt, o '' si no aplica/falla. _(línea 67)_
 
-**Internas** (empiezan con `_`): `_label_regex`, `_collapse`, `_collapsed_map`, `_fuzzy_hits`, `_fact_for`
+**Internas** (empiezan con `_`): `_fact_for`
 
 ## Depende de
 
 - [[core.company_data.py]] — importa `get_live_profile`
+- [[core.context_engine.py]] — importa `detect`
 - [[core.entities.py]] — importa `get_index`
 - [[core.quotes.py]] — importa `fetch_market_cap_yahoo`
 
@@ -37,16 +38,18 @@ DATOS EN VIVO para toda llamada de IA.
 - [[core.sim_agents.py]] — lo importa
 - [[research.committee.py]] — lo importa
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 9 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_ask_agent.py]]
 - [[tests.test_block0_numbers.py]]
 - [[tests.test_block0_review.py]]
+- [[tests.test_context_engine.py]]
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]
+- [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_live_facts_entities.py]]
 - [[tests.test_numbers_guard.py]]
 - [[tests.test_overnight_ai_routing.py]]

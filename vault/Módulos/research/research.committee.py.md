@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "research/committee.py"
 lenguaje: "python"
-lineas: 2286
+lineas: 2328
 aliases: ["research/committee.py"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # research/committee.py
 
-> Módulo · capa [[Capa Comité]] · 2.286 líneas · `research/committee.py`
+> Módulo · capa [[Capa Comité]] · 2.328 líneas · `research/committee.py`
 
 ## Para qué sirve
 
@@ -42,31 +42,32 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - `progress_get(memo_id)` _(línea 1014)_
 - `progress_clear(memo_id)` _(línea 1027)_
 - `run_committee(session, entity_id, requested_by, client_id=…, provider=…, deps=…, memo_id=…)` — Corre el comité completo y persiste el memo. Devuelve el memo (dict). _(línea 1032)_
-- `memo_dict(m, redact_client=…)` _(línea 1707)_
-- `falsified_in_memo(session, m)` — C8: conclusiones de ESTE memo que el mercado ya falsó (regla verificable). _(línea 1750)_
-- `get_memo(session, memo_id, redact_client=…)` _(línea 1764)_
-- `latest_memo(session, entity_id, redact_client=…)` _(línea 1772)_
-- `list_memos(session, entity_id=…, limit=…)` _(línea 1780)_
-- `approve_memo(session, memo_id, actor, note=…, brokerage=…)` — Aprobación HUMANA (la ruta exige PIN). Con cliente y decisión accionable crea una PREVISUALIZACIÓN de orden en brokerage … _(línea 1823)_
-- `reject_memo(session, memo_id, actor, reason=…, brokerage=…)` — Rechazo humano. Si el memo ya tenía una orden esperando aprobación en Clientes, se RETIRA (brokerage.reject_preview) — si no, un humano … _(línea 1928)_
-- `memo_allows_order(session, memo_id, preview_id=…)` — SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una orden source='committee'): solo se envía si su memo está … _(línea 1976)_
-- `mark_executed(session, memo_id, order=…, actor=…)` — Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera un bloqueo (SKIP LOCKED): la llama el corretaje con su orden … _(línea 1990)_
-- `fail_memo(session, memo_id, error, error_en=…)` _(línea 2011)_
-- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 2020)_
-- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 2049)_
-- `release_run_slot()` _(línea 2054)_
-- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 2061)_
-- `invalidate_board_cache()` _(línea 2105)_
-- `board(session, limit=…)` _(línea 2135)_
-- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2246)_
+- `memo_dict(m, redact_client=…)` _(línea 1727)_
+- `falsified_in_memo(session, m)` — C8: conclusiones de ESTE memo que el mercado ya falsó (regla verificable). _(línea 1770)_
+- `get_memo(session, memo_id, redact_client=…)` _(línea 1784)_
+- `latest_memo(session, entity_id, redact_client=…)` _(línea 1792)_
+- `list_memos(session, entity_id=…, limit=…)` _(línea 1800)_
+- `approve_memo(session, memo_id, actor, note=…, brokerage=…)` — approval.grant (paso 18) sobre el committee.run del memo: ENVUELVE la previsualización (order.preview queda como hija) y deja la puerta G5 … _(línea 1843)_
+- `reject_memo(session, memo_id, actor, reason=…, brokerage=…)` — approval.deny (paso 18) sobre el committee.run del memo; el retiro de la orden pendiente queda como hijo. _(línea 1961)_
+- `memo_allows_order(session, memo_id, preview_id=…)` — SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una orden source='committee'): solo se envía si su memo está … _(línea 2018)_
+- `mark_executed(session, memo_id, order=…, actor=…)` — Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera un bloqueo (SKIP LOCKED): la llama el corretaje con su orden … _(línea 2032)_
+- `fail_memo(session, memo_id, error, error_en=…)` _(línea 2053)_
+- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 2062)_
+- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 2091)_
+- `release_run_slot()` _(línea 2096)_
+- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 2103)_
+- `invalidate_board_cache()` _(línea 2147)_
+- `board(session, limit=…)` _(línea 2177)_
+- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2288)_
 
-**Internas** (empiezan con `_`): `_now`, `_ttl_hours`, `_frac`, `_usd_or_none`, `_decide_core`, `_downgrade_reason`, `_schema_hint`, `_money_check`, `_default_risk`, `_default_live`, `_bounded`, `_daily_used`, `_same_symbol`, `_client_context`, `_fmt_pct`, `_audit`, `_resolve_entity`, `_dominant_horizon`, `_run_committee`, `_ai_ready`, `_entity_node`, `_entity_listed`, `_unlisted_tech_lines`, `_room_names`, `_mascot_voice`, `_research_request_lines`, `_auto_research`, `_seat_run`, `_run_debate`, `_src_dict`, `_evidence_rows`, `_top_evidence`, `_chair`, `_scrub`, `_redact_audit`, `_client_mode`, `_lock_memo`, `_err`, `_preview_error`, `_max_concurrent`, `_board_fingerprint`, `_board_uncached`, `_prefer_canonical`, `_entity_ids_for`
+**Internas** (empiezan con `_`): `_now`, `_ttl_hours`, `_frac`, `_usd_or_none`, `_decide_core`, `_downgrade_reason`, `_schema_hint`, `_money_check`, `_default_risk`, `_default_live`, `_bounded`, `_daily_used`, `_same_symbol`, `_client_context`, `_fmt_pct`, `_audit`, `_resolve_entity`, `_dominant_horizon`, `_run_committee`, `_ai_ready`, `_entity_node`, `_entity_listed`, `_unlisted_tech_lines`, `_room_names`, `_mascot_voice`, `_research_request_lines`, `_auto_research`, `_seat_run`, `_run_debate`, `_src_dict`, `_evidence_rows`, `_top_evidence`, `_chair`, `_scrub`, `_redact_audit`, `_client_mode`, `_lock_memo`, `_err`, `_preview_error`, `_approve_memo`, `_reject_memo`, `_max_concurrent`, `_board_fingerprint`, `_board_uncached`, `_prefer_canonical`, `_entity_ids_for`
 
 ## Depende de
 
 - [[brokerage.service.py]] — importa `(dinámico: brokerage.service)`
 - [[core.ai_usage.py]] — importa `ai_context`
 - [[core.company_data.py]] — importa `get_live_profile`
+- [[core.decision_sites.py]] — importa `decision_sites`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `entity_ids_for`, `get_index`, `resolve`
 - [[core.governance.py]] — importa `governance`
 - [[core.live_facts.py]] — importa `_fact_for`
@@ -85,6 +86,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 ## Lo usan
 
 - [[brokerage.service.py]] — lo importa
+- [[core.decision_sites.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
@@ -94,7 +96,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - herramienta MCP `get_conclusions_board` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 16 pruebas (lista abajo)._
+_Además lo importan 18 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -112,6 +114,8 @@ _Además lo importan 16 pruebas (lista abajo)._
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]
+- [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_phase3.py]]

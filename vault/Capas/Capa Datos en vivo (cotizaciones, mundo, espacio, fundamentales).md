@@ -9,7 +9,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.584 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.473 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -29,7 +29,6 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[core.gdelt_events.py]] — 307 líneas · conflicto / protestas / sanciones EN VIVO desde la base de EVENTOS de GDELT 2.0 (archivos crudos cada 15 minutos, públicos y sin clave).
 - [[engine.brief.js]] — 301 líneas · BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez al día, descartable), un overlay NEXUS resume: el mayor chokepoint, la …
 - [[core.country_geo.py]] — 222 líneas · coordenadas de referencia por PAÍS (la capital), para capas que solo dicen "qué país" (avisos de viaje del Departamento de Estado, cortes de …
-- [[core.live_facts.py]] — 204 líneas · DATOS EN VIVO para toda llamada de IA.
 - [[core.providers.base.py]] — 201 líneas · Phase 1 · M3: el contrato de los proveedores.
 - [[core.gpr.py]] — 186 líneas · Índice de RIESGO GEOPOLÍTICO (GPR) de Caldara & Iacoviello (Junta de la Reserva Federal), EN VIVO y gratuito: https://www.matteoiacoviello.com/gpr.htm
 - [[core.providers.market.py]] — 159 líneas · Phase 1 · M3: adapters de datos de mercado.
@@ -38,6 +37,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[core.live_caps.py]] — 127 líneas · capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[core.providers.coingecko.py]] — 123 líneas · adapter de cripto (CoinGecko API v3, tier gratuito).
 - [[core.live_fundamentals.py]] — 121 líneas · FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
+- [[core.live_facts.py]] — 93 líneas · DATOS EN VIVO para toda llamada de IA.
 - [[core.providers.news.py]] — 90 líneas · Phase 1 · M3: adapter de noticias.
 - [[core.providers.__init__.py]] — 15 líneas · capa de proveedores de datos financieros (patrón adapter).
 
@@ -45,7 +45,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 20 |
+| usa a | [[Capa Infraestructura]] | 21 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 20 |
 | la usa | [[Capa Infraestructura]] | 15 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
@@ -56,8 +56,8 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |
+| la usa | [[Capa MCP y API]] | 4 |
 | la usa | [[Capa Investigación]] | 3 |
-| la usa | [[Capa MCP y API]] | 3 |
 | la usa | [[Capa Ontología y grafo temporal]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
 | la usa | [[Capa Voz]] | 2 |

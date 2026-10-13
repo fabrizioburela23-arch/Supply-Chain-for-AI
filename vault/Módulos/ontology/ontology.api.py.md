@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/api.py"
 lenguaje: "python"
-lineas: 1220
+lineas: 1247
 aliases: ["ontology/api.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/api.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.220 líneas · `ontology/api.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.247 líneas · `ontology/api.py`
 
 ## Para qué sirve
 
@@ -35,31 +35,32 @@ API REST de la ontología: /api/ontology/\*
 - `agents_proposals_list()` _(línea 536)_
 - `select_proposed(status, limit)` _(línea 549)_
 - `agents_proposal_approve(proposal_id)` — Aprueba (con ediciones opcionales) → ejecuta la Acción real, auditada con actor='&lt;agente>, aprobado por &lt;humano>'. Reclamo atómico: ver … _(línea 629)_
-- `agents_proposal_reject(proposal_id)` _(línea 664)_
-- `agents_brief()` — Cronista: Brief Matinal — no requiere aprobación, es informativo. _(línea 679)_
-- `alerts_list()` _(línea 698)_
-- `select_alerts(owner)` _(línea 707)_
-- `alerts_create()` — Body: {owner, rule:{entity,metric,op,value} o {region,event_type}, channel?}. _(línea 719)_
-- `alerts_delete(alert_id)` _(línea 742)_
-- `alerts_check()` — Evalúa las alertas activas (de `owner` si se pasa) y devuelve las que dispararon ahora — el cliente las convierte en notificaciones del … _(línea 760)_
-- `search_objects()` — Búsqueda de entidades desde el SERVIDOR (Phase 1 · M5). _(línea 772)_
-- `event_detail(event_id)` — Un evento concreto, con su procedencia resuelta (Phase 1 · M5). _(línea 824)_
-- `object_timeline(object_id)` — Qué le ha pasado a esta entidad, en un solo hilo (Phase 1 · M5). Fusiona eventos del grafo y noticias, ordenado por cuándo fue cierto en el … _(línea 858)_
-- `global_feed_route()` — Lo último que entró al grafo ENTERO (M6): noticias, relaciones nuevas o terminadas, tesis y acciones — sin la migración ni los precios. … _(línea 883)_
-- `object_news(object_id)` — Noticias que informan sobre una entidad, ya en el grafo (Phase 1 · M4). Solo LEE: no dispara ingesta, para que abrir una ficha no provoque … _(línea 927)_
-- `ingest_news()` — Ingiere noticias de una entidad AL GRAFO (Phase 1 · M4). Body: {entity_id, query?, limit?, actor?}. _(línea 948)_
-- `sources_list()` — Documentos que respaldan hechos del grafo (Phase 1 · M1). Query: ?kind=primary&min_trust=2&limit=50. Ordenadas por confiabilidad. _(línea 994)_
-- `object_provenance(object_id)` — De dónde salió lo que sabemos de este objeto: las fuentes que lo evidencian y los eventos que las citan (con fecha y confianza). _(línea 1024)_
-- `events_create()` — Escritura de bajo nivel. En Fase 2 esto se envuelve con el catálogo de Acciones (validación por tipo, auditoría de actor humano). Por ahora … _(línea 1045)_
-- `reconcile_plan()` — Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1. No escribe nada. _(línea 1108)_
-- `reconcile_apply()` — Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id. _(línea 1169)_
-- `reconcile_rollback()` — Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos. _(línea 1203)_
+- `agents_proposal_reject(proposal_id)` _(línea 671)_
+- `agents_brief()` — Cronista: Brief Matinal — no requiere aprobación, es informativo. _(línea 696)_
+- `alerts_list()` _(línea 715)_
+- `select_alerts(owner)` _(línea 724)_
+- `alerts_create()` — Body: {owner, rule:{entity,metric,op,value} o {region,event_type}, channel?}. _(línea 736)_
+- `alerts_delete(alert_id)` _(línea 764)_
+- `alerts_check()` — Evalúa las alertas activas (de `owner` si se pasa) y devuelve las que dispararon ahora — el cliente las convierte en notificaciones del … _(línea 787)_
+- `search_objects()` — Búsqueda de entidades desde el SERVIDOR (Phase 1 · M5). _(línea 799)_
+- `event_detail(event_id)` — Un evento concreto, con su procedencia resuelta (Phase 1 · M5). _(línea 851)_
+- `object_timeline(object_id)` — Qué le ha pasado a esta entidad, en un solo hilo (Phase 1 · M5). Fusiona eventos del grafo y noticias, ordenado por cuándo fue cierto en el … _(línea 885)_
+- `global_feed_route()` — Lo último que entró al grafo ENTERO (M6): noticias, relaciones nuevas o terminadas, tesis y acciones — sin la migración ni los precios. … _(línea 910)_
+- `object_news(object_id)` — Noticias que informan sobre una entidad, ya en el grafo (Phase 1 · M4). Solo LEE: no dispara ingesta, para que abrir una ficha no provoque … _(línea 954)_
+- `ingest_news()` — Ingiere noticias de una entidad AL GRAFO (Phase 1 · M4). Body: {entity_id, query?, limit?, actor?}. _(línea 975)_
+- `sources_list()` — Documentos que respaldan hechos del grafo (Phase 1 · M1). Query: ?kind=primary&min_trust=2&limit=50. Ordenadas por confiabilidad. _(línea 1021)_
+- `object_provenance(object_id)` — De dónde salió lo que sabemos de este objeto: las fuentes que lo evidencian y los eventos que las citan (con fecha y confianza). _(línea 1051)_
+- `events_create()` — Escritura de bajo nivel. En Fase 2 esto se envuelve con el catálogo de Acciones (validación por tipo, auditoría de actor humano). Por ahora … _(línea 1072)_
+- `reconcile_plan()` — Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1. No escribe nada. _(línea 1135)_
+- `reconcile_apply()` — Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id. _(línea 1196)_
+- `reconcile_rollback()` — Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos. _(línea 1230)_
 
 **Internas** (empiezan con `_`): `_unavailable`, `_body`, `_BadArg`, `_int_arg`, `_bad_arg`, `_ledger_unavailable`, `_principal`, `_require_db`, `_obj_to_dict`, `_mark_genesis`, `_link_to_dict`, `_event_to_dict`, `_action_event_to_dict`, `_proposal_to_dict`, `_cycle_bg`, `_try_start_cycle`, `_invest_bg`, `_claim_proposal`, `_cycle_may_auto_apply`, `_proposal_actor_and_id`, `_alert_to_dict`, `_recon_plan`, `_strict_operator`, `_strict_operator_required`, `_str_arg`
 
 ## Depende de
 
 - [[core.__init__.py]] — importa `core.gates`
+- [[core.decision_sites.py]] — importa `decision_sites`
 - [[core.decisions.py]] — importa `LedgerUnavailable`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `resolve`
 - [[core.http.py]] — importa `rate_limit`
@@ -83,7 +84,7 @@ API REST de la ontología: /api/ontology/\*
 
 - [[server.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -95,13 +96,13 @@ _Además lo importan 5 pruebas (lista abajo)._
 | `POST` | `/api/ontology/agents/cycle` | `agents_cycle` | [[engine.live.js]], 2 pruebas |
 | `POST` | `/api/ontology/agents/investigar` | `agents_investigar` | [[app.html]], 2 pruebas |
 | `GET` | `/api/ontology/agents/proposals` | `agents_proposals_list` | [[app.html]], 2 pruebas |
-| `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[app.html]], 2 pruebas |
-| `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[app.html]], 1 prueba |
+| `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[app.html]], 3 pruebas |
+| `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[app.html]], 2 pruebas |
 | `POST` | `/api/ontology/agents/run` | `agents_run` | [[app.html]], 2 pruebas |
-| `GET` | `/api/ontology/alerts` | `alerts_list` | [[engine.khipu_lang.js]], 2 pruebas |
-| `POST` | `/api/ontology/alerts` | `alerts_create` | [[engine.khipu_lang.js]], 2 pruebas |
-| `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[app.html]], 2 pruebas |
-| `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[app.html]], 2 pruebas |
+| `GET` | `/api/ontology/alerts` | `alerts_list` | [[engine.khipu_lang.js]], 3 pruebas |
+| `POST` | `/api/ontology/alerts` | `alerts_create` | [[engine.khipu_lang.js]], 3 pruebas |
+| `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[app.html]], 3 pruebas |
+| `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[app.html]], 3 pruebas |
 | `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | 1 prueba |
 | `POST` | `/api/ontology/events` | `events_create` | 1 prueba |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | 1 prueba |
@@ -135,6 +136,7 @@ Grupos: [[API ontology]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]

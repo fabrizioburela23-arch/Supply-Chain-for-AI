@@ -6,8 +6,9 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-97 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+98 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-13 (e) — PASOS 18-21 Y BLOQUES 4-5]] — 1 archivos
 - [[Sesión 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2]] — 3 archivos
 - [[Sesión 2026-10-13 (c) — INFRAESTRUCTURA OPERATIVA, PASOS 7, 9, 10 y 13]] — 2 archivos
 - [[Sesión 2026-10-13 (b) — INFRAESTRUCTURA OPERATIVA, PASOS 5, 6 y 8]] — 0 archivos

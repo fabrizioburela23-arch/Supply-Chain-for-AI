@@ -31,6 +31,11 @@ SMOKE = (
     ('get_world_events', {'layers': ['quakes', 'chokepoints'], 'limit': 5}, ('items', 'sources')),
     ('get_track_record', {}, ()),
     ('get_conclusions_board', {}, ()),
+    # operaciones v2 (BRECHAS L4-09) + contrato común (detail/truncated, mcp_server/contract.py) — sin red
+    ('run_scenario', {'shocks': [{'id': 'TSMC', 'magnitude': 1}], 'top': 5, 'detail': 'summary'},
+     ('victims', 'kernel', 'detail', 'truncated')),
+    ('get_subgraph', {'seeds': ['TSMC'], 'budget_chars': 2000}, ('edges', 'tail', 'detail', 'truncated')),
+    ('find_similar_entities', {'id': 'TSMC', 'k': 3}, ('results', 'detail')),
 )
 NEEDS_DB = 'needs the Khipus ontology database'
 

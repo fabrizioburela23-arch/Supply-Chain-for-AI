@@ -465,3 +465,22 @@ def test_insights_shock_manual_no_se_comparte(insights_env):
     assert a[0] == 200 and b[0] == 200 and calls['narrate'] == 2
     assert not a[1].get('shared') and not b[1].get('shared') and calls['persist'] == 0
     assert M._INFLIGHT == {}
+
+
+def test_insights_atribuye_ia_solo_si_la_ficha_se_escribe(insights_env, monkeypatch):
+    """Revisión paso 21: un shock manual (o as_of) narra con IA pero NO escribe insight.snapshot → sus llamadas de IA
+    no llevan decision_id (antes apuntaban a una ficha que nunca existía). La lectura real sí lo lleva."""
+    from core import ai_calls
+    app, calls, M = insights_env
+    seen = []
+
+    def narrate(situation, lang, tier):
+        calls['narrate'] += 1
+        a = ai_calls._ATTR.get()
+        seen.append(a.get('decision_id') if a else None)
+        return [{'title': 't', 'detail': 'd', 'kind': 'estructura'}], 'fake:' + tier
+    monkeypatch.setattr(M, '_narrate_insights', narrate)
+    c = app.test_client()
+    assert c.post('/api/matrix/insights', json={'lang': 'es', 'shock': ['A']}).status_code == 200
+    assert c.post('/api/matrix/insights', json={'lang': 'es'}).status_code == 200
+    assert seen[0] is None and seen[1] is not None and calls['narrate'] == 2

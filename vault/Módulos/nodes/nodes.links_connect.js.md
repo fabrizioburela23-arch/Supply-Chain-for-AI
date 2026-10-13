@@ -37,6 +37,7 @@ Se carga en [[app.html]] en la posición **18 de 95** (línea 1453), después de
 
 - [[app.html]] — lo carga con `<script>` (posición 18)
 - [[app.html]] — usa `LINKS_CONNECT`
+- [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren

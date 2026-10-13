@@ -14,6 +14,10 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[core.ai_usage.py]]
 
+## Pruebas que la fijan o nombran
+
+- [[tests.test_ai_usage_cache.py]]
+
 ## ¿Está documentada en CLAUDE.md?
 
 **No** — falta en [[Doc CLAUDE]].

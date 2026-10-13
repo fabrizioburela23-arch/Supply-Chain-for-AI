@@ -10,10 +10,13 @@ PRECIOS REALES: si se dispara, la claim pasa a 'falsified', queda una fila
 ClaimOutcome ('falsifier', miss) y su foto de partida deja de calificarse.
 Métricas v1 (solo lo que se verifica gratis): precio y exceso vs SPY.
 """
+import logging
 import re
 from datetime import date
 
 from pydantic import BaseModel, Field, field_validator
+
+log = logging.getLogger('khipu')
 
 METRICS = ('price', 'excess_vs_spy')
 OPS = ('<', '>')
@@ -168,16 +171,31 @@ def apply_falsifiers(session, now, get_series, today):
                            eval_price=(hit['value'] if r['metric'] == 'price' else None), band=b.band, result='miss',
                            reason=reason[:900], reason_en=reason_en[:900], claim_status='falsified',
                            price_source='cierres diarios ajustados', method='falsifier-v1', evaluated_at=now)
+        # revisión paso 19: TODA la falsación de un claim (fila de resultado + estado + ficha claim.status + su
+        # claim_eval) va en UN savepoint: si el libro falla, se revierte solo ESTE claim y la calificación del día
+        # sigue (antes: la transacción entera quedaba abortada y se perdían las calificaciones ya hechas)
+        from core import decision_sites as _ds
         try:
             with session.begin_nested():
                 session.add(row)
                 session.flush()
+                claim.status = 'falsified'
+                claim.valid_to = now
+                b.scoreable = False
+                b.na_reason = 'falsada por una regla verificable (' + describe(r) + ')'
+                # paso 19: claim.status en el libro (antes: UPDATE silencioso) — regla, métrica y valor; hija del
+                # research.run que creó el claim, y su calificación 'claim_eval' (miss) como resultado posterior
+                run_dec = _ds.find_decision(session, 'claim', claim.id, ('research.run',))
+                session.flush()
+                _ds.claim_status(session, [claim.id], 'falsified', reason='falsifier', parent_id=run_dec,
+                                 task='research_outcomes',
+                                 notes={claim.id: {'rule': r, 'date': hit['date'], 'value': hit['value']}})
+                _ds.claim_evals(session, [row], source='falsifiers')
         except IntegrityError:
             continue
-        claim.status = 'falsified'
-        claim.valid_to = now
-        b.scoreable = False
-        b.na_reason = 'falsada por una regla verificable (' + describe(r) + ')'
+        except Exception as e:  # noqa: BLE001 — p. ej. LedgerUnavailable: se reintenta en la próxima corrida
+            log.warning('falsadores: claim %s no falsada ahora (%s)', claim.id, type(e).__name__)
+            continue
         n += 1
     if n:
         session.flush()

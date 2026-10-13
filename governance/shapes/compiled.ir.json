@@ -1,5 +1,5 @@
 {
- "ir_hash": "854622bc3b313fc59aadf5b4d6f9e556b0b2d0e6f71be9626349a60ded066129",
+ "ir_hash": "9ef5603a5daa7fb001765deb502e11e14b77050032da040647d69b9a34cfd21e",
  "rules": [
   "khr:action.agent_needs_human",
   "khr:action.auto_apply_allowed",
@@ -28,6 +28,13 @@
   "khr:link.rel_in_vocab",
   "khr:link.valid_interval",
   "khr:link.weight_range",
+  "khr:memo.manifest_complete",
+  "khr:memo.not_expired",
+  "khr:memo.quorum",
+  "khr:memo.quorum_no_ai",
+  "khr:memo.size_le_mandate",
+  "khr:memo.unvalidated_half",
+  "khr:memo.unvalidated_label",
   "khr:object.margin_range",
   "khr:object.numeric_props",
   "khr:object.type_immutable",
@@ -194,6 +201,73 @@
    ],
    "sparql": [],
    "target": "kh:ActionRequest"
+  },
+  {
+   "iri": "khs:CommitteeMemoShape",
+   "props": [
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        "BUY",
+        "ADD",
+        "HOLD",
+        "TRIM",
+        "SELL",
+        "AVOID"
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:MemoManifestComplete",
+     "msg_en": "The memo does not carry a valid decision ({value}): it cannot be approved.",
+     "msg_es": "El memo no trae una decisión válida ({value}): no se puede aprobar.",
+     "name": "memo con una decisión del vocabulario",
+     "path": "kh:decision",
+     "rule": "khr:memo.manifest_complete",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:ttlHours"
+      }
+     ],
+     "iri": "khs:MemoNotExpired",
+     "msg_en": "The memo is {value} h old and expires at {limit} h: prices changed, run the committee again.",
+     "msg_es": "El memo tiene {value} h y caduca a las {limit} h: los precios cambiaron, vuelve a correr el comité.",
+     "name": "memo vigente",
+     "path": "kh:ageHours",
+     "rule": "khr:memo.not_expired",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxPositionPct"
+      }
+     ],
+     "iri": "khs:MemoSizeLeMandate",
+     "msg_en": "The memo's target weight ({value}%) exceeds the mandate's per-position maximum ({limit}%).",
+     "msg_es": "El peso objetivo del memo ({value} %) supera el máximo por posición del mandato ({limit} %).",
+     "name": "tamaño dentro del mandato",
+     "path": "kh:targetWeightPct",
+     "rule": "khr:memo.size_le_mandate",
+     "severity": "sh:Violation"
+    }
+   ],
+   "sparql": [],
+   "target": "kh:CommitteeMemo"
   },
   {
    "iri": "khs:DecisionMoneyExecutedNotBlockedShape",
@@ -741,6 +815,48 @@
    ],
    "sparql": [],
    "target": "kh:Link"
+  },
+  {
+   "iri": "khs:MemoWithoutQuorumShape",
+   "props": [
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        "HOLD",
+        "AVOID"
+       ]
+      }
+     ],
+     "iri": "khs:MemoQuorum",
+     "msg_en": "Without an analyst quorum (INSUFFICIENT DATA) the memo cannot decide \"{value}\".",
+     "msg_es": "Sin quórum de analistas (DATOS INSUFICIENTES) el memo no puede decidir «{value}».",
+     "name": "sin quórum no hay decisión accionable",
+     "path": "kh:decision",
+     "rule": "khr:memo.quorum",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      }
+     ],
+     "iri": "khs:MemoQuorumNoAi",
+     "msg_en": "Without an analyst quorum the AI chair should not be consulted (it was: {value}).",
+     "msg_es": "Sin quórum de analistas el presidente IA no debía consultarse (se consultó: {value}).",
+     "name": "sin quórum no se consulta al presidente IA",
+     "path": "kh:aiUsed",
+     "rule": "khr:memo.quorum_no_ai",
+     "severity": "sh:Warning"
+    }
+   ],
+   "sparql": [],
+   "target": "kh:MemoWithoutQuorum"
   },
   {
    "iri": "khs:ObjectShape",
@@ -1394,7 +1510,50 @@
     }
    ],
    "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:UnvalidatedMemoShape",
+   "props": [
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxUnvalidatedWeightPct"
+      }
+     ],
+     "iri": "khs:MemoUnvalidatedHalf",
+     "msg_en": "Without a validated track record the target weight must be halved (max {limit}%), but it is {value}%.",
+     "msg_es": "Sin historial validado el peso objetivo debe ir a la mitad (máx. {limit} %), pero es {value} %.",
+     "name": "sin validar: tamaño a la mitad",
+     "path": "kh:targetWeightPct",
+     "rule": "khr:memo.unvalidated_half",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:MemoUnvalidatedLabel",
+     "msg_en": "The memo's size is not marked \"not validated\" ({value}) although no analyst has enough track record.",
+     "msg_es": "El tamaño del memo no está marcado como «no validado» ({value}) aunque ningún analista tiene historial suficiente.",
+     "name": "sin validar: el memo lo dice",
+     "path": "kh:sizingUnvalidated",
+     "rule": "khr:memo.unvalidated_label",
+     "severity": "sh:Warning"
+    }
+   ],
+   "sparql": [],
+   "target": "kh:UnvalidatedMemo"
   }
  ],
- "source_sha": "57b07a9b19f449f6eaf160832746e71e2fbd5503c9bc503f9cabfcd264cd1c1a"
+ "source_sha": "063d9e77ed34aa7ac9b72e6fb096705041bae8b1e17de40a41239bfcfadffaa2"
 }

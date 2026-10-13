@@ -22,7 +22,7 @@ también viven en core/ledger_ddl.
 vieja se compila como bigint + txid_current() (core/ledger_ddl.detect_xid8 corre ANTES de create_all).
 """
 from sqlalchemy import (
-    CHAR, BigInteger, Boolean, CheckConstraint, Column, Date, DateTime, ForeignKey, Identity, Index, Integer,
+    CHAR, BigInteger, Boolean, CheckConstraint, Column, Date, DateTime, Float, ForeignKey, Identity, Index, Integer,
     LargeBinary, PrimaryKeyConstraint, SmallInteger, String, Text, text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -222,5 +222,50 @@ class LedgerAnchor(Base):
     __table_args__ = (Index('ux_anchor_day_lineage', 'day', 'lineage_id', unique=True),)
 
 
+class AICall(Base):
+    """Paso 21 (§2.6, GV-11): UNA fila por pedido de texto a la IA (cascada de core/ai._ai_complete_raw). La
+    escribe SOLO core/ai.py (vía core/ai_calls, en lote y fuera del camino del usuario). Append-only y sellada.
+    Nunca texto en claro aquí: el prompt, el system y la salida van como blobs direccionados por hash
+    (decision_blobs, retención 'legal' si la llamada ocurrió dentro de una decisión sync; si no, 'standard_90d');
+    quién la pidió va como hash. `decision_id` NO tiene FK: las decisiones async (chat, qué-pasaría-si) se
+    escriben DESPUÉS de sus llamadas. `model` = el modelo REAL que devolvió el proveedor (no la variable)."""
+    __tablename__ = 'ai_calls'
+    id = Column(UUID(as_uuid=True), primary_key=True)        # lo reserva core/ai_calls antes de escribir
+    seq = Column(BigInteger, Identity(always=True), nullable=False, unique=True)
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    provider = Column(String(20), nullable=True)             # claude|gemini|nvidia (None si nadie respondió)
+    model = Column(String(80), nullable=True)
+    tier = Column(String(8), nullable=False)
+    feature = Column(String(40), nullable=True)
+    who_hash = Column(String(16), nullable=True)
+    prompt_sha = Column(CHAR(64), nullable=False)
+    system_sha = Column(CHAR(64), nullable=False)
+    system_blob = Column(CHAR(64), ForeignKey('decision_blobs.sha256'), nullable=True)
+    input_blob = Column(CHAR(64), ForeignKey('decision_blobs.sha256'), nullable=True)
+    output_sha = Column(CHAR(64), nullable=True)
+    output_blob = Column(CHAR(64), ForeignKey('decision_blobs.sha256'), nullable=True)
+    tokens_in = Column(Integer, nullable=False, server_default=text('0'))
+    tokens_out = Column(Integer, nullable=False, server_default=text('0'))
+    cache_read_tokens = Column(Integer, nullable=False, server_default=text('0'))
+    cache_write_tokens = Column(Integer, nullable=False, server_default=text('0'))
+    cost_usd = Column(Float, nullable=False, server_default=text('0'))
+    latency_ms = Column(Integer, nullable=True)
+    ok = Column(Boolean, nullable=False)
+    error = Column(String(240), nullable=True)
+    guardian = Column(JSONB, nullable=True)                  # veredicto del guardián de cifras
+    route = Column(JSONB, nullable=True)                     # {order, tried, json, max_tokens}
+    decision_id = Column(UUID(as_uuid=True), nullable=True)
+    retention_class = Column(String(16), nullable=False)
+    txid = Column(XID8(), nullable=False, server_default=txid_default())
+    recorded_at = Column(DateTime(timezone=True), nullable=False, server_default=_NOW)
+    __table_args__ = (
+        CheckConstraint(_in('retention_class', RETENTION), name='ck_aicall_retention'),
+        CheckConstraint(_in('tier', ('fast', 'deep')), name='ck_aicall_tier'),
+        Index('ix_aicall_time', text('recorded_at DESC')),
+        Index('ix_aicall_decision', 'decision_id'),
+        Index('ix_aicall_txid', 'txid'),
+    )
+
+
 LEDGER_TABLES = ('decisions', 'decision_refs', 'decision_outcomes', 'decision_violations', 'ledger_seals',
-                 'ledger_meta', 'ledger_anchors')
+                 'ledger_meta', 'ledger_anchors', 'ai_calls')

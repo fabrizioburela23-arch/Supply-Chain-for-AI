@@ -19,13 +19,13 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `POST` | `/api/ontology/agents/cycle` | `agents_cycle` | [[ontology.api.py]] | [[engine.live.js]], 2 pruebas |
 | `POST` | `/api/ontology/agents/investigar` | `agents_investigar` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
 | `GET` | `/api/ontology/agents/proposals` | `agents_proposals_list` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
-| `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
-| `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[ontology.api.py]] | [[app.html]], 1 prueba |
+| `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[ontology.api.py]] | [[app.html]], 3 pruebas |
+| `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
 | `POST` | `/api/ontology/agents/run` | `agents_run` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
-| `GET` | `/api/ontology/alerts` | `alerts_list` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 2 pruebas |
-| `POST` | `/api/ontology/alerts` | `alerts_create` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 2 pruebas |
-| `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
-| `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
+| `GET` | `/api/ontology/alerts` | `alerts_list` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 3 pruebas |
+| `POST` | `/api/ontology/alerts` | `alerts_create` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 3 pruebas |
+| `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[ontology.api.py]] | [[app.html]], 3 pruebas |
+| `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[ontology.api.py]] | [[app.html]], 3 pruebas |
 | `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | [[ontology.api.py]] | 1 prueba |
 | `POST` | `/api/ontology/events` | `events_create` | [[ontology.api.py]] | 1 prueba |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | [[ontology.api.py]] | 1 prueba |

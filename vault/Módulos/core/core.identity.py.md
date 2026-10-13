@@ -49,8 +49,12 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 
 - [[brokerage.api.py]] — lo importa
 - [[brokerage.service.py]] — lo importa
+- [[core.ai_calls.py]] — lo importa
+- [[core.decide.py]] — lo importa
+- [[core.decision_sites.py]] — lo importa
 - [[core.governance.py]] — lo importa
 - [[core.governance_api.py]] — lo importa
+- [[core.khipu_chat.py]] — lo importa
 - [[core.ledger.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
 - [[core.pin.py]] — lo importa
@@ -59,13 +63,15 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - [[core.scheduler.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
+- [[mcp_server.tools.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 - [[research.committee_api.py]] — lo importa
 - [[server.py]] — lo importa
+- herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 11 pruebas (lista abajo)._
+_Además lo importan 14 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -73,12 +79,15 @@ _Además lo importan 11 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_ai_calls.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_ledger_callsites.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_order_single_path.py]]

@@ -278,7 +278,7 @@ def _actual_route(out):
     return 'needs_deep_reasoning'
 
 
-def chat_gate_finish(fut, out, message=None):
+def chat_gate_finish(fut, out, message=None, correlation_id=None):
     """Compara la decisión de Jev con lo que hizo el chat y lo deja en sombra."""
     if fut is None:
         return None
@@ -286,19 +286,19 @@ def chat_gate_finish(fut, out, message=None):
         ans = fut.result(timeout=0.05) if fut.done() else None
         if ans is None:
             # todavía no llegó: se resuelve en segundo plano para no frenar la respuesta
-            _POOL.submit(_finish_bg, fut, out, message)
+            _POOL.submit(_finish_bg, fut, out, message, correlation_id)
             return None
-        return _compare(ans, out, message)
+        return _compare(ans, out, message, correlation_id)
     except Exception as e:  # noqa: BLE001
         log.info('decide: gate (%s)', type(e).__name__)
         return None
 
 
-def _finish_bg(fut, out, message):
+def _finish_bg(fut, out, message, correlation_id=None):
     try:
         ans = fut.result(timeout=TIMEOUT_S + 2)
         if ans:
-            _compare(ans, out, message)
+            _compare(ans, out, message, correlation_id)
     except Exception:  # noqa: BLE001
         pass
 
@@ -345,12 +345,71 @@ def chat_plan(fut, wait_s=None):
     return d
 
 
-def _compare(ans, out, message):
+def private_key(message):
+    """Clave de la sombra SIN el texto del usuario (INFRA_OPERATIVA §2.7, paso 20): 'hmac:' + HMAC-SHA256 con la
+    clave derivada de SECRET_KEY (core/decisions.pii_hmac). Antes guardaba hasta 200 caracteres del mensaje."""
+    try:
+        from core.decisions import pii_hmac
+        h = pii_hmac(message or '')
+        return ('hmac:' + h['hmac'][:40]) if h.get('hmac') else f"len:{h.get('len', 0)}"
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _compare(ans, out, message, correlation_id=None):
     decision = decision_of(ans)
     actual = {'route': _actual_route(out), 'steps': (out or {}).get('steps'),
               'router': ((out or {}).get('router') or {}).get('by'),
               'tools': [t.get('name') for t in (out or {}).get('tools_used') or [] if isinstance(t, dict)],
               'source': (out or {}).get('answer_source'), 'elapsed_ms': (out or {}).get('elapsed_ms')}
     agree = (decision['route'] == actual['route']) if decision['route'] else None
-    shadow('chat_gate', (message or '')[:200], decision, actual, agree)
+    shadow('chat_gate', private_key(message), decision, actual, agree)
+    ledger_route(decision, actual, agree, message, ans, correlation_id)
     return decision
+
+
+def ledger_route(decision, actual, agree, message, ans=None, correlation_id=None):
+    """Ficha `chat.route` (async, §2.5): qué decidió Jev (ruta, probabilidades, confianza), con qué política
+    (`policy.decide`) y modelo, si MANDÓ o solo miró (sombra) y, como resultado posterior, si coincidió con lo que
+    hizo el chat (decision_outcomes 'agree'). El mensaje solo como HMAC. Se encola: nunca frena al chat."""
+    try:
+        from core import decisions, identity
+    except Exception:  # noqa: BLE001
+        return False
+    route_raw = (ans or {}).get('route') if isinstance(ans, dict) else None
+    probs = route_raw.get('probabilities') if isinstance(route_raw, dict) else None
+    controlled = control('chat_gate')
+    lang = None
+
+    def build():
+        p = identity.Principal(id='system:chat_gate', kind='system', auth='none', channel='chat',
+                               declared_name='jev')
+        ctx = decisions.DecisionCtx('chat.route', p, subject={'feature': 'chat_gate'},
+                                    correlation_id=correlation_id)
+        ctx.private_text('message', message, lang)
+        try:
+            from core import governance
+            pol = governance.active().artifacts.get('policy.decide') or {}
+            if pol:
+                ctx.policy(f"policy.decide@{pol.get('semver')}", pol.get('hash'))
+        except Exception:  # noqa: BLE001
+            pass
+        ctx.model = {'provider': PROVIDER, 'model': MODEL}
+        ctx.extra['jev'] = {'probabilities': probs if isinstance(probs, dict) else None,
+                            'min_conf': MIN_CONF, 'controlled': bool(controlled)}
+        ctx.output = {'decision': decision, 'actual': actual, 'agree': agree, 'mode': 'control' if controlled
+                      else 'shadow'}
+        ctx.status = 'recorded'
+
+        def after(did):
+            if agree is None:
+                return
+            from datetime import datetime, timezone
+
+            from ontology.db import session_scope
+            with session_scope() as s:
+                decisions.outcome(s, did, 'agree', {'agree': bool(agree), 'actual_route': actual.get('route'),
+                                                    'dedup_key': 'agree'},
+                                  observed_at=datetime.now(timezone.utc), source='jev')
+        return ctx, after
+    return decisions.submit_async(build)

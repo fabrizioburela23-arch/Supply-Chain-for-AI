@@ -119,7 +119,8 @@ REGLAS_CAPA = [
     # Ontología y grafo temporal
     ('ontology/*', 'ontologia'), ('core/entities.py', 'ontologia'),
     ('scripts/migrate_v0_to_ontology.py', 'ontologia'), ('scripts/reconcile_v0_to_ontology.py', 'ontologia'),
-    ('scripts/audit_graph.py', 'ontologia'),
+    ('scripts/audit_graph.py', 'ontologia'), ('scripts/build_graph_review.py', 'ontologia'),
+    ('scripts/link_origins.js', 'ontologia'),
     ('engine/temporal-graph.js', 'ontologia'), ('engine/timeline3d.js', 'ontologia'),
     ('engine/maptime.js', 'ontologia'), ('engine/reconcile.js', 'ontologia'),
     ('engine/secondbrain.js', 'ontologia'), ('engine/hypergraph.js', 'ontologia'),
@@ -1298,8 +1299,10 @@ def build_model():
 
     # ── herramientas MCP ─────────────────────────────────────────────────────
     M.tools = []
-    if 'mcp_server/tools.py' in files:
-        M.tools = _mcp_tools(files['mcp_server/tools.py'], mods)
+    for _tp in ('mcp_server/tools.py', 'mcp_server/ops.py'):     # ops.py: operaciones v2 (mismo REGISTRY)
+        if _tp in files:
+            M.tools += [dict(t, file=_tp) for t in _mcp_tools(files[_tp], mods)]
+    M.tools.sort(key=lambda t: t['name'])
 
     # ── sesiones de ESTADO ───────────────────────────────────────────────────
     M.sessions = parse_sessions(files.get('docs/ESTADO.md', {}).get('text', ''))
@@ -1735,7 +1738,7 @@ def _build_edges(M):
     for r in M.routes:
         E.append((r['file'], r['id'], 'defines_endpoint', r['func']))
     for t in M.tools:
-        E.append(('mcp_server/tools.py', t['id'], 'defines_endpoint', t['func']))
+        E.append((t.get('file', 'mcp_server/tools.py'), t['id'], 'defines_endpoint', t['func']))
         for m in t['modules']:
             E.append((t['id'], m, 'imports', 'herramienta MCP'))
     for mod in sorted(M.tested):
@@ -2229,7 +2232,8 @@ def note_mcp_tools(M):
     out = [fm({'tipo': 'api', 'capa': CAPA['mcp'][1], 'herramientas': len(M.tools),
                'tags': tags_for('mcp', 'api')})]
     out.append('# API herramientas MCP\n')
-    out.append(f"> {len(M.tools)} herramientas definidas en {link('mcp_server.tools.py')} y servidas por "
+    out.append(f"> {len(M.tools)} herramientas definidas en {link('mcp_server.tools.py')} (y las v2 en "
+               f"{link('mcp_server.ops.py')}) y servidas por "
                f"{link('mcp_server.api.py')} en `POST /mcp` (JSON-RPC). Alcances: **read** (consultas), "
                "**research** (gasta presupuesto de IA), **trade** (solo PROPONE órdenes; siempre aprobación humana).\n")
     out.append('| Herramienta | Alcance | Solo lectura | Función | Módulos que usa |\n|---|---|---|---|---|')

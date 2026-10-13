@@ -308,6 +308,47 @@ def gather_order(facts):
     return order_triples(facts)
 
 
+# hechos del memo del comité (core/decision_sites.memo_facts) → propiedad del foco (puerta G5, committee.ttl)
+_MEMO_PROPS = (
+    ('decision', 'decision', str), ('quant_decision', 'quantDecision', str), ('decision_code', 'decisionCode', str),
+    ('validated', 'validated', bool), ('sizing_unvalidated', 'sizingUnvalidated', bool),
+    ('target_weight_pct', 'targetWeightPct', 'num'), ('max_position_pct', 'maxPositionPct', 'num'),
+    ('max_unvalidated_weight_pct', 'maxUnvalidatedWeightPct', 'num'), ('age_hours', 'ageHours', 'num'),
+    ('ttl_hours', 'ttlHours', 'num'), ('ai_used', 'aiUsed', bool), ('n_claims', 'nClaims', 'num'),
+)
+
+
+def memo_triples(m):
+    """m: {id, decision, quant_decision, decision_code, validated, sizing_unvalidated, target_weight_pct,
+    max_position_pct, max_unvalidated_weight_pct, age_hours, ttl_hours, quorum_ok, n_claims, ai_used} → (tripletas,
+    foco). Foco `a kh:CommitteeMemo` (+ kh:UnvalidatedMemo si validated es False; + kh:MemoWithoutQuorum si hay
+    conclusiones sin quórum o el código es INSUFFICIENT_DATA): las clases condicionales hacen que las reglas de
+    committee.ttl apliquen SOLO donde corresponden, sin SPARQL."""
+    t = _T()
+    M = node('memo', m.get('id') or 'memo')
+    t.add(M, TYPE, kh('CommitteeMemo'))
+    if m.get('validated') is False:
+        t.add(M, TYPE, kh('UnvalidatedMemo'))
+    n = m.get('n_claims')
+    if m.get('decision_code') == 'INSUFFICIENT_DATA' or (m.get('quorum_ok') is False and (n or 0) > 0):
+        t.add(M, TYPE, kh('MemoWithoutQuorum'))
+    for key, local, kind in _MEMO_PROPS:
+        v = m.get(key)
+        if v is None:
+            continue
+        if kind == 'num':
+            t.add(M, kh(local), num(v))
+        elif kind is bool:
+            t.add(M, kh(local), v if isinstance(v, bool) else str(v))
+        else:
+            t.add(M, kh(local), str(v))
+    return list(t), M
+
+
+def gather_memo(facts):
+    return memo_triples(facts)
+
+
 # ── para pySHACL (pruebas, auditoría): importado de forma perezosa ───────────
 def to_rdflib(triples):
     from rdflib import Graph, Literal, URIRef

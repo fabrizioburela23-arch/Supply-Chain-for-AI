@@ -30,13 +30,19 @@ from datetime import datetime, timedelta, timezone
 
 log = logging.getLogger('khipu')
 
-PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida)
+PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida[, escritura de caché, lectura de caché])
+    # BRECHAS L4-06 (2026-10-13): la caché de prompts se cobra APARTE — escribir 1,25× la entrada (TTL de 5 min) y
+    # leer ~0,1× (Opus 5.5: 0,05×; Fable/Mythos 5.1: 0,025×). Sin los dos últimos valores: los multiplicadores por
+    # proveedor de CACHE_MULT. Los tokens de caché son PARTE de los de entrada (record/cost_of).
     # Claude (tabla oficial de la API, oct-2026). Haiku 5.5: tarifa para prompts ≤ 100K tokens (más largos: 0,5/2,5).
-    'claude-fable-5': (10.0, 50.0), 'claude-mythos-5': (10.0, 50.0),
-    'claude-opus-5-5': (4.0, 20.0), 'claude-opus-5': (5.0, 25.0),
-    'claude-opus-4': (5.0, 25.0), 'claude-sonnet-5-5': (2.0, 10.0), 'claude-sonnet-5': (2.0, 10.0),
-    'claude-sonnet-4': (3.0, 15.0), 'claude-haiku-5-5': (0.1, 0.5), 'claude-haiku-4': (1.0, 5.0),
-    'claude': (3.0, 15.0),
+    'claude-fable-5-1': (10.0, 50.0, 12.5, 0.25), 'claude-mythos-5-1': (10.0, 50.0, 12.5, 0.25),
+    'claude-fable-5': (10.0, 50.0, 12.5, 1.0), 'claude-mythos-5': (10.0, 50.0, 12.5, 1.0),
+    'claude-opus-5-5': (4.0, 20.0, 5.0, 0.2), 'claude-opus-5': (5.0, 25.0, 6.25, 0.5),
+    'claude-opus-4': (5.0, 25.0, 6.25, 0.5), 'claude-sonnet-5-5': (2.0, 10.0, 2.5, 0.2),
+    'claude-sonnet-5': (2.0, 10.0, 2.5, 0.2),
+    'claude-sonnet-4': (3.0, 15.0, 3.75, 0.3), 'claude-haiku-5-5': (0.1, 0.5, 0.125, 0.01),
+    'claude-haiku-4': (1.0, 5.0, 1.25, 0.1),
+    'claude': (3.0, 15.0, 3.75, 0.3),
     'gemini:gemini-2.5-pro': (1.25, 10.0), 'gemini:gemini-3-pro': (2.0, 12.0), 'gemini:gemini-2.5-flash-lite': (0.1, 0.4),
     'gemini:gemini-2.5-flash': (0.3, 2.5), 'gemini': (0.3, 2.5),
     # precio de lanzamiento hasta el 31-dic-2026; desde el 1-ene-2027 sube a (1.5, 7.5) → actualizar aquí
@@ -102,19 +108,24 @@ def _today():
     return _now().date().isoformat()
 
 
+# L4-06: multiplicadores de la caché sobre el precio de entrada cuando la fila de PRICES no trae los suyos
+# (escritura, lectura). Gemini: caché IMPLÍCITA (no se cobra escribir; leer ≈ 0,1× — ESTIMADO, Google no lo
+# publica por modelo en una página que pudiéramos leer); NVIDIA/Jev: sin caché.
+CACHE_MULT = {'claude': (1.25, 0.1), 'gemini': (0.0, 0.1)}
+
+
 def _prices():
     p = dict(PRICES)
     try:
         extra = json.loads(os.getenv('AI_PRICES_JSON', '') or '{}')
         for k, v in extra.items():
-            p[str(k)] = (float(v[0]), float(v[1]))
+            p[str(k)] = tuple(float(x) for x in v[:4]) if len(v) >= 4 else (float(v[0]), float(v[1]))
     except Exception:  # noqa: BLE001
         pass
     return p
 
 
-def price_for(provider, model):
-    """(entrada, salida) USD por 1M tokens. Prefijo más largo que calce."""
+def _price_row(provider, model):
     m = str(model or provider or '').lower()
     # 'gemini-3.8-flash' empieza con 'gemini' pero NO con 'gemini:' → antes no se prefijaba y todo Gemini caía
     # al precio genérico (0,3/2,5) en 💰 Gasto IA
@@ -129,9 +140,32 @@ def price_for(provider, model):
     return _prices().get(provider, (3.0, 15.0))
 
 
-def cost_of(provider, model, tin, tout):
+def price_for(provider, model):
+    """(entrada, salida) USD por 1M tokens. Prefijo más largo que calce."""
+    return tuple(_price_row(provider, model)[:2])
+
+
+def cache_price_for(provider, model):
+    """(escritura, lectura) de caché, USD por 1M tokens (L4-06): los de la fila de PRICES o, si no los trae,
+    los multiplicadores del proveedor (CACHE_MULT) sobre el precio de entrada."""
+    row = _price_row(provider, model)
+    if len(row) >= 4:
+        return float(row[2]), float(row[3])
+    w, r = CACHE_MULT.get(provider, (1.0, 1.0))
+    return round(row[0] * w, 6), round(row[0] * r, 6)
+
+
+def cost_of(provider, model, tin, tout, cache_read=0, cache_write=0):
+    """Costo estimado. `tin` = TODOS los tokens de entrada; `cache_read`/`cache_write` son la parte de ellos que se
+    leyó de / se escribió en la caché del proveedor y se cobran a su propio precio."""
     pin, pout = price_for(provider, model)
-    return round((tin or 0) * pin / 1e6 + (tout or 0) * pout / 1e6, 6)
+    cr, cw = max(0, int(cache_read or 0)), max(0, int(cache_write or 0))
+    plain = max(0, int(tin or 0) - cr - cw)
+    c = plain * pin / 1e6 + (tout or 0) * pout / 1e6
+    if cr or cw:
+        pcw, pcr = cache_price_for(provider, model)
+        c += cw * pcw / 1e6 + cr * pcr / 1e6
+    return round(c, 6)
 
 
 # ── contexto: qué función y quién ───────────────────────────────────────────
@@ -155,7 +189,11 @@ def meter():
     se descartan). research/llm lo usa para que su presupuesto diario cuente lo mismo
     que 💰 Gasto IA: el largo del texto visible subestima a los modelos que piensan
     (Sonnet 5.5 en el nivel profundo, Gemini 3 con thinkingLevel)."""
-    acc = {'tokens_in': 0, 'tokens_out': 0, 'calls': 0}
+    # tokens_in = entrada "a precio lleno equivalente" (L4-06: la caché leída cuesta ~0,1×, así que el presupuesto
+    # de research/llm —estimate_cost(tokens_in, tokens_out)— sigue contando lo que de verdad se cobra);
+    # raw_in = tokens de entrada reales; cache_read/cache_write por separado; cost_usd = costo ya calculado
+    acc = {'tokens_in': 0, 'tokens_out': 0, 'calls': 0, 'raw_in': 0, 'cache_read': 0, 'cache_write': 0,
+           'cost_usd': 0.0}
     stack = getattr(_TLS, 'meters', None)
     if stack is None:
         stack = _TLS.meters = []
@@ -169,11 +207,15 @@ def meter():
             pass
 
 
-def _meter_add(tin, tout):
+def _meter_add(tin, tout, raw_in=None, cache_read=0, cache_write=0, cost=0.0):
     for acc in getattr(_TLS, 'meters', None) or ():
         acc['tokens_in'] += tin
         acc['tokens_out'] += tout
         acc['calls'] += 1
+        acc['raw_in'] = acc.get('raw_in', 0) + (tin if raw_in is None else raw_in)
+        acc['cache_read'] = acc.get('cache_read', 0) + cache_read
+        acc['cache_write'] = acc.get('cache_write', 0) + cache_write
+        acc['cost_usd'] = acc.get('cost_usd', 0.0) + cost
 
 
 def current():
@@ -205,8 +247,19 @@ def bind(fn):
         lctx = current_fields()               # O2: job_id/entity también en los hilos del pool
     except Exception:  # noqa: BLE001
         lctx, log_context = {}, None
+    try:      # paso 21: la decisión a la que se atribuyen las llamadas de IA (core/ai_calls) también viaja
+        from core import ai_calls as _aic
+        asnap = _aic.snapshot()
+    except Exception:  # noqa: BLE001
+        _aic, asnap = None, None
 
     def wrapper(*a, **k):
+        if asnap is not None:
+            with _aic.restore(asnap), ai_context(**ctx):
+                if log_context is None:
+                    return fn(*a, **k)
+                with log_context(**lctx):
+                    return fn(*a, **k)
         with ai_context(**ctx):
             if log_context is None:
                 return fn(*a, **k)
@@ -263,10 +316,15 @@ def save_settings(values, actor):
     from research.models import AISetting
     with session_scope() as db:
         row = db.get(AISetting, 'limits')
+        prev = dict(row.value) if row is not None and isinstance(row.value, dict) else None
         if row is None:
             row = AISetting(key='limits')
             db.add(row)
         row.value, row.updated_by, row.updated_at = s, str(actor)[:120], _now()
+        # paso 18: policy.change con el valor ANTERIOR (sin guardar → los del entorno) en la MISMA transacción
+        from core import decision_sites
+        decision_sites.policy_change(db, 'ai.spend_limits', prev if prev is not None else default_settings(), s,
+                                     task='ai_limits', declared=str(actor)[:80])
     _STATE['settings'], _STATE['settings_at'] = s, time.time()
     return s
 
@@ -361,17 +419,24 @@ def check(provider, max_tokens=None):
                             f"{ctx['who']} reached their daily AI limit (${pw:.2f}).", 'who')
 
 
-def record(provider, model, tin, tout, ok=True, ms=None, estimated=False):
+def record(provider, model, tin, tout, ok=True, ms=None, estimated=False, cache_read=0, cache_write=0):
     """Después de cada respuesta del proveedor (también las que se descartan:
-    se cobraron igual)."""
+    se cobraron igual). `tin` = TODOS los tokens de entrada; `cache_read`/`cache_write` (L4-06) = la parte que se
+    leyó de / escribió en la caché del proveedor (se guardan y se cobran APARTE, cada una a su precio)."""
     try:
         tin, tout = int(tin or 0), int(tout or 0)
-        _meter_add(tin, tout)
+        cr, cw = max(0, int(cache_read or 0)), max(0, int(cache_write or 0))
         ctx = current()
-        cost = cost_of(provider, model, tin, tout)
+        cost = cost_of(provider, model, tin, tout, cache_read=cr, cache_write=cw)
+        equiv = tin
+        if cr or cw:      # entrada "a precio lleno equivalente" para el medidor (presupuesto de research)
+            pin = price_for(provider, model)[0]
+            equiv = int(round((cost - tout * price_for(provider, model)[1] / 1e6) * 1e6 / pin)) if pin else tin
+        _meter_add(equiv, tout, raw_in=tin, cache_read=cr, cache_write=cw, cost=cost)
         row = {'at': _now(), 'provider': provider, 'model': str(model or '')[:80], 'feature': ctx['feature'],
                'who': ctx['who'], 'tokens_in': tin, 'tokens_out': tout, 'cost_usd': cost,
-               'estimated': bool(estimated), 'ok': bool(ok), 'ms': int(ms) if ms else None}
+               'estimated': bool(estimated), 'ok': bool(ok), 'ms': int(ms) if ms else None,
+               'cache_read': cr, 'cache_write': cw}
         with _LOCK:
             _add(row['at'].date().isoformat(), (provider, row['model'], ctx['feature'], ctx['who']), tin, tout, cost)
             _RECENT.appendleft(dict(row, at=row['at'].isoformat()))
@@ -494,13 +559,49 @@ def report(days=30, lang='es'):
         'limits': s, 'remaining': {
             'today': round(max(0.0, s['daily_usd'] - spent_today), 4) if s.get('daily_usd') else None,
             'month': round(max(0.0, s['monthly_usd'] - spent_month), 4) if s.get('monthly_usd') else None},
-        'prices': {k: list(v) for k, v in _prices().items()},
+        'prices': {k: list(v[:2]) for k, v in _prices().items()},
+        'cache_prices': {k: list(cache_price_for(k.split(':', 1)[0] if ':' in k else
+                                                 ('claude' if k.startswith('claude') else k), k))
+                         for k in _prices()},
+        'cache': _cache_totals(days, source),
         'recent': recent, 'anthropic_billed': anthropic_cost_report(),
         'note_es': ('Costos ESTIMADOS con los tokens que devuelve cada proveedor y los precios de lista. '
                     'Ningún proveedor publica el saldo restante por API: revísalo en su consola.'),
         'note_en': ('ESTIMATED costs from the tokens each provider returns and list prices. '
                     'No provider exposes the remaining balance via API: check it in their console.'),
     }
+
+
+def _cache_totals(days, source):
+    """L4-06: tokens leídos de / escritos en la caché de prompts, por proveedor (de la base o de la memoria)."""
+    out = {}
+    try:
+        if source == 'database':
+            from sqlalchemy import func
+
+            from ontology.db import session_scope
+            from research.models import AIUsage
+            since = _now() - timedelta(days=days)
+            with session_scope() as db:
+                rows = (db.query(AIUsage.provider, func.sum(AIUsage.cache_read), func.sum(AIUsage.cache_write),
+                                 func.sum(AIUsage.tokens_in))
+                        .filter(AIUsage.at >= since).group_by(AIUsage.provider).all())
+        else:
+            acc = {}
+            with _LOCK:
+                for r in _RECENT:
+                    a = acc.setdefault(r['provider'], [0, 0, 0])
+                    a[0] += r.get('cache_read') or 0
+                    a[1] += r.get('cache_write') or 0
+                    a[2] += r.get('tokens_in') or 0
+            rows = [(p, *v) for p, v in acc.items()]
+        for prov, cr, cw, tin in rows:
+            cr, cw, tin = int(cr or 0), int(cw or 0), int(tin or 0)
+            out[prov] = {'cache_read': cr, 'cache_write': cw, 'tokens_in': tin,
+                         'read_pct': round(100.0 * cr / tin, 1) if tin else None}
+    except Exception as e:  # noqa: BLE001
+        log.warning('ai_usage cache totals: %s', type(e).__name__)
+    return out
 
 
 def anthropic_cost_report():

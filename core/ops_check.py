@@ -60,6 +60,11 @@ SMOKE_TOOLS = (
     ('get_world_events', {'layers': ['quakes', 'chokepoints'], 'limit': 5}, ('items', 'sources')),
     ('get_track_record', {}, ()),
     ('get_conclusions_board', {}, ()),
+    # operaciones v2 (BRECHAS L4-09) + contrato común (detail/truncated, mcp_server/contract.py) — sin red
+    ('run_scenario', {'shocks': [{'id': 'TSMC', 'magnitude': 1}], 'top': 5, 'detail': 'summary'},
+     ('victims', 'kernel', 'detail', 'truncated')),
+    ('get_subgraph', {'seeds': ['TSMC'], 'budget_chars': 2000}, ('edges', 'tail', 'detail', 'truncated')),
+    ('find_similar_entities', {'id': 'TSMC', 'k': 3}, ('results', 'detail')),
 )
 
 
@@ -100,7 +105,7 @@ def _mcp_tool(name, args, must):
         if t.scope != 'read' or not t.annotations.get('readOnlyHint', False):
             return False, 'negado: el chequeo solo llama herramientas de LECTURA'
         ctx = T.Ctx(principal=Principal(token_id='ops-check', name='ops-check', scopes=frozenset({'read'})))
-        res = T.call(name, args, ctx)
+        res = T.call(name, args, ctx, shape=True)       # con el contrato común, como lo ve una IA
         missing = [k for k in must if k not in res]
         if missing:
             return False, f'faltan campos del contrato: {missing}'

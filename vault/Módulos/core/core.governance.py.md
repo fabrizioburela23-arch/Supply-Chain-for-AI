@@ -67,6 +67,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[brokerage.risk.py]] — lo importa
 - [[brokerage.service.py]] — lo importa
 - [[core.decide.py]] — lo importa
+- [[core.decision_sites.py]] — lo importa
 - [[core.decisions.py]] — lo importa
 - [[core.governance_api.py]] — lo importa
 - [[core.governance_preview.py]] — lo importa

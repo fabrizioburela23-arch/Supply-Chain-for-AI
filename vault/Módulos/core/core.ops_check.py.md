@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ops_check.py"
 lenguaje: "python"
-lineas: 252
+lineas: 257
 aliases: ["core/ops_check.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ops_check.py
 
-> Módulo · capa [[Capa Infraestructura]] · 252 líneas · `core/ops_check.py`
+> Módulo · capa [[Capa Infraestructura]] · 257 líneas · `core/ops_check.py`
 
 ## Para qué sirve
 
@@ -19,10 +19,10 @@ O1 (misión de reparación 2026-10-04): chequeo del sistema EN el servidor, guar
 ## API pública
 
 - clase `OpsCheck` — Una corrida del chequeo (append-only). _(línea 40)_
-- `run_checks(kind=…, persist=…)` _(línea 170)_
-- `scheduled()` — Tarea del reloj (cada 5 min): corre una vez 5 min tras el arranque (humo del despliegue) y luego cada 24 h. Si no toca, no hace nada. _(línea 202)_
-- `last_check(history=…)` _(línea 216)_
-- `api_last_check()` _(línea 236)_
+- `run_checks(kind=…, persist=…)` _(línea 175)_
+- `scheduled()` — Tarea del reloj (cada 5 min): corre una vez 5 min tras el arranque (humo del despliegue) y luego cada 24 h. Si no toca, no hace nada. _(línea 207)_
+- `last_check(history=…)` _(línea 221)_
+- `api_last_check()` _(línea 241)_
 
 **Internas** (empiezan con `_`): `_now`, `_version`, `_check`, `_mcp_tool`, `_db`, `_snapshot`, `_ai`, `_scheduler`, `_world`, `_graph_drift`, `_register_manual_route`
 

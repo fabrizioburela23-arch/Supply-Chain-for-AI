@@ -44,12 +44,15 @@ ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
 ## Lo usan
 
 - [[matrix.tensor_api.py]] — lo importa
+- [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[research.agent_skills.py]] — lo importa
+- herramienta MCP `find_similar_entities` → [[API herramientas MCP]]
 - herramienta MCP `get_company` → [[API herramientas MCP]]
+- herramienta MCP `get_exposure` → [[API herramientas MCP]]
 
-_Además lo importan 8 pruebas (lista abajo)._
+_Además lo importan 9 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -58,6 +61,7 @@ _Además lo importan 8 pruebas (lista abajo)._
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_kernel_reference_figures.py]]
+- [[tests.test_mcp.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_tensor.py]]
 - [[tests.test_tensor_autolink.py]]

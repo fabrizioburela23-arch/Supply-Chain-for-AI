@@ -79,6 +79,12 @@ def ledger_status():
         st = ledger.status()
         from core.decisions import stats
         st['writer'] = {k: v for k, v in stats().items() if k != 'last_error'}
+        try:      # paso 20/21: colas en segundo plano (decisiones async, registro ai_calls)
+            from core import ai_calls, decisions
+            st['writer']['async_pending'] = decisions.async_pending()
+            st['ai_calls'] = {k: v for k, v in ai_calls.stats().items() if k != 'last_error'}
+        except Exception:  # noqa: BLE001
+            pass
         return jsonify({'available': True, **st})
     except Exception as e:  # noqa: BLE001
         return _err(e)

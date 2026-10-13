@@ -19,6 +19,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_infra.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ops_identity.py]]

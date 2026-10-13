@@ -23,3 +23,23 @@ def _ai_circuits_cerrados():
     ai = sys.modules.get('core.ai')
     if ai is not None and hasattr(ai, '_CIRCUIT'):
         ai._CIRCUIT.clear()
+
+
+@pytest.fixture(autouse=True)
+def _libro_async_vacio():
+    """Paso 20/21 (INFRA_OPERATIVA): las decisiones async (chat, MCP, qué-pasaría-si) y las filas de ai_calls se
+    escriben en hilos propios. Se vacían al terminar cada test: nada pendiente puede caer sobre las tablas que el
+    módulo siguiente borra y recrea."""
+    yield
+    d = sys.modules.get('core.decisions')
+    if d is not None and hasattr(d, 'flush_async'):
+        try:
+            d.flush_async(timeout=5.0)
+        except Exception:  # noqa: BLE001
+            pass
+    a = sys.modules.get('core.ai_calls')
+    if a is not None and hasattr(a, 'flush'):
+        try:
+            a.flush()
+        except Exception:  # noqa: BLE001
+            pass

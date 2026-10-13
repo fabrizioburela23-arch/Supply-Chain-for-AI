@@ -20,6 +20,7 @@ ARQUITECTURA v2 — Khipus como infraestructura de información y decisión — 
 
 - [[core.ai.py]]
 - [[core.ai_usage.py]]
+- [[core.context_engine.py]]
 - [[core.entities.py]]
 - [[core.instruments.py]]
 - [[core.khipu_chat.py]]

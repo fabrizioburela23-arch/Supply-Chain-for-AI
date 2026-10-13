@@ -62,7 +62,7 @@ def test_impls_registradas_y_carga():
     impls = {s['impl'] for sh in ir['shapes'] for s in sh['sparql']}
     assert impls and impls <= set(rules.RULES)
     comp = engine.compile_ir(ir)
-    assert comp.n_rules == len(ir["rules"]) == 62          # 31 + 31 de órdenes (paso 17)
+    assert comp.n_rules == len(ir["rules"]) == 69          # 31 + 31 de órdenes (paso 17) + 7 del comité (paso 18)
 
 
 def test_sin_sparql_prohibido_y_mensajes_bilingues():

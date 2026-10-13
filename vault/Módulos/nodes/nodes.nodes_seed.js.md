@@ -71,6 +71,7 @@ Se carga en [[app.html]] en la posición **2 de 95** (línea 1437) y antes de [[
 - [[nodes.nodes_expand5.js]] — usa `CATS_NEW`, `CAT_TO_SECTOR`, `NODE_META`
 - [[nodes.nodes_multicapa.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `NODE_META`, `SECTORS9`
 - [[sim.scenario_builder.js]] — usa `NODE_META`
+- [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren

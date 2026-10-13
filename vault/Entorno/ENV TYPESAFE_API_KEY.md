@@ -16,8 +16,10 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## Pruebas que la fijan o nombran
 
+- [[tests.test_context_engine.py]]
 - [[tests.test_decide.py]]
 - [[tests.test_jev_router.py]]
+- [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_overnight_fixes_review.py]]
 

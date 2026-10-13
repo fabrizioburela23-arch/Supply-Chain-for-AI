@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/MCP.md"
 lenguaje: "markdown"
-lineas: 352
+lineas: 377
 aliases: ["docs/MCP.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/MCP.md
 
-> Documento · capa [[Capa Documentación]] · 352 líneas · `docs/MCP.md`
+> Documento · capa [[Capa Documentación]] · 377 líneas · `docs/MCP.md`
 
 ## De qué trata
 
@@ -21,9 +21,11 @@ tags: ["capa/documentacion", "tipo/documento"]
 - [[brokerage.api.py]]
 - [[brokerage.risk.py]]
 - [[brokerage.service.py]]
+- [[core.context_engine.py]]
 - [[core.http.py]]
 - [[engine.mcpconnect.js]]
 - [[mcp_server.auth.py]]
+- [[mcp_server.contract.py]]
 - [[mcp_server.oauth.py]]
 - [[mcp_server.protocol.py]]
 - [[mcp_server.tools.py]]

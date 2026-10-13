@@ -158,3 +158,39 @@ def test_api_sin_pin_no_devuelve_etiqueta_sujeto_ni_manifiesto(db, dev, monkeypa
     # y el filtro por entidad no sirve para sondear sin PIN
     assert json.loads(c.get('/api/ledger/decisions?entity=EMPRESA_X').get_data())['count'] >= 1
     pin._reset_for_tests()
+
+
+@needs_db
+def test_fichas_reales_de_chat_y_jev_sin_texto_en_claro(db, dev):
+    """Paso 20: las fichas que escriben los sitios REALES (khipu_chat.ledger_answer, decide.ledger_route) guardan el
+    mensaje solo como HMAC, los argumentos de las herramientas (que pueden repetir la pregunta) solo como huella y la
+    clave de la sombra de Jev como 'hmac:…'."""
+    import uuid
+
+    from sqlalchemy import text
+
+    from core import decide, decisions, identity
+    from core import khipu_chat as kc
+    p = identity.anon('chat', owner='owner-abc-777')
+    out = {'answer': 'Respuesta pública de la IA.', 'answer_source': 'ai', 'model': 'claude-x', 'steps': 2,
+           'req_id': 'req-priv-1', 'sources': [{'label': 'Yahoo Finance', 'as_of': '2026-10-13T10:00:00Z'}],
+           'tools_used': [{'name': 'web_search', 'args_summary': SECRET_TEXT, 'ok': True, 'ms': 12}],
+           'agents_used': [{'agent': 'radar', 'tools': ['web_search'], 'ok': True}], 'entities': [{'id': 'NVDA'}]}
+    did = uuid.uuid4()
+    assert kc.ledger_answer(did, p, SECRET_TEXT, 'es', out, [])
+    assert decide.ledger_route({'route': 'needs_tools', 'confidence': 0.9}, {'route': 'needs_tools'}, True,
+                               SECRET_TEXT, None, 'req-priv-1')
+    key = decide.private_key(SECRET_TEXT)
+    assert key.startswith('hmac:') and SECRET_TEXT[:10] not in key
+    decisions.flush_async(timeout=10)
+    with db.connect() as c:
+        rows = c.execute(text("SELECT to_jsonb(t) FROM decisions t WHERE kind IN ('chat.answer', 'chat.route') "
+                              "AND correlation_id = 'req-priv-1'")).all()
+        dump = ' '.join(json.dumps(r[0], ensure_ascii=False) for r in rows)
+        blobs = [zlib.decompress(bytes(b)).decode('utf-8') for (b,) in c.execute(text(
+            'SELECT body FROM decision_blobs WHERE body IS NOT NULL'))]
+    assert len(rows) == 2
+    for frag in (SECRET_TEXT, 'Calle Falsa', '48.250', 'owner-abc-777'):
+        assert frag not in dump, frag
+        assert all(frag not in b for b in blobs), frag
+    assert decisions.pii_hmac(SECRET_TEXT, 'es')['hmac'] in dump

@@ -27,6 +27,8 @@ _Nada interno._
 ## Lo usan
 
 - [[brokerage.service.py]] — lo importa
+- [[core.context_engine.py]] — lo importa
+- [[core.decision_sites.py]] — lo importa
 - [[core.decisions.py]] — lo importa
 - [[core.entities.py]] — lo importa
 - [[core.governance_preview.py]] — lo importa
@@ -42,6 +44,7 @@ _Nada interno._
 - [[matrix.engine.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
 - [[matrix.tensor_api.py]] — lo importa
+- [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
@@ -54,13 +57,17 @@ _Nada interno._
 - [[research.router.py]] — lo importa
 - [[scripts.build_shapes.py]] — lo importa
 - [[server.py]] — lo importa
+- herramienta MCP `calculate_correlation` → [[API herramientas MCP]]
 - herramienta MCP `get_company` → [[API herramientas MCP]]
+- herramienta MCP `get_exposure` → [[API herramientas MCP]]
+- herramienta MCP `get_history` → [[API herramientas MCP]]
 - herramienta MCP `get_supply_chain` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 - herramienta MCP `run_research` → [[API herramientas MCP]]
+- herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 21 pruebas (lista abajo)._
+_Además lo importan 25 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -78,10 +85,14 @@ _Además lo importan 21 pruebas (lista abajo)._
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_kernel_monotone_severity.py]]
 - [[tests.test_kernel_reference_figures.py]]
+- [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_mcp.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_review_lists.py]]
 - [[tests.test_scenario_kernel.py]]
 - [[tests.test_tensor.py]]

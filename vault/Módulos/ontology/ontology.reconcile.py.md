@@ -44,6 +44,7 @@ G3 (misión de reparación 2026-10-04): RECONCILIACIÓN append-only entre el cat
 
 - [[core.ops_check.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[scripts.build_graph_review.py]] — lo importa
 - [[scripts.reconcile_v0_to_ontology.py]] — lo importa
 
 _Además lo importan 2 pruebas (lista abajo)._

@@ -63,7 +63,7 @@ def test_preguntas_abiertas_tienen_su_columna_y_leen_las_filas_viejas():
 
 def test_runner_guarda_preguntas_fuera_de_errors_y_sin_skip_por_presupuesto():
     from research import runner
-    src = inspect.getsource(runner._finish_run)
+    src = inspect.getsource(runner._finish_run) + inspect.getsource(runner._finish_run_inner)   # paso 19: dentro de research.run
     assert "run.open_questions" in src and "{'unresolved_questions'" not in src
     assert 'presupuesto' not in inspect.getsource(runner._prepare_run).split('"""')[-1]   # solo el job difiere
     assert not hasattr(runner, 'run_agent')                                              # camino muerto

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/conftest.py"
 lenguaje: "python"
-lineas: 25
+lineas: 45
 aliases: ["tests/conftest.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/conftest.py
 
-> Prueba · capa [[Capa Pruebas]] · 25 líneas · `tests/conftest.py`
+> Prueba · capa [[Capa Pruebas]] · 45 líneas · `tests/conftest.py`
 
 ## Qué prueba
 
@@ -21,6 +21,8 @@ estado global que NO debe filtrarse entre tests.
 ## Cubre
 
 - [[core.ai.py]]
+- [[core.ai_calls.py]]
+- [[core.decisions.py]]
 
 ## Variables de entorno que fija o nombra
 

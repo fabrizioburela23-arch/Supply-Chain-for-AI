@@ -1504,3 +1504,145 @@ def test_conclusions_board_tool(client, db, monkeypatch):
     _, d = call_tool(client, tok, 'get_conclusions_board', {'limit': 1})
     sc = d['result']['structuredContent']
     assert sc['n'] == 1 and sc['items'][0]['committee']['conclusion'] == 'cash supports the thesis'
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# operaciones v2 que faltaban (BRECHAS L4-09, mcp_server/ops.py): solo lectura, scope read
+# ════════════════════════════════════════════════════════════════════════════
+V2_OPS = ('run_scenario', 'get_subgraph', 'get_exposure', 'find_similar_entities', 'calculate_correlation',
+          'get_history')
+
+
+def test_v2_ops_visibles_con_read_y_solo_lectura(client, nodb):
+    d = rpc(client, nodb, 'tools/list').get_json()
+    by = {t['name']: t for t in d['result']['tools']}
+    for name in V2_OPS:
+        assert name in by, name
+        assert by[name]['annotations']['readOnlyHint'] is True and by[name]['annotations']['destructiveHint'] is False
+        assert 'detail' in by[name]['inputSchema']['properties']
+    from mcp_server import tools as T
+    assert all(T.REGISTRY[n].scope == 'read' for n in V2_OPS)
+
+
+def test_run_scenario_usa_el_kernel_unico(client, nodb):
+    import numpy as np
+    from core.hotviews import hot
+    from core.hotviews.views import impact
+    _, d = call_tool(client, nodb, 'run_scenario', {'shocks': [{'id': 'TSM', 'magnitude': 1}], 'top': 10,
+                                                    'positions': [{'symbol': 'NVDA', 'usd': 1000},
+                                                                  {'symbol': 'ZZZZ', 'usd': 50}]})
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and sc['shocks'][0]['id'] == 'TSMC'
+    v = hot.graph()
+    x0 = np.zeros(len(v.core.ids))
+    x0[v.core.idx['TSMC']] = 1.0
+    ref = impact.scenario(v.core, x0, top=10)
+    assert [x['impact_pct'] for x in sc['victims']] == [x['pct'] for x in ref['victims']]   # mismos números
+    assert sc['affected'] == ref['affected'] and sc['kernel']['method'] and sc['generation'] == v.generation
+    pf = sc['portfolio']
+    nv = next(p for p in pf['positions'] if p['symbol'] == 'NVDA')
+    assert nv['id'] == 'Nvidia' and nv['est_loss_usd'] == pytest.approx(1000 * nv['structural_hit_pct'] / 100, abs=0.01)
+    assert pf['unmapped'] == ['ZZZZ'] and 'NOT a price forecast' in sc['uncertainty']
+    _, d = call_tool(client, nodb, 'run_scenario', {'scenario': 'China blockades Taiwan', 'top': 5,
+                                                    'positions': [{'symbol': 'TSM', 'usd': 1000}]})
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and sc['seeded_by'].startswith('scenario_engine') and sc['shocks']
+    # revisión: el ejemplo de la propia herramienta golpea a TAIWÁN (antes sembraba empresas chinas y TSM daba 0 %)
+    assert sc['scenario']['disrupted_country'] == 'taiwan' and 'TSMC' in [x['id'] for x in sc['shocks']]
+    assert sc['portfolio']['positions'][0]['structural_hit_pct'] > 0
+    _, d = call_tool(client, nodb, 'run_scenario', {})
+    assert d['error']['code'] == -32602                                     # shocks o scenario
+    _, d = call_tool(client, nodb, 'run_scenario', {'shocks': [{'id': 'zzzz-no-existe', 'magnitude': 1}]})
+    assert d['result']['isError'] is True and d['result']['structuredContent']['code'] == 'not_found'
+
+
+def test_get_subgraph_presupuesto_y_cola(client, nodb):
+    _, d = call_tool(client, nodb, 'get_subgraph', {'seeds': ['Nvidia', 'AMD'], 'question': '¿quién les vende?',
+                                                    'depth': 2, 'budget_chars': 3000})
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and set(sc['seeds']) == {'Nvidia', 'AMD'}
+    assert sc['intent'] == 'upstream' and sc['tail']['omitted_edges'] > 0 and sc['edges']
+    assert len(json.dumps(sc['edges'], separators=(',', ':'), ensure_ascii=False)) <= 3000
+    _, d = call_tool(client, nodb, 'get_subgraph', {'seeds': ['zzzz-no-existe']})
+    assert d['result']['isError'] is True
+
+
+def test_get_exposure_cartera_y_empresa(client, nodb, monkeypatch):
+    import core.quotes
+    monkeypatch.setattr(core.quotes, 'fetch_quotes_live',
+                        lambda syms, **k: {'quotes': {'AAPL': {'close': 200.0, 'src': 'yahoo', 'as_of': '2026-10-13'}}})
+    _, d = call_tool(client, nodb, 'get_exposure', {'positions': [{'symbol': 'NVDA', 'usd': 1000},
+                                                                  {'symbol': 'AAPL', 'shares': 5},
+                                                                  {'id': 'OpenAI', 'usd': 100}]})
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and sc['total_usd'] == 2100.0
+    assert sc['valued_with_quotes']['AAPL']['price'] == 200.0
+    assert sum(x['pct'] for x in sc['by_sector']) == pytest.approx(100, abs=0.1)
+    assert sc['chain_worst_suppliers'][0]['id'] == 'TSMC' and sc['by_supplier_country']
+    _, d = call_tool(client, nodb, 'get_exposure', {'entity': 'Apple'})
+    sc = d['result']['structuredContent']
+    assert sc['entity'] == 'Apple' and sc['supplier_countries'] and sc['upstream_risk_sources']
+    _, d = call_tool(client, nodb, 'get_exposure', {})
+    assert d['error']['code'] == -32602
+
+
+def test_find_similar_entities_puntaje_por_espacio(client, nodb):
+    from matrix import tensor
+    _, d = call_tool(client, nodb, 'find_similar_entities', {'id': 'AMD', 'k': 5})
+    sc = d['result']['structuredContent']
+    assert len(sc['results']) == 5 and all(set(r['by_space']) == {'chain', 'features', 'category'} for r in sc['results'])
+    r0 = sc['results'][0]
+    assert r0['score'] == pytest.approx(0.6 * r0['by_space']['chain'] + 0.25 * r0['by_space']['features']
+                                        + 0.15 * r0['by_space']['category'], abs=1e-3)
+    assert [r['id'] for r in sc['results']] == [p['id'] for p in tensor.peers('AMD', n=5)]   # = comparables de la app
+    _, d = call_tool(client, nodb, 'find_similar_entities', {'id': 'AMD', 'k': 3, 'space': 'chain'})
+    ch = [r['by_space']['chain'] for r in d['result']['structuredContent']['results']]
+    assert ch == sorted(ch, reverse=True)
+
+
+def _fake_history(monkeypatch):
+    import math as _m
+    from datetime import date, timedelta
+
+    import core.risk_report as rr
+    days = [(date(2025, 10, 1) + timedelta(days=i)) for i in range(400)]
+    days = [d for d in days if d.weekday() < 5][:260]
+
+    def fake(symbol, rng='1y', getter=None):
+        k = {'NVDA': 1.0, 'AMD': 0.9, 'TSM': -0.5}.get(symbol)
+        if k is None:
+            return {}, None
+        p, out = 100.0, {}
+        for i, d in enumerate(days):
+            p *= 1 + 0.01 * (k * _m.sin(i * 0.7) + (0.2 if symbol == 'AMD' else 0.0) * _m.cos(i * 1.3))
+            out[d.isoformat()] = p
+        rr._HIST_META[(symbol, rng)] = {'adjusted': True, 'source': 'khipus_eod:yahoo', 'as_of': days[-1].isoformat(),
+                                        'n': len(out)}
+        return out, 'USD'
+    monkeypatch.setattr(rr, 'fetch_history', fake)
+    return days
+
+
+def test_get_history_y_correlacion(client, nodb, monkeypatch):
+    days = _fake_history(monkeypatch)
+    _, d = call_tool(client, nodb, 'get_history', {'id_or_ticker': 'Nvidia', 'frequency': 'monthly'})
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and sc['symbol'] == 'NVDA' and sc['source'] == 'khipus_eod:yahoo'
+    assert sc['as_of'] == days[-1].isoformat() and 10 <= sc['n'] <= 14 and sc['currency'] == 'USD'
+    _, d = call_tool(client, nodb, 'get_history', {'id_or_ticker': 'Nvidia', 'frequency': 'daily', 'max_points': 1500,
+                                                   'max_chars': 3000})
+    sc = d['result']['structuredContent']
+    # revisión: la serie va de vieja a nueva → al recortar se conservan los cierres MÁS RECIENTES
+    assert sc['truncated'] and sc['points'][-1]['date'] == days[-1].isoformat() == sc['as_of']
+    tr = next(t for t in sc['truncation'] if t['path'] == 'points')
+    assert tr['kept_end'] == 'newest' and tr['kept'] == len(sc['points']) < tr['total']
+    _, d = call_tool(client, nodb, 'get_history', {'id_or_ticker': 'OpenAI'})
+    assert d['result']['isError'] is True                                   # privada: sin historia de precios
+    _, d = call_tool(client, nodb, 'calculate_correlation', {'symbols': ['NVDA', 'AMD', 'TSMC', 'ZZZZ']})
+    sc = d['result']['structuredContent']
+    assert sc['symbols'] == ['NVDA', 'AMD', 'TSM'] and sc['missing'] == ['ZZZZ']
+    r = {(p['a'], p['b']): p for p in sc['strongest_pairs']}
+    assert r[('NVDA', 'AMD')]['r'] > 0.9 and r[('NVDA', 'TSM')]['r'] < -0.9
+    assert 0 < r[('NVDA', 'AMD')]['se'] < 0.05 and sc['matrix'][0][0] == 1.0 and sc['n_obs'][0][1] == len(days) - 1
+    from mcp_server.ops import correlation
+    assert correlation([1, 2, 3, 4], [1, 4, 9, 16], 'spearman')[0] == pytest.approx(1.0)

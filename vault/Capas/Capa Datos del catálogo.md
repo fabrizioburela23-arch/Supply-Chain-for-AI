@@ -9,7 +9,7 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 
 > El catálogo curado de empresas y vínculos (nodes/\*.js), el snapshot data/grafo_v0.json y sus generadores.
 
-**34 archivos · 64.358 líneas.** Volver al [[00 Mapa de Khipus]].
+**34 archivos · 64.359 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -46,14 +46,14 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 - [[nodes.nodes_expand4.js]] — 63 líneas · Infraestructura espacial (Khipu Finance) Completa el sector espacio del documento de expansión: landers lunares, estructuras en microgravedad, plano …
 - [[scripts.build_listing_status.py]] — 63 líneas · genera nodes/listing_status.js.
 - [[nodes.links_all.js]] — 39 líneas · Links del ecosistema SpaceX y conexiones expandidas
-- [[data.graph_audit_baseline.json]] — 21 líneas · Línea base de scripts/audit_graph.py (G1). Las categorías de `metrics` NO pueden empeorar (tests/test_graph_audit.py); `info` es solo informativo. …
+- [[data.graph_audit_baseline.json]] — 22 líneas · Línea base de scripts/audit_graph.py (G1). Las categorías de `metrics` NO pueden empeorar (tests/test_graph_audit.py); `info` es solo informativo. …
 
 ## Conexiones con otras capas
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
+| la usa | [[Capa Ontología y grafo temporal]] | 34 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 31 |
-| la usa | [[Capa Ontología y grafo temporal]] | 20 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 8 |

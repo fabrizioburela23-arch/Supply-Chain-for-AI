@@ -149,6 +149,9 @@ _COLUMNAS_TARDIAS = (
     # INFRA_OPERATIVA pasos 15-17 — un solo camino de órdenes: canal, modo de controles, release al previsualizar,
     # decisiones del libro y prueba de lectura por voz de cada orden (brokerage/models.BrokerOrder.meta)
     ('broker_orders', 'meta', 'JSONB'),
+    # BRECHAS L4-06 (2026-10-13) — caché de prompts: tokens leídos/escritos por separado en 💰 Gasto IA
+    ('ai_usage', 'cache_read', 'INTEGER'),
+    ('ai_usage', 'cache_write', 'INTEGER'),
 )
 
 

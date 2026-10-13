@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ai.py"
 lenguaje: "python"
-lineas: 1098
+lineas: 1196
 aliases: ["core/ai.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ai.py
 
-> Módulo · capa [[Capa Infraestructura]] · 1.098 líneas · `core/ai.py`
+> Módulo · capa [[Capa Infraestructura]] · 1.196 líneas · `core/ai.py`
 
 ## Para qué sirve
 
@@ -29,15 +29,17 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - `claude_thinking_mode(model)` — Cómo se controla el pensamiento en este modelo: 'between_tools' (Sonnet 5.5) · 'always' (Opus ≥ 5.5, Fable, Mythos, Sonnet > 5.5: no se … _(línea 393)_
 - `claude_attempts(model, tier=…, max_tokens=…)` — [(kwargs_extra, max_tokens), …] para UN modelo Claude, en orden: el primero es el preferido; los siguientes son más SEGUROS (se usan si la … _(línea 411)_
 - `claude_ping_kwargs(model)` — kwargs de pensamiento para un ping de 1 token (🩺) que el modelo ACEPTA: Haiku 4.5 y viejos → disabled; Sonnet 5.5 → between_tools; Opus … _(línea 451)_
-- `gemini_state()` — Para el 🩺 / salud: orden actual de modelos y cuáles están saturados ahora. _(línea 675)_
-- `provider_order(tier=…)` — Orden de la cascada para el nivel ('fast'|'deep'). Profundo: AI_ORDER_DEEP > claude,gemini,nvidia (la AI_ORDER vieja se IGNORA a propósito: … _(línea 895)_
-- `ai_route_state()` — Para 🩺 / salud / MCP: el orden EFECTIVO por nivel, de dónde sale y qué modelo usa cada uno. _(línea 904)_
-- `strip_reasoning(text)` — Quita el "razonamiento oculto" que algunos modelos (NVIDIA/DeepSeek, Qwen…) escriben en &lt;think>…&lt;/think>. Si el bloque quedó sin cerrar (se … _(línea 1056)_
+- `claude_system(system)` — `system` para messages.create: texto plano si es corto; un bloque con cache_control si es largo. _(línea 467)_
+- `gemini_state()` — Para el 🩺 / salud: orden actual de modelos y cuáles están saturados ahora. _(línea 693)_
+- `provider_order(tier=…)` — Orden de la cascada para el nivel ('fast'|'deep'). Profundo: AI_ORDER_DEEP > claude,gemini,nvidia (la AI_ORDER vieja se IGNORA a propósito: … _(línea 915)_
+- `ai_route_state()` — Para 🩺 / salud / MCP: el orden EFECTIVO por nivel, de dónde sale y qué modelo usa cada uno. _(línea 924)_
+- `strip_reasoning(text)` — Quita el "razonamiento oculto" que algunos modelos (NVIDIA/DeepSeek, Qwen…) escriben en &lt;think>…&lt;/think>. Si el bloque quedó sin cerrar (se … _(línea 1154)_
 
-**Internas** (empiezan con `_`): `_env_num`, `_is_background`, `_ai_slot`, `_small`, `_mono`, `_sleep`, `_transient_wait_s`, `_retry_transient`, `_definitive_kind`, `_open_circuit`, `_close_circuit`, `_note_error`, `_guarded`, `_redact`, `_usage`, `_claude_version`, `_status_of`, `_param_rejected`, `_complete_claude`, `_complete_claude_inner`, `_complete_gemini`, `_NetDown`, `_gemini_post`, `_gemini_major`, `_GeminiHTTP`, `_gemini_models`, `_gemini_mark`, `_complete_gemini_inner`, `_gemini_dead`, `_gemini_mark_dead`, `_gemini_once`, `_complete_nvidia`, `_complete_nvidia_inner`, `_ai_configured`, `_parse_order`, `_legacy_order`, `_order_source`, `_ai_complete`, `_ai_complete_raw`, `_ai_json`, `_extract_json`
+**Internas** (empiezan con `_`): `_env_num`, `_is_background`, `_ai_slot`, `_small`, `_mono`, `_sleep`, `_transient_wait_s`, `_retry_transient`, `_definitive_kind`, `_open_circuit`, `_close_circuit`, `_note_error`, `_guarded`, `_redact`, `_usage`, `_claude_version`, `_status_of`, `_param_rejected`, `_complete_claude`, `_complete_claude_inner`, `_complete_gemini`, `_NetDown`, `_gemini_post`, `_gemini_major`, `_GeminiHTTP`, `_gemini_models`, `_gemini_mark`, `_complete_gemini_inner`, `_gemini_dead`, `_gemini_mark_dead`, `_gemini_once`, `_complete_nvidia`, `_complete_nvidia_inner`, `_ai_configured`, `_parse_order`, `_legacy_order`, `_order_source`, `_nullctx`, `_ai_complete`, `_aicalls`, `_ai_complete_raw`, `_complete_single`, `_cascade`, `_ai_json`, `_extract_json`
 
 ## Depende de
 
+- [[core.ai_calls.py]] — importa `ai_calls`
 - [[core.ai_usage.py]] — importa `ai_usage`, `current`
 - [[core.config.py]] — importa `AI_MODEL_DEEP`, `AI_MODEL_FAST`, `AI_ORDER`, `AI_ORDER_DEEP_DEFAULT`, `AI_ORDER_EXPLICIT`, `AI_ORDER_FAST_DEFAULT`, `CLAUDE`, `GEMINI_FALLBACK_MODEL` …
 - [[core.http.py]] — importa `redact_secrets`
@@ -64,7 +66,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[server.py]] — lo importa
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 
-_Además lo importan 24 pruebas (lista abajo)._
+_Además lo importan 28 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -88,17 +90,21 @@ _Además lo importan 24 pruebas (lista abajo)._
 
 - [[tests.conftest.py]]
 - [[tests.test_agent_dudosos.py]]
+- [[tests.test_ai_calls.py]]
 - [[tests.test_ai_gemini_fast.py]]
 - [[tests.test_ai_json.py]]
 - [[tests.test_ai_usage.py]]
 - [[tests.test_block0_numbers.py]]
 - [[tests.test_block0_review.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_context_engine.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]
+- [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_numbers_guard.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]

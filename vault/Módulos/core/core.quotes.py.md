@@ -49,11 +49,13 @@ cotización cruda compartida (server rutas + agentes de alertas).
 - [[core.portfolio_report.py]] — lo importa
 - [[core.providers.market.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
+- [[mcp_server.ops.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[research.context.py]] — lo importa
 - [[server.py]] — lo importa
+- herramienta MCP `get_exposure` → [[API herramientas MCP]]
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 7 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -63,6 +65,7 @@ _Además lo importan 6 pruebas (lista abajo)._
 
 - [[tests.test_company_data.py]]
 - [[tests.test_live_caps.py]]
+- [[tests.test_mcp.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_quotes_live.py]]
 - [[tests.test_repair_prices.py]]

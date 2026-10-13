@@ -11,7 +11,8 @@
     "no_source_text": 300,
     "unverified_weighted": 28,
     "orphans": 23,
-    "bad_vocab": 0
+    "bad_vocab": 0,
+    "text_direction": 17
   },
   "info": {
     "undated_figures": 554,

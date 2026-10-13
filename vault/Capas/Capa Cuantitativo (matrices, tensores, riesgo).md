@@ -9,17 +9,17 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 > Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones.
 
-**18 archivos · 7.642 líneas.** Volver al [[00 Mapa de Khipus]].
+**18 archivos · 7.765 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[matrix.api.py]] — 1.098 líneas · blueprint Flask del motor de matrices: /api/matrix/\*.
+- [[matrix.api.py]] — 1.199 líneas · blueprint Flask del motor de matrices: /api/matrix/\*.
 - [[engine.riskreport.js]] — 992 líneas · REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
 - [[matrix.engine.py]] — 862 líneas · construcción, modulación y propagación de matrices.
 - [[core.sim_agents.py]] — 706 líneas · Motor de simulación POR AGENTES (interno).
 - [[core.risk_report.py]] — 553 líneas · REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
+- [[core.scenario_engine.py]] — 548 líneas · ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
 - [[matrix.tensor.py]] — 528 líneas · ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
-- [[core.scenario_engine.py]] — 526 líneas · ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
 - [[engine.livesim.js]] — 430 líneas · SIMULACIÓN EN VIVO v3 (abierta, no cerrada) Constructor de escenarios: eliges el TIPO de golpe (corte↓, demanda↑, precio, sanción) y el OBJETIVO …
 - [[engine.hotclient.js]] — 348 líneas · EL cliente de las vistas rápidas del servidor (window.KhipuHot) INFRA_OPERATIVA §4.6-§4.7 (paso 13, 2026-10-13): en el navegador NO queda ningún …
 - [[engine.insights.js]] — 342 líneas · INSIGHTS AUTOMÁTICOS (Etapa 5, piel NEXUS) Genera tarjetas de lectura desde la topología + el motor de matrices: - chokepoints (quién arrastra a más …
@@ -36,7 +36,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 22 |
+| usa a | [[Capa Infraestructura]] | 24 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 12 |
 | la usa | [[Capa Chat y agentes]] | 9 |
@@ -44,9 +44,9 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | usa a | [[Capa Datos del catálogo]] | 8 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 8 |
+| la usa | [[Capa MCP y API]] | 6 |
 | la usa | [[Capa Comité]] | 3 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
-| la usa | [[Capa MCP y API]] | 3 |
 | la usa | [[Capa Ontología y grafo temporal]] | 3 |
 | la usa | [[Capa Voz]] | 3 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 2 |

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Investigación"
 ruta: "research/models.py"
 lenguaje: "python"
-lineas: 401
+lineas: 404
 aliases: ["research/models.py"]
 tags: ["capa/investigacion", "tipo/modulo"]
 ---
 
 # research/models.py
 
-> Módulo · capa [[Capa Investigación]] · 401 líneas · `research/models.py`
+> Módulo · capa [[Capa Investigación]] · 404 líneas · `research/models.py`
 
 ## Para qué sirve
 
@@ -31,10 +31,10 @@ tablas de la capa DERIVED CLAIMS (Phase 2).
 - clase `CommitteeMemo` — Memo del COMITÉ DE INVERSIÓN automatizado: decisión propuesta + tamaño (determinista) + tesis/riesgos/disenso (presidente IA o plantilla … _(línea 269)_
 - clase `DecisionShadow` — JEV (core/decide.py) en MODO SOMBRA: lo que decidió vs lo que hizo el sistema, para medir acuerdo antes de darle control por función. _(línea 312)_
 - clase `AIUsage` _(línea 326)_
-- clase `AISetting` _(línea 343)_
-- clase `PortfolioWatch` _(línea 358)_
-- clase `PortfolioReport` _(línea 377)_
-- clase `UserState` — Sincronización entre dispositivos (2026-10-03): carteras, perfil y posiciones del usuario, por dueño (hash de la llave del navegador). … _(línea 393)_
+- clase `AISetting` _(línea 346)_
+- clase `PortfolioWatch` _(línea 361)_
+- clase `PortfolioReport` _(línea 380)_
+- clase `UserState` — Sincronización entre dispositivos (2026-10-03): carteras, perfil y posiciones del usuario, por dueño (hash de la llave del navegador). … _(línea 396)_
 
 **Internas** (empiezan con `_`): `_uuid`
 
@@ -47,6 +47,7 @@ tablas de la capa DERIVED CLAIMS (Phase 2).
 - [[core.agents_api.py]] — lo importa
 - [[core.ai_usage.py]] — lo importa
 - [[core.decide.py]] — lo importa
+- [[core.decision_sites.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
@@ -67,16 +68,20 @@ tablas de la capa DERIVED CLAIMS (Phase 2).
 - herramienta MCP `get_research` → [[API herramientas MCP]]
 - herramienta MCP `get_research_job` → [[API herramientas MCP]]
 
-_Además lo importan 16 pruebas (lista abajo)._
+_Además lo importan 20 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_ai_calls.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_ledger_callsites.py]]
+- [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_phase3.py]]

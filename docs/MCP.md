@@ -115,6 +115,25 @@ Todo resultado trae `source` (de dónde sale) y `as_of` (cuándo). Si un dato no
 existe o no se pudo leer, la herramienta **lo dice** (resultado con
 `isError: true`) en vez de inventarlo.
 
+**Contrato común (2026-10-13, BRECHAS L4-08 — `mcp_server/contract.py`).** TODA herramienta acepta dos parámetros más:
+
+- `detail`: `summary` (lo esencial: p. ej. `get_company` ≈ identidad + precio + NRS + 5 proveedores/clientes, ≤ 1.500
+  caracteres) · `standard` (por defecto) · `full` (todo).
+- `max_chars`: tope de caracteres del JSON (1.000-200.000; por defecto 12.000 en `standard`, 4.000 en `summary`).
+
+Y toda respuesta trae, además de sus campos: `detail`, `as_of`, `known_at` (cuándo lo leyó Khipus), `sources`,
+`method`, `truncated`, `tokens_estimate`, `max_chars` y, si algo se recortó, `truncation: [{path, kept, total}]`.
+El recorte es **ordenado** (se conserva la cabeza de cada lista, que ya viene por relevancia o peso), nunca a ciegas;
+en las series de tiempo (`get_history.points`, de vieja a nueva) se conserva la **cola** —los cierres más recientes—
+y la marca dice `kept_end: "newest"`. Si recortar listas y textos no alcanza, se sacan claves enteras de poco valor
+(`catalog`, `edge_semantics`, `tail`, `related`…; marca `{path: "(dropped)", keys: [...]}`); si aun así lo esencial
+pesa más que `max_chars`, la respuesta lo dice con `over_budget: true` (nunca `truncated: false` pasado del tope).
+`get_supply_chain` en `summary`/`standard` ordena las aristas por **relevancia** (motor de contexto, ver abajo) con
+los dos lados de la cadena y el 2.º salto, y resume lo que quedó afuera en `tail` (cuántos vínculos, peso, por salto,
+por tipo, países); `counts` siempre dice los totales reales. La copia en texto (`content[0].text`) es el MISMO JSON
+compacto, así que el tamaño total queda en ~2 × `max_chars`. Medido: `get_supply_chain` de Nvidia a 2 saltos pasó de
+112.354 a ≈10.500 caracteres en `standard` (≈2.800 en `summary`); con `detail: full` sigue dando las 282 aristas.
+
 ### read — consultar (siempre incluido)
 
 | Herramienta | Qué hace | Fuente |
@@ -132,6 +151,12 @@ existe o no se pudo leer, la herramienta **lo dice** (resultado con
 | `get_world_events` | Eventos del World Monitor (conflicto, protestas, comercio, sismos, desastres, estrechos, inestabilidad) | GDELT, USGS, NASA EONET… |
 | `get_committee_memo` | Último memo del comité de inversión (montos de un cliente ocultos salvo que el token opere ese cliente) | Comité (Phase 3) |
 | `get_track_record` | Aciertos, Brier y calibración de cada agente | Predicciones calificadas contra precios reales |
+| `run_scenario` | **¿Qué pasa si…?** Choque a una o más empresas (`shocks: [{id, magnitude 0-1}]`) o descrito en palabras (`scenario`: sus golpeados directos siembran el choque; "China bloquea Taiwán" golpea a Taiwán — `scenario.disrupted_country` y `scenario.seeds` dicen qué se sembró). Devuelve el impacto por empresa con **el mismo kernel de la app** (parámetros `kernel.params` del release vigente, `kernel.semver`), alcance, saltos y, con `positions: [{symbol, usd}]`, la **pérdida estructural estimada** de esa cartera. Estimación estructural, **no** un pronóstico de precio | Grafo + kernel único (vistas rápidas) |
+| `get_subgraph` | Vecindario de una o más empresas hasta 3 saltos, ordenado por **relevancia** para tu pregunta R(v\|Q) (PageRank personalizado sobre el grafo de flujo × importancia sistémica × confianza) y recortado a `budget_chars`, con la cola resumida (`tail`). Socios/inversores aparte (`related`): no transmiten daño | Motor de contexto (`core/context_engine.py`) |
+| `get_exposure` | Exposición de una **cartera** (`positions: [{symbol\|id, usd\|shares}]`): peso por sector, país, **país de los proveedores** (indirecto) y peor proveedor único vía Ψ (qué parte de la cartera cae si ese proveedor falla); o de una **empresa** (`entity`): concentración y países de sus proveedores, fuentes de riesgo directas e indirectas, capitalización aguas abajo en riesgo. `shares` se valoran con cotización en vivo (con fuente) | Vista AccountRisk + tensor de flujo |
+| `find_similar_entities` | Comparables con puntaje **por espacio**: `chain` (proveedores/clientes compartidos), `features` (rasgos estructurales), `category`; `combined` = 0,6/0,25/0,15 (la misma mezcla de los comparables de la app) | Tensor de flujo |
+| `calculate_correlation` | Correlación de retornos DIARIOS (Pearson o Spearman) entre 2-15 empresas/tickers, con días en común (`n_obs`) y **error estándar** de cada coeficiente | Historia propia (prices_eod) o Yahoo ajustado |
+| `get_history` | Cierres ajustados de una empresa/ticker (diario, semanal o mensual = último cierre del período) con `source`, `as_of`, moneda y si está ajustada | Historia propia (prices_eod) o Yahoo ajustado |
 
 ### research — investigar (gasta presupuesto de IA)
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/decisions.py"
 lenguaje: "python"
-lineas: 794
+lineas: 896
 aliases: ["core/decisions.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/decisions.py
 
-> Módulo · capa [[Capa Infraestructura]] · 794 líneas · `core/decisions.py`
+> Módulo · capa [[Capa Infraestructura]] · 896 líneas · `core/decisions.py`
 
 ## Para qué sirve
 
@@ -27,23 +27,26 @@ EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan)
 - `stamp()` — graph_version y linaje del grafo (en memoria, sin SQL), release_hash y code_sha. _(línea 153)_
 - `default_durability(kind)` _(línea 177)_
 - clase `DecisionCtx` — Se llena desde los puntos instrumentados (apply_event → effect) o a mano. Nunca escribe por sí solo. _(línea 182)_
-- `current()` _(línea 286)_
-- `note_event(ev)` — Hook de ontology.service.apply_event: cada evento escrito dentro de un scope es un EFECTO de la decisión. _(línea 290)_
-- `record(session, ctx, status=…, output=…, expires_at=…)` — Escribe la decisión. sync: en la MISMA sesión que el efecto (si falla, lanza y el caller revierte todo). async: sesión autónoma, nunca … _(línea 451)_
-- `safe_error(exc)` — Resumen del error SIN valores de entrada (Pydantic incluye el input del usuario en sus errores). _(línea 507)_
-- `record_rejection(ctx, status=…, error=…, report=…)` — Rechazo/bloqueo/fallo en una sesión AUTÓNOMA: queda aunque el caller revierta su transacción. Nunca lanza (devuelve None si ni siquiera se … _(línea 528)_
-- `decision_scope(kind, principal, session, subject=…, durability=…, parent_id=…, supersedes_id=…, correlation_id=…, valid_at=…, rejection_status=…)` — Reserva decision_id, marca la transacción (`khipus.decision_id`, guardia del paso 22) y abre el contexto. Al salir: … _(línea 568)_
-- `approve(session, target_id, principal, verdict=…, effective_from=…, note=…)` — approval.grant | approval.deny con parent_id = la decisión aprobada. Exige un HUMANO con PIN; si quien pidió fue un agente, una IA (MCP) o … _(línea 613)_
-- `link(session, decision_id, role, ref_kind, ref_id, ref_hash=…, as_of=…, **note)` — Añade una referencia DESPUÉS (solo INSERT; repetirla es un no-op). _(línea 653)_
-- `link_effect(session, decision_id, ref_kind, ref_id, **note)` _(línea 662)_
-- `outcome(session, decision_id, outcome_kind, result, observed_at, source)` — Resultado posterior (nunca se pisa; el vigente es el último). Con result['dedup_key'] no se repite. _(línea 666)_
-- `supersede(session, old_id, principal, reason, kind=…, output=…)` — Corrección: decisión NUEVA con supersedes_id (nunca un UPDATE). 'superseded' se deriva, no es un estado. _(línea 677)_
-- `list_decisions(session, kind=…, principal=…, status=…, entity=…, since=…, limit=…, redact=…)` _(línea 718)_
-- `get(session, decision_id, redact=…, with_blobs=…)` _(línea 737)_
-- `explain(d, lang=…)` — Explicación de una línea en lenguaje simple (ES/EN) a partir de get(..., redact=False). _(línea 776)_
-- `stats()` _(línea 792)_
+- `current()` _(línea 287)_
+- `note_event(ev)` — Hook de ontology.service.apply_event: cada evento escrito dentro de un scope es un EFECTO de la decisión. _(línea 291)_
+- `record(session, ctx, status=…, output=…, expires_at=…)` — Escribe la decisión. sync: en la MISMA sesión que el efecto (si falla, lanza y el caller revierte todo). async: sesión autónoma, nunca … _(línea 452)_
+- `safe_error(exc)` — Resumen del error SIN valores de entrada (Pydantic incluye el input del usuario en sus errores). _(línea 508)_
+- `record_rejection(ctx, status=…, error=…, report=…)` — Rechazo/bloqueo/fallo en una sesión AUTÓNOMA: queda aunque el caller revierta su transacción. Nunca lanza (devuelve None si ni siquiera se … _(línea 529)_
+- `decision_scope(kind, principal, session, subject=…, durability=…, parent_id=…, supersedes_id=…, correlation_id=…, valid_at=…, rejection_status=…, decision_id=…)` — Reserva decision_id, marca la transacción (`khipus.decision_id`, guardia del paso 22) y abre el contexto. Al salir: … _(línea 569)_
+- `approve(session, target_id, principal, verdict=…, effective_from=…, note=…)` — approval.grant | approval.deny con parent_id = la decisión aprobada. Exige un HUMANO con PIN; si quien pidió fue un agente, una IA (MCP) o … _(línea 614)_
+- `link(session, decision_id, role, ref_kind, ref_id, ref_hash=…, as_of=…, **note)` — Añade una referencia DESPUÉS (solo INSERT; repetirla es un no-op). _(línea 654)_
+- `link_effect(session, decision_id, ref_kind, ref_id, **note)` _(línea 663)_
+- `outcome(session, decision_id, outcome_kind, result, observed_at, source)` — Resultado posterior (nunca se pisa; el vigente es el último). Con result['dedup_key'] no se repite. _(línea 667)_
+- `supersede(session, old_id, principal, reason, kind=…, output=…)` — Corrección: decisión NUEVA con supersedes_id (nunca un UPDATE). 'superseded' se deriva, no es un estado. _(línea 678)_
+- `list_decisions(session, kind=…, principal=…, status=…, entity=…, since=…, limit=…, redact=…)` _(línea 719)_
+- `get(session, decision_id, redact=…, with_blobs=…)` _(línea 738)_
+- `explain(d, lang=…)` — Explicación de una línea en lenguaje simple (ES/EN) a partir de get(..., redact=False). _(línea 777)_
+- `stats()` _(línea 793)_
+- `submit_async(build, status=…)` — Encola `build()` → DecisionCtx | (DecisionCtx, after) | None. Corre en el hilo del libro; `after(decision_id)` (opcional) corre tras … _(línea 807)_
+- `flush_async(timeout=…)` — Escribe ya lo encolado (pruebas y apagado). → cuántas se procesaron. _(línea 844)_
+- `async_pending()` _(línea 894)_
 
-**Internas** (empiezan con `_`): `_json_default`, `_hkdf`, `_tables`, `_manifest`, `_rows`, `_dumps`, `_insert`, `_lineage`, `_g8`, `_autonomous`, `_set_guc`, `_uuid`, `_row_dict`
+**Internas** (empiezan con `_`): `_json_default`, `_hkdf`, `_tables`, `_manifest`, `_rows`, `_dumps`, `_insert`, `_lineage`, `_g8`, `_autonomous`, `_set_guc`, `_uuid`, `_row_dict`, `_run_async_item`, `_ensure_async_writer`
 
 ## Depende de
 
@@ -52,25 +55,32 @@ EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan)
 - [[core.ledger.py]] — importa `ledger`
 - [[core.pin.py]] — importa `DEFAULT_SECRET_KEY`, `in_production`, `secret_key_default`
 - [[ontology.bulk_import.py]] — importa `(dinámico: ontology.bulk_import)`
-- [[ontology.db.py]] — importa `get_session_factory`
+- [[ontology.db.py]] — importa `get_session_factory`, `ontology_available`
 - [[ontology.ledger_models.py]] — importa `Decision`, `DecisionBlob`, `DecisionOutcome`, `DecisionRef`, `DecisionViolation`
 
 ## Lo usan
 
 - [[brokerage.service.py]] — lo importa
+- [[core.ai_calls.py]] — lo importa
+- [[core.decide.py]] — lo importa
+- [[core.decision_sites.py]] — lo importa
 - [[core.governance.py]] — lo importa
+- [[core.khipu_chat.py]] — lo importa
 - [[core.ledger.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
 - [[core.prices_api.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
+- [[matrix.api.py]] — lo importa
+- [[mcp_server.api.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 - [[ontology.service.py]] — lo importa
+- [[research.runner.py]] — lo importa
 - [[scripts.build_governance.py]] — lo importa
 - [[scripts.build_shapes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 15 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -79,12 +89,17 @@ _Además lo importan 10 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.conftest.py]]
 - [[tests.gates_cases.py]]
+- [[tests.test_ai_calls.py]]
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
+- [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
+- [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_order_single_path.py]]

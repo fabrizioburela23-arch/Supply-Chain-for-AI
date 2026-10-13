@@ -3,7 +3,7 @@
   "_doc": "GENERADO por scripts/build_governance.py --write: no editar a mano. El release del repositorio es una PROPUESTA; manda el aprobado en la base (core/governance.py).",
   "release": {
     "semver": "1.0.0",
-    "release_hash": "cf693160245255c194c9009862d6af320fbcda56f6c12ad962ab37d9d810fa9d",
+    "release_hash": "2fab17d168263c25f0f03de3a5e968d52858c3939e2d0205462adcf6befb14d8",
     "artifacts": {
       "kernel.params": {
         "semver": "1.0.0",
@@ -26,9 +26,9 @@
         "file": "artifacts/ontology.schema@1.0.0.json"
       },
       "ontology.shapes": {
-        "semver": "3.0.0",
-        "hash": "706a19b62747e4d779445a75110b9c4adf7bc8b624a951fa64e9a20faf48aa82",
-        "file": "artifacts/ontology.shapes@3.0.0.json"
+        "semver": "4.0.0",
+        "hash": "87482b203671108740526c1c13e50162f34b5d3b6e4a89c3d9eb93e6c3976e50",
+        "file": "artifacts/ontology.shapes@4.0.0.json"
       },
       "policy.auto_apply": {
         "semver": "1.0.0",
@@ -126,6 +126,13 @@
       "hash": "706a19b62747e4d779445a75110b9c4adf7bc8b624a951fa64e9a20faf48aa82",
       "change_kind": "major",
       "file": "artifacts/ontology.shapes@3.0.0.json"
+    },
+    {
+      "id": "ontology.shapes",
+      "semver": "4.0.0",
+      "hash": "87482b203671108740526c1c13e50162f34b5d3b6e4a89c3d9eb93e6c3976e50",
+      "change_kind": "major",
+      "file": "artifacts/ontology.shapes@4.0.0.json"
     },
     {
       "id": "policy.auto_apply",

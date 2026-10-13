@@ -227,6 +227,7 @@ def defer_job(session, job, now=None):
                      f'duplicate: the same request is already waiting ({twin.id[:8]})')
         job.completed_at = now
         session.flush()
+        _ds().research_job_closed(session, job)
         return job
     job.status = 'deferred'
     if daily_budget() <= 0:
@@ -239,6 +240,7 @@ def defer_job(session, job, now=None):
     job.trigger = dict(job.trigger or {}, resume_after=ra.isoformat(), deferred_at=now.isoformat())
     job.completed_at = None
     session.flush()
+    _ds().research_job_closed(session, job)                   # deferred → noop (con resume_after)
     return job
 
 
@@ -295,6 +297,9 @@ def resume_deferred(session, now=None, max_jobs=None):
         j.trigger = dict(j.trigger or {}, resumed_at=now.isoformat())
         out['resumed'].append(j.id)
     session.flush()
+    for j in rows:                     # paso 19: los descartados cierran su pedido en el libro
+        if j.id in out['discarded']:
+            _ds().research_job_closed(session, j)
     return out
 
 
@@ -391,6 +396,7 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
                                   requested_by=requested_by, status='queued', dedupe_key=sub_key)
                 session.add(job)
                 session.flush()
+                _ds().research_job(session, job)          # paso 19: el pedido nuevo deja su decisión
                 return job, False
             if prev.status == 'partial' and not missing:
                 # lo que faltaba ya se completó en otro job → el último completo manda
@@ -413,7 +419,13 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
                       requested_by=requested_by, status='queued', dedupe_key=key)
     session.add(job)
     session.flush()
+    _ds().research_job(session, job)                      # paso 19: research.job (sync, misma transacción)
     return job, False
+
+
+def _ds():
+    from core import decision_sites
+    return decision_sites
 
 
 def _ids_with_aliases(eid):
@@ -433,6 +445,7 @@ def retract_unsupported(session, entity_id):
               .filter(ResearchClaim.subject_entity_id.in_(_ids_with_aliases(entity_id)),     # G6b
                       ResearchClaim.status == 'active').all())
     n = 0
+    retracted = []
     for c in claims:
         txt = ' '.join(filter(None, [c.statement_es, c.statement_en, c.reasoning_summary, c.object]))
         if not txt or not re.search(r'\d', txt):
@@ -441,9 +454,13 @@ def retract_unsupported(session, entity_id):
         vals = evidence_numbers([{'title': e.title, 'excerpt': e.excerpt} for e in ev])
         if unsupported_money(txt, vals):
             c.status = 'retracted'
+            retracted.append(c.id)
             n += 1
     if n:
         session.flush()
+        # paso 19: la transición queda en el libro (antes: UPDATE silencioso)
+        _ds().claim_status(session, retracted, 'retracted', reason='money_figures_without_evidence',
+                           task='research_retract')
     return n
 
 
@@ -502,9 +519,38 @@ def _agent_work_inner(entity_id, trigger, depth, agent_type, provider, fetchers,
     return out
 
 
-def _finish_run(session, job, run, agent_type, work, fetchers=None, quotes=None):
-    """Hilo principal: persiste claims/evidencia y cierra el AgentRun."""
+def _finish_run(session, job, run, agent_type, work, fetchers=None, quotes=None, decision_id=None):
+    """Hilo principal: persiste claims/evidencia y cierra el AgentRun. Paso 19: TODO dentro de una decisión
+    research.run (sync, misma transacción que los claims): si la ficha no se escribe, los claims tampoco.
+    `decision_id` = el id reservado antes de la IA del analista (sus filas de ai_calls ya lo citan).
+
+    Revisión: si el libro no acepta la ficha (LedgerUnavailable), se revierte SOLO lo de este analista (savepoint),
+    su AgentRun queda 'failed' y el job sigue con los demás (antes: el job entero fallaba y se cancelaban los
+    analistas en curso, tirando IA ya pagada)."""
+    from core.decisions import LedgerUnavailable
     agent = AGENTS_BY_TYPE[agent_type]
+    try:
+        with session.begin_nested():
+            with _ds().research_run(session, job, run, agent, decision_id=decision_id):
+                _finish_run_inner(session, job, run, agent, work, fetchers, quotes)
+    except LedgerUnavailable as e:
+        log.warning('research.run %s/%s: libro no disponible (%s)', job.entity_id, agent_type, str(e)[:120])
+        run.status = 'failed'
+        run.errors = [f'ledger_unavailable: {str(e)[:200]}']
+        run.claims_generated = 0
+        run.completed_at = _now()
+        run.latency_ms = int((work.get('seconds') or 0) * 1000)
+        session.flush()
+        if decision_id:      # la IA ya citó este id: que la ficha exista (como 'failed') si el libro vuelve
+            _ds().record_reserved_failure('research.run', decision_id, _ds()._run_principal(
+                agent_type, getattr(agent, 'version', None)),
+                subject={'entity_ids': [job.entity_id], 'job_id': str(job.id), 'run_id': str(run.id),
+                         'agent_type': agent_type}, error=e)
+    return run
+
+
+def _finish_run_inner(session, job, run, agent, work, fetchers=None, quotes=None):
+    agent_type = agent.agent_type
     ctx = work.get('ctx')
     try:
         if ctx is not None:
@@ -530,7 +576,8 @@ def _finish_run(session, job, run, agent_type, work, fetchers=None, quotes=None)
             run.summary = result.summary_es
             if quotes is None:
                 quotes = baseline_quotes(job.entity_id, fetchers)
-            n = persist_result(session, job, run, agent, ctx, result, quotes=quotes)
+            with session.begin_nested():        # un fallo a mitad no deja claims sueltos (ni sin su decisión)
+                n = persist_result(session, job, run, agent, ctx, result, quotes=quotes)
             run.claims_generated = n
             run.status = 'done'
             run.errors = []
@@ -558,6 +605,7 @@ def persist_result(session, job, run, agent, ctx, result, quotes=None):
     now = _now()
     cal_table = _calibration_table(session)
     n = 0
+    superseded = {}                     # claim viejo → el nuevo que lo supera (paso 19: claim.status)
     for c in result.claims:
         support = [ev_by_ref[r] for r in c.evidence_refs if r in ev_by_ref]
         counter = [ev_by_ref[r] for r in c.counter_evidence_refs if r in ev_by_ref]
@@ -592,16 +640,23 @@ def persist_result(session, job, run, agent, ctx, result, quotes=None):
                     published_at=_parse_dt(it.get('published_at')), retrieved_at=_parse_dt(it.get('retrieved_at')),
                     relevance=None, reliability=it.get('reliability')))
         # memoria: la conclusión previa del MISMO agente/tema/horizonte queda superada
-        (session.query(ResearchClaim)
-         .filter(ResearchClaim.subject_entity_id.in_(_ids_with_aliases(job.entity_id)),   # G6b: también ids viejos
-                 ResearchClaim.agent_type == agent.agent_type,
-                 ResearchClaim.topic == c.topic, ResearchClaim.horizon == c.horizon,
-                 ResearchClaim.status == 'active', ResearchClaim.id != claim.id)
-         .update({'status': 'superseded'}, synchronize_session=False))
+        old_ids = [r[0] for r in session.query(ResearchClaim.id).filter(
+            ResearchClaim.subject_entity_id.in_(_ids_with_aliases(job.entity_id)),   # G6b: también ids viejos
+            ResearchClaim.agent_type == agent.agent_type,
+            ResearchClaim.topic == c.topic, ResearchClaim.horizon == c.horizon,
+            ResearchClaim.status == 'active', ResearchClaim.id != claim.id).all()]
+        if old_ids:
+            (session.query(ResearchClaim).filter(ResearchClaim.id.in_(old_ids))
+             .update({'status': 'superseded'}, synchronize_session=False))
+            for oid in old_ids:
+                superseded[oid] = claim.id
         detect_for(session, claim)
         _record_baseline(session, claim, quotes)
         n += 1
     session.flush()
+    if superseded:                       # dentro del research.run abierto → queda como hija
+        _ds().claim_status(session, list(superseded), 'superseded', reason='superseded_by_new_claim',
+                           notes={k: {'by': v} for k, v in superseded.items()}, task='research_runner')
     return n
 
 
@@ -752,6 +807,9 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
     session.flush()
     ok = 0
     quotes = baseline_quotes(job.entity_id, fetchers) if job.agents else {}
+    # L4-11: POOL DE EVIDENCIA del job — los analistas de esta empresa comparten noticias/perfil/estados (1 pedido)
+    from research.context import pooled_fetchers
+    fetchers = pooled_fetchers(fetchers)
     # Los agentes trabajan EN PARALELO (contexto + IA en hilos, sin base); la
     # base solo se toca aquí, en el hilo del job. R3: el pool es COMPARTIDO por
     # todos los jobs (RESEARCH_PARALLEL, default 2): FIFO global hacia la IA.
@@ -767,16 +825,19 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
             if on_start:
                 on_start(agent_type)
             from core.ai_usage import bind
-            futs[_pool_submit(bind(_agent_work), job.entity_id, job.trigger, job.depth, agent_type, prov,
-                              fetchers, prior)] = (agent_type, run)
+            rid = _ds().reserve_id()        # research.run reservado: la IA del analista lo cita en ai_calls
+            with _ds().ai_attributed(rid):
+                work_fn = bind(_agent_work)
+            futs[_pool_submit(work_fn, job.entity_id, job.trigger, job.depth, agent_type, prov,
+                              fetchers, prior)] = (agent_type, run, rid)
         try:
             for fut in as_completed(futs):
-                agent_type, run = futs[fut]
+                agent_type, run, rid = futs[fut]
                 try:
                     work = fut.result()
                 except Exception as e:  # noqa: BLE001
                     work = {'error': f'{type(e).__name__}: {str(e)[:300]}'}
-                _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
+                _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes, decision_id=rid)
                 ok += 1 if run.status == 'done' else 0
                 _heartbeat(job)
                 session.commit()   # cada agente visible en vivo (feed de actividad)
@@ -816,6 +877,7 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
         job.error = 'ningún agente produjo resultado'
     job.completed_at = _now()
     session.flush()
+    _ds().research_job_closed(session, job, coverage=cov)     # paso 19: cierre (hija del research.job)
     return job
 
 
@@ -841,6 +903,7 @@ def _run_job_id(job_id):
                     s.query(AgentRun).filter(AgentRun.job_id == job_id, AgentRun.status == 'running').update(
                         {'status': 'failed', 'errors': [f'{type(e).__name__}: {str(e)[:200]}'], 'completed_at': _now()},
                         synchronize_session=False)
+                    _ds().research_job_closed(s, job)            # paso 19: el fallo también cierra en el libro
         except Exception:  # noqa: BLE001
             pass
 

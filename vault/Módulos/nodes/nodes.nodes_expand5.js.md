@@ -37,8 +37,9 @@ Se carga en [[app.html]] en la posición **9 de 95** (línea 1444), después de 
 
 - [[app.html]] — lo carga con `<script>` (posición 9)
 - [[app.html]] — usa `LINKS_EXPAND5`, `NODES_EXPAND5`
+- [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_review_lists.py]]

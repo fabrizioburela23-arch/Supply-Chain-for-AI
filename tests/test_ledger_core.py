@@ -357,7 +357,11 @@ def test_auto_aplicar_queda_a_nombre_de_system(db):
         p = s.scalars(select(ProposedAction).where(ProposedAction.agent == 'centinela_nrs')).first()
         rows = [d for d in decisions.list_decisions(s, redact=False, principal='system:auto_apply')
                 if d['correlation_id'] == f'proposal:{p.id}']
-    assert len(rows) == 1 and rows[0]['declared_name'] == 'centinela_nrs' and rows[0]['status'] == 'executed'
+    # paso 19: la Acción (ontology.action) es HIJA de proposal.auto_apply; las dos a nombre de system:auto_apply
+    acts = [d for d in rows if d['kind'] == 'ontology.action']
+    auto = [d for d in rows if d['kind'] == 'proposal.auto_apply']
+    assert len(acts) == 1 and acts[0]['declared_name'] == 'centinela_nrs' and acts[0]['status'] == 'executed'
+    assert len(auto) == 1 and auto[0]['status'] == 'executed' and acts[0]['parent_id'] == auto[0]['id']
 
 
 # ── API ──────────────────────────────────────────────────────────────────────

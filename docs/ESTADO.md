@@ -9,6 +9,36 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-13 (e) — PASOS 18-21 Y BLOQUES 4-5 (cada decisión con su registro, llamadas a la IA, motor de contexto, MCP con contrato, listas de revisión)
+
+- Pasos 18-19: comité (committee.run en la misma transacción que el memo, aprobar/rechazar como approval.*, puerta G5 en
+  sombra — necesita activar ontology.shapes 4.0.0), consejo de cartera, cambios de límites (cliente y gasto de IA) con valor
+  anterior, investigación (job, cada analista, cambios de estado de claims, falsadores y calificaciones), propuestas y
+  auto-aplicación (igual que hoy, D6), alertas (regla con dueño en HMAC; disparo máx 1 cada 10 min). Costo: ~8 ms por
+  comité y ~14 ms por job (contra 20-60 s de IA). Un analista con el libro caído falla solo él (job "partial").
+- Pasos 20-21: chat, Jev, MCP, qué-pasaría-si e insights dejan su decisión DESPUÉS de responder (latencia del chat igual:
+  p50 3,4-3,7 ms con IA falsa, con y sin libro). Cada pedido a la IA = una fila en ai_calls (modelo real, tokens, caché,
+  costo, veredicto del guardián, decisión). OJO privacidad: los textos de los prompts (incluyen preguntas del chat y datos de
+  cartera) quedan guardados; la purga de 90 días es el paso 26 (siguiente lote). Las filas viejas de decision_shadow aún
+  tienen texto plano (se limpian en el paso 26).
+- Caché de prompt: el nivel profundo (Sonnet 5.5) cachea el system; Haiku 4.5 (nivel rápido) NO llega al mínimo de 4.096
+  tokens → no cachea ni paga extra. El 💰 Gasto IA separa lecturas y escrituras de caché.
+- Bloque 4: un solo detector de entidades y motor de contexto; prompts del chat 19-23 % más chicos en preguntas típicas;
+  MCP con detail/max_chars (Nvidia cadena prof. 2: 112k → 10k) y 6 operaciones nuevas de solo lectura. Las IAs conectadas
+  por MCP reciben respuestas recortadas por defecto (pedir detail:"full" para todo).
+- Bloque 5: docs/REVISION_GRAFO.md — lo que Fabrizio marca ✔/✘ (27 vínculos con fecha, 17 direcciones sospechosas, escala
+  de pesos, 58 verbos en español, 12 márgenes, 200 vínculos pesados sin fecha). Nada se aplicó.
+- Revisión (3 lentes): 19 hallazgos, 16 arreglados con prueba (analistas y comité sin fila en ai_calls, comité por MCP como
+  system, decision_id colgante en insights, fallo tras enviar en auto-aprobación, falsador que perdía la calificación del
+  día, job entero caído por un analista, texto de argumentos en errores MCP, alertas sostenidas, get_history recortaba lo
+  más nuevo, max_chars no respetado, [F#] recortado, "China" detectado como StateGridChina, "China bloquea Taiwán" golpeaba
+  a China, listas de revisión: duplicado, verbos sin acciones, explicación invertida, cifras fijas, licencias 0,8). 3
+  diferidos (contradicciones sin decisión propia, id colgante raro al abortar un job, memoria de alertas en proceso).
+- Simulación de la actualización (base creada con f96f3ca → código nuevo): tabla ai_calls y columnas de caché creadas,
+  6 versiones propuestas (kernel 2.0.0, ledger.kinds 2.0.0, shapes 2.0-4.0, gates 1.1.0), cadena íntegra, dinero permitido.
+
+---
+
 # SESIÓN 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2 (kernel 2.0.0 con PIN, fichas rápidas, un camino de órdenes, historia de precios) — sw v261
 
 - Paso 14: ficha de empresa, NRS en lote, geo, cotización con sello y alertas desde las vistas rápidas; MCP, chat, voz,

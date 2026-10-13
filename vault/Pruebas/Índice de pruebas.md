@@ -6,20 +6,22 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-164 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+172 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
 | [[tests.__init__.py]] | 0 | 0 |
-| [[tests.conftest.py]] | 0 | 1 |
+| [[tests.conftest.py]] | 0 | 3 |
 | [[tests.gates_cases.py]] | 0 | 4 |
 | [[tests.js.localcharts_intents.js]] | 0 | 1 |
 | [[tests.js.localcharts_pfperf.js]] | 0 | 1 |
 | [[tests.test_agent_dudosos.py]] | 2 | 5 |
 | [[tests.test_agents_registry.py]] | 7 | 14 |
+| [[tests.test_ai_calls.py]] | 15 | 11 |
 | [[tests.test_ai_gemini_fast.py]] | 8 | 3 |
 | [[tests.test_ai_json.py]] | 4 | 2 |
 | [[tests.test_ai_usage.py]] | 6 | 7 |
+| [[tests.test_ai_usage_cache.py]] | 6 | 3 |
 | [[tests.test_analytics.py]] | 6 | 3 |
 | [[tests.test_ask_agent.py]] | 16 | 8 |
 | [[tests.test_block0_ci.py]] | 4 | 1 |
@@ -44,6 +46,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_committee_os_pf_tokens.py]] | 9 | 2 |
 | [[tests.test_committee_os_ui.py]] | 11 | 7 |
 | [[tests.test_company_data.py]] | 28 | 3 |
+| [[tests.test_context_engine.py]] | 17 | 11 |
 | [[tests.test_decide.py]] | 8 | 3 |
 | [[tests.test_docs_facts.py]] | 4 | 5 |
 | [[tests.test_entities.py]] | 13 | 4 |
@@ -76,15 +79,18 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_khipus_os_fixes_shell.py]] | 11 | 3 |
 | [[tests.test_khipus_os_fixes_windows.py]] | 10 | 4 |
 | [[tests.test_khipus_os_integration.py]] | 5 | 7 |
-| [[tests.test_khipus_os_perf.py]] | 16 | 7 |
+| [[tests.test_khipus_os_perf.py]] | 17 | 8 |
 | [[tests.test_khipus_os_server.py]] | 24 | 14 |
 | [[tests.test_khipus_os_shell.py]] | 13 | 4 |
 | [[tests.test_khipus_os_windows.py]] | 19 | 4 |
 | [[tests.test_ledger_anchor.py]] | 10 | 9 |
 | [[tests.test_ledger_callsites.py]] | 4 | 6 |
+| [[tests.test_ledger_callsites_chat.py]] | 8 | 17 |
+| [[tests.test_ledger_callsites_committee.py]] | 10 | 19 |
 | [[tests.test_ledger_chain.py]] | 7 | 7 |
 | [[tests.test_ledger_core.py]] | 15 | 12 |
-| [[tests.test_ledger_privacy.py]] | 6 | 7 |
+| [[tests.test_ledger_privacy.py]] | 7 | 9 |
+| [[tests.test_ledger_review_fixes.py]] | 8 | 15 |
 | [[tests.test_live_caps.py]] | 5 | 3 |
 | [[tests.test_live_facts_entities.py]] | 1 | 1 |
 | [[tests.test_live_fundamentals.py]] | 3 | 2 |
@@ -93,7 +99,8 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_map_search_reset.py]] | 2 | 1 |
 | [[tests.test_matrix.py]] | 13 | 10 |
 | [[tests.test_matrix_sparse.py]] | 19 | 1 |
-| [[tests.test_mcp.py]] | 60 | 19 |
+| [[tests.test_mcp.py]] | 66 | 23 |
+| [[tests.test_mcp_contract.py]] | 9 | 5 |
 | [[tests.test_merge_graph_alias.py]] | 1 | 2 |
 | [[tests.test_no_client_engine.py]] | 14 | 24 |
 | [[tests.test_numbers_guard.py]] | 6 | 2 |
@@ -148,6 +155,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_research.py]] | 23 | 15 |
 | [[tests.test_review_batch_e.py]] | 4 | 5 |
 | [[tests.test_review_infra_c.py]] | 16 | 18 |
+| [[tests.test_review_lists.py]] | 14 | 7 |
 | [[tests.test_risk_easy.py]] | 5 | 4 |
 | [[tests.test_risk_on_history.py]] | 11 | 6 |
 | [[tests.test_risk_options.py]] | 6 | 3 |

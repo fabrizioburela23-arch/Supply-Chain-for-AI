@@ -29,6 +29,13 @@ empeorar; ver tests/test_graph_audit.py):
   orphans                nodos con grado 0
   bad_vocab              `type` fuera de ontology/vocabulary.json, `cat` fuera de
                          las categorías del snapshot o `sector` fuera de sectors9
+  text_direction         (BRECHAS_V2 L3-12, 2026-10-13) vínculo de FLUJO cuyo texto
+                         dice lo contrario de la flecha: (1) el SUJETO del verbo de
+                         consumo ("X usa/compra/corre sobre…", "X adquirió…") es el
+                         source y no el target; (2) "proveedor … de <source>";
+                         (3) texto de competencia o fundación ("compite",
+                         "competidores", "co-fundó") en una relación de flujo.
+                         Lista para Fabrizio: docs/REVISION_GRAFO.md (b).
 
 Categorías INFORMATIVAS (se reportan, no se ratchetean):
   undated_figures        nodos con margin/capex_2026 sin fecha propia
@@ -57,7 +64,7 @@ BASELINE_PATH = os.path.join(ROOT, 'data', 'graph_audit_baseline.json')
 VOCAB_PATH = os.path.join(ROOT, 'ontology', 'vocabulary.json')
 
 RATCHET = ('duplicate_links', 'duplicate_entities', 'suspicious_directions',
-           'no_source_text', 'unverified_weighted', 'orphans', 'bad_vocab')
+           'no_source_text', 'unverified_weighted', 'orphans', 'bad_vocab', 'text_direction')
 INFO = ('undated_figures', 'missing_coverage', 'pairs_multi_type')
 
 LABELS = {
@@ -68,6 +75,8 @@ LABELS = {
     'unverified_weighted': {'es': 'Enlaces "no verificados" con peso > 1', 'en': '"Unverified" links with weight > 1'},
     'orphans': {'es': 'Nodos huérfanos (grado 0)', 'en': 'Orphan nodes (degree 0)'},
     'bad_vocab': {'es': 'Fuera de vocabulario (type / cat / sector)', 'en': 'Out of vocabulary (type / cat / sector)'},
+    'text_direction': {'es': 'Dirección contraria al texto (sujeto del verbo = proveedor, competencia/fundación en flujo)',
+                       'en': 'Direction contradicts the text (verb subject = supplier, competition/founding in a flow)'},
     'undated_figures': {'es': 'Nodos con margin/capex sin fecha (informativo)', 'en': 'Nodes with undated margin/capex (informational)'},
     'missing_coverage': {'es': 'Cobertura faltante: semis analógicos (informativo)', 'en': 'Missing coverage: analog semis (informational)'},
     'pairs_multi_type': {'es': 'Pares con más de un tipo de enlace (informativo)', 'en': 'Pairs with more than one link type (informational)'},
@@ -106,6 +115,28 @@ FAB_EN_PREFIX = r'\ben\s+(?:(?:la|el|los|las|su|sus|de|del|planta|plantas|f[áa]
 
 UNVERIFIED_RE = re.compile(r'no verificad|\bposible|no revisad|no confirmad|sin confirmar', re.I)
 
+# ── L3-12: detector de dirección POR TEXTO (sujeto del verbo) ────────────────
+# En el catálogo la flecha es source PROVEE a target y el texto suele estar escrito desde el CLIENTE
+# ("Samsung usa chips Dimensity" en MediaTek→Samsung es CORRECTO). Está al revés cuando quien CONSUME (el
+# sujeto, el texto ANTES del verbo) es el source. Voz pasiva ("se usan en") no cuenta: ahí el sujeto es lo provisto.
+TEXT_CONSUME_RE = re.compile(
+    r'(?<!\bse )\b(?:usa[n]?|utiliza[n]?|uses?|compra[n]?|buys?|corre[n]? (?:sobre|en)|runs? on|'
+    r'se abastece[n]? de|sources? from)\b', re.I)
+TEXT_ACQUIRE_RE = re.compile(r'\b(?:adquiri[óo]|compr[óo]|acquired|bought)\b', re.I)
+TEXT_RIVAL_RE = re.compile(r'^\s*compite[n]?\b|\bcompetidor(?:es|a|as)?\b|\bcompetitors?\b|\brival(?:es|s)?\b|'
+                           r'\bco-?fund[óo]\b|\bco-?founded\b', re.I)
+TEXT_PROVIDER_PREFIX = (r'\b(?:proveedor(?:es|a)?|supplier|provider)\b[^.;—]{0,40}?\b(?:de|of|to|for)\s+'
+                        r'(?:(?:la|el|los|las)\s+)?(?:')
+# Productos/activos que el texto usa EN LUGAR del nombre de la empresa (dato curado, no IA). Solo se usan para
+# reconocer al SUJETO; nunca crean vínculos.
+TEXT_PRODUCT_ALIASES = {
+    'OpenAI': ('ChatGPT', 'GPT-4', 'GPT-4o'),
+    'BostonDynamics': ('Spot', 'Atlas'),
+    'Palantir': ('AIP', 'Foundry'),
+    'Anthropic': ('Claude',),
+    'SouthernCo': ('Vogtle', 'Georgia Power'),
+}
+
 SUFFIX_RE = re.compile(
     r'\s+(?:inc|corp|corporation|ltd|limited|co|company|group|trust|holdings?|plc)\.?\s*$', re.I)
 
@@ -120,6 +151,7 @@ DATE_KEYS = ('as_of', 'figures_as_of', 'data_as_of', 'margin_as_of', 'capex_as_o
 # Vocabulario histórico exacto (fallback si vocabulary.json no se puede leer).
 _FALLBACK_RELS = ('supply', 'cloud', 'fab', 'license', 'partner', 'invest', 'deploy', 'owns', 'ppa')
 _FALLBACK_SYMMETRIC = frozenset({'partner'})
+_FALLBACK_FLOW = ('supply', 'fab', 'cloud', 'license', 'ppa', 'owns', 'deploy')
 
 
 # ── carga ───────────────────────────────────────────────────────────────────
@@ -141,10 +173,12 @@ def load_vocab(path=VOCAB_PATH):
             'rel_types': set(rt.keys()),
             'structural': [k for k, v in rt.items() if (v or {}).get('structural')],
             'symmetric': {k for k, v in rt.items() if (v or {}).get('symmetric')},
+            'flow': {k for k, v in rt.items() if (v or {}).get('flow')},
+            'criticality': {k: float((v or {}).get('weight') or 0) for k, v in rt.items()},
         }
     except Exception:  # noqa: BLE001 — sin vocabulario no se para la auditoría
         return {'rel_types': set(_FALLBACK_RELS), 'structural': list(_FALLBACK_RELS),
-                'symmetric': set(_FALLBACK_SYMMETRIC)}
+                'symmetric': set(_FALLBACK_SYMMETRIC), 'flow': set(_FALLBACK_FLOW), 'criticality': {}}
 
 
 def load_baseline(path=BASELINE_PATH):
@@ -207,6 +241,59 @@ def _name_pattern(variants):
         if toks:
             pats.append(r'(?<![A-Za-z0-9])' + r'[\s\-_.+&/]*'.join(re.escape(t) for t in toks) + r'(?![A-Za-z0-9])')
     return '|'.join(pats) if pats else ''
+
+
+_PRODUCT_RX = {nid: re.compile(_name_pattern(names), re.I) for nid, names in TEXT_PRODUCT_ALIASES.items()}
+
+
+def text_direction_findings(links, vocab, mentions, name_pattern):
+    """L3-12 · vínculos de FLUJO cuyo texto contradice la flecha. `mentions(texto, id)` / `name_pattern(id)` son los
+    de audit_snapshot (nombres, etiquetas y alias del catálogo). Determinista: mismo orden que `links`.
+    Razones: subject_is_source (el que usa/compra/corre sobre es el source) · subject_is_target_buyer (owns:
+    "<target> adquirió <source>") · provider_of_source
+    ("proveedor … de <source>": el target provee al source) · rival_or_founder (competencia/fundación en flujo)."""
+    flow = set(vocab.get('flow') or _FALLBACK_FLOW)
+    out = []
+
+    def names(text, nid):
+        rx = _PRODUCT_RX.get(nid)
+        return mentions(text, nid) or bool(rx and rx.search(text))
+
+    for l in links:
+        ty = l.get('type') or 'supply'
+        rel = (l.get('rel') or '').strip()
+        if ty not in flow or not rel:
+            continue
+        s, t = l.get('source'), l.get('target')
+        reason, verb = None, None
+        acq = TEXT_ACQUIRE_RE.search(rel) if ty == 'owns' else None
+        if acq:
+            # "X adquirió Y" en owns X→Y es correcto; al revés si el que compró es el TARGET
+            subj = rel[:acq.start()]
+            if subj.strip() and names(subj, t) and not names(subj, s):
+                reason, verb = 'subject_is_target_buyer', acq.group(0)
+        else:
+            # "USA" (Estados Unidos, en mayúsculas) no es el verbo "usa"
+            m = next((x for x in TEXT_CONSUME_RE.finditer(rel) if not x.group(0).isupper()), None)
+            if m:
+                subj = rel[:m.start()]
+                if subj.strip() and names(subj, s) and not names(subj, t):
+                    reason, verb = 'subject_is_source', m.group(0)
+        if reason is None:
+            pat = name_pattern(s)
+            if pat and re.search(TEXT_PROVIDER_PREFIX + pat + ')', rel, re.I):
+                reason, verb = 'provider_of_source', 'proveedor de'
+        if reason is None:
+            m = TEXT_RIVAL_RE.search(rel)
+            if m:
+                reason, verb = 'rival_or_founder', m.group(0).strip()
+        if reason:
+            # "corre sobre AWS" = nube, aunque hoy esté como licencia/suministro
+            ptype = 'cloud' if (reason == 'subject_is_source' and re.match(r'(?i)corre|runs', verb or '')) else ty
+            out.append({'source': s, 'target': t, 'type': ty, 'w': l.get('w'), 'rel': rel, 'reason': reason,
+                        'verb': verb, 'proposed_type': ptype,
+                        'proposal': 'change_type' if reason == 'rival_or_founder' else 'invert'})
+    return out
 
 
 # ── auditoría del snapshot ──────────────────────────────────────────────────
@@ -306,6 +393,9 @@ def audit_snapshot(snap, vocab=None):
         seen.add((a, b))
         for ty in sorted((types & fwd[(b, a)]) - vocab['symmetric']):
             f['suspicious_directions'].append({'source': a, 'target': b, 'type': ty, 'reason': 'bidirectional_same_type'})
+
+    # (c2) L3-12: dirección contraria al TEXTO (sujeto del verbo) ─────────────
+    f['text_direction'] = text_direction_findings(links, vocab, mentions, name_pattern)
 
     # (d) sin texto ─────────────────────────────────────────────────────────
     for l in links:
@@ -493,6 +583,8 @@ def _fmt_finding(cat, x):
         extra = f" [{x.get('source_cat')}]" if x.get('source_cat') else ''
         rel = (x.get('rel') or '')[:90]
         return f"{x['source']} → {x['target']} ({x['type']}) · {x['reason']}{extra}" + (f" · «{rel}»" if rel else '')
+    if cat == 'text_direction':
+        return f"{x['source']} → {x['target']} ({x['type']}) · {x['reason']} «{x['verb']}» · «{(x.get('rel') or '')[:90]}»"
     if cat == 'bad_vocab':
         return f"{x['kind']}={x['value']!r} en {x.get('id') or (str(x.get('source')) + ' → ' + str(x.get('target')))}"
     if cat == 'missing_coverage':

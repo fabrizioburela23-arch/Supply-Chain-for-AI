@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "core/decide.py"
 lenguaje: "python"
-lineas: 356
+lineas: 415
 aliases: ["core/decide.py"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # core/decide.py
 
-> Módulo · capa [[Capa Chat y agentes]] · 356 líneas · `core/decide.py`
+> Módulo · capa [[Capa Chat y agentes]] · 415 líneas · `core/decide.py`
 
 ## Para qué sirve
 
@@ -26,16 +26,20 @@ JEV (TypeSafe AI, modelo "System One"): DECISIONES, no texto.
 - `shadow(feature, key, decision, actual, agree)` _(línea 174)_
 - `shadow_report(days=…, limit=…)` — Acuerdo Jev ↔ sistema por función (Postgres si hay; si no, memoria). _(línea 199)_
 - `chat_gate_start(message, lang=…)` — Lanza la decisión de Jev en paralelo (no frena el chat). None si no aplica. _(línea 262)_
-- `chat_gate_finish(fut, out, message=…)` — Compara la decisión de Jev con lo que hizo el chat y lo deja en sombra. _(línea 281)_
+- `chat_gate_finish(fut, out, message=…, correlation_id=…)` — Compara la decisión de Jev con lo que hizo el chat y lo deja en sombra. _(línea 281)_
 - `decision_of(ans)` — Respuesta cruda de Jev → decisión plana. La confianza de la ruta: `confidence` o, si no viene, la probabilidad de la opción elegida. _(línea 314)_
 - `chat_plan(fut, wait_s=…)` — Jev AL MANDO del chat: → decisión {route, confidence, …} que el chat OBEDECE, o None (sin control, sin respuesta a tiempo o confianza < … _(línea 330)_
+- `private_key(message)` — Clave de la sombra SIN el texto del usuario (INFRA_OPERATIVA §2.7, paso 20): 'hmac:' + HMAC-SHA256 con la clave derivada de SECRET_KEY … _(línea 348)_
+- `ledger_route(decision, actual, agree, message, ans=…, correlation_id=…)` — Ficha `chat.route` (async, §2.5): qué decidió Jev (ruta, probabilidades, confianza), con qué política (`policy.decide`) y modelo, si MANDÓ … _(línea 371)_
 
 **Internas** (empiezan con `_`): `_key`, `_now`, `_trim_state`, `_persist`, `_actual_route`, `_finish_bg`, `_num`, `_compare`
 
 ## Depende de
 
 - [[core.ai_usage.py]] — importa `ai_usage`
+- [[core.decisions.py]] — importa `decisions`, `pii_hmac`
 - [[core.governance.py]] — importa `governance`
+- [[core.identity.py]] — importa `identity`
 - [[ontology.db.py]] — importa `ontology_available`, `session_scope`
 - [[research.models.py]] — importa `DecisionShadow`
 
@@ -44,7 +48,7 @@ JEV (TypeSafe AI, modelo "System One"): DECISIONES, no texto.
 - [[core.decide_api.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -59,9 +63,12 @@ _Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_context_engine.py]]
 - [[tests.test_decide.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_jev_router.py]]
+- [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_ledger_privacy.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_overnight_fixes_review.py]]
 

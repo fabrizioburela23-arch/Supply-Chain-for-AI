@@ -3,35 +3,39 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_mcp.py"
 lenguaje: "python"
-lineas: 1506
+lineas: 1648
 aliases: ["tests/test_mcp.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_mcp.py
 
-> Prueba · capa [[Capa Pruebas]] · 1.506 líneas · `tests/test_mcp.py`
+> Prueba · capa [[Capa Pruebas]] · 1.648 líneas · `tests/test_mcp.py`
 
 ## Qué prueba
 
 servidor MCP (mcp_server/): protocolo, auth, alcances, herramientas, flujo de trading con aprobación humana, auditoría y OAuth.
 
-**60** funciones `test_…`.
+**66** funciones `test_…`.
 
 ## Cubre
 
 - [[brokerage.alpaca.py]]
 - [[brokerage.service.py]]
+- [[core.__init__.py]]
 - [[core.ai.py]]
 - [[core.http.py]]
 - [[core.options.py]]
+- [[core.quotes.py]]
 - [[core.risk_report.py]]
 - [[core.world.py]]
 - [[engine.mcpconnect.js]]
+- [[matrix.tensor.py]]
 - [[mcp_server.api.py]]
 - [[mcp_server.auth.py]]
 - [[mcp_server.models.py]]
 - [[mcp_server.oauth.py]]
+- [[mcp_server.ops.py]]
 - [[mcp_server.protocol.py]]
 - [[mcp_server.tools.py]]
 - [[ontology.db.py]]

@@ -397,7 +397,28 @@ def create_client(session, name, email=None, notes=None, mode='paper', risk_prof
     session.add(rec)
     session.flush()
     audit(session, actor, 'client_created', rec.id, detail={'name': name, 'mode': mode, 'risk_profile': risk_profile})
+    _policy_change(session, rec, None, actor)          # paso 18: límites iniciales (antes: nada)
     return {'ok': True, 'client': client_dict(rec)}
+
+
+# paso 18 (INFRA_OPERATIVA §2.5): lo que GOBIERNA el riesgo de un cliente (perfil, límites, mandato, estado, modo,
+# dinero real) cambia con una decisión policy.change que guarda el valor ANTERIOR y el nuevo. Nombre, correo y notas
+# NO van (datos personales, no política).
+_POLICY_FIELDS = ('risk_profile', 'risk_limits', 'mandate', 'status', 'mode', 'live_enabled')
+
+
+def _policy_snapshot(rec):
+    return {k: getattr(rec, k, None) for k in _POLICY_FIELDS}
+
+
+def _policy_change(session, rec, before, actor, reset_hwm=False):
+    """reset_hwm: reiniciar el máximo del patrimonio también cambia el stop por caída → cuenta como cambio."""
+    from core import decision_sites
+    after = _policy_snapshot(rec)
+    if reset_hwm:
+        before, after = dict(before or {}, hwm_reset=False), dict(after, hwm_reset=True)
+    decision_sites.policy_change(session, 'broker.client_limits', before, after, subject={'client_id': rec.id},
+                                 p=_principal(actor))
 
 
 def update_client(session, client_id, patch, actor='ui'):
@@ -407,6 +428,7 @@ def update_client(session, client_id, patch, actor='ui'):
     patch = patch or {}
     changed = {}
     mode_changed = False
+    before = _policy_snapshot(rec)
     try:
         for k in ('name', 'email', 'notes'):
             if k in patch:
@@ -475,6 +497,8 @@ def update_client(session, client_id, patch, actor='ui'):
         audit(session, actor, 'client_updated', rec.id, detail=changed)
         if 'live_enabled' in changed:
             audit(session, actor, 'live_enabled_on' if changed['live_enabled'] else 'live_enabled_off', rec.id)
+        _policy_change(session, rec, before, actor,      # sin cambio real de política → no escribe nada
+                       reset_hwm=bool(changed.get('reset_hwm')))
     return {'ok': True, 'client': client_dict(rec)}
 
 

@@ -3,14 +3,14 @@ tipo: "datos"
 capa: "Datos del catálogo"
 ruta: "data/graph_audit_baseline.json"
 lenguaje: "json"
-lineas: 21
+lineas: 22
 aliases: ["data/graph_audit_baseline.json"]
 tags: ["capa/datos-catalogo", "tipo/datos"]
 ---
 
 # data/graph_audit_baseline.json
 
-> Datos · capa [[Capa Datos del catálogo]] · 21 líneas · `data/graph_audit_baseline.json`
+> Datos · capa [[Capa Datos del catálogo]] · 22 líneas · `data/graph_audit_baseline.json`
 
 ## Para qué sirve
 
@@ -24,7 +24,7 @@ Línea base de scripts/audit_graph.py (G1). Las categorías de `metrics` NO pued
 | `snapshot_exported_at` | fecha | `2026-10-06T04:19:20.593Z` |
 | `nodes` | número | 937 |
 | `links` | número | 2510 |
-| `metrics` | objeto | 7 |
+| `metrics` | objeto | 8 |
 | `info` | objeto | 3 |
 
 ## Depende de

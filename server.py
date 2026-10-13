@@ -3302,10 +3302,15 @@ def ai_usage_limits():
                                     'AI_DAILY_LIMIT_USD / AI_MONTHLY_LIMIT_USD on Railway.'}), 503
     body = request.get_json(silent=True) or {}
     actor = str(body.get('actor') or '').strip()[:120] or 'operador'
+    from core.decisions import LedgerUnavailable
     try:
         return jsonify({'ok': True, 'limits': ai_usage.save_settings(body.get('limits') or {}, actor)})
     except (TypeError, ValueError) as e:
         return jsonify({'error': f'valor inválido: {str(e)[:80]}', 'error_en': f'invalid value: {str(e)[:80]}'}), 400
+    except LedgerUnavailable:          # paso 18: sin su policy.change en el libro, el cambio no se guarda
+        return jsonify({'error': 'El libro de decisiones no está disponible: no se cambió nada',
+                        'error_en': 'The decision ledger is unavailable: nothing was changed',
+                        'code': 'ledger_unavailable'}), 503
 
 
 @app.route('/api/sim/agents', methods=['POST'])

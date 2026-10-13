@@ -9,19 +9,19 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 > El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud.
 
-**21 archivos · 5.075 líneas.** Volver al [[00 Mapa de Khipus]].
+**21 archivos · 5.264 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[research.runner.py]] — 994 líneas · ejecución de un ResearchJob (vertical slice → general).
-- [[research.context.py]] — 611 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
+- [[research.runner.py]] — 1.057 líneas · ejecución de un ResearchJob (vertical slice → general).
+- [[research.context.py]] — 715 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
 - [[engine.research.js]] — 591 líneas · PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
-- [[research.models.py]] — 401 líneas · tablas de la capa DERIVED CLAIMS (Phase 2).
+- [[research.models.py]] — 404 líneas · tablas de la capa DERIVED CLAIMS (Phase 2).
 - [[research.api.py]] — 324 líneas · blueprint /api/research/\* (Phase 2).
-- [[research.llm.py]] — 301 líneas · abstracción de proveedor de modelos (no acoplada a nadie).
+- [[research.llm.py]] — 302 líneas · abstracción de proveedor de modelos (no acoplada a nadie).
 - [[research.analytics.py]] — 273 líneas · ANÁLISIS CUANTITATIVO determinista para los agentes.
+- [[research.falsifiers.py]] — 202 líneas · falsadores ESTRUCTURADOS y verificables (C8, misión de reparación 2026-10-04).
 - [[research.health.py]] — 202 líneas · "¿puedo investigar ahora?" en UNA foto (R6, misión de reparación).
-- [[research.falsifiers.py]] — 184 líneas · falsadores ESTRUCTURADOS y verificables (C8, misión de reparación 2026-10-04).
 - [[core.sec.py]] — 143 líneas · SEC EDGAR como EVIDENCIA PRIMARIA (Phase 2).
 - [[research.contradictions.py]] — 143 líneas · detección INICIAL de tensiones entre claims.
 - [[research.agents.base.py]] — 142 líneas · la interfaz Agent.
@@ -39,11 +39,11 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 23 |
+| usa a | [[Capa Infraestructura]] | 27 |
 | la usa | [[Capa Comité]] | 15 |
 | usa a | [[Capa Ontología y grafo temporal]] | 15 |
 | la usa | [[Capa Chat y agentes]] | 9 |
-| la usa | [[Capa Infraestructura]] | 6 |
+| la usa | [[Capa Infraestructura]] | 7 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 4 |
 | la usa | [[Capa Ontología y grafo temporal]] | 4 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 4 |

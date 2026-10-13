@@ -183,10 +183,11 @@ class DecisionCtx:
     """Se llena desde los puntos instrumentados (apply_event → effect) o a mano. Nunca escribe por sí solo."""
 
     def __init__(self, kind, principal, *, subject=None, durability=None, parent_id=None, supersedes_id=None,
-                 correlation_id=None, valid_at=None, expires_at=None):
+                 correlation_id=None, valid_at=None, expires_at=None, decision_id=None):
         if kind not in KINDS:
             raise ValueError(f'kind de decisión fuera del vocabulario (ledger.kinds): {kind!r}')
-        self.id = uuid.uuid4()
+        # decision_id RESERVADO antes del trabajo de IA (comité, analistas): sus filas de ai_calls ya lo llevan
+        self.id = _uuid(decision_id) if decision_id else uuid.uuid4()
         self.kind = kind
         self.principal = principal
         self.subject = dict(subject or {})
@@ -566,7 +567,7 @@ def _set_guc(session, value):
 
 @contextmanager
 def decision_scope(kind, principal, *, session, subject=None, durability=None, parent_id=None,
-                   supersedes_id=None, correlation_id=None, valid_at=None, rejection_status=None):
+                   supersedes_id=None, correlation_id=None, valid_at=None, rejection_status=None, decision_id=None):
     """Reserva decision_id, marca la transacción (`khipus.decision_id`, guardia del paso 22) y abre el contexto.
     Al salir: record(status=ctx.status or 'executed'); con excepción → record_rejection y se relanza.
     `rejection_status(exc)` → 'rejected' | 'failed' | 'blocked' (por defecto: 'rejected' para errores de
@@ -577,7 +578,7 @@ def decision_scope(kind, principal, *, session, subject=None, durability=None, p
     ctx = DecisionCtx(kind, principal, subject=subject, durability=durability, parent_id=parent_id,
                       supersedes_id=supersedes_id, correlation_id=correlation_id or (outer.correlation_id
                                                                                        if outer else None),
-                      valid_at=valid_at)
+                      valid_at=valid_at, decision_id=decision_id)
     tok = _CTX.set(ctx)
     try:
         if session is not None and ctx.durability == 'sync':
@@ -792,3 +793,104 @@ def explain(d, lang='es'):
 def stats():
     with _LOCK:
         return dict(STATS)
+
+
+# ── decisiones ASYNC fuera del camino del usuario (paso 20: chat, Jev, MCP, qué-pasaría-si, insights) ──────
+# §2.2: "async: cola en el proceso (lote cada 1 s, tope 5.000)". El que responde al usuario solo ENCOLA una función
+# (microsegundos); un hilo propio arma la ficha (stamp, manifiesto, blobs) y la escribe en una sesión autónoma.
+# Lo que no cabe en la cola o falla al escribir se cuenta en STATS['async_dropped'] (🩺). Sin base: no hace nada.
+ASYNC_MAX = 5000
+_AQ = []
+_ASTATE = {'thread': None, 'wake': threading.Event(), 'busy': False}
+
+
+def submit_async(build, status='recorded'):
+    """Encola `build()` → DecisionCtx | (DecisionCtx, after) | None. Corre en el hilo del libro; `after(decision_id)`
+    (opcional) corre tras escribirla (p. ej. un decision_outcome). → True si quedó en cola. Nunca lanza."""
+    try:
+        from ontology.db import ontology_available
+        if not ontology_available():
+            return False
+    except Exception:  # noqa: BLE001
+        return False
+    with _LOCK:
+        if len(_AQ) >= ASYNC_MAX:
+            STATS['async_dropped'] += 1
+            return False
+        _AQ.append((build, status))
+    _ensure_async_writer()
+    _ASTATE['wake'].set()
+    return True
+
+
+def _run_async_item(build, status):
+    try:
+        got = build()
+        ctx, after = (got if isinstance(got, tuple) else (got, None))
+        if ctx is None:
+            return None
+        did = record(None, ctx, status=ctx.status or status)
+        if did is not None and after is not None:
+            after(did)
+        return did
+    except Exception as e:  # noqa: BLE001
+        with _LOCK:
+            STATS['async_dropped'] += 1
+            STATS['last_error'] = f'{type(e).__name__}: {str(e)[:160]}'
+        log.warning('decisions: decisión async no armada (%s)', type(e).__name__)
+        return None
+
+
+def flush_async(timeout=10.0):
+    """Escribe ya lo encolado (pruebas y apagado). → cuántas se procesaron."""
+    n, t_end = 0, time.monotonic() + timeout
+    while time.monotonic() < t_end:
+        with _LOCK:
+            if not _AQ:
+                busy = _ASTATE['busy']
+                item = None
+            else:
+                item = _AQ.pop(0)
+                busy = True
+        if item is None:
+            if not busy:
+                return n
+            time.sleep(0.01)
+            continue
+        _run_async_item(*item)
+        n += 1
+    return n
+
+
+def _ensure_async_writer():
+    t = _ASTATE['thread']
+    if t is not None and t.is_alive():
+        return
+    with _LOCK:
+        t = _ASTATE['thread']
+        if t is not None and t.is_alive():
+            return
+
+        def loop():
+            while True:
+                _ASTATE['wake'].wait(1.0)
+                _ASTATE['wake'].clear()
+                while True:
+                    with _LOCK:
+                        if not _AQ:
+                            break
+                        item = _AQ.pop(0)
+                        _ASTATE['busy'] = True
+                    try:
+                        _run_async_item(*item)
+                    finally:
+                        with _LOCK:
+                            _ASTATE['busy'] = False
+        t = threading.Thread(target=loop, name='ledger-async', daemon=True)
+        _ASTATE['thread'] = t
+        t.start()
+
+
+def async_pending():
+    with _LOCK:
+        return len(_AQ)

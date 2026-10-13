@@ -62,6 +62,8 @@ SOURCES = (
     # paso 9: el registro de gobernanza también entra a la cadena (qué reglas y números hubo, a prueba de cambios)
     ('gov_artifacts', 't.hash::text', 't.recorded_at, t.hash', 'text'),
     ('gov_releases', 't.release_hash::text', 't.recorded_at, t.release_hash', 'text'),
+    # paso 21: cada pedido a la IA (core/ai_calls) también queda a prueba de cambios
+    ('ai_calls', 't.id::text', 't.seq', 'uuid'),
 )
 SEALED_TABLES = tuple(s[0] for s in SOURCES)
 

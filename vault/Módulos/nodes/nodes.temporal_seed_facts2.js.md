@@ -39,6 +39,7 @@ Se carga en [[app.html]] en la posición **41 de 95** (línea 7840), después de
 - [[engine.maptime.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[engine.temporal-graph.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[engine.timeline3d.js]] — usa `TEMPORAL_SEED_FACTS`
+- [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren

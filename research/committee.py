@@ -1031,12 +1031,25 @@ def progress_clear(memo_id):
 
 def run_committee(session, entity_id, requested_by, client_id=None, provider=None, deps=None, memo_id=None):
     """Corre el comité completo y persiste el memo. Devuelve el memo (dict)."""
+    from core import decision_sites as _ds
     from core.ai_usage import ai_context       # gasto de IA atribuido al Comité y a quien lo pidió
-    with ai_context('comite', requested_by or 'usuario'):
-        return _run_committee(session, entity_id, requested_by, client_id, provider, deps, memo_id)
+    # revisión paso 21: el id de committee.run se RESERVA antes del debate y del presidente → sus filas de ai_calls
+    # lo citan (retención 'legal', D3); si el comité falla antes de guardar el memo, esa ficha queda como 'failed'
+    res = {'id': _ds.reserve_id(), 'opened': False}
+    rid = res['id']
+    with ai_context('comite', requested_by or 'usuario'), _ds.ai_attributed(rid) as ai_ids:
+        try:
+            return _run_committee(session, entity_id, requested_by, client_id, provider, deps, memo_id,
+                                  reserved=res)
+        except Exception as e:
+            if ai_ids and not res['opened']:     # abierta = decision_scope ya registró su rechazo con ese id
+                _ds.record_reserved_failure('committee.run', rid, _ds.principal('committee', requested_by),
+                                            subject={'entity_ids': [entity_id], 'memo_id': memo_id}, error=e)
+            raise
 
 
-def _run_committee(session, entity_id, requested_by, client_id=None, provider=None, deps=None, memo_id=None):
+def _run_committee(session, entity_id, requested_by, client_id=None, provider=None, deps=None, memo_id=None,
+                   reserved=None):
     from research import deliberation as dl8
     from research.outcomes import (agent_reliability, calibrated_confidence, calibration_table, is_us_listing,
                                    symbol_for)
@@ -1279,6 +1292,13 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     _audit(memo, 'committee', 'proposed', {'decision': final_decision, 'quant_decision': decision,
                                            'ai': memo.ai_used, 'overall': overall})
     session.flush()
+    # paso 18: decisión committee.run en la MISMA transacción que el memo (claims con huella, policy.committee,
+    # cotización, paquete COMPLETO y transcripción como blobs, puerta G5 en sombra). Sin ficha no hay memo.
+    from core import decision_sites as _ds
+    if reserved:
+        reserved['opened'] = True
+    _ds.committee_run(session, memo, rows, package=text, rels=len(rels),
+                      decision_id=reserved['id'] if reserved else None)
     return memo_dict(memo)
 
 
@@ -1821,6 +1841,17 @@ def _preview_error(pv):
 
 
 def approve_memo(session, memo_id, actor, note='', brokerage=None):
+    """approval.grant (paso 18) sobre el committee.run del memo: ENVUELVE la previsualización (order.preview queda
+    como hija) y deja la puerta G5 (sombra) en la ficha. El comportamiento es el de _approve_memo."""
+    from core import decision_sites as _ds
+    with _ds.memo_approval(session, memo_id, 'grant', actor=actor, note=note) as ap:
+        out = _approve_memo(session, memo_id, actor, note=note, brokerage=brokerage,
+                            on_memo=lambda m: ap.gate(m, session=session))
+        ap.finish(out)
+    return out
+
+
+def _approve_memo(session, memo_id, actor, note='', brokerage=None, on_memo=None):
     """Aprobación HUMANA (la ruta exige PIN). Con cliente y decisión accionable
     crea una PREVISUALIZACIÓN de orden en brokerage (source='committee'):
       · 'pending_approval' → memo aprobado; la orden espera la aprobación final
@@ -1833,6 +1864,8 @@ def approve_memo(session, memo_id, actor, note='', brokerage=None):
     m = _lock_memo(session, memo_id)
     if not m:
         return _err('not_found', 'memo no encontrado', 'memo not found')
+    if on_memo is not None:
+        on_memo(m)                        # puerta G5 (sombra) antes de la previsualización
     if m.status != 'proposed':
         return _err('bad_status', f'el memo ya está «{m.status}»', f'the memo is already "{m.status}"',
                     memo=memo_dict(m))
@@ -1926,6 +1959,15 @@ def approve_memo(session, memo_id, actor, note='', brokerage=None):
 
 
 def reject_memo(session, memo_id, actor, reason='', brokerage=None):
+    """approval.deny (paso 18) sobre el committee.run del memo; el retiro de la orden pendiente queda como hijo."""
+    from core import decision_sites as _ds
+    with _ds.memo_approval(session, memo_id, 'deny', actor=actor, note=reason) as ap:
+        out = _reject_memo(session, memo_id, actor, reason=reason, brokerage=brokerage)
+        ap.finish(out)
+    return out
+
+
+def _reject_memo(session, memo_id, actor, reason='', brokerage=None):
     """Rechazo humano. Si el memo ya tenía una orden esperando aprobación en
     Clientes, se RETIRA (brokerage.reject_preview) — si no, un humano podría
     aprobarla allí y ejecutarse con el memo rechazado."""

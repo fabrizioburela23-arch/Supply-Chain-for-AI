@@ -88,21 +88,11 @@ def resolve_ids(names):
 
 
 def extract_companies(question, limit=4):
-    """Detección barata (sin IA) de empresas mencionadas en la pregunta."""
-    snap = _load_snapshot()
-    ql = ' ' + str(question).lower() + ' '
-    hits = []
-    for lbl, nid in snap['by_label'].items():
-        if len(lbl) >= 3 and lbl in ql:
-            hits.append((len(lbl), nid))
-    hits.sort(reverse=True)
-    out = []
-    for _, nid in hits:
-        if nid not in out:
-            out.append(nid)
-        if len(out) >= limit:
-            break
-    return out
+    """Empresas mencionadas en la pregunta (sin IA) — EL detector del motor de contexto (core/context_engine.detect,
+    BRECHAS L4-01). Antes era una búsqueda de subcadenas propia que no coincidía con la del chat ni con la de los
+    datos en vivo (6 de 15 preguntas distintas)."""
+    from core.context_engine import detect
+    return detect(question, limit=limit, resolve_short=True)
 
 
 def _node_brief(snap, nid):
@@ -124,10 +114,15 @@ def build_context(company_ids=None, question=None, neighbors_per_side=8):
     for nid in ids:
         # proveedores / clientes = SOLO flujo (G4a); socios e inversores van aparte en 'relacionados'
         flow = snap['flow_types']
-        ins = sorted([l for l in snap['in'].get(nid, []) if (l.get('type') or 'supply') in flow],
-                     key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
-        outs = sorted([l for l in snap['out'].get(nid, []) if (l.get('type') or 'supply') in flow],
-                      key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
+        try:   # orden por relevancia R(e|Q) del motor de contexto (peso × confianza × alcance desde la pregunta)
+            from core.context_engine import rank_neighbors
+            ins = rank_neighbors(nid, 'up', neighbors_per_side, question)
+            outs = rank_neighbors(nid, 'down', neighbors_per_side, question)
+        except Exception:  # noqa: BLE001 — respaldo: por peso, como antes
+            ins = sorted([l for l in snap['in'].get(nid, []) if (l.get('type') or 'supply') in flow],
+                         key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
+            outs = sorted([l for l in snap['out'].get(nid, []) if (l.get('type') or 'supply') in flow],
+                          key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
         rel = sorted([l for l in snap['in'].get(nid, []) + snap['out'].get(nid, [])
                       if (l.get('type') or 'supply') not in flow], key=lambda l: -(l.get('w') or 0))[:4]
         focus.append({

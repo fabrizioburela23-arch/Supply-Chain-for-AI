@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "scripts/smoke_mcp.py"
 lenguaje: "python"
-lineas: 162
+lineas: 167
 aliases: ["scripts/smoke_mcp.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # scripts/smoke_mcp.py
 
-> Módulo · capa [[Capa MCP y API]] · 162 líneas · `scripts/smoke_mcp.py`
+> Módulo · capa [[Capa MCP y API]] · 167 líneas · `scripts/smoke_mcp.py`
 
 ## Para qué sirve
 
@@ -18,9 +18,9 @@ O1 (misión de reparación 2026-10-04): humo del MCP VIVO (el desplegado en Rail
 
 ## API pública
 
-- clase `SmokeConfigError` _(línea 38)_
-- `smoke(base_url, token, http=…, timeout=…)` _(línea 62)_
-- `main(argv=…)` _(línea 126)_
+- clase `SmokeConfigError` _(línea 43)_
+- `smoke(base_url, token, http=…, timeout=…)` _(línea 67)_
+- `main(argv=…)` _(línea 131)_
 
 **Internas** (empiezan con `_`): `_rpc`
 

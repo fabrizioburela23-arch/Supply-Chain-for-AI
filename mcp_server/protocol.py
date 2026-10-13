@@ -60,6 +60,9 @@ def instructions(principal):
         'Rules: (1) Never invent figures — every tool result carries source and as_of; if something is '
         'unavailable, say so. (2) Research and committee memos are information, not advice. '
         '(3) Start with search_companies to get ids, then get_company / get_supply_chain / get_research.',
+        '(4) Every tool accepts detail (summary | standard | full) and max_chars; results say truncated and, when '
+        'cut, what was left out. For big neighborhoods use get_subgraph; for what-ifs run_scenario (structural '
+        'estimate from the same kernel the app uses, not a price forecast).',
     ]
     if principal.has('trade') and principal.client_id and _tools.trading_enabled():
         lines.append(
@@ -97,9 +100,9 @@ def _finite(v, depth=0):
 def _tool_result(payload, is_error=False):
     try:
         try:
-            text = json.dumps(payload, ensure_ascii=False, default=str, allow_nan=False)
-        except ValueError:
-            text = json.dumps(_finite(payload), ensure_ascii=False, default=str, allow_nan=False)
+            text = json.dumps(payload, ensure_ascii=False, default=str, allow_nan=False, separators=(',', ':'))
+        except ValueError:      # JSON compacto (L4-08): la copia en texto no suma espacios a la estructurada
+            text = json.dumps(_finite(payload), ensure_ascii=False, default=str, allow_nan=False, separators=(',', ':'))
     except Exception:  # noqa: BLE001
         text = json.dumps({'error': 'result could not be serialized'})
         is_error = True
@@ -172,18 +175,20 @@ def handle(msg, ctx):
                 audit.update(status='invalid', error='unknown tool')
                 return error(id_, INVALID_PARAMS, f'Unknown tool: {name[:60]}'), audit
             try:
-                res = _tools.call(name, args or {}, ctx)
+                res = _tools.call(name, args or {}, ctx, shape=True)      # contrato común (detail/max_chars)
                 return result(id_, _tool_result(res)), audit
             except _tools.InvalidParams as e:
-                audit.update(status='invalid', error=str(e))
+                audit.update(status='invalid', error=str(e), error_code='invalid_params')
                 return error(id_, INVALID_PARAMS, f'Invalid params: {e}'), audit
             except _tools.ToolError as e:
                 audit.update(status='denied' if e.code in ('insufficient_scope', 'forbidden') else
-                             'rate_limited' if e.code == 'rate_limited' else 'error', error=e.message)
+                             'rate_limited' if e.code == 'rate_limited' else 'error', error=e.message,
+                             error_code=str(e.code or 'tool_error')[:60])
                 return result(id_, _tool_result(e.payload(), is_error=True)), audit
             except Exception as e:  # noqa: BLE001 — fallo inesperado de la herramienta: isError, no 500
                 log.warning('mcp tool %s: %s: %s', name, type(e).__name__, str(e)[:200])
-                audit.update(status='error', error=f'{type(e).__name__}: {str(e)[:200]}')
+                audit.update(status='error', error=f'{type(e).__name__}: {str(e)[:200]}',
+                             error_code='internal:' + type(e).__name__[:40])
                 return result(id_, _tool_result({'error': f'internal error in {name} ({type(e).__name__}); '
                                                           'the server logged it', 'code': 'internal'},
                                                 is_error=True)), audit

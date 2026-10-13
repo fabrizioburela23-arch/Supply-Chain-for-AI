@@ -253,6 +253,14 @@ def hot_scenario():
     t0 = time.perf_counter()
     sc = impact.scenario(core, x0, factors=factors, damping=damping, max_hops=int(hops), top=int(top),
                          direction=direction)
+    try:   # paso 20: ficha whatif.shock (async, 0 ms al usuario) con lo pedido y la generación usada
+        from matrix.api import ledger_whatif
+        ledger_whatif('whatif.shock', {'shock': [u['id'] for u in used], 'shocks': used, 'factors': factors,
+                                       'direction': direction, 'damping': damping, 'max_hops': int(hops),
+                                       'endpoint': '/api/hot/scenario'},
+                      sc.get('impacts') or {}, g, {'affected': sc.get('affected')})
+    except Exception:  # noqa: BLE001
+        pass
     if not body.get('full'):
         sc.pop('impacts', None)            # el vector completo solo si se pide (full: true)
     data = {'shocks': used, 'unknown_ids': unknown, 'factors': factors, 'direction': direction,

@@ -496,6 +496,7 @@ def evaluate_due(session, now=None, price_fn=None, limit=500):
 
     counts = {'hit': 0, 'miss': 0, 'n/a': 0}
     evaluated = 0
+    graded = []
     for b, cp in due:
         res = score_checkpoint(b, cp, get_series, today)
         if res is None:
@@ -519,7 +520,12 @@ def evaluate_due(session, now=None, price_fn=None, limit=500):
         except IntegrityError:        # otro proceso la calificó a la vez → idempotente
             continue
         evaluated += 1
+        graded.append(row)
         counts[res['result']] = counts.get(res['result'], 0) + 1
+    # paso 19: cada calificación es un resultado POSTERIOR del research.run que creó el claim (decision_outcomes)
+    if graded:
+        from core import decision_sites as _ds
+        _ds.claim_evals(session, graded, source=f'outcomes:{METHOD}')
     # C8: reglas de falsación verificables (precio / exceso vs SPY) sobre claims activas
     try:
         from research.falsifiers import apply_falsifiers

@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 198 |
-| Líneas de código | 119.123 |
+| Archivos de código (Python, JS, HTML) | 205 |
+| Líneas de código | 123.754 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 164 |
-| Documentos | 27 |
+| Archivos de prueba | 172 |
+| Documentos | 28 |
 | Rutas HTTP | 247 |
 | Grupos de API | 61 |
-| Herramientas MCP | 23 |
+| Herramientas MCP | 29 |
 | Variables de entorno | 162 |
-| Sesiones de trabajo | 97 |
-| Aristas `calls_endpoint` | 609 |
-| Aristas `defines_endpoint` | 270 |
-| Aristas `imports` | 1.454 |
+| Sesiones de trabajo | 98 |
+| Aristas `calls_endpoint` | 627 |
+| Aristas `defines_endpoint` | 276 |
+| Aristas `imports` | 1.652 |
 | Aristas `loads_script` | 81 |
-| Aristas `mentions_in_session` | 500 |
-| Aristas `reads_env` | 225 |
-| Aristas `references_file` | 45 |
-| Aristas `tested_by` | 1.100 |
+| Aristas `mentions_in_session` | 501 |
+| Aristas `reads_env` | 226 |
+| Aristas `references_file` | 59 |
+| Aristas `tested_by` | 1.197 |
 | Aristas `uses_global` | 346 |
 
 ## Nodos "dios" (más conectados)
@@ -45,26 +45,26 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 |---|---|---|---|---|
 | [[app.html]] | 142 | 54 | 88 | [[Capa Interfaz (Khipus OS)]] |
 | [[server.py]] | 85 | 24 | 61 | [[Capa Infraestructura]] |
-| [[ontology.db.py]] | 42 | 34 | 8 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.db.py]] | 45 | 37 | 8 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 41 | 11 | 30 | [[Capa Interfaz (Khipus OS)]] |
+| [[nodes.nodes_seed.js]] | 36 | 36 | 0 | [[Capa Datos del catálogo]] |
 | [[core.http.py]] | 35 | 33 | 2 | [[Capa Infraestructura]] |
-| [[nodes.nodes_seed.js]] | 35 | 35 | 0 | [[Capa Datos del catálogo]] |
-| [[mcp_server.tools.py]] | 29 | 5 | 24 | [[Capa MCP y API]] |
-| [[core.__init__.py]] | 28 | 28 | 0 | [[Capa Infraestructura]] |
-| [[core.khipu_chat.py]] | 28 | 6 | 22 | [[Capa Chat y agentes]] |
+| [[mcp_server.tools.py]] | 33 | 6 | 27 | [[Capa MCP y API]] |
+| [[core.khipu_chat.py]] | 32 | 6 | 26 | [[Capa Chat y agentes]] |
+| [[core.__init__.py]] | 31 | 31 | 0 | [[Capa Infraestructura]] |
+| [[ontology.api.py]] | 27 | 7 | 20 | [[Capa Ontología y grafo temporal]] |
+| [[research.committee_api.py]] | 27 | 7 | 20 | [[Capa Comité]] |
+| [[core.decisions.py]] | 26 | 19 | 7 | [[Capa Infraestructura]] |
 | [[engine.resolve.js]] | 26 | 17 | 9 | [[Capa Chat y agentes]] |
 | [[engine.voice.js]] | 26 | 5 | 21 | [[Capa Voz]] |
-| [[ontology.api.py]] | 26 | 7 | 19 | [[Capa Ontología y grafo temporal]] |
 | [[ontology.models.py]] | 26 | 23 | 3 | [[Capa Ontología y grafo temporal]] |
-| [[research.committee_api.py]] | 25 | 7 | 18 | [[Capa Comité]] |
+| [[research.runner.py]] | 26 | 8 | 18 | [[Capa Investigación]] |
+| [[research.committee.py]] | 25 | 7 | 18 | [[Capa Comité]] |
+| [[brokerage.service.py]] | 24 | 9 | 15 | [[Capa Dinero (carteras, trading, corretaje)]] |
+| [[core.identity.py]] | 24 | 22 | 2 | [[Capa Infraestructura]] |
 | [[core.world.py]] | 24 | 15 | 9 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
-| [[engine.xray.js]] | 24 | 11 | 13 | [[Capa Interfaz (Khipus OS)]] |
-| [[research.runner.py]] | 24 | 8 | 16 | [[Capa Investigación]] |
-| [[engine.khipu_chat.js]] | 23 | 5 | 18 | [[Capa Chat y agentes]] |
-| [[research.committee.py]] | 23 | 6 | 17 | [[Capa Comité]] |
-| [[brokerage.service.py]] | 22 | 8 | 14 | [[Capa Dinero (carteras, trading, corretaje)]] |
 
-## Módulos sin pruebas (27)
+## Módulos sin pruebas (28)
 
 Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
@@ -79,7 +79,7 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[engine.maptime.js]] | 389 | [[Capa Ontología y grafo temporal]] |
 | [[engine.termdata.js]] | 359 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[scripts.ingest_multicapa.py]] | 343 | [[Capa Datos del catálogo]] |
-| [[ontology.ledger_models.py]] | 226 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.ledger_models.py]] | 271 | [[Capa Ontología y grafo temporal]] |
 | [[core.country_geo.py]] | 222 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.matrixview.js]] | 207 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
 | [[engine.pricehist.js]] | 189 | [[Capa Interfaz (Khipus OS)]] |
@@ -96,6 +96,7 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[scripts.build_private_valuations.py]] | 71 | [[Capa Datos del catálogo]] |
 | [[scripts.build_listing_status.py]] | 63 | [[Capa Datos del catálogo]] |
 | [[ontology.governance_models.py]] | 62 | [[Capa Ontología y grafo temporal]] |
+| [[scripts.link_origins.js]] | 56 | [[Capa Ontología y grafo temporal]] |
 | [[core.decide_api.py]] | 25 | [[Capa Chat y agentes]] |
 
 ## Módulos Python que nadie importa (0)
