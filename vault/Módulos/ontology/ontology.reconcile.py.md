@@ -50,6 +50,7 @@ _Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_ops_single_source.py]]
 - [[tests.test_reconcile.py]]
 - [[tests.test_repair_ontology_review.py]]
 

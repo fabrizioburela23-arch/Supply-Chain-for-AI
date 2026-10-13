@@ -39,13 +39,6 @@ _Nada interno._
 
 ## Lo usan
 
-- [[core.entities.py]] — lo nombra por su ruta
-- [[core.screener.py]] — lo nombra por su ruta
-- [[core.semantic.py]] — lo nombra por su ruta
-- [[core.sim_agents.py]] — lo nombra por su ruta
-- [[core.world.py]] — lo nombra por su ruta
-- [[matrix.tensor.py]] — lo nombra por su ruta
-- [[mcp_server.tools.py]] — lo nombra por su ruta
 - [[ontology.reconcile.py]] — lo nombra por su ruta
 - [[scripts.audit_graph.py]] — lo nombra por su ruta
 - [[scripts.ingest_multicapa.py]] — lo nombra por su ruta
@@ -61,6 +54,7 @@ _Nada interno._
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
 - [[tests.test_ontology.py]]
+- [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_server_smoke.py]]
 - [[tests.test_voice_tour.py]]

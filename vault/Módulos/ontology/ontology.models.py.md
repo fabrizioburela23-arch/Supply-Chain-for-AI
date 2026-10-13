@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/models.py"
 lenguaje: "python"
-lineas: 187
+lineas: 192
 aliases: ["ontology/models.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/models.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 187 líneas · `ontology/models.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 192 líneas · `ontology/models.py`
 
 ## Para qué sirve
 
@@ -28,7 +28,7 @@ esquema SQLAlchemy de la ontología.
 
 ## Depende de
 
-_Nada interno._
+- [[ontology.ledger_models.py]] — importa `ledger_models`
 
 ## Lo usan
 
@@ -44,6 +44,7 @@ _Nada interno._
 - [[ontology.bulk_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.ingest_news.py]] — lo importa
+- [[ontology.ledger_models.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 - [[ontology.service.py]] — lo importa
@@ -56,7 +57,7 @@ _Nada interno._
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 32 pruebas (lista abajo)._
+_Además lo importan 38 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -70,6 +71,9 @@ _Además lo importan 32 pruebas (lista abajo)._
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
+- [[tests.test_ledger_chain.py]]
+- [[tests.test_ledger_core.py]]
+- [[tests.test_ledger_privacy.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_ontology.py]]
@@ -78,7 +82,10 @@ _Además lo importan 32 pruebas (lista abajo)._
 - [[tests.test_ontology_alerts.py]]
 - [[tests.test_ops_events_append_only.py]]
 - [[tests.test_ops_graph_version.py]]
+- [[tests.test_ops_identity.py]]
 - [[tests.test_ops_link_status_event.py]]
+- [[tests.test_ops_review_steps568.py]]
+- [[tests.test_ops_single_source.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_provenance.py]]
 - [[tests.test_reconcile.py]]

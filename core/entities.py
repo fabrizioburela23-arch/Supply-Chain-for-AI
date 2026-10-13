@@ -23,16 +23,15 @@ umbrales distintos según quién pregunta (un humano escribiendo puede aceptar
 un fuzzy flojo; un agente escribiendo en la ontología, no).
 """
 import json
-import os
 import re
 import threading
 import unicodedata
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SNAPSHOT = os.path.join(_ROOT, 'data', 'grafo_v0.json')
-
+# Paso 8 (INFRA_OPERATIVA §4.7): el índice sale de la vista `graph` de la generación vigente
+# (core/hotviews/hot.graph(): Postgres si existe, el snapshot si no) y se reconstruye cuando cambia la
+# generación — antes se armaba UNA vez desde data/grafo_v0.json y una empresa nueva nunca resolvía.
 _lock = threading.Lock()
-_index = None   # se construye una vez, es de solo lectura
+_index = None   # {'generation': …, …} de solo lectura; se renueva con la generación
 
 # Umbrales recomendados. Distintos a propósito: escribir en la ontología con un
 # match flojo corrompe el grafo en silencio; buscar desde la UI no.
@@ -98,12 +97,19 @@ def external_ids(node):
     return out
 
 
-def _build_index(snapshot_path=None):
-    """Índice de resolución desde el snapshot canónico. Incluye la tabla de
-    alias del merge (`node_id_alias`), que antes no cruzaba al servidor."""
-    path = snapshot_path or _SNAPSHOT
-    with open(path, encoding='utf-8') as fh:
-        snap = json.load(fh)
+def _build_index(snapshot_path=None, view=None):
+    """Índice de resolución desde el grafo vigente (vista `graph`) o, si se pasa, desde un archivo con la forma
+    del snapshot (solo pruebas/herramientas). Incluye la tabla de alias del merge (`node_id_alias`) y, con
+    Postgres, las fusiones (FusionarEntidad: merged_into)."""
+    if snapshot_path:
+        with open(snapshot_path, encoding='utf-8') as fh:
+            snap = json.load(fh)
+        generation = f'file:{snapshot_path}'
+    else:
+        from core.hotviews import hot
+        view = view or hot.graph()
+        snap = view.snapshot
+        generation = view.generation
 
     nodos = {n['id']: n for n in snap.get('nodes', [])}
     alias_tbl = snap.get('node_id_alias') or {}
@@ -157,45 +163,48 @@ def _build_index(snapshot_path=None):
             por_alias.setdefault(norm(nombre), can)
             por_alias.setdefault(strip_suffix(nombre), can)
 
+    alias_inv = {}      # canónico → ids viejos que apuntan a él (entity_ids_for)
+    for a in alias_tbl:
+        alias_inv.setdefault(canonico(a), []).append(a)
+
     return {'nodos': nodos, 'por_id': por_id, 'por_ticker': por_ticker,
             'por_label': por_label, 'por_label_corto': por_label_corto,
-            'por_alias': por_alias, 'alias_tbl': alias_tbl,
-            'preipo_intel': snap.get('preipo_intel') or {}}
+            'por_alias': por_alias, 'alias_tbl': alias_tbl, 'alias_inv': alias_inv,
+            'preipo_intel': snap.get('preipo_intel') or {}, 'generation': generation}
 
 
 def get_index(force=False, snapshot_path=None):
+    """Índice de la generación VIGENTE (se reconstruye solo si cambió). `snapshot_path` = un archivo aparte
+    (no toca el índice compartido)."""
     global _index
+    if snapshot_path:
+        return _build_index(snapshot_path)
+    from core.hotviews import hot
+    view = hot.graph()
+    cur = _index
+    if cur is not None and not force and cur.get('generation') == view.generation:
+        return cur
     with _lock:
-        if _index is None or force:
-            _index = _build_index(snapshot_path)
+        if _index is None or force or _index.get('generation') != view.generation:
+            _index = _build_index(view=view)
         return _index
 
 
-_ALIAS_IDS = {'tbl': None}
+def graph_version():
+    """La generación del grafo que usa este módulo (tests/test_ops_single_source.py)."""
+    return get_index().get('generation')
 
 
 def entity_ids_for(eid):
-    """[eid] + los ids VIEJOS (alias del catálogo) que hoy apuntan a eid.
+    """[eid] + los ids VIEJOS (alias del catálogo y fusiones) que hoy apuntan a eid.
     Revisión G1b/G1d: lo guardado con un id que luego se fusionó (claims de
     investigación, memos) sigue apareciendo bajo la empresa canónica."""
     if not eid:
         return []
-    tbl = _ALIAS_IDS['tbl']
-    if tbl is None:
-        try:
-            with open(_SNAPSHOT, encoding='utf-8') as fh:
-                alias = json.load(fh).get('node_id_alias') or {}
-        except Exception:  # noqa: BLE001
-            alias = {}
-
-        def canon(x, hops=5):
-            while x in alias and hops > 0:
-                x, hops = alias[x], hops - 1
-            return x
+    try:
+        tbl = get_index().get('alias_inv') or {}
+    except Exception:  # noqa: BLE001
         tbl = {}
-        for a in alias:
-            tbl.setdefault(canon(a), []).append(a)
-        _ALIAS_IDS['tbl'] = tbl
     return [eid] + [a for a in tbl.get(eid, []) if a != eid]
 
 

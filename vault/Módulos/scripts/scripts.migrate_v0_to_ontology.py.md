@@ -56,4 +56,5 @@ _Además lo importan 1 pruebas (lista abajo)._
 - [[tests.test_infra.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_ontology.py]]
+- [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_graph.py]]

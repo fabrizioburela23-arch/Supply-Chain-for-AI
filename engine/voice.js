@@ -1925,7 +1925,7 @@ const BixbyVoice = {
 
     // confirmed=true tras SU resumen → enviar de verdad (con guard anti-doble-envío compartido); el sí se usa una vez
     this._orderPreview = null;
-    const r = await window._executeTradeOrder(orderObj);
+    const r = await window._executeTradeOrder(Object.assign({ channel: 'voice' }, orderObj));
     this._defer(() => { if (window._openBrokerStage) window._openBrokerStage({}); });
     if (!r.ok) return { success: false, error: r.error };
     if (paper === null) {
@@ -1969,7 +1969,7 @@ const BixbyVoice = {
     }
     let positions = [];
     try {
-      const r = await window._tradeFetch('/api/trade/positions/detail', {}, false);
+      const r = await window._tradeFetch('/api/trade/positions/detail', { channel: 'voice' }, false);
       const d = await r.json();
       if (Array.isArray(d)) positions = d;
     } catch (e) {}
@@ -2828,7 +2828,7 @@ if (typeof document !== 'undefined' && document.addEventListener) {
     if (!window._tradeFetch) return null;
     try {
       // interactive=false: NUNCA pedir el PIN solo para resolver un nombre
-      var r = await window._tradeFetch('/api/trade/crypto/assets', {}, false);
+      var r = await window._tradeFetch('/api/trade/crypto/assets', { channel: 'voice' }, false);
       if (!r.ok) return null;
       var d = await r.json();
       var list = (d && Array.isArray(d.assets)) ? d.assets : null;
@@ -2966,6 +2966,9 @@ if (typeof document !== 'undefined' && document.addEventListener) {
     var p = (async function () {
       try {
         var r = await window._tradeFetch('/api/trade/order', {
+          // paso 5 (INFRA_OPERATIVA §2.5): X-Khipu-Channel = canal de quien llama (voz → 'voice'; Cabina → 'ui').
+          // Es metadato: nunca autoriza nada.
+          channel: o.channel === 'voice' ? 'voice' : 'ui',
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), timeout: 30000,
         }, true);
         var d = await r.json().catch(function () { return null; });

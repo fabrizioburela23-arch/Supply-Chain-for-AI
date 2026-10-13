@@ -222,9 +222,12 @@ def _decide(memo_id, fn):
     if bad:
         return bad
     body = request.get_json(silent=True) or {}
-    actor = _actor(body)
-    if not actor:
+    if not _actor(body):
         return jsonify({'error': 'actor obligatorio', 'error_en': 'actor is required'}), 400
+    # paso 5 (camino de DINERO): quién aprueba/rechaza = el principal autenticado por el PIN (op:fabrizio),
+    # no el texto libre del cuerpo — ese texto acababa en broker_orders.approved_by y broker_audit.actor.
+    from core import identity
+    actor = identity.principal_from_request(declared=_actor(body)).id
     with session_scope() as s:
         out = fn(s, memo_id, actor, body)
     code = 200 if out.get('ok') else {'not_found': 404, 'expired': 409, 'bad_status': 409, 'order_sent': 409,

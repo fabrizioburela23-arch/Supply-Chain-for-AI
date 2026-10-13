@@ -27,7 +27,7 @@ De nivel superior (globales del script): `_sbEn`, `_sbFlow`, `_sbL`
 - [[app.html]] — usa `DataLayer`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8detail`, `_secondBrain`, `activateStress`, `catColor`, `computeDownstream` y 11 más
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **35 de 92** (línea 7821), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
+Se carga en [[app.html]] en la posición **35 de 92** (línea 7828), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
 
 ## Lo usan
 

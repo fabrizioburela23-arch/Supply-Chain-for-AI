@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **28 de 92** (línea 7814), después de [[engine.toast.js]] y antes de [[engine.tour_script.js]].
+Se carga en [[app.html]] en la posición **28 de 92** (línea 7821), después de [[engine.toast.js]] y antes de [[engine.tour_script.js]].
 
 ## Lo usan
 

@@ -22,12 +22,23 @@ def _snap():
 
 
 def test_psi_es_el_mismo_kernel_de_shocks_que_propagate():
+    """Paso 8 (INFRA_OPERATIVA §4.7, M-code-01): Ψ = EL kernel del servidor (propagate, fragilidad de los factores)
+    sobre las relaciones de FLUJO: BRECHAS #4 por defecto (socios/inversores no transmiten) hasta el paso 12."""
+    from core.hotviews import source
+    from core.hotviews.views import graph_core
+    from ontology import vocabulary as vocab
     m = T.Model(_snap(), caps_live={'D': 100.0, 'C': 10.0})
+    core = graph_core.build(source.from_snapshot(_snap()))
+    flow = set(vocab.flow_relation_types())
+    mats = {r: x for r, x in core.mats.items() if r in flow}
     for s in m.ids:
-        imp, _ = E.propagate(m.A, m.idx, m.ids, [s], damping=T.DAMPING, max_hops=T.MAX_HOPS, threshold=T.THRESHOLD)
-        for k, v in imp.items():
+        imp, _ = E.propagate(mats, core.idx, core.ids, [s], damping=T.DAMPING, max_hops=T.MAX_HOPS,
+                             threshold=T.THRESHOLD, frag=core.frag)
+        exp = {k: v / 100.0 for k, v in imp.items() if k != s}
+        for k in m.ids:
             if k != s:
-                assert abs(m.psi[m.idx[k], m.idx[s]] * 100 - v) < 0.02, (s, k)
+                assert m.psi[m.idx[k], m.idx[s]] == exp.get(k, 0.0), (s, k)
+    assert m.psi[m.idx['C'], m.idx['Z']] == 0.0                # Z es socio de C: no transmite
 
 
 def test_metricas_estructurales_a_mano():
@@ -40,7 +51,8 @@ def test_metricas_estructurales_a_mano():
     d = T.structure('D', m)
     src = {x['id']: x for x in d['upstream_risk_sources']}
     assert 'A' in src and src['A']['direct'] is False          # riesgo INDIRECTO (vía C, P1, P2)
-    assert 'Z' not in src                                       # un socio no transmite daño de suministro
+    # Z (socio de C) no es fuente de riesgo: BRECHAS #4 (socios no transmiten), tests/test_ops_single_source.py
+    assert 'Z' not in src
     assert T.ranking(m, 'cap_at_risk', 1)[0]['id'] == 'A'       # A es la más sistémica
 
 

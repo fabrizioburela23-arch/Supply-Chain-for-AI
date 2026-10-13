@@ -9,15 +9,15 @@ tags: ["capa/mcp-api", "tipo/capa"]
 
 > El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas.
 
-**9 archivos · 4.541 líneas.** Volver al [[00 Mapa de Khipus]].
+**9 archivos · 4.569 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 
 ## Archivos
 
-- [[mcp_server.tools.py]] — 1.708 líneas · catálogo de herramientas MCP de Khipus.
+- [[mcp_server.tools.py]] — 1.726 líneas · catálogo de herramientas MCP de Khipus.
 - [[mcp_server.oauth.py]] — 708 líneas · OAuth 2.1 mínimo (y correcto) para conectores remotos.
-- [[mcp_server.api.py]] — 599 líneas · blueprint mcp_bp (transporte + administración).
+- [[mcp_server.api.py]] — 609 líneas · blueprint mcp_bp (transporte + administración).
 - [[mcp_server.auth.py]] — 534 líneas · tokens kmcp_…, alcances, límites por token y auditoría.
 - [[engine.mcpconnect.js]] — 500 líneas · 🤖 CONECTAR IAs (MCP): que Claude, ChatGPT, Cursor o un agente propio usen Khipus desde SU propia interfaz.
 - [[mcp_server.protocol.py]] — 203 líneas · JSON-RPC 2.0 + Model Context Protocol (servidor).
@@ -30,7 +30,7 @@ Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Ontología y grafo temporal]] | 11 |
-| usa a | [[Capa Infraestructura]] | 8 |
+| usa a | [[Capa Infraestructura]] | 10 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
 | la usa | [[Capa Infraestructura]] | 4 |
 | la usa | [[Capa Chat y agentes]] | 3 |
@@ -39,7 +39,7 @@ Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 | usa a | [[Capa Investigación]] | 3 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 2 |
-| usa a | [[Capa Datos del catálogo]] | 2 |
 | usa a | [[Capa Comité]] | 2 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 1 |
 | la usa | [[Capa Ontología y grafo temporal]] | 1 |
+| usa a | [[Capa Datos del catálogo]] | 1 |

@@ -188,6 +188,12 @@ def _fmt_series(years, vals, unit='B'):
     return ', '.join(out)
 
 
+def graph_version():
+    """La generación del grafo que usa el armador de contexto (tests/test_ops_single_source.py)."""
+    from core.hotviews import hot
+    return hot.graph().generation
+
+
 class ContextBuilder:
     def __init__(self, fetchers=None, session=None):
         self.f = dict(DEFAULT_FETCHERS, **(fetchers or {}))
@@ -195,14 +201,9 @@ class ContextBuilder:
 
     # ── grafo: vecinos acotados (evita explosión combinatoria) ───────────────
     def subgraph(self, entity_id, max_nodes=12, max_depth=1, rel_types=None, min_weight=0):
+        from core.hotviews import hot
         idx = get_index()
-        snap_links = idx.get('_links')
-        if snap_links is None:
-            import json
-            from core.entities import _SNAPSHOT
-            with open(_SNAPSHOT, encoding='utf-8') as fh:
-                snap_links = json.load(fh).get('links', [])
-            idx['_links'] = snap_links
+        snap_links = hot.graph().links          # paso 8: el grafo vigente (misma generación que el índice)
         nodes = idx['nodos']
         frontier, seen, edges = {entity_id}, {entity_id}, []
         for _depth in range(max(1, max_depth)):

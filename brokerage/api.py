@@ -137,9 +137,17 @@ def _body():
     return request.get_json(silent=True) or {}
 
 
+def _principal(body=None):
+    """Paso 5: QUIÉN actúa = el principal autenticado (todas las rutas pasan por el PIN → op:fabrizio). El
+    'actor' del cuerpo (o X-Khipu-Actor) queda solo como etiqueta; el canal sale de X-Khipu-Channel."""
+    from core import identity
+    b = body or {}
+    return identity.principal_from_request(declared=str(b.get('actor') or '').strip()[:120] or None)
+
+
 def _actor(body=None):
-    a = str((body or {}).get('actor') or request.headers.get('X-Khipu-Actor') or '').strip()[:120]
-    return a or 'ui (PIN)'
+    """Lo que se REGISTRA como requested_by / approved_by / actor de broker_audit: el id del principal."""
+    return _principal(body).id
 
 
 def _svc():

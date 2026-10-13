@@ -9,6 +9,20 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-13 (b) — INFRAESTRUCTURA OPERATIVA, PASOS 5, 6 y 8 (identidad, libro de decisiones, un solo grafo) — sw v258
+
+- Paso 5: el PIN identifica a `op:fabrizio`; el nombre tecleado es solo etiqueta; canal por cabecera; MCP/agentes/reloj
+  con su propio principal; producción falla cerrada sin TRADE_PIN (escrituras de operador → 403).
+- Paso 6: libro de decisiones append-only con cadena de hashes y sellador; cada acción de ontología = 1 decisión.
+  Costo medido: +1,7 ms p50 por acción. Sellador ~6.000 filas/s; verify 6.137 sellos en 0,3 s.
+- Paso 8: un solo grafo en el servidor (12 lectores → `hot.graph()`); cambia Ψ (ahora el kernel, solo flujo): TSMC
+  aguas abajo y capitalización en riesgo suben; screener aplica su bono PageRank también sin base.
+- Revisión (3 lentes): 12 hallazgos, 12 arreglados (vínculos propuestos servidos como verificados, principal falso en
+  rutas sin PIN, sellos dependientes de la zona horaria, auto-aprobación bloqueada a Fabrizio, Ψ con socios…).
+- RIESGO a vigilar: si TRADE_PIN no existe en Railway, las acciones manuales de ontología dan 403.
+
+---
+
 # SESIÓN 2026-10-13 — INFRAESTRUCTURA OPERATIVA, PASOS 1-4 (registro inmutable, versión del grafo, vistas rápidas)
 
 - Paso 1: `events` append-only con disparador (UPDATE/DELETE/TRUNCATE bloqueados), columnas txid/seq/release_hash

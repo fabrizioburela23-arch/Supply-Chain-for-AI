@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L543"
+ruta: "docs/ESTADO.md#L557"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (z) — SIMULACIÓN CON CONTEXTO EN VIVO + RÓTULOS DE ORIGEN (sw v233)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 543 (11 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 557 (11 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

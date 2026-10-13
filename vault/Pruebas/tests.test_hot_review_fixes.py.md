@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_hot_review_fixes.py"
 lenguaje: "python"
-lineas: 355
+lineas: 358
 aliases: ["tests/test_hot_review_fixes.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_hot_review_fixes.py
 
-> Prueba · capa [[Capa Pruebas]] · 355 líneas · `tests/test_hot_review_fixes.py`
+> Prueba · capa [[Capa Pruebas]] · 358 líneas · `tests/test_hot_review_fixes.py`
 
 ## Qué prueba
 

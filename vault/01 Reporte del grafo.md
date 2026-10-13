@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 178 |
-| Líneas de código | 110.216 |
+| Archivos de código (Python, JS, HTML) | 183 |
+| Líneas de código | 112.356 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 136 |
+| Archivos de prueba | 142 |
 | Documentos | 26 |
-| Rutas HTTP | 228 |
-| Grupos de API | 57 |
+| Rutas HTTP | 232 |
+| Grupos de API | 58 |
 | Herramientas MCP | 23 |
-| Variables de entorno | 161 |
-| Sesiones de trabajo | 94 |
-| Aristas `calls_endpoint` | 568 |
-| Aristas `defines_endpoint` | 251 |
-| Aristas `imports` | 1.080 |
+| Variables de entorno | 162 |
+| Sesiones de trabajo | 95 |
+| Aristas `calls_endpoint` | 585 |
+| Aristas `defines_endpoint` | 255 |
+| Aristas `imports` | 1.207 |
 | Aristas `loads_script` | 78 |
-| Aristas `mentions_in_session` | 494 |
-| Aristas `reads_env` | 221 |
-| Aristas `references_file` | 50 |
-| Aristas `tested_by` | 813 |
+| Aristas `mentions_in_session` | 495 |
+| Aristas `reads_env` | 224 |
+| Aristas `references_file` | 43 |
+| Aristas `tested_by` | 901 |
 | Aristas `uses_global` | 341 |
 
 ## Nodos "dios" (más conectados)
@@ -44,27 +44,27 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
 | [[app.html]] | 137 | 52 | 85 | [[Capa Interfaz (Khipus OS)]] |
-| [[server.py]] | 77 | 24 | 53 | [[Capa Infraestructura]] |
+| [[server.py]] | 80 | 24 | 56 | [[Capa Infraestructura]] |
 | [[engine.cockpit.js]] | 41 | 11 | 30 | [[Capa Interfaz (Khipus OS)]] |
+| [[ontology.db.py]] | 38 | 31 | 7 | [[Capa Ontología y grafo temporal]] |
 | [[nodes.nodes_seed.js]] | 35 | 35 | 0 | [[Capa Datos del catálogo]] |
-| [[ontology.db.py]] | 35 | 28 | 7 | [[Capa Ontología y grafo temporal]] |
-| [[core.http.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
+| [[core.http.py]] | 33 | 31 | 2 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 29 | 5 | 24 | [[Capa MCP y API]] |
 | [[core.khipu_chat.py]] | 27 | 6 | 21 | [[Capa Chat y agentes]] |
 | [[engine.voice.js]] | 27 | 5 | 22 | [[Capa Voz]] |
 | [[engine.resolve.js]] | 26 | 17 | 9 | [[Capa Chat y agentes]] |
 | [[engine.xray.js]] | 26 | 11 | 15 | [[Capa Interfaz (Khipus OS)]] |
-| [[research.committee_api.py]] | 24 | 7 | 17 | [[Capa Comité]] |
+| [[ontology.api.py]] | 25 | 7 | 18 | [[Capa Ontología y grafo temporal]] |
+| [[research.committee_api.py]] | 25 | 7 | 18 | [[Capa Comité]] |
 | [[research.runner.py]] | 24 | 8 | 16 | [[Capa Investigación]] |
 | [[core.world.py]] | 23 | 15 | 8 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.khipu_chat.js]] | 23 | 5 | 18 | [[Capa Chat y agentes]] |
-| [[ontology.api.py]] | 23 | 7 | 16 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.models.py]] | 22 | 21 | 1 | [[Capa Ontología y grafo temporal]] |
 | [[research.committee.py]] | 22 | 6 | 16 | [[Capa Comité]] |
 | [[scripts.export_graph_v0.js]] | 22 | 0 | 22 | [[Capa Datos del catálogo]] |
 | [[core.ai.py]] | 21 | 16 | 5 | [[Capa Infraestructura]] |
-| [[engine.committee.js]] | 21 | 11 | 10 | [[Capa Comité]] |
 
-## Módulos sin pruebas (22)
+## Módulos sin pruebas (23)
 
 Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
@@ -80,6 +80,7 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[engine.termdata.js]] | 359 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[scripts.ingest_multicapa.py]] | 343 | [[Capa Datos del catálogo]] |
 | [[core.country_geo.py]] | 222 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
+| [[ontology.ledger_models.py]] | 208 | [[Capa Ontología y grafo temporal]] |
 | [[engine.matrixview.js]] | 207 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
 | [[security_audit.py]] | 182 | [[Capa Infraestructura]] |
 | [[engine.compare.js]] | 168 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
@@ -160,17 +161,17 @@ Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los s
 | `GET` | `/api/vocabulary` | `api_vocabulary` | [[server.py]] |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | [[server.py]] |
 
-**Solo las llaman las pruebas** (23): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/khipu/tools`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/rank`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
+**Solo las llaman las pruebas** (27): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/khipu/tools`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/rank`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
 
 ## Llamadas a rutas que no existen (0)
 
 Textos con forma de ruta (`/api/…`) en el código que no coinciden con ninguna ruta del servidor. Pueden ser restos de funciones retiradas o rutas armadas por partes.
 
-## Variables leídas en el código que faltan en CLAUDE.md (63)
+## Variables leídas en el código que faltan en CLAUDE.md (64)
 
 Se pueden configurar en Railway pero nadie las anotó en la lista de CLAUDE.md.
 
-[[ENV AI_BUSY_WAIT_S]], [[ENV AI_CLAUDE_TIMEOUT_DEEP_S]], [[ENV AI_DAILY_LIMIT_USD]], [[ENV AI_MONTHLY_LIMIT_USD]], [[ENV AI_PER_USER_DAILY_USD]], [[ENV AI_PRICES_JSON]], [[ENV ALPHA_VANTAGE_KEY]], [[ENV ANTHROPIC_ADMIN_KEY]], [[ENV BIXBY_AUTOSYNC]], [[ENV CLAUDE_KEY]], [[ENV CLOUDFLARE_RADAR_TOKEN]], [[ENV COINGECKO_KEY]], [[ENV COMMITTEE_MAX_SEATS]], [[ENV CSP_ENABLED]], [[ENV CSP_REPORT_ONLY]], [[ENV DB_CONNECT_TIMEOUT_S]], [[ENV DB_POOL_TIMEOUT_S]], [[ENV DECIDE_ENABLED]], [[ENV DECIDE_MIN_CONF]], [[ENV DECIDE_WAIT_S]], [[ENV ELEVENLABS_LLM]], [[ENV GEMINI_HOT_S]], [[ENV GEMINI_THINKING]], [[ENV GOOGLE_API_KEY]], [[ENV IMPORT_BULK_WEIGHT_FACTOR]], [[ENV INSIGHTS_INFLIGHT_WAIT_S]], [[ENV INVESTIGADOR_AUTO]], [[ENV INVESTIGADOR_AUTO_CUTOFF_HORAS]], [[ENV KHIPU_URL]], [[ENV LIVE_DEADLINE_S]], [[ENV MATRIX_BUSY_WAIT_S]], [[ENV MATRIX_ENGINE]], [[ENV MCP_MAX_INFLIGHT]], [[ENV MCP_MAX_INFLIGHT_TOTAL]], [[ENV MCP_OAUTH_TTL_HOURS]], [[ENV MCP_PIN_LOCK_MIN]], [[ENV MCP_PIN_MAX_FAILS]], [[ENV MCP_RATE_PER_MIN]], [[ENV MCP_RESEARCH_PER_HOUR]], [[ENV MCP_STATIC_TOKEN]], [[ENV MCP_TRADE_PER_HOUR]], [[ENV MCP_TRUSTED_PROXY_HOPS]], [[ENV NVIDIA_API_KEY]], [[ENV RAILWAY_PUBLIC_DOMAIN]], [[ENV REDIS_URL]], [[ENV RESEARCH_DEDUPE_MINUTES]], [[ENV RESEARCH_HEARTBEAT_STALE_MIN]], [[ENV RESEARCH_MAX_AGENTS_PER_JOB]], [[ENV SEC_USER_AGENT]], [[ENV SMOKE_RETRIES]], [[ENV SPACE_LL2_BASE]], [[ENV TAVILY_KEY]], [[ENV TYPESAFE_API_URL]], [[ENV TYPESAFE_KEY]], [[ENV WORLD_ADVISORIES_URL]], [[ENV WORLD_FEDREG_URL]], [[ENV WORLD_GDACS_URL]], [[ENV WORLD_GDELT_BACKFILL]], [[ENV WORLD_GDELT_EVENTS]], [[ENV WORLD_GDELT_EVENTS_BASE]], [[ENV WORLD_GPR_DAILY_URL]], [[ENV WORLD_GPR_MONTHLY_URL]], [[ENV WORLD_PORTWATCH_URL]]
+[[ENV AI_BUSY_WAIT_S]], [[ENV AI_CLAUDE_TIMEOUT_DEEP_S]], [[ENV AI_DAILY_LIMIT_USD]], [[ENV AI_MONTHLY_LIMIT_USD]], [[ENV AI_PER_USER_DAILY_USD]], [[ENV AI_PRICES_JSON]], [[ENV ALPHA_VANTAGE_KEY]], [[ENV ANTHROPIC_ADMIN_KEY]], [[ENV BIXBY_AUTOSYNC]], [[ENV CLAUDE_KEY]], [[ENV CLOUDFLARE_RADAR_TOKEN]], [[ENV COINGECKO_KEY]], [[ENV COMMITTEE_MAX_SEATS]], [[ENV CSP_ENABLED]], [[ENV CSP_REPORT_ONLY]], [[ENV DB_CONNECT_TIMEOUT_S]], [[ENV DB_POOL_TIMEOUT_S]], [[ENV DECIDE_ENABLED]], [[ENV DECIDE_MIN_CONF]], [[ENV DECIDE_WAIT_S]], [[ENV ELEVENLABS_LLM]], [[ENV GEMINI_HOT_S]], [[ENV GEMINI_THINKING]], [[ENV GOOGLE_API_KEY]], [[ENV IMPORT_BULK_WEIGHT_FACTOR]], [[ENV INSIGHTS_INFLIGHT_WAIT_S]], [[ENV INVESTIGADOR_AUTO]], [[ENV INVESTIGADOR_AUTO_CUTOFF_HORAS]], [[ENV KHIPU_URL]], [[ENV LIVE_DEADLINE_S]], [[ENV MATRIX_BUSY_WAIT_S]], [[ENV MATRIX_ENGINE]], [[ENV MCP_MAX_INFLIGHT]], [[ENV MCP_MAX_INFLIGHT_TOTAL]], [[ENV MCP_OAUTH_TTL_HOURS]], [[ENV MCP_PIN_LOCK_MIN]], [[ENV MCP_PIN_MAX_FAILS]], [[ENV MCP_RATE_PER_MIN]], [[ENV MCP_RESEARCH_PER_HOUR]], [[ENV MCP_STATIC_TOKEN]], [[ENV MCP_TRADE_PER_HOUR]], [[ENV MCP_TRUSTED_PROXY_HOPS]], [[ENV NVIDIA_API_KEY]], [[ENV RAILWAY_GIT_COMMIT_SHA]], [[ENV RAILWAY_PUBLIC_DOMAIN]], [[ENV REDIS_URL]], [[ENV RESEARCH_DEDUPE_MINUTES]], [[ENV RESEARCH_HEARTBEAT_STALE_MIN]], [[ENV RESEARCH_MAX_AGENTS_PER_JOB]], [[ENV SEC_USER_AGENT]], [[ENV SMOKE_RETRIES]], [[ENV SPACE_LL2_BASE]], [[ENV TAVILY_KEY]], [[ENV TYPESAFE_API_URL]], [[ENV TYPESAFE_KEY]], [[ENV WORLD_ADVISORIES_URL]], [[ENV WORLD_FEDREG_URL]], [[ENV WORLD_GDACS_URL]], [[ENV WORLD_GDELT_BACKFILL]], [[ENV WORLD_GDELT_EVENTS]], [[ENV WORLD_GDELT_EVENTS_BASE]], [[ENV WORLD_GPR_DAILY_URL]], [[ENV WORLD_GPR_MONTHLY_URL]], [[ENV WORLD_PORTWATCH_URL]]
 
 Solo aparecen en archivos de despliegue (Dockerfile, docker-compose.yml, workflows) y no en CLAUDE.md (2): [[ENV GUNICORN_MAX_REQUESTS_JITTER]], [[ENV OPENAI_KEY]]
 

@@ -34,10 +34,10 @@ razonable (propagación por la cadena con magnitudes acotadas) para que la DEMO
 nunca se caiga. NUNCA lanza excepción hacia arriba.
 
 Depende solo de `core.ai` (cascada multi-IA, tier='deep' = Sonnet 5) y
-`core.semantic` (snapshot data/grafo_v0.json). No importa server ni la BD.
+`core.semantic` (el grafo vigente de core/hotviews/hot.graph(): Postgres si existe, el catálogo si no).
+No importa server.
 """
 import json
-import os
 
 from core import ai, semantic
 
@@ -72,21 +72,14 @@ _EXTERNALS = [
 ]
 
 
-# ── sectores9 (etiquetas bonitas de sector) — lectura cacheada del snapshot ──
-_SEC = {'data': None}
-
-
+# ── sectores9 (etiquetas bonitas de sector) — del catálogo de la generación vigente ──
 def _sectors9():
-    if _SEC['data'] is None:
-        try:
-            path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                'data', 'grafo_v0.json')
-            with open(path, 'r', encoding='utf-8') as f:
-                g = json.load(f)
-            _SEC['data'] = g.get('sectors9') or {}
-        except Exception:  # noqa: BLE001
-            _SEC['data'] = {}
-    return _SEC['data']
+    """Diccionario de sectores del catálogo, desde la vista `graph` (paso 8: ya no se abre el snapshot aparte)."""
+    try:
+        from core.hotviews import hot
+        return hot.graph().catalog.get('sectors9') or {}
+    except Exception:  # noqa: BLE001
+        return {}
 
 
 def _sector_label(sec, lang):

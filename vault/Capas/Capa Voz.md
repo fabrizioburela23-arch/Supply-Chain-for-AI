@@ -9,11 +9,11 @@ tags: ["capa/voz", "tipo/capa"]
 
 > Khipu por voz: ElevenLabs (servidor y navegador) y el orbe.
 
-**3 archivos · 4.462 líneas.** Volver al [[00 Mapa de Khipus]].
+**3 archivos · 4.465 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[engine.voice.js]] — 3.024 líneas · Khipu, el asistente de voz de Khipu Finance Cliente WebSocket de ElevenLabs Agents (Conversational AI). Khipu es el "Jarvis de las finanzas": escucha …
+- [[engine.voice.js]] — 3.027 líneas · Khipu, el asistente de voz de Khipu Finance Cliente WebSocket de ElevenLabs Agents (Conversational AI). Khipu es el "Jarvis de las finanzas": escucha …
 - [[core.voice_agent.py]] — 1.042 líneas · Khipu (voz) ↔ ElevenLabs Agents Platform (oct-2026).
 - [[engine.orb.js]] — 396 líneas · BixbyOrb: el orbe de voz de Khipu.
 

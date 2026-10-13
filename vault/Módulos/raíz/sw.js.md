@@ -39,6 +39,7 @@ _Nada interno._
 - [[tests.test_cleanup_client.py]]
 - [[tests.test_client_hardening.py]]
 - [[tests.test_khipus_os_integration.py]]
+- [[tests.test_ops_identity.py]]
 - [[tests.test_server_smoke.py]]
 - [[tests.test_voice_tour.py]]
 
@@ -52,7 +53,7 @@ _Nada interno._
 
 ## Caché del service worker
 
-Versión de caché actual: `khipu-finance-v257` — se sube en CADA cambio de JS/HTML (regla de despliegue n.º 1 de CLAUDE.md).
+Versión de caché actual: `khipu-finance-v258` — se sube en CADA cambio de JS/HTML (regla de despliegue n.º 1 de CLAUDE.md).
 
 El array SHELL guarda **87** archivos para usarlos sin conexión (lista en texto para no saturar el grafo):
 

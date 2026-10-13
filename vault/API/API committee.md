@@ -19,7 +19,7 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET` | `/api/committee/clients` | `clients` | [[research.committee_api.py]] | [[engine.committee.js]], 2 pruebas |
 | `GET` | `/api/committee/entity/<entity_id>` | `entity` | [[research.committee_api.py]] | [[engine.committee.js]], [[engine.oswindows.js]], 3 pruebas |
 | `GET` | `/api/committee/memo/<memo_id>` | `memo` | [[research.committee_api.py]] | [[engine.committee.js]], [[engine.oswindows.js]], 3 pruebas |
-| `POST` | `/api/committee/memo/<memo_id>/approve` | `approve` | [[research.committee_api.py]] | [[engine.committee.js]], [[engine.oswindows.js]], 2 pruebas |
+| `POST` | `/api/committee/memo/<memo_id>/approve` | `approve` | [[research.committee_api.py]] | [[engine.committee.js]], [[engine.oswindows.js]], 3 pruebas |
 | `POST` | `/api/committee/memo/<memo_id>/reject` | `reject` | [[research.committee_api.py]] | [[engine.committee.js]], [[engine.oswindows.js]], 2 pruebas |
 | `POST` | `/api/committee/outcomes/evaluate` | `evaluate` | [[research.committee_api.py]] | [[engine.committee.js]], 1 prueba |
 | `GET` | `/api/committee/outcomes/recent` | `outcomes_recent` | [[research.committee_api.py]] | [[engine.committee.js]], 1 prueba |

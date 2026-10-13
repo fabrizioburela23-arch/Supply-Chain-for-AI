@@ -734,7 +734,10 @@ def auto_cycle(session, actor='agent:auto'):
             if claimed != 1:
                 sp.rollback()
                 continue
-            execute_action(session, p.action_type, p.payload, f'{p.agent} → {actor}')
+            from core import identity as _identity        # paso 6: la ficha es de system:auto_apply (§2.5)
+            execute_action(session, p.action_type, p.payload, f'{p.agent} → {actor}',
+                           principal=_identity.system('auto_apply', declared=p.agent),
+                           correlation_id=f'proposal:{p.id}')
             sp.commit()
             session.refresh(p)
             applied.append({'agent': p.agent, 'action': p.action_type,

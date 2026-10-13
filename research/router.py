@@ -37,6 +37,19 @@ def _country_nodes(country, limit=8):
     return [n['id'] for n in hits[:limit]]
 
 
+def _links():
+    """Vínculos del grafo vigente (core/hotviews/hot.graph(): la MISMA generación que el índice de entidades).
+    Paso 8: antes se leía data/grafo_v0.json una vez y se colgaba del índice para siempre."""
+    from core.hotviews import hot
+    return hot.graph().links
+
+
+def graph_version():
+    """La generación del grafo que usa el enrutador de eventos (tests/test_ops_single_source.py)."""
+    from core.hotviews import hot
+    return hot.graph().generation
+
+
 def relevant_entities(event, limits=None):
     """Devuelve lista ordenada [{id, label, distance, via}] acotada por límites."""
     lim = dict(DEFAULT_LIMITS, **(limits or {}))
@@ -52,12 +65,7 @@ def relevant_entities(event, limits=None):
             seeds.append(nid)
     if not seeds:
         return []
-    links = idx.get('_links')
-    if links is None:
-        from core.entities import _SNAPSHOT
-        with open(_SNAPSHOT, encoding='utf-8') as fh:
-            links = json.load(fh).get('links', [])
-        idx['_links'] = links
+    links = _links()
     out = [{'id': s, 'label': (nodes.get(s) or {}).get('label', s), 'distance': 0, 'via': None} for s in seeds]
     seen = set(seeds)
     frontier = list(seeds)

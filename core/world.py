@@ -53,7 +53,6 @@ log = logging.getLogger('world')
 world_bp = Blueprint('world', __name__, url_prefix='/api/world')
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SNAPSHOT = os.path.join(_ROOT, 'data', 'grafo_v0.json')
 _UA = 'KhipuFinance/1.0 (+world-monitor)'
 
 WINDOWS = {'24h': 86400, '7d': 7 * 86400}
@@ -760,18 +759,24 @@ _GRAPH_LOCK = threading.Lock()
 
 
 def _graph():
-    """Snapshot del grafo (data/grafo_v0.json) con coordenadas + NRS, una vez."""
-    if _GRAPH['data'] is not None:
-        return _GRAPH['data']
+    """El grafo de la generación vigente (core/hotviews/hot.graph(): Postgres si existe, el snapshot si no) con
+    coordenadas + NRS. Se recalcula cuando cambia la generación (paso 8: antes se leía data/grafo_v0.json UNA vez
+    y una empresa nueva nunca aparecía en el World Monitor)."""
+    try:
+        from core.hotviews import hot
+        view = hot.graph()
+    except Exception as e:  # noqa: BLE001
+        log.warning('world: grafo no disponible: %s', e)
+        view = None
+    gen = view.generation if view is not None else None
+    cur = _GRAPH['data']
+    if cur is not None and cur.get('generation') == gen:
+        return cur
     with _GRAPH_LOCK:
-        if _GRAPH['data'] is not None:
-            return _GRAPH['data']
-        try:
-            with open(_SNAPSHOT, encoding='utf-8') as fh:
-                snap = json.load(fh)
-        except Exception as e:  # noqa: BLE001
-            log.warning('world: snapshot no disponible: %s', e)
-            snap = {'nodes': [], 'links': []}
+        cur = _GRAPH['data']
+        if cur is not None and cur.get('generation') == gen:
+            return cur
+        snap = view.snapshot if view is not None else {'nodes': [], 'links': []}
         deg = {}
         for lk in snap.get('links') or []:
             s, t = lk.get('source'), lk.get('target')
@@ -805,8 +810,14 @@ def _graph():
         for lst in by_country.values():
             lst.sort(key=lambda r: (-r['degree'], r['id']))
         _GRAPH['data'] = {'nodes': nodes, 'by_id': by_id, 'by_country': by_country,
-                          'precise': [r for r in nodes if r['precision'] in ('hq', 'city')]}
+                          'precise': [r for r in nodes if r['precision'] in ('hq', 'city')],
+                          'generation': gen}
         return _GRAPH['data']
+
+
+def graph_version():
+    """La generación del grafo que usa el World Monitor (tests/test_ops_single_source.py)."""
+    return _graph().get('generation')
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_graph_api.py"
 lenguaje: "python"
-lineas: 253
+lineas: 256
 aliases: ["tests/test_graph_api.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_graph_api.py
 
-> Prueba · capa [[Capa Pruebas]] · 253 líneas · `tests/test_graph_api.py`
+> Prueba · capa [[Capa Pruebas]] · 256 líneas · `tests/test_graph_api.py`
 
 ## Qué prueba
 

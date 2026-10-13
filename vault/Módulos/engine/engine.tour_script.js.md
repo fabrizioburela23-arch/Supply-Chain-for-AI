@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **29 de 92** (línea 7815), después de [[engine.agents_registry.js]] y antes de [[engine.mascot.js]].
+Se carga en [[app.html]] en la posición **29 de 92** (línea 7822), después de [[engine.agents_registry.js]] y antes de [[engine.mascot.js]].
 
 ## Lo usan
 

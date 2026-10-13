@@ -25,7 +25,11 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_brokerage.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_infra.py]]
+- [[tests.test_ledger_core.py]]
+- [[tests.test_ledger_privacy.py]]
 - [[tests.test_mcp.py]]
+- [[tests.test_ops_identity.py]]
+- [[tests.test_ops_review_steps568.py]]
 - [[tests.test_overnight_voice_server.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_reconcile.py]]
@@ -41,6 +45,7 @@ Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
 
 ## Mencionada en sesiones
 
+- [[Sesión 2026-10-13 (b) — INFRAESTRUCTURA OPERATIVA, PASOS 5, 6 y 8]]
 - [[Sesión 2026-09-21 — Limpieza estructural - Track A Fase 2 + Track B completos]]
 - [[Sesión 2026-07-03 — Etapa 0 — Seguridad y cimientos - CÓDIGO COMPLETO]]
 - [[Sesión 2026-07-13 — Etapa M — Trading cripto en papel, integrado en Khipu (sw v80)]]

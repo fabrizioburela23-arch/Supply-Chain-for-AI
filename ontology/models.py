@@ -185,3 +185,8 @@ class Alert(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     last_fired_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+# INFRA_OPERATIVA paso 6: el libro de decisiones vive en el MISMO Base (create_all lo crea en init_schema y las
+# pruebas lo limpian con drop_all). Al final del módulo: ledger_models importa `Base` de aquí.
+from ontology import ledger_models as _ledger_models  # noqa: E402,F401

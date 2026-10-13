@@ -30,7 +30,7 @@ SPACE MONITOR (pestaña 🚀 Espacio).
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`, `sectorOf`
 
-Se carga en [[app.html]] en la posición **54 de 92** (línea 7891), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
+Se carga en [[app.html]] en la posición **54 de 92** (línea 7898), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
 
 ## Lo usan
 

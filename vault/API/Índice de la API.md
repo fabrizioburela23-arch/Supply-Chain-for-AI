@@ -6,7 +6,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 
 # Índice de la API
 
-228 rutas HTTP en 57 grupos + 23 herramientas MCP.
+232 rutas HTTP en 58 grupos + 23 herramientas MCP.
 
 | Grupo | Rutas | Definidas en |
 |---|---|---|
@@ -34,6 +34,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 | [[API investors]] | 1 | [[server.py]] |
 | [[API ipo_calendar]] | 1 | [[server.py]] |
 | [[API khipu]] | 3 | [[core.khipu_chat.py]] |
+| [[API ledger]] | 4 | [[core.ledger_api.py]] |
 | [[API macro]] | 1 | [[server.py]] |
 | [[API market]] | 4 | [[server.py]] |
 | [[API marketstack]] | 1 | [[server.py]] |

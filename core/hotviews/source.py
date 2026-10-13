@@ -12,6 +12,14 @@ link_confidence).
 Snapshot: replica lo que scripts/migrate_v0_to_ontology.py escribiría en la base (empresas + objetos de
 ontología, vínculos del catálogo, hechos temporales SIN fin, factores latentes de
 data/multicapa_factors_seats.json), versión 0.
+
+Paso 8 (un solo grafo en el servidor): la MISMA foto trae además el grafo "de lectura" en la forma del
+catálogo (`nodes` con todas sus propiedades, `links` {source, target, w, rel, type, conf, verified} y los
+diccionarios del catálogo) que sirven la vista `graph` (core/hotviews/views/graph.py) a los 13 lectores del
+servidor. En PG: empresas = objetos `Company` vigentes (sin `retired`; `merged_into` pasa a alias), vínculos =
+filas vigentes entre esas empresas, propiedades de la base y SOLO los campos que la base no tiene se completan
+con el catálogo (nunca lo pisan). Este módulo es, con ontology/reconcile.py y los scripts, el único que lee
+data/grafo_v0.json (tests/test_ops_single_source.py).
 """
 import hashlib
 import json
@@ -37,6 +45,10 @@ class GraphData:
     factors: list                     # = matrix.engine.active_factors()
     read_ms: float = 0.0
     extra: dict = field(default_factory=dict)
+    # paso 8: el grafo de lectura en la forma del catálogo (None = esta foto no lo trae → sin vista `graph`)
+    nodes: list = None                # [{id, label, …propiedades}] empresas vigentes
+    links: list = None                # [{source, target, w, rel, type, conf, verified[, since][, status]}]
+    catalog: dict = None              # sectors9, categories, legal_names, node_id_alias… + catalog_ids
 
 
 def _meta_of(label, otype, props):
@@ -77,7 +89,9 @@ def load_pg():
                             E._eff_weight(l.weight, props.get('source'), E.link_confidence(props))))
             flow_links.append({'source': l.source_id, 'target': l.target_id, 'type': l.rel_type})
         factors = E.active_factors(s)
-        extra = {}
+        comp = [(o[0], o[2], o[3]) for o in objs if o[1] == 'Company']     # la misma lectura, sin otra consulta
+        r_nodes, r_links, r_catalog = _reader_graph_pg(comp, rows)
+        extra = {'alias': r_catalog['node_id_alias']}      # GraphCore.resolve: alias del catálogo + fusiones
         try:      # la foto de esta lectura: el sondeo busca después escrituras SIN versión (contenedor viejo)
             from core.hotviews import signals
             extra['snapshot'] = signals.current_snapshot(s)
@@ -90,7 +104,110 @@ def load_pg():
         finally:
             s.close()
     return GraphData('pg', v, lineage, ids, meta, triples, flow_links, factors,
-                     read_ms=round((time.perf_counter() - t0) * 1000, 1), extra=extra)
+                     read_ms=round((time.perf_counter() - t0) * 1000, 1), extra=extra,
+                     nodes=r_nodes, links=r_links, catalog=r_catalog)
+
+
+# ── grafo de lectura (paso 8) ───────────────────────────────────────────────
+CATALOG_KEYS = ('sectors9', 'categories', 'cat_to_sector', 'legal_names', 'preipo_intel', 'counts',
+                'exported_at', 'source')
+
+
+def _catalog_meta(g, sha):
+    """Los diccionarios del CATÁLOGO (no son verdad del grafo: etiquetas de sector, nombres legales…) y el
+    conjunto de ids del catálogo (para medir cuánto del catálogo trae la base)."""
+    meta = {k: g.get(k) for k in CATALOG_KEYS}
+    meta['node_id_alias'] = dict(g.get('node_id_alias') or {})
+    meta['snapshot_sha'] = sha
+    meta['catalog_ids'] = frozenset(n['id'] for n in g.get('nodes') or [] if n.get('id'))
+    return meta
+
+
+def _reader_link_pg(l):
+    """Fila vigente de `links` → vínculo en la forma del catálogo. `conf`/`verified` como los exporta
+    nodes/merge_graph.js; una confirmación de una persona (LinkStatusChanged) manda: conf 1, verificado."""
+    props = l.properties or {}
+    conf, ver = props.get('confidence'), props.get('verified')
+    if props.get('status') == 'confirmed':
+        conf, ver = 1, True
+    out = {'source': l.source_id, 'target': l.target_id, 'w': l.weight,
+           'rel': props.get('rel_label') or props.get('headline') or '', 'type': l.rel_type or 'supply',
+           'conf': conf, 'verified': ver}
+    if props.get('since'):
+        out['since'] = props.get('since')
+    if props.get('status'):
+        out['status'] = props.get('status')
+    return out
+
+
+def _reader_graph_pg(comp, rows):
+    """(nodes, links, catalog) desde la base. Orden estable = el del catálogo (los nuevos al final, por id),
+    para que los desempates de los lectores no cambien solo por la fuente."""
+    try:
+        snap, sha = _snapshot_parsed()
+    except OSError:
+        snap, sha = {'nodes': [], 'links': []}, None
+    cat = _catalog_meta(snap, sha)
+    cat_nodes = {n['id']: n for n in snap.get('nodes') or [] if n.get('id')}
+    order = {nid: i for i, nid in enumerate(cat_nodes)}
+    alias = cat['node_id_alias']
+    nodes, filled, retired = [], 0, 0
+    for oid, label, props in comp:
+        props = props or {}
+        if props.get('retired') is True:
+            retired += 1
+            if props.get('merged_into') and oid not in alias:
+                alias[oid] = props['merged_into']
+            continue
+        n = {'id': oid, 'label': label or oid}
+        n.update({k: v for k, v in props.items() if k not in ('id', 'label')})
+        base = cat_nodes.get(oid)
+        if base:                       # SOLO lo que la base no tiene; nunca pisa un valor de Postgres
+            for k, v in base.items():
+                if k not in n:
+                    n[k] = v
+                    filled += 1
+        nodes.append(n)
+    nodes.sort(key=lambda n: (order.get(n['id'], len(order)), n['id']))
+    known = {n['id'] for n in nodes}
+    lorder = {}
+    for i, l in enumerate(snap.get('links') or []):
+        lorder.setdefault((l.get('source'), l.get('target'), l.get('type') or 'supply'), i)
+    links, proposed, facts = [], 0, 0
+    for l in rows:
+        if l.source_id not in known or l.target_id not in known or l.source_id == l.target_id:
+            continue
+        props = l.properties or {}
+        # Una PROPUESTA (ProponerVinculo: radar, IncorporarEmpresa/tensor con confianza 0) o un vínculo
+        # RECHAZADO no es un proveedor/cliente: queda "proposed hasta que una persona lo confirme". Fuera del
+        # grafo de lectura (MCP, chat, contexto de investigación, grado de flujo, NRS); sigue en la ontología.
+        if props.get('status') in ('proposed', 'rejected'):
+            proposed += 1
+            continue
+        # Hecho temporal migrado (predicate/headline, sin rel_label): su rel_type salió por defecto ('supply'
+        # para "Amazon invierte $8B en Anthropic"). El snapshot nunca los trajo como vínculos de lectura →
+        # misma regla aquí (siguen en la ImpactView y en el Grafo Temporal, como antes).
+        if props.get('predicate') is not None and not props.get('rel_label'):
+            facts += 1
+            continue
+        links.append(_reader_link_pg(l))
+    links.sort(key=lambda l: (lorder.get((l['source'], l['target'], l['type']), len(lorder)),
+                              l['source'], l['target'], l['type'], str(l.get('rel'))))
+    # un par (origen, destino, tipo) = UN vínculo de lectura (como el catálogo): gana el primero con peso
+    uniq = {}
+    for l in links:
+        k = (l['source'], l['target'], l['type'])
+        cur = uniq.get(k)
+        if cur is None or (cur.get('w') is None and l.get('w') is not None):
+            uniq[k] = l
+    dups = len(links) - len(uniq)
+    links = list(uniq.values())
+    links.sort(key=lambda l: (lorder.get((l['source'], l['target'], l['type']), len(lorder)),
+                              l['source'], l['target'], l['type'], str(l.get('rel'))))
+    cat['stats'] = {'catalog_fields_filled': filled, 'retired': retired,
+                    'missing_from_db': sorted(cat['catalog_ids'] - known),
+                    'proposed_excluded': proposed, 'facts_excluded': facts, 'duplicates_collapsed': dups}
+    return nodes, links, cat
 
 
 # ── snapshot ────────────────────────────────────────────────────────────────
@@ -110,13 +227,33 @@ def _snapshot_bytes():
     return raw, sha
 
 
+def _snapshot_parsed():
+    """(dict, sha) del snapshot, parseado UNA vez por versión del archivo. Solo lectura: quien lo use arma
+    sus propias estructuras (la vista `graph` congela las suyas)."""
+    raw, sha = _snapshot_bytes()
+    hit = _SNAP_CACHE.get('parsed')
+    if hit and hit[0] == sha:
+        return hit[1], sha
+    g = json.loads(raw)
+    _SNAP_CACHE['parsed'] = (sha, g)
+    return g, sha
+
+
 def load_snapshot():
     """Lo que la migración escribiría en Postgres, sin Postgres (versión 0, linaje = sha del snapshot)."""
+    t0 = time.perf_counter()
+    g, sha = _snapshot_parsed()
+    return from_snapshot(g, sha, t0=t0)
+
+
+def from_snapshot(g, sha=None, t0=None):
+    """GraphData desde un dict con la forma del snapshot (el archivo, o uno armado a mano: matrix/tensor.evaluate
+    y las pruebas). Mismo código que la base usaría: mismas triples, mismos factores latentes."""
     from matrix import engine as E
     from ontology import vocabulary as vocab
-    t0 = time.perf_counter()
-    raw, sha = _snapshot_bytes()
-    g = json.loads(raw)
+    t0 = time.perf_counter() if t0 is None else t0
+    if sha is None:
+        sha = hashlib.sha256(json.dumps(g, sort_keys=True, default=str).encode()).hexdigest()
     nodes = g.get('nodes') or []
     onto = (g.get('ontology') or {}).get('objects') or []
     econ = set(vocab.economic_types())
@@ -172,10 +309,14 @@ def load_snapshot():
                         'severity_crisis': float(crisis) if crisis is not None else None,
                         'rationale': f.get('rationale') or '', 'since': None, 'updated': None,
                         'members': members})
+    cat = _catalog_meta(g, sha)
+    cat['stats'] = {'catalog_fields_filled': 0, 'retired': 0, 'missing_from_db': []}
     return GraphData('snapshot', 0, 'snap:' + sha[:12], ids, meta, triples, flow_links, factors,
                      read_ms=round((time.perf_counter() - t0) * 1000, 1),
                      extra={'snapshot_sha': sha, 'exported_at': g.get('exported_at'),
-                            'alias': g.get('node_id_alias') or {}})
+                            'alias': g.get('node_id_alias') or {}},
+                     nodes=[n for n in g.get('nodes') or [] if n.get('id')],
+                     links=list(g.get('links') or []), catalog=cat)
 
 
 def load():

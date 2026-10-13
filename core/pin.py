@@ -12,8 +12,8 @@ el primero lo escribe el cliente y se puede falsificar.
 Uso:
     from core.pin import require_pin, require_operator, pin_error
     @require_pin            # trading/corretaje: sin TRADE_PIN → 403 (deshabilitado)
-    @require_operator       # escrituras de la ontología: sin TRADE_PIN → se permite
-                            # (modo desarrollo) con aviso en el log; con TRADE_PIN → exige PIN
+    @require_operator       # escrituras de la ontología: con TRADE_PIN → exige PIN; sin TRADE_PIN →
+                            # en PRODUCCIÓN 403 (paso 5, G-6); en desarrollo se permite con aviso (ui:anon)
     check(got, where, strict, ip)  # igual que pin_error pero devuelve (dict, status)
                                    # sin Flask (lo usa mcp_server/auth.check_pin)
 
@@ -157,6 +157,7 @@ def check(got=None, where='api', strict=True, ip=None):
     if got and hmac.compare_digest(got.encode(), want.encode()):
         with _LOCK:
             _TRUSTED[ip] = now
+        _bind_operator()             # paso 5: la petición queda autenticada como op:fabrizio (D1)
         return None
     bad = ({'error': 'PIN incorrecto o faltante', 'error_en': 'Wrong or missing PIN', 'code': 'invalid_pin'}, 401)
     if not got:                      # PIN vacío: 401 sin contar (no revela nada)
@@ -178,6 +179,16 @@ def check(got=None, where='api', strict=True, ip=None):
             except Exception:  # noqa: BLE001
                 pass
     return bad
+
+
+def _bind_operator():
+    """El PIN identifica a una PERSONA (core/identity.OPERATORS, decisión D1): se ata a la petición para que
+    identity.principal_from_request() devuelva `op:fabrizio` y no el texto libre del campo 'actor'."""
+    try:
+        from core import identity
+        identity.note_pin_ok(identity.operator_for_pin_env('TRADE_PIN'))
+    except Exception:  # noqa: BLE001 — identificar nunca tumba la verificación
+        pass
 
 
 def pin_error(got=None, where='api', strict=True):
@@ -223,14 +234,20 @@ def require_pin(f):
     return wrapper
 
 
+def operator_strict():
+    """Paso 5 (G-6): en PRODUCCIÓN las escrituras de operador exigen TRADE_PIN configurado (sin él → 403
+    'deshabilitado'); en desarrollo (sin RAILWAY_*) siguen permitidas sin PIN, registradas como `ui:anon`."""
+    return in_production()
+
+
 def require_operator(f):
     @wraps(f)
     def wrapper(*a, **k):
-        err = pin_error(where=f.__name__, strict=False)
+        err = pin_error(where=f.__name__, strict=operator_strict())
         if err:
             return err
         if not configured():
-            log.warning('escritura sin PIN (%s): TRADE_PIN no configurado — modo desarrollo', f.__name__)
+            log.warning('escritura sin PIN (%s): TRADE_PIN no configurado — modo desarrollo (ui:anon)', f.__name__)
         return f(*a, **k)
     return wrapper
 

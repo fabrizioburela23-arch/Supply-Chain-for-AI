@@ -9,17 +9,17 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.558 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.570 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[core.world.py]] — 2.072 líneas · WORLD MONITOR geopolítico: /api/world/\*.
+- [[core.world.py]] — 2.083 líneas · WORLD MONITOR geopolítico: /api/world/\*.
 - [[core.company_data.py]] — 1.332 líneas · estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del mundo (Dossier, 2026-09-28).
 - [[engine.worldmonitor.js]] — 1.326 líneas · WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 - [[engine.spacemonitor.js]] — 1.324 líneas · SPACE MONITOR (pestaña 🚀 Espacio).
 - [[engine.fincard.js]] — 1.202 líneas · DOSSIER FINANCIERO de una empresa (Etapa G, 2026-07-11) Estilo investingvisuals que pidió Fabrizio: una tarjeta con small-multiples de indicadores …
 - [[engine.globe.js]] — 1.025 líneas · MOTOR GLOBO UNIFICADO (Track A, Fase 1 del prompt 2026-08). Fusión de engine/geoglobe.js + engine/planetarium.js: el boilerplate Three.js …
-- [[engine.crypto.js]] — 988 líneas · Pestaña ₿ Cripto (Fase 1 módulo de datos + Expediente). - Datos VIVOS: /api/crypto/\* (server → core/providers/coingecko.py). - Capa ESTÁTICA: …
+- [[engine.crypto.js]] — 989 líneas · Pestaña ₿ Cripto (Fase 1 módulo de datos + Expediente). - Datos VIVOS: /api/crypto/\* (server → core/providers/coingecko.py). - Capa ESTÁTICA: …
 - [[core.space.py]] — 640 líneas · SPACE MONITOR (pestaña 🚀 Espacio): /api/space2/\*.
 - [[core.world_feeds.py]] — 632 líneas · fuentes OFICIALES nuevas del World Monitor (2026-10-05).
 - [[core.quotes.py]] — 463 líneas · cotización cruda compartida (server rutas + agentes de alertas).
@@ -46,11 +46,11 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Interfaz (Khipus OS)]] | 20 |
-| usa a | [[Capa Infraestructura]] | 18 |
+| usa a | [[Capa Infraestructura]] | 19 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
 | la usa | [[Capa Infraestructura]] | 12 |
-| usa a | [[Capa Datos del catálogo]] | 11 |
 | la usa | [[Capa Chat y agentes]] | 10 |
+| usa a | [[Capa Datos del catálogo]] | 10 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 8 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |

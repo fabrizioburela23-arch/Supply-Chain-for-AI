@@ -4,18 +4,21 @@ Pedido de Fabrizio (2026-10): "el siguiente nivel de la ontología, totalmente m
 sistematizado con tensores, listo para que todos los nodos nuevos se conecten de la misma forma de
 inmediato; lo más eficiente posible y que genere datos de verdad, que den valor real como inversionista".
 
-Objetos matemáticos (todo sparse/numpy, sin base de datos — lee el snapshot canónico
-data/grafo_v0.json, el MISMO merge que el navegador):
+Objetos matemáticos (todo sparse/numpy). Paso 8 (INFRA_OPERATIVA §4.7): el grafo es la vista `graph` de la
+generación vigente (core/hotviews/hot.graph(): Postgres si existe, el snapshot data/grafo_v0.json si no) y el
+modelo se recalcula cuando cambia la generación:
 
   A  ∈ ℝ^{R×N×N}  tensor de relaciones de FLUJO (supply, fab, cloud, license, ppa, owns, deploy;
                   vocabulary.json `flow: true`). A[r,i,j] = peso × confianza del vínculo i → j
                   (i PROVEE a j). Socios e inversores NO transmiten daño de suministro (regla G4).
   D  = Σ_r α_r · colnorm(A_r)   matriz de transmisión (matrix.engine._dependency_matrix, la MISMA
                   del kernel de shocks: un proveedor único transmite casi todo).
-  Ψ  ∈ [0,1]^{N×N}  INFLUENCIA: Ψ[j,s] = impacto sobre j de un shock unitario en s, con la MISMA
-                  semántica que matrix.engine.propagate (damping 0.6, máx. 6 saltos, umbral 1 %,
-                  máximo por ruta). Se calcula para las N fuentes A LA VEZ (Dᵀ @ I por salto: ~6
-                  productos sparse×denso, milisegundos) — antes era una propagación por nodo.
+  Ψ  ∈ [0,1]^{N×N}  INFLUENCIA: Ψ[j,s] = impacto sobre j del colapso unitario de s con EL kernel del
+                  servidor (matrix.engine.propagate_many, damping 0.6, máx. 6 saltos, umbral 1 %, máximo por
+                  ruta, fragilidad de los factores activos) sobre la GraphCore de la generación vigente, con
+                  las relaciones de FLUJO solamente: BRECHAS #4 (valor por defecto vigente) = socios e
+                  inversores NO transmiten daño. Paso 8 (M-code-01): antes el tensor propagaba por su cuenta
+                  y sin factores. Cuando el paso 12 lleve BRECHAS #4 al kernel, Ψ = la vista V2 Impact.
   c  ∈ ℝ^N        capitalización (USD B): en vivo (core.live_caps) → valuación VERIFICADA de privadas
                   (nodes/private_valuations.js) → sin dato (0, y se dice).
   X  ∈ ℝ^{N×F}    tensor de rasgos (FEATURES), z-normalizado, + perfil estructural (filas y columnas
@@ -39,10 +42,8 @@ Las propuestas NUNCA se escriben solas: van a revisión de Fabrizio (regla: lo a
 `evaluate()` mide la calidad con vínculos REALES ocultos (Hit@10 vs. la línea base de popularidad):
 el número se publica tal cual, sea bueno o malo.
 """
-import json
 import logging
 import math
-import os
 import re
 import threading
 import time
@@ -56,8 +57,6 @@ from ontology import vocabulary as vocab
 
 log = logging.getLogger('khipu')
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SNAPSHOT = os.path.join(_ROOT, 'data', 'grafo_v0.json')
 DAMPING = 0.6
 MAX_HOPS = 6
 THRESHOLD = 0.01
@@ -72,9 +71,71 @@ _MODEL = {'m': None, 'key': None}
 
 
 # ─────────────────────────── carga ───────────────────────────
-def _load_snapshot(path=SNAPSHOT):
-    with open(path, encoding='utf-8') as fh:
-        return json.load(fh)
+def _load_snapshot():
+    """El grafo vigente con la forma del snapshot (Mapping de solo lectura de la vista `graph`)."""
+    from core.hotviews import hot
+    return hot.graph().snapshot
+
+
+def _psi_from_impact(imp, ids, idx):
+    """Ψ[j,s] (0-1) desde la vista Impact: víctimas del colapso unitario de cada fuente s (pct/100)."""
+    n = len(ids)
+    psi = np.zeros((n, n))
+    if imp is None:
+        return psi
+    for s, si in idx.items():
+        hit = imp.victims.get(s)
+        if not hit:
+            continue
+        vids, pct, _hop = hit
+        for k, p in zip(vids, pct):
+            j = idx.get(k)
+            if j is not None and j != si and p > 0:
+                psi[j, si] = p / 100.0
+    return psi
+
+
+def _core_for(snap):
+    """La GraphCore de un grafo dado (evaluate() y pruebas): MISMO código que el constructor de las vistas."""
+    from core.hotviews import source
+    from core.hotviews.views import graph_core
+    return graph_core.build(source.from_snapshot(snap))
+
+
+def _impact_for(snap):
+    """La vista Impact de un grafo dado (MISMO código que el constructor de las vistas)."""
+    from core.hotviews.views import impact
+    return impact.build(_core_for(snap))
+
+
+class _FlowImpact:
+    __slots__ = ('victims',)
+
+
+def _flow_impact(core):
+    """La vista Impact con el MISMO kernel (propagate_many: damping, saltos, umbral, máximo por ruta, fragilidad
+    de los factores activos) pero SOLO sobre las relaciones de FLUJO: socios e inversores no transmiten daño
+    (BRECHAS #4, valor por defecto vigente mientras Fabrizio no responda). Cuando el paso 12 lleve esa regla
+    al kernel, esta máscara queda igual a la vista Impact y el tensor vuelve a leerla tal cual."""
+    out = _FlowImpact()
+    out.victims = {}
+    if core is None or not core.mats:
+        return out
+    flow = set(vocab.flow_relation_types())
+    mats = {r: m for r, m in core.mats.items() if r in flow}
+    if not mats:
+        return out
+    sources = [oid for oid in core.ids]
+    res = E.propagate_many(mats, core.idx, core.ids, sources, damping=DAMPING, max_hops=MAX_HOPS,
+                           threshold=THRESHOLD, frag=core.frag, dt=E.dependency_transpose(mats))
+    for oid in sources:
+        impacts, hops = res.get(oid, ({}, {}))
+        if not impacts:
+            continue
+        order = sorted(impacts.items(), key=lambda kv: (-kv[1], hops.get(kv[0], 0), kv[0]))
+        out.victims[oid] = (tuple(k for k, _ in order), tuple(p for _, p in order),
+                            tuple(hops.get(k, 0) for k, _ in order))
+    return out
 
 
 def _caps_live():
@@ -131,8 +192,10 @@ def _tokens(*parts):
 class Model:
     """Tensores del grafo ya calculados (inmutable; se reemplaza entero al cambiar la entrada)."""
 
-    def __init__(self, snap, caps_live=None, caps_private=None, caps_as_of=None):
+    def __init__(self, snap, caps_live=None, caps_private=None, caps_as_of=None, view=None):
         t0 = time.time()
+        self.generation = view.generation if view is not None else None
+        self.graph_version = view.graph_version if view is not None else None
         nodes = [n for n in snap['nodes'] if n.get('id')]
         self.ids = sorted(n['id'] for n in nodes)
         self.idx = {k: i for i, k in enumerate(self.ids)}
@@ -159,18 +222,12 @@ class Model:
             elif k in caps_private:
                 self.cap[i], self.cap_src[i] = caps_private[k], 'verified_valuation'
         self.caps_as_of = caps_as_of
-        # ── Ψ: influencia de TODAS las fuentes a la vez (misma semántica que engine.propagate)
-        DT = E._transpose_csr(self.D).tocsr()
-        cur = np.eye(n)
-        psi = np.zeros((n, n))
-        for _hop in range(MAX_HOPS):
-            cur = DAMPING * (DT @ cur)
-            np.minimum(cur, 1.0, out=cur)
-            cur[cur < THRESHOLD] = 0.0
-            if not cur.any():
-                break
-            np.maximum(psi, cur, out=psi)
-        np.fill_diagonal(psi, 0.0)
+        # ── Ψ = la vista Impact (EL kernel del servidor, factores activos incluidos): la de la generación
+        #    vigente, o —para un grafo armado a mano (evaluate, pruebas)— la misma vista calculada sobre él
+        core = view.core if view is not None else _core_for(snap)
+        imp = _flow_impact(core)
+        self.psi_method = 'impact_kernel_flow_only:propagate@1'
+        psi = _psi_from_impact(imp, self.ids, self.idx)
         self.psi = psi                                                        # psi[j, s]
         # ── proveedores directos (columna de A sobre SUPPLIER_RELS)
         S = None
@@ -244,21 +301,26 @@ class Model:
 
 
 def model(force=False, snap=None):
-    """Modelo vigente (caché). Se reconstruye si cambia el snapshot o la versión de las caps en vivo."""
+    """Modelo vigente (caché). Se reconstruye si cambia la GENERACIÓN del grafo (paso 8: antes, la fecha del
+    archivo del snapshot) o la versión de las caps en vivo."""
     caps_live, caps_as_of = _caps_live()
-    try:
-        mtime = os.path.getmtime(SNAPSHOT)
-    except OSError:
-        mtime = 0
-    key = (mtime, caps_as_of, len(caps_live))
+    if snap is not None:
+        return Model(snap, caps_live, _caps_private(), caps_as_of)
+    from core.hotviews import hot
+    view = hot.graph()
+    key = (view.generation, caps_as_of, len(caps_live))
     with _LOCK:
-        if not force and snap is None and _MODEL['m'] is not None and _MODEL['key'] == key:
+        if not force and _MODEL['m'] is not None and _MODEL['key'] == key:
             return _MODEL['m']
-    m = Model(snap or _load_snapshot(), caps_live, _caps_private(), caps_as_of)
-    if snap is None:
-        with _LOCK:
-            _MODEL.update(m=m, key=key)
+    m = Model(view.snapshot, caps_live, _caps_private(), caps_as_of, view=view)
+    with _LOCK:
+        _MODEL.update(m=m, key=key)
     return m
+
+
+def graph_version():
+    """La generación del grafo del modelo vigente (tests/test_ops_single_source.py)."""
+    return model().generation
 
 
 # ─────────────────────────── métricas por empresa ───────────────────────────
@@ -317,7 +379,8 @@ def structure(nid, m=None, top=5):
         'peers': peers(k, m=m, n=5),
         'cap_usd_b': round(float(m.cap[j]), 1) if m.cap[j] > 0 else None,
         'cap_source': m.cap_src[j],
-        'method': 'flow tensor (supply/fab/cloud/license/ppa/owns/deploy) · damping 0.6 · 6 hops · conf-weighted',
+        'method': ('flow tensor (supply/fab/cloud/license/ppa/owns/deploy, conf-weighted) · influence Ψ = Impact '
+                   'view (server kernel propagate@1: damping 0.6 · 6 hops · active factors)'),
         'caps_as_of': m.caps_as_of,
     }
 
@@ -456,4 +519,5 @@ def status():
     return {'nodes': m.n, 'relations': m.rels, 'features': list(FEATURES),
             'nnz': {r: int(m.A[r].nnz) for r in m.rels}, 'caps_live': int(sum(1 for s in m.cap_src if s == 'live')),
             'caps_verified': int(sum(1 for s in m.cap_src if s == 'verified_valuation')),
-            'build_ms': m.ms, 'caps_as_of': m.caps_as_of}
+            'build_ms': m.ms, 'caps_as_of': m.caps_as_of, 'generation': m.generation,
+            'graph_version': m.graph_version, 'psi': m.psi_method}

@@ -54,7 +54,7 @@ construcción, modulación y propagación de matrices.
 - [[ontology.bulk_import.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 15 pruebas (lista abajo)._
+_Además lo importan 16 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -74,6 +74,7 @@ _Además lo importan 15 pruebas (lista abajo)._
 - [[tests.test_ontology_actions.py]]
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_link_status_event.py]]
+- [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_tensor.py]]

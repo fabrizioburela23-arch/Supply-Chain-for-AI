@@ -13,7 +13,9 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## La leen
 
 - [[brokerage.crypto.py]]
+- [[core.decisions.py]]
 - [[core.http.py]] _(en una lista de nombres, p. ej. para tapar secretos en logs)_
+- [[core.identity.py]]
 - [[core.pin.py]]
 - [[mcp_server.oauth.py]]
 - [[server.py]]
@@ -25,6 +27,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_company_data.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_ingest_news.py]]
+- [[tests.test_ledger_privacy.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]

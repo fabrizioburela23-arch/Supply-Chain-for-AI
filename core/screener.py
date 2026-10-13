@@ -4,8 +4,9 @@ LA tesis de la app (Fabrizio): "spotear empresas con potencial de crecimiento
 exponencial" — en TODAS las bolsas, no solo EE.UU. Este módulo la convierte en
 un ranking diario computable:
 
-- Universo: los ~410 tickers cotizables del grafo (data/grafo_v0.json — incluye
-  la ola china: 688825.SS, 1347.HK…). Multi-bolsa vía Yahoo.
+- Universo: los ~410 tickers cotizables del grafo (la vista `graph` de la generación vigente —
+  core/hotviews/hot.graph(): Postgres si existe, el catálogo si no— incluye la ola china: 688825.SS,
+  1347.HK…). Multi-bolsa vía Yahoo.
 - MOMENTUM real multi-semana por símbolo (5/20/60 días + media móvil), calculado
   de la serie de 3 meses. Los retornos son ratios → invariantes a la moneda
   (no necesitan conversión FX).
@@ -20,9 +21,7 @@ un ranking diario computable:
 HONESTIDAD: es un ranking de SEÑALES (precio + estructura), no una predicción
 ni asesoría. El método viaja en la respuesta.
 """
-import json
 import logging
-import os
 import threading
 import time
 
@@ -39,26 +38,33 @@ _UNIVERSE = {'ts': 0.0, 'items': None}
 
 
 def _load_universe():
-    """[{id,label,mkt,cat,sector}] desde el snapshot canónico (con dedupe por
-    símbolo — varias entidades comparten ticker, p.ej. BABA)."""
-    if _UNIVERSE['items'] is not None and time.time() - _UNIVERSE['ts'] < 3600:
-        return _UNIVERSE['items']
-    items, seen = [], set()
+    """[{id,label,mkt,cat,sector}] del grafo vigente (con dedupe por símbolo — varias entidades comparten
+    ticker, p.ej. BABA). Se recalcula cuando cambia la generación (paso 8: antes, 1 h de TTL sobre el
+    snapshot)."""
     try:
-        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        with open(os.path.join(base, 'data', 'grafo_v0.json'), encoding='utf-8') as f:
-            d = json.load(f)
-        for n in d.get('nodes', []):
-            mkt = (n.get('mkt') or '').strip()
-            if not mkt or mkt in seen:
-                continue
-            seen.add(mkt)
-            items.append({'id': n['id'], 'label': n.get('label') or n['id'],
-                          'mkt': mkt, 'cat': n.get('cat', ''), 'sector': n.get('sector', '')})
+        from core.hotviews import hot
+        view = hot.graph()
     except Exception as e:  # noqa: BLE001
         log.warning('screener: universo no cargado: %s', e)
-    _UNIVERSE.update(ts=time.time(), items=items)
+        return _UNIVERSE['items'] or []
+    if _UNIVERSE['items'] is not None and _UNIVERSE.get('generation') == view.generation:
+        return _UNIVERSE['items']
+    items, seen = [], set()
+    for n in view.nodes:
+        mkt = (n.get('mkt') or '').strip()
+        if not mkt or mkt in seen:
+            continue
+        seen.add(mkt)
+        items.append({'id': n['id'], 'label': n.get('label') or n['id'],
+                      'mkt': mkt, 'cat': n.get('cat', ''), 'sector': n.get('sector', '')})
+    _UNIVERSE.update(ts=time.time(), items=items, generation=view.generation)
     return items
+
+
+def graph_version():
+    """La generación del grafo que usa el screener (tests/test_ops_single_source.py)."""
+    _load_universe()
+    return _UNIVERSE.get('generation')
 
 
 def _momentum(symbol):
@@ -131,27 +137,21 @@ def ensure_warmer():
 
 
 def _pagerank_ranks():
-    """{node_id: pagerank_rank} desde la vista Impact publicada (core/hotviews, la que sirve
-    /api/matrix/metrics desde INFRA_OPERATIVA paso 4) o, si no hay, desde la caché del cálculo
-    directo de /api/matrix/metrics (no dispara el cómputo pesado — señal opcional)."""
+    """{node_id: pagerank_rank} de la vista Impact de la MISMA generación que el universo (core/hotviews; la que
+    sirve /api/matrix/metrics). No dispara construcciones: si todavía no hay vista, {} (señal opcional). Paso 8:
+    ya no se lee la caché privada de las rutas de matrices.
+
+    CAMBIO DE CIFRAS DELIBERADO (paso 8): antes esa caché solo existía si alguien había abierto
+    /api/matrix/metrics dentro de su TTL (y NUNCA sin DATABASE_URL, donde esa ruta da 503), así que el bonus
+    estructural documentado (+6/+3) casi nunca se aplicaba. Ahora se aplica siempre que la vista exista, con o
+    sin base: los puntajes y el orden de screen_growth cambian a propósito. La respuesta dice si se aplicó
+    (`structural_signal`)."""
     try:
-        from core.hotviews import registry
-        g = registry.generation()
-        imp = g.views.get('impact') if (g is not None and g.source == 'pg') else None
+        from core.hotviews import hot
+        view = hot.graph(wait=False)
+        imp = view.impact if view is not None else None
         if imp is not None and getattr(imp, 'metrics', None):
             return {oid: m.get('pagerank_rank') for oid, m in imp.metrics.items() if m.get('pagerank_rank')}
-    except Exception:  # noqa: BLE001
-        pass
-    try:
-        from matrix.api import _TTL_CACHE
-        best = None
-        for k, (ts, payload) in list(_TTL_CACHE.items()):
-            if isinstance(k, str) and k.startswith('metrics:'):
-                if best is None or ts > best[0]:
-                    best = (ts, payload)
-        if best and isinstance(best[1], dict):
-            return {oid: m.get('pagerank_rank') for oid, m in
-                    (best[1].get('metrics') or {}).items() if m.get('pagerank_rank')}
     except Exception:  # noqa: BLE001
         pass
     return {}
@@ -187,6 +187,8 @@ def screen_growth(top=30):
         'ranked': rows[:max(5, min(int(top), 100))],
         'coverage': {'warm': warm, 'total': total,
                      'complete': warm >= total * 0.9},
+        # ¿entró el bonus de PageRank? (sin vista todavía → no; nunca se finge)
+        'structural_signal': {'applied': bool(pr), 'ranked_nodes': len(pr)},
         'method_es': 'Señales, no predicción: momentum 5/20/60 días (multi-bolsa, '
                      'invariante a la moneda) + centralidad PageRank del grafo '
                      '(de quién depende el sistema) + tendencia sobre MA20. '

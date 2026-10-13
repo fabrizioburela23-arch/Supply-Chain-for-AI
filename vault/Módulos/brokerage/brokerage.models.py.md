@@ -35,11 +35,12 @@ tablas del corretaje multi-cliente.
 - [[brokerage.service.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_brokerage.py]]
 - [[tests.test_infra.py]]
+- [[tests.test_ops_identity.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_security.py]]

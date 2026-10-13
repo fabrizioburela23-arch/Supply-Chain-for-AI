@@ -202,8 +202,11 @@ def test_la_accion_auditable_arrastra_su_fuente_al_timeline(db):
     assert r.status_code == 200
 
     d = c.get('/api/ontology/objects/ACME/timeline?limit=20').get_json()
+    # INFRA_OPERATIVA paso 5: events.actor es el PRINCIPAL (sin PIN en desarrollo → ui:anon); lo que la persona
+    # escribió en 'actor' queda como etiqueta (declared_name) en el ActionExecuted.
     accion = next(e for e in d['timeline']
-                  if e['event_type'] == 'ActionExecuted' and e['actor'] == 'beto')
+                  if e['event_type'] == 'ActionExecuted' and e['actor'] == 'ui:anon'
+                  and e.get('declared_name') == 'beto' and e.get('decision_id'))
     assert accion['source'], 'la acción llegó sin fuente al timeline'
     assert 'sec.gov' in accion['source']['url']
     assert accion['source']['trust'] == 3       # filing = fuente primaria

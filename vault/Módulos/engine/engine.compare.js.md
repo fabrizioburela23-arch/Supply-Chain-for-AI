@@ -26,7 +26,7 @@ COMPARAR DOS EMPRESAS lado a lado (decidir entre 2) Overlay NEXUS: elige dos emp
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **69 de 92** (línea 7921), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
+Se carga en [[app.html]] en la posición **69 de 92** (línea 7928), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
 
 ## Lo usan
 

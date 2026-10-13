@@ -37,12 +37,13 @@ Phase 1 · M4: las noticias entran al grafo.
 - [[ontology.api.py]] — lo importa
 - [[ontology.timeline.py]] — lo importa
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_graph_api.py]]
 - [[tests.test_ingest_news.py]]
+- [[tests.test_ops_review_steps568.py]]
 
 ## Mencionado en sesiones de trabajo
 

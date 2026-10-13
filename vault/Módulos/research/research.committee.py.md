@@ -93,7 +93,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - herramienta MCP `get_conclusions_board` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 13 pruebas (lista abajo)._
+_Además lo importan 14 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -111,6 +111,7 @@ _Además lo importan 13 pruebas (lista abajo)._
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_mcp.py]]
+- [[tests.test_ops_review_steps568.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_repair_committee.py]]
 - [[tests.test_repair_research.py]]

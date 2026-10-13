@@ -38,6 +38,17 @@ def register(name, fn, every_s, run_at_start=True):
                         'last_ms': None}
 
 
+def _run_as_system(name, fn):
+    """Paso 5 (INFRA_OPERATIVA §8.1): todo lo que una tarea del reloj escribe queda a nombre de `system:<tarea>`."""
+    try:
+        from core import identity
+        ctx = identity.use(identity.system(name))
+    except Exception:  # noqa: BLE001
+        return fn()
+    with ctx:
+        return fn()
+
+
 def tick(now=None):
     """Una pasada: corre las tareas vencidas (testable, sin hilo)."""
     now = time.time() if now is None else now
@@ -47,7 +58,7 @@ def tick(now=None):
     for name, t in due:
         t0 = time.time()
         try:
-            res = t['fn']()
+            res = _run_as_system(name, t['fn'])
             with _LOCK:
                 t.update(last=now, runs=t['runs'] + 1, last_ok=now, last_error=None, last_result=res,
                          last_ms=int((time.time() - t0) * 1000))

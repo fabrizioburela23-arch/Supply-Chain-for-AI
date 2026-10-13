@@ -10,46 +10,55 @@ build_context(company_ids, question) → dict compacto con:
   - sus vecinos a 1 salto (top por peso, con tipo de relación y dirección),
   - chokepoints globales del grafo (para que el LLM sitúe el riesgo).
 
-Fuentes (en orden): ontología viva (Postgres, incluye lo que el Radar
-incorporó) → snapshot data/grafo_v0.json (el catálogo curado, siempre disponible).
-El snapshot se carga UNA vez por proceso (caché de módulo).
+Fuente: la vista `graph` de la generación vigente (core/hotviews/hot.graph(): Postgres —incluye lo que el
+Radar incorporó— si existe; el catálogo data/grafo_v0.json si no). Lo derivado se arma UNA vez por generación
+(paso 8: antes una vez por proceso, y una empresa nueva nunca entraba al contexto).
 """
-import json
-import os
 import threading
 
 _SNAP = {'data': None}
 _LOCK = threading.Lock()
 
 
+def _build(view):
+    g = view.snapshot
+    by_id = {n['id']: n for n in g['nodes']}
+    by_label = {n.get('label', '').lower(): n['id'] for n in g['nodes']}
+    by_ticker = {n['mkt'].upper(): n['id'] for n in g['nodes'] if n.get('mkt')}
+    out_links, in_links = {}, {}
+    for l in g['links']:
+        s, t = l.get('source'), l.get('target')
+        out_links.setdefault(s, []).append(l)
+        in_links.setdefault(t, []).append(l)
+    deg = {}
+    for l in g['links']:
+        deg[l.get('source')] = deg.get(l.get('source'), 0) + 1
+        deg[l.get('target')] = deg.get(l.get('target'), 0) + 1
+    # grado ESTRUCTURAL (G4d: pares distintos de FLUJO) — el que usan el NRS y los chokepoints
+    from ontology.vocabulary import flow_relation_types
+    return {'by_id': by_id, 'by_label': by_label, 'by_ticker': by_ticker,
+            'out': out_links, 'in': in_links, 'deg': deg,
+            'flow_deg': dict(view.flow_degree), 'flow_types': frozenset(flow_relation_types()),
+            'generation': view.generation}
+
+
 def _load_snapshot():
-    if _SNAP['data'] is not None:
-        return _SNAP['data']
+    """El grafo vigente, indexado (by_id, by_label, by_ticker, out, in, deg, flow_deg, flow_types)."""
+    from core.hotviews import hot
+    view = hot.graph()
+    cur = _SNAP['data']
+    if cur is not None and cur.get('generation') == view.generation:
+        return cur
     with _LOCK:
-        if _SNAP['data'] is not None:
-            return _SNAP['data']
-        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                            'data', 'grafo_v0.json')
-        with open(path, 'r', encoding='utf-8') as f:
-            g = json.load(f)
-        by_id = {n['id']: n for n in g['nodes']}
-        by_label = {n.get('label', '').lower(): n['id'] for n in g['nodes']}
-        by_ticker = {n['mkt'].upper(): n['id'] for n in g['nodes'] if n.get('mkt')}
-        out_links, in_links = {}, {}
-        for l in g['links']:
-            s, t = l.get('source'), l.get('target')
-            out_links.setdefault(s, []).append(l)
-            in_links.setdefault(t, []).append(l)
-        deg = {}
-        for l in g['links']:
-            deg[l.get('source')] = deg.get(l.get('source'), 0) + 1
-            deg[l.get('target')] = deg.get(l.get('target'), 0) + 1
-        # grado ESTRUCTURAL (G4d: pares distintos de FLUJO) — el que usan el NRS y los chokepoints
-        from ontology.vocabulary import flow_degree, flow_relation_types
-        _SNAP['data'] = {'by_id': by_id, 'by_label': by_label, 'by_ticker': by_ticker,
-                         'out': out_links, 'in': in_links, 'deg': deg,
-                         'flow_deg': flow_degree(g['links']), 'flow_types': frozenset(flow_relation_types())}
-    return _SNAP['data']
+        cur = _SNAP['data']
+        if cur is None or cur.get('generation') != view.generation:
+            _SNAP['data'] = _build(view)
+        return _SNAP['data']
+
+
+def graph_version():
+    """La generación del grafo que usa la capa semántica (tests/test_ops_single_source.py)."""
+    return _load_snapshot().get('generation')
 
 
 def resolve_ids(names):

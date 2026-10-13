@@ -9,6 +9,12 @@ Cada Acción:
      LinkCreated/Removed) vía ontology.service.apply_event().
   3. SIEMPRE deja además un evento `ActionExecuted` — el rastro auditable que
      alimenta el panel "📋 Registro" (timeline filtrable por autor/tipo/objeto).
+  4. INFRA_OPERATIVA paso 6 (2026-10-13): y su FICHA en el libro de decisiones (core/decisions,
+     kind `ontology.action`, durabilidad sync): quién (principal tipado de core/identity), qué entrada
+     exacta (blob con hash), con qué versión del grafo y release, qué eventos escribió (refs 'effect') y qué
+     fuentes citó. `ActionExecuted.payload.decision_id` apunta a la ficha; si la Acción se rechaza, la ficha
+     'rejected' queda igual (sesión autónoma). RegistrarDecision sigue creando su nodo `Decision`, pero solo
+     como ANCLA en el grafo: `properties.decision_id` = la ficha del libro.
 
 No reemplaza POST /api/ontology/events (Fase 1, escritura de bajo nivel para
 pipelines internos) — lo complementa como el camino recomendado y seguro
@@ -202,12 +208,36 @@ def _log_action(session, action_type, object_id, target_id, payload, actor, sour
     `source_id` (Phase 1 · M1) hace que el rastro apunte al DOCUMENTO que
     respalda la acción, no solo al canal. Sin esto la línea de tiempo mostraba
     la acción sin su evidencia, aunque la evidencia existiera."""
+    marks = _decision_marks()
+    if source_id:
+        _cite('source', source_id)
     return apply_event(
-        session, 'ActionExecuted', payload={'action': action_type, **payload},
+        session, 'ActionExecuted', payload={'action': action_type, **payload, **marks},
         valid_from=_utcnow(), source=source, actor=actor,
         object_id=object_id, target_id=target_id,
         source_id=source_id, confidence=confidence,
     )
+
+
+def _decision_marks():
+    """Paso 6: lo que ActionExecuted lleva de la ficha en curso (decision_id + principal + canal + etiqueta)."""
+    from core import decisions
+    ctx = decisions.current()
+    if ctx is None:
+        return {}
+    p = ctx.principal
+    out = {'decision_id': str(ctx.id), 'principal': p.id, 'channel': p.channel}
+    if p.declared_name:
+        out['declared_name'] = p.declared_name
+    return out
+
+
+def _cite(ref_kind, ref_id):
+    """Evidencia citada por la Acción → ref 'evidence' de la ficha en curso (si hay una)."""
+    from core import decisions
+    ctx = decisions.current()
+    if ctx is not None and ref_id:
+        ctx.evidence(ref_kind, str(ref_id))
 
 
 def _require_object(session, object_id):
@@ -446,10 +476,12 @@ def registrar_decision(session, inp: RegistrarDecisionInput, actor):
     if inp.company_id:
         _require_object(session, inp.company_id)
     decision_id = f'decision_{uuid.uuid4().hex[:12]}'
+    ledger_id = _decision_marks().get('decision_id')       # la ficha del libro (paso 6); el nodo es su ANCLA
+    props = {'decision': inp.decision, 'contexto': inp.contexto, 'company_id': inp.company_id, 'author': actor}
+    if ledger_id:
+        props['decision_id'] = ledger_id
     apply_event(session, 'ObjectCreated', {
-        'label': f'Decisión de {actor}', 'type': 'Decision',
-        'properties': {'decision': inp.decision, 'contexto': inp.contexto,
-                        'company_id': inp.company_id, 'author': actor},
+        'label': f'Decisión de {actor}', 'type': 'Decision', 'properties': props,
     }, valid_from=_utcnow(), source='manual', actor=actor, object_id=decision_id)
     if inp.company_id:
         apply_event(session, 'LinkCreated', {'rel_type': 'about', 'properties': {}},
@@ -457,7 +489,10 @@ def registrar_decision(session, inp: RegistrarDecisionInput, actor):
                     object_id=decision_id, target_id=inp.company_id)
     _log_action(session, 'RegistrarDecision', inp.company_id, decision_id,
                 {'decision': inp.decision[:200], 'contexto': inp.contexto}, actor)
-    return {'decision_id': decision_id}
+    out = {'decision_id': decision_id}
+    if ledger_id:
+        out['ledger_decision_id'] = ledger_id
+    return out
 
 
 def ajustar_posicion(session, inp: AjustarPosicionInput, actor):
@@ -720,28 +755,67 @@ ACTION_CATALOG = {
 }
 
 
-def execute_action(session, action_type, payload, actor):
+_SUBJECT_KEYS = ('object_id', 'company_id', 'from_id', 'to_id', 'factor_id', 'alias_id', 'canonical_id')
+
+
+def _subject(action_type, validated):
+    try:
+        d = validated.model_dump()
+    except Exception:  # noqa: BLE001
+        d = {}
+    subj = {'action': action_type}
+    ids = sorted({str(d[k]) for k in _SUBJECT_KEYS if d.get(k)})
+    if ids:
+        subj['entity_ids'] = ids
+    for k in ('link_id', 'ticker'):
+        if d.get(k):
+            subj[k] = str(d[k])[:120]
+    return subj
+
+
+def execute_action(session, action_type, payload, actor, principal=None, *, meta=None, correlation_id=None):
     """Punto de entrada único: valida con el esquema del catálogo y ejecuta.
     Lanza ActionError/ValidationError si algo no es válido — nunca escribe a
-    medias (el caller hace rollback si esto lanza, vía session_scope)."""
-    entry = ACTION_CATALOG.get(action_type)
-    if not entry:
-        raise ActionError(f'Acción desconocida: {action_type}. Catálogo: {", ".join(ACTION_CATALOG)}')
-    schema, handler = entry
-    try:
-        validated = schema(**(payload or {}))
-    except ValidationError as e:
-        raise ActionError(f'Entrada inválida para {action_type}: {e.errors()}')
-    if not actor or not str(actor).strip():
-        raise ActionError('actor es requerido — toda Acción queda atribuida a alguien')
-    return handler(session, validated, actor)
+    medias (el caller hace rollback si esto lanza, vía session_scope).
+
+    Paso 6: TODA ejecución deja su ficha en el libro de decisiones (kind 'ontology.action', sync, en la MISMA
+    transacción que los eventos: si la ficha no se puede escribir, la Acción se revierte). Un rechazo
+    (Acción desconocida, entrada inválida, error de dominio) deja una ficha 'rejected' en una sesión autónoma
+    que sobrevive al rollback del caller. `actor` es el texto que se escribe en events.actor; `principal`
+    (core/identity) es QUIÉN actúa — sin él, el del contexto (scheduler, MCP) o `legacy:<actor>`.
+    `meta` (dict opcional) recibe {'decision_id': …}."""
+    from core import decisions, identity
+    if principal is None:
+        principal = identity.current() or identity.legacy(actor)
+    with decisions.decision_scope('ontology.action', principal, session=session,
+                                  subject={'action': str(action_type)[:60]}, correlation_id=correlation_id) as ctx:
+        if meta is not None:
+            meta['decision_id'] = str(ctx.id)
+        entry = ACTION_CATALOG.get(action_type)
+        if not entry:
+            raise ActionError(f'Acción desconocida: {action_type}. Catálogo: {", ".join(ACTION_CATALOG)}')
+        schema, handler = entry
+        ctx.payload_blob({'action': action_type, 'payload': payload or {}})
+        try:
+            validated = schema(**(payload or {}))
+        except ValidationError as e:
+            raise ActionError(f'Entrada inválida para {action_type}: {e.errors()}') from e
+        if not actor or not str(actor).strip():
+            raise ActionError('actor es requerido — toda Acción queda atribuida a alguien')
+        ctx.subject = _subject(action_type, validated)
+        ctx.extra['impl'] = {'action': f'{action_type}@1'}
+        result = handler(session, validated, actor)
+        ctx.output = result
+        ctx.status = 'executed'
+    return result
 
 
 def list_actions(session, actor=None, action_type=None, object_id=None, limit=100):
     """Para el panel '📋 Registro': timeline de ActionExecuted, filtrable."""
     q = select(Event).where(Event.event_type == 'ActionExecuted')
-    if actor:
-        q = q.where(Event.actor == actor)
+    if actor:   # paso 5: el principal (events.actor) o la etiqueta que escribió la persona (declared_name)
+        from sqlalchemy import or_ as _or
+        q = q.where(_or(Event.actor == actor, Event.payload['declared_name'].astext == actor))
     if action_type:
         q = q.where(Event.payload['action'].astext == action_type)
     if object_id:

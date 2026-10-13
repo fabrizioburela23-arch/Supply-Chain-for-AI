@@ -31,6 +31,7 @@ ingesta masiva idempotente y validada (Wikidata/GLEIF).
 
 ## Lo usan
 
+- [[core.decisions.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 
 _Además lo importan 2 pruebas (lista abajo)._

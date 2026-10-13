@@ -141,6 +141,9 @@ _COLUMNAS_TARDIAS = (
     ('events', 'txid', 'XID8'),            # → BIGINT en Postgres < 13 (ver init_schema)
     ('events', 'seq', 'BIGINT'),
     ('events', 'release_hash', 'CHAR(64)'),
+    # INFRA_OPERATIVA paso 6 — broker_audit entra a la cadena de sellos: txid/seq (DEFAULT en core/ledger_ddl)
+    ('broker_audit', 'txid', 'XID8'),
+    ('broker_audit', 'seq', 'BIGINT'),
 )
 
 
@@ -197,6 +200,12 @@ def init_schema(retries=6, delay=2.0):
     for intento in range(1, max(1, retries) + 1):
         try:
             engine = _get_engine()
+            try:   # paso 6: xid8 o bigint para las columnas txid del libro (lo decide la versión de Postgres)
+                from core import ledger_ddl as _ldd
+                with engine.connect() as _c:
+                    _ldd.detect_xid8(_c)
+            except Exception:  # noqa: BLE001
+                pass
             Base.metadata.create_all(engine)
 
             with engine.begin() as conn:
@@ -212,8 +221,9 @@ def init_schema(retries=6, delay=2.0):
                     _pgv = int(conn.execute(text('SHOW server_version_num')).scalar())
                 except Exception:  # noqa: BLE001
                     _pgv = None
+                tablas = {t for t, _c in existentes}
                 for tabla, columna, tipo in _COLUMNAS_TARDIAS:
-                    if (tabla, columna) not in existentes:
+                    if tabla in tablas and (tabla, columna) not in existentes:
                         if tipo == 'XID8' and _pgv is not None and _pgv < 130000:
                             tipo = 'BIGINT'
                         conn.execute(text(f'ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {columna} {tipo}'))

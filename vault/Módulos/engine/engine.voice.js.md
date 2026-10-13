@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "engine/voice.js"
 lenguaje: "javascript"
-lineas: 3024
+lineas: 3027
 aliases: ["engine/voice.js"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # engine/voice.js
 
-> Módulo · capa [[Capa Voz]] · 3.024 líneas · `engine/voice.js`
+> Módulo · capa [[Capa Voz]] · 3.027 líneas · `engine/voice.js`
 
 ## Para qué sirve
 
@@ -45,7 +45,7 @@ De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`,
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **34 de 92** (línea 7820), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **34 de 92** (línea 7827), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 
@@ -72,6 +72,7 @@ Se carga en [[app.html]] en la posición **34 de 92** (línea 7820), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_client_hardening.py]]
+- [[tests.test_ops_identity.py]]
 - [[tests.test_overnight3_fixer_voice_race.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]
 - [[tests.test_overnight_fixes_review.py]]

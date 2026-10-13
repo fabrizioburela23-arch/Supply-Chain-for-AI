@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L26"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 — INFRAESTRUCTURA OPERATIVA, PASOS 1-4 (registro inmutable, versión del grafo, vistas rápidas)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 26 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,4 +18,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 - [[core.ledger_ddl.py]]
 
-← más antigua: [[Sesión 2026-10-12 (e) — BLOQUE 0 DE BRECHAS_V2 - CIFRAS Y PUBLICACIÓN SEGURAS]]
+← más antigua: [[Sesión 2026-10-12 (e) — BLOQUE 0 DE BRECHAS_V2 - CIFRAS Y PUBLICACIÓN SEGURAS]] · más nueva: [[Sesión 2026-10-13 (b) — INFRAESTRUCTURA OPERATIVA, PASOS 5, 6 y 8]] →

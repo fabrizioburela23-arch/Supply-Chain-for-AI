@@ -19,6 +19,10 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_infra.py]]
+- [[tests.test_ledger_core.py]]
+- [[tests.test_ledger_privacy.py]]
+- [[tests.test_ops_identity.py]]
+- [[tests.test_ops_review_steps568.py]]
 - [[tests.test_security.py]]
 
 ## ¿Está documentada en CLAUDE.md?

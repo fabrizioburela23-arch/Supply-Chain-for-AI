@@ -343,13 +343,16 @@ def test_metrics_y_factors_directos_traen_el_sobre(db, monkeypatch):
 
 @needs_db
 def test_screener_lee_pagerank_de_la_vista(db, monkeypatch):
-    import matrix.api as M
+    """Paso 8: el PageRank sale de la vista Impact de la MISMA generación que lee el screener (hot.graph()):
+    la publicada si trae el catálogo; con esta base de prueba (5 empresas) los lectores usan el snapshot."""
     from core import screener
-    from core.hotviews import builder, registry
-    monkeypatch.setattr(M, '_TTL_CACHE', {})
+    from core.hotviews import builder, hot, registry
     registry.reset()
+    hot.reset()
     assert screener._pagerank_ranks() == {}
-    g = builder.build_once()
+    builder.build_once()
+    view = hot.graph()
     ranks = screener._pagerank_ranks()
-    assert ranks and set(ranks) <= set(g.views['graph_core'].ids)
-    assert ranks == {k: m['pagerank_rank'] for k, m in g.views['impact'].metrics.items() if m.get('pagerank_rank')}
+    assert ranks and set(ranks) <= set(view.core.ids)
+    assert ranks == {k: m['pagerank_rank'] for k, m in view.impact.metrics.items() if m.get('pagerank_rank')}
+    hot.reset()

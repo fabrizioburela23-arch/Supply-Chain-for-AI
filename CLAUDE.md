@@ -35,6 +35,20 @@ en `core/hotviews/signals.py`, tablas `kh_versions`/`kh_tx_versions`, NOTIFY `kh
 diferencias en 969 choques) con `/api/hot/status|impact/<id>|chokepoints|factors|scenario` (sobre con graph_version,
 generation, source, stale; ETag) y `/api/matrix/status|impact|metrics|factors|factor/fire` DELEGAN en ellas (impacto
 98 ms → 0,6 ms). Env: `HOTVIEWS` (on), `HOT_WAIT_S` (2), `HOTVIEWS_COALESCE_S` (1), `HOTVIEWS_LISTEN` (on).
+**PASOS 5, 6 y 8 (2026-10-13)**: IDENTIDAD — `core/identity.principal()` decide QUIÉN actúa: PIN válido = `op:fabrizio`
+(D1), token MCP = `mcp:<id>`, agentes `agent:<id>@<ver>` (solo del registro), reloj `system:<tarea>`, sin PIN `ui:anon`; el
+`actor` que manda el cliente es SOLO `declared_name` (etiqueta); `X-Khipu-Channel` (ui|voice|crypto|terminal|mcp…) se
+anota pero nunca autoriza; `require_operator` ESTRICTO en producción (sin TRADE_PIN → 403). LIBRO DE DECISIONES —
+`ontology/ledger_models.py` (decisions, decision_refs, decision_outcomes, decision_violations, decision_blobs,
+ledger_seals, ledger_meta; todas append-only) + `core/decisions.py` (`decision_scope` en la MISMA transacción del
+efecto; `record_rejection` en sesión propia que sobrevive al rollback; `approve`; texto personal solo como HMAC) +
+`core/ledger.py` (sellador cada 30 s con cadena de hashes sobre events/kh_tx_versions/decisions/broker_audit; sesión
+canónica UTC; columnas tardías SIEMPRE nulas o el verify fallaría) + `/api/ledger/status|decisions|decision/<id>|verify`.
+Toda acción de ontología deja UNA decisión (`ActionExecuted.decision_id`); sin libro → 503 `ledger_unavailable`.
+UN SOLO GRAFO — `core/hotviews/hot.graph()`: los 12 lectores del servidor (world, entities, screener, sim_agents,
+semantic, portfolio_ai, research/router|context, tensor, MCP, chat) leen la generación vigente (Postgres o snapshot);
+solo reconcile lee el catálogo a propósito. Desde Postgres se EXCLUYEN vínculos propuestos/rechazados y los hechos
+temporales migrados. Ψ del tensor = kernel restringido a FLUJO (sin socios/inversores) hasta el paso 12.
 
 ## Arquitectura
 

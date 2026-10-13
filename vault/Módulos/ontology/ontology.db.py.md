@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/db.py"
 lenguaje: "python"
-lineas: 251
+lineas: 261
 aliases: ["ontology/db.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/db.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 251 líneas · `ontology/db.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 261 líneas · `ontology/db.py`
 
 ## Para qué sirve
 
@@ -21,8 +21,8 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - `ontology_available()` _(línea 20)_
 - `get_session_factory()` _(línea 104)_
 - `session_scope()` — Sesión con commit/rollback automático. Uso: with session_scope() as s: ... _(línea 110)_
-- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 147)_
-- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 170)_
+- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 150)_
+- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 173)_
 
 **Internas** (empiezan con `_`): `_normalize_url`, `_env_int`, `_engine_kwargs`, `_get_engine`
 
@@ -43,8 +43,11 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[core.agents_api.py]] — lo importa
 - [[core.ai_usage.py]] — lo importa
 - [[core.decide.py]] — lo importa
+- [[core.decisions.py]] — lo importa
 - [[core.geosit.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
+- [[core.ledger.py]] — lo importa
+- [[core.ledger_api.py]] — lo importa
 - [[core.live_caps.py]] — lo importa
 - [[core.ops_check.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
@@ -84,7 +87,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 37 pruebas (lista abajo)._
+_Además lo importan 43 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -113,6 +116,9 @@ _Además lo importan 37 pruebas (lista abajo)._
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]
+- [[tests.test_ledger_chain.py]]
+- [[tests.test_ledger_core.py]]
+- [[tests.test_ledger_privacy.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_ontology.py]]
@@ -121,7 +127,10 @@ _Además lo importan 37 pruebas (lista abajo)._
 - [[tests.test_ontology_alerts.py]]
 - [[tests.test_ops_events_append_only.py]]
 - [[tests.test_ops_graph_version.py]]
+- [[tests.test_ops_identity.py]]
 - [[tests.test_ops_link_status_event.py]]
+- [[tests.test_ops_review_steps568.py]]
+- [[tests.test_ops_single_source.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_phase3.py]]

@@ -132,10 +132,36 @@ def approval_ttl_s():
         return 1440 * 60
 
 
+def _who():
+    """Paso 5 (INFRA_OPERATIVA §8.1): el principal AUTENTICADO de quien origina la fila (op:fabrizio, mcp:<token>,
+    system:<tarea>…), su canal declarado y la etiqueta libre. Nunca lanza; None fuera de contexto."""
+    try:
+        from core import identity
+        p = identity.current()
+        if p is None:
+            from flask import has_request_context
+            if has_request_context():
+                p = identity.principal_from_request()
+        if p is None:
+            return None
+        w = {'principal': p.id, 'kind': p.kind, 'auth': p.auth, 'channel': p.channel}
+        if p.declared_name:
+            w['declared_name'] = p.declared_name
+        return w
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def audit(session, actor, action, client_id=None, order_id=None, detail=None):
-    """APPEND-ONLY. Jamás se escribe un secreto en `detail`."""
+    """APPEND-ONLY. Jamás se escribe un secreto en `detail`. Desde el paso 5 cada fila lleva `detail._who`
+    (principal autenticado + canal) aunque `actor` sea un texto heredado."""
+    detail = dict(detail or {})
+    if '_who' not in detail:
+        who = _who()
+        if who:
+            detail['_who'] = who
     session.add(BrokerAudit(actor=str(actor or 'sistema')[:120], action=str(action)[:40],
-                            client_id=client_id, order_id=order_id, detail=detail or {}))
+                            client_id=client_id, order_id=order_id, detail=detail))
 
 
 def list_audit(session, client_id=None, limit=100):

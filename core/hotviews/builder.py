@@ -5,7 +5,8 @@ Entradas: after_commit (camino rápido), LISTEN khipu_graph (escritores fuera de
 más de una construcción en curso; si alguien está esperando una versión (una ruta /api/matrix/* que vio la
 base más adelante), se construye sin esperar el agrupamiento.
 
-Construir = source.load() (foto REPEATABLE READ de Postgres o el snapshot) → GraphCore → Impact → publicar
+Construir = source.load() (foto REPEATABLE READ de Postgres o el snapshot) → GraphCore → Impact → graph (el
+grafo de los lectores, paso 8; no va a hot_view_builds: su versión es la de la generación) → publicar
 la Generation entera (una asignación) → una fila por vista en `hot_view_builds` (append-only, sin cuerpos).
 Si falla, se queda la generación anterior (stale:true, last_error) y se reintenta con espera creciente.
 
@@ -89,6 +90,7 @@ def _log_builds(g):
 def build_once(data=None):
     """Construye y PUBLICA una generación (sincrónico). Lanza si la fuente falla."""
     from core.hotviews import registry, signals, source
+    from core.hotviews.views import graph as graph_view
     from core.hotviews.views import graph_core, impact
     t0 = time.perf_counter()
     if data is None:
@@ -98,11 +100,19 @@ def build_once(data=None):
     t2 = time.perf_counter()
     imp = impact.build(core)
     t3 = time.perf_counter()
+    gv = graph_view.build(data)          # paso 8: el grafo de los lectores, de la MISMA foto (None si no la trae)
+    t4 = time.perf_counter()
     rel, label = signals.release_hash()
     build_ms = {'read': round((t1 - t0) * 1000, 1), 'graph_core': round((t2 - t1) * 1000, 1),
-                'impact': round((t3 - t2) * 1000, 1), 'total': round((t3 - t0) * 1000, 1)}
-    g = registry.make(data, {'graph_core': core, 'impact': imp}, rel, label, build_ms,
+                'impact': round((t3 - t2) * 1000, 1), 'graph': round((t4 - t3) * 1000, 1),
+                'total': round((t4 - t0) * 1000, 1)}
+    views = {'graph_core': core, 'impact': imp}
+    if gv is not None:
+        views['graph'] = gv
+    g = registry.make(data, views, rel, label, build_ms,
                       {'graph_core': core.content_sha, 'impact': imp.content_sha})
+    if gv is not None:
+        gv.attach(g)
     registry.publish(g)
     if data.source == 'pg' and data.lineage:
         signals._observe(g.graph_version, data.lineage, via='build')

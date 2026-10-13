@@ -79,21 +79,23 @@ def _num(raw, default, lo, hi, key):
 @hot_bp.get('/status')
 @rate_limit(240, 60)
 def hot_status():
-    from core.hotviews import builder, registry, signals
+    from core.hotviews import builder, hot, registry, signals
+    from core.hotviews.views import graph as graph_view
     from core.hotviews.views import graph_core, impact
     g = registry.generation()
     if g is None:
         builder.request_build()
     data = {'warming': g is None, 'builder': builder.state(), 'signals': signals.stats(),
             'known': {k: v for k, v in signals.known().items() if k != 'ids'},
-            'history': registry.history()[:10]}
+            'history': registry.history()[:10], 'readers': hot.status()}
     if g is not None:
         data.update({
             'generation': g.id, 'graph_version': g.graph_version, 'lineage': g.lineage, 'source': g.source,
             'release': g.release, 'release_label': g.release_label, 'built_at': g.built_at,
             'build_ms': g.build_ms, 'read_ms': g.read_ms,
             'views': {'graph_core': graph_core.status(g.views['graph_core']),
-                      'impact': impact.status(g.views['impact'])},
+                      'impact': impact.status(g.views['impact']),
+                      'graph': graph_view.status(g.views.get('graph'))},
             'snapshot': {k: g.extra.get(k) for k in ('snapshot_sha', 'exported_at')} if g.source == 'snapshot' else None,
         })
     return envelope('status', data, g, etag=False)

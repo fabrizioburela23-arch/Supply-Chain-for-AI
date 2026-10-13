@@ -217,17 +217,18 @@ def _portfolio_report(positions):
 
 
 # ── grafo ────────────────────────────────────────────────────────────────────
-_GRAPH = {'deg': None, 'flow_deg': None, 'sup': None, 'cli': None, 'sectors9': None}
+_GRAPH = {'deg': None, 'flow_deg': None, 'sup': None, 'cli': None, 'sectors9': None, 'generation': None}
 _GRAPH_LOCK = threading.Lock()
 
 
 def _graph():
-    """Grado, proveedores y clientes por id desde el snapshot (1 vez)."""
+    """Grado, proveedores y clientes por id del grafo vigente (core/hotviews/hot.graph(); se recalcula al
+    cambiar la generación — paso 8: antes se leía el snapshot una vez por proceso)."""
+    from core.hotviews import hot
+    view = hot.graph()
     with _GRAPH_LOCK:
-        if _GRAPH['deg'] is None:
-            from core.entities import _SNAPSHOT
-            with open(_SNAPSHOT, encoding='utf-8') as fh:
-                snap = json.load(fh)
+        if _GRAPH['deg'] is None or _GRAPH.get('generation') != view.generation:
+            snap = view.snapshot
             deg, sup, cli = defaultdict(int), defaultdict(list), defaultdict(list)
             for l in snap.get('links', []):
                 s, t = l.get('source'), l.get('target')
@@ -238,14 +239,16 @@ def _graph():
                 w = l.get('w') or 1
                 sup[t].append((w, s))   # s PROVEE a t
                 cli[s].append((w, t))
-            try:   # G4d: el NRS usa el grado ESTRUCTURAL (pares de flujo distintos), igual que la app y el MCP
-                from ontology.vocabulary import flow_degree
-                fdeg = flow_degree(snap.get('links', []))
-            except Exception:  # noqa: BLE001
-                fdeg = dict(deg)
+            # G4d: el NRS usa el grado ESTRUCTURAL (pares de flujo distintos), igual que la app y el MCP
+            fdeg = dict(view.flow_degree)
             _GRAPH.update(deg=dict(deg), flow_deg=fdeg, sup=dict(sup), cli=dict(cli),
-                          sectors9=snap.get('sectors9') or {})
+                          sectors9=snap.get('sectors9') or {}, generation=view.generation)
         return _GRAPH
+
+
+def graph_version():
+    """La generación del grafo que usa el asistente de carteras (tests/test_ops_single_source.py)."""
+    return _graph().get('generation')
 
 
 def _nodes():

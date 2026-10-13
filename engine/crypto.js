@@ -491,7 +491,7 @@
     var pin = _pinNow();
     if (TRADE && Date.now() - TRADE.ts < 3600000 &&
         !(TRADE.status === 401 && pin !== TRADE.pin)) { cb(TRADE); return; }
-    window._tradeFetch('/api/trade/crypto/assets', {}, false)
+    window._tradeFetch('/api/trade/crypto/assets', { channel: 'crypto' }, false)
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (d) {
           TRADE = { ts: Date.now(), status: r.status, pin: pin,
@@ -625,6 +625,7 @@
     var tid = KT ? KT.order.sending(info) : null;
     var note = function (res) { if (KT) { try { KT.order.result(info, res, tid); } catch (e) {} } };
     window._tradeFetch('/api/trade/order', {
+      channel: 'crypto',   // paso 5: X-Khipu-Channel (metadato del canal; nunca autoriza)
       method: 'POST', headers: { 'Content-Type': 'application/json' }, timeout: 30000,
       // cripto: el server fuerza time_in_force='gtc' — no se envía aquí
       body: JSON.stringify({ symbol: o.pair, side: o.side, notional: o.amt, type: 'market', client_order_id: coid })

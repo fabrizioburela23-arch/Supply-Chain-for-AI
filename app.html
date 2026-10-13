@@ -1621,10 +1621,16 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   function jsonResp(status, body) {
     return new Response(JSON.stringify(body), { status: status, headers: { 'Content-Type': 'application/json' } });
   }
-  function send(url, o, pin, timeout) {
+  // Paso 5 (INFRA_OPERATIVA §8.1): el canal DECLARADO (ui|voice|crypto|terminal…) viaja en X-Khipu-Channel —
+  // es solo metadato, nunca autoriza — y X-Khipu-Pin-Source dice si el PIN se tecleó ahora o venía guardado.
+  var KH_CHANNELS = ['ui', 'voice', 'chat', 'terminal', 'crypto', 'mcp', 'agent'];
+  function send(url, o, pin, timeout, pinSource) {
     var opts = Object.assign({}, o);
     opts.headers = Object.assign({}, o.headers || {});
     if (pin) opts.headers['X-Trade-Pin'] = pin; else delete opts.headers['X-Trade-Pin'];
+    var ch = String(opts.channel || opts.headers['X-Khipu-Channel'] || 'ui').toLowerCase(); delete opts.channel;
+    opts.headers['X-Khipu-Channel'] = KH_CHANNELS.indexOf(ch) >= 0 ? ch : 'ui';
+    if (pin) opts.headers['X-Khipu-Pin-Source'] = pinSource || 'stored'; else delete opts.headers['X-Khipu-Pin-Source'];
     if (!(timeout > 0) || typeof AbortController === 'undefined' || opts.signal) return fetch(url, opts);
     var ac = new AbortController(); opts.signal = ac.signal;
     var t = setTimeout(function () { ac.abort(); }, timeout);
@@ -1632,25 +1638,26 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   }
   // interactive=true → puede pedir el PIN (una vez; y otra si el server dice
   // que es incorrecto). opts.timeout (ms) opcional → AbortError al vencer.
+  // opts.channel ('voice'|'crypto'|'terminal'…) opcional → X-Khipu-Channel (por defecto 'ui').
   window._tradeFetch = async function (url, opts, interactive) {
     var o = Object.assign({}, opts || {});
     var timeout = +o.timeout || 0; delete o.timeout;
-    var pin = window._tradePinStored();
+    var pin = window._tradePinStored(), pinSrc = 'stored';
     if (!pin) {
       var required = await window._tradePinRequired();
       if (required !== false) {
-        if (interactive) pin = await askPin();
+        if (interactive) { pin = await askPin(); pinSrc = 'prompted'; }
         if (!pin) return jsonResp(401, { error: 'Falta el PIN de trading', error_en: 'Trading PIN required', code: 'pin_required' });
       }
     }
-    var r = await send(url, o, pin, timeout);
+    var r = await send(url, o, pin, timeout, pinSrc);
     if (r.status === 401) {
       var d = null; try { d = await r.clone().json(); } catch (e) {}
       // solo si el 401 es NUESTRO (PIN malo/faltante), no uno de Alpaca pasado tal cual
       if (d && (d.code === 'invalid_pin' || d.code === 'pin_required')) {
         _pinReq.v = true; _pinReq.ts = Date.now();   // el server SÍ exige PIN (p. ej. recién configurado)
         if (pin) window._tradePinClear();
-        if (interactive) { var p2 = await askPin(); if (p2) r = await send(url, o, p2, timeout); }
+        if (interactive) { var p2 = await askPin(); if (p2) r = await send(url, o, p2, timeout, 'prompted'); }
       }
     }
     return r;
@@ -11118,7 +11125,8 @@ window.loadTradeFlows = loadTradeFlows;
   // El server exige X-Trade-Pin (env TRADE_PIN) en todas las rutas /api/trade/*.
   // El manejo del PIN vive en UN solo lugar: window._tradeFetch (primer bloque
   // inline de app.html; lo usan también crypto.js, voice.js y cockpit.js).
-  const _tradeFetch = (url, opts, interactive) => window._tradeFetch(url, opts, interactive);
+  const _tradeFetch = (url, opts, interactive) =>
+    window._tradeFetch(url, Object.assign({ channel: 'terminal' }, opts || {}), interactive);   // paso 5: canal
   const _tpL = (es, en) => ((window.LANG || '') === 'en' ? en : es);
   const _tpE = s => (typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
   const TP_MAX_NOTIONAL = 100000;              // mismo tope que el server por orden

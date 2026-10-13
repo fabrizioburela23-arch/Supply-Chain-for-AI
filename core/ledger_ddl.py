@@ -24,8 +24,14 @@ import logging
 
 log = logging.getLogger('khipu')
 
-# Tablas protegidas por kh_append_only (broker_audit tiene su propio disparador desde Phase 3).
-APPEND_ONLY_TABLES = ('events', 'kh_tx_versions', 'hot_view_builds')
+# Tablas protegidas por kh_append_only (broker_audit tiene su propio disparador desde Phase 3). Paso 6: el
+# libro de decisiones (ontology/ledger_models.py). decision_blobs tiene su propia guardia (purga por retención).
+APPEND_ONLY_TABLES = ('events', 'kh_tx_versions', 'hot_view_builds',
+                      'decisions', 'decision_refs', 'decision_outcomes', 'decision_violations',
+                      'ledger_seals', 'ledger_meta')
+
+# Tablas con txid/seq añadidos como columnas tardías (ontology/db._COLUMNAS_TARDIAS): aquí solo el DEFAULT.
+TXID_SEQ_TABLES = ('events', 'broker_audit')
 
 STRUCTURAL_EVENT_TYPES = ('ObjectCreated', 'ObjectUpdated', 'LinkCreated', 'LinkRemoved', 'LinkStatusChanged')
 
@@ -127,26 +133,33 @@ def _tables_sql():
     )
 
 
-def _column_defaults(conn):
+def _column_defaults(conn, table='events'):
     from sqlalchemy import text
     rows = conn.execute(text(
         "SELECT column_name, column_default FROM information_schema.columns "
-        "WHERE table_schema = current_schema() AND table_name = 'events' "
-        "AND column_name IN ('txid', 'seq', 'release_hash')")).all()
+        "WHERE table_schema = current_schema() AND table_name = :t "
+        "AND column_name IN ('txid', 'seq', 'release_hash')"), {'t': table}).all()
     return {c: d for c, d in rows}
+
+
+def ensure_txid_seq(conn, table):
+    """DEFAULT de <table>.txid/seq DESPUÉS de crear las columnas (las filas viejas quedan NULL = anteriores a
+    la migración, nunca con un txid inventado). Idempotente. Devuelve {txid, seq} presentes."""
+    cols = _column_defaults(conn, table)
+    if 'txid' in cols and not cols['txid']:
+        safe_ddl(conn, f'ALTER TABLE {table} ALTER COLUMN txid SET DEFAULT {txid_expr()}')
+    if 'seq' in cols and not cols['seq']:
+        if safe_ddl(conn, f'CREATE SEQUENCE IF NOT EXISTS {table}_seq_seq'):
+            safe_ddl(conn, f"ALTER TABLE {table} ALTER COLUMN seq SET DEFAULT nextval('{table}_seq_seq')")
+            safe_ddl(conn, f'ALTER SEQUENCE {table}_seq_seq OWNED BY {table}.seq')
+    return cols
 
 
 def ensure_events(conn):
     """DEFAULT de events.txid/seq (las columnas ya las creó _COLUMNAS_TARDIAS), índice parcial e índice por txid.
     Idempotente: solo toca lo que falta (un ALTER toma ACCESS EXCLUSIVE aunque no cambie nada)."""
     from sqlalchemy import text
-    cols = _column_defaults(conn)
-    if 'txid' in cols and not cols['txid']:
-        safe_ddl(conn, f'ALTER TABLE events ALTER COLUMN txid SET DEFAULT {txid_expr()}')
-    if 'seq' in cols and not cols['seq']:
-        if safe_ddl(conn, 'CREATE SEQUENCE IF NOT EXISTS events_seq_seq'):
-            safe_ddl(conn, "ALTER TABLE events ALTER COLUMN seq SET DEFAULT nextval('events_seq_seq')")
-            safe_ddl(conn, 'ALTER SEQUENCE events_seq_seq OWNED BY events.seq')
+    cols = ensure_txid_seq(conn, 'events')
     idx = {n for (n,) in conn.execute(text(
         "SELECT indexname FROM pg_indexes WHERE schemaname = current_schema() AND tablename = 'events'")).all()}
     types = ', '.join(f"'{t}'" for t in STRUCTURAL_EVENT_TYPES)
@@ -157,6 +170,90 @@ def ensure_events(conn):
         safe_ddl(conn, 'CREATE INDEX IF NOT EXISTS ix_events_txid ON events (txid)')
     if 'seq' in cols and 'ix_events_seq' not in idx:
         safe_ddl(conn, 'CREATE INDEX IF NOT EXISTS ix_events_seq ON events (seq)')
+
+
+# ── paso 6: libro de decisiones ─────────────────────────────────────────────
+# decision_blobs: DELETE/TRUNCATE siempre prohibidos; UPDATE solo como PURGA por retención (§2.7): el job
+# marca khipus.retention_job=on, el blob es standard_90d con > 90 días, queda body NULL con el MISMO sha y
+# ninguna decisión 'sync' lo cita.
+_FN_BLOB_GUARD = """
+CREATE OR REPLACE FUNCTION kh_blob_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'UPDATE'
+     AND coalesce(current_setting('khipus.retention_job', true), '') = 'on'
+     AND OLD.retention_class = 'standard_90d'
+     AND OLD.created_at < now() - interval '90 days'
+     AND NEW.body IS NULL AND NEW.sha256 = OLD.sha256 AND NEW.kind = OLD.kind
+     AND NEW.size_bytes = OLD.size_bytes AND NEW.retention_class = OLD.retention_class
+     AND NEW.created_at = OLD.created_at
+     AND NOT EXISTS (SELECT 1 FROM decision_refs r JOIN decisions d ON d.id = r.decision_id
+                     WHERE r.ref_kind = 'blob' AND r.ref_id = OLD.sha256 AND d.durability = 'sync')
+     AND NOT EXISTS (SELECT 1 FROM decisions d
+                     WHERE d.durability = 'sync' AND (d.inputs_sha = OLD.sha256 OR d.output_sha = OLD.sha256))
+  THEN
+    RETURN NEW;
+  END IF;
+  RAISE EXCEPTION 'decision_blobs es append-only: % no permitido (append-only; solo purga por retención)', TG_OP;
+END $$
+"""
+
+_BLOB_TRIGGERS = """
+DO $$
+BEGIN
+  IF to_regclass('decision_blobs') IS NOT NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'decision_blobs_guard'
+                   AND tgrelid = 'decision_blobs'::regclass) THEN
+      CREATE TRIGGER decision_blobs_guard BEFORE UPDATE OR DELETE ON decision_blobs
+        FOR EACH ROW EXECUTE PROCEDURE kh_blob_guard();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'decision_blobs_no_truncate'
+                   AND tgrelid = 'decision_blobs'::regclass) THEN
+      CREATE TRIGGER decision_blobs_no_truncate BEFORE TRUNCATE ON decision_blobs
+        FOR EACH STATEMENT EXECUTE PROCEDURE kh_blob_guard();
+    END IF;
+  END IF;
+END $$
+"""
+
+_LEDGER_INDEXES = (
+    ('ix_dec_corr', 'CREATE INDEX IF NOT EXISTS ix_dec_corr ON decisions (correlation_id) '
+                    'WHERE correlation_id IS NOT NULL'),
+    ('ix_dec_parent', 'CREATE INDEX IF NOT EXISTS ix_dec_parent ON decisions (parent_id) WHERE parent_id IS NOT NULL'),
+    ('ix_dec_pending', "CREATE INDEX IF NOT EXISTS ix_dec_pending ON decisions (recorded_at) "
+                       "WHERE status = 'pending_approval'"),
+    ('ix_dec_subject', 'CREATE INDEX IF NOT EXISTS ix_dec_subject ON decisions USING gin (subject jsonb_path_ops)'),
+    ('ux_dout_dedup', "CREATE UNIQUE INDEX IF NOT EXISTS ux_dout_dedup ON decision_outcomes "
+                      "(decision_id, outcome_kind, (result->>'dedup_key')) WHERE result ? 'dedup_key'"),
+    ('ix_broker_audit_txid', 'CREATE INDEX IF NOT EXISTS ix_broker_audit_txid ON broker_audit (txid)'),
+)
+
+
+def ensure_ledger(conn):
+    """Guardia de blobs, índices especiales del libro y DEFAULT de broker_audit.txid/seq. Idempotente."""
+    from sqlalchemy import text
+    if safe_ddl(conn, _FN_BLOB_GUARD):
+        safe_ddl(conn, _BLOB_TRIGGERS)
+    have = {n for (n,) in conn.execute(text(
+        "SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()")).all()}
+    tables = {n for (n,) in conn.execute(text(
+        "SELECT tablename FROM pg_tables WHERE schemaname = current_schema()")).all()}
+    for name, sql in _LEDGER_INDEXES:
+        tbl = 'broker_audit' if name.startswith('ix_broker') else ('decision_outcomes' if 'dout' in name
+                                                                   else 'decisions')
+        if name not in have and tbl in tables:
+            if tbl == 'broker_audit' and 'txid' not in _column_defaults(conn, 'broker_audit'):
+                continue
+            safe_ddl(conn, sql)
+    if 'broker_audit' in tables:
+        ensure_txid_seq(conn, 'broker_audit')
+
+
+def blob_triggers_present(conn):
+    from sqlalchemy import text
+    rows = {n for (n,) in conn.execute(text(
+        "SELECT t.tgname FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid "
+        "WHERE c.relname = 'decision_blobs' AND NOT t.tgisinternal")).all()}
+    return {'decision_blobs_guard', 'decision_blobs_no_truncate'} <= rows
 
 
 def ensure_append_only(conn, tables=APPEND_ONLY_TABLES):
@@ -181,8 +278,14 @@ def ensure_all(engine):
             for sql in _tables_sql():
                 ok = safe_ddl(conn, sql) and ok
             ensure_events(conn)
+            ensure_ledger(conn)
             ok = ensure_append_only(conn) and ok
         STATE['ready'] = bool(ok)
+        try:   # paso 6: el linaje del libro (ledger_meta) se crea una vez y se cachea en el proceso
+            from core import ledger
+            ledger.on_schema_init(engine)
+        except Exception as e:  # noqa: BLE001
+            log.warning('ledger_ddl: linaje no inicializado (%s)', type(e).__name__)
         return STATE['ready']
     except Exception as e:  # noqa: BLE001
         STATE['ready'] = False

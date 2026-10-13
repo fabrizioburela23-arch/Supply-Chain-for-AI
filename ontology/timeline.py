@@ -166,6 +166,11 @@ def entity_timeline(session, object_id, limit=60, lang='es', include_news=True):
         # como si la relación hubiera empezado ese día.
         if is_genesis(ev.valid_from):
             fila['valid_from_known'] = False
+        if ev.event_type == 'ActionExecuted':      # INFRA_OPERATIVA pasos 5-6: etiqueta libre y ficha del libro
+            pl = ev.payload or {}
+            for k in ('declared_name', 'decision_id'):
+                if pl.get(k):
+                    fila[k] = pl[k]
         entradas.append(fila)
 
     if include_news:

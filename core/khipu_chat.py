@@ -516,7 +516,8 @@ def x_rank_companies(by='connections', sector=None, country=None, listed_only=Fa
             'matched': len(rows), 'items': rows[:limit],
             'explain': ('degree = number of supplier/customer links in the curated graph; nrs = Network Risk '
                         'Score 0-100 (higher = more fragile), a heuristic, not a forecast'),
-            'source': mt.SNAPSHOT_SOURCE, 'as_of': snap['as_of']}
+            # la fuente REAL de la generación (Postgres o el snapshot), como las herramientas del MCP
+            'source': snap.get('source_label') or mt.SNAPSHOT_SOURCE, 'as_of': snap['as_of']}
 
 
 @_extra('get_space_summary', '',

@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-136 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+142 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -69,6 +69,9 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_khipus_os_server.py]] | 24 | 14 |
 | [[tests.test_khipus_os_shell.py]] | 13 | 4 |
 | [[tests.test_khipus_os_windows.py]] | 19 | 4 |
+| [[tests.test_ledger_chain.py]] | 7 | 7 |
+| [[tests.test_ledger_core.py]] | 15 | 12 |
+| [[tests.test_ledger_privacy.py]] | 6 | 7 |
 | [[tests.test_live_caps.py]] | 5 | 3 |
 | [[tests.test_live_facts_entities.py]] | 1 | 1 |
 | [[tests.test_live_fundamentals.py]] | 3 | 2 |
@@ -86,7 +89,10 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_ontology_alerts.py]] | 5 | 6 |
 | [[tests.test_ops_events_append_only.py]] | 6 | 5 |
 | [[tests.test_ops_graph_version.py]] | 8 | 7 |
+| [[tests.test_ops_identity.py]] | 12 | 20 |
 | [[tests.test_ops_link_status_event.py]] | 4 | 5 |
+| [[tests.test_ops_review_steps568.py]] | 11 | 18 |
+| [[tests.test_ops_single_source.py]] | 17 | 22 |
 | [[tests.test_overnight2_fixer_review.py]] | 9 | 6 |
 | [[tests.test_overnight2_scenes_tokens.py]] | 12 | 5 |
 | [[tests.test_overnight2_sistema_shell.py]] | 12 | 2 |
@@ -132,7 +138,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_server_smoke.py]] | 24 | 12 |
 | [[tests.test_sim_agents.py]] | 6 | 2 |
 | [[tests.test_space2.py]] | 16 | 1 |
-| [[tests.test_tensor.py]] | 8 | 6 |
+| [[tests.test_tensor.py]] | 8 | 8 |
 | [[tests.test_tensor_autolink.py]] | 2 | 6 |
 | [[tests.test_vault.py]] | 19 | 1 |
 | [[tests.test_verified_valuations.py]] | 1 | 2 |

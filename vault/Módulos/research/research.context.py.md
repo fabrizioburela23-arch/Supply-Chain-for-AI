@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Investigación"
 ruta: "research/context.py"
 lenguaje: "python"
-lineas: 577
+lineas: 578
 aliases: ["research/context.py"]
 tags: ["capa/investigacion", "tipo/modulo"]
 ---
 
 # research/context.py
 
-> Módulo · capa [[Capa Investigación]] · 577 líneas · `research/context.py`
+> Módulo · capa [[Capa Investigación]] · 578 líneas · `research/context.py`
 
 ## Para qué sirve
 
@@ -19,16 +19,18 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 ## API pública
 
 - `price_indicators(series)` — Indicadores deterministas (sin IA) para el TechnicalAgent. _(línea 129)_
-- clase `ContextBuilder` _(línea 191)_
-- `render_context(ctx)` — Texto para el prompt. El contenido externo va dentro de &lt;data>…&lt;/data>. _(línea 547)_
+- `graph_version()` — La generación del grafo que usa el armador de contexto (tests/test_ops_single_source.py). _(línea 191)_
+- clase `ContextBuilder` _(línea 197)_
+- `render_context(ctx)` — Texto para el prompt. El contenido externo va dentro de &lt;data>…&lt;/data>. _(línea 548)_
 
 **Internas** (empiezan con `_`): `_now`, `_clean`, `_fetch_profile`, `_fetch_financials`, `_fetch_news`, `_fetch_company_news`, `_fetch_candles`, `_fetch_web`, `_fetch_sec_filings`, `_fetch_sec_sections`, `_fetch_mcap`, `_reliability_for_url`, `_fmt_series`, `_entity_ids_for`
 
 ## Depende de
 
+- [[core.__init__.py]] — importa `hot`
 - [[core.company_data.py]] — importa `_get_json`, `get_annual_financials`, `get_live_profile`
 - [[core.config.py]] — importa `FINNHUB`
-- [[core.entities.py]] — importa `_SNAPSHOT`, `entity_ids_for`, `get_index`
+- [[core.entities.py]] — importa `entity_ids_for`, `get_index`
 - [[core.http.py]] — importa `_safe_get`, `_safe_ticker`
 - [[core.quotes.py]] — importa `fetch_market_cap_yahoo`
 - [[core.sec.py]] — importa `filing_sections`, `latest_filings`
@@ -47,7 +49,7 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 - [[research.outcomes.py]] — lo importa
 - [[research.runner.py]] — lo importa
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 7 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -60,6 +62,7 @@ _Además lo importan 6 pruebas (lista abajo)._
 - [[tests.test_block0_review.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_khipus_os_server.py]]
+- [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_committee.py]]
 - [[tests.test_research.py]]
 - [[tests.test_sec.py]]

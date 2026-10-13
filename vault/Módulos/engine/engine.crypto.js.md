@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/crypto.js"
 lenguaje: "javascript"
-lineas: 988
+lineas: 989
 aliases: ["engine/crypto.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/crypto.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 988 líneas · `engine/crypto.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 989 líneas · `engine/crypto.js`
 
 ## Para qué sirve
 
@@ -29,7 +29,7 @@ Pestaña ₿ Cripto (Fase 1 módulo de datos + Expediente). - Datos VIVOS: /api/
 - [[nodes.crypto_intel.js]] — usa `CRYPTO_CATS`, `CRYPTO_INTEL`
 - [[nodes.crypto_intel2.js]] — usa `CRYPTO_INTEL`
 
-Se carga en [[app.html]] en la posición **79 de 92** (línea 7931), después de [[nodes.crypto_intel2.js]] y antes de [[engine.portfolios.js]].
+Se carga en [[app.html]] en la posición **79 de 92** (línea 7938), después de [[nodes.crypto_intel2.js]] y antes de [[engine.portfolios.js]].
 
 ## Lo usan
 
@@ -50,6 +50,7 @@ Se carga en [[app.html]] en la posición **79 de 92** (línea 7931), después de
 
 - [[tests.test_client_hardening.py]]
 - [[tests.test_live_labels_misc.py]]
+- [[tests.test_ops_identity.py]]
 
 ## Mencionado en sesiones de trabajo
 

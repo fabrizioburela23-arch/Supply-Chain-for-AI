@@ -443,7 +443,12 @@ def matrix_save_sim():
     b = request.get_json(silent=True) or {}
     if not isinstance(b, dict):
         b = {}
-    actor = str(b.get('actor') or 'anónimo').strip()[:80] or 'anónimo'
+    # paso 5: ruta SIN PIN → events.actor = principal autenticado (ui:anon), nunca el texto libre del cuerpo
+    # (un 'op:fabrizio' tecleado no debe parecer una escritura del operador ni sellarse así en el libro).
+    from core import identity
+    principal = identity.principal_from_request(declared=str(b.get('actor') or '').strip()[:80] or None)
+    actor = principal.id
+    shown = principal.declared_name or 'anónimo'
     sid = 'sim_' + uuid.uuid4().hex[:12]
     now = datetime.now(timezone.utc).isoformat()
     targets = [str(t)[:120] for t in (b.get('targets') if isinstance(b.get('targets'), list) else [])][:20]
@@ -455,7 +460,7 @@ def matrix_save_sim():
     props = {'kind': str(b.get('kind', 'collapse'))[:40], 'direction': str(b.get('direction', 'down'))[:10],
              'severity': b.get('severity', 100) if isinstance(b.get('severity', 100), (int, float)) else 100,
              'targets': targets, 'affected': affected, 'top': top[:10],
-             'saved_at': now, 'saved_by': actor}
+             'saved_at': now, 'saved_by': shown, 'saved_by_principal': actor}
     label = str(b.get('name') or ('Sim ' + ', '.join((targets or ['?'])[:2])))[:200]
     with scope() as s:
         apply_event(s, 'ObjectCreated', {'label': label, 'type': 'Simulation', 'properties': props},

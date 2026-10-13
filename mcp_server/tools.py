@@ -34,7 +34,6 @@ from mcp_server import auth as _auth
 log = logging.getLogger('khipu')
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_SNAPSHOT = os.path.join(_ROOT, 'data', 'grafo_v0.json')
 _PRIVATE_VAL = os.path.join(_ROOT, 'nodes', 'private_valuations.js')
 _POOL = ThreadPoolExecutor(max_workers=6, thread_name_prefix='mcp-tool')
 
@@ -242,20 +241,24 @@ def _bounded(fn, timeout, *a, **kw):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# datos del grafo (snapshot canónico data/grafo_v0.json)
+# datos del grafo: la vista `graph` de la generación vigente (core/hotviews/hot.graph(): Postgres si existe,
+# el snapshot canónico data/grafo_v0.json si no). Paso 8: antes se leía el snapshot UNA vez por proceso.
 # ════════════════════════════════════════════════════════════════════════════
 _SNAP = {'data': None}
 _SNAP_LOCK = threading.Lock()
 
 
 def _snapshot():
-    if _SNAP['data'] is not None:
-        return _SNAP['data']
+    from core.hotviews import hot
+    view = hot.graph()
+    cur = _SNAP['data']
+    if cur is not None and cur.get('generation') == view.generation:
+        return cur
     with _SNAP_LOCK:
-        if _SNAP['data'] is not None:
-            return _SNAP['data']
-        with open(_SNAPSHOT, encoding='utf-8') as fh:
-            snap = json.load(fh)
+        cur = _SNAP['data']
+        if cur is not None and cur.get('generation') == view.generation:
+            return cur
+        snap = view.snapshot
         nodes = {n['id']: n for n in snap.get('nodes') or [] if n.get('id')}
         out_e, in_e, deg = {}, {}, {}
         kept = []
@@ -279,11 +282,23 @@ def _snapshot():
         # flujo — el que usa el NRS. `deg` (todo tipo, con duplicados) se
         # conserva para ordenar búsquedas y para `degree` de las fichas.
         from ontology import vocabulary as _vocab
+        if view.source == 'pg' and not view.fallback:
+            label = (f'Khipus ontology (Postgres, graph_version {view.graph_version}) — descriptive text from the '
+                     f'curated catalog')
+            as_of = view.built_at
+        else:
+            label, as_of = SNAPSHOT_SOURCE, snap.get('exported_at')
         _SNAP['data'] = {'nodes': nodes, 'out': out_e, 'in': in_e, 'deg': deg, 'flow_deg': _vocab.flow_degree(kept),
                          'sectors': snap.get('sectors9') or {}, 'cats': snap.get('categories') or {},
-                         'preipo': snap.get('preipo_intel') or {}, 'as_of': snap.get('exported_at'),
-                         'counts': snap.get('counts') or {}}
+                         'preipo': snap.get('preipo_intel') or {}, 'as_of': as_of,
+                         'counts': snap.get('counts') or {}, 'source_label': label,
+                         'generation': view.generation}
         return _SNAP['data']
+
+
+def graph_version():
+    """La generación del grafo que usan las herramientas MCP (tests/test_ops_single_source.py)."""
+    return _snapshot().get('generation')
 
 
 _PV = {'data': None}
@@ -538,8 +553,9 @@ def _margin_pct(margin):
       required=['query'])
 def t_search_companies(ctx, query, limit=10):
     res = _search(query, limit)
-    return {'query': query, 'count': len(res), 'results': res, 'source': SNAPSHOT_SOURCE,
-            'as_of': _snapshot()['as_of']}
+    snap = _snapshot()
+    return {'query': query, 'count': len(res), 'results': res, 'source': snap['source_label'],
+            'as_of': snap['as_of']}
 
 
 @tool('get_company', 'Company profile (catalog + live market data + risk)', 'read',
@@ -564,13 +580,15 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
                                                                         'score': r['score']}}
     out.update({k: v for k, v in _brief(n).items() if k not in ('id', 'label')})
     out['catalog'] = {
-        'source': SNAPSHOT_SOURCE + ' — descriptive text curated by Khipus; figures inside may be approximate',
+        'source': snap['source_label'] + ' — descriptive text curated by Khipus; figures inside may be approximate',
         'as_of': snap['as_of'],
         # G4e: `as_of` es la fecha de EXPORTACIÓN del snapshot, no la de las
         # cifras: las cifras del catálogo (margen, capex…) se escribieron a mano
         # sin fecha propia. Se dice explícitamente y se da el margen en la
         # MISMA unidad que live_market (porcentaje) junto al campo histórico.
-        'as_of_note': 'date the catalog snapshot was exported — NOT the date of the figures',
+        'as_of_note': ('date the catalog snapshot was exported — NOT the date of the figures'
+                       if snap['source_label'] == SNAPSHOT_SOURCE else
+                       'date Khipus read the graph from its database — NOT the date of the figures'),
         'figures_as_of': None,
         'figures_note': 'undated curated figures (catalog); prefer live_market when available',
         'figures_note_es': 'cifras curadas sin fecha propia (catálogo); preferir live_market cuando exista',
@@ -735,7 +753,7 @@ def t_get_supply_chain(ctx, id, direction='both', depth=1, min_weight=0, limit=2
                                'relation_class': 'supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other',
                                'verified': 'false (confidence 0.3) when the curated text says the link is '
                                            'unverified or only possible'},
-            'source': SNAPSHOT_SOURCE, 'as_of': snap['as_of']}
+            'source': snap['source_label'], 'as_of': snap['as_of']}
 
 
 # ════════════════════════════════════════════════════════════════════════════

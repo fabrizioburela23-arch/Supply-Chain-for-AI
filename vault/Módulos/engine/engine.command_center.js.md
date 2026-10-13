@@ -36,7 +36,7 @@ Khipu Command Center (Khipu Finance) UN SOLO Khipu: el botón original del heade
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **86 de 92** (línea 7938), después de [[engine.live.js]] y antes de [[sim.scenario_builder.js]].
+Se carga en [[app.html]] en la posición **86 de 92** (línea 7945), después de [[engine.live.js]] y antes de [[sim.scenario_builder.js]].
 
 ## Lo usan
 

@@ -237,7 +237,8 @@ for _mod, _bp_name in (('core.world', 'world_bp'), ('research.committee_api', 'c
                        ('brokerage.api', 'brokerage_bp'), ('mcp_server.api', 'mcp_bp'),
                        ('core.space', 'space_bp'), ('core.portfolio_ai', 'portfolio_ai_bp'),
                        ('core.khipu_chat', 'khipu_chat_bp'),
-                       ('core.portfolio_reports_api', 'portfolio_reports_bp'), ('core.decide_api', 'decide_bp')):
+                       ('core.portfolio_reports_api', 'portfolio_reports_bp'), ('core.decide_api', 'decide_bp'),
+                       ('core.ledger_api', 'ledger_bp')):   # INFRA_OPERATIVA paso 6: libro de decisiones /api/ledger/*
     try:
         app.register_blueprint(getattr(_importlib.import_module(_mod), _bp_name))
     except Exception as _e:  # noqa: BLE001
@@ -521,6 +522,13 @@ try:
         _sched.register('hot_views', _hot_views_tick, every_s=30, run_at_start=True)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: hot_views no registrado (%s)', type(_e).__name__)
+    try:   # INFRA_OPERATIVA paso 6: sellador del libro (cadena de hashes sobre events, decisiones y broker_audit)
+        from ontology.db import ontology_available as _ledger_db_on
+        if _ledger_db_on():
+            from core import ledger as _ledger
+            _sched.register('ledger_seal', _ledger.seal_job, every_s=_ledger.SEAL_EVERY_S, run_at_start=True)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: ledger_seal no registrado (%s)', type(_e).__name__)
     try:   # O1: humo 5 min tras cada arranque (= tras cada deploy) y luego 1×/día, guardado en ops_checks
         from core.ops_check import scheduled as _ops_scheduled, FIRST_AFTER_BOOT_S as _OPS_FIRST
         _sched.register('ops_daily_check', _ops_scheduled, every_s=_OPS_FIRST, run_at_start=False)
@@ -2345,11 +2353,14 @@ def _broker_missing_response():
 
 
 def _trade_actor():
+    """Paso 5 (INFRA_OPERATIVA §8.1): quien opera la cuenta de la casa es el PRINCIPAL autenticado (el PIN →
+    op:fabrizio; el hilo del agente → system:trading_agent), no el texto de X-Khipu-Actor, que queda como
+    etiqueta en broker_audit.detail._who."""
     try:
-        a = str(request.headers.get('X-Khipu-Actor') or '').strip()[:80]
-    except Exception:  # noqa: BLE001 — fuera de una petición (hilo del agente)
-        a = ''
-    return f'{a} (PIN)' if a else 'ui (PIN)'
+        from core import identity
+        return identity.principal_from_request().id
+    except Exception:  # noqa: BLE001 — fuera de una petición y sin principal atado
+        return 'system:unknown'
 
 
 def _trade_audit(action, detail, actor=None):
@@ -5724,7 +5735,9 @@ def _agent_run_cycle():
 
 
 def _agent_thread_fn():
+    from core import identity as _identity
     _AGENT['status'] = 'running'
+    _tok = _identity._CURRENT.set(_identity.system('trading_agent'))   # paso 5: el hilo actúa como system:…
     try:
         while _AGENT['running']:
             try:
@@ -5738,6 +5751,7 @@ def _agent_thread_fn():
                     break
                 time.sleep(1)
     finally:
+        _identity._CURRENT.reset(_tok)
         _AGENT['status'] = 'stopped'
 
 

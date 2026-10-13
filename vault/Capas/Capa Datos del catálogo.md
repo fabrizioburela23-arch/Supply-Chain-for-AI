@@ -52,10 +52,10 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | la usa | [[Capa Interfaz (Khipus OS)]] | 31 |
-| la usa | [[Capa Ontología y grafo temporal]] | 21 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 11 |
-| la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 11 |
-| la usa | [[Capa Chat y agentes]] | 10 |
+| la usa | [[Capa Ontología y grafo temporal]] | 20 |
+| la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 10 |
+| la usa | [[Capa Chat y agentes]] | 9 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 8 |
 | la usa | [[Capa Voz]] | 3 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
-| la usa | [[Capa MCP y API]] | 2 |
+| la usa | [[Capa MCP y API]] | 1 |

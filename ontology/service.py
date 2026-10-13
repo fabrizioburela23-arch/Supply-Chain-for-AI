@@ -23,6 +23,12 @@ try:
 except Exception:  # noqa: BLE001
     _hv_signals = None
 
+# INFRA_OPERATIVA paso 6: cada evento escrito dentro de un decision_scope queda como EFECTO de esa decisión.
+try:
+    from core import decisions as _decisions
+except Exception:  # noqa: BLE001
+    _decisions = None
+
 
 class OntologyError(ValueError):
     pass
@@ -155,6 +161,8 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
     _materialize(session, ev)
     if _hv_signals is not None:
         _hv_signals.mark(session, ev, prev_type)     # económico → graph_version+1 al confirmar
+    if _decisions is not None:
+        _decisions.note_event(ev)                    # paso 6: efecto de la decisión en curso (si hay una)
     return ev
 
 

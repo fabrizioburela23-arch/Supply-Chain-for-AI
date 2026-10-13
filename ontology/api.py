@@ -20,6 +20,11 @@ Seguridad (auditoría estructural 2026-09-30, #20/#22):
     (UPDATE … WHERE status='pending'): dos clics o dos pestañas a la vez ya no
     ejecutan la Acción dos veces.
 
+Paso 5 de INFRA_OPERATIVA (2026-10-13): QUIÉN escribe sale de core/identity (PIN → op:fabrizio; en
+producción require_operator es estricto: sin TRADE_PIN → 403). El campo 'actor' de los cuerpos se sigue
+aceptando (compatibilidad) pero queda solo como etiqueta (declared_name en la decisión y en ActionExecuted).
+Cada Acción ejecutada deja además su ficha en el libro de decisiones (core/decisions, `decision_id`).
+
 Revisión 2026-09-30:
   · POST /agents/cycle: el "latido" del Radar (engine/live.js, cada 10 min) SIN
     PIN y SIN force sigue funcionando — no recibe datos del cliente, así que no
@@ -40,7 +45,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 
 from core.http import rate_limit
-from core.pin import pin_error, require_operator
+from core.pin import operator_strict, pin_error, require_operator
 from ontology.db import ontology_available, session_scope
 from ontology.service import (
     OntologyError, apply_event, get_object, list_objects, object_links,
@@ -82,6 +87,23 @@ def _int_arg(name, default, lo, hi):
 def _bad_arg(name):
     return jsonify({'error': f'parámetro inválido: {name} (debe ser un entero)',
                     'error_en': f'invalid parameter: {name} (must be an integer)'}), 400
+
+
+from core.decisions import LedgerUnavailable as _LedgerUnavailable  # noqa: E402
+
+
+def _ledger_unavailable():
+    """§7: sin ficha no hay efecto — la Acción se revirtió porque el libro de decisiones no se pudo escribir."""
+    return jsonify({'error': 'No se pudo registrar la decisión: la acción NO se aplicó. Reintenta en un momento.',
+                    'error_en': 'The decision could not be recorded: the action was NOT applied. Retry shortly.',
+                    'code': 'ledger_unavailable'}), 503
+
+
+def _principal(declared=None):
+    """Paso 5 (INFRA_OPERATIVA §8.1): QUIÉN escribe sale de la autenticación (PIN → op:fabrizio; sin PIN en
+    desarrollo → ui:anon), no del campo libre 'actor', que queda solo como etiqueta (declared_name)."""
+    from core import identity
+    return identity.principal_from_request(declared=declared)
 
 
 def _require_db(fn):
@@ -242,16 +264,21 @@ def actions_execute(action_type):
     AjustarPosicion, CorregirDato. Body: {actor, ...campos del esquema}."""
     from ontology.actions import execute_action, ActionError
     body = _body()
-    actor = body.pop('actor', None)
+    declared = body.pop('actor', None)       # paso 5: SOLO etiqueta para mostrar (declared_name)
     body.pop('action', None)  # por si el cliente reenvía el nombre dentro del body
+    principal = _principal(declared)
+    meta = {}
     try:
         with session_scope() as s:
-            result = execute_action(s, action_type, body, actor)
-            return jsonify({'status': 'ok', 'action': action_type, 'result': result})
+            result = execute_action(s, action_type, body, principal.id, principal=principal, meta=meta)
+            return jsonify({'status': 'ok', 'action': action_type, 'result': result,
+                            'decision_id': meta.get('decision_id'), 'principal': principal.id})
     except ActionError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'decision_id': meta.get('decision_id')}), 400
     except OntologyError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'decision_id': meta.get('decision_id')}), 400
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
 
 
 def _proposal_to_dict(p):
@@ -343,7 +370,8 @@ def agents_cycle():
     corridas debe mandar X-Trade-Pin."""
     force = bool(_body().get('force'))
     if force or request.headers.get('X-Trade-Pin'):
-        err = pin_error(where='agents_cycle', strict=False)
+        # paso 5 (G-6): en producción sin TRADE_PIN, forzar corridas (costo de IA + auto-aplicación) → 403
+        err = pin_error(where='agents_cycle', strict=operator_strict())
         if err:
             return err
     started = _try_start_cycle(force)
@@ -368,10 +396,11 @@ def bulk_import_route():
     Mismo modelo de seguridad que las Acciones (actor obligatorio, todo queda
     como eventos inmutables reversibles) + límite de tamaño por request."""
     b = _body()
-    actor = (b.get('actor') or '').strip()[:80]
+    declared = (b.get('actor') or '').strip()[:80]
     provenance = (b.get('provenance') or 'bulk').strip()[:60]
-    if not actor:
+    if not declared:
         return jsonify({'error': 'actor requerido'}), 400
+    actor = _principal(declared).id          # paso 5: se registra el principal, no el texto libre
     objects = b.get('objects') or []
     links = b.get('links') or []
     if len(objects) > 200 or len(links) > 1000:
@@ -461,7 +490,7 @@ def agents_investigar():
                         '(tavily.com, tier gratis) para habilitar la investigación web.'}), 400
     b = _body()
     query = (b.get('query') or '').strip()[:300]
-    actor = (b.get('actor') or 'anónimo').strip()[:80]
+    actor = _principal((b.get('actor') or '').strip()[:80]).id    # paso 5: el principal, no el texto libre
     empresa_id = (b.get('empresa_id') or None)
     if not query:
         return jsonify({'ok': False, 'error': 'query requerida'}), 400
@@ -560,15 +589,17 @@ def _cycle_may_auto_apply(s, pid):
 
 
 def _proposal_actor_and_id(body, proposal_id):
+    """(principal, pid, None) o (None, None, error). El cuerpo sigue exigiendo 'actor' (compatibilidad), pero
+    lo que se registra como quien resolvió es el PRINCIPAL autenticado (paso 5); el texto queda de etiqueta."""
     import uuid as _uuid
-    actor = str(body.get('actor') or '').strip()[:120]
-    if not actor:
+    declared = str(body.get('actor') or '').strip()[:120]
+    if not declared:
         return None, None, (jsonify({'error': 'actor es requerido', 'error_en': 'actor is required'}), 400)
     try:
         pid = _uuid.UUID(proposal_id)
     except ValueError:
         return None, None, (jsonify({'error': 'proposal_id inválido', 'error_en': 'invalid proposal_id'}), 400)
-    return actor, pid, None
+    return _principal(declared), pid, None
 
 
 @ontology_bp.route('/agents/proposals/<proposal_id>/approve', methods=['POST'])
@@ -580,25 +611,30 @@ def agents_proposal_approve(proposal_id):
     _claim_proposal."""
     from ontology.actions import execute_action, ActionError
     body = _body()
-    actor, pid, err = _proposal_actor_and_id(body, proposal_id)
+    principal, pid, err = _proposal_actor_and_id(body, proposal_id)
     if err:
         return err
     edits = body.get('edits') or {}
     if not isinstance(edits, dict):
         return jsonify({'error': 'edits debe ser un objeto', 'error_en': 'edits must be an object'}), 400
+    meta = {}
     try:
         with session_scope() as s:
-            p, err = _claim_proposal(s, pid, 'approved', actor)
+            p, err = _claim_proposal(s, pid, 'approved', principal.id)
             if err:
                 return err
             payload = {**(p.payload or {}), **edits}
-            combined_actor = f'{p.agent} → aprobado por {actor}'
-            result = execute_action(s, p.action_type, payload, combined_actor)
-            return jsonify({'status': 'ok', 'result': result})
+            combined_actor = f'{p.agent} → aprobado por {principal.id}'[:120]
+            result = execute_action(s, p.action_type, payload, combined_actor, principal=principal, meta=meta,
+                                    correlation_id=f'proposal:{pid}')
+            return jsonify({'status': 'ok', 'result': result, 'decision_id': meta.get('decision_id'),
+                            'principal': principal.id})
     except ActionError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'decision_id': meta.get('decision_id')}), 400
     except OntologyError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'decision_id': meta.get('decision_id')}), 400
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
 
 
 @ontology_bp.route('/agents/proposals/<proposal_id>/reject', methods=['POST'])
@@ -606,11 +642,11 @@ def agents_proposal_approve(proposal_id):
 @require_operator
 def agents_proposal_reject(proposal_id):
     body = _body()
-    actor, pid, err = _proposal_actor_and_id(body, proposal_id)
+    principal, pid, err = _proposal_actor_and_id(body, proposal_id)
     if err:
         return err
     with session_scope() as s:
-        _p, err = _claim_proposal(s, pid, 'rejected', actor)
+        _p, err = _claim_proposal(s, pid, 'rejected', principal.id)
         if err:
             return err
         return jsonify({'status': 'ok'})
@@ -901,9 +937,12 @@ def ingest_news():
     entity_id = (body.get('entity_id') or '').strip()
     if not entity_id:
         return jsonify({'error': 'entity_id es requerido'}), 400
-    actor = (body.get('actor') or '').strip()
-    if not actor:
+    declared = (body.get('actor') or '').strip()
+    if not declared:
         return jsonify({'error': 'actor es requerido — toda escritura queda atribuida'}), 400
+    # paso 5: ruta abierta → events.actor = principal AUTENTICADO (ui:anon sin PIN); el texto libre no puede
+    # hacerse pasar por 'op:fabrizio' (queda solo como etiqueta en el principal).
+    actor = _principal(declared).id
     try:
         limit = min(max(int(body.get('limit', 10)), 1), 50)
     except (TypeError, ValueError):
@@ -996,7 +1035,7 @@ def events_create():
             ev = apply_event(
                 s, event_type=body['event_type'], payload=body.get('payload', {}),
                 valid_from=body['valid_from'], valid_to=body.get('valid_to'),
-                source=body['source'], actor=body['actor'],
+                source=body['source'], actor=_principal(body['actor']).id,   # paso 5: el principal
                 object_id=body.get('object_id'), target_id=body.get('target_id'),
             )
             s.flush()
@@ -1113,6 +1152,7 @@ def reconcile_apply():
     actor = _str_arg(b, 'actor', 80)
     if not actor:
         return jsonify({'error': 'actor requerido', 'error_en': 'actor is required'}), 400
+    actor = _principal(actor).id               # paso 5: se registra el principal (op:fabrizio), no el texto
     include = b.get('include') or list(R.DEFAULT_APPLY)
     if not isinstance(include, list) or any(c not in R.CATEGORIES for c in include):
         return jsonify({'error': f'include inválido; válidas: {list(R.CATEGORIES)}',
@@ -1147,6 +1187,7 @@ def reconcile_rollback():
     run_id = _str_arg(b, 'run_id', 60)
     if not actor or not run_id:
         return jsonify({'error': 'actor y run_id requeridos', 'error_en': 'actor and run_id are required'}), 400
+    actor = _principal(actor).id
     try:
         with session_scope() as s:
             res = R.rollback_run(s, run_id, confirm_db=_str_arg(b, 'confirm_db', 120), actor=actor)

@@ -317,6 +317,12 @@ def mcp_post():
         if authz:
             _auth.write_audit(None, method='auth', status='unauthorized', error='invalid token', ip=ip)
         return _unauthorized(bool(authz))
+    try:   # INFRA_OPERATIVA paso 5: quien actúa en esta petición es mcp:<token_id> (nunca el PIN ni un texto libre)
+        from core import identity as _identity
+        _identity.bind_request(_identity.mcp(principal.token_id, principal.name,
+                                             oauth=getattr(principal, 'kind', '') == 'oauth'))
+    except Exception:  # noqa: BLE001
+        pass
     # ── peticiones simultáneas (por token y en total) ──
     busy = _auth.inflight_acquire(principal)
     if busy:
@@ -441,8 +447,12 @@ def _pin_guard(safety=False):
 
 
 def _actor(body=None):
-    a = str((body or {}).get('actor') or request.headers.get('X-Khipu-Actor') or '').strip()[:120]
-    return a or 'ui (PIN)'
+    """Paso 5: lo que se registra como created_by / revoked_by de un token (incluso con scope trade) es el
+    principal autenticado por el PIN (op:fabrizio); el 'actor' del cuerpo / X-Khipu-Actor queda solo como
+    etiqueta (declared_name)."""
+    from core import identity
+    a = str((body or {}).get('actor') or '').strip()[:120] or None
+    return identity.principal_from_request(declared=a).id
 
 
 def _brokerage_available():
