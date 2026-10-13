@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/timeline.py"
 lenguaje: "python"
-lineas: 318
+lineas: 326
 aliases: ["ontology/timeline.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/timeline.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 318 líneas · `ontology/timeline.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 326 líneas · `ontology/timeline.py`
 
 ## Para qué sirve
 
@@ -18,8 +18,8 @@ Phase 1 · M5: la línea de tiempo de una entidad.
 
 ## API pública
 
-- `entity_timeline(session, object_id, limit=…, lang=…, include_news=…)` — Todo lo que le ha pasado a una entidad, en un solo hilo ordenado. _(línea 108)_
-- `global_feed(session, limit=…, lang=…, since=…)` — Lo más reciente del grafo entero, más nuevo primero. _(línea 209)_
+- `entity_timeline(session, object_id, limit=…, lang=…, include_news=…)` — Todo lo que le ha pasado a una entidad, en un solo hilo ordenado. _(línea 116)_
+- `global_feed(session, limit=…, lang=…, since=…)` — Lo más reciente del grafo entero, más nuevo primero. _(línea 217)_
 
 **Internas** (empiezan con `_`): `_iso`, `_titulo`
 

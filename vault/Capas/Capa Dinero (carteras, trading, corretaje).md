@@ -9,7 +9,7 @@ tags: ["capa/dinero", "tipo/capa"]
 
 > Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana.
 
-**13 archivos · 7.754 líneas.** Volver al [[00 Mapa de Khipus]].
+**13 archivos · 7.760 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -23,7 +23,7 @@ tags: ["capa/dinero", "tipo/capa"]
 - [[brokerage.api.py]] — 411 líneas · blueprint /api/brokerage/\* (corretaje multi-cliente).
 - [[brokerage.alpaca.py]] — 256 líneas · cliente HTTP mínimo de Alpaca (Trading API v2 + OAuth).
 - [[core.portfolio_report.py]] — 227 líneas · REPORTE DE CARTERA (a pedido, diario, semanal o mensual).
-- [[brokerage.models.py]] — 194 líneas · tablas del corretaje multi-cliente.
+- [[brokerage.models.py]] — 200 líneas · tablas del corretaje multi-cliente.
 - [[brokerage.crypto.py]] — 135 líneas · cifrado de credenciales de clientes (Fernet).
 - [[brokerage.__init__.py]] — 14 líneas · corretaje MULTI-CLIENTE vía Alpaca (Phase 3, 2026-09-30).
 
@@ -31,7 +31,7 @@ tags: ["capa/dinero", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 11 |
+| usa a | [[Capa Infraestructura]] | 12 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 11 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 8 |
 | la usa | [[Capa Comité]] | 7 |

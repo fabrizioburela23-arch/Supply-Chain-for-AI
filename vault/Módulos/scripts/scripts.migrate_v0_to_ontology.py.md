@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "scripts/migrate_v0_to_ontology.py"
 lenguaje: "python"
-lineas: 493
+lineas: 501
 aliases: ["scripts/migrate_v0_to_ontology.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # scripts/migrate_v0_to_ontology.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 493 líneas · `scripts/migrate_v0_to_ontology.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 501 líneas · `scripts/migrate_v0_to_ontology.py`
 
 ## Para qué sirve
 
@@ -24,7 +24,7 @@ Fase 1: migra data/grafo_v0.json (el snapshot congelado en Fase 0) a la ontolog�
 - `claim_boot_remigration(engine, dbname, flag)` — Reserva la re-migración del ARRANQUE para este valor de REMIGRATE_ON_BOOT (una sola vez). Devuelve el id de la fila 'started'; lanza … _(línea 206)_
 - `remigrate_flag_warning()` — Para /api/health o /api/diagnostics: si REMIGRATE_ON_BOOT sigue puesta, devuelve un aviso bilingüe (y si ese valor ya se ejecutó, cuándo). … _(línea 251)_
 - `reset_graph_tables(engine, log=…)` — DROP SOLO de RESET_TABLES (en orden de FKs). No toca ninguna otra tabla. _(línea 279)_
-- `run_migration(reset=…, dry_run=…, graph_path=…, log=…, confirm_db=…)` — Núcleo reutilizable de la migración v0 → ontología. Lo llama main() (CLI) y el hook REMIGRATE_ON_BOOT del server (para re-migrar producción … _(línea 288)_
+- `run_migration(reset=…, dry_run=…, graph_path=…, log=…, confirm_db=…)` — Núcleo reutilizable de la migración v0 → ontología. Lo llama main() (CLI) y el hook REMIGRATE_ON_BOOT del server (para re-migrar producción … _(línea 296)_
 
 **Internas** (empiezan con `_`): `_in_production`, `_local_reset_ok`, `_current_database`, `_protected_tables_with_rows`, `_ensure_remigrate_log`, `_finish_boot_remigration`, `_migrate_graph`, `_restore_factors_and_seats`
 

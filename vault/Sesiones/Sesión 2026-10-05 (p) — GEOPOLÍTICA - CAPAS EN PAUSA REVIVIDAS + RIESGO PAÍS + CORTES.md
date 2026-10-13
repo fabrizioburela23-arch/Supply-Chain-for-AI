@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L633"
+ruta: "docs/ESTADO.md#L651"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (p) — GEOPOLÍTICA: CAPAS "EN PAUSA" REVIVIDAS + RIESGO PAÍS + CORTES (sw v219)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 633 (19 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 651 (19 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

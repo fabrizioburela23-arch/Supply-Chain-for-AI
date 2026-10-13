@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/actions.py"
 lenguaje: "python"
-lineas: 742
+lineas: 751
 aliases: ["ontology/actions.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/actions.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 742 líneas · `ontology/actions.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 751 líneas · `ontology/actions.py`
 
 ## Para qué sirve
 
@@ -40,21 +40,21 @@ Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usu
 - `anotar_objeto(session, inp, actor)` _(línea 264)_
 - `marcar_riesgo(session, inp, actor)` _(línea 278)_
 - `proponer_vinculo(session, inp, actor)` _(línea 289)_
-- `retractar_vinculo(session, inp, actor, source=…, log=…)` — G2: LinkRemoved dirigido a la creación de ESTA fila. _(línea 353)_
-- `fusionar_entidad(session, inp, actor, source=…)` — G2: alias → canónico, todo por eventos. Devuelve cuántos vínculos se movieron. _(línea 382)_
-- `confirmar_vinculo(session, inp, actor)` _(línea 428)_
-- `rechazar_vinculo(session, inp, actor)` _(línea 432)_
-- `registrar_decision(session, inp, actor)` _(línea 436)_
-- `ajustar_posicion(session, inp, actor)` _(línea 454)_
-- `corregir_dato(session, inp, actor)` _(línea 482)_
-- `incorporar_empresa(session, inp, actor)` — Alta viva de empresa (Radar/humano). Crea el objeto + link opcional al grafo. Falla si el id ya existe (usar CorregirDato para actualizar). _(línea 496)_
-- `retirar_empresa(session, inp, actor)` — Baja lógica reversible: properties.retired = true/false. La historia completa queda en events — nada se borra jamás. _(línea 558)_
-- `crear_factor(session, inp, actor)` — Crea la hiperarista: un ObjectRecord type='Factor' (con severity) + N links 'affects' bitemporales hacia las empresas afectadas. Solo … _(línea 573)_
-- `retirar_factor(session, inp, actor)` — Expira la hiperarista: cierra los 'affects' vigentes (valid_to) y marca el Factor como expirado. Reversible en el sentido bitemporal (la … _(línea 606)_
-- `activar_factor(session, inp, actor)` — Persistente: cambia `severity` en las props del Factor. El motor lo lee en active_factors() y el caché de matrices se invalida solo (la … _(línea 633)_
-- `desactivar_factor(session, inp, actor)` — Revierte ActivarFactor. Vuelve a `severity_latente`; si el factor nunca se activó por esta vía (p.ej. venía de la ingesta multicapa) cae a … _(línea 669)_
-- `execute_action(session, action_type, payload, actor)` — Punto de entrada único: valida con el esquema del catálogo y ejecuta. Lanza ActionError/ValidationError si algo no es válido — nunca … _(línea 714)_
-- `list_actions(session, actor=…, action_type=…, object_id=…, limit=…)` — Para el panel '📋 Registro': timeline de ActionExecuted, filtrable. _(línea 731)_
+- `retractar_vinculo(session, inp, actor, source=…, log=…)` — G2: LinkRemoved dirigido a la creación de ESTA fila. _(línea 362)_
+- `fusionar_entidad(session, inp, actor, source=…)` — G2: alias → canónico, todo por eventos. Devuelve cuántos vínculos se movieron. _(línea 391)_
+- `confirmar_vinculo(session, inp, actor)` _(línea 437)_
+- `rechazar_vinculo(session, inp, actor)` _(línea 441)_
+- `registrar_decision(session, inp, actor)` _(línea 445)_
+- `ajustar_posicion(session, inp, actor)` _(línea 463)_
+- `corregir_dato(session, inp, actor)` _(línea 491)_
+- `incorporar_empresa(session, inp, actor)` — Alta viva de empresa (Radar/humano). Crea el objeto + link opcional al grafo. Falla si el id ya existe (usar CorregirDato para actualizar). _(línea 505)_
+- `retirar_empresa(session, inp, actor)` — Baja lógica reversible: properties.retired = true/false. La historia completa queda en events — nada se borra jamás. _(línea 567)_
+- `crear_factor(session, inp, actor)` — Crea la hiperarista: un ObjectRecord type='Factor' (con severity) + N links 'affects' bitemporales hacia las empresas afectadas. Solo … _(línea 582)_
+- `retirar_factor(session, inp, actor)` — Expira la hiperarista: cierra los 'affects' vigentes (valid_to) y marca el Factor como expirado. Reversible en el sentido bitemporal (la … _(línea 615)_
+- `activar_factor(session, inp, actor)` — Persistente: cambia `severity` en las props del Factor. El motor lo lee en active_factors() y el caché de matrices se invalida solo (la … _(línea 642)_
+- `desactivar_factor(session, inp, actor)` — Revierte ActivarFactor. Vuelve a `severity_latente`; si el factor nunca se activó por esta vía (p.ej. venía de la ingesta multicapa) cae a … _(línea 678)_
+- `execute_action(session, action_type, payload, actor)` — Punto de entrada único: valida con el esquema del catálogo y ejecuta. Lanza ActionError/ValidationError si algo no es válido — nunca … _(línea 723)_
+- `list_actions(session, actor=…, action_type=…, object_id=…, limit=…)` — Para el panel '📋 Registro': timeline de ActionExecuted, filtrable. _(línea 740)_
 
 **Internas** (empiezan con `_`): `_log_action`, `_require_object`, `_resolver_vinculo`, `_link_by_id`, `_proponer_por_tensor`, `_require_factor`
 
@@ -71,17 +71,20 @@ Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usu
 - [[ontology.api.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 
-_Además lo importan 12 pruebas (lista abajo)._
+_Además lo importan 15 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_docs_facts.py]]
+- [[tests.test_hot_invalidation.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_investigador.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ontology_actions.py]]
 - [[tests.test_ontology_agents.py]]
+- [[tests.test_ops_graph_version.py]]
+- [[tests.test_ops_link_status_event.py]]
 - [[tests.test_provenance.py]]
 - [[tests.test_repair_ontology.py]]
 - [[tests.test_repair_ontology_review.py]]

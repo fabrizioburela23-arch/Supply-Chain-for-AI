@@ -6,8 +6,9 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-93 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+94 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-13 — INFRAESTRUCTURA OPERATIVA, PASOS 1-4]] — 1 archivos
 - [[Sesión 2026-10-12 (e) — BLOQUE 0 DE BRECHAS_V2 - CIFRAS Y PUBLICACIÓN SEGURAS]] — 1 archivos
 - [[Sesión 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA - DECISIONES, PUERTAS SHACL, VISTAS]] — 1 archivos
 - [[Sesión 2026-10-12 (c) — AUDITORÍA - QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN]] — 1 archivos

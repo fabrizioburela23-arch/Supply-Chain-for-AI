@@ -52,13 +52,14 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - [[ontology.api.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_agent_dudosos.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_docs_facts.py]]
+- [[tests.test_hot_review_fixes.py]]
 - [[tests.test_investigador.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]

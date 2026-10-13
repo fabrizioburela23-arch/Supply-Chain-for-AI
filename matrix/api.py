@@ -250,10 +250,13 @@ def _view_meta(name, g, scope=None):
             'source': 'direct', 'stale': False, 'lag_versions': 0, 'method': 'propagate@1'}
 
 
-def _with_view(payload, name, g):
-    """jsonify(payload + view) con la cabecera X-Khipu-Graph-Version."""
+def _with_view(payload, name, g, stale=None):
+    """jsonify(payload + view) con la cabecera X-Khipu-Graph-Version. `stale` marca una respuesta directa de
+    respaldo (la última lectura) para que el sobre no diga stale:false."""
     try:
         meta = _view_meta(name, g)
+        if meta is not None and stale is not None:
+            meta['stale'] = bool(stale)
     except Exception:  # noqa: BLE001
         meta = None
     resp = jsonify({**payload, 'view': meta} if meta else payload)
@@ -865,12 +868,13 @@ def matrix_metrics():
         ck = f'metrics:{graph_key(s)}:{slot}'
     hit = _ttl_get(ck, ttl=METRICS_TTL_S)
     if hit is not None:
-        return jsonify(hit)
+        return _with_view(hit, 'impact', None)
     stale = _LAST_METRICS.get(slot)
 
     def _fallback(resp):
         if stale is not None:
-            return jsonify({**stale, 'stale': True})
+            return _with_view({**{k: v for k, v in stale.items() if k != 'view'}, 'stale': True}, 'impact', None,
+                              stale=True)
         return resp
 
     if not _compute_allowed('matrix_metrics_compute', METRICS_COMPUTE_PER_IP, METRICS_COMPUTE_GLOBAL):
@@ -879,7 +883,7 @@ def matrix_metrics():
         with _heavy_slot():
             hit = _ttl_get(ck, ttl=METRICS_TTL_S)     # otro hilo pudo calcularlo mientras esperábamos
             if hit is not None:
-                return jsonify(hit)
+                return _with_view(hit, 'impact', None)
             with scope() as s:
                 metrics, factors = compute_metrics(s, as_of=as_of)
                 try:
@@ -903,7 +907,7 @@ def matrix_metrics():
     _ttl_set(ck, payload)
     if slot == 'now':
         _LAST_METRICS['now'] = payload
-    return jsonify(payload)
+    return _with_view(payload, 'impact', None)
 
 
 @matrix_bp.get('/factors')
@@ -924,7 +928,7 @@ def matrix_factors():
                           'graph_core', g)
     with scope() as s:
         factors = active_factors(s, as_of=as_of)
-    return jsonify({'available': True, 'as_of': as_of, 'factors': factors})
+    return _with_view({'available': True, 'as_of': as_of, 'factors': factors}, 'graph_core', None)
 
 
 @matrix_bp.post('/factor/fire')

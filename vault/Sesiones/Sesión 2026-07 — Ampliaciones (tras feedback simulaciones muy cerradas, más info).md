@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07"
-ruta: "docs/ESTADO.md#L2154"
+ruta: "docs/ESTADO.md#L2172"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Ampliaciones 2026-07 (tras feedback "simulaciones muy cerradas, más info")
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2154 (54 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2172 (54 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

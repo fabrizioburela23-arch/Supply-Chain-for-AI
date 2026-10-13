@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/db.py"
 lenguaje: "python"
-lineas: 222
+lineas: 251
 aliases: ["ontology/db.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/db.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 222 líneas · `ontology/db.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 251 líneas · `ontology/db.py`
 
 ## Para qué sirve
 
@@ -21,14 +21,16 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - `ontology_available()` _(línea 20)_
 - `get_session_factory()` _(línea 104)_
 - `session_scope()` — Sesión con commit/rollback automático. Uso: with session_scope() as s: ... _(línea 110)_
-- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 141)_
-- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 160)_
+- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 147)_
+- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 170)_
 
 **Internas** (empiezan con `_`): `_normalize_url`, `_env_int`, `_engine_kwargs`, `_get_engine`
 
 ## Depende de
 
 - [[brokerage.models.py]] — importa `(dinámico: brokerage.models)`
+- [[core.__init__.py]] — importa `signals`
+- [[core.ledger_ddl.py]] — importa `ledger_ddl`
 - [[core.ops_check.py]] — importa `(dinámico: core.ops_check)`
 - [[mcp_server.models.py]] — importa `(dinámico: mcp_server.models)`
 - [[ontology.models.py]] — importa `Base`
@@ -82,7 +84,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 30 pruebas (lista abajo)._
+_Además lo importan 37 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -102,6 +104,10 @@ _Además lo importan 30 pruebas (lista abajo)._
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_graph_api.py]]
+- [[tests.test_hot_contract.py]]
+- [[tests.test_hot_invalidation.py]]
+- [[tests.test_hot_review_fixes.py]]
+- [[tests.test_hot_views_parity.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_jev_router.py]]
@@ -113,6 +119,9 @@ _Además lo importan 30 pruebas (lista abajo)._
 - [[tests.test_ontology_actions.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]
+- [[tests.test_ops_events_append_only.py]]
+- [[tests.test_ops_graph_version.py]]
+- [[tests.test_ops_link_status_event.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_phase3.py]]

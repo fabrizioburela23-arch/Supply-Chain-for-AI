@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L74"
+ruta: "docs/ESTADO.md#L92"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 — EL BOTÓN DEL RECORRIDO CON LA VOZ REAL DE KHIPU (sw v256)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 74 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 92 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

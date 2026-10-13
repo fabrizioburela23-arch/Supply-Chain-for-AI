@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L30"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 (e) — BLOQUE 0 DE BRECHAS_V2: CIFRAS Y PUBLICACIÓN SEGURAS
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 30 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,4 +18,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 - [[core.numbers.py]]
 
-← más antigua: [[Sesión 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA - DECISIONES, PUERTAS SHACL, VISTAS]]
+← más antigua: [[Sesión 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA - DECISIONES, PUERTAS SHACL, VISTAS]] · más nueva: [[Sesión 2026-10-13 — INFRAESTRUCTURA OPERATIVA, PASOS 1-4]] →

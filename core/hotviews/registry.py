@@ -4,6 +4,8 @@ Una Generation es INMUTABLE: todas las vistas derivadas del grafo se publican JU
 una versión con un impacto de otra). Publicar = asignar una referencia (atómico bajo el GIL; medido 1,7 µs y 0
 errores en 532 millones de lecturas concurrentes). Leer = tomar UNA referencia: `g = generation()`.
 """
+import hashlib
+import json
 import threading
 import time
 from collections import deque
@@ -12,6 +14,7 @@ from datetime import datetime, timezone
 _GEN = [None]
 _HISTORY = deque(maxlen=20)          # últimas construcciones (sin cuerpos), también sin base
 _LOCK = threading.Lock()
+_BOOT = f'{time.time_ns()}'          # este proceso (= este deploy): el código que arma los cuerpos puede cambiar
 
 
 class Generation:
@@ -29,7 +32,12 @@ def make(data, views, release, release_label, build_ms, content_sha):
     g.release = release
     g.release_label = release_label
     g.source = data.source
-    g.id = f'g{g.graph_version}.r{release[:8]}.{g.source}'
+    # El id (y con él el ETag de /api/hot/*) lleva el LINAJE y el CONTENIDO: el mismo número de versión de otra
+    # base, otro snapshot (siempre g0) o un deploy que cambia las vistas sin escritura económica dan otro id
+    # (antes: mismo ETag → 304 con datos viejos).
+    tag = hashlib.sha256(json.dumps([g.lineage, sorted((content_sha or {}).items()), _BOOT], default=str)
+                         .encode()).hexdigest()[:8]
+    g.id = f'g{g.graph_version}.r{release[:8]}.c{tag}.{g.source}'
     g.built_ts = time.time()
     g.built_at = datetime.fromtimestamp(g.built_ts, tz=timezone.utc).isoformat(timespec='milliseconds')
     g.build_ms = build_ms

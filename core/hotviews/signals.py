@@ -207,16 +207,34 @@ def graph_key(session):
 
 
 # ── hooks de SQLAlchemy ─────────────────────────────────────────────────────
+def _nested(session):
+    """¿El hook viene de un SAVEPOINT? SQLAlchemy 2.0 despacha before_commit/after_commit/after_rollback también
+    para `begin_nested()`: solo la transacción RAÍZ toma la versión (si no, el 2.º savepoint de la misma
+    transacción repetía kh_tx_versions(txid) → UniqueViolation, y after_commit avisaba una versión que la raíz
+    aún podía deshacer)."""
+    try:
+        return bool(session.in_nested_transaction())
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _before_commit(session):
-    touched = session.info.pop('kh_touched', None)
-    if not touched:
+    if _nested(session) or not session.info.get('kh_touched'):
         return
     if not _ready(session):
+        session.info.pop('kh_touched', None)
         _STATS['skipped_not_ready'] += 1
         return
     from sqlalchemy import text
 
     from core import ledger_ddl
+    # Volcar ANTES de tomar la fila de kh_versions: así el contador es SIEMPRE el último candado de la
+    # transacción (si no, dos escritores sobre la misma fila se cruzaban: uno con la fila y esperando el
+    # contador, el otro con el contador y esperando la fila → DeadlockDetected).
+    session.flush()
+    touched = session.info.pop('kh_touched', None)
+    if not touched:
+        return
     t0 = time.perf_counter()
     rel = release_hash()[0]
     session.execute(text("SET LOCAL lock_timeout = '5s'"))
@@ -241,12 +259,18 @@ def _before_commit(session):
 
 
 def _after_commit(session):
+    if _nested(session):
+        return
     c = session.info.pop('kh_committed', None)
     if c:
         signal('graph', c[0], c[1], n_ids=c[2], via='after_commit')
 
 
 def _after_rollback(session):
+    # Un SAVEPOINT deshecho NO borra lo anotado por la transacción de afuera (una versión de más es inocua;
+    # una de menos deja a las vistas y a las cachés por graph_key sirviendo el grafo viejo).
+    if _nested(session):
+        return
     session.info.pop('kh_touched', None)
     session.info.pop('kh_committed', None)
 
@@ -301,13 +325,114 @@ def known():
 
 def stats():
     out = dict(_STATS)
+    out['orphans'] = {k: v for k, v in _ORPHAN.items() if k != 'snapshot'}
     out['listener'] = {k: v for k, v in _LISTENER.items() if k != 'thread'}
     out['listener']['alive'] = bool(_LISTENER['thread'] and _LISTENER['thread'].is_alive())
     return out
 
 
+# ── escrituras SIN versión (el contenedor viejo durante un deploy) ──────────
+# El contador solo lo mueve el hook de ESTE código. Lo que confirma un proceso sin el hook (el contenedor
+# viejo en el solape del deploy, un script viejo) queda en `events` sin fila en kh_tx_versions y la versión
+# no se mueve: las vistas seguirían diciendo stale:false con el grafo de antes, sin plazo. El sondeo busca
+# esos eventos (no visibles en la última foto revisada, sin kh_tx_versions) y, si alguno es ECONÓMICO,
+# mueve la versión UNA vez → reconstrucción + cachés por graph_key invalidadas.
+_ORPHAN = {'snapshot': None, 'lineage': None, 'at': 0.0, 'checks': 0, 'bumps': 0, 'last_ids': (),
+           'last_error': None}
+_ORPHAN_LIMIT = 2000
+
+
+def _snap_sql():
+    try:
+        from core import ledger_ddl
+        xid8 = ledger_ddl.STATE.get('xid8') is not False
+    except Exception:  # noqa: BLE001
+        xid8 = True
+    if xid8:
+        return {'cur': 'pg_current_snapshot()', 'type': 'pg_snapshot', 'xmin': 'pg_snapshot_xmin',
+                'vis': 'pg_visible_in_snapshot'}
+    return {'cur': 'txid_current_snapshot()', 'type': 'txid_snapshot', 'xmin': 'txid_snapshot_xmin',
+            'vis': 'txid_visible_in_snapshot'}
+
+
+def current_snapshot(session):
+    """La foto MVCC de la transacción (texto `xmin:xmax:xip`). En REPEATABLE READ es la de toda la lectura."""
+    from sqlalchemy import text
+    return str(session.execute(text(f"SELECT {_snap_sql()['cur']}::text")).scalar())
+
+
+def _orphan_base(g):
+    """La foto más reciente ya revisada: la del último sondeo o la de la generación publicada (la más nueva)."""
+    ex = (g.extra or {}) if (g is not None and g.source == 'pg') else {}
+    snap = ex.get('snapshot')
+    if snap and ((ex.get('snapshot_at') or 0) >= _ORPHAN['at'] or _ORPHAN['lineage'] != g.lineage):
+        return snap, g.lineage
+    if _ORPHAN['snapshot']:
+        return _ORPHAN['snapshot'], _ORPHAN['lineage']
+    return None, None
+
+
+def check_orphans(g=None):
+    """Busca eventos estructurales confirmados sin versión desde la última foto revisada. Devuelve
+    {'checked': n, 'economic': [...ids]}; si hay alguno económico, mueve la versión una vez."""
+    from types import SimpleNamespace
+
+    from sqlalchemy import text
+
+    from core import ledger_ddl
+    from ontology.db import get_session_factory, session_scope
+    if g is None:
+        from core.hotviews import registry
+        g = registry.generation()
+    base, lineage = _orphan_base(g)
+    if not base:
+        return {'skipped': 'no_base'}
+    q = _snap_sql()
+    types = ', '.join(f"'{t}'" for t in ledger_ddl.STRUCTURAL_EVENT_TYPES)
+    s = get_session_factory()()
+    at0 = time.time()
+    try:
+        s.connection(execution_options={'isolation_level': 'REPEATABLE READ', 'postgresql_readonly': True})
+        row = s.execute(text(
+            f"SELECT {q['cur']}::text, to_regclass('events')::oid, to_regclass('kh_versions')::oid")).first()
+        now_snap, now_lineage = str(row[0]), f'{row[1]}.{row[2]}'
+        if lineage and now_lineage != lineage:      # otra base: la reconstrucción por linaje ya la cubre
+            _ORPHAN.update(snapshot=now_snap, lineage=now_lineage, at=at0)
+            return {'skipped': 'lineage'}
+        rows = s.execute(text(
+            f"SELECT e.event_type, e.object_id, e.target_id, e.payload FROM events e "
+            f"WHERE e.txid IS NOT NULL AND e.txid >= {q['xmin']}(CAST(:b AS {q['type']})) "
+            f"AND NOT {q['vis']}(e.txid, CAST(:b AS {q['type']})) AND e.event_type IN ({types}) "
+            f"AND NOT EXISTS (SELECT 1 FROM kh_tx_versions t WHERE t.txid = e.txid AND t.name = 'graph') "
+            f"LIMIT {_ORPHAN_LIMIT}"), {'b': base}).all()
+        ids, econ = set(), 0
+        for et, oid, tid, payload in rows:
+            ev = SimpleNamespace(event_type=et, object_id=oid, target_id=tid, payload=payload or {})
+            if is_economic(s, ev):
+                econ += 1
+                for x in (oid, tid):
+                    if x:
+                        ids.add(str(x))
+                if not oid and not tid:
+                    ids.add('*')
+    finally:
+        try:
+            s.rollback()
+        finally:
+            s.close()
+    _ORPHAN['checks'] += 1
+    if econ:
+        with session_scope() as w:                  # el hook before_commit toma la versión (y avisa)
+            w.info['kh_touched'] = ids or {'*'}
+        _ORPHAN['bumps'] += 1
+        _ORPHAN['last_ids'] = tuple(sorted(ids))[:50]
+    _ORPHAN.update(snapshot=now_snap, lineage=now_lineage, at=at0, last_error=None)
+    return {'checked': len(rows), 'economic': econ}
+
+
 def poll():
-    """Sondeo (core/scheduler cada 30 s): compara kh_versions con lo conocido por si se perdió un aviso."""
+    """Sondeo (core/scheduler cada 30 s): compara kh_versions con lo conocido por si se perdió un aviso, y
+    busca escrituras económicas confirmadas SIN versión (check_orphans)."""
     from ontology.db import ontology_available, session_scope
     if not ontology_available():
         return {'skipped': 'no_db'}
@@ -324,7 +449,13 @@ def poll():
                 fn('graph', r[0], ())
             except Exception:  # noqa: BLE001
                 pass
-    return {'v': r[0], 'lineage': r[1], 'changed': (r[0], r[1]) != (before['v'], before['lineage'])}
+    out = {'v': r[0], 'lineage': r[1], 'changed': (r[0], r[1]) != (before['v'], before['lineage'])}
+    try:
+        out['orphans'] = check_orphans()
+    except Exception as e:  # noqa: BLE001 — base sin txid/seq o caída: el sondeo de versión ya respondió
+        _ORPHAN['last_error'] = _redact(f'{type(e).__name__}: {e}')[:160]
+        out['orphans'] = {'error': type(e).__name__}
+    return out
 
 
 def on_schema_init():

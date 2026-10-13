@@ -18,6 +18,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[tests.conftest.py]]
 - [[tests.test_block0_ci.py]]
+- [[tests.test_hot_review_fixes.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

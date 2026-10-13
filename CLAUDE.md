@@ -27,6 +27,14 @@ Decisión (libro mayor append-only con cadena de hashes, `core/decisions.py`), P
 validadores Python de 0,01-0,3 ms; pySHACL solo como oráculo en CI), Hot Path Views (vistas en memoria versionadas por
 `graph_version` tomado al confirmar, `/api/hot/*`, UN kernel) y Gobernanza (artefactos con hash, release aprobado con PIN,
 G(t,κ) y replay). Plan de 26 pasos desplegables en su §10; decisiones nuevas D1-D7.
+**PASOS 1-4 HECHOS (2026-10-13)**: `events` es append-only DE VERDAD (disparador `kh_append_only`, `core/ledger_ddl.py`;
+nunca UPDATE/DELETE: una corrección es un evento nuevo); `graph_version` se toma AL CONFIRMAR (hooks before/after_commit
+en `core/hotviews/signals.py`, tablas `kh_versions`/`kh_tx_versions`, NOTIFY `khipu_graph` + sondeo 30 s) y reemplaza a
+`_graph_epoch` (borrado) como clave de caché — notas/noticias/simulaciones NO la mueven; Confirmar/RechazarVinculo emiten
+`LinkStatusChanged`; vistas rápidas v1 en `core/hotviews/` (GraphCore + Impact, mismo kernel `propagate_many`, paridad 0
+diferencias en 969 choques) con `/api/hot/status|impact/<id>|chokepoints|factors|scenario` (sobre con graph_version,
+generation, source, stale; ETag) y `/api/matrix/status|impact|metrics|factors|factor/fire` DELEGAN en ellas (impacto
+98 ms → 0,6 ms). Env: `HOTVIEWS` (on), `HOT_WAIT_S` (2), `HOTVIEWS_COALESCE_S` (1), `HOTVIEWS_LISTEN` (on).
 
 ## Arquitectura
 
@@ -531,6 +539,7 @@ AI_TRANSIENT_RETRIES (3), AI_TRANSIENT_BASE_S (1.5), AI_TRANSIENT_CAP_S (8)  ←
 RESEARCH_BUSY_RETRIES (4)  ← R2: esperas ante "IA ocupada" (3/6/12/24 s) antes de fallar el agente
 RESEARCH_PARALLEL (2; nunca más que los cupos de fondo), RESEARCH_JOB_CONCURRENCY (2), RESEARCH_STALE_MIN (30), RESEARCH_RESUME_MAX (3)  ← R3/R5: cola de investigación
 KHIPU_SCHEDULER (on; off en tests)  ← R5: reloj del servidor (core/scheduler.py) para lo diario
+HOTVIEWS (on), HOT_WAIT_S (2), HOTVIEWS_COALESCE_S (1), HOTVIEWS_LISTEN (on)  ← vistas rápidas (core/hotviews)
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)

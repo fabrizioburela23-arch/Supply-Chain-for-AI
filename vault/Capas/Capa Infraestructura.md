@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 19
+archivos: 20
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,13 +9,13 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**19 archivos · 13.888 líneas.** Volver al [[00 Mapa de Khipus]].
+**20 archivos · 14.157 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 5.977 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[server.py]] — 6.045 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 - [[scripts.build_vault.py]] — 3.476 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 - [[core.ai.py]] — 1.098 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.numbers.py]] — 856 líneas · guardián de CIFRAS (anti-alucinación numérica).
@@ -24,6 +24,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[sw.js]] — 277 líneas · Khipu Finance — Service Worker Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / CACHE va en la línea 6 (regla de despliegue #1: …
 - [[core.ops_check.py]] — 252 líneas · O1 (misión de reparación 2026-10-04): chequeo del sistema EN el servidor, guardado y consultable.
 - [[core.pin.py]] — 243 líneas · verificación ÚNICA del PIN de operador (X-Trade-Pin).
+- [[core.ledger_ddl.py]] — 201 líneas · DDL idempotente de los registros que SOLO crecen (docs/INFRA_OPERATIVA.md §2.1, §4.3).
 - [[core.http.py]] — 189 líneas · llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology y matrix).
 - [[security_audit.py]] — 182 líneas · Khipu Finance (Fase 2H)
 - [[engine.sync.js]] — 128 líneas · SINCRONIZACIÓN ENTRE DISPOSITIVOS (carteras, perfil, posiciones)
@@ -43,12 +44,12 @@ Variables de entorno: [[Índice de variables de entorno]].
 | la usa | [[Capa Chat y agentes]] | 19 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 18 |
 | la usa | [[Capa Comité]] | 14 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 12 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 12 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 11 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 9 |
+| la usa | [[Capa Ontología y grafo temporal]] | 11 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa MCP y API]] | 8 |
-| la usa | [[Capa Ontología y grafo temporal]] | 8 |
 | usa a | [[Capa Chat y agentes]] | 7 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 7 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |

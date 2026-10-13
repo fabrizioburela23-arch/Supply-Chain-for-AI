@@ -9,6 +9,24 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-13 — INFRAESTRUCTURA OPERATIVA, PASOS 1-4 (registro inmutable, versión del grafo, vistas rápidas)
+
+- Paso 1: `events` append-only con disparador (UPDATE/DELETE/TRUNCATE bloqueados), columnas txid/seq/release_hash
+  (las filas viejas quedan NULL, nada se reescribe), índice parcial de eventos estructurales; brokerage reutiliza
+  `core/ledger_ddl.safe_ddl`. Ningún código de producción modificaba eventos (prueba estática).
+- Paso 2: `graph_version` al confirmar (+1 por transacción que cambia la estructura; savepoints y rollbacks no la
+  mueven; el contador es el último candado → sin interbloqueos), NOTIFY + sondeo, detección de escrituras de otro
+  proceso (contenedor viejo durante un despliegue); `_graph_epoch` borrado.
+- Paso 3: `LinkStatusChanged` en vez de mutar `link.properties` (el replay respeta la fecha de la confirmación).
+- Paso 4: `core/hotviews/` + `/api/hot/*`; `/api/matrix/*` delega. Medido: build 220-390 ms, 3-12 MB, impacto
+  p50 0,6 ms (antes 98 ms), métricas 4 ms (antes 493 ms), paridad exacta con el kernel en 969 choques.
+- Revisión (3 lentes): 11 hallazgos, 11 arreglados con prueba (hooks en SAVEPOINT, interbloqueo, tarea de 30 s que
+  reconstruía siempre, espera de 1,2 s, reintentos sin pausa, ETag sin contenido, PageRank del screener…).
+- Simulación de la actualización de producción: base creada con el código publicado → arranque con el nuevo en
+  0,45 s, datos intactos, disparadores activos, segundo arranque idempotente, acción real → versión 0→1 y vistas g1.
+
+---
+
 # SESIÓN 2026-10-12 (e) — BLOQUE 0 DE BRECHAS_V2: CIFRAS Y PUBLICACIÓN SEGURAS
 
 - Guardián de cifras (core/numbers.py) reescrito: recall 0,08 → 0,98 y precisión 0,94 en un corpus de 102 respuestas

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L880"
+ruta: "docs/ESTADO.md#L898"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (e) — INICIO DE LA CABINA REDISEÑADO + FEED SIN NOTICIAS VIEJAS (sw v190)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 880 (15 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 898 (15 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

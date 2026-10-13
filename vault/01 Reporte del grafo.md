@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 177 |
-| Líneas de código | 109.661 |
+| Archivos de código (Python, JS, HTML) | 178 |
+| Líneas de código | 110.216 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 129 |
+| Archivos de prueba | 136 |
 | Documentos | 26 |
 | Rutas HTTP | 228 |
 | Grupos de API | 57 |
 | Herramientas MCP | 23 |
-| Variables de entorno | 159 |
-| Sesiones de trabajo | 93 |
-| Aristas `calls_endpoint` | 552 |
+| Variables de entorno | 161 |
+| Sesiones de trabajo | 94 |
+| Aristas `calls_endpoint` | 568 |
 | Aristas `defines_endpoint` | 251 |
-| Aristas `imports` | 1.028 |
+| Aristas `imports` | 1.080 |
 | Aristas `loads_script` | 78 |
-| Aristas `mentions_in_session` | 493 |
-| Aristas `reads_env` | 219 |
+| Aristas `mentions_in_session` | 494 |
+| Aristas `reads_env` | 221 |
 | Aristas `references_file` | 50 |
-| Aristas `tested_by` | 766 |
+| Aristas `tested_by` | 813 |
 | Aristas `uses_global` | 341 |
 
 ## Nodos "dios" (más conectados)
@@ -44,10 +44,10 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
 | [[app.html]] | 137 | 52 | 85 | [[Capa Interfaz (Khipus OS)]] |
-| [[server.py]] | 75 | 24 | 51 | [[Capa Infraestructura]] |
+| [[server.py]] | 77 | 24 | 53 | [[Capa Infraestructura]] |
 | [[engine.cockpit.js]] | 41 | 11 | 30 | [[Capa Interfaz (Khipus OS)]] |
 | [[nodes.nodes_seed.js]] | 35 | 35 | 0 | [[Capa Datos del catálogo]] |
-| [[ontology.db.py]] | 33 | 28 | 5 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.db.py]] | 35 | 28 | 7 | [[Capa Ontología y grafo temporal]] |
 | [[core.http.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 29 | 5 | 24 | [[Capa MCP y API]] |
 | [[core.khipu_chat.py]] | 27 | 6 | 21 | [[Capa Chat y agentes]] |
@@ -64,7 +64,7 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[core.ai.py]] | 21 | 16 | 5 | [[Capa Infraestructura]] |
 | [[engine.committee.js]] | 21 | 11 | 10 | [[Capa Comité]] |
 
-## Módulos sin pruebas (23)
+## Módulos sin pruebas (22)
 
 Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
@@ -81,7 +81,6 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[scripts.ingest_multicapa.py]] | 343 | [[Capa Datos del catálogo]] |
 | [[core.country_geo.py]] | 222 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.matrixview.js]] | 207 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
-| [[core.screener.py]] | 185 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
 | [[security_audit.py]] | 182 | [[Capa Infraestructura]] |
 | [[engine.compare.js]] | 168 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
 | [[research.contradictions.py]] | 143 | [[Capa Investigación]] |
@@ -177,9 +176,9 @@ Solo aparecen en archivos de despliegue (Dockerfile, docker-compose.yml, workflo
 
 Solo aparecen en listas de nombres (p. ej. la lista de secretos que se tapan en los logs) (5): [[ENV ANTHROPIC_API_KEY]], [[ENV RAILWAY_ENVIRONMENT]], [[ENV RAILWAY_ENVIRONMENT_NAME]], [[ENV RAILWAY_PROJECT_ID]], [[ENV TAVILY_API_KEY]]
 
-## Variables de la lista de CLAUDE.md que nadie lee (0)
+## Variables de la lista de CLAUDE.md que nadie lee (2)
 
-_Ninguna._
+`HOTVIEWS_COALESCE_S`, `HOTVIEWS_LISTEN`
 
 ## Scripts que app.html carga pero sw.js no guarda en caché (0)
 

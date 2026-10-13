@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "brokerage/models.py"
 lenguaje: "python"
-lineas: 194
+lineas: 200
 aliases: ["brokerage/models.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # brokerage/models.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 194 líneas · `brokerage/models.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 200 líneas · `brokerage/models.py`
 
 ## Para qué sirve
 
@@ -27,6 +27,7 @@ tablas del corretaje multi-cliente.
 
 ## Depende de
 
+- [[core.ledger_ddl.py]] — importa `safe_ddl`
 - [[ontology.models.py]] — importa `Base`
 
 ## Lo usan

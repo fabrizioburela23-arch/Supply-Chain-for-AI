@@ -25,7 +25,15 @@ VIEW_NAMES = ('graph_core', 'impact')
 _COND = threading.Condition()
 _ST = {'thread': None, 'eager': False, 'dirty': True, 'demand': 0, 'building': False, 'builds': 0,
        'failures': 0, 'consecutive_failures': 0, 'last_error': None, 'last_error_at': None,
-       'last_build_ms': None, 'last_signal_at': None, 'last_build_at': None, 'started_at': None}
+       'retry_at': 0.0, 'last_build_ms': None, 'last_signal_at': None, 'last_build_at': None,
+       'started_at': None}
+_LOGGED = {}                          # vista → última generación registrada en hot_view_builds (sin repetir)
+
+
+def _backoff(n):
+    """Espera tras la n-ésima falla seguida: 0,5 s, 1, 2, 4… hasta 60 s — TAMBIÉN si hay lectores esperando
+    (antes reintentaba en bucle cerrado y cada /api/matrix/* esperaba los HOT_WAIT_S enteros)."""
+    return min(60.0, 0.5 * 2.0 ** max(0, n - 1))
 
 
 def _on_signal(name, version, ids):
@@ -63,14 +71,17 @@ def _log_builds(g):
         with session_scope() as s:
             for name in VIEW_NAMES:
                 v = g.views.get(name)
-                if v is None:
-                    continue
+                if v is None or _LOGGED.get(name) == g.id:
+                    continue                  # misma generación (= mismo contenido): una sola fila
                 n = len(getattr(v, 'ids', None) or getattr(v, 'sources', None) or [])
                 s.execute(text(
                     'INSERT INTO hot_view_builds (name, generation, graph_version, release_hash, source, '
                     'content_sha, n, build_ms) VALUES (:n, :g, :v, :r, :s, :c, :k, :ms)'),
                     {'n': name, 'g': g.id, 'v': g.graph_version, 'r': g.release, 's': g.source,
                      'c': v.content_sha, 'k': n, 'ms': int(round(g.build_ms.get(name, 0)))})
+        for name in VIEW_NAMES:
+            if g.views.get(name) is not None:
+                _LOGGED[name] = g.id
     except Exception as e:  # noqa: BLE001
         log.debug('hot_view_builds no registrado: %s', type(e).__name__)
 
@@ -104,29 +115,27 @@ def _loop():
         with _COND:
             while not (_ST['dirty'] and (_ST['eager'] or _ST['demand'] > 0)):
                 _COND.wait(timeout=30.0)
-            demand = _ST['demand'] > 0
-        if not demand and COALESCE_S > 0:
-            time.sleep(COALESCE_S)                  # agrupa las señales de un lote de escrituras
-        with _COND:
+            if _ST['demand'] == 0 and COALESCE_S > 0:
+                # agrupa las señales de un lote de escrituras; un lector que llega a esperar lo corta
+                _COND.wait_for(lambda: _ST['demand'] > 0, timeout=COALESCE_S)
             _ST['dirty'] = False
             _ST['building'] = True
         try:
             g = build_once()
             with _COND:
-                _ST.update(builds=_ST['builds'] + 1, consecutive_failures=0, last_build_ms=g.build_ms,
+                _ST.update(builds=_ST['builds'] + 1, consecutive_failures=0, retry_at=0.0, last_build_ms=g.build_ms,
                            last_build_at=time.time())
         except Exception as e:  # noqa: BLE001
             with _COND:
                 from core.hotviews.signals import _redact
-                _ST.update(failures=_ST['failures'] + 1, consecutive_failures=_ST['consecutive_failures'] + 1,
+                n = _ST['consecutive_failures'] + 1
+                wait = _backoff(n)
+                _ST.update(failures=_ST['failures'] + 1, consecutive_failures=n,
                            last_error=_redact(f'{type(e).__name__}: {e}')[:200], last_error_at=time.time(),
-                           dirty=True)
-                wait = 0.0 if _ST['demand'] > 0 else min(60.0, 2.0 ** min(6, _ST['consecutive_failures']))
+                           retry_at=time.time() + wait, dirty=True, building=False)
+                _COND.notify_all()              # quien espera ve la falla y calcula directo sin agotar su plazo
             log.warning('hotviews: construcción falló (%s); se conserva la generación anterior', type(e).__name__)
-            if wait:
-                with _COND:
-                    _COND.notify_all()
-                time.sleep(wait)
+            time.sleep(wait)
         finally:
             with _COND:
                 _ST['building'] = False
@@ -145,10 +154,15 @@ def _ensure_thread():
 
 
 def start(eager=True, listen=True):
-    """Arranque del servidor: modo ansioso (reconstruye tras cada señal), LISTEN y primera construcción."""
+    """Arranque del servidor: modo ansioso (reconstruye tras cada señal), LISTEN y primera construcción.
+    Idempotente: la tarea 'hot_views' lo llama cada 30 s y SOLO construye si todavía no hay ninguna
+    generación — los cambios los detectan las señales y el sondeo (antes cada tick reconstruía todo y dejaba
+    2 filas imborrables en hot_view_builds)."""
+    from core.hotviews import registry
     with _COND:
         _ST['eager'] = bool(eager) or _ST['eager']
-        _ST['dirty'] = True
+        if registry.generation() is None:
+            _ST['dirty'] = True
         _COND.notify_all()
     _ensure_thread()
     if listen:
@@ -189,8 +203,17 @@ def ensure(min_version=None, lineage=None, timeout=2.0):
     deadline = time.time() + max(0.0, float(timeout))
     with _COND:
         _ST['dirty'] = True
-        _ST['demand'] += 1
-        _COND.notify_all()
+        if _ST['consecutive_failures'] and time.time() < _ST['retry_at']:
+            _COND.notify_all()              # fallando y en espera: no hacer esperar al lector (calcula directo)
+            backing_off = True
+        else:
+            backing_off = False
+            _ST['demand'] += 1
+            failures0 = _ST['failures']
+            _COND.notify_all()
+    if backing_off:
+        _ensure_thread()
+        return None
     try:
         _ensure_thread()
         with _COND:
@@ -198,6 +221,8 @@ def ensure(min_version=None, lineage=None, timeout=2.0):
                 g = registry.generation()
                 if _satisfies(g, min_version, lineage):
                     return g
+                if _ST['failures'] != failures0:
+                    return None             # la construcción que esperábamos falló: directo, sin agotar el plazo
                 left = deadline - time.time()
                 if left <= 0:
                     return None

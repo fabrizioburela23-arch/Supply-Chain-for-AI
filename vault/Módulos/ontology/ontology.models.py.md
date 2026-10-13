@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/models.py"
 lenguaje: "python"
-lineas: 172
+lineas: 187
 aliases: ["ontology/models.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/models.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 172 líneas · `ontology/models.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 187 líneas · `ontology/models.py`
 
 ## Para qué sirve
 
@@ -19,12 +19,12 @@ esquema SQLAlchemy de la ontología.
 ## API pública
 
 - clase `EventType` _(línea 29)_
-- clase `Event` — Tabla append-only. NUNCA se hace UPDATE/DELETE sobre filas existentes — una corrección es un evento nuevo con su propio valid_from. _(línea 38)_
-- clase `ObjectRecord` — Estado materializado ACTUAL de un objeto (empresa, tecnología, política…). `properties` acumula el último valor conocido de cada campo. _(línea 66)_
-- clase `LinkRecord` — Vínculo materializado. `valid_to IS NULL` = vigente ahora mismo (según el conocimiento más reciente). Varias filas pueden existir para el … _(línea 79)_
-- clase `ProposedAction` — Fase 3 — cola de aprobación. Un agente observa la ontología, detecta una señal y PROPONE una Acción del catálogo (ontology/actions.py); … _(línea 105)_
-- clase `InsightSnapshot` — Track B — historial de /api/matrix/insights. _(línea 129)_
-- clase `Alert` — Fase 4 — regla de alerta. rule = {entity, metric, op, value} para precio/NRS, o {region, event_type} para noticias por región. _(línea 161)_
+- clase `Event` — Tabla append-only. NUNCA se hace UPDATE/DELETE sobre filas existentes — una corrección es un evento nuevo con su propio valid_from. _(línea 42)_
+- clase `ObjectRecord` — Estado materializado ACTUAL de un objeto (empresa, tecnología, política…). `properties` acumula el último valor conocido de cada campo. _(línea 78)_
+- clase `LinkRecord` — Vínculo materializado. `valid_to IS NULL` = vigente ahora mismo (según el conocimiento más reciente). Varias filas pueden existir para el … _(línea 91)_
+- clase `ProposedAction` — Fase 3 — cola de aprobación. Un agente observa la ontología, detecta una señal y PROPONE una Acción del catálogo (ontology/actions.py); … _(línea 117)_
+- clase `InsightSnapshot` — Track B — historial de /api/matrix/insights. _(línea 141)_
+- clase `Alert` — Fase 4 — regla de alerta. rule = {entity, metric, op, value} para precio/NRS, o {region, event_type} para noticias por región. _(línea 176)_
 
 ## Depende de
 
@@ -56,7 +56,7 @@ _Nada interno._
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 25 pruebas (lista abajo)._
+_Además lo importan 32 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -64,6 +64,10 @@ _Además lo importan 25 pruebas (lista abajo)._
 - [[tests.test_brokerage.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_graph_api.py]]
+- [[tests.test_hot_contract.py]]
+- [[tests.test_hot_invalidation.py]]
+- [[tests.test_hot_review_fixes.py]]
+- [[tests.test_hot_views_parity.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_matrix.py]]
@@ -72,6 +76,9 @@ _Además lo importan 25 pruebas (lista abajo)._
 - [[tests.test_ontology_actions.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]
+- [[tests.test_ops_events_append_only.py]]
+- [[tests.test_ops_graph_version.py]]
+- [[tests.test_ops_link_status_event.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_provenance.py]]
 - [[tests.test_reconcile.py]]

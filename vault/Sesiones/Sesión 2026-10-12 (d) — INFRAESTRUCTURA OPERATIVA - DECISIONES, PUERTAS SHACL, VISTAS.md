@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L25"
+ruta: "docs/ESTADO.md#L43"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA: DECISIONES, PUERTAS SHACL, VISTAS RÁPIDAS, GOBERNANZA
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 25 (19 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 43 (19 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

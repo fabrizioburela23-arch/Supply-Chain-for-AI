@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-129 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+136 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -50,6 +50,10 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_gpr.py]] | 3 | 2 |
 | [[tests.test_graph_api.py]] | 15 | 8 |
 | [[tests.test_graph_audit.py]] | 7 | 5 |
+| [[tests.test_hot_contract.py]] | 9 | 7 |
+| [[tests.test_hot_invalidation.py]] | 7 | 7 |
+| [[tests.test_hot_review_fixes.py]] | 12 | 8 |
+| [[tests.test_hot_views_parity.py]] | 7 | 8 |
 | [[tests.test_infra.py]] | 57 | 16 |
 | [[tests.test_ingest_news.py]] | 12 | 7 |
 | [[tests.test_investigador.py]] | 7 | 4 |
@@ -80,6 +84,9 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_ontology_actions.py]] | 17 | 5 |
 | [[tests.test_ontology_agents.py]] | 7 | 7 |
 | [[tests.test_ontology_alerts.py]] | 5 | 6 |
+| [[tests.test_ops_events_append_only.py]] | 6 | 5 |
+| [[tests.test_ops_graph_version.py]] | 8 | 7 |
+| [[tests.test_ops_link_status_event.py]] | 4 | 5 |
 | [[tests.test_overnight2_fixer_review.py]] | 9 | 6 |
 | [[tests.test_overnight2_scenes_tokens.py]] | 12 | 5 |
 | [[tests.test_overnight2_sistema_shell.py]] | 12 | 2 |

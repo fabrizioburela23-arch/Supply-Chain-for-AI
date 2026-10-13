@@ -131,8 +131,17 @@ def ensure_warmer():
 
 
 def _pagerank_ranks():
-    """{node_id: pagerank_rank} desde la caché del endpoint /api/matrix/metrics
-    si está caliente (no dispara el cómputo pesado — señal opcional)."""
+    """{node_id: pagerank_rank} desde la vista Impact publicada (core/hotviews, la que sirve
+    /api/matrix/metrics desde INFRA_OPERATIVA paso 4) o, si no hay, desde la caché del cálculo
+    directo de /api/matrix/metrics (no dispara el cómputo pesado — señal opcional)."""
+    try:
+        from core.hotviews import registry
+        g = registry.generation()
+        imp = g.views.get('impact') if (g is not None and g.source == 'pg') else None
+        if imp is not None and getattr(imp, 'metrics', None):
+            return {oid: m.get('pagerank_rank') for oid, m in imp.metrics.items() if m.get('pagerank_rank')}
+    except Exception:  # noqa: BLE001
+        pass
     try:
         from matrix.api import _TTL_CACHE
         best = None

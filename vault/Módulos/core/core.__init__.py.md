@@ -26,8 +26,19 @@ _Nada interno._
 
 ## Lo usan
 
-_Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
+- [[core.screener.py]] — lo importa
+- [[matrix.api.py]] — lo importa
+- [[matrix.engine.py]] — lo importa
+- [[ontology.db.py]] — lo importa
+- [[ontology.service.py]] — lo importa
+- [[server.py]] — lo importa
+
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_hot_contract.py]]
+- [[tests.test_hot_invalidation.py]]
+- [[tests.test_hot_review_fixes.py]]
+- [[tests.test_hot_views_parity.py]]
+- [[tests.test_ops_graph_version.py]]

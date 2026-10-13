@@ -56,6 +56,7 @@ def load_pg():
     from ontology.db import get_session_factory
     from ontology.models import LinkRecord, ObjectRecord
     t0 = time.perf_counter()
+    wall0 = time.time()
     s = get_session_factory()()
     try:
         s.connection(execution_options={'isolation_level': 'REPEATABLE READ', 'postgresql_readonly': True})
@@ -76,13 +77,20 @@ def load_pg():
                             E._eff_weight(l.weight, props.get('source'), E.link_confidence(props))))
             flow_links.append({'source': l.source_id, 'target': l.target_id, 'type': l.rel_type})
         factors = E.active_factors(s)
+        extra = {}
+        try:      # la foto de esta lectura: el sondeo busca después escrituras SIN versión (contenedor viejo)
+            from core.hotviews import signals
+            extra['snapshot'] = signals.current_snapshot(s)
+            extra['snapshot_at'] = wall0
+        except Exception:  # noqa: BLE001 — base sin txid: sin vigilancia de huérfanos, la vista igual sale
+            pass
     finally:
         try:
             s.rollback()
         finally:
             s.close()
     return GraphData('pg', v, lineage, ids, meta, triples, flow_links, factors,
-                     read_ms=round((time.perf_counter() - t0) * 1000, 1))
+                     read_ms=round((time.perf_counter() - t0) * 1000, 1), extra=extra)
 
 
 # ── snapshot ────────────────────────────────────────────────────────────────
