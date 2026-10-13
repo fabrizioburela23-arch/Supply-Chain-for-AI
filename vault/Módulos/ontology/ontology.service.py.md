@@ -42,6 +42,7 @@ lógica de negocio de la ontología.
 
 ## Lo usan
 
+- [[core.replay.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[matrix.engine.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
@@ -57,7 +58,7 @@ lógica de negocio de la ontología.
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 37 pruebas (lista abajo)._
+_Además lo importan 38 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -95,6 +96,7 @@ _Además lo importan 37 pruebas (lista abajo)._
 - [[tests.test_repair_ontology.py]]
 - [[tests.test_repair_ontology_review.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_replay_determinism.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_tensor_autolink.py]]
 - [[tests.test_vocabulary.py]]

@@ -278,6 +278,56 @@
         b: 'For each company in <b>your positions</b> (if you have none, the 10 most critical in the graph) Khipus compares, with the version in force and with the new one: ' +
            'the <b>worst hit</b> it can take if any other company fails, and <b>how many it drags</b> if it fails.<br><br>' +
            'For rules outside the engine (committee, brokerage…) it shows you the numbers that change, by name. These are structural estimates, <b>not prices</b>.' } },
+    audit_replay: {
+      es: { t: '¿Qué es «Repetir» una decisión?',
+        b: 'Khipus vuelve a hacer el <b>mismo cálculo</b> con lo que el sistema <b>sabía en ese momento</b>: los datos que guardó, el grafo ' +
+           'tal como estaba (su versión), las <b>reglas y números aprobados</b> que regían entonces (aunque hoy rijan otros) y el mismo código.<br><br>' +
+           'Si sale igual, la decisión es <b>auditable</b>: cualquiera puede comprobar que se tomó con esos datos. Cada noche se repiten solas ' +
+           '50 decisiones al azar y todas las de dinero. Lo que escribió una IA <b>no se vuelve a pedir</b> (sería otra respuesta): solo se ' +
+           'comprueba que su texto y sus cifras son los guardados.' },
+      en: { t: 'What does "Replay" a decision mean?',
+        b: 'Khipus redoes the <b>same computation</b> with what the system <b>knew at that moment</b>: the data it stored, the graph ' +
+           'as it was (its version), the <b>approved rules and numbers</b> in force then (even if others rule today) and the same code.<br><br>' +
+           'If it comes out the same, the decision is <b>auditable</b>: anyone can check it was taken with that data. Every night 50 random ' +
+           'decisions and all money ones are replayed automatically. Text written by an AI is <b>never asked again</b> (it would be a different ' +
+           'answer): only its stored text and figures are checked.' } },
+    audit_verdict: {
+      es: { t: '¿Qué significan «idéntica», «distinta» y «no repetible»?',
+        b: '<b>✓ Idéntica</b>: al repetirla sale exactamente lo mismo (todas las cifras, sin redondeos).<br>' +
+           '<b>≠ Distinta</b>: algo no coincide; se muestra qué campo y los dos valores. Pasa si cambió el código que la calcula o si algo del registro ' +
+           'no cuadra: el 🩺 se pone en rojo para que lo revises.<br>' +
+           '<b>— No repetible</b>: no tiene un cálculo que repetir, y se dice por qué: es texto de IA, sus datos se vaciaron a los 90 días (queda la huella), ' +
+           'usó precios en vivo que no se guardaron completos, o es anterior a este registro. <b>Nunca se inventa</b> lo que falta.<br>' +
+           '<b>aproximada</b> (etiqueta amarilla): se repitió, pero con una salvedad que se explica debajo del veredicto.' },
+      en: { t: 'What do "identical", "different" and "not replayable" mean?',
+        b: '<b>✓ Identical</b>: replaying it gives exactly the same (every figure, no rounding).<br>' +
+           '<b>≠ Different</b>: something does not match; the field and both values are shown. It happens if the code that computes it changed or ' +
+           'something in the record does not add up: the 🩺 turns red so you review it.<br>' +
+           '<b>— Not replayable</b>: there is no computation to repeat, and it says why: it is AI text, its data was emptied after 90 days (the ' +
+           'fingerprint stays), it used live prices that were not fully stored, or it predates this record. What is missing is <b>never invented</b>.<br>' +
+           '<b>approximate</b> (yellow tag): it was replayed, but with a caveat explained under the verdict.' } },
+    audit_approx: {
+      es: { t: '¿Qué significa «aproximada»?',
+        b: 'El cálculo se repitió y se comparó, pero <b>algo de lo que se usó para repetirlo no es exactamente lo de entonces</b>, y Khipus te dice qué: ' +
+           'por ejemplo, la versión del grafo salió del sello de la ficha y no de la vista que se leyó, fue un viaje a una fecha pasada, la base de datos ' +
+           'se restauró, o un memo viejo se repitió con el paquete guardado del comité.<br><br>' +
+           '«✓ Idéntica» + «aproximada» = <b>mismo resultado</b>, con esa salvedad escrita debajo. «≠ Distinta» + «aproximada» = revisa primero esa ' +
+           'salvedad: puede explicar la diferencia.' },
+      en: { t: 'What does "approximate" mean?',
+        b: 'The computation was repeated and compared, but <b>something used to repeat it is not exactly what was used then</b>, and Khipus tells you what: ' +
+           'for example, the graph version came from the record stamp rather than from the view that was read, it was a trip to a past date, the database ' +
+           'was restored, or an old memo was replayed from the stored committee package.<br><br>' +
+           '"✓ Identical" + "approximate" = <b>same result</b>, with that caveat written below. "≠ Different" + "approximate" = check that caveat first: ' +
+           'it may explain the difference.' } },
+    audit_why: {
+      es: { t: '¿Qué muestra «¿Por qué?»?',
+        b: 'La ficha de la decisión en lenguaje simple: <b>qué</b> se decidió y cómo terminó, <b>quién</b> (una persona con PIN, un agente, una tarea ' +
+           'automática o una IA externa), <b>cuándo</b>, <b>con qué conocimiento</b> (versión del grafo y versión de cada regla), cuánta <b>evidencia</b> citó, ' +
+           'qué <b>puertas de validación</b> avisaron y los resultados posteriores. Sin tu PIN no se muestran nombres de personas ni datos de clientes.' },
+      en: { t: 'What does "Why?" show?',
+        b: 'The decision record in plain language: <b>what</b> was decided and how it ended, <b>who</b> (a person with PIN, an agent, an automatic ' +
+           'task or an external AI), <b>when</b>, <b>with what knowledge</b> (graph version and version of every rule), how much <b>evidence</b> it cited, ' +
+           'which <b>validation gates</b> warned and later outcomes. Without your PIN, people names and client data are not shown.' } },
     choke_sum: {
       es: { t: '¿Qué es el «impacto total» de un cuello de botella?',
         b: 'Si esa empresa cae, sumamos cuánto pierde cada empresa golpeada (100 % = una empresa entera). Un impacto total de 40 equivale a ' +

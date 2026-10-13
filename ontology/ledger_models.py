@@ -26,32 +26,9 @@ from sqlalchemy import (
     LargeBinary, PrimaryKeyConstraint, SmallInteger, String, Text, text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql.expression import FunctionElement
-from sqlalchemy.types import UserDefinedType
 
 from ontology.models import Base
-
-
-class XID8(UserDefinedType):
-    """xid8 (o bigint en Postgres < 13). Solo DDL: el código lo escribe por DEFAULT y lo lee como texto."""
-    cache_ok = True
-
-    def get_col_spec(self, **kw):
-        from core import ledger_ddl
-        return ledger_ddl._txid_type()
-
-
-class txid_default(FunctionElement):      # noqa: N801 — se usa como valor de server_default
-    """DEFAULT pg_current_xact_id() (o txid_current()) según la base."""
-    inherit_cache = True
-
-
-@compiles(txid_default)
-def _compile_txid_default(element, compiler, **kw):
-    from core import ledger_ddl
-    return ledger_ddl.txid_expr()
-
+from ontology.sqltypes import XID8, txid_default  # noqa: F401 — tipos en un módulo hoja (sin importación circular)
 
 _NOW = text('clock_timestamp()')
 

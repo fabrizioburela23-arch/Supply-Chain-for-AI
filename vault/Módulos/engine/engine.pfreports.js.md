@@ -27,7 +27,7 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **60 de 95** (línea 7912), después de [[engine.pfcommittee.js]] y antes de [[engine.sync.js]].
+Se carga en [[app.html]] en la posición **60 de 96** (línea 7920), después de [[engine.pfcommittee.js]] y antes de [[engine.sync.js]].
 
 ## Lo usan
 

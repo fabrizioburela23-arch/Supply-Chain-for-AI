@@ -281,7 +281,24 @@ def _with_view(payload, name, g, stale=None):
     return resp
 
 
-def ledger_whatif(kind, params, impacts, g=None, extra=None):
+def _read_version_rr(s):
+    """Camino directo (sin vista rápida): fija la foto REPEATABLE READ de la sesión y lee (versión, linaje) del grafo en
+    ESA foto, antes de construir las matrices → el cálculo y la versión son la MISMA lectura (paso 24, revisión del lote
+    H: el sello del libro se toma después, en el hilo del libro, y un hecho confirmado entre medio daba un falso
+    «distinto» al repetir). None si no se pudo (sin contador)."""
+    try:
+        s.connection(execution_options={'isolation_level': 'REPEATABLE READ'})
+        from core.hotviews import signals
+        r = signals.read_db_version(s)
+        if r is None or r[1] is None:
+            return None
+        return {'graph_version': int(r[0]), 'graph_lineage': r[1], 'source': 'pg_direct'}
+    except Exception:  # noqa: BLE001 — sin la versión exacta el replay usa el sello (aproximado) como antes
+        log.debug('versión del grafo no leída en el camino directo', exc_info=True)
+        return None
+
+
+def ledger_whatif(kind, params, impacts, g=None, extra=None, computed_on=None):
     """Ficha `whatif.shock` / `whatif.factor_fire` (paso 20, §2.5; GV-10): un qué-pasaría-si que la persona LANZÓ
     (botón, comando, chat — no al pasar el ratón): los parámetros del pedido (request_params: choques, factores,
     damping, saltos, pesos propios…), la generación de vistas y el release usados, y la salida como top-50 + la
@@ -300,9 +317,12 @@ def ledger_whatif(kind, params, impacts, g=None, extra=None):
             'entity_ids': [str(x)[:80] for x in (params.get('shock') or params.get('members') or [])][:20],
             **({'factor_id': params['factor_id']} if params.get('factor_id') else {})})
         ctx.params(**{k: v for k, v in params.items() if k not in ('members',)})
+        ctx.extra['impl'] = {'kernel': 'propagate@1'}         # paso 24: qué implementación retenida lo repite
         sha = decisions.sha256_hex(impacts)
         if gen:
             ctx.read_view('impact', gen, content_sha=sha)
+        elif computed_on:
+            ctx.extra['computed_on'] = dict(computed_on)     # versión leída al calcular (camino directo)
         top = sorted(impacts.items(), key=lambda kv: (-float(kv[1] or 0), kv[0]))[:50]
         ctx.output = {'top': [[k, v] for k, v in top], 'n': len(impacts), 'content_sha': sha,
                       'generation': gen, **(extra or {})}
@@ -428,8 +448,10 @@ def matrix_impact():
         core = g.views['graph_core']
         mats, idx, ids, factors, frag = core.mats, core.idx, core.ids, core.factors, core.frag
         dt = core.dt if not kw['rel_weights'] else None      # pesos propios → Tᵀ propia
-    else:
+    con = None
+    if g is None:
         with scope() as s:
+            con = _read_version_rr(s)
             mats, idx, ids = build_matrices(s, as_of=as_of)
             factors = active_factors(s, as_of=as_of)
             frag = fragility(idx, factors)
@@ -473,7 +495,7 @@ def matrix_impact():
                                    'damping': kw['damping'], 'max_hops': kw['max_hops'],
                                    'rel_weights': kw['rel_weights'], 'nonlinear': kw['nonlinear'],
                                    'n_samples': n_samples, 'seed': seed, 'endpoint': '/api/matrix/impact'},
-                  impacts, g, {'affected': out['affected']})
+                  impacts, g, {'affected': out['affected']}, computed_on=con)
     if as_of is not None:
         return jsonify(out)          # viaje en el tiempo: fuera de las vistas (V7 AsOf llega en el paso 23)
     return _with_view(out, 'impact', g)
@@ -513,10 +535,22 @@ def matrix_save_sim():
              'targets': targets, 'affected': affected, 'top': top[:10],
              'saved_at': now, 'saved_by': shown, 'saved_by_principal': actor}
     label = str(b.get('name') or ('Sim ' + ', '.join((targets or ['?'])[:2])))[:200]
-    with scope() as s:
-        apply_event(s, 'ObjectCreated', {'label': label, 'type': 'Simulation', 'properties': props},
-                    valid_from=now, source='livesim', actor=actor, object_id=sid)
-    return jsonify({'id': sid, 'label': label, 'saved_at': now})
+    # cierre del lote H (E4): el evento y su decisión `simulation.save` en la MISMA transacción (toda escritura deja
+    # UNA decisión; sin libro → no se guarda, 503 ledger_unavailable). No mueve la versión del grafo (es una nota).
+    from core import decisions
+    try:
+        with scope() as s:
+            with decisions.decision_scope('simulation.save', principal, session=s, durability='sync',
+                                          subject={'object_id': sid, 'targets': targets[:20]}) as ctx:
+                apply_event(s, 'ObjectCreated', {'label': label, 'type': 'Simulation', 'properties': props},
+                            valid_from=now, source='livesim', actor=actor, object_id=sid)
+                ctx.output = {'id': sid, 'affected': affected, 'n_top': len(props['top'])}
+                did = str(ctx.id)
+    except decisions.LedgerUnavailable:
+        return jsonify({'error': 'El libro de decisiones no está disponible: la simulación no se guardó',
+                        'error_en': 'The decision ledger is unavailable: the simulation was not saved',
+                        'code': 'ledger_unavailable'}), 503
+    return jsonify({'id': sid, 'label': label, 'saved_at': now, 'decision_id': did})
 
 
 @matrix_bp.get('/simulations')
@@ -1078,11 +1112,13 @@ def matrix_factor_fire():
     except _BadParam as e:
         return _bad_param(str(e))
     g = _hot(scope)
+    con = None
     if g is not None:
         core = g.views['graph_core']
         mats, idx, ids, factors = core.mats, core.idx, core.ids, core.factors
     else:
         with scope() as s:
+            con = _read_version_rr(s)
             mats, idx, ids = build_matrices(s)
             factors = active_factors(s)
     target = next((f for f in factors if f['id'] == fid), None)
@@ -1131,7 +1167,7 @@ def matrix_factor_fire():
                                          'magnitude': magnitude, 'damping': damping, 'max_hops': max_hops,
                                          'fire_mode': 'member_coef' if member_coef else 'legacy',
                                          'endpoint': '/api/matrix/factor/fire'},
-                  impacts, g, {'rho_crisis': rho_cri.get('rho')})
+                  impacts, g, {'rho_crisis': rho_cri.get('rho')}, computed_on=con)
     return _with_view({
         'factor': {'id': fid, 'label': target['label'],
                    'severity_latente': target['severity'],

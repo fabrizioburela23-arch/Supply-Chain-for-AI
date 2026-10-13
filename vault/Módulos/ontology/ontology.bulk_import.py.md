@@ -33,13 +33,15 @@ ingesta masiva idempotente y validada (Wikidata/GLEIF).
 ## Lo usan
 
 - [[core.decisions.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_bulk_import.py]]
+- [[tests.test_cierre_infra.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_repair_ontology_review.py]]
 

@@ -34,9 +34,11 @@ _Nada interno._
 - [[core.governance_flow.py]] — lo importa
 - [[core.governance_preview.py]] — lo importa
 - [[core.governance_shadow.py]] — lo importa
+- [[core.impls.py]] — lo importa
 - [[core.instruments.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[core.scenario_engine.py]] — lo importa
 - [[core.screener.py]] — lo importa
 - [[core.semantic.py]] — lo importa
@@ -70,13 +72,14 @@ _Nada interno._
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 29 pruebas (lista abajo)._
+_Además lo importan 31 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
 - [[tests.test_bitemporal.py]]
 - [[tests.test_bitemporal_review.py]]
+- [[tests.test_cierre_infra.py]]
 - [[tests.test_gates_conformance.py]]
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_gates_orders_parity.py]]
@@ -98,6 +101,7 @@ _Además lo importan 29 pruebas (lista abajo)._
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_order_single_path.py]]
+- [[tests.test_replay_determinism.py]]
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]

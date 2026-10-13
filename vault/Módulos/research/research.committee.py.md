@@ -89,8 +89,10 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 
 - [[brokerage.service.py]] — lo importa
 - [[core.decision_sites.py]] — lo importa
+- [[core.impls.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[research.ask_agent.py]] — lo importa
 - [[research.committee_api.py]] — lo importa
@@ -98,7 +100,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - herramienta MCP `get_conclusions_board` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 18 pruebas (lista abajo)._
+_Además lo importan 20 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -114,6 +116,7 @@ _Además lo importan 18 pruebas (lista abajo)._
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_seed_parity.py]]
+- [[tests.test_impl_registry.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_ledger_callsites_committee.py]]
@@ -124,6 +127,7 @@ _Además lo importan 18 pruebas (lista abajo)._
 - [[tests.test_repair_committee.py]]
 - [[tests.test_repair_research.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_replay_determinism.py]]
 
 ## Mencionado en sesiones de trabajo
 

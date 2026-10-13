@@ -1,0 +1,92 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "kernel.params": "1.0.0"
+   },
+   "output": {
+    "block": [
+     1.0,
+     0.984,
+     0.5,
+     0.15
+    ],
+    "first": [
+     0,
+     1,
+     0,
+     1
+    ],
+    "impacts": {
+     "A": 100.0,
+     "B": 98.4,
+     "C": 39.36,
+     "D": 11.81
+    },
+    "order": [
+     {
+      "hop": 1,
+      "id": "B",
+      "impact": 98.4
+     },
+     {
+      "hop": 1,
+      "id": "C",
+      "impact": 18.0
+     },
+     {
+      "hop": 2,
+      "id": "D",
+      "impact": 8.35
+     }
+    ]
+   },
+   "sha": "d776fcf103af1a16f0ec226fe400034f0dd060981ddd9d2e14707d491ce3b295"
+  },
+  {
+   "artifacts": {
+    "kernel.params": "2.0.0"
+   },
+   "output": {
+    "block": [
+     1.0,
+     0.792,
+     0.5,
+     0.15
+    ],
+    "first": [
+     0,
+     1,
+     0,
+     1
+    ],
+    "impacts": {
+     "A": 100.0,
+     "B": 79.2,
+     "C": 31.68,
+     "D": 9.5
+    },
+    "order": [
+     {
+      "hop": 1,
+      "id": "B",
+      "impact": 79.2
+     },
+     {
+      "hop": 1,
+      "id": "C",
+      "impact": 18.0
+     },
+     {
+      "hop": 2,
+      "id": "D",
+      "impact": 5.4
+     }
+    ]
+   },
+   "sha": "df41d4ccc4d272868ca74802a08cc3c0ae7f3ffef4d1c896d32375912bd6b6c7"
+  }
+ ],
+ "key": "kernel.propagate",
+ "version": 1
+}

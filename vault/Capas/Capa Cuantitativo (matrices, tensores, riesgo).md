@@ -9,13 +9,13 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 > Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones.
 
-**18 archivos · 7.825 líneas.** Volver al [[00 Mapa de Khipus]].
+**18 archivos · 7.874 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[matrix.api.py]] — 1.199 líneas · blueprint Flask del motor de matrices: /api/matrix/\*.
+- [[matrix.api.py]] — 1.235 líneas · blueprint Flask del motor de matrices: /api/matrix/\*.
 - [[engine.riskreport.js]] — 992 líneas · REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
-- [[matrix.engine.py]] — 922 líneas · construcción, modulación y propagación de matrices.
+- [[matrix.engine.py]] — 935 líneas · construcción, modulación y propagación de matrices.
 - [[core.sim_agents.py]] — 706 líneas · Motor de simulación POR AGENTES (interno).
 - [[core.risk_report.py]] — 553 líneas · REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
 - [[core.scenario_engine.py]] — 548 líneas · ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
@@ -38,8 +38,8 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 |---|---|---|
 | usa a | [[Capa Infraestructura]] | 24 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
+| la usa | [[Capa Infraestructura]] | 13 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 12 |
-| la usa | [[Capa Infraestructura]] | 10 |
 | usa a | [[Capa Ontología y grafo temporal]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | usa a | [[Capa Datos del catálogo]] | 8 |

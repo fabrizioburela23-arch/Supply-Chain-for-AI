@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **43 de 95** (línea 7844), después de [[nodes.ontology.js]] y antes de [[nodes.legal_names.js]].
+Se carga en [[app.html]] en la posición **43 de 96** (línea 7852), después de [[nodes.ontology.js]] y antes de [[nodes.legal_names.js]].
 
 ## Lo usan
 

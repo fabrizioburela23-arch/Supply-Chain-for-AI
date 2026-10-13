@@ -539,6 +539,10 @@ try:
             from ontology import checkpoints as _checkpoints
             _sched.register('retention_daily', _retention.daily_job, every_s=3600, run_at_start=False)
             _sched.register('graph_checkpoints', _checkpoints.job, every_s=3600, run_at_start=False)
+            # paso 24 (§5.6): muestra nocturna de replays — 50 decisiones deterministas al azar de las últimas 24 h +
+            # TODAS las de dinero, UNA vez por día UTC (la tarea mira cada hora); un 'differs' pone el 🩺 en rojo
+            from core import replay as _replay_mod
+            _sched.register('ledger_replay_sample', _replay_mod.sample_job, every_s=3600, run_at_start=False)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: ledger_seal no registrado (%s)', type(_e).__name__)
     try:   # INFRA_OPERATIVA paso 9: release de gobernanza vigente (la base manda; barato: 2 consultas indexadas)
@@ -1513,11 +1517,19 @@ def _diag_gobernanza():
                 en += f" Gates in {_gm_en}: {gs.get('rules', 0)} rules, {n_warn} warning(s) since start."
         except Exception:  # noqa: BLE001
             gs = None
-        g3 = _diag_g3_bullets()            # pasos 11, 22 y 26: Puertas 7 días · guardia · retención
+        g3 = _diag_g3_bullets()            # pasos 11, 22, 24 y 26: Puertas 7 días · guardia · repetición · retención
         es += g3['es']
         en += g3['en']
+        if (g3.get('replay') or {}).get('differs'):          # paso 24: una decisión ya no se repite igual → rojo
+            ok = False
+            fix = fix or ('abre 🩺 → 📋 Registro → ⚖ Auditoría: arriba, en «Distintas en la última muestra», pulsa «Repetir» '
+                          'para ver qué campo cambió (o el código que la calcula cambió o algo del registro no cuadra).',
+                          'open 🩺 → 📋 Log → ⚖ Audit: at the top, under "Different in the last sample", press "Replay" to '
+                          'see which field changed (either the code that computes it changed or something in the record '
+                          'does not add up).')
         return _diag_card(es, en, fix, configured=True, ok=ok, release=st['release_hash'][:16],
                           gates_7d=g3.get('gates_7d'), guard=g3.get('guard'), retention=g3.get('retention'),
+                          replay=g3.get('replay'),
                           gates_mode=(gs or {}).get('mode'),
                           semver=st['semver'], label=st['label'], ratified=st['ratified'],
                           env_warnings=[w['env'] for w in st['env_warnings']],
@@ -1563,6 +1575,25 @@ def _diag_g3_bullets():
             out['en'] += (f" • \"No decision, no change\" guard in {mode_en}: {gd['total']} change(s) without a "
                           f"decision in 7 days ({by}); triggers {gd.get('triggers')}/{gd.get('triggers_expected')}.")
             out['guard'] = gd
+    except Exception:  # noqa: BLE001
+        pass
+    try:   # paso 24: muestra nocturna de replays (¿las decisiones de ayer se repiten idénticas?)
+        from core import replay as _rp
+        rs = _rp.status()
+        last = rs.get('last') or {}
+        cn = last.get('counts') or {}
+        when = (last.get('at') or '')[:16].replace('T', ' ') or None
+        if when:
+            out['es'] += (f" • Repetición (muestra del {when}): {last.get('sampled', 0)} decisiones — "
+                          f"{cn.get('identical', 0)} idénticas, {cn.get('differs', 0)} distintas, "
+                          f"{cn.get('not_replayable', 0)} no repetibles (IA o datos en vivo).")
+            out['en'] += (f" • Replay (sample of {when}): {last.get('sampled', 0)} decisions — "
+                          f"{cn.get('identical', 0)} identical, {cn.get('differs', 0)} different, "
+                          f"{cn.get('not_replayable', 0)} not replayable (AI or live data).")
+        else:
+            out['es'] += ' • Repetición: la primera muestra nocturna aún no corrió (⚖ Auditoría deja repetir una a mano).'
+            out['en'] += ' • Replay: the first nightly sample has not run yet (⚖ Audit lets you replay one by hand).'
+        out['replay'] = rs
     except Exception:  # noqa: BLE001
         pass
     try:

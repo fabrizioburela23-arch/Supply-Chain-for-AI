@@ -1,0 +1,51 @@
+{
+  "id": "policy.broker_risk",
+  "semver": "1.1.0",
+  "kind": "policy",
+  "change_kind": "minor",
+  "parent": "policy.broker_risk@1.0.0",
+  "params": {
+    "profiles": {
+      "conservador": {
+        "max_position_pct": 10.0,
+        "max_order_usd": 1000.0,
+        "max_daily_usd": 2500.0,
+        "max_drawdown_stop_pct": 10.0,
+        "allowed_asset_classes": [
+          "us_equity"
+        ]
+      },
+      "moderado": {
+        "max_position_pct": 20.0,
+        "max_order_usd": 5000.0,
+        "max_daily_usd": 15000.0,
+        "max_drawdown_stop_pct": 20.0,
+        "allowed_asset_classes": [
+          "us_equity",
+          "crypto"
+        ]
+      },
+      "agresivo": {
+        "max_position_pct": 35.0,
+        "max_order_usd": 25000.0,
+        "max_daily_usd": 75000.0,
+        "max_drawdown_stop_pct": 35.0,
+        "allowed_asset_classes": [
+          "us_equity",
+          "crypto"
+        ]
+      }
+    },
+    "hard_max_order_usd": 100000.0,
+    "min_order_usd": 1.0,
+    "duplicate_window_s": 60,
+    "limit_deviation_pct": 10.0,
+    "asset_classes": [
+      "us_equity",
+      "crypto"
+    ],
+    "approval_ttl_min": 1440
+  },
+  "changelog_es": "Cierre del lote H (E5, D2): agrega cuánto espera una orden en la cola de aprobación antes de vencer (approval_ttl_min = 1440 minutos = 24 h, antes BROKERAGE_APPROVAL_TTL_MIN). Con el valor de hoy: solo agrega una clave (MINOR), ningún número cambia. La variable ya no manda (el 🩺 avisa si sigue puesta).",
+  "changelog_en": "Batch H close (E5, D2): adds how long an order waits in the approval queue before it expires (approval_ttl_min = 1440 minutes = 24 h, formerly BROKERAGE_APPROVAL_TTL_MIN). With today's value: only adds one key (MINOR), no number changes. The variable no longer rules (the 🩺 warns if it is still set)."
+}

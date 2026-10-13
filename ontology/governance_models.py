@@ -16,7 +16,7 @@ Nunca IA. Nunca UPDATE/DELETE. Las escribe solo core/governance.py.
 from sqlalchemy import CHAR, Boolean, CheckConstraint, Column, DateTime, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from ontology.ledger_models import XID8, txid_default
+from ontology.sqltypes import XID8, txid_default
 from ontology.models import Base
 
 _NOW = text('clock_timestamp()')

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/api.py"
 lenguaje: "python"
-lineas: 1351
+lineas: 1386
 aliases: ["ontology/api.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/api.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.351 líneas · `ontology/api.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.386 líneas · `ontology/api.py`
 
 ## Para qué sirve
 
@@ -48,12 +48,12 @@ API REST de la ontología: /api/ontology/\*
 - `global_feed_route()` — Lo último que entró al grafo ENTERO (M6): noticias, relaciones nuevas o terminadas, tesis y acciones — sin la migración ni los precios. … _(línea 1007)_
 - `object_news(object_id)` — Noticias que informan sobre una entidad, ya en el grafo (Phase 1 · M4). Solo LEE: no dispara ingesta, para que abrir una ficha no provoque … _(línea 1051)_
 - `ingest_news()` — Ingiere noticias de una entidad AL GRAFO (Phase 1 · M4). Body: {entity_id, query?, limit?, actor?}. _(línea 1072)_
-- `sources_list()` — Documentos que respaldan hechos del grafo (Phase 1 · M1). Query: ?kind=primary&min_trust=2&limit=50. Ordenadas por confiabilidad. _(línea 1118)_
-- `object_provenance(object_id)` — De dónde salió lo que sabemos de este objeto: las fuentes que lo evidencian y los eventos que las citan (con fecha y confianza). _(línea 1148)_
-- `events_create()` — Escritura de bajo nivel. En Fase 2 esto se envuelve con el catálogo de Acciones (validación por tipo, auditoría de actor humano). Por ahora … _(línea 1169)_
-- `reconcile_plan()` — Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1. No escribe nada. _(línea 1232)_
-- `reconcile_apply()` — Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id. _(línea 1294)_
-- `reconcile_rollback()` — Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos. _(línea 1334)_
+- `sources_list()` — Documentos que respaldan hechos del grafo (Phase 1 · M1). Query: ?kind=primary&min_trust=2&limit=50. Ordenadas por confiabilidad. _(línea 1133)_
+- `object_provenance(object_id)` — De dónde salió lo que sabemos de este objeto: las fuentes que lo evidencian y los eventos que las citan (con fecha y confianza). _(línea 1163)_
+- `events_create()` — Escritura de bajo nivel. En Fase 2 esto se envuelve con el catálogo de Acciones (validación por tipo, auditoría de actor humano). Por ahora … _(línea 1184)_
+- `reconcile_plan()` — Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1. No escribe nada. _(línea 1261)_
+- `reconcile_apply()` — Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id. _(línea 1323)_
+- `reconcile_rollback()` — Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos. _(línea 1366)_
 
 **Internas** (empiezan con `_`): `_unavailable`, `_body`, `_BadArg`, `_int_arg`, `_bad_arg`, `_gate_violation`, `_ledger_unavailable`, `_principal`, `_require_db`, `_obj_to_dict`, `_mark_genesis`, `_link_to_dict`, `_event_to_dict`, `_known_bad`, `_action_event_to_dict`, `_proposal_to_dict`, `_cycle_bg`, `_try_start_cycle`, `_bulk_import_apply`, `_invest_bg`, `_claim_proposal`, `_cycle_may_auto_apply`, `_proposal_actor_and_id`, `_alert_to_dict`, `_recon_plan`, `_strict_operator`, `_strict_operator_required`, `_str_arg`
 
@@ -101,18 +101,18 @@ _Además lo importan 6 pruebas (lista abajo)._
 | `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[app.html]], 3 pruebas |
 | `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[app.html]], 2 pruebas |
 | `POST` | `/api/ontology/agents/run` | `agents_run` | [[app.html]], 2 pruebas |
-| `GET` | `/api/ontology/alerts` | `alerts_list` | [[engine.khipu_lang.js]], 3 pruebas |
-| `POST` | `/api/ontology/alerts` | `alerts_create` | [[engine.khipu_lang.js]], 3 pruebas |
+| `GET` | `/api/ontology/alerts` | `alerts_list` | [[engine.khipu_lang.js]], 4 pruebas |
+| `POST` | `/api/ontology/alerts` | `alerts_create` | [[engine.khipu_lang.js]], 4 pruebas |
 | `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[app.html]], 3 pruebas |
 | `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[app.html]], 3 pruebas |
-| `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | 1 prueba |
-| `POST` | `/api/ontology/events` | `events_create` | 1 prueba |
+| `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | 2 pruebas |
+| `POST` | `/api/ontology/events` | `events_create` | 3 pruebas |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | 1 prueba |
 | `GET` | `/api/ontology/feed` | `global_feed_route` | [[app.html]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | — |
 | `GET` | `/api/ontology/graph` | `graph` | 2 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[engine.khipu_lang.js]], 1 prueba |
-| `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[app.html]], [[engine.temporal-graph.js]], 3 pruebas |
+| `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[app.html]], [[engine.temporal-graph.js]], 4 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/history` | `objects_history` | [[engine.fincard.js]], 1 prueba |
@@ -137,6 +137,8 @@ Grupos: [[API ontology]]
 
 - [[tests.test_bitemporal.py]]
 - [[tests.test_checkpoints.py]]
+- [[tests.test_cierre_defectos.py]]
+- [[tests.test_cierre_infra.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_infra.py]]

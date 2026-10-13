@@ -109,6 +109,7 @@ def evaluate(gate, triples, focus=None):
     us = int((time.perf_counter() - t0) * 1e6)
     rep['latency_us'] = us
     report.note_stats(rep, us)
+    report.capture_focus(rep, triples)     # paso 24: el grafo foco queda con la decisión en curso (replay)
     return rep
 
 

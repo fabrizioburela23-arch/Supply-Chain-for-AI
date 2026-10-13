@@ -9,6 +9,14 @@
   GET /api/ledger/chain               público: ¿cadena rota? ¿dinero real bloqueado? (sin cuerpos)
   POST /api/ledger/chain_ack          SOLO operador (PIN): reconoce la ruptura → decisión ledger.chain_ack y el
                                       dinero real vuelve a operar
+  GET|POST /api/ledger/replay/<id>    paso 24: REPETIR la decisión (modo audit, core/replay.py) → identical | differs |
+                                      not_replayable. Sin PIN: veredicto + pasos y RUTAS de lo que difiere (sin valores);
+                                      con PIN: el detalle. Límite 10/min por IP y un solo grafo reconstruido a la vez
+  GET /api/ledger/why/<id>            paso 24: «¿Por qué?» en lenguaje simple ES/EN (entradas, versiones de las reglas,
+                                      evidencia, puertas, resultado); sin PIN nada del sujeto ni de los clientes
+  GET /api/ledger/audit               paso 24: ⚖ Auditoría — decisiones recientes (?kind=&principal=&principal_kind=
+                                      &since=&until=&limit=) con su nombre ES/EN, si tienen cálculo repetible, el
+                                      catálogo de tipos y la última muestra nocturna de replays
 
 Acceso: con el PIN de operador (X-Trade-Pin, core/pin — estricto en producción) se ven los CUERPOS (manifiesto,
 sujeto, salida, referencias, resultados, blobs). Sin PIN, un resumen REDACTADO (ids, kind, estado, tipo de
@@ -236,5 +244,116 @@ def ledger_chain_ack():
     except ValueError as e:
         return jsonify({'error': str(e), 'error_en': 'that break was already acknowledged',
                         'code': 'already_acked'}), 409
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
+
+
+# ── paso 24: replay, «¿Por qué?» y ⚖ Auditoría ──────────────────────────────────────────────────────────────────
+def _uuid_or_400(decision_id):
+    import uuid
+    try:
+        return str(uuid.UUID(decision_id)), None
+    except ValueError:
+        return None, (jsonify({'error': 'id inválido', 'error_en': 'invalid id'}), 400)
+
+
+def _iso_arg(name):
+    v = request.args.get(name)
+    if not v:
+        return None, None
+    try:
+        return datetime.fromisoformat(v.replace('Z', '+00:00')), None
+    except ValueError:
+        return None, (jsonify({'error': f'{name} inválido (ISO 8601)', 'error_en': f'invalid {name} (ISO 8601)'}), 400)
+
+
+@ledger_bp.route('/replay/<decision_id>', methods=['GET', 'POST'])
+@rate_limit(10, 60)
+def ledger_replay(decision_id):
+    if not _db():
+        return _unavailable()
+    did, bad = _uuid_or_400(decision_id)
+    if bad:
+        return bad
+    full, err = _operator()
+    if err:
+        return err
+    body = (request.get_json(silent=True) or {}) if request.method == 'POST' else {}
+    mode = (request.args.get('mode') or (body.get('mode') if isinstance(body, dict) else None) or 'audit').strip()
+    try:
+        from core import identity, replay
+        out = replay.replay(did, mode=mode, full=full, principal=identity.principal_from_request())
+        return jsonify(out)
+    except LookupError:
+        return jsonify({'error': 'decisión no encontrada', 'error_en': 'decision not found'}), 404
+    except ValueError:
+        return jsonify({'error': 'modo no soportado: solo «audit» (el contrafactual está en 🩺 → Gobernanza → '
+                                 'Regresión)', 'error_en': 'unsupported mode: only "audit" (the counterfactual lives '
+                                                           'in 🩺 → Governance → Regression)',
+                        'code': 'mode_unsupported'}), 400
+    except TimeoutError:
+        return jsonify({'error': 'Otro replay está reconstruyendo un grafo: prueba en unos segundos',
+                        'error_en': 'Another replay is rebuilding a graph: try again in a few seconds',
+                        'code': 'replay_busy'}), 503
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
+
+
+@ledger_bp.route('/why/<decision_id>')
+@rate_limit(60, 60)
+def ledger_why(decision_id):
+    if not _db():
+        return _unavailable()
+    did, bad = _uuid_or_400(decision_id)
+    if bad:
+        return bad
+    full, err = _operator()
+    if err:
+        return err
+    try:
+        from core import replay
+        from ontology.db import session_scope
+        with session_scope() as s:
+            out = replay.why(s, did, full=full)
+        if out is None:
+            return jsonify({'error': 'decisión no encontrada', 'error_en': 'decision not found'}), 404
+        return jsonify(out)
+    except Exception as e:  # noqa: BLE001
+        return _err(e)
+
+
+@ledger_bp.route('/audit')
+@rate_limit(60, 60)
+def ledger_audit():
+    if not _db():
+        return _unavailable()
+    full, err = _operator()
+    if err:
+        return err
+    since, bad = _iso_arg('since')
+    if bad:
+        return bad
+    until, bad = _iso_arg('until')
+    if bad:
+        return bad
+    try:
+        limit = max(1, min(200, int(request.args.get('limit', 30))))
+    except ValueError:
+        return jsonify({'error': 'limit inválido', 'error_en': 'invalid limit'}), 400
+    pk = (request.args.get('principal_kind') or '').strip() or None
+    from core.identity import KINDS as _PK
+    if pk and pk not in _PK:
+        return jsonify({'error': 'principal_kind inválido', 'error_en': 'invalid principal_kind',
+                        'allowed': list(_PK)}), 400
+    try:
+        from core import replay
+        from ontology.db import session_scope
+        with session_scope() as s:
+            items = replay.recent(s, kind=(request.args.get('kind') or '').strip()[:40] or None,
+                                  principal=(request.args.get('principal') or '').strip()[:96] or None,
+                                  principal_kind=pk, since=since, until=until, limit=limit, full=full)
+        return jsonify({'count': len(items), 'redacted': not full, 'decisions': items,
+                        'kinds': replay.kinds_catalog(), 'principal_kinds': list(_PK),
+                        'sample': replay.status()})
     except Exception as e:  # noqa: BLE001
         return _err(e)

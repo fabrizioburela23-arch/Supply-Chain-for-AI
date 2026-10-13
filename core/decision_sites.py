@@ -262,6 +262,23 @@ def committee_run(session, memo, claims, *, package=None, rels=0, decision_id=No
             ctx.extra['transcript_blob'] = ctx.blob('transcript', clean(body.get('transcript')))
         ctx.extra['impl'] = {'committee': memo.method or 'committee-v1', 'sizing': 'compute_sizing@1',
                              'conviction': 'conviction_by_horizon@1'}
+        # paso 24 (replay): las entradas EXACTAS del cálculo determinista (decisión por umbrales → tamaño), incluida la
+        # foto del cliente que el paquete no traía, y lo que salió — core/replay.py lo repite con policy.committee
+        # del release de entonces y compara campo a campo
+        cl = inp.get('client') or {}
+        ctx.extra['replay'] = {'impl': 'compute_sizing@1', 'blob': ctx.blob('replay_inputs', clean({
+            'schema': 'committee-sizing/1', 'symbol': memo.symbol, 'has_client': bool(memo.client_id),
+            'client': {k: cl.get(k) for k in ('ok', 'equity', 'buying_power', 'position')} if cl else None,
+            'us_listing': inp.get('us_listing'), 'price_is_usd': inp.get('price_is_usd'),
+            'mandate': inp.get('mandate'), 'vol_ann_pct': (inp.get('risk') or {}).get('vol_ann_pct')
+            if (inp.get('risk') or {}).get('ok') else None,
+            'price': (inp.get('live') or {}).get('price') if (inp.get('live') or {}).get('ok') else None,
+            'validated': (body.get('track_validation') or inp.get('track_validation') or {}).get('validated'),
+            'overall': memo.overall_conviction, 'n_claims': inp.get('n_claims'),
+            'agent_types': sorted({c.agent_type for c in claims if getattr(c, 'agent_type', None)}),
+            'expect': {'quant_decision': memo.quant_decision, 'decision': memo.decision,
+                       'decision_code': body.get('decision_code'), 'quorum_ok': (body.get('quorum') or {}).get('ok'),
+                       'sizing': memo.sizing}}))}
         if memo.ai_used:
             try:
                 from research.committee import PROMPT_VERSION

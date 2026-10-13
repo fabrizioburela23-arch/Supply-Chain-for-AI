@@ -34,6 +34,7 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 
 - [[core.governance_api.py]] — lo importa
 - [[core.governance_flow.py]] — lo importa
+- [[core.replay.py]] — lo importa
 
 _Además lo importan 2 pruebas (lista abajo)._
 

@@ -212,6 +212,22 @@ def test_g3_aplicar_rollback_ida_y_vuelta(db):
             rollback_run(s, r1['run_id'], confirm_db=name)
         ev_end, lk_end = _counts(s)
         assert ev_end > ev1 and lk_end >= lk1, 'deshacer también es append-only'
+    # cierre del lote H (E2): cada categoría aplicada y cada deshacer dejan su decisión (los rechazos también)
+    from sqlalchemy import text
+    with session_scope() as s:
+        rows = s.execute(text("SELECT kind, status, subject->>'category' AS cat, subject->>'run_id' AS run, "
+                              "principal_id FROM decisions WHERE kind LIKE 'reconcile.%'")).all()
+        eff = s.execute(text("SELECT count(*) FROM decision_refs r JOIN decisions d ON d.id = r.decision_id "
+                             "WHERE d.kind = 'reconcile.apply' AND r.role = 'effect'")).scalar()
+    ap = [r for r in rows if r.kind == 'reconcile.apply']
+    assert sorted((r.run, r.cat) for r in ap) == sorted([(r1['run_id'], c) for c in r1['applied']] +
+                                                        [(r2['run_id'], c) for c in r2['applied']])
+    assert all(r.status == 'executed' and r.principal_id == 'system:reconcile_cli' for r in ap)
+    assert set(r1['decision_ids']) == set(r1['applied']) and eff > 0       # efectos = los eventos escritos
+    rb = [r for r in rows if r.kind == 'reconcile.rollback']
+    assert sorted(r.run for r in rb if r.status == 'executed') == sorted([r1['run_id'], r2['run_id']])
+    assert sum(1 for r in rb if r.status == 'rejected') == 3                # otra base, orden, ya deshecha
+    assert rb2['decision_id']
 
 
 def test_g3_api_plan_lectura_y_apply_con_pin(db, monkeypatch):

@@ -21,6 +21,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_mcp.py]]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_phase3.py]]
+- [[tests.test_replay_determinism.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

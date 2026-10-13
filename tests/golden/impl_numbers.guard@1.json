@@ -1,0 +1,16 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "policy.numbers_guard": "1.0.0"
+   },
+   "output": [
+    "233,95 USD",
+    "35 %"
+   ],
+   "sha": "a6a9bced29b84a7c96ac3e057c7805ef15bbbb0d9fae957e94dd98e8d91aef36"
+  }
+ ],
+ "key": "numbers.guard",
+ "version": 1
+}

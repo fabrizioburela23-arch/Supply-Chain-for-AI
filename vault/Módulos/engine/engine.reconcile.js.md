@@ -26,7 +26,7 @@ G3 (misión de reparación 2026-10-04) 🩺 Diagnóstico → "Grafo: base vs cat
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **77 de 95** (línea 7944), después de [[engine.explain.js]] y antes de [[engine.governance.js]].
+Se carga en [[app.html]] en la posición **77 de 96** (línea 7952), después de [[engine.explain.js]] y antes de [[engine.governance.js]].
 
 ## Lo usan
 

@@ -1,0 +1,92 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "policy.broker_risk": "1.0.0"
+   },
+   "output": [
+    {
+     "detail": "Interruptor general encendido",
+     "name": "kill_switch",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "🧪 Cuenta de PAPEL (dinero simulado)",
+     "name": "mode",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Cliente activo",
+     "name": "client_status",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Cuenta de Alpaca leída en vivo",
+     "name": "account",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "AMD · acciones de EE.UU.",
+     "name": "symbol",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Símbolo permitido por el mandato",
+     "name": "restricted",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Monto US$6,000.00 supera el máximo por orden del cliente (US$5,000.00)",
+     "name": "order_size",
+     "ok": false,
+     "severity": "block"
+    },
+    {
+     "detail": "Hoy: US$0.00 comprado + US$6,000.00 = US$6,000.00 de US$15,000.00 diarios",
+     "name": "daily_limit",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Disponible sin préstamo US$50,000.00 (efectivo US$50,000.00; poder de compra de Alpaca US$50,000.00)",
+     "name": "buying_power",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "AMD pasaría a ser 6.0% del patrimonio (máx. 20%)",
+     "name": "position_limit",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Caída desde el máximo: 0.0% (stop en 20%)",
+     "name": "drawdown_stop",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Sin órdenes iguales en el último minuto",
+     "name": "duplicate",
+     "ok": true,
+     "severity": "block"
+    },
+    {
+     "detail": "Mercado de EE.UU. abierto",
+     "name": "market_hours",
+     "ok": true,
+     "severity": "warn"
+    }
+   ],
+   "sha": "c3ccf5bf364627bfdd48eda07481678538a8704d6c77377aab9f12a14a370afb"
+  }
+ ],
+ "key": "broker.run_checks",
+ "version": 1
+}

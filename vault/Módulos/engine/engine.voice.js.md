@@ -44,7 +44,7 @@ De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`,
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **35 de 95** (línea 7836), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **35 de 96** (línea 7844), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 

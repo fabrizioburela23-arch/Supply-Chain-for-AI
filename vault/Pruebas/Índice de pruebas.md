@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-179 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+183 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -38,6 +38,8 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_chat_commands.py]] | 3 | 2 |
 | [[tests.test_chat_portfolio_agent.py]] | 3 | 6 |
 | [[tests.test_checkpoints.py]] | 4 | 7 |
+| [[tests.test_cierre_defectos.py]] | 11 | 17 |
+| [[tests.test_cierre_infra.py]] | 6 | 13 |
 | [[tests.test_cleanup_client.py]] | 9 | 8 |
 | [[tests.test_cleanup_dialogs.py]] | 10 | 16 |
 | [[tests.test_cleanup_modules_theme_i18n.py]] | 18 | 6 |
@@ -69,6 +71,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_hot_invalidation.py]] | 10 | 9 |
 | [[tests.test_hot_review_fixes.py]] | 12 | 8 |
 | [[tests.test_hot_views_parity.py]] | 15 | 13 |
+| [[tests.test_impl_registry.py]] | 7 | 12 |
 | [[tests.test_infra.py]] | 57 | 16 |
 | [[tests.test_ingest_news.py]] | 12 | 7 |
 | [[tests.test_instruments.py]] | 5 | 3 |
@@ -157,6 +160,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_repair_review2.py]] | 9 | 16 |
 | [[tests.test_repair_risk.py]] | 10 | 1 |
 | [[tests.test_repair_world.py]] | 7 | 2 |
+| [[tests.test_replay_determinism.py]] | 15 | 25 |
 | [[tests.test_research.py]] | 23 | 15 |
 | [[tests.test_retention_purge.py]] | 6 | 8 |
 | [[tests.test_review_batch_e.py]] | 4 | 5 |

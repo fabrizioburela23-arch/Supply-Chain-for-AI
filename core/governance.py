@@ -56,6 +56,17 @@ LEGACY_NUMERIC_ENV = {
     'DECIDE_MIN_CONF': ('policy.decide', 'min_conf'),
     'DECIDE_WAIT_S': ('policy.decide', 'control_wait_s'),
     'COMMITTEE_MEMO_TTL_HOURS': ('policy.committee', 'memo_ttl_hours'),
+    # cierre del lote H (E5): los tres que quedaban (policy.committee / policy.broker_risk 1.1.0)
+    'RESEARCH_CALIBRATION_K': ('policy.committee', 'calibration_k'),
+    'RESEARCH_OUTCOME_BAND': ('policy.committee', 'outcome_band'),
+    'BROKERAGE_APPROVAL_TTL_MIN': ('policy.broker_risk', 'approval_ttl_min'),
+}
+# Valor del CÓDIGO (= el de hoy) para las claves que un release aprobado anterior todavía no trae: así el 🩺 avisa
+# también mientras rige 1.0.0 (el código usa ese mismo valor; research/outcomes.py, brokerage/service.py).
+LEGACY_CODE_DEFAULTS = {
+    'RESEARCH_CALIBRATION_K': 10.0,
+    'RESEARCH_OUTCOME_BAND': 0.02,
+    'BROKERAGE_APPROVAL_TTL_MIN': 1440,
 }
 
 _LOCK = threading.RLock()
@@ -731,6 +742,15 @@ class counterfactual:
         return False
 
 
+class pinned(counterfactual):
+    """`with pinned(arts):` — como `counterfactual`, pero con los cuerpos YA resueltos y verificados por hash
+    ({artifact_id: {semver, hash, params, kind}}): el replay (core/replay.py, paso 24) repite una decisión con el release
+    que regía ENTONCES (cuerpos de gov_artifacts por hash), no con un archivo del repositorio. Solo este hilo."""
+
+    def __init__(self, arts):  # noqa: D107 — no llama a counterfactual.__init__ (no lee archivos)
+        self.arts = {aid: dict(a) for aid, a in (arts or {}).items()}
+
+
 def proposals():
     """Versiones DISPONIBLES (repositorio) distintas de la vigente, por artefacto: lo que el 🩺 ofrece activar con PIN.
     [{id, semver, active_semver, change_kind, activation, changelog_es/en, newer}]"""
@@ -1032,7 +1052,7 @@ def env_warnings():
         if raw is None or raw.strip() == '':
             continue
         try:
-            cur = param(aid, key)
+            cur = param(aid, key, LEGACY_CODE_DEFAULTS.get(env, _MISSING))
             differs = float(raw) != float(cur)
         except (TypeError, ValueError):
             cur, differs = None, True

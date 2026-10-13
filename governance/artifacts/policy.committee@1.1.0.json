@@ -1,0 +1,53 @@
+{
+  "id": "policy.committee",
+  "semver": "1.1.0",
+  "kind": "policy",
+  "change_kind": "minor",
+  "parent": "policy.committee@1.0.0",
+  "params": {
+    "hz_weights": {
+      "INTRADAY": 0.0,
+      "SHORT_TERM": 0.2,
+      "MEDIUM_TERM": 0.35,
+      "LONG_TERM": 0.35,
+      "STRUCTURAL": 0.1
+    },
+    "w0": 1.0,
+    "prior_rel": 0.5,
+    "contra_penalty": 0.5,
+    "buy_threshold": 35.0,
+    "trim_threshold": -20.0,
+    "sell_threshold": -50.0,
+    "overweight": 1.25,
+    "underweight": 0.8,
+    "min_claims": 2,
+    "unvalidated_factor": 0.5,
+    "required_agents": [
+      "fundamental"
+    ],
+    "quorum_pool": [
+      "fundamental",
+      "news",
+      "technical",
+      "supply_chain"
+    ],
+    "min_agents": 3,
+    "default_mandate": {
+      "risk_budget_pct": 2.0,
+      "max_position_pct": 10.0,
+      "min_vol_pct": 10.0
+    },
+    "review_days": {
+      "INTRADAY": 7,
+      "SHORT_TERM": 30,
+      "MEDIUM_TERM": 90,
+      "LONG_TERM": 120,
+      "STRUCTURAL": 180
+    },
+    "memo_ttl_hours": 72.0,
+    "calibration_k": 10.0,
+    "outcome_band": 0.02
+  },
+  "changelog_es": "Cierre del lote H (E5, D2): agrega los dos números de la calibración del comité que todavía fijaba Railway — la fuerza del ajuste por historial de cada analista (calibration_k = 10, antes RESEARCH_CALIBRATION_K) y la banda de «movimiento que cuenta» al evaluar una conclusión (outcome_band = 0,02 = 2 %, antes RESEARCH_OUTCOME_BAND). Con los valores de hoy: solo agrega claves (MINOR), ningún número cambia. Las variables ya no mandan (el 🩺 avisa si siguen puestas).",
+  "changelog_en": "Batch H close (E5, D2): adds the two committee calibration numbers that Railway still set — the strength of the adjustment by each analyst's track record (calibration_k = 10, formerly RESEARCH_CALIBRATION_K) and the \"move that counts\" band when grading a conclusion (outcome_band = 0.02 = 2%, formerly RESEARCH_OUTCOME_BAND). With today's values: only adds keys (MINOR), no number changes. The variables no longer rule (the 🩺 warns if they are still set)."
+}

@@ -1382,6 +1382,35 @@ def t_get_track_record(ctx, agent_type=None):
     return res
 
 
+@tool('replay_decision', 'Replay a past decision (audit)', 'read',
+      'Repeats a past Khipus decision (from its decision ledger) with exactly what the system knew then: the recorded '
+      'inputs, the graph as known at that graph version, the governance release (rules and numbers) in force and the '
+      'retained deterministic code. Verdict: identical | differs (field paths) | not_replayable (reason: AI text is '
+      'never re-run — only its inputs and the figures guard are checked —, purged data, live data not stored, record '
+      'older than the replay inputs). Summary only: no client values.',
+      {'decision_id': {'type': 'string', 'minLength': 36, 'maxLength': 36,
+                       'description': 'Decision id (uuid) from the ledger (e.g. returned by preview_order).'}},
+      required=['decision_id'])
+def t_replay_decision(ctx, decision_id):
+    _need_db('replay_decision')
+    import uuid as _uuid
+    try:
+        did = str(_uuid.UUID(str(decision_id)))
+    except ValueError:
+        raise InvalidParams('decision_id must be a uuid') from None
+    from core import identity, replay
+    try:      # quien pide el replay queda como auditor (mcp:<token>, atado a la petición por /mcp)
+        out = replay.replay(did, full=False, principal=identity.current())
+    except LookupError:
+        raise ToolError('decision not found', code='not_found') from None
+    except TimeoutError:
+        raise ToolError('another replay is rebuilding a graph — try again in a few seconds', code='busy') from None
+    out = {k: v for k, v in out.items() if k != 'explanation'} | {'explanation': out['explanation']['en']}
+    out['source'] = 'Khipus decision ledger (append-only, hash-sealed) + retained implementations (core/impls)'
+    out.setdefault('as_of', _now_iso())
+    return out
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # RESEARCH — lanzar investigación / comité (gasta presupuesto de IA)
 # ════════════════════════════════════════════════════════════════════════════

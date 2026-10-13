@@ -35,6 +35,8 @@ LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2: L3-01, L2-12, L3-14, L3
 - [[core.prices_store.py]] — lo importa
 - [[ontology.models.py]] — lo importa
 
+_Además lo importan 1 pruebas (lista abajo)._
+
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_cierre_defectos.py]]

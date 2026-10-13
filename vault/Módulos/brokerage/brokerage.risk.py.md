@@ -47,9 +47,11 @@ controles de riesgo PRE-orden por cliente.
 ## Lo usan
 
 - [[brokerage.service.py]] — lo importa
+- [[core.impls.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -62,5 +64,6 @@ _Además lo importan 5 pruebas (lista abajo)._
 - [[tests.test_brokerage.py]]
 - [[tests.test_gates_orders_parity.py]]
 - [[tests.test_governance_seed_parity.py]]
+- [[tests.test_impl_registry.py]]
 - [[tests.test_ledger_anchor.py]]
 - [[tests.test_order_single_path.py]]

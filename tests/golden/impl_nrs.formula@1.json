@@ -1,0 +1,41 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "nrs.formula": "1.0.0"
+   },
+   "output": [
+    {
+     "chain": 17.5,
+     "concentration": 10,
+     "degree": 7,
+     "fundamental": 0,
+     "geo": 25,
+     "market": 14,
+     "total": 67
+    },
+    {
+     "chain": 5.0,
+     "concentration": 4,
+     "degree": 2,
+     "fundamental": 0,
+     "geo": 8,
+     "market": 0,
+     "total": 17
+    },
+    {
+     "chain": 0.0,
+     "concentration": 4,
+     "degree": 0,
+     "fundamental": 0,
+     "geo": 12,
+     "market": 13,
+     "total": 29
+    }
+   ],
+   "sha": "ccac22f430b272d66ab48533dd890e5eaf4f13f0222d3a8d4060e5b9991d2160"
+  }
+ ],
+ "key": "nrs.formula",
+ "version": 1
+}

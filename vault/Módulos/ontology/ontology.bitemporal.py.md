@@ -45,6 +45,7 @@ G(t, κ): el grafo vigente en la fecha t TAL COMO SE CONOCÍA en κ (INFRA_OPERA
 
 ## Lo usan
 
+- [[core.replay.py]] — lo importa
 - [[matrix.engine.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.api.py]] — lo importa
@@ -52,12 +53,13 @@ G(t, κ): el grafo vigente en la fecha t TAL COMO SE CONOCÍA en κ (INFRA_OPERA
 - [[ontology.timeline.py]] — lo importa
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_bitemporal.py]]
 - [[tests.test_bitemporal_review.py]]
+- [[tests.test_replay_determinism.py]]
 
 ## Mencionado en sesiones de trabajo
 

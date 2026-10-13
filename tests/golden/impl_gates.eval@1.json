@@ -1,0 +1,60 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "ontology.shapes": "5.0.0"
+   },
+   "output": {
+    "by_rule": {
+     "khr:link.endpoints_live": 2,
+     "khr:link.no_self_loop": 1,
+     "khr:link.rel_in_vocab": 1,
+     "khr:link.valid_interval": 1
+    },
+    "conforms": false,
+    "n_results": 5,
+    "outcome": "warn",
+    "results": [
+     {
+      "effective": "warn",
+      "limit": null,
+      "rule": "khr:link.no_self_loop",
+      "severity": "block",
+      "value": "khd:obj/TSMC"
+     },
+     {
+      "effective": "warn",
+      "limit": "1",
+      "rule": "khr:link.rel_in_vocab",
+      "severity": "block",
+      "value": null
+     },
+     {
+      "effective": "warn",
+      "limit": null,
+      "rule": "khr:link.endpoints_live",
+      "severity": "block",
+      "value": "khd:obj/TSMC"
+     },
+     {
+      "effective": "warn",
+      "limit": null,
+      "rule": "khr:link.endpoints_live",
+      "severity": "block",
+      "value": "khd:obj/TSMC"
+     },
+     {
+      "effective": "warn",
+      "limit": "2019-01-01T00:00:00+00:00",
+      "rule": "khr:link.valid_interval",
+      "severity": "block",
+      "value": "2020-01-01T00:00:00+00:00"
+     }
+    ]
+   },
+   "sha": "9f91e833101b122e073a240fe4bd8b190f501226ea9f2cf6d07e9a6dade0ffda"
+  }
+ ],
+ "key": "gates.eval",
+ "version": 1
+}

@@ -129,6 +129,95 @@ def stats():
     return out
 
 
+# ── paso 24: el GRAFO FOCO se guarda con la decisión (para repetir el veredicto con el IR de entonces) ─────────
+FOCUS_MAX_PER_DECISION = 20          # una importación en bloque no llena el manifiesto: el resto se cuenta
+FOCUS_MAX_BYTES = 64 * 1024          # un foco más grande (G-BULK de miles de vínculos) no se guarda: se anota
+
+
+def encode_term(v):
+    """Término del grafo foco → JSON sin pérdida (IRI, Decimal, fecha, booleano, texto)."""
+    if v is None:
+        return None
+    if isinstance(v, F.IRI):
+        return ['i', str(v)]
+    if isinstance(v, bool):
+        return ['b', v]
+    if isinstance(v, Decimal):
+        return ['d', str(v)]
+    if isinstance(v, datetime):
+        return ['t', v.isoformat()]
+    return ['s', str(v)]
+
+
+def decode_term(x):
+    if x is None:
+        return None
+    k, v = x[0], x[1]
+    if k == 'i':
+        return F.IRI(v)
+    if k == 'b':
+        return bool(v)
+    if k == 'd':
+        return Decimal(v)
+    if k == 't':
+        return datetime.fromisoformat(v)
+    return str(v)
+
+
+def encode_triples(triples):
+    return [[encode_term(s), encode_term(p), encode_term(o)] for s, p, o in triples]
+
+
+def decode_triples(rows):
+    return [(decode_term(s), decode_term(p), decode_term(o)) for s, p, o in rows or ()]
+
+
+def results_sha(rep):
+    """Huella EXACTA de lo que la puerta encontró (regla, foco, desenlace, valor, límite) — lo que el replay compara."""
+    import hashlib
+    import json
+    body = [[r['rule'], r['focus'], r['effective'], r['severity'], r['value'], r['limit']] for r in rep['results']]
+    raw = json.dumps([rep['outcome'], rep.get('n_results'), rep.get('by_rule'), body], sort_keys=True,
+                     separators=(',', ':'), ensure_ascii=False, default=str)
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()
+
+
+def capture_focus(rep, triples):
+    """Con una decisión en curso (no la meta-puerta G8, que repite la ficha misma): blob 'gate_focus' con el grafo foco
+    codificado + índice en el manifiesto {gate, outcome, mode, ir_hash, n, rsha, blob}. Nunca lanza; sin decisión no
+    hace nada (los avisos sin decisión van a audit.gates con su reporte, sin foco)."""
+    if not rep or rep.get('gate') == 'ledger.g8':
+        return
+    try:
+        from core import decisions
+        ctx = decisions.current()
+        if ctx is None or ctx.recorded:
+            return
+        lst = ctx.extra.setdefault('gate_focus', [])
+        if len(lst) >= FOCUS_MAX_PER_DECISION:
+            ctx.extra['gate_focus_skipped'] = int(ctx.extra.get('gate_focus_skipped') or 0) + 1
+            return
+        ent = {'gate': rep['gate'], 'outcome': rep['outcome'], 'mode': rep['mode'],
+               'ir_hash': (rep.get('shapes') or {}).get('ir_hash'), 'n': rep.get('n_results', len(rep['results'])),
+               'rsha': results_sha(rep)}
+        body = {'schema': 'gate-focus/1', 'gate': rep['gate'], 'focus': rep.get('focus'),
+                'triples': encode_triples(triples)}
+        if len(decisions.canonical(body)) > FOCUS_MAX_BYTES:
+            ent['blob'] = None
+            ent['skipped'] = 'focus_too_large'
+        else:
+            ent['blob'] = ctx.blob('gate_focus', body, retention='legal')
+        try:
+            from core import governance
+            ent['overrides_hash'] = governance.artifact_hash_of('policy.gates')
+        except Exception:  # noqa: BLE001
+            pass
+        lst.append(ent)
+        ctx.extra.setdefault('impl', {})['gates'] = 'gate_eval@1'
+    except Exception as e:  # noqa: BLE001
+        log.debug('gates: foco no guardado (%s)', type(e).__name__)
+
+
 # ── registro en el libro ─────────────────────────────────────────────────────
 def to_ctx_report(rep):
     """GateReport/1 → la forma que consume DecisionCtx.gate (decision_violations)."""

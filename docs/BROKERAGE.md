@@ -223,7 +223,7 @@ cancelaciones, sincronizaciones, habilitar/deshabilitar dinero real. Se ve en
 | `BROKERAGE_TRADING_ENABLED` | `on` | `off` = interruptor general de este módulo (👥 Clientes, MCP, comité; ver §2.6 para `/api/trade/*`) |
 | `BROKERAGE_LIVE_ENABLED` | `off` | primer candado del dinero real |
 | `BROKERAGE_AUTO_APPROVE_PAPER` | `off` | `on` = propuestas MCP/comité de clientes **en papel** no esperan humano (dinero real SIEMPRE espera). Se vuelve a comprobar AL CONFIRMAR: si ya no aplica (variable apagada, cuenta cambiada), pasa a la cola humana o se rechaza |
-| `BROKERAGE_APPROVAL_TTL_MIN` | `1440` | caducidad de propuestas pendientes |
+| ~~`BROKERAGE_APPROVAL_TTL_MIN`~~ | `1440` | caducidad de propuestas pendientes — desde 2026-10-13 vive en `policy.broker_risk` 1.1.0 (`approval_ttl_min`); la variable ya no manda (D2, el 🩺 avisa) |
 | `ALPACA_OAUTH_CLIENT_ID` / `_SECRET` / `_REDIRECT_URI` | — | activan OAuth |
 | `ALPACA_KEY` / `ALPACA_SECRET` / `ALPACA_BASE` | — | cuenta de la casa → cliente `house` «Cuenta principal» |
 

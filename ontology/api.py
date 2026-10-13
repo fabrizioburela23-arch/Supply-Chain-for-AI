@@ -1093,9 +1093,24 @@ def ingest_news():
     except (TypeError, ValueError):
         limit = 10
 
-    with session_scope() as s:
-        res = ingest_news_for(s, entity_id, query=body.get('query'),
-                              limit=limit, actor=actor)
+    from core import decisions as _decisions
+    try:
+        # cierre del lote H (E3): las noticias que entran al grafo dejan su decisión `ontology.news_ingest` (misma
+        # transacción; efectos = los eventos escritos). Sin ningún evento nuevo → 'noop'.
+        with session_scope() as s, _decisions.decision_scope(
+                'ontology.news_ingest', _principal(declared), session=s,
+                subject={'entity_id': entity_id[:120], 'limit': limit}) as dctx:
+            res = ingest_news_for(s, entity_id, query=body.get('query'),
+                                  limit=limit, actor=actor)
+            dctx.output = {k: res.get(k) for k in ('ok', 'fetched', 'ingested', 'new', 'skipped_no_url')}
+            dctx.output['errors'] = len(res.get('errors') or [])
+            if not res.get('ok'):
+                dctx.status = 'rejected'
+            elif not any(k[0] == 'effect' for k in dctx.refs):
+                dctx.status = 'noop'            # todo ya estaba (idempotente): ningún evento escrito
+            res['decision_id'] = str(dctx.id)
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
     # PHASE 2 · event-driven: noticias NUEVAS de una entidad = evento NEWS →
     # router → agentes suscritos (QUICK, dedupe 24 h, tope diario). Apagado
     # por defecto por costo: RESEARCH_AUTO_EVENTS=on en Railway lo activa.
@@ -1175,18 +1190,32 @@ def events_create():
     missing = [k for k in required if not body.get(k)]
     if missing:
         return jsonify({'error': f'faltan campos: {", ".join(missing)}'}), 400
+    from core import decisions as _decisions
+    principal = _principal(body['actor'])
+    did = {}
     try:
-        with session_scope() as s:
+        # cierre del lote H (E1): el evento crudo deja su decisión `ontology.raw_event` en la MISMA transacción
+        with session_scope() as s, _decisions.decision_scope(
+                'ontology.raw_event', principal, session=s,
+                subject={'event_type': str(body['event_type'])[:40], 'object_id': body.get('object_id'),
+                         'target_id': body.get('target_id')}) as dctx:
+            did['id'] = str(dctx.id)
             ev = apply_event(
                 s, event_type=body['event_type'], payload=body.get('payload', {}),
                 valid_from=body['valid_from'], valid_to=body.get('valid_to'),
-                source=body['source'], actor=_principal(body['actor']).id,   # paso 5: el principal
+                source=body['source'], actor=principal.id,   # paso 5: el principal
                 object_id=body.get('object_id'), target_id=body.get('target_id'),
             )
             s.flush()
-            return jsonify({'status': 'ok', 'event': _event_to_dict(ev)})
+            dctx.output = {'event_id': str(ev.id), 'event_type': ev.event_type}
+            res = {'status': 'ok', 'event': _event_to_dict(ev), 'decision_id': did['id']}
+        return jsonify(res)
+    except _GateViolation as e:
+        return _gate_violation(e, did.get('id'))
     except OntologyError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'decision_id': did.get('id')}), 400
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
 
 
 # ── G3 (misión de reparación 2026-10-04): reconciliación catálogo ↔ base ──────
@@ -1298,7 +1327,8 @@ def reconcile_apply():
     actor = _str_arg(b, 'actor', 80)
     if not actor:
         return jsonify({'error': 'actor requerido', 'error_en': 'actor is required'}), 400
-    actor = _principal(actor).id               # paso 5: se registra el principal (op:fabrizio), no el texto
+    principal = _principal(actor)
+    actor = principal.id                       # paso 5: se registra el principal (op:fabrizio), no el texto
     include = b.get('include') or list(R.DEFAULT_APPLY)
     if not isinstance(include, list) or any(c not in R.CATEGORIES for c in include):
         return jsonify({'error': f'include inválido; válidas: {list(R.CATEGORIES)}',
@@ -1314,7 +1344,9 @@ def reconcile_apply():
                         'error_en': 'expect must be {category: number, plan_sha}'}), 400
     try:
         res = R.apply_plan(session_scope, R.load_snapshot(), include=include, confirm_db=_str_arg(b, 'confirm_db', 120),
-                           actor=actor, expect=expect)
+                           actor=actor, expect=expect, principal=principal)
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
     except R.ReconcileError as e:
         return jsonify({'error': str(e), 'error_en': e.en}), 409 if 'en curso' in str(e) or 'cambió' in str(e) else 400
     except (OntologyError, ValueError) as e:
@@ -1339,10 +1371,13 @@ def reconcile_rollback():
     run_id = _str_arg(b, 'run_id', 60)
     if not actor or not run_id:
         return jsonify({'error': 'actor y run_id requeridos', 'error_en': 'actor and run_id are required'}), 400
-    actor = _principal(actor).id
+    principal = _principal(actor)
+    actor = principal.id
     try:
         with session_scope() as s:
-            res = R.rollback_run(s, run_id, confirm_db=_str_arg(b, 'confirm_db', 120), actor=actor)
+            res = R.rollback_run(s, run_id, confirm_db=_str_arg(b, 'confirm_db', 120), actor=actor, principal=principal)
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
     except R.ReconcileError as e:
         return jsonify({'error': str(e), 'error_en': e.en}), 409 if 'en curso' in str(e) else 400
     except (OntologyError, ValueError) as e:

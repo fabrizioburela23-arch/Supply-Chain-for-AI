@@ -36,7 +36,6 @@ precios reales — y con eso mide qué tan confiable es cada agente.
 """
 import bisect
 import logging
-import os
 import re
 import threading
 import time
@@ -73,22 +72,32 @@ def _now():
     return datetime.now(timezone.utc)
 
 
-def band_default():
-    """Banda de 'movimiento que cuenta' (fracción). Acepta 0.02 o 2 (= 2 %)."""
+OUTCOME_BAND_CODE = 0.02          # valores del código (= los de hoy) si el release vigente aún no trae la clave
+CALIBRATION_K_CODE = 10.0
+
+
+def _policy(key, code_default):
+    """D2 (cierre del lote H, E5): el número sale de policy.committee del release VIGENTE (≥1.1.0); con un release
+    anterior que no trae la clave, el valor del código (= el de hoy). RESEARCH_OUTCOME_BAND / RESEARCH_CALIBRATION_K
+    ya NO cambian números (core/governance.LEGACY_NUMERIC_ENV: el 🩺 avisa si siguen puestas)."""
     try:
-        v = float(os.getenv('RESEARCH_OUTCOME_BAND', '0.02'))
-    except (TypeError, ValueError):
-        v = 0.02
+        from core import governance
+        return float(governance.param('policy.committee', key, code_default))
+    except Exception:  # noqa: BLE001 — sin gobernanza legible, el valor del código
+        return float(code_default)
+
+
+def band_default():
+    """Banda de 'movimiento que cuenta' (fracción): policy.committee.outcome_band."""
+    v = _policy('outcome_band', OUTCOME_BAND_CODE)
     if v >= 1:
         v = v / 100.0
     return max(0.0, min(v, 0.5))
 
 
 def k_default():
-    try:
-        return max(0.0, float(os.getenv('RESEARCH_CALIBRATION_K', '10')))
-    except (TypeError, ValueError):
-        return 10.0
+    """Fuerza de la calibración por historial: policy.committee.calibration_k."""
+    return max(0.0, _policy('calibration_k', CALIBRATION_K_CODE))
 
 
 # ── fechas de mercado (Nueva York) ───────────────────────────────────────────

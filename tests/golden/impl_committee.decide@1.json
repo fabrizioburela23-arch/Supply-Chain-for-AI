@@ -1,0 +1,29 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "policy.committee": "1.0.0"
+   },
+   "output": [
+    [
+     "BUY",
+     "convicción global +40 ≥ 35",
+     "overall conviction +40 ≥ 35"
+    ],
+    [
+     "TRIM",
+     "convicción global -30 ≤ -20",
+     "overall conviction -30 ≤ -20"
+    ],
+    [
+     "HOLD",
+     "convicción global +10: no alcanza el umbral para abrir (35)",
+     "overall conviction +10: below the threshold to open (35)"
+    ]
+   ],
+   "sha": "764ef8a6e3c84857ae967d44744656cda64952bc503424da845e0b30b6a40a6e"
+  }
+ ],
+ "key": "committee.decide",
+ "version": 1
+}

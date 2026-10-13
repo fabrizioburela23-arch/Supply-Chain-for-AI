@@ -385,7 +385,7 @@ def active_factors(session, as_of=None, known=None):
                             'since': _iso_or_none(since.get(fid) or o.created_at),
                             'updated': _iso_or_none(o.updated_at),
                             'members': members})
-    return factors
+    return _canonical_factors(factors)
 
 
 def _active_factors_known(session, as_of, known, links=None):
@@ -420,7 +420,18 @@ def _active_factors_known(session, as_of, known, links=None):
                         'since': _iso_or_none(since.get(fid) or o.get('valid_from')),
                         'updated': _iso_or_none(o.get('updated_from')),
                         'members': members})
-    return factors
+    return _canonical_factors(factors)
+
+
+def _canonical_factors(factors):
+    """Paso 24 (replay): factores por id y miembros por id. La lectura de la base no tiene ORDER BY y la fragilidad
+    suma en ese orden: la vista viva y G(t, κ) (que lee de los eventos) diferían en 1 ulp → la GraphCore reconstruida
+    no tenía la huella de la publicada y una decisión no se repetía bit a bit. (El catálogo/snapshot no pasa por aquí:
+    su orden es el del archivo, y las salidas doradas de tests/golden/governance_parity_v1.json no cambian.)"""
+    out = sorted(factors, key=lambda f: str(f['id']))
+    for f in out:
+        f['members'] = dict(sorted(f['members'].items(), key=lambda kv: str(kv[0])))
+    return out
 
 
 def factor_coef(raw):
@@ -808,7 +819,9 @@ def spectral_radius(mats, factors=None, idx=None, rel_weights=None, damping=None
     if _issparse(M) and n >= 3:
         try:
             from scipy.sparse.linalg import eigs
-            vals = eigs(M.astype(float), k=1, which='LM',
+            # paso 24 (replay): vector inicial FIJO — ARPACK arranca de uno aleatorio y ρ salía distinto en el 6.º
+            # decimal de una corrida a otra (grafos acíclicos: ruido 3e-06 vs 4e-06): una decisión no se repetía igual
+            vals = eigs(M.astype(float), k=1, which='LM', v0=np.ones(n),
                         maxiter=n * 20, return_eigenvectors=False)
             rho, method = float(np.abs(vals[0])), 'eigs'
         except Exception as e:  # noqa: BLE001

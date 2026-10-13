@@ -27,6 +27,10 @@ Decisión (libro mayor append-only con cadena de hashes, `core/decisions.py`), P
 validadores Python de 0,01-0,3 ms; pySHACL solo como oráculo en CI), Hot Path Views (vistas en memoria versionadas por
 `graph_version` tomado al confirmar, `/api/hot/*`, UN kernel) y Gobernanza (artefactos con hash, release aprobado con PIN,
 G(t,κ) y replay). Plan de 26 pasos desplegables en su §10; decisiones nuevas D1-D7.
+**CIERRE (2026-10-13): los 26 pasos están hechos** — `docs/CIERRE_INFRA.md` (español simple) dice qué hace cada pilar,
+el estado de los 99 hallazgos de BRECHAS con su prueba, las 11 rutas de escritura que aún no dejan decisión (fijadas en
+tests/test_cierre_infra.py: la lista solo puede ACHICARSE) y los clics exactos que solo Fabrizio puede hacer (ratificar,
+activar kernel 2.0.0 / shapes / gates / guard con PIN, Railway). Empezar por ahí antes de la "Fase 2+".
 **PASOS 1-4 HECHOS (2026-10-13)**: `events` es append-only DE VERDAD (disparador `kh_append_only`, `core/ledger_ddl.py`;
 nunca UPDATE/DELETE: una corrección es un evento nuevo); `graph_version` se toma AL CONFIRMAR (hooks before/after_commit
 en `core/hotviews/signals.py`, tablas `kh_versions`/`kh_tx_versions`, NOTIFY `khipu_graph` + sondeo 30 s) y reemplaza a
@@ -149,6 +153,19 @@ admite ese UPDATE, con una decisión retention.purge de la misma transacción); 
 `ontology/checkpoints.py` apagado bajo 20.000 eventos. PUERTAS EN BLOQUEO — policy.gates 2.0.0 (PIN): G1/G2/G-PROP/G-BULK
 devuelven 422 (`GateViolation`, GateReport ES/EN); órdenes, comité y libro siguen en sombra; acciones con
 `extra='forbid'` (lista blanca: `dudosos`); reconcile exige `expect` con `plan_sha`.
+**PASO 24 (2026-10-13) — REPETIR DECISIONES**: `core/replay.py` `replay(decision_id)` (solo modo 'audit'): integridad
+(hashes, blobs PURGADOS se dicen, sello, linaje) → release de ENTONCES por hash (gov_artifacts) → G(t,κ) con la versión del
+grafo que se leyó → implementación RETENIDA (`core/impls.py`: IMPLS/STAMPS por versión; `module_view` = mismo código con los
+números de otro release sin tocar el módulo vivo; `governance.pinned(arts)` por hilo) → `identical | differs` (rutas de
+campo) `| not_replayable` (texto de IA nunca se re-pide: se verifican prompt/output_sha y el guardián; blob purgado; datos
+en vivo no guardados; anterior al paso 24). Repetibles: whatif.shock/factor_fire, committee.run (umbrales→tamaño, blob
+`replay_inputs`), order.preview/confirm (run_checks, blob `replay_inputs`), governance.validate y las PUERTAS de toda
+decisión (blob `gate_focus`). Salidas doradas `tests/golden/impl_*.json` (`scripts/build_impl_goldens.py --check`): si
+cambian, nace `@2` (nunca editar `@1`). Toda etiqueta `impl` nueva va a STAMPS (tests/test_impl_registry.py).
+`/api/ledger/replay/<id>` (sin PIN = resumen sin valores, 10/min, un grafo a la vez → 503 replay_busy) · `/why/<id>` ·
+`/audit`; MCP `replay_decision` (read); reloj `ledger_replay_sample` (1×/día UTC: 50 al azar + todas las de dinero →
+`audit.replay`; un 'differs' pone ⚖ Gobernanza del 🩺 en rojo). UI: 🩺 → 📋 Registro → ⚖ Auditoría (engine/audit.js,
+`openSistema('auditoria')`). Determinismo: ρ con `v0` fijo y factores en orden canónico (`_canonical_factors`).
 
 ## Arquitectura
 

@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **40 de 95** (línea 7841), después de [[engine.canvas-data.js]] y antes de [[nodes.temporal_seed_facts2.js]].
+Se carga en [[app.html]] en la posición **40 de 96** (línea 7849), después de [[engine.canvas-data.js]] y antes de [[nodes.temporal_seed_facts2.js]].
 
 ## Lo usan
 

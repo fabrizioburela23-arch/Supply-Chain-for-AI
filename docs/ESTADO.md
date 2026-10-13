@@ -9,6 +9,65 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-13 (h) — PASO 24: REPETIR DECISIONES (replay), IMPLEMENTACIONES RETENIDAS Y ⚖ AUDITORÍA — sw v263
+
+- CIERRE DEL PLAN: los 26 pasos de INFRA_OPERATIVA están hechos; resumen para Fabrizio, estado de los 99 hallazgos y
+  lo que solo él puede hacer en `docs/CIERRE_INFRA.md`. Revisión del lote H: 18 hallazgos (E1-E8 de la auditoría + 10 de
+  los revisores), 16 arreglados con prueba, 2 diferidos (11 rutas sin decisión que no tocan grafo ni dinero; activar
+  policy.committee 1.1.0 / policy.broker_risk 1.1.0 con PIN).
+
+- `core/replay.py` — `replay(decision_id)` (modo audit): integridad (manifest_sha/output_sha, blobs presentes o PURGADOS,
+  sello, linaje) → el release de ENTONCES por hash (gov_releases → gov_artifacts; sin fila, el mapa de versiones del
+  manifiesto) → G(t, κ) con la versión del grafo que leyó la decisión (del id de la generación `g<v>.r…`) construido con
+  el kernel de ese release → el cálculo con la implementación retenida → comparación exacta. Veredicto `identical` |
+  `differs` (rutas de campo) | `not_replayable` (por qué: texto de IA —nunca se re-ejecuta; se verifican prompt_sha,
+  output_sha y el guardián de cifras—, blob purgado, entradas anteriores al paso 24…). Deja decision_outcome 'replay' +
+  decisión `audit.replay` (async). Repetibles: whatif.shock (/api/hot/scenario y /api/matrix/impact), whatif.factor_fire,
+  committee.run (umbrales → tamaño), order.preview/confirm (run_checks), governance.validate (choques); las PUERTAS de
+  cualquier decisión con su grafo foco guardado.
+- `core/impls.py` — registro de implementaciones retenidas (kernel, NRS, comité, run_checks, guardián, puertas) por
+  versión; `module_view` corre el MISMO código con los números de otro release (copia de globales + clones de funciones:
+  no toca el módulo vivo ni a otros hilos); `governance.pinned(arts)` para lo que se lee con `governance.param`. Salidas
+  doradas en tests/golden/impl_*.json (`scripts/build_impl_goldens.py --check`): si cambian, nace `@2`.
+- Captura nueva para repetir (sin latencia apreciable): grafo foco de cada puerta dentro de una decisión (blob
+  'gate_focus', ~32 µs por evaluación), contexto exacto de run_checks + interruptores de entorno (blob 'replay_inputs'
+  en order.preview/confirm) y entradas del tamaño del comité con la foto del cliente (committee.run).
+- Arreglos de determinismo encontrados por el replay: ρ (ARPACK) arrancaba de un vector aleatorio (6.º decimal distinto
+  entre corridas) → v0 fijo; los factores se leían de la base sin ORDER BY y la fragilidad los suma en ese orden → 1 ulp
+  de diferencia entre la vista viva y G(t, κ) → factores y miembros en orden canónico (por id) en `active_factors` y
+  `_active_factors_known` (el catálogo no pasa por ahí: la paridad dorada del paso 9 sigue en 0 diferencias). Las
+  generaciones anteriores a este deploy no coinciden bit a bit con la reconstruida: se anota como aproximación
+  (`view_sha_differs`), no como «distinta» (el veredicto lo da el RESULTADO de la decisión, comparado exacto).
+- API: `GET|POST /api/ledger/replay/<id>` (sin PIN: resumen sin valores; 10/min), `GET /api/ledger/why/<id>` («¿Por
+  qué?» ES/EN), `GET /api/ledger/audit` (lista con filtros tipo/quién/fecha + muestra). MCP `replay_decision` (read).
+  Reloj `ledger_replay_sample` (1×/día UTC: 50 al azar de 24 h + todas las de dinero → una audit.replay con conteos; un
+  'differs' pone ⚖ Gobernanza del 🩺 en rojo con «qué hacer»).
+- UI: 🩺 → 📋 Registro → ⚖ Auditoría (engine/audit.js; sin botón nuevo; `openSistema('auditoria')` lo abre), con «?»
+  audit_replay / audit_verdict / audit_why en engine/explain.js. Chromium 1440/390 ES/EN: 0 errores de página.
+- Medido sobre el catálogo migrado a una base local (1.066 objetos, 3.042 vínculos, 69 factores): replay de un whatif.shock 321 ms en frío
+  (reconstruye G(t, κ)) y 27-39 ms con el grafo en caché; whatif.factor_fire 303 ms en frío; «¿Por qué?» 6 ms. La captura
+  nueva no cambia el escenario del usuario (p50 4 ms). Repetir una `audit.replay` dice «es un registro, no un cálculo»
+  (antes decía, falso, que faltaba el código: la etiqueta `replay@1` no cuenta como implementación perdida).
+- AUDITORÍA DE CIERRE (`docs/CIERRE_INFRA.md`, `tests/test_cierre_infra.py`: toda ruta de escritura clasificada; las
+  brechas y los tipos de ficha sin escritor solo pueden achicarse) + DEFECTOS CORREGIDOS al cierre
+  (`tests/test_cierre_defectos.py`): E1 `POST /api/ontology/events` → `ontology.raw_event`; E2 reconcile apply (una
+  `reconcile.apply` por categoría, en su transacción) / rollback (`reconcile.rollback`, también los rechazos;
+  `system:reconcile_cli` desde la terminal); E3 noticias → `ontology.news_ingest` (noop si nada es nuevo); E4
+  `POST /api/matrix/simulations` → `simulation.save`; E5 RESEARCH_CALIBRATION_K / RESEARCH_OUTCOME_BAND /
+  BROKERAGE_APPROVAL_TTL_MIN ya NO mandan (policy.committee 1.1.0 `calibration_k`/`outcome_band`, policy.broker_risk
+  1.1.0 `approval_ttl_min`, MINOR con los valores de hoy; con 1.0.0 vigente rige el valor del código; LEGACY_NUMERIC_ENV
+  + LEGACY_CODE_DEFAULTS → el 🩺 avisa); E6 `ontology/sqltypes.py` (XID8/txid_default en un módulo hoja: sin importación
+  circular); E8 un replay SIN autenticar (GET o POST) ya no deja `audit.replay` (solo el resultado deduplicado); con
+  PIN/MCP/reloj UNA por auditor·decisión·veredicto·código·día (también desde la caché; tras reiniciar lo mira en la base).
+  Revisión del replay: «¿Por qué?» sin PIN da `n_quotes`, nunca el ticker (`quotes` solo con PIN); el camino directo de
+  /api/matrix/impact|factor/fire (GRAPH ASOF, vistas apagadas/atrasadas) fija su foto REPEATABLE READ y guarda la
+  versión LEÍDA (`computed_on`) → sin falsos «distinto»; «texto de IA» solo con ai_calls (mcp.tool_call = registro,
+  chat.route = `external_model`, portfolio_advice + `live_data`); desborde purgado → «no repetible»; «idéntica» +
+  «aproximada» explica por qué (`APPROX_LABELS`, `approximations_text`, «?» `audit_approx`). Rutas sin ficha: 16 → 11
+  (MCP/OAuth, voz, sim por agentes, Neo4j: ninguna toca grafo ni dinero).
+
+---
+
 # SESIÓN 2026-10-13 (f) — PASOS 22, 23, 25, 26 Y 11 (guardia, grafo bitemporal, flujo de gobernanza, purga de 90 días, puertas en bloqueo listas) — sw v262
 
 - Paso 23, G(t, κ): el grafo "como era en la fecha t según lo que se sabía en κ" (`ontology/bitemporal.py`, `known_at`

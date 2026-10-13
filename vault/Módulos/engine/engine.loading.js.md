@@ -24,7 +24,7 @@ Sistema de animaciones de carga por NIVEL DE ESPERA. Pedido de Fabrizio (2026-07
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **26 de 95** (línea 7827), después de [[nodes.merge_graph.js]] y antes de [[engine.toast.js]].
+Se carga en [[app.html]] en la posición **26 de 96** (línea 7835), después de [[nodes.merge_graph.js]] y antes de [[engine.toast.js]].
 
 ## Lo usan
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/reconcile.py"
 lenguaje: "python"
-lineas: 806
+lineas: 843
 aliases: ["ontology/reconcile.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/reconcile.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 806 líneas · `ontology/reconcile.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 843 líneas · `ontology/reconcile.py`
 
 ## Para qué sirve
 
@@ -27,15 +27,16 @@ G3 (misión de reparación 2026-10-04): RECONCILIACIÓN append-only entre el cat
 - `render_markdown(plan, dbname=…, limit_rows=…, lang=…)` _(línea 413)_
 - `markdown_to_html(md, title=…)` — Conversor MÍNIMO y seguro (todo se escapa) para el informe: títulos, tablas, listas numeradas, párrafos, \*\*negrita\*\*, \*cursiva\* y `código`. _(línea 481)_
 - `new_run_id()` _(línea 533)_
-- `apply_plan(session_scope, snap, include=…, confirm_db=…, actor=…, run_id=…, log=…, expect=…)` — Aplica por categoría, RE-CALCULANDO el plan antes de cada una (la fusión de alias cambia qué filas existen). Cada categoría en su propia … _(línea 555)_
-- `rollback_run(session, run_id, confirm_db=…, actor=…)` — Deshace una corrida con NUEVOS eventos (canal reconcile_v0_rollback:&lt;run_id>). No borra nada. No se puede deshacer un rollback (sería otra … _(línea 676)_
-- `list_runs(session, limit=…)` _(línea 799)_
+- `apply_plan(session_scope, snap, include=…, confirm_db=…, actor=…, run_id=…, log=…, expect=…, principal=…)` — Aplica por categoría, RE-CALCULANDO el plan antes de cada una (la fusión de alias cambia qué filas existen). Cada categoría en su propia … _(línea 568)_
+- `rollback_run(session, run_id, confirm_db=…, actor=…, principal=…)` — Deshace una corrida con NUEVOS eventos (canal reconcile_v0_rollback:&lt;run_id>). No borra nada. No se puede deshacer un rollback (sería otra … _(línea 702)_
+- `list_runs(session, limit=…)` _(línea 836)_
 
-**Internas** (empiezan con `_`): `_w`, `_same_w`, `_is_genesis`, `_now`, `_load_db`, `_row_scope`, `_creation_order`, `_human_rejections`, `_cell`, `_db_name`, `_check_confirm`, `_busy`, `_apply_locked`, `_current_incarnation`
+**Internas** (empiezan con `_`): `_w`, `_same_w`, `_is_genesis`, `_now`, `_load_db`, `_row_scope`, `_creation_order`, `_human_rejections`, `_cell`, `_db_name`, `_check_confirm`, `_busy`, `_who`, `_rej_status`, `_apply_locked`, `_rollback_body`, `_current_incarnation`
 
 ## Depende de
 
-- [[core.decisions.py]] — importa `canonical`
+- [[core.decisions.py]] — importa `canonical`, `decisions`
+- [[core.identity.py]] — importa `identity`
 - [[ontology.actions.py]] — importa `FusionarEntidadInput`, `RetractarVinculoInput`, `fusionar_entidad`, `retractar_vinculo`
 - [[ontology.db.py]] — importa `_get_engine`
 - [[ontology.models.py]] — importa `Event`, `EventType`, `LinkRecord`, `ObjectRecord`

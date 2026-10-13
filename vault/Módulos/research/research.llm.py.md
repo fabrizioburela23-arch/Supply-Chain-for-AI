@@ -41,7 +41,7 @@ abstracción de proveedor de modelos (no acoplada a nadie).
 - [[research.debate.py]] — lo importa
 - [[research.runner.py]] — lo importa
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 11 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -60,6 +60,7 @@ _Además lo importan 10 pruebas (lista abajo)._
 - [[tests.test_phase3.py]]
 - [[tests.test_repair_committee.py]]
 - [[tests.test_repair_research.py]]
+- [[tests.test_replay_determinism.py]]
 - [[tests.test_research.py]]
 
 ## Mencionado en sesiones de trabajo

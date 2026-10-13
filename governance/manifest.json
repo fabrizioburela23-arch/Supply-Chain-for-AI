@@ -3,7 +3,7 @@
   "_doc": "GENERADO por scripts/build_governance.py --write: no editar a mano. El release del repositorio es una PROPUESTA; manda el aprobado en la base (core/governance.py).",
   "release": {
     "semver": "1.0.0",
-    "release_hash": "3eaf591b20b6da7980f8ee979e8d85357a6535664abb668ac9a6ff4ca0465139",
+    "release_hash": "e178f823f319fbe6bde5aa4487d5a85c9d62d4f3ed6d46385a3fa822213d054a",
     "artifacts": {
       "kernel.params": {
         "semver": "1.0.0",
@@ -41,14 +41,14 @@
         "file": "artifacts/policy.auto_apply@1.0.0.json"
       },
       "policy.broker_risk": {
-        "semver": "1.0.0",
-        "hash": "a8e1908516e5778566bf543e063a904867858794af6a64b7b549d1a7196df522",
-        "file": "artifacts/policy.broker_risk@1.0.0.json"
+        "semver": "1.1.0",
+        "hash": "43507458141d9c7fbaa1cb1756b0ca2bd14336cd4d1087d1766e6f16cbe14e44",
+        "file": "artifacts/policy.broker_risk@1.1.0.json"
       },
       "policy.committee": {
-        "semver": "1.0.0",
-        "hash": "dc7ccfd7e7a79c36c6220e92f462e90104d651498de12a72edbdebe884a793a2",
-        "file": "artifacts/policy.committee@1.0.0.json"
+        "semver": "1.1.0",
+        "hash": "73b1549a1f75dda5933debc3b8c34fb17e0efa8f618c85e8642ec85afbc4145a",
+        "file": "artifacts/policy.committee@1.1.0.json"
       },
       "policy.decide": {
         "semver": "1.0.0",
@@ -180,11 +180,25 @@
       "file": "artifacts/policy.broker_risk@1.0.0.json"
     },
     {
+      "id": "policy.broker_risk",
+      "semver": "1.1.0",
+      "hash": "43507458141d9c7fbaa1cb1756b0ca2bd14336cd4d1087d1766e6f16cbe14e44",
+      "change_kind": "minor",
+      "file": "artifacts/policy.broker_risk@1.1.0.json"
+    },
+    {
       "id": "policy.committee",
       "semver": "1.0.0",
       "hash": "dc7ccfd7e7a79c36c6220e92f462e90104d651498de12a72edbdebe884a793a2",
       "change_kind": "initial",
       "file": "artifacts/policy.committee@1.0.0.json"
+    },
+    {
+      "id": "policy.committee",
+      "semver": "1.1.0",
+      "hash": "73b1549a1f75dda5933debc3b8c34fb17e0efa8f618c85e8642ec85afbc4145a",
+      "change_kind": "minor",
+      "file": "artifacts/policy.committee@1.1.0.json"
     },
     {
       "id": "policy.decide",

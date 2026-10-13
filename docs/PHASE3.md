@@ -238,8 +238,8 @@ Sin `DATABASE_URL` → 503. Sin IA → memo determinista. Todo error trae
 ## 6. Variables de entorno
 
 ```
-RESEARCH_OUTCOME_BAND=0.02        banda de acierto (acepta 2 = 2 %)
-RESEARCH_CALIBRATION_K=10         fuerza del encogimiento bayesiano
+# RESEARCH_OUTCOME_BAND / RESEARCH_CALIBRATION_K ya NO mandan (D2, 2026-10-13): la banda (0,02) y k (10) viven en
+# policy.committee 1.1.0 (outcome_band, calibration_k); cambiarlos = versión nueva aprobada con PIN (🩺 → Gobernanza)
 RESEARCH_MODEL_COMMITTEE=...      ruta de modelo del presidente (default: RESEARCH_MODEL_DEFAULT)
 COMMITTEE_MEMO_TTL_HOURS=72       un memo más viejo no se puede aprobar
 COMMITTEE_MAX_CONCURRENT=2        comités deliberando a la vez (más → 429)

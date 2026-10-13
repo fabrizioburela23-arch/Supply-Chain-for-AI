@@ -78,6 +78,7 @@ WORLD MONITOR geopolítico: /api/world/\*.
 
 - [[core.geosit.py]] — lo importa
 - [[core.governance_flow.py]] — lo importa
+- [[core.impls.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.ops_check.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa

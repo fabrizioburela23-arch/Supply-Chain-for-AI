@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 18
+archivos: 19
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,11 +9,11 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**18 archivos · 26.084 líneas.** Volver al [[00 Mapa de Khipus]].
+**19 archivos · 26.440 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[app.html]] — 12.691 líneas
+- [[app.html]] — 12.700 líneas
 - [[engine.cockpit.js]] — 5.007 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.oswindows.js]] — 1.518 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.graph3d.js]] — 1.216 líneas · Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos como esferas en el espacio, con tamaño por market cap, links de …
@@ -22,7 +22,8 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.toast.js]] — 767 líneas · NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que te avise cuando estás comprando con una notificación pop up o …
 - [[engine.xray.js]] — 666 líneas · X-RAY DE EMPRESA · "desarmar el alma" (Etapa 4, wow #1) Overlay NEXUS-styled que abre para cualquier nodo: - anatomía (sector, país, precio en vivo, …
 - [[engine.governance.js]] — 538 líneas · 🩺 Sistema → Gobernanza (INFRA_OPERATIVA paso 12; pieza mínima del paso 25). Muestra el RELEASE vigente (reglas y números versionados), «Ratificar …
-- [[engine.explain.js]] — 340 líneas · EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversionista preguntó "¿qué es el NRS y cómo se calcula?" y la app no se lo …
+- [[engine.explain.js]] — 390 líneas · EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversionista preguntó "¿qué es el NRS y cómo se calcula?" y la app no se lo …
+- [[engine.audit.js]] — 297 líneas · 🩺 Sistema → 📋 Registro → ⚖ Auditoría (INFRA_OPERATIVA paso 24, §5.6). Lista las decisiones recientes del LIBRO (filtros: tipo, quién, fecha) y por …
 - [[engine.guide.js]] — 271 líneas · pestaña "❓ Guía": explica la app en lenguaje simple. Sin jerga técnica. Expone window.initGuiaTab (mismo patrón que initTKGTab). Actualizada …
 - [[engine.pricehist.js]] — 189 líneas · 🩺 Sistema → «Historia de precios» (BRECHAS bloque 2: la memoria de los números). Muestra cuánta historia guarda Khipus (cierres diarios ajustados, …
 - [[engine.loading.js]] — 159 líneas · Sistema de animaciones de carga por NIVEL DE ESPERA. Pedido de Fabrizio (2026-07-14): "que todo lo que tarde tenga una animación de carga adecuada; …
@@ -45,10 +46,10 @@ tags: ["capa/interfaz", "tipo/capa"]
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 11 |
 | la usa | [[Capa Ontología y grafo temporal]] | 9 |
+| usa a | [[Capa Infraestructura]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Comité]] | 8 |
 | la usa | [[Capa Voz]] | 8 |
-| usa a | [[Capa Infraestructura]] | 8 |
 | usa a | [[Capa Comité]] | 6 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
 | la usa | [[Capa Infraestructura]] | 5 |

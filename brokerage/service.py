@@ -139,11 +139,18 @@ def _sha(s):
     return hashlib.sha256(str(s or '').encode()).hexdigest()
 
 
+APPROVAL_TTL_MIN_CODE = 1440        # valor del código (= el de hoy) si el release vigente aún no trae la clave
+
+
 def approval_ttl_s():
+    """Cuánto espera una orden en la cola de aprobación: policy.broker_risk.approval_ttl_min (D2, cierre del lote H,
+    E5). BROKERAGE_APPROVAL_TTL_MIN ya NO manda (core/governance.LEGACY_NUMERIC_ENV: el 🩺 avisa)."""
     try:
-        return max(5, int(os.getenv('BROKERAGE_APPROVAL_TTL_MIN', '1440'))) * 60
-    except ValueError:
-        return 1440 * 60
+        from core import governance
+        v = int(float(governance.param('policy.broker_risk', 'approval_ttl_min', APPROVAL_TTL_MIN_CODE)))
+    except Exception:  # noqa: BLE001
+        v = APPROVAL_TTL_MIN_CODE
+    return max(5, v) * 60
 
 
 def _who():
@@ -1134,6 +1141,7 @@ def _decision_inputs(dctx, rec, spec, ev, *, order_id, source, channel=None, cha
         pass
     dctx.extra.setdefault('impl', {}).update({'risk': 'run_checks@1', 'gates': 'gate_eval@1'})
     dctx.extra['checks_mode'] = policy_mode or 'standard'
+    _replay_inputs(dctx, ev)
     if channel_proof:
         dctx.channel_proof(**channel_proof)
     dctx.gate(checks_report(ev.get('checks'), order_id, ev, policy_mode))
@@ -1146,6 +1154,26 @@ def _decision_inputs(dctx, rec, spec, ev, *, order_id, source, channel=None, cha
     order_gate(rec, spec, ev, order_id=order_id, source=source, channel=channel, channel_proof=channel_proof,
                policy_changed=policy_changed, acc=acc, ctx=dctx)
     return acc
+
+
+def _replay_inputs(dctx, ev):
+    """Paso 24 (replay): el contexto EXACTO de run_checks (sin la cuenta y las posiciones, que ya están en el blob
+    'account_snapshot'), los interruptores de entorno que leyó y el resultado control por control. core/replay.py
+    repite los controles con policy.broker_risk del release de entonces y compara. Nunca lanza."""
+    try:
+        from core.decision_sites import clean
+        rc = ev.get('rc') or {}
+        checks = [{k: c.get(k) for k in ('name', 'ok', 'severity', 'warn', 'shadow', 'detail')}
+                  for c in (ev.get('checks') or [])]
+        body = clean({'schema': 'order-checks/1',
+                      'ctx': {k: v for k, v in rc.items() if k not in ('account', 'positions')},
+                      'account_blob': (dctx.extra.get('account') or {}).get('blob'),
+                      'env': {'trading_enabled': _risk.trading_enabled(),
+                              'live_env_enabled': _risk.live_env_enabled()},
+                      'expect': {'checks': checks}})
+        dctx.extra['replay'] = {'impl': 'run_checks@1', 'blob': dctx.blob('replay_inputs', body)}
+    except Exception as e:  # noqa: BLE001 — registrar nunca tumba una orden
+        log.warning('brokerage: entradas de replay no guardadas (%s)', type(e).__name__)
 
 
 def _close(session, dctx, status, output=None):

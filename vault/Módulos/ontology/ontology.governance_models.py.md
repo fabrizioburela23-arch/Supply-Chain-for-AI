@@ -23,13 +23,15 @@ REGISTRO DE GOBERNANZA (docs/INFRA_OPERATIVA.md §5.1; paso 9 del plan).
 
 ## Depende de
 
-- [[ontology.ledger_models.py]] — importa `XID8`, `txid_default`
 - [[ontology.models.py]] — importa `Base`
+- [[ontology.sqltypes.py]] — importa `XID8`, `txid_default`
 
 ## Lo usan
 
 - [[ontology.models.py]] — lo importa
 
+_Además lo importan 1 pruebas (lista abajo)._
+
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_cierre_defectos.py]]

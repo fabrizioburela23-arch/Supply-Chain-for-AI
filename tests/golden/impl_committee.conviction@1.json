@@ -1,0 +1,122 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "policy.committee": "1.0.0"
+   },
+   "output": [
+    {
+     "LONG_TERM": {
+      "agents": {
+       "fundamental": {
+        "contra_share": 0.0,
+        "n_claims": 1,
+        "stance": 1.0,
+        "weight": 0.7
+       }
+      },
+      "aggregation": "per_agent",
+      "claims": [
+       {
+        "agent_type": "fundamental",
+        "calibrated": 0.7,
+        "confidence": 0.7,
+        "contradicted": false,
+        "id": "c1",
+        "reliability": 0.5,
+        "stance": "positive",
+        "weight": 0.7
+       }
+      ],
+      "contra_share": 0.0,
+      "horizon_weight": 0.35,
+      "n_agents": 1,
+      "n_claims": 1,
+      "n_neg": 0,
+      "n_other": 0,
+      "n_pos": 1,
+      "net_weight": 0.7,
+      "penalty": 1.0,
+      "score": 41.2,
+      "w0": 1.0,
+      "weight_sum": 0.7
+     },
+     "MEDIUM_TERM": {
+      "agents": {
+       "news": {
+        "contra_share": 0.0,
+        "n_claims": 1,
+        "stance": 1.0,
+        "weight": 0.55
+       }
+      },
+      "aggregation": "per_agent",
+      "claims": [
+       {
+        "agent_type": "news",
+        "calibrated": 0.55,
+        "confidence": 0.55,
+        "contradicted": false,
+        "id": "c3",
+        "reliability": 0.5,
+        "stance": "positive",
+        "weight": 0.55
+       }
+      ],
+      "contra_share": 0.0,
+      "horizon_weight": 0.35,
+      "n_agents": 1,
+      "n_claims": 1,
+      "n_neg": 0,
+      "n_other": 0,
+      "n_pos": 1,
+      "net_weight": 0.55,
+      "penalty": 1.0,
+      "score": 35.5,
+      "w0": 1.0,
+      "weight_sum": 0.55
+     },
+     "SHORT_TERM": {
+      "agents": {
+       "technical": {
+        "contra_share": 1.0,
+        "n_claims": 1,
+        "stance": -1.0,
+        "weight": 0.6
+       }
+      },
+      "aggregation": "per_agent",
+      "claims": [
+       {
+        "agent_type": "technical",
+        "calibrated": 0.6,
+        "confidence": 0.6,
+        "contradicted": true,
+        "id": "c2",
+        "reliability": 0.5,
+        "stance": "negative",
+        "weight": 0.6
+       }
+      ],
+      "contra_share": 1.0,
+      "horizon_weight": 0.2,
+      "n_agents": 1,
+      "n_claims": 1,
+      "n_neg": 1,
+      "n_other": 0,
+      "n_pos": 0,
+      "net_weight": -0.6,
+      "penalty": 0.5,
+      "score": -18.7,
+      "w0": 1.0,
+      "weight_sum": 0.6
+     }
+    },
+    25.6
+   ],
+   "sha": "01a64cb3432d12dea0754b24f8343e2749d5e86142c4e5984105e1f42e7aa7ba"
+  }
+ ],
+ "key": "committee.conviction",
+ "version": 1
+}

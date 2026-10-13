@@ -22,18 +22,18 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[ontology.api.py]] | [[app.html]], 3 pruebas |
 | `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
 | `POST` | `/api/ontology/agents/run` | `agents_run` | [[ontology.api.py]] | [[app.html]], 2 pruebas |
-| `GET` | `/api/ontology/alerts` | `alerts_list` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 3 pruebas |
-| `POST` | `/api/ontology/alerts` | `alerts_create` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 3 pruebas |
+| `GET` | `/api/ontology/alerts` | `alerts_list` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 4 pruebas |
+| `POST` | `/api/ontology/alerts` | `alerts_create` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 4 pruebas |
 | `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[ontology.api.py]] | [[app.html]], 3 pruebas |
 | `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[ontology.api.py]] | [[app.html]], 3 pruebas |
-| `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | [[ontology.api.py]] | 1 prueba |
-| `POST` | `/api/ontology/events` | `events_create` | [[ontology.api.py]] | 1 prueba |
+| `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | [[ontology.api.py]] | 2 pruebas |
+| `POST` | `/api/ontology/events` | `events_create` | [[ontology.api.py]] | 3 pruebas |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | [[ontology.api.py]] | 1 prueba |
 | `GET` | `/api/ontology/feed` | `global_feed_route` | [[ontology.api.py]] | [[app.html]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | [[ontology.api.py]] | — |
 | `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] | 2 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 1 prueba |
-| `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[ontology.api.py]] | [[app.html]], [[engine.temporal-graph.js]], 3 pruebas |
+| `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[ontology.api.py]] | [[app.html]], [[engine.temporal-graph.js]], 4 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[ontology.api.py]] | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[ontology.api.py]] | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/history` | `objects_history` | [[ontology.api.py]] | [[engine.fincard.js]], 1 prueba |

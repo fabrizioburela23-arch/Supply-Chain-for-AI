@@ -2531,6 +2531,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   </div>
 
   <div id="sistema-registro" role="tabpanel" style="display:none">
+    <!-- paso 24 (INFRA_OPERATIVA §5.6): ⚖ Auditoría — decisiones del libro, «¿Por qué?» y «Repetir» — engine/audit.js -->
+    <div id="audit-box"></div>
     <p class="settings-sub" data-ksys-h="reg_sub">Tesis, decisiones, anotaciones y correcciones — quién hizo qué, cuándo y por qué. Se registran desde la ficha de cada empresa en <b>◈ Grafo Temporal</b>.</p>
     <div class="ksys-bar">
       <input id="registro-filter-actor" class="ksys-in" placeholder="Filtrar por autor…" data-ksys-ph="reg_filter" aria-label="Filtrar por autor" data-ksys-al="reg_filter">
@@ -6192,6 +6194,8 @@ function _sistemaApplyLang(){
   return D;
 }
 function _switchSistemaTab(t){
+  const toAudit = t === 'auditoria';               // paso 24: ⚖ Auditoría vive DENTRO de 📋 Registro (sin pestaña nueva)
+  if(toAudit) t = 'registro';
   _sistemaTab = t;
   document.querySelectorAll('#sistema-tabseg button').forEach(b=>{
     const on = b.dataset.t===t;
@@ -6206,7 +6210,11 @@ function _switchSistemaTab(t){
   if(D['t_'+t]) $('sistema-title').textContent = D['t_'+t];
   if(t==='gasto') { if(window.KhipuSpend) window.KhipuSpend.render('sistema-gasto'); }
   else if(t==='diag') window.openDiagnostics();
-  else if(t==='registro') window.openRegistro();
+  else if(t==='registro'){
+    window.openRegistro();
+    if(window.KhipuAudit) window.KhipuAudit.mount('audit-box');
+    if(toAudit){ const ab=$('audit-box'); if(ab && ab.scrollIntoView) ab.scrollIntoView({block:'start'}); }
+  }
   else if(t==='propuestas') window.openPropuestas();
 }
 window.openSistema = function(tab){
@@ -7943,6 +7951,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <script src="engine/explain.js"></script>
 <script src="engine/reconcile.js"></script>
 <script src="engine/governance.js"></script>
+<script src="engine/audit.js"></script>
 <script src="engine/pricehist.js"></script>
 <script src="nodes/crypto_intel.js"></script>
 <script src="nodes/crypto_intel2.js"></script>

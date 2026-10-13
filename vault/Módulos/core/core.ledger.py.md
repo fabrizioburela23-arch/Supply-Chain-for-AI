@@ -54,6 +54,7 @@ sellado y verificación del libro (docs/INFRA_OPERATIVA.md §2.8; paso 6 del pla
 - [[core.decisions.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
 - [[core.ledger_ddl.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[ontology.checkpoints.py]] — lo importa
 - [[server.py]] — lo importa
 

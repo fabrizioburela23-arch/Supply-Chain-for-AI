@@ -58,12 +58,15 @@ FLUJO DE GOBERNANZA COMPLETO (docs/INFRA_OPERATIVA.md §5.3; paso 25 del plan).
 - [[core.governance.py]] — lo importa
 - [[core.governance_api.py]] — lo importa
 - [[core.governance_preview.py]] — lo importa
+- [[core.impls.py]] — lo importa
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_governance_activation.py]]
 - [[tests.test_governance_flow.py]]
+- [[tests.test_impl_registry.py]]
 - [[tests.test_ledger_guard.py]]
+- [[tests.test_replay_determinism.py]]
 - [[tests.test_review_batch_g.py]]

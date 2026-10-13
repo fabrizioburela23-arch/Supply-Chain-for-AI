@@ -61,6 +61,7 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - [[core.pin.py]] — lo importa
 - [[core.prices_api.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[core.retention.py]] — lo importa
 - [[core.scheduler.py]] — lo importa
 - [[matrix.api.py]] — lo importa
@@ -69,12 +70,14 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[ontology.reconcile.py]] — lo importa
 - [[research.committee.py]] — lo importa
 - [[research.committee_api.py]] — lo importa
 - [[server.py]] — lo importa
+- herramienta MCP `replay_decision` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 19 pruebas (lista abajo)._
+_Además lo importan 21 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -83,6 +86,7 @@ _Además lo importan 19 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_ai_calls.py]]
+- [[tests.test_cierre_defectos.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
@@ -98,6 +102,7 @@ _Además lo importan 19 pruebas (lista abajo)._
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_prices_eod.py]]
+- [[tests.test_replay_determinism.py]]
 - [[tests.test_retention_purge.py]]
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]

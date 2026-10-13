@@ -46,9 +46,10 @@ registro append-only de CADA pedido a la IA (docs/INFRA_OPERATIVA.md §2.6, paso
 - [[core.decision_sites.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 7 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -57,4 +58,5 @@ _Además lo importan 6 pruebas (lista abajo)._
 - [[tests.test_khipus_os_perf.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_ledger_review_fixes.py]]
+- [[tests.test_replay_determinism.py]]
 - [[tests.test_review_batch_g.py]]

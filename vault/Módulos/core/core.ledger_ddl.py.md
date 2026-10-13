@@ -45,7 +45,7 @@ DDL idempotente de los registros que SOLO crecen (docs/INFRA_OPERATIVA.md §2.1,
 - [[core.retention.py]] — lo importa
 - [[ontology.bitemporal.py]] — lo importa
 - [[ontology.db.py]] — lo importa
-- [[ontology.ledger_models.py]] — lo importa
+- [[ontology.sqltypes.py]] — lo importa
 - [[server.py]] — lo importa
 
 _Además lo importan 3 pruebas (lista abajo)._

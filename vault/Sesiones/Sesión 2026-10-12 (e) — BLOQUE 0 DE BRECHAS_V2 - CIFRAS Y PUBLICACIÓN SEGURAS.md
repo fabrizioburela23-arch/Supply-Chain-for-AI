@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L189"
+ruta: "docs/ESTADO.md#L248"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 (e) — BLOQUE 0 DE BRECHAS_V2: CIFRAS Y PUBLICACIÓN SEGURAS
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 189 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 248 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

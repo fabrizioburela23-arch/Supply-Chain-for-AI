@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 790
+lineas: 807
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 790 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 807 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -41,6 +41,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.governance_shadow.py]]
 - [[core.http.py]]
 - [[core.identity.py]]
+- [[core.impls.py]]
 - [[core.instruments.py]]
 - [[core.khipu_chat.py]]
 - [[core.ledger.py]]
@@ -60,6 +61,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.portfolio_reports_api.py]]
 - [[core.prices_store.py]]
 - [[core.quotes.py]]
+- [[core.replay.py]]
 - [[core.retention.py]]
 - [[core.risk_report.py]]
 - [[core.scenario_engine.py]]
@@ -75,6 +77,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[Doc AUDITORIA]]
 - [[Doc BRECHAS_V2]]
 - [[Doc BROKERAGE]]
+- [[Doc CIERRE_INFRA]]
 - [[Doc INFRA_OPERATIVA]]
 - [[Doc INVERSION_TERCEROS]]
 - [[Doc JEV]]
@@ -86,6 +89,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[Doc REVISION_INSTRUMENTOS]]
 - [[engine.agents_registry.js]]
 - [[engine.aispend.js]]
+- [[engine.audit.js]]
 - [[engine.brief.js]]
 - [[engine.canvas-data.js]]
 - [[engine.clients.js]]
@@ -175,6 +179,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[scripts.audit_graph.py]]
 - [[scripts.build_governance.py]]
 - [[scripts.build_graph_review.py]]
+- [[scripts.build_impl_goldens.py]]
 - [[scripts.build_listing_status.py]]
 - [[scripts.build_shapes.py]]
 - [[scripts.build_vault.py]]
@@ -186,12 +191,14 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[sim.scenario_builder.js]]
 - [[sw.js]]
 - [[tests.test_agents_registry.py]]
+- [[tests.test_cierre_infra.py]]
 - [[tests.test_cleanup_client.py]]
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_graph_audit.py]]
+- [[tests.test_impl_registry.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_vault.py]]

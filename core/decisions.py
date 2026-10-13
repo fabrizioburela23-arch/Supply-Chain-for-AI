@@ -334,7 +334,8 @@ def _manifest(ctx, lineage_id, rejected=False):
     if rejected and ctx.parent_id:
         m['parent_pending'] = str(ctx.parent_id)
     if len(canonical(m)) > MANIFEST_MAX:          # lo grande va a un blob; el manifiesto guarda su sha
-        big = {k: m.pop(k) for k in list(m) if k in ('views', 'quotes', 'request_params', 'channel_proof')}
+        big = {k: m.pop(k) for k in list(m) if k in ('views', 'quotes', 'request_params', 'channel_proof',
+                                                      'gate_focus')}
         m['overflow_blob'] = ctx.blob('inputs', big)
     return m
 

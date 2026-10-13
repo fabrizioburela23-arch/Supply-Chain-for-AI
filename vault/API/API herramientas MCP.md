@@ -1,13 +1,13 @@
 ---
 tipo: "api"
 capa: "MCP y API"
-herramientas: 29
+herramientas: 30
 tags: ["capa/mcp-api", "tipo/api"]
 ---
 
 # API herramientas MCP
 
-> 29 herramientas definidas en [[mcp_server.tools.py]] (y las v2 en [[mcp_server.ops.py]]) y servidas por [[mcp_server.api.py]] en `POST /mcp` (JSON-RPC). Alcances: **read** (consultas), **research** (gasta presupuesto de IA), **trade** (solo PROPONE órdenes; siempre aprobación humana).
+> 30 herramientas definidas en [[mcp_server.tools.py]] (y las v2 en [[mcp_server.ops.py]]) y servidas por [[mcp_server.api.py]] en `POST /mcp` (JSON-RPC). Alcances: **read** (consultas), **research** (gasta presupuesto de IA), **trade** (solo PROPONE órdenes; siempre aprobación humana).
 
 | Herramienta | Alcance | Solo lectura | Función | Módulos que usa |
 |---|---|---|---|---|
@@ -35,6 +35,7 @@ tags: ["capa/mcp-api", "tipo/api"]
 | `get_world_events` | read | sí | `t_get_world_events` | [[core.gpr.py]], [[core.world.py]], [[mcp_server.contract.py]] |
 | `list_orders` | trade | sí | `t_list_orders` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 | `preview_order` | trade | **no** | `t_preview_order` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
+| `replay_decision` | read | sí | `t_replay_decision` | [[core.identity.py]], [[core.replay.py]], [[mcp_server.contract.py]] |
 | `run_committee` | research | **no** | `t_run_committee` | [[brokerage.service.py]], [[core.__init__.py]], [[core.entities.py]], [[core.identity.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.vocabulary.py]], [[research.committee.py]] |
 | `run_research` | research | **no** | `t_run_research` | [[core.__init__.py]], [[core.ai.py]], [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.vocabulary.py]], [[research.runner.py]] |
 | `run_scenario` | read | sí | `t_run_scenario` | [[core.__init__.py]], [[core.context_engine.py]], [[core.scenario_engine.py]], [[core.semantic.py]] |

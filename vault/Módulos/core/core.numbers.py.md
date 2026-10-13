@@ -40,6 +40,8 @@ guardián de CIFRAS (anti-alucinación numérica).
 ## Lo usan
 
 - [[core.ai.py]] — lo importa
+- [[core.impls.py]] — lo importa
+- [[core.replay.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[research.agents.base.py]] — lo importa
 - [[research.committee.py]] — lo importa

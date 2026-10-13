@@ -27,7 +27,7 @@ INSIGHTS AUTOMÁTICOS (Etapa 5, piel NEXUS) Genera tarjetas de lectura desde la 
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **65 de 95** (línea 7932), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
+Se carga en [[app.html]] en la posición **65 de 96** (línea 7940), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
 
 ## Lo usan
 

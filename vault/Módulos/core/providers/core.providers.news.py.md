@@ -34,10 +34,11 @@ Phase 1 · M3: adapter de noticias.
 - [[ontology.ingest_news.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cierre_defectos.py]]
 - [[tests.test_providers.py]]
 
 ## Mencionado en sesiones de trabajo

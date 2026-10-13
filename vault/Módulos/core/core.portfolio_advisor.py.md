@@ -36,6 +36,7 @@ COMITÉ DE CARTERA: analiza una cartera completa y da ACCIONES CONCRETAS como co
 
 ## Lo usan
 
+- [[core.impls.py]] — lo importa
 - [[core.portfolio_report.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[research.committee_api.py]] — lo importa

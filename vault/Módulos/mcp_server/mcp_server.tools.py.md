@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/tools.py"
 lenguaje: "python"
-lineas: 1848
+lineas: 1877
 aliases: ["mcp_server/tools.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/tools.py
 
-> Módulo · capa [[Capa MCP y API]] · 1.848 líneas · `mcp_server/tools.py`
+> Módulo · capa [[Capa MCP y API]] · 1.877 líneas · `mcp_server/tools.py`
 
 ## Para qué sirve
 
@@ -44,21 +44,22 @@ catálogo de herramientas MCP de Khipus.
 - `t_get_conclusions_board(ctx, limit=…, side=…)` _(línea 1322)_
 - `t_get_research_health(ctx, fresh=…)` _(línea 1359)_
 - `t_get_track_record(ctx, agent_type=…)` _(línea 1370)_
-- `t_run_research(ctx, entity, depth=…, only_missing=…)` _(línea 1397)_
-- `t_run_committee(ctx, entity, client_id=…)` _(línea 1500)_
-- `t_get_account(ctx)` _(línea 1637)_
-- `t_get_positions(ctx)` _(línea 1653)_
-- `t_preview_order(ctx, symbol, side, rationale, notional=…, qty=…, order_type=…, limit_price=…)` _(línea 1687)_
-- `t_submit_order(ctx, preview_id)` _(línea 1722)_
-- `t_list_orders(ctx, status=…, limit=…)` _(línea 1758)_
-- `t_cancel_order(ctx, order_id)` _(línea 1773)_
-- `t_get_order_status(ctx, order_id)` _(línea 1796)_
-- `catalog()` — Para la UI / docs: todas las herramientas con su alcance. _(línea 1816)_
-- `reset_caches()` _(línea 1821)_
+- `t_replay_decision(ctx, decision_id)` _(línea 1394)_
+- `t_run_research(ctx, entity, depth=…, only_missing=…)` _(línea 1426)_
+- `t_run_committee(ctx, entity, client_id=…)` _(línea 1529)_
+- `t_get_account(ctx)` _(línea 1666)_
+- `t_get_positions(ctx)` _(línea 1682)_
+- `t_preview_order(ctx, symbol, side, rationale, notional=…, qty=…, order_type=…, limit_price=…)` _(línea 1716)_
+- `t_submit_order(ctx, preview_id)` _(línea 1751)_
+- `t_list_orders(ctx, status=…, limit=…)` _(línea 1787)_
+- `t_cancel_order(ctx, order_id)` _(línea 1802)_
+- `t_get_order_status(ctx, order_id)` _(línea 1825)_
+- `catalog()` — Para la UI / docs: todas las herramientas con su alcance. _(línea 1845)_
+- `reset_caches()` _(línea 1850)_
 
 **Internas** (empiezan con `_`): `_now_iso`, `_coerce`, `_bounded`, `_snapshot`, `_private_valuations`, `_link_trust`, `_resolve`, `_resolve_or_fail`, `_listed`, `_brief`, `_search`, `_edges`, `_distinct_pairs`, `_neighbor`, `_nrs`, `_live_profile`, `_margin_pct`, `_need_db`, `_iso`, `_with_genesis`, `_ontology_object_at`, `_claim_brief`, `_unsupported_money`, `_deferred_next`, `_job_coverage`, `_module`, `_trim_memo`, `_run_committee_async`, `_brokerage`, `_trade_ctx`, `_session`, `_mode_badge`, `_client_public`, `_order_public`, `_own_order`, `_prefer_canonical`, `_entity_ids_for`
 
-Define **23 herramientas MCP** → [[API herramientas MCP]]
+Define **24 herramientas MCP** → [[API herramientas MCP]]
 
 ## Depende de
 
@@ -71,6 +72,7 @@ Define **23 herramientas MCP** → [[API herramientas MCP]]
 - [[core.identity.py]] — importa `identity`
 - [[core.numbers.py]] — importa `evidence_numbers`, `unsupported_money`
 - [[core.options.py]] — importa `vega_report`
+- [[core.replay.py]] — importa `replay`
 - [[core.risk_report.py]] — importa `build_report`
 - [[core.world.py]] — importa `(dinámico: core.world)`, `client_nrs`
 - [[matrix.tensor.py]] — importa `(dinámico: matrix.tensor)`
@@ -100,7 +102,7 @@ Define **23 herramientas MCP** → [[API herramientas MCP]]
 - [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.protocol.py]] — lo importa
 
-_Además lo importan 19 pruebas (lista abajo)._
+_Además lo importan 20 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -128,4 +130,5 @@ _Además lo importan 19 pruebas (lista abajo)._
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_replay_determinism.py]]
 - [[tests.test_tensor.py]]

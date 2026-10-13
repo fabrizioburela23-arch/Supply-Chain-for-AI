@@ -74,11 +74,11 @@ def test_changelog_no_cambia_el_hash(repo_copy):
     assert B.check(verbose=False) == []
 
 
-def _new_version(repo_copy, change_kind, mutate, semver='1.0.1'):
-    src = repo_copy / 'artifacts' / 'policy.committee@1.0.0.json'
+def _new_version(repo_copy, change_kind, mutate, semver='1.0.1', base='1.0.0'):
+    src = repo_copy / 'artifacts' / f'policy.committee@{base}.json'
     with open(src, encoding='utf-8') as fh:
         d = json.load(fh)
-    d.update(semver=semver, change_kind=change_kind, parent='policy.committee@1.0.0',
+    d.update(semver=semver, change_kind=change_kind, parent=f'policy.committee@{base}',
              changelog_es='prueba', changelog_en='test')
     mutate(d['params'])
     with open(repo_copy / 'artifacts' / f'policy.committee@{semver}.json', 'w', encoding='utf-8') as fh:
@@ -93,14 +93,15 @@ def test_semver_patch_que_cambia_un_numero_se_rechaza(repo_copy):
 
 def test_semver_minor_solo_agrega(repo_copy):
     from scripts import build_governance as B
-    _new_version(repo_copy, 'minor', lambda p: p.pop('min_claims'), semver='1.1.0')
+    _new_version(repo_copy, 'minor', lambda p: p.pop('min_claims'), semver='1.2.0', base='1.1.0')
     assert any('MINOR solo agrega' in p for p in B.semver_problems(B.G.scan_repo()))
 
 
 def test_semver_minor_que_agrega_y_major_pasan(repo_copy):
     from scripts import build_governance as B
-    _new_version(repo_copy, 'minor', lambda p: p.update(nueva_clave=1), semver='1.1.0')
-    _new_version(repo_copy, 'major', lambda p: p.update(buy_threshold=30.0), semver='2.0.0')
+    # (policy.committee 1.1.0 ya existe desde el cierre del lote H: la MINOR de prueba es 1.2.0 sobre 1.1.0)
+    _new_version(repo_copy, 'minor', lambda p: p.update(nueva_clave=1), semver='1.2.0', base='1.1.0')
+    _new_version(repo_copy, 'major', lambda p: p.update(buy_threshold=30.0), semver='2.0.0', base='1.1.0')
     assert B.semver_problems(B.G.scan_repo()) == []
     B.write()
     assert B.check(verbose=False) == []

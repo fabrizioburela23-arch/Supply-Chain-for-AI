@@ -50,6 +50,7 @@ EL contrato común de las respuestas MCP (ARQUITECTURA_V2 §15; BRECHAS L4-08).
 - herramienta MCP `get_world_events` → [[API herramientas MCP]]
 - herramienta MCP `list_orders` → [[API herramientas MCP]]
 - herramienta MCP `preview_order` → [[API herramientas MCP]]
+- herramienta MCP `replay_decision` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]

@@ -552,11 +552,26 @@ def _busy():
                           'another reconciliation (apply or undo) is running; try again in a minute')
 
 
+def _who(principal):
+    """Quién aplica/deshace: el principal autenticado de la ruta (op:fabrizio con PIN) o, desde la terminal
+    (scripts/reconcile_v0_to_ontology.py), la tarea `system:reconcile_cli`."""
+    if principal is not None:
+        return principal
+    from core import identity
+    return identity.system('reconcile_cli')
+
+
+def _rej_status(exc):
+    return 'rejected' if isinstance(exc, (ReconcileError, ValueError)) else 'failed'
+
+
 def apply_plan(session_scope, snap, include=DEFAULT_APPLY, confirm_db=None, actor=ACTOR, run_id=None, log=None,
-               expect=None):
+               expect=None, principal=None):
     """Aplica por categoría, RE-CALCULANDO el plan antes de cada una (la
     fusión de alias cambia qué filas existen). Cada categoría en su propia
-    transacción. Devuelve {run_id, applied: {cat: n}, events: n, plan_before}."""
+    transacción, con su decisión `reconcile.apply` en ESA transacción (cierre del lote H, E2: efectos = los eventos
+    escritos; si la categoría falla, una decisión rechazada/fallida). Devuelve {run_id, applied: {cat: n}, events: n,
+    plan_before, decision_ids}."""
     from sqlalchemy import text
     from ontology.db import _get_engine
     bad = [c for c in (include or ()) if c not in CATEGORIES]
@@ -568,16 +583,19 @@ def apply_plan(session_scope, snap, include=DEFAULT_APPLY, confirm_db=None, acto
         if not conn.execute(text('SELECT pg_try_advisory_lock(:k)'), {'k': LOCK_KEY}).scalar():
             raise _busy()
         try:
-            return _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, expect)
+            return _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, expect, principal)
         finally:
             conn.execute(text('SELECT pg_advisory_unlock(:k)'), {'k': LOCK_KEY})
     finally:
         conn.close()
 
 
-def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, expect):
+def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, expect, principal=None):
+    from core import decisions
     from ontology.actions import RetractarVinculoInput, FusionarEntidadInput, retractar_vinculo, fusionar_entidad
     from ontology.service import apply_event
+    who = _who(principal)
+    decision_ids = {}
     include = [c for c in (include or ()) if c in CATEGORIES]
     run_id = run_id or new_run_id()
     source = RUN_PREFIX + run_id
@@ -599,7 +617,11 @@ def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, 
     order = [c for c in CATEGORIES if c in include]
     for cat in order:
       try:
-        with session_scope() as s:
+        with session_scope() as s, decisions.decision_scope(
+                'reconcile.apply', who, session=s, rejection_status=_rej_status,
+                subject={'run_id': run_id, 'category': cat, 'db': dbname,
+                         'plan_sha': (expect or {}).get('plan_sha') or before.get('plan_sha')}) as dctx:
+            decision_ids[cat] = str(dctx.id)
             plan = build_plan(s, snap)
             items = plan[cat]
             n = 0
@@ -657,6 +679,9 @@ def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, 
                                       actor, source=source)
                     n += 1; n_events += 2
             applied[cat] = n
+            dctx.output = {'category': cat, 'applied': n, 'run_id': run_id}
+            if not n:
+                dctx.status = 'noop'
             log(f'{cat}: {n} aplicados')
       except Exception as e:  # noqa: BLE001 — G5: lo ya aplicado queda (y se puede deshacer); se informa el run_id
         error = {'category': cat, 'error': f'{type(e).__name__}: {str(e)[:300]}'}
@@ -665,7 +690,8 @@ def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, 
     with session_scope() as s:
         after = build_plan(s, snap)
     out = {'run_id': run_id, 'db': dbname, 'include': order, 'applied': applied, 'events_estimated': n_events,
-           'summary_before': before['summary'], 'summary_after': after['summary'], 'source_channel': source}
+           'summary_before': before['summary'], 'summary_after': after['summary'], 'source_channel': source,
+           'decision_ids': decision_ids}
     if error:
         out['error'] = error
     return out
@@ -673,9 +699,20 @@ def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, 
 
 # ───────────────────────── rollback ─────────────────────────
 
-def rollback_run(session, run_id, confirm_db=None, actor=ACTOR):
+def rollback_run(session, run_id, confirm_db=None, actor=ACTOR, principal=None):
     """Deshace una corrida con NUEVOS eventos (canal reconcile_v0_rollback:<run_id>).
-    No borra nada. No se puede deshacer un rollback (sería otra corrida)."""
+    No borra nada. No se puede deshacer un rollback (sería otra corrida). Deja su decisión `reconcile.rollback` en la
+    MISMA transacción (cierre del lote H, E2; un intento rechazado también queda, como rechazo)."""
+    from core import decisions
+    with decisions.decision_scope('reconcile.rollback', _who(principal), session=session, rejection_status=_rej_status,
+                                  subject={'run_id': str(run_id)[:60]}) as dctx:
+        out = _rollback_body(session, run_id, confirm_db, actor)
+        dctx.output = {k: v for k, v in out.items() if k != 'rollback_channel'}
+        out['decision_id'] = str(dctx.id)
+    return out
+
+
+def _rollback_body(session, run_id, confirm_db, actor):
     from sqlalchemy import text
     from ontology.service import apply_event
     _check_confirm(session, confirm_db)

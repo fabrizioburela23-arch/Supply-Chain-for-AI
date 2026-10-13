@@ -39,11 +39,11 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 
-Se carga en [[app.html]] en la posición **85 de 95** (línea 7952), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
+Se carga en [[app.html]] en la posición **86 de 96** (línea 7961), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 85)
+- [[app.html]] — lo carga con `<script>` (posición 86)
 - [[engine.cockpit.js]] — usa `KhipuChat`
 - [[engine.command_center.js]] — usa `KhipuChat`
 - [[engine.pickers.js]] — usa `KhipuChat`

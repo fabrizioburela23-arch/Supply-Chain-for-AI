@@ -1,0 +1,58 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "policy.committee": "1.0.0"
+   },
+   "output": [
+    {
+     "min_agents": 3,
+     "missing_required": [],
+     "n_present": 3,
+     "ok": true,
+     "pool": [
+      "fundamental",
+      "news",
+      "technical",
+      "supply_chain"
+     ],
+     "reason_en": null,
+     "reason_es": null,
+     "required": [
+      "fundamental"
+     ],
+     "to_run": [
+      "supply_chain"
+     ]
+    },
+    {
+     "min_agents": 3,
+     "missing_required": [
+      "fundamental"
+     ],
+     "n_present": 1,
+     "ok": false,
+     "pool": [
+      "fundamental",
+      "news",
+      "technical",
+      "supply_chain"
+     ],
+     "reason_en": "no analyst quorum: the fundamental analyst is missing; only 1 of 4 analysts weighed in (minimum 3)",
+     "reason_es": "sin quórum de analistas: falta el analista fundamental; solo 1 de 4 analistas opinaron (mínimo 3)",
+     "required": [
+      "fundamental"
+     ],
+     "to_run": [
+      "fundamental",
+      "news",
+      "supply_chain"
+     ]
+    }
+   ],
+   "sha": "b3f6d2bb86f49f1dc20689b876e1159eb19583b24459508d2439c1fba0fac811"
+  }
+ ],
+ "key": "committee.quorum",
+ "version": 1
+}

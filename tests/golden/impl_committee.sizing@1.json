@@ -1,0 +1,155 @@
+{
+ "cases": [
+  {
+   "artifacts": {
+    "policy.committee": "1.0.0"
+   },
+   "output": [
+    {
+     "buying_power": null,
+     "cap_pct": 5.0,
+     "capped_by": "unvalidated",
+     "current_qty": 0.0,
+     "current_value": 0.0,
+     "current_weight_pct": 0.0,
+     "daily_remaining_usd": 20000.0,
+     "decision": "BUY",
+     "equity": 100000.0,
+     "halved_weight_pct": 1.429,
+     "max_order_usd": 5000.0,
+     "max_position_pct": 10.0,
+     "method": "volatility-targeting",
+     "notional": 1428.0,
+     "partial": false,
+     "per_10k": null,
+     "price": 120.0,
+     "qty": null,
+     "qty_est": 11.9,
+     "raw_weight_pct": 2.857,
+     "reference_only": false,
+     "risk_budget_pct": 1.0,
+     "side": "buy",
+     "sizing_order": [
+      "size",
+      "halve",
+      "cap"
+     ],
+     "steps_en": [
+      "Annual volatility 35.0%",
+      "1) Size = risk budget 1.0% ÷ volatility 35.0% = 2.86%",
+      "2) No validated track record (no analyst reaches the minimum scored calls): the size is cut in half → 1.43%, and so is the per-position cap (10.0% → 5.0%).",
+      "Client equity $100,000 × 1.43% = target $1,429; current position $0",
+      "Proposed order: BUY $1,428"
+     ],
+     "steps_es": [
+      "Volatilidad anual 35.0 %",
+      "1) Tamaño = presupuesto de riesgo 1.0 % ÷ volatilidad 35.0 % = 2.86 %",
+      "2) Sin historial validado (ningún analista llega a las calificaciones mínimas): el tamaño se reduce a la mitad → 1.43 %, y el tope por posición también (10.0 % → 5.0 %).",
+      "Patrimonio del cliente $100,000 × 1.43 % = objetivo $1,429; posición actual $0",
+      "Orden propuesta: BUY $1,428"
+     ],
+     "target_weight_pct": 1.429,
+     "unvalidated": true,
+     "unvalidated_factor": 0.5,
+     "vol_ann_pct": 35.0,
+     "vol_used_pct": 35.0
+    },
+    {
+     "buying_power": null,
+     "cap_pct": 10.0,
+     "capped_by": "max_order",
+     "current_qty": 50,
+     "current_value": 9000.0,
+     "current_weight_pct": 18.0,
+     "daily_remaining_usd": 20000.0,
+     "decision": "TRIM",
+     "equity": 50000.0,
+     "halved_weight_pct": 4.0,
+     "max_order_usd": 5000.0,
+     "max_position_pct": 10.0,
+     "method": "volatility-targeting",
+     "notional": 5000.0,
+     "partial": false,
+     "per_10k": null,
+     "price": 180.0,
+     "qty": null,
+     "qty_est": 27.7778,
+     "raw_weight_pct": 4.0,
+     "reference_only": false,
+     "risk_budget_pct": 1.0,
+     "side": "sell",
+     "sizing_order": [
+      "size",
+      "halve",
+      "cap"
+     ],
+     "steps_en": [
+      "Annual volatility 25.0%",
+      "1) Size = risk budget 1.0% ÷ volatility 25.0% = 4.00%",
+      "Client equity $50,000 × 4.00% = target $2,000; current position $9,000",
+      "Reduce to $1,000",
+      "Limited by the client's per-order max: $5,000",
+      "Proposed order: SELL $5,000"
+     ],
+     "steps_es": [
+      "Volatilidad anual 25.0 %",
+      "1) Tamaño = presupuesto de riesgo 1.0 % ÷ volatilidad 25.0 % = 4.00 %",
+      "Patrimonio del cliente $50,000 × 4.00 % = objetivo $2,000; posición actual $9,000",
+      "Reducir a $1,000",
+      "Limitado por el máximo por orden del cliente: $5,000",
+      "Orden propuesta: SELL $5,000"
+     ],
+     "target_weight_pct": 4.0,
+     "unvalidated": false,
+     "unvalidated_factor": 1.0,
+     "vol_ann_pct": 25.0,
+     "vol_used_pct": 25.0
+    },
+    {
+     "buying_power": null,
+     "cap_pct": 10.0,
+     "capped_by": null,
+     "current_qty": 0.0,
+     "current_value": 0.0,
+     "current_weight_pct": null,
+     "daily_remaining_usd": 20000.0,
+     "decision": "HOLD",
+     "equity": null,
+     "halved_weight_pct": null,
+     "max_order_usd": 5000.0,
+     "max_position_pct": 10.0,
+     "method": "volatility-targeting",
+     "notional": 0.0,
+     "partial": false,
+     "per_10k": null,
+     "price": null,
+     "qty": null,
+     "qty_est": null,
+     "raw_weight_pct": null,
+     "reference_only": true,
+     "risk_budget_pct": 1.0,
+     "side": null,
+     "sizing_order": [
+      "size",
+      "halve",
+      "cap"
+     ],
+     "steps_en": [
+      "No measurable volatility (no price history): no target size is computed."
+     ],
+     "steps_es": [
+      "Sin volatilidad medible (no hay historia de precios): no se calcula un tamaño objetivo."
+     ],
+     "target_weight_pct": null,
+     "unvalidated": false,
+     "unvalidated_factor": 1.0,
+     "vol_ann_pct": null,
+     "vol_used_pct": null
+    }
+   ],
+   "sha": "3c5ef2de5bad09eecf6facaf811b1ba888b49327f07a229215751dd7c066e553"
+  }
+ ],
+ "key": "committee.sizing",
+ "version": 1
+}

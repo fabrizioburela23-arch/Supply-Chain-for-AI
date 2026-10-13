@@ -6,7 +6,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 
 # Índice de variables de entorno
 
-163 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
+160 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
 
 | Variable | La leen | En CLAUDE.md |
 |---|---|---|
@@ -42,7 +42,6 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV ANTHROPIC_KEY]] | 3 | sí |
 | [[ENV AV_KEY]] | 5 | sí |
 | [[ENV BIXBY_AUTOSYNC]] | 1 | **no** |
-| [[ENV BROKERAGE_APPROVAL_TTL_MIN]] | 1 | sí |
 | [[ENV BROKERAGE_AUTO_APPROVE_PAPER]] | 1 | sí |
 | [[ENV BROKERAGE_ENC_KEY]] | 2 | sí |
 | [[ENV BROKERAGE_LIVE_ENABLED]] | 1 | sí |
@@ -136,7 +135,6 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV RESEARCH_ANOMALY_PCT]] | 1 | sí |
 | [[ENV RESEARCH_AUTO_EVENTS]] | 2 | sí |
 | [[ENV RESEARCH_BUSY_RETRIES]] | 1 | sí |
-| [[ENV RESEARCH_CALIBRATION_K]] | 1 | sí |
 | [[ENV RESEARCH_DAILY_BUDGET_USD]] | 3 | sí |
 | [[ENV RESEARCH_DEDUPE_MINUTES]] | 1 | **no** |
 | [[ENV RESEARCH_EARNINGS_MAX]] | 1 | sí |
@@ -145,7 +143,6 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV RESEARCH_MAX_AGENTS_PER_JOB]] | 1 | **no** |
 | [[ENV RESEARCH_MODEL_DEFAULT]] | 2 | sí |
 | [[ENV RESEARCH_MODEL_{X}]] | 1 | sí |
-| [[ENV RESEARCH_OUTCOME_BAND]] | 1 | sí |
 | [[ENV RESEARCH_PARALLEL]] | 2 | sí |
 | [[ENV RESEARCH_RESUME_MAX]] | 1 | sí |
 | [[ENV RESEARCH_STALE_MIN]] | 1 | sí |

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/explain.js"
 lenguaje: "javascript"
-lineas: 340
+lineas: 390
 aliases: ["engine/explain.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/explain.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 340 líneas · `engine/explain.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 390 líneas · `engine/explain.js`
 
 ## Para qué sirve
 
@@ -24,12 +24,13 @@ EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversi
 
 - [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **76 de 95** (línea 7943), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
+Se carga en [[app.html]] en la posición **76 de 96** (línea 7951), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 76)
 - [[app.html]] — usa `explainChip`, `explainMetric`
+- [[engine.audit.js]] — usa `explainChip`
 - [[engine.clients.js]] — usa `explainChip`, `explainRegister`
 - [[engine.cockpit.js]] — usa `explainMetric`
 - [[engine.committee.js]] — usa `explainChip`, `explainRegister`
@@ -51,11 +52,13 @@ Se carga en [[app.html]] en la posición **76 de 95** (línea 7943), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cierre_defectos.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_repair_graph.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (h) — PASO 24 - REPETIR DECISIONES (replay), IMPLEMENTACIONES RETENIDAS]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]
 - [[Sesión 2026-09-29 (día) — REPORTE DE RIESGO - VaR + VEGA-KAPPA (sw v164)]]
 - [[Sesión 2026-07-12 — Etapa H — Feedback 7 - explicabilidad + regla bilingüe + cripto]]
