@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 807
+lineas: 809
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 807 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 809 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -199,12 +199,14 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_graph_audit.py]]
 - [[tests.test_impl_registry.py]]
+- [[tests.test_neo4j_retirado.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_vault.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]]
 - [[Sesión 2026-10-03 (g) — SINCRONIZACIÓN ENTRE DISPOSITIVOS (sw v184)]]

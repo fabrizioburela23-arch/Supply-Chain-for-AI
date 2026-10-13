@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/BRECHAS_V2.md"
 lenguaje: "markdown"
-lineas: 1004
+lineas: 1006
 aliases: ["docs/BRECHAS_V2.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/BRECHAS_V2.md
 
-> Documento · capa [[Capa Documentación]] · 1.004 líneas · `docs/BRECHAS_V2.md`
+> Documento · capa [[Capa Documentación]] · 1.006 líneas · `docs/BRECHAS_V2.md`
 
 ## De qué trata
 
@@ -57,6 +57,7 @@ BRECHAS v2 — qué falta para que Khipus esté bien en código y en matemática
 - [[data.graph_audit_baseline.json]]
 - [[data.multicapa_factors_seats.json]]
 - [[Doc ARQUITECTURA_V2]]
+- [[Doc CIERRE_INFRA]]
 - [[engine.brief.js]]
 - [[engine.cockpit.js]]
 - [[engine.crypto.js]]
@@ -119,6 +120,7 @@ BRECHAS v2 — qué falta para que Khipus esté bien en código y en matemática
 - [[tests.test_cleanup_modules_theme_i18n.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_neo4j_retirado.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_research.py]]
 - [[tests.test_voice_tour_drive.py]]
@@ -127,4 +129,5 @@ BRECHAS v2 — qué falta para que Khipus esté bien en código y en matemática
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-10-12 (c) — AUDITORÍA - QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN]]

@@ -60,7 +60,7 @@ Nada de esto lo decido yo: son decisiones de negocio, de dinero o de datos que s
 | 3 | **OK para guardar 5 años de precios** en el Postgres actual (~720 mil filas, ~100 MB en 10 años; descarga gratuita de Yahoo, unas horas) | es la base de todo lo que dependa del tiempo | L3-01, L2-12 |
 | 4 | **¿Socios y accionistas transmiten daño en una caída?** (recomendación: NO por defecto; se muestran aparte como "relacionadas") | hoy unos motores sí y otros no | PROP-07, L4-03, M-code-01 |
 | 5 | **Escala de severidad de los factores = 0-10** (como en el documento multicapa) | para corregir el golpe al 160 % | PROP-05 |
-| 6 | **¿Dar de baja Neo4j Aura** y borrar `NEO4J_URI/USER/PASSWORD`? (nadie lo lee) | una copia menos del grafo y una factura menos | L3-10, G5-12 |
+| 6 | ✅ **DECIDIDO (2026-10-13, Fabrizio: «si crees que es lo mejor quita neo4j»)** — ~~¿Dar de baja Neo4j Aura y borrar `NEO4J_URI/USER/PASSWORD`?~~ Neo4j retirado del código (driver, `NEO4J_*`, `POST /api/grafo/seed`, siembra del cliente y tarjeta del 🩺; tests/test_neo4j_retirado.py). Te queda borrar las 3 variables en Railway y, si quieres, pausar o borrar la instancia en console.neo4j.io (docs/CIERRE_INFRA.md §6) | una copia menos del grafo y una factura menos | L3-10, G5-12 |
 | 7 | **¿Postgres de producción manda sobre el catálogo?** (recomendado) y revisar una vez el plan de reconciliación | hoy hay tres copias vivas del grafo | L3-09 |
 | 8 | **Revisar listas que yo preparo** (tú solo marcas ✔/✘): 27 vínculos con fecha (tipo y dirección), 9-15 direcciones sospechosas, la conversión de pesos (sobre todo 462 vínculos con peso 1), el significado de "controla / alberga / domina" | nada del grafo se cambia sin tu marca | L3-02, L3-03, L3-11, L3-12, PROP-14 |
 | 9 | **Precio de referencia** de 16 empresas con varios listados y 28 con certificado OTC (acción local o ADR en dólares) | empresa ≠ instrumento | L3-13 |
@@ -633,6 +633,7 @@ el bloque 1 (necesita solo tus respuestas a #4 y #5). Los bloques 2 y 3 arrancan
 - *Evidencia:* grep -n 'MATCH |s.run(' server.py → solo las 2 constraints y el _FACT_CYPHER de escritura; grep neo4j en engine/*.js → solo temporal-graph.js (badge + seed).
 - *Arreglo:* Quitar /api/grafo/seed, _get_neo4j_driver, _neo4j_add_fact, la tarjeta del 🩺 y el seed de temporal-graph.js; borrar el driver de requirements/constraints; regenerar la bóveda y bump de sw.js.
 - *Necesita de Fabrizio:* Confirmar que se puede dar de baja la cuenta de Neo4j Aura y borrar NEO4J_URI/USER/PASSWORD en Railway.
+- *Estado (2026-10-13):* ✅ HECHO — decisión #6 tomada; Neo4j retirado del código (tests/test_neo4j_retirado.py). Solo falta borrar las variables en Railway.
 - *Verificación:* confirmed
 
 **L3-16 · BAJO · data · Fase 1 · esfuerzo S** — Tabla de precios de IA sin fecha de vigencia: el 1-ene-2027 el costo de Gemini 3.8 quedará subestimado 2×  
@@ -877,6 +878,7 @@ el bloque 1 (necesita solo tus respuestas a #4 y #5). Los bloques 2 y 3 arrancan
 - *Evidencia:* grep -c neo4j server.py → 56; grep 'api/ontology/graph' engine/ app.html → solo khipu_lang.js:328 (/diff) y dos comentarios; du -cb nodes/*.js → 2.182.420 bytes.
 - *Arreglo:* Retirar Neo4j (rutas, seed y dependencia) tras confirmar que nadie lo usa; luego que el cliente cargue nodos/vínculos desde /api/ontology/graph (o un snapshot generado desde Postgres) en vez de nodes/*.js.
 - *Necesita de Fabrizio:* Confirmar que se puede apagar Neo4j Aura (y cancelar la cuenta si tiene costo).
+- *Estado (2026-10-13):* 🔶 la mitad de Neo4j está hecha (retirado, decisión #6); la UI sigue dibujando el catálogo y no /api/ontology/graph (#7).
 - *Verificación:* adjusted — Direction confirmed, sizes off. The UI never fetches /api/ontology/graph; only /graph/diff is used (khipu_lang.js:328). engine/temporal-graph.js:1399/1455 still calls /api/grafo/estado and /seed. Neo4j stays in requirements.txt:24 and constraints.txt:28. Corrections: the Neo4j code is about 260 lin…
 
 **M-code-01 · MEDIO · both · Fase 1 · esfuerzo S** — El tensor Ψ (X-Ray, capitalización en riesgo, sugerencias de vínculos) dice usar 'la misma semántica que propagate' pero usa otro conjunto de relaciones y da otros números  

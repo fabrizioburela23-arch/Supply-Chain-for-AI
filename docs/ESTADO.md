@@ -4,8 +4,28 @@ Archivo vivo. Cada sesión de trabajo en la ontología lee esto primero y lo
 actualiza al terminar. Ver `ROADMAP_KHIPUS_ONTOLOGIA.md` (adjuntado por el
 usuario) para el plan completo por fases, y `docs/AUDITORIA.md` para las
 correcciones de arquitectura respecto al roadmap original (backend real =
-Flask/Python, no Node; `/v1/*` ya es la API pública monetizada; Neo4j Aura ya
-está conectado).
+Flask/Python, no Node; `/v1/*` ya es la API pública monetizada; Neo4j Aura
+estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
+
+---
+
+# SESIÓN 2026-10-13 (i) — NEO4J RETIRADO (decisión #6 de Fabrizio) — sw v264
+
+- Fabrizio decidió: «si crees que es lo mejor quita neo4j» (BRECHAS §2 #6; ARQUITECTURA_V2: Postgres es la única base).
+  Nadie leía Neo4j: solo recibía hechos (`POST /api/grafo/seed`) y el 🩺 probaba la conexión.
+- Borrado: en server.py la lectura de `NEO4J_*`, `_neo4j_available`, `_temporal_mode`, `_get_neo4j_driver`,
+  `_neo4j_add_fact`, `_FACT_CYPHER`, `_neo4j_estado_cache` y `POST /api/grafo/seed`; `NEO4J_*` de las listas de
+  secretos (server.py, core/http.SECRET_ENV_NAMES); el driver `neo4j` (y `pytz`, que solo traía él) de
+  requirements/constraints; en engine/temporal-graph.js la insignia de Neo4j y `_seedBackend` (con su marca
+  `tkg_seeded_neo4j_v2`).
+- Queda: `GET /api/grafo/estado` → `{"store": "native"}` (la insignia «memoria: nativa / memory: native», ES/EN) y la
+  tarjeta ◈ Grafo Temporal del 🩺 (verde, bilingüe: la memoria temporal vive en Postgres y en el navegador).
+- Brechas sin ficha: 11 → 10 (tests/test_cierre_infra.py achicó la lista). Guardia nueva: tests/test_neo4j_retirado.py
+  (ningún código importa `neo4j` ni lee `NEO4J_*`; sin ruta de siembra; estado siempre nativo).
+- Docs: CLAUDE.md («Una base de datos: Postgres»), docs/CIERRE_INFRA.md (#6 resuelta, L3-10 ✅, G5-12 🔶, qué hacer en
+  Railway), docs/BRECHAS_V2.md (#6 decidida).
+- QUÉ HACER (Fabrizio): Railway → tu servicio → Variables → borrar `NEO4J_URI`, `NEO4J_USER` y `NEO4J_PASSWORD`.
+  Opcional: console.neo4j.io → pausar o borrar la instancia de Aura.
 
 ---
 

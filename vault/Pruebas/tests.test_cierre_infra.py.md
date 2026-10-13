@@ -44,4 +44,5 @@ auditoría de cierre de la infraestructura operativa (docs/CIERRE_INFRA.md).
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-10-13 (h) — PASO 24 - REPETIR DECISIONES (replay), IMPLEMENTACIONES RETENIDAS]]

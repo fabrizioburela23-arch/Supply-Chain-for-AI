@@ -3,18 +3,18 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "engine/temporal-graph.js"
 lenguaje: "javascript"
-lineas: 1497
+lineas: 1463
 aliases: ["engine/temporal-graph.js"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # engine/temporal-graph.js
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.497 líneas · `engine/temporal-graph.js`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.463 líneas · `engine/temporal-graph.js`
 
 ## Para qué sirve
 
-Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline deslizable/reproducible muestra cómo las relaciones aparecen, están vigentes o expiran a lo largo del tiempo. Funciona 100% client-side (deriva de TEMPORAL_SEED_FACTS + LINKS + PREIPO_INTEL); el backend Graphiti/Neo4j es un upgrade opcional. Expone window.initTKGTab.
+Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline deslizable/reproducible muestra cómo las relaciones aparecen, están vigentes o expiran a lo largo del tiempo. Funciona 100% client-side (deriva de TEMPORAL_SEED_FACTS + LINKS + PREIPO_INTEL); la historia con fecha vive en Postgres (ontología bitemporal). Expone window.initTKGTab.
 
 ## API pública (globales que define)
 
@@ -53,7 +53,6 @@ Se carga en [[app.html]] en la posición **45 de 96** (línea 7854), después de
 - `GET /api/ontology/objects/<object_id>` → [[ontology.api.py]] ([[API ontology]])
 - `GET /api/ontology/status` → [[ontology.api.py]] ([[API ontology]])
 - `POST /api/ai/analyze` → [[server.py]] ([[API ai]])
-- `POST /api/grafo/seed` → [[server.py]] ([[API grafo]])
 - `POST /api/news/portfolio` → [[core.portfolio_reports_api.py]] ([[API news]])
 - `POST /api/ontology/actions/<action_type>` → [[ontology.api.py]] ([[API ontology]])
 - `POST /api/ontology/ingest/news` → [[ontology.api.py]] ([[API ontology]])
@@ -61,8 +60,10 @@ Se carga en [[app.html]] en la posición **45 de 96** (línea 7854), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_neo4j_retirado.py]]
 - [[tests.test_review_infra_c.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]]

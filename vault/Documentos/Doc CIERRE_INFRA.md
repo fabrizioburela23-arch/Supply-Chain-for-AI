@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/CIERRE_INFRA.md"
 lenguaje: "markdown"
-lineas: 415
+lineas: 422
 aliases: ["docs/CIERRE_INFRA.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/CIERRE_INFRA.md
 
-> Documento · capa [[Capa Documentación]] · 415 líneas · `docs/CIERRE_INFRA.md`
+> Documento · capa [[Capa Documentación]] · 422 líneas · `docs/CIERRE_INFRA.md`
 
 ## De qué trata
 
@@ -63,4 +63,5 @@ CIERRE — infraestructura operativa y plan de BRECHAS v2 — \*Auditoría de ci
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-10-13 (h) — PASO 24 - REPETIR DECISIONES (replay), IMPLEMENTACIONES RETENIDAS]]

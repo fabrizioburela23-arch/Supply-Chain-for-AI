@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07"
-ruta: "docs/ESTADO.md#L2206"
+ruta: "docs/ESTADO.md#L2226"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # REDISEÑO MAYOR 2026-07 — mapa único con capas + motor de matrices
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2206 (20 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2226 (20 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

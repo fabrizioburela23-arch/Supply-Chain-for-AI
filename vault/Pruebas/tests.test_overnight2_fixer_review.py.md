@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight2_fixer_review.py"
 lenguaje: "python"
-lineas: 344
+lineas: 345
 aliases: ["tests/test_overnight2_fixer_review.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight2_fixer_review.py
 
-> Prueba · capa [[Capa Pruebas]] · 344 líneas · `tests/test_overnight2_fixer_review.py`
+> Prueba · capa [[Capa Pruebas]] · 345 líneas · `tests/test_overnight2_fixer_review.py`
 
 ## Qué prueba
 

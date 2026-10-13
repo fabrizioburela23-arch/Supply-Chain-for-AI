@@ -3,7 +3,7 @@
 Prefijo elegido para NO colisionar con /v1/* (que ya es el producto de API
 pública monetizado por tiers de Khipu Finance — ver server.py:khipu_auth).
 
-Sigue el patrón de "feature opcional" ya usado con Neo4j: si DATABASE_URL no
+Sigue el patrón de "feature opcional": si DATABASE_URL no
 está configurada, todas las rutas devuelven 503 con un mensaje claro en vez
 de romper el arranque del servidor.
 

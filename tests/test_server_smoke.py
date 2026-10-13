@@ -205,10 +205,10 @@ def test_db_error_hint_es_accionable():
     assert 'DATABASE_URL' in railway
 
     # un host que no resuelve pero no es Railway → pista genérica, no la de Railway
-    neo = hint('Failed to DNS resolve address a83aa2de.databases.neo4j.io:7687: '
-               'Name or service not known')
-    assert 'no resuelve' in neo
-    assert 'REFERENCIA' not in neo
+    otro = hint('Failed to DNS resolve address a83aa2de.db.example.com:5432: '
+                'Name or service not known')
+    assert 'no resuelve' in otro
+    assert 'REFERENCIA' not in otro
 
     assert 'credenciales' in hint('FATAL: password authentication failed for user "postgres"')
     assert 'apagado' in hint('connection refused')

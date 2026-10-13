@@ -340,6 +340,7 @@ Además declara **248** funciones/constantes de nivel superior en sus bloques in
 - [[tests.test_khipus_os_shell.py]]
 - [[tests.test_live_labels_misc.py]]
 - [[tests.test_map_search_reset.py]]
+- [[tests.test_neo4j_retirado.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_overnight2_fixer_review.py]]

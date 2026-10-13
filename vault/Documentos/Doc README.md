@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "README.md"
 lenguaje: "markdown"
-lineas: 124
+lineas: 123
 aliases: ["README.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # README.md
 
-> Documento · capa [[Capa Documentación]] · 124 líneas · `README.md`
+> Documento · capa [[Capa Documentación]] · 123 líneas · `README.md`
 
 ## De qué trata
 

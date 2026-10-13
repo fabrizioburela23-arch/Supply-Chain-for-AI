@@ -171,8 +171,10 @@ Razones, en orden de peso:
    `ontology/service.py`, `matrix/engine.py` y las 13 Acciones. La spec pide
    evitar exactamente eso.
 
-**Neo4j se mantiene donde está hoy: espejo visual opcional de solo lectura.**
-Si se cae, la app sigue en modo nativo (patrón `*_available()`).
+~~**Neo4j se mantiene donde está hoy: espejo visual opcional de solo lectura.**~~
+**Actualización 2026-10-13:** Neo4j se RETIRÓ del todo (decisión #6 de Fabrizio,
+docs/BRECHAS_V2.md): nadie lo leía. Postgres es la única base; el Grafo
+Temporal es nativo. No reintroducirlo (tests/test_neo4j_retirado.py).
 
 **Cuándo reabrir esta decisión:** si aparecen consultas de camino variable de
 verdad (p.ej. *"toda cadena de suministro de ≤5 saltos entre A y B, filtrada

@@ -79,12 +79,12 @@ SCHEMA = ('Esquema desactualizado: faltan events.source_id. Se intentó reparar 
 DB = ('Ontología configurada pero no conecta: could not translate host name "postgres.railway.internal" → El servicio '
       'de base de datos no existe con ese nombre en el proyecto. En Railway: crea el Postgres (+ New → Database) y pon '
       'la variable como REFERENCIA.')
-NEO = ('NEO4J configurado pero no conecta: timed out → Tiempo de espera agotado: red o firewall entre la app y la base. '
-       '[usuario=neo4j · host=x.databases.neo4j.io · pw=12 car.]')
+TIMEOUT = ('Ontología configurada pero no conecta: timed out → Tiempo de espera agotado: red o firewall entre la app y '
+           'la base. [host=db.example.com · espera=5 s]')
 CASES = {
     'schema': {'configured': True, 'ok': False, 'detail': SCHEMA},
     'db': {'configured': True, 'ok': False, 'detail': DB},
-    'neo': {'configured': True, 'ok': False, 'detail': NEO},
+    'timeout': {'configured': True, 'ok': False, 'detail': TIMEOUT},
     'ai': {'configured': True, 'ok': False, 'detail': 'FAST: m ✗ (400) → Saldo agotado: recarga en la consola del proveedor.'},
     'bullets': {'configured': True, 'ok': False, 'detail': 'Khipu (voz) tiene problemas: • En Railway → Variables falta la clave.'},
 }
@@ -107,8 +107,9 @@ def test_diag_hint_split_skips_arrows_inside_parentheses(diag):
     assert diag['db']['detail'] == 'Ontología configurada pero no conecta: could not translate host name "postgres.railway.internal"'
     assert diag['db']['fixes'] == ['El servicio de base de datos no existe con ese nombre en el proyecto. En Railway: crea el '
                                    'Postgres (+ New → Database) y pon la variable como REFERENCIA.']
-    assert diag['neo']['detail'] == 'NEO4J configurado pero no conecta: timed out'
-    assert diag['neo']['fixes'][0].startswith('Tiempo de espera agotado') and diag['neo']['fixes'][0].endswith('pw=12 car.]')
+    assert diag['timeout']['detail'] == 'Ontología configurada pero no conecta: timed out'
+    assert (diag['timeout']['fixes'][0].startswith('Tiempo de espera agotado')
+            and diag['timeout']['fixes'][0].endswith('espera=5 s]'))
     assert diag['ai'] == {'detail': 'FAST: m ✗ (400)', 'fixes': ['Saldo agotado: recarga en la consola del proveedor.']}
     # un detalle con viñetas «•» (la voz) no se parte
     assert diag['bullets'] == {'detail': CASES['bullets']['detail'], 'fixes': []}

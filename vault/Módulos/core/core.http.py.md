@@ -89,7 +89,6 @@ _Además lo importan 33 pruebas (lista abajo)._
 - [[ENV KHIPU_ADMIN_SECRET]] _(en una lista, p. ej. para tapar secretos en logs)_
 - [[ENV MARKETSTACK_KEY]] _(en una lista, p. ej. para tapar secretos en logs)_
 - [[ENV MCP_STATIC_TOKEN]] _(en una lista, p. ej. para tapar secretos en logs)_
-- [[ENV NEO4J_PASSWORD]] _(en una lista, p. ej. para tapar secretos en logs)_
 - [[ENV NVIDIA_API_KEY]] _(en una lista, p. ej. para tapar secretos en logs)_
 - [[ENV NVIDIA_KEY]] _(en una lista, p. ej. para tapar secretos en logs)_
 - [[ENV REDIS_URL]] _(en una lista, p. ej. para tapar secretos en logs)_
@@ -136,5 +135,6 @@ _Además lo importan 33 pruebas (lista abajo)._
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-09-21 — Limpieza estructural - Track A Fase 2 + Track B completos]]
 - [[Sesión 2026-08-01 — Prompt frontend+IA (Cowork) - Tracks C y D implementados]]

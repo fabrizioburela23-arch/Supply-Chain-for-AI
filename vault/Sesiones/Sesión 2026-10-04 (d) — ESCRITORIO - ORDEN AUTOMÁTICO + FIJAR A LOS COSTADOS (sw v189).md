@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1131"
+ruta: "docs/ESTADO.md#L1151"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (d) — ESCRITORIO: ORDEN AUTOMÁTICO + 📌 FIJAR A LOS COSTADOS (sw v189)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1131 (17 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1151 (17 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

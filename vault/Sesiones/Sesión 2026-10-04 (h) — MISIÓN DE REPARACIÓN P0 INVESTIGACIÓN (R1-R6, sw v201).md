@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1013"
+ruta: "docs/ESTADO.md#L1033"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (h) — MISIÓN DE REPARACIÓN · P0 INVESTIGACIÓN (R1-R6, sw v201)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1013 (55 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1033 (55 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

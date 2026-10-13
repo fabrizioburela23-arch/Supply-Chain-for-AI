@@ -2,8 +2,8 @@
 // Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from →
 // valid_until). Un timeline deslizable/reproducible muestra cómo las relaciones
 // aparecen, están vigentes o expiran a lo largo del tiempo. Funciona 100%
-// client-side (deriva de TEMPORAL_SEED_FACTS + LINKS + PREIPO_INTEL); el backend
-// Graphiti/Neo4j es un upgrade opcional. Expone window.initTKGTab.
+// client-side (deriva de TEMPORAL_SEED_FACTS + LINKS + PREIPO_INTEL); la historia
+// con fecha vive en Postgres (ontología bitemporal). Expone window.initTKGTab.
 
 (function () {
   'use strict';
@@ -62,6 +62,7 @@
     chokeSub:   { es: 'quién arrastra a más si cae · motor del servidor, grafo vigente (la fecha del deslizador no cambia este ranking)', en: 'who drags down the most if it falls · server engine, current graph (the date slider does not change this ranking)' },
     chokeN:     { es: 'afectadas ≥1 %', en: 'hit ≥1 %' },
     chokeTip:   { es: 'Clic en cualquiera para su ficha. Orden: suma del impacto que transmite (el mismo número que X-Ray e Insights).', en: 'Click any for its card. Order: total impact it transmits (the same number as X-Ray and Insights).' },
+    storeNative: { es: 'memoria: nativa', en: 'memory: native' },
   };
   function _t(k) { const o = _L[k]; return o ? (o[_lang()] || o.es) : k; }
 
@@ -220,7 +221,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:10px"><button id="tkg-back" onclick="window.switchTab&&window.switchTab('map')" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">← ${(window.LANG==='en')?'Map':'Mapa'}</button>
           <h2 style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;margin:0">◈ Grafo de Conocimiento Temporal</h2></div>
-          <span id="tkg-store" style="font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3)">memoria: nativa</span>
+          <span id="tkg-store" style="font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3)">${_t('storeNative')}</span>
           <span id="tkg-ontology-badge" style="display:none;font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--violet);color:var(--violet)"></span>
         </div>
         <p style="font-size:12.5px;color:var(--ink-3);margin:0 0 14px">Cada hecho tiene una <b>ventana de validez</b>. Mueve la línea de tiempo (o dale ▶) para ver cómo las relaciones aparecen, están vigentes o expiran.</p>
@@ -1422,26 +1423,15 @@
     _sim.alpha(0.4).restart();
   }
 
-  // Si el backend expone el grafo (Neo4j), lo indicamos en el badge y, la
-  // primera vez que detectamos Neo4j conectado, sembramos los hechos derivados.
+  // La memoria temporal es NATIVA (cliente + Postgres): Neo4j se retiró el 2026-10-13 (decisión #6).
+  // /api/grafo/estado solo confirma el modo; la insignia lo dice en el idioma del usuario.
   function _checkBackendStore() {
     try {
       const base = (typeof BASE !== 'undefined') ? BASE : '';
       fetch(`${base}/api/grafo/estado`).then(r => r.ok ? r.json() : null).then(d => {
         if (!d || !d.store) return;
         const el = document.getElementById('tkg-store');
-        if (el) {
-          if (d.store === 'neo4j' && d.neo4j_connected) {
-            el.textContent = 'memoria: neo4j 🟢';
-          } else if (d.store === 'neo4j') {
-            el.textContent = 'neo4j ⚠ sin conexión';
-            el.title = d.error || 'No conecta con Neo4j';
-          } else {
-            el.textContent = 'memoria: nativa';
-            if (d.hint) el.title = d.hint;
-          }
-        }
-        if (d.store === 'neo4j' && d.neo4j_connected) _seedBackend(base);
+        if (el) el.textContent = _t('storeNative');
       }).catch(() => {});
     } catch (e) {}
     _checkOntologyStatus();
@@ -1469,29 +1459,5 @@
         }
       }).catch(() => {});
     } catch (e) {}
-  }
-
-  function _seedBackend(base) {
-    // solo una vez por navegador (el MERGE del server igual es idempotente)
-    try { if (localStorage.getItem('tkg_seeded_neo4j_v2') === '1') return; } catch (e) {}
-    const NB = window.NODE_BY_ID || {};
-    const payload = (_facts || []).map(f => ({
-      id: f.id, subject: f.subject, subject_label: (NB[f.subject] && NB[f.subject].label) || f.subject,
-      predicate: f.predicate, object: f.object, object_type: f.object_type,
-      object_label: (NB[f.object] && NB[f.object].label) || f.object,
-      valid_from: f.valid_from || null, valid_until: f.valid_until || null,
-      source: f.source, confidence: f.confidence, group: f.group, meta: f.meta || {},
-    }));
-    if (!payload.length) return;
-    fetch(`${base}/api/grafo/seed`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ facts: payload }),
-    }).then(r => r.ok ? r.json() : null).then(res => {
-      if (res && res.status === 'ok') {
-        try { localStorage.setItem('tkg_seeded_neo4j_v2', '1'); } catch (e) {}
-        const el = document.getElementById('tkg-store');
-        if (el) el.textContent = 'memoria: neo4j 🟢 (' + res.persisted + ' hechos)';
-      }
-    }).catch(() => {});
   }
 })();

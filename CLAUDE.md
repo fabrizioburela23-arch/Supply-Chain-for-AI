@@ -28,7 +28,7 @@ validadores Python de 0,01-0,3 ms; pySHACL solo como oráculo en CI), Hot Path V
 `graph_version` tomado al confirmar, `/api/hot/*`, UN kernel) y Gobernanza (artefactos con hash, release aprobado con PIN,
 G(t,κ) y replay). Plan de 26 pasos desplegables en su §10; decisiones nuevas D1-D7.
 **CIERRE (2026-10-13): los 26 pasos están hechos** — `docs/CIERRE_INFRA.md` (español simple) dice qué hace cada pilar,
-el estado de los 99 hallazgos de BRECHAS con su prueba, las 11 rutas de escritura que aún no dejan decisión (fijadas en
+el estado de los 99 hallazgos de BRECHAS con su prueba, las 10 rutas de escritura que aún no dejan decisión (fijadas en
 tests/test_cierre_infra.py: la lista solo puede ACHICARSE) y los clics exactos que solo Fabrizio puede hacer (ratificar,
 activar kernel 2.0.0 / shapes / gates / guard con PIN, Railway). Empezar por ahí antes de la "Fase 2+".
 **PASOS 1-4 HECHOS (2026-10-13)**: `events` es append-only DE VERDAD (disparador `kh_append_only`, `core/ledger_ddl.py`;
@@ -467,14 +467,15 @@ cambian, nace `@2` (nunca editar `@1`). Toda etiqueta `impl` nueva va a STAMPS (
   era un microservicio EXTERNO; lo reemplazan los motores internos
   core/sim_agents.py y matrix/engine.py).
 
-## Dos bases de datos — roles distintos, NO fusionar
+## Una base de datos: Postgres
 
 - **Postgres** (`DATABASE_URL`, plugin de Railway): FUENTE ÚNICA DE VERDAD de
   la ontología. Eventos inmutables con `valid_from/valid_to` (validez) +
   `recorded_at` (sistema). Time-travel: `GET /api/ontology/graph?as_of=`.
-- **Neo4j Aura** (`NEO4J_URI/USER/PASSWORD`): espejo visual del Grafo
-  Temporal. Si cae, la app sigue en modo nativo.
-- Ambas OPCIONALES: sin sus env vars el server arranca igual (patrón
+  El Grafo Temporal es NATIVO (cliente + esta base; `/api/grafo/estado` → `store: 'native'`).
+- **Neo4j se RETIRÓ el 2026-10-13** (decisión #6 de Fabrizio, docs/BRECHAS_V2.md): nadie lo leía. NO
+  reintroducirlo (ni driver, ni `NEO4J_*`, ni `/api/grafo/seed`; tests/test_neo4j_retirado.py lo vigila).
+- OPCIONAL: sin `DATABASE_URL` el server arranca igual (patrón
   try/except + `*_available()`). Nunca romper ese patrón.
 
 ## Namespaces de API — CRÍTICO
@@ -650,7 +651,6 @@ ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, ELEVENLABS_ALLOW_OVERRIDE,
 AV_KEY, FMP_KEY, MARKETSTACK_KEY, ALPACA_KEY/SECRET/BASE,
 TRADE_PIN            ← SIN esto el trading queda deshabilitado (X-Trade-Pin)
 KHIPU_ADMIN_SECRET   ← emite claves /v1 de tiers de pago (X-Admin-Secret)
-NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,   ← Grafo Temporal persistente
 DATABASE_URL                              ← Ontología (Postgres en Railway)
 RESEARCH_DAILY_BUDGET_USD, RESEARCH_AUTO_EVENTS, RESEARCH_MODEL_DEFAULT  ← Phase 2
 RESEARCH_ANOMALY_PCT (8), RESEARCH_ANOMALY_MAX (3)  ← movimientos anómalos → investigación auto
@@ -793,8 +793,10 @@ bloque "DATOS EN VIVO" (capitalización+precio del perfil en vivo; privadas:
   KhipuPortfolios/KhipuUniverse2D, window.KHIPU DSL, engine/khipu_lang.js,
   /v1/* monetizada) — cambiarlos rompería estados/caché.
 - Usuario (Fabrizio): hispanohablante, no técnico. Explicar en español simple,
-  sin jerga; pasos con clics exactos para Railway/Neo4j/etc.; siempre cerrar
+  sin jerga; pasos con clics exactos para Railway/etc.; siempre cerrar
   con "qué hacer ahora" concreto. La pestaña ❓ Guía de la app existe para él.
+  **Mensajes CORTOS estilo TDAH (pedido 2026-10-13: "los mensajes largos me quitan atención")**: viñetas breves con
+  emoji de sección, lo esencial primero, máximo ~10 líneas, sin párrafos largos.
 - La interfaz debe tender a SIMPLIFICARSE: antes de añadir un botón/ícono
   nuevo, evaluar fusionarlo con uno existente (pidió esto explícitamente).
 - **REGLA BILINGÜE (2026-07-12, pedido explícito)**: TODO texto de UI nuevo

@@ -1,6 +1,6 @@
 """ontology/db.py — conexión a Postgres (fuente única de verdad de la ontología).
 
-Sigue el mismo patrón de "feature opcional" que Neo4j (server.py:_temporal_mode):
+Sigue el patrón de "feature opcional" del resto de integraciones:
 si DATABASE_URL no está configurada, la ontología queda inactiva sin romper
 el resto de la app. Railway inyecta DATABASE_URL automáticamente al añadir
 el plugin de Postgres al proyecto.

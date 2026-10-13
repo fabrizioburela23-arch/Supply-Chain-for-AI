@@ -6,8 +6,9 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-101 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+102 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]] — 8 archivos
 - [[Sesión 2026-10-13 (h) — PASO 24 - REPETIR DECISIONES (replay), IMPLEMENTACIONES RETENIDAS]] — 9 archivos
 - [[Sesión 2026-10-13 (f) — PASOS 22, 23, 25, 26 Y 11]] — 1 archivos
 - [[Sesión 2026-10-13 (g-rev) — REVISIÓN DEL BATCH G]] — 2 archivos

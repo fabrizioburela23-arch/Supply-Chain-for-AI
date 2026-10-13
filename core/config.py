@@ -1,7 +1,7 @@
 """core/config.py — variables de entorno compartidas entre server y ontology.
 
 Solo viven aquí las que necesita más de un módulo (IA, Finnhub, timeout).
-Las exclusivas del server (Alpaca, ElevenLabs, Neo4j…) siguen en server.py.
+Las exclusivas del server (Alpaca, ElevenLabs…) siguen en server.py.
 load_dotenv() es idempotente: no importa si server.py también lo llama.
 """
 import os
@@ -66,7 +66,7 @@ HTTP_TIMEOUT = 8
 # Tavily: pensado para agentes LLM (snippets + URL ya listos para citar, sin
 # parsear HTML a mano); tier gratis 1,000 búsquedas/mes alcanza para uso
 # personal. Sin la key, el agente se auto-deshabilita — mismo patrón que
-# NEO4J_*/DATABASE_URL (*_available()), nunca rompe el resto de la app.
+# DATABASE_URL (*_available()), nunca rompe el resto de la app.
 TAVILY_KEY = os.getenv('TAVILY_KEY', '')
 
 # Interruptor de investigación reactiva — decisión de Fabrizio (2026-08-02):

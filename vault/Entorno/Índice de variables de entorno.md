@@ -6,7 +6,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 
 # Índice de variables de entorno
 
-160 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
+157 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
 
 | Variable | La leen | En CLAUDE.md |
 |---|---|---|
@@ -114,9 +114,6 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV MCP_TRADE_PER_HOUR]] | 1 | **no** |
 | [[ENV MCP_TRADING_ENABLED]] | 1 | sí |
 | [[ENV MCP_TRUSTED_PROXY_HOPS]] | 1 | **no** |
-| [[ENV NEO4J_PASSWORD]] | 2 | sí |
-| [[ENV NEO4J_URI]] | 1 | sí |
-| [[ENV NEO4J_USER]] | 1 | sí |
 | [[ENV NVIDIA_API_KEY]] | 2 | **no** |
 | [[ENV NVIDIA_KEY]] | 2 | sí |
 | [[ENV NVIDIA_MODEL]] | 1 | sí |

@@ -602,35 +602,17 @@ def _ai_models_now():
 FMP      = os.getenv('FMP_KEY', '')
 MSTACK   = os.getenv('MARKETSTACK_KEY', '')
 
-# ── Grafo de Conocimiento Temporal (Neo4j opcional) ─────────────────────────
 def _clean_env(v):
     """Limpia un valor de variable de entorno: quita espacios/saltos de línea y
     comillas que se cuelan al pegar en el panel de Railway (causa típica de un
-    'Unauthorized' de Neo4j aunque la contraseña sea 'correcta')."""
+    'Unauthorized' aunque la clave sea 'correcta')."""
     v = (v or '').strip()
     if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
         v = v[1:-1].strip()
     return v
 
-# Guardamos también los valores crudos para detectar si venían con espacios.
-_NEO4J_URI_RAW      = os.getenv('NEO4J_URI', '')
-_NEO4J_USER_RAW     = os.getenv('NEO4J_USER', 'neo4j')
-_NEO4J_PASSWORD_RAW = os.getenv('NEO4J_PASSWORD', '')
-NEO4J_URI      = _clean_env(_NEO4J_URI_RAW)
-NEO4J_USER     = _clean_env(_NEO4J_USER_RAW) or 'neo4j'
-NEO4J_PASSWORD = _clean_env(_NEO4J_PASSWORD_RAW)
-
-
-def _neo4j_available():
-    try:
-        import neo4j  # noqa: F401  (driver oficial, ligero)
-        return True
-    except Exception:  # noqa: BLE001
-        return False
-
-
-def _temporal_mode():
-    return 'neo4j' if (NEO4J_URI and NEO4J_PASSWORD and _neo4j_available()) else 'native'
+# Grafo de Conocimiento Temporal: la memoria temporal vive en Postgres (ontología bitemporal, G(t, κ)) y en el
+# cliente (modo nativo). Neo4j se RETIRÓ el 2026-10-13 (decisión #6 de Fabrizio): nadie lo leía. No reintroducirlo.
 
 # Servicios adicionales (Khipu Finance v1)
 # MiroFish (microservicio externo multi-agente) se retiró: su caso de uso lo
@@ -812,7 +794,7 @@ def _secret_values_for_scan():
     from core.http import secret_values
     return secret_values(min_len=_REDACT_MIN_LEN, extra=(CLAUDE, GEMINI_KEY, NVIDIA_KEY, FINNHUB, FMP, MSTACK, AV_KEY,
                                            ELEVENLABS_KEY, ALPACA_KEY, ALPACA_SECRET, KHIPU_ADMIN_SECRET,
-                                           NEO4J_PASSWORD, SECRET_KEY))
+                                           SECRET_KEY))
 
 
 # ----------------------------------------------------------------------------
@@ -1103,7 +1085,7 @@ def _diag_redact(text, limit=200):
     Se redacta el texto COMPLETO y luego se trunca (antes se truncaba primero y
     un secreto cortado en el borde quedaba a medias sin tapar)."""
     return redact_secrets(text, extra=(CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, SECRET_KEY,
-                                       NEO4J_PASSWORD, NEO4J_URI, GEMINI_KEY, NVIDIA_KEY, ALPACA_KEY,
+                                       GEMINI_KEY, NVIDIA_KEY, ALPACA_KEY,
                                        ALPACA_SECRET, TRADE_PIN, KHIPU_ADMIN_SECRET),
                           limit=limit)
 
@@ -1648,40 +1630,14 @@ def _diag_hot_views():
 
 
 def _diag_grafo():
-    mode = _temporal_mode()
-    if mode == 'native':
-        return _diag_card(
-            'Grafo de Conocimiento Temporal en modo NATIVO (client-side + memoria). '
-            'Añade NEO4J_URI/USER/PASSWORD para memoria persistente en Neo4j.',
-            'Temporal Knowledge Graph in NATIVE mode (client-side + memory). '
-            'Add NEO4J_URI/USER/PASSWORD for persistent memory in Neo4j.',
-            configured=True, ok=True)
-    # neo4j mode → probar conexión. Mostramos usuario + host (seguros) para
-    # depurar el Unauthorized sin exponer la contraseña (solo su LARGO).
-    host = ''
-    try:
-        host = NEO4J_URI.split('://', 1)[-1].split('@')[-1].split('/')[0]
-    except Exception:  # noqa: BLE001
-        host = ''
-    ctx = f' [usuario={NEO4J_USER} · host={host or "(uri inválida)"} · pw={len(NEO4J_PASSWORD)} car.]'
-    ctx_en = f' [user={NEO4J_USER} · host={host or "(invalid uri)"} · pw={len(NEO4J_PASSWORD)} chars]'
-    warn = warn_en = ''
-    if _NEO4J_PASSWORD_RAW != _NEO4J_PASSWORD_RAW.strip():
-        warn += ' ⚠ la contraseña tenía espacios (ya la limpié, pero revísala).'
-        warn_en += ' ⚠ the password had spaces (already trimmed, but check it).'
-    t0 = time.time()
-    try:
-        drv = _get_neo4j_driver()
-        drv.verify_connectivity()
-        return _diag_card('Neo4j conectado — memoria temporal persistente activa.' + ctx,
-                          'Neo4j connected — persistent temporal memory active.' + ctx_en,
-                          configured=True, ok=True, latency_ms=int((time.time() - t0) * 1000))
-    except Exception as e:  # noqa: BLE001
-        red = _diag_redact(e)
-        return _diag_card('NEO4J configurado pero no conecta: ' + red + ctx + warn,
-                          'NEO4J is set up but does not connect: ' + red + ctx_en + warn_en,
-                          _db_error_fix(red),
-                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
+    """Grafo Temporal: siempre NATIVO. La memoria temporal vive en Postgres (la ontología bitemporal) y en el
+    navegador; Neo4j se retiró el 2026-10-13 (decisión #6) y no hay otra base que configurar ni probar."""
+    return _diag_card(
+        'Grafo de Conocimiento Temporal en modo NATIVO: la memoria temporal vive en Postgres (la ontología con su '
+        'historia) y en el navegador. No necesita otra base de datos.',
+        'Temporal Knowledge Graph in NATIVE mode: the temporal memory lives in Postgres (the ontology and its '
+        'history) and in the browser. No other database needed.',
+        configured=True, ok=True, store='native')
 
 
 def _diag_alpaca():
@@ -4249,153 +4205,14 @@ def company_research(ticker):
         return jsonify({'error': str(e)[:200]}), 500
 
 
-# ── Grafo de Conocimiento Temporal — /api/grafo/* ────────────────────────────
-# El panel funciona 100% en el cliente (deriva hechos de NODES/LINKS/PREIPO).
-# Estos endpoints añaden persistencia/ingesta y el upgrade opcional a Graphiti+Neo4j.
-_neo4j_estado_cache = {'ok': None, 'ts': 0, 'err': None}
-
-
+# ── Grafo de Conocimiento Temporal — /api/grafo/estado ──────────────────────────────────────────────────────────
+# El panel funciona 100% en el cliente (deriva hechos de NODES/LINKS/PREIPO) y la memoria temporal con historia vive
+# en Postgres (/api/ontology/graph?as_of=, G(t, κ)). Neo4j y su carga masiva (POST /api/grafo/seed) se RETIRARON el
+# 2026-10-13 (decisión #6 de Fabrizio: nadie lo leía). Este estado queda para la insignia del Grafo Temporal y
+# siempre dice 'native'.
 @app.route('/api/grafo/estado')
 def grafo_estado():
-    mode = _temporal_mode()
-    connected = False
-    err = None
-    if mode == 'neo4j':
-        # cache asimétrico: éxito 60s (no pingar Aura en cada apertura), fallo 8s
-        # (para que el badge se recupere pronto tras un cold-start de Aura, sin
-        # quedar rojo 60s). verify_connectivity tiene timeout corto (ver driver).
-        c = _neo4j_estado_cache
-        ttl = 60 if c['ok'] else 8
-        if c['ok'] is not None and (time.time() - c['ts']) < ttl:
-            connected, err = c['ok'], c['err']
-        else:
-            try:
-                drv = _get_neo4j_driver()          # reusa el singleton
-                drv.verify_connectivity()
-                connected, err = True, None
-            except Exception as e:  # noqa: BLE001
-                connected = False
-                err = _diag_redact(e)
-            c['ok'], c['ts'], c['err'] = connected, time.time(), err
-    payload = {'store': mode, 'neo4j_connected': connected}
-    if not connected and mode == 'neo4j' and err:
-        payload['error'] = err            # el badge/diag puede mostrar el porqué
-    elif mode == 'native' and (NEO4J_URI or NEO4J_PASSWORD):
-        # el usuario puso alguna var pero no todas / falta el driver
-        payload['hint'] = ('NEO4J incompleto: revisa que NEO4J_URI, NEO4J_USER y '
-                           'NEO4J_PASSWORD estén las 3 puestas y que el deploy incluya el driver neo4j.')
-    # Metadatos SEGUROS para depurar el Unauthorized (nada de contraseña).
-    if NEO4J_URI or NEO4J_PASSWORD:
-        host = ''
-        try:
-            host = NEO4J_URI.split('://', 1)[-1].split('@')[-1].split('/')[0]
-        except Exception:  # noqa: BLE001
-            host = '(uri inválida)'
-        payload['diag'] = {
-            'user': NEO4J_USER,
-            'uri_host': host,
-            'uri_scheme': (NEO4J_URI.split('://', 1)[0] if '://' in NEO4J_URI else '(sin esquema)'),
-            'pw_len': len(NEO4J_PASSWORD),
-            'pw_had_spaces': _NEO4J_PASSWORD_RAW != _NEO4J_PASSWORD_RAW.strip(),
-            'uri_had_spaces': _NEO4J_URI_RAW != _NEO4J_URI_RAW.strip(),
-            'user_had_spaces': _NEO4J_USER_RAW != _NEO4J_USER_RAW.strip(),
-        }
-    return jsonify(payload)
-
-
-@app.route('/api/grafo/seed', methods=['POST'])
-@rate_limit(limit=20, window=3600)
-def grafo_seed():
-    """Carga masiva de hechos (el cliente empuja su catálogo derivado una vez
-    cuando detecta Neo4j). Idempotente: MERGE por id, no duplica."""
-    if _temporal_mode() != 'neo4j':
-        return jsonify({'error': 'neo4j no configurado', 'store': 'native'}), 400
-    b = request.get_json(force=True, silent=True) or {}
-    facts = b.get('facts') or []
-    if not isinstance(facts, list):
-        return jsonify({'error': 'facts debe ser una lista'}), 400
-    ok, fail = 0, 0
-    for f in facts[:1000]:
-        if not isinstance(f, dict) or not f.get('subject') or not f.get('id'):
-            fail += 1
-            continue
-        try:
-            _neo4j_add_fact(f)
-            ok += 1
-        except Exception:  # noqa: BLE001
-            fail += 1
-    return jsonify({'status': 'ok', 'persisted': ok, 'failed': fail, 'store': 'neo4j'})
-
-
-_neo4j_driver = None
-_neo4j_ready = False
-
-
-def _get_neo4j_driver():
-    """Driver singleton + constraints creadas una sola vez (idempotente)."""
-    global _neo4j_driver, _neo4j_ready
-    if _neo4j_driver is None:
-        from neo4j import GraphDatabase
-        # timeouts cortos: si Aura está dormida/caída, verify_connectivity falla
-        # rápido en vez de colgar los 2 workers de gunicorn ~30s.
-        _neo4j_driver = GraphDatabase.driver(
-            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD),
-            max_connection_lifetime=600,
-            connection_timeout=5,
-            connection_acquisition_timeout=10,
-            max_transaction_retry_time=8)
-    if not _neo4j_ready:
-        try:
-            with _neo4j_driver.session() as s:
-                s.run('CREATE CONSTRAINT khipu_entity_id IF NOT EXISTS '
-                      'FOR (e:Entity) REQUIRE e.id IS UNIQUE')
-                s.run('CREATE CONSTRAINT khipu_fact_id IF NOT EXISTS '
-                      'FOR (f:Fact) REQUIRE f.id IS UNIQUE')
-            _neo4j_ready = True
-        except Exception:  # noqa: BLE001
-            pass  # sin constraints igual funciona (MERGE deduplica de todos modos)
-    return _neo4j_driver
-
-
-# Cypher: un hecho = un nodo Fact colgado del sujeto; si el objeto es entidad,
-# también lo enlaza. Guarda la ventana de validez (valid_from → valid_until).
-_FACT_CYPHER = """
-MERGE (s:Entity {id:$subject})
-  ON CREATE SET s.label=$subject_label
-  ON MATCH  SET s.label=coalesce(s.label,$subject_label)
-MERGE (f:Fact {id:$fact_id})
-  SET f.subject=$subject, f.predicate=$predicate, f.object=$object,
-      f.object_type=$object_type, f.valid_from=$valid_from, f.valid_until=$valid_until,
-      f.source=$source, f.confidence=$confidence, f.group=$group,
-      f.headline=$headline
-MERGE (s)-[:ASSERTS]->(f)
-WITH f
-FOREACH (_ IN CASE WHEN $is_edge THEN [1] ELSE [] END |
-  MERGE (o:Entity {id:$object})
-    ON CREATE SET o.label=$object_label
-  MERGE (f)-[:ABOUT]->(o)
-)
-"""
-
-
-def _neo4j_add_fact(fact):
-    """Persiste un hecho temporal directamente en Neo4j (idempotente)."""
-    drv = _get_neo4j_driver()
-    NB = None  # el server no tiene el catálogo JS; usamos el id como label si no hay
-    is_edge = fact.get('object_type') == 'node' and bool(fact.get('object'))
-    params = {
-        'subject': fact['subject'], 'subject_label': fact.get('subject_label') or fact['subject'],
-        'fact_id': fact['id'], 'predicate': fact.get('predicate', ''),
-        'object': fact.get('object', ''), 'object_type': fact.get('object_type', 'literal'),
-        'object_label': fact.get('object_label') or fact.get('object', ''),
-        'valid_from': fact.get('valid_from'), 'valid_until': fact.get('valid_until'),
-        'source': fact.get('source', 'ingest'), 'confidence': float(fact.get('confidence') or 0.8),
-        'group': fact.get('group', 'g_ingest'),
-        'headline': (fact.get('meta') or {}).get('headline', ''),
-        'is_edge': is_edge,
-    }
-    with drv.session() as s:
-        s.run(_FACT_CYPHER, **params)
+    return jsonify({'store': 'native'})
 
 
 # Pantallas del menú "Herramientas / Tools" que la voz puede abrir (ids de BixbyCockpit.screens() en

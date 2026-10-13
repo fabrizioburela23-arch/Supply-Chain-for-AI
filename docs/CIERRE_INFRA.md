@@ -13,8 +13,9 @@ Los cuatro pilares que pediste están construidos y funcionando: cada acción im
 que no se puede borrar, las **reglas** revisan cada escritura en una décima de milisegundo, los **números rápidos**
 salen de vistas en memoria en menos de 1 ms, y las **reglas y el motor tienen versión** y solo cambian con tu PIN.
 Los **8 defectos** que encontró esta auditoría (E1-E8) y los 5 que encontró la revisión del «Repetir» (R2-R6, U1)
-**ya están corregidos**, cada uno con su prueba (sección 4). Quedan **11 acciones que todavía no dejan ficha** (lista en
-la sección 3: credenciales de IAs externas, voz, simulación por agentes y Neo4j; ninguna toca el grafo ni el dinero) y
+**ya están corregidos**, cada uno con su prueba (sección 4). Quedan **10 acciones que todavía no dejan ficha** (lista en
+la sección 3: credenciales de IAs externas, voz y simulación por agentes; ninguna toca el grafo ni el dinero; la 11.ª,
+la carga a Neo4j, desapareció al retirarlo el 2026-10-13, decisión #6) y
 varias cosas que solo tú puedes encender o decidir (sección 6). Lo más importante que falta es tuyo: **activar el motor
 2.0.0** (cierra 14 hallazgos de golpe) y **descargar los 5 años de precios**.
 
@@ -102,7 +103,8 @@ fallos** (sin «xfail»: las dos brechas que se probaban así ya dejan su ficha)
 
 ## 3. Acciones que todavía NO dejan ficha
 
-Se recorrieron las **92 rutas** que escriben (POST/PUT/PATCH/DELETE) del servidor, de los blueprints y del MCP. A 64
+Se recorrieron las **92 rutas** que escriben (POST/PUT/PATCH/DELETE) del servidor, de los blueprints y del MCP (hoy
+**91**: `POST /api/grafo/seed` se borró con Neo4j el 2026-10-13, decisión #6). A 64
 se las llamó de verdad contra la base (sin red ni IA) contando fichas antes y después; las demás (aprobaciones,
 gobernanza, OAuth…) se clasificaron leyendo su código y sus pruebas. Resultado:
 
@@ -114,7 +116,8 @@ gobernanza, OAuth…) se clasificaron leyendo su código y sus pruebas. Resultad
   (`/api/user-state`, reportes de cartera), sesiones técnicas (`/api/voice/session`, `/api/ws-key`), el chequeo de
   salud `/api/ops/check` (telemetría: escribe su propia fila de control, no toca el libro) o la API pública `/v1/*`
   (intocable);
-- **11 cambian algo y NO dejan ficha** (brechas). Ninguna toca el grafo ni el dinero. Están fijadas en
+- **10 cambian algo y NO dejan ficha** (brechas; eran 11 — la 11.ª, `POST /api/grafo/seed`, se borró con Neo4j).
+  Ninguna toca el grafo ni el dinero. Están fijadas en
   `tests/test_cierre_infra.py`: una ruta nueva sin ficha rompe la CI, y esta lista solo puede achicarse.
 
 | Ruta | Qué cambia sin ficha | Tipo de ficha que le falta |
@@ -123,7 +126,6 @@ gobernanza, OAuth…) se clasificaron leyendo su código y sus pruebas. Resultad
 | `POST /api/mcp/tokens`, `POST /api/mcp/tokens/<token_id>/revoke` | crea/revoca credenciales para IAs externas (pueden tener permiso de órdenes) | nueva (p. ej. `policy.change mcp.tokens`) |
 | `POST /oauth/authorize`, `POST /oauth/register`, `POST /oauth/token`, `POST /oauth/revoke` | alta y acceso de IAs externas por OAuth | ídem |
 | `POST /api/voice/adopt`, `POST /api/voice/agent-tune`, `POST /api/voice/sync-agent` | cambia la voz, instrucciones y herramientas del agente de ElevenLabs | `policy.change voice.agent` |
-| `POST /api/grafo/seed` | escribe en Neo4j (espejo) | — (o retirarla con Neo4j, decisión #6) |
 
 Además, 1 tipo de ficha del vocabulario (`core/decisions.KINDS`) no lo escribe ningún código: `reconcile.plan` (ver el
 plan es una lectura; también fijado en la prueba, que solo deja achicar esa lista). La guardia de la base
@@ -251,8 +253,13 @@ se corrigieron al cierre (sección 4).
    `IMPORT_BULK_WEIGHT_FACTOR`, `DECIDE_MIN_CONF`, `DECIDE_WAIT_S`, `COMMITTEE_MEMO_TTL_HOURS`, `RESEARCH_CALIBRATION_K`,
    `RESEARCH_OUTCOME_BAND` y `BROKERAGE_APPROVAL_TTL_MIN` (estas tres últimas desde E5: viven en `policy.committee` y
    `policy.broker_risk` 1.1.0).
-5. En GitHub → *Settings* → *Secrets and variables* → *Actions*: el secreto **`KHIPU_MCP_TOKEN`** (scope read) para que
-   el ancla diaria del libro se guarde fuera de la base (decisión D7 del diseño).
+5. **Neo4j ya no existe en Khipus** (tu decisión #6, 2026-10-13): en Railway → tu servicio → *Variables* borra
+   **`NEO4J_URI`**, **`NEO4J_USER`** y **`NEO4J_PASSWORD`** (nadie las lee; el Grafo Temporal sigue funcionando igual,
+   en modo nativo). Opcional: entra a **console.neo4j.io** y pausa o borra la instancia de Aura (no se pierde nada:
+   solo recibía copias y nadie la consultaba).
+6. En GitHub → *Settings* → *Secrets and variables* → *Actions*: el secreto **`KHIPU_MCP_TOKEN`** (scope read) para que
+   la prueba de humo del MCP corra después de cada despliegue. El ancla diaria del libro (decisión D7) NO lo necesita:
+   `/api/ledger/anchor` es público y se guarda sola cada día como artefacto de GitHub Actions.
 
 **En la app (el círculo con tus iniciales, arriba a la derecha → «🩺 Sistema» → pestaña «🩺 Diagnóstico» → baja hasta la
 caja «⚖ Gobernanza: reglas y motor versionados»; también lo encuentras con ⌘K / Ctrl+K escribiendo «Sistema». En la vista
@@ -279,7 +286,7 @@ clásica es el botón 🩺 de la barra):**
    «AGENTE IA» → **«▶ INICIAR»** una vez.
 
 **Decisiones y revisiones que siguen abiertas** (BRECHAS §2): #1 topes de tu cuenta (hoy US$100.000 por orden y nada
-más), #6 Neo4j, #7 que Postgres mande sobre el catálogo, #8 las listas de `docs/REVISION_GRAFO.md`, #9 las de
+más), #7 que Postgres mande sobre el catálogo, #8 las listas de `docs/REVISION_GRAFO.md`, #9 las de
 `docs/REVISION_INSTRUMENTOS.md`, #10 las fechas propuestas, #11 episodios para calibrar, #12 OK para corregir los números
 de `/v1/risk/portfolio`, #13 recalificar predicciones con un método v2, #15 si faltan `find_anomalies` y
 `project_portfolio` en el MCP.
@@ -291,7 +298,7 @@ de `/v1/risk/portfolio`, #13 recalificar predicciones con un método v2, #15 si 
 Ya hecho de lo que estaba en "Fase 2+": el grafo bitemporal G(t, κ), la historia de propiedades, Δθ en el diff y el
 disparador append-only. Lo que queda, en el orden en que lo haría:
 
-1. **Cerrar las 11 brechas que quedan** (≈1 día, sin decisiones tuyas salvo la de Neo4j): credenciales MCP y OAuth
+1. **Cerrar las 10 brechas que quedan** (≈1 día, sin decisiones tuyas): credenciales MCP y OAuth
    (`policy.change mcp.tokens`), voz (`policy.change voice.agent`) y simulación por agentes (`whatif.*`). Los defectos
    E1-E8 ya están cerrados (sección 4).
 2. **Tus dos clics grandes**: motor 2.0.0 y descarga de 5 años (sección 6).
@@ -310,7 +317,7 @@ disparador append-only. Lo que queda, en el orden en que lo haría:
 Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PIN** (activar una versión) · 🔶 parcial ·
 👤 necesita tu decisión o revisión (#n de BRECHAS §2) · ⬜ abierto (Fase 2+ o pendiente).
 
-**Resumen: ✅ 42 cerrados · 🟡 14 listos, esperan tu PIN · 🔶 8 parciales · 👤 12 esperan tu decisión o revisión · ⬜ 23 abiertos (total 99).** Si activas el motor 2.0.0, los 14 🟡 pasan a ✅. L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
+**Resumen: ✅ 43 cerrados · 🟡 14 listos, esperan tu PIN · 🔶 9 parciales · 👤 10 esperan tu decisión o revisión · ⬜ 23 abiertos (total 99).** Si activas el motor 2.0.0, los 14 🟡 pasan a ✅. L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
 
 | Id | Qué era | Estado | Evidencia (código / prueba) |
 |---|---|---|---|
@@ -362,7 +369,7 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | L3-02 | 27 vínculos fechados entran como supply | 👤 #8 | lista en docs/REVISION_GRAFO.md |
 | L3-04 | 97 % de vínculos con fecha centinela | 👤 #10 | fechas propuestas en docs/REVISION_GRAFO.md; nada aplicado |
 | L3-05 | No existía G(t,κ) | ✅ | ontology/bitemporal.py, ?known_at= (test_bitemporal, test_bitemporal_review) |
-| L3-09 | Tres copias vivas del grafo + Neo4j | 🔶 | el servidor lee una sola (hot.graph); catálogo y Postgres siguen separados (#7) y Neo4j sigue (#6) |
+| L3-09 | Tres copias vivas del grafo + Neo4j | 🔶 | el servidor lee una sola (hot.graph); Neo4j retirado el 2026-10-13 (#6, test_neo4j_retirado); catálogo y Postgres siguen separados (#7) |
 | L3-11 | Pesos mezclados en dos escalas | 👤 #8 | lista en docs/REVISION_GRAFO.md |
 | L3-12 | Direcciones invertidas por texto no detectadas | 👤 #8 | detector en scripts/audit_graph.py + lista (test_review_lists) |
 | L3-13 | Empresa = acción | 🔶 #9 | tabla instruments (test_instruments) + docs/REVISION_INSTRUMENTOS.md para que marques |
@@ -373,7 +380,7 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | L3-07 | diff_graph no veía cambios de peso | ✅ | diff con changed (Δθ) (test_bitemporal) |
 | L3-08 | events append-only solo por convención | ✅ | disparador kh_append_only (test_ops_events_append_only) |
 | L3-15 | Órdenes sin tabla de ejecuciones; posiciones sin historia | ✅ | broker_fills + positions_eod (test_trading_agent_ledger, test_prices_eod) |
-| L3-10 | Neo4j recibe escrituras y nadie lo lee | 👤 #6 | sin respuesta: se deja como está |
+| L3-10 | Neo4j recibe escrituras y nadie lo lee | ✅ | retirado el 2026-10-13 por tu decisión #6: sin driver, sin `NEO4J_*`, sin `POST /api/grafo/seed`; el Grafo Temporal es nativo (test_neo4j_retirado) |
 | L3-16 | Precio de IA sin fecha de vigencia | ⬜ | core/ai_usage.py:48 (Gemini 3.8 sube el 1-ene-2027; hay que editar a mano) |
 | L4-02 | El guardián no veía «233,95 USD» | ✅ | test_block0_numbers, corpus 102 respuestas |
 | L4-M1 | El guardián aceptaba ±15 % contra todo el prompt | ✅ | test_block0_numbers |
@@ -399,7 +406,7 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | G5-09 | CSP débil con el PIN en localStorage | ⬜ | server.py:691 sigue con unsafe-inline/unsafe-eval |
 | G5-10 | El agente de trading se apagaba en silencio | ✅ | queda apagado con aviso y su configuración guardada (test_trading_agent_ledger; decisión #14 por defecto) |
 | G5-11 | Tres mecanismos de migración sin versión | 🔶 | columnas tardías + safe_ddl (idempotentes); sigue sin número de versión de esquema |
-| G5-12 | Neo4j cableado; la UI no lee Postgres | 👤 #6 | sin respuesta: se deja como está |
+| G5-12 | Neo4j cableado; la UI no lee Postgres | 🔶 | Neo4j retirado (#6, test_neo4j_retirado); la UI sigue dibujando el catálogo y no /api/ontology/graph (#7) |
 | M-code-01 | Ψ decía usar la misma semántica que propagate | 🟡 | Ψ = la vista Impact restringida a flujo; coincide con el impacto solo con 2.0.0 (test_kernel_reference_figures::test_psi_del_tensor_es_la_vista_impact) |
 | M-code-02 | Al menos 5 variantes del contagio | 🟡 | con 2.0.0 queda una (test_kernel_reference_figures) |
 | M-code-03 | /api/trade/close sin controles | ✅ | test_order_single_path::test_close_leaves_the_same_trail |

@@ -134,16 +134,16 @@ SIN_DECISION = {
     'POST /api/voice/adopt': 'brecha',                  # cambia la voz/config del agente de ElevenLabs
     'POST /api/voice/agent-tune': 'brecha',
     'POST /api/voice/sync-agent': 'brecha',
-    'POST /api/grafo/seed': 'brecha',                   # escribe en Neo4j (espejo)
+    # 'POST /api/grafo/seed' (escribía en Neo4j) se BORRÓ el 2026-10-13 con Neo4j (decisión #6): brecha cerrada.
 }
 CATEGORIAS = {'lectura', 'ia', 'personal', 'sesion', 'telemetria', 'resultado', 'v1', 'brecha'}
-# Foto de las brechas al cierre (2026-10-13, tras cerrar E1-E4): la lista de arriba solo puede quedarse con un
-# SUBCONJUNTO de esta.
+# Foto de las brechas al cierre (2026-10-13, tras cerrar E1-E4; sin POST /api/grafo/seed desde que se retiró Neo4j):
+# la lista de arriba solo puede quedarse con un SUBCONJUNTO de esta.
 BRECHAS_AL_CIERRE = frozenset((
     'POST /api/sim/agents',
     'POST /api/mcp/tokens', 'POST /api/mcp/tokens/<token_id>/revoke', 'POST /oauth/authorize', 'POST /oauth/register',
     'POST /oauth/token', 'POST /oauth/revoke', 'POST /api/voice/adopt', 'POST /api/voice/agent-tune',
-    'POST /api/voice/sync-agent', 'POST /api/grafo/seed'))
+    'POST /api/voice/sync-agent'))
 BRECHAS_CONOCIDAS = {k for k, v in SIN_DECISION.items() if v == 'brecha'}
 
 # ── 3. Tipos del vocabulario sin ningún escritor en el código (solo pueden achicarse) ────────────────────────────

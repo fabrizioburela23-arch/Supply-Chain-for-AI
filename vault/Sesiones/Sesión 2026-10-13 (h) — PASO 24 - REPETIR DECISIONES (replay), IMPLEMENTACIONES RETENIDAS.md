@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L32"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (h) — PASO 24: REPETIR DECISIONES (replay), IMPLEMENTACIONES RETENIDAS Y ⚖ AUDITORÍA — sw v263
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (59 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 32 (59 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -26,4 +26,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[tests.test_cierre_defectos.py]]
 - [[tests.test_cierre_infra.py]]
 
-← más antigua: [[Sesión 2026-10-13 (f) — PASOS 22, 23, 25, 26 Y 11]]
+← más antigua: [[Sesión 2026-10-13 (f) — PASOS 22, 23, 25, 26 Y 11]] · más nueva: [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]] →

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L115"
+ruta: "docs/ESTADO.md#L135"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (e) — PASOS 18-21 Y BLOQUES 4-5 (cada decisión con su registro, llamadas a la IA, motor de contexto, MCP con contrato, listas de revisión)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 115 (30 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 135 (30 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

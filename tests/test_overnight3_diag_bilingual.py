@@ -39,7 +39,6 @@ SECRETS = {
     'FMP': 'SECRETfmp0123456789abcdefghij',
     'ALPACA_KEY': 'PKSECRETalpacaKEY01234567',
     'ALPACA_SECRET': 'SECRETalpacaSECRET0123456789abcdef',
-    'NEO4J_PASSWORD': 'SECRETneo4jPass0123456789',
     'ELEVENLABS_KEY': 'sk_SECRETeleven0123456789abcdef',
 }
 DB_PASS = 'SECRETdbPass0123456789'
@@ -88,15 +87,11 @@ def _aislado(monkeypatch):
 def _no_keys(monkeypatch):
     for k in ('CLAUDE', 'GEMINI_KEY', 'NVIDIA_KEY', 'FINNHUB', 'FMP', 'ALPACA_KEY', 'ALPACA_SECRET', 'MSTACK', 'AV_KEY'):
         monkeypatch.setattr(server, k, '', raising=False)
-    monkeypatch.setattr(server, '_temporal_mode', lambda: 'native')
 
 
 def _with_keys(monkeypatch):
     for k, v in SECRETS.items():
         monkeypatch.setattr(server, k, v, raising=False)
-    monkeypatch.setattr(server, '_NEO4J_PASSWORD_RAW', SECRETS['NEO4J_PASSWORD'])
-    monkeypatch.setattr(server, 'NEO4J_URI', 'neo4j+s://abc123.databases.neo4j.io')
-    monkeypatch.setattr(server, '_temporal_mode', lambda: 'neo4j')
 
 
 def _check_card(name, d):
@@ -139,6 +134,7 @@ def test_sin_claves_todas_bilingues(monkeypatch):
     assert cards['finnhub']['detail'].startswith('FINNHUB_KEY no está. Los precios en vivo del terminal no cargarán.')
     assert cards['ontologia']['detail'].startswith('Ontología no configurada (opcional).')
     assert cards['grafo']['detail'].startswith('Grafo de Conocimiento Temporal en modo NATIVO')
+    assert cards['grafo']['detail_en'].startswith('Temporal Knowledge Graph in NATIVE mode')
     assert cards['alpaca']['mode'] in ('paper', 'live')
     # no configurado → «Qué hacer» con el paso exacto en Railway (ES y EN)
     for name in ('claude', 'gemini', 'nvidia', 'finnhub', 'fmp', 'alpaca'):
@@ -170,7 +166,6 @@ def test_todo_ok_bilingue(monkeypatch):
             return _Resp(200, {'status': 'ACTIVE'})
         raise AssertionError(url)
     monkeypatch.setattr(server.requests, 'get', get)
-    monkeypatch.setattr(server, '_get_neo4j_driver', lambda: types.SimpleNamespace(verify_connectivity=lambda: None))
     import ontology.db as odb
     monkeypatch.setattr(odb, 'ontology_available', lambda: False)
     cards = _all_diags()
@@ -185,10 +180,10 @@ def test_todo_ok_bilingue(monkeypatch):
     assert cards['alpaca']['detail'] == 'Cuenta PAPEL (simulada) conectada — sin dinero real.'
     assert cards['alpaca']['detail_en'] == 'PAPER (simulated) account connected — no real money.'
     assert cards['alpaca']['mode'] == 'paper'
+    # Grafo Temporal: siempre nativo (memoria en Postgres + navegador); Neo4j se retiró (decisión #6)
     g = cards['grafo']
-    assert g['detail'].startswith('Neo4j conectado — memoria temporal persistente activa. [usuario=')
-    assert g['detail_en'].startswith('Neo4j connected — persistent temporal memory active. [user=')
-    assert 'chars]' in g['detail_en'] and 'abc123.databases.neo4j.io' in g['detail_en']
+    assert g['store'] == 'native' and 'Postgres' in g['detail'] and 'Postgres' in g['detail_en']
+    assert 'neo4j' not in json.dumps(g).lower()
     # cuenta REAL: el aviso también en inglés
     monkeypatch.setattr(server, 'ALPACA_BASE', 'https://api.alpaca.markets')
     live = server._diag_alpaca()
@@ -226,9 +221,6 @@ def test_fallas_con_arreglo_en_dos_idiomas(monkeypatch):
         raise AssertionError(url)
     monkeypatch.setattr(server.requests, 'get', get)
 
-    def drv():
-        raise RuntimeError('connection timed out (neo4j:' + SECRETS['NEO4J_PASSWORD'] + '@abc123.databases.neo4j.io)')
-    monkeypatch.setattr(server, '_get_neo4j_driver', drv)
     import ontology.db as odb
 
     def onto():
@@ -239,7 +231,8 @@ def test_fallas_con_arreglo_en_dos_idiomas(monkeypatch):
     blob = json.dumps(cards, ensure_ascii=False)
     for name, d in cards.items():
         _check_card(name, d)
-        assert d['ok'] is False, name
+        # el Grafo Temporal es nativo (sin base aparte que pueda fallar)
+        assert d['ok'] is (name == 'grafo'), name
     for v in list(SECRETS.values()) + [DB_PASS]:
         assert v not in blob, f'filtró {v}'
     c = cards['claude']
@@ -261,9 +254,7 @@ def test_fallas_con_arreglo_en_dos_idiomas(monkeypatch):
     o = cards['ontologia']
     assert o['detail'].startswith('Ontología configurada pero no conecta: ')
     assert 'REFERENCIA' in o['fix_es'] and 'REFERENCE' in o['fix_en'] and '${{Postgres.DATABASE_URL}}' in o['fix_en']
-    n = cards['grafo']
-    assert n['fix_es'].startswith('Tiempo de espera agotado') and n['fix_en'].startswith('Timed out')
-    assert ' [user=neo4j · host=abc123.databases.neo4j.io · pw=' in n['detail_en']
+    assert 'fix_es' not in cards['grafo'] and cards['grafo']['store'] == 'native'
 
 
 # ── 4. fallas de red crudas (excepciones con la clave dentro): nunca salen ────────────────────────────────
@@ -281,14 +272,12 @@ def test_excepciones_crudas_no_filtran_claves(monkeypatch):
         RuntimeError('weird ' + SECRETS['GEMINI_KEY'])))
     monkeypatch.setattr(server, '_complete_nvidia', lambda *a, **k: (_ for _ in ()).throw(
         RuntimeError('weird ' + SECRETS['NVIDIA_KEY'])))
-    monkeypatch.setattr(server, '_get_neo4j_driver', lambda: (_ for _ in ()).throw(
-        RuntimeError('weird ' + SECRETS['NEO4J_PASSWORD'])))
     cards = _all_diags()
     blob = json.dumps(cards, ensure_ascii=False)
     for v in SECRETS.values():
         assert v not in blob, f'filtró {v}'
     for name, d in cards.items():
-        if name in ('ontologia',):
+        if name in ('ontologia', 'grafo'):     # opcional / siempre nativo: no dependen de una red caída
             continue
         _check_card(name, d)
         assert d['ok'] is False, name
@@ -379,7 +368,6 @@ def _route_mocks(monkeypatch):
             return _Resp(200, {'chart': {'result': [{'meta': {'regularMarketPrice': 180.5}}]}})
         return _Resp(500, {})
     monkeypatch.setattr(server.requests, 'get', get)
-    monkeypatch.setattr(server, '_get_neo4j_driver', lambda: types.SimpleNamespace(verify_connectivity=lambda: None))
     import ontology.db as odb
     monkeypatch.setattr(odb, 'ontology_available', lambda: False)
     from core import voice_agent as va

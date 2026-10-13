@@ -9,11 +9,11 @@ tags: ["capa/ontologia", "tipo/capa"]
 
 > La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa.
 
-**32 archivos · 13.350 líneas.** Volver al [[00 Mapa de Khipus]].
+**32 archivos · 13.316 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[engine.temporal-graph.js]] — 1.497 líneas · Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline …
+- [[engine.temporal-graph.js]] — 1.463 líneas · Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline …
 - [[ontology.api.py]] — 1.386 líneas · API REST de la ontología: /api/ontology/\*
 - [[ontology.agents.py]] — 1.039 líneas · Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta sin aprobación humana (salvo lo que el usuario marque como …
 - [[ontology.actions.py]] — 898 líneas · Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usuario deja de solo mirar: registra tesis, anotaciones, correcciones y …

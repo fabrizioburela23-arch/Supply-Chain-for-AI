@@ -9,13 +9,13 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**44 archivos · 26.615 líneas.** Volver al [[00 Mapa de Khipus]].
+**44 archivos · 26.432 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 6.529 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[server.py]] — 6.346 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 - [[scripts.build_vault.py]] — 3.484 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 - [[core.replay.py]] — 1.435 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
 - [[core.ai.py]] — 1.196 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).

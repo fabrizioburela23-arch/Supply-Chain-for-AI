@@ -42,8 +42,8 @@ Flask + gunicorn (server.py, :5050 local / Railway)
 ├── /api/vocabulary — registro ÚNICO de sectores/tipos/relaciones (dato, no código)
 └── /v1/* — API pública monetizada (JWT por tiers) — NO usar para features internas
 
-Postgres (Railway)  = fuente única de verdad (ontología bitemporal)
-Neo4j Aura (opc.)   = espejo visual del Grafo Temporal
+Postgres (Railway)  = la ÚNICA base: fuente de verdad (ontología bitemporal);
+                      el Grafo Temporal es nativo (Neo4j se retiró el 2026-10-13)
 IA: Claude (Sonnet razonamiento / Haiku narración) con cascada Gemini/NVIDIA
     y fallback de plantilla — ningún panel sale vacío si un modelo falla
 ```
@@ -80,7 +80,6 @@ VITE_API_TARGET=http://localhost:5050 npm run dev   # contra tu Flask local
 | `FINNHUB_KEY` | precios y noticias | free tier OK |
 | `ELEVENLABS_KEY` + `ELEVENLABS_AGENT_ID` | voz de Khipu | opcional |
 | `DATABASE_URL` | ontología bitemporal (Postgres) | opcional; Railway la inyecta |
-| `NEO4J_URI/USER/PASSWORD` | espejo del Grafo Temporal | opcional |
 | `ALPACA_KEY/SECRET/BASE` | bróker simulado (paper) | opcional |
 | `GEMINI_KEY`, `NVIDIA_KEY`, `AI_ORDER_FAST`, `AI_ORDER_DEEP` | cascada multi-IA por nivel (rápido / profundo) | opcional |
 | `AV_KEY`, `FMP_KEY`, `MARKETSTACK_KEY` | datos financieros extra | opcional |
