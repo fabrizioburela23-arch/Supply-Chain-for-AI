@@ -292,10 +292,19 @@ def ensure_house_client(session):
     if rec and rec.auth_type == 'env':
         if rec.base_url != env['base'] or rec.mode != mode or (rec.credentials_hint or '') != hint:
             before = {'from_mode': rec.mode, 'to_mode': mode}
+            snap0 = {'base_url': rec.base_url, 'mode': rec.mode, 'credentials_hint': rec.credentials_hint}
             rec.base_url, rec.mode, rec.credentials_hint = env['base'], mode, hint
             rec.updated_at = _now()
-            _account_changed(session, rec, 'sistema', 'cambió ALPACA_KEY/ALPACA_BASE en el servidor',
-                             'ALPACA_KEY/ALPACA_BASE changed on the server', detail=before)
+            n = _account_changed(session, rec, 'sistema', 'cambió ALPACA_KEY/ALPACA_BASE en el servidor',
+                                 'ALPACA_KEY/ALPACA_BASE changed on the server', detail=before)
+            # revisión batch G (paso 22): cambiar la cuenta de la casa (modo papel/real, URL, credenciales) y caducar
+            # sus previsualizaciones es un cambio de dinero → decisión policy.change en la MISMA transacción
+            from core import decision_sites, identity
+            decision_sites.policy_change(
+                session, 'broker.house_account', snap0,
+                {'base_url': rec.base_url, 'mode': rec.mode, 'credentials_hint': rec.credentials_hint},
+                subject={'client_id': HOUSE_ID, 'expired_previews': n},
+                p=identity.system('brokerage_house_account'))
     return rec
 
 
@@ -419,6 +428,21 @@ def _policy_change(session, rec, before, actor, reset_hwm=False):
         before, after = dict(before or {}, hwm_reset=False), dict(after, hwm_reset=True)
     decision_sites.policy_change(session, 'broker.client_limits', before, after, subject={'client_id': rec.id},
                                  p=_principal(actor))
+
+
+def _account_decision(session, rec, before, actor):
+    """Paso 22: conectar o cambiar la cuenta de Alpaca de un cliente (claves u OAuth, modo) es una decisión del libro
+    (policy.change 'broker.client_account', sync, misma transacción). Sin secretos: tipo, modo, pista enmascarada y una
+    huella corta del cifrado (cambia en cada conexión)."""
+    import hashlib as _hl
+    from core import decision_sites
+
+    def snap(enc, auth, mode, hint):
+        return {'auth_type': auth, 'mode': mode, 'credentials_hint': hint,
+                'credentials_fp': _hl.sha256(enc.encode()).hexdigest()[:16] if enc else None}
+    decision_sites.policy_change(session, 'broker.client_account', snap(*before),
+                                 snap(rec.enc_credentials, rec.auth_type, rec.mode, rec.credentials_hint),
+                                 subject={'client_id': rec.id}, p=_principal(actor))
 
 
 def update_client(session, client_id, patch, actor='ui'):
@@ -601,6 +625,7 @@ def set_credentials(session, client_id, api_key, api_secret, env='paper', actor=
     session.flush()
     audit(session, actor, 'credentials_set', rec.id,
           detail={'env': env, 'hint': rec.credentials_hint, 'verified': verified})
+    _account_decision(session, rec, (prev[0], prev[1], prev[2], prev[4]), actor)
     return {'ok': True, 'verified': verified, 'detail': detail, 'detail_en': detail_en, 'client': client_dict(rec)}
 
 
@@ -1752,18 +1777,41 @@ def pending_approvals(session):
     rows = (session.query(BrokerOrder).filter(BrokerOrder.status == 'pending_approval')
             .order_by(BrokerOrder.created_at.asc()).all())
     out, now = [], _now()
+    due = []
     for r in rows:
         exp = _aware(r.expires_at)
         if exp and exp < now:
-            r.status, r.updated_at = 'expired', now
-            r.error, r.error_en = 'la propuesta caducó sin aprobación', 'the proposal expired without approval'
-            audit(session, 'sistema', 'approval_expired', r.client_id, r.id)
-            _notify_closed(session, r, 'sistema', r.error)
+            due.append(r)
             continue
         out.append(r)
+    if due:
+        _expire_proposals(session, due, now)
     session.flush()
     names = _names(session, [r.client_id for r in out])
     return [order_dict(r, names.get(r.client_id)) for r in out]
+
+
+def _expire_proposals(session, due, now):
+    """Revisión batch G (paso 22): caducar propuestas vencidas cambia broker_orders y el memo del comité → UNA
+    decisión order.expire (system:brokerage_expiry) en la MISMA transacción. Va en un SAVEPOINT: si el libro no
+    se puede escribir, nada cambia (se reintenta en el próximo sondeo) y la lista igual sale sin las vencidas."""
+    from core import decisions, identity
+    try:
+        with session.begin_nested():
+            with decisions.decision_scope('order.expire', identity.system('brokerage_expiry'), session=session,
+                                          subject={'orders': [r.id for r in due][:50], 'n': len(due),
+                                                   'reason': 'approval_ttl'}) as ctx:
+                for r in due:
+                    r.status, r.updated_at = 'expired', now
+                    r.error, r.error_en = 'la propuesta caducó sin aprobación', 'the proposal expired without approval'
+                    audit(session, 'sistema', 'approval_expired', r.client_id, r.id)
+                    _notify_closed(session, r, 'sistema', r.error)
+                    ctx.effect('broker_order', r.id, status='expired')
+                session.flush()
+                ctx.output = {'expired': len(due)}
+                ctx.status = 'expired'
+    except Exception as e:  # noqa: BLE001
+        log.warning('brokerage: no se pudieron caducar %d propuestas (%s); se reintenta', len(due), type(e).__name__)
 
 
 def list_orders(session, client_id=None, status=None, limit=50):
@@ -2208,6 +2256,7 @@ def oauth_callback(session, state, code, error=None):
         audit(session, 'alpaca-oauth', 'oauth_failed', rec.id, detail={'error': str(e)[:300]})
         return _err('oauth_failed', str(e), f'OAuth failed: {e}', client_id=rec.id)
     had_creds, prev_mode, prev_auth = bool(rec.enc_credentials), rec.mode, rec.auth_type
+    prev_acct = (rec.enc_credentials, rec.auth_type, rec.mode, rec.credentials_hint)
     rec.enc_credentials, rec.auth_type = enc, 'oauth'
     rec.mode, rec.base_url = st.env, _alp.base_for_mode(st.env)
     rec.credentials_hint = 'OAuth ' + _crypto.mask(tok['access_token'])
@@ -2218,6 +2267,7 @@ def oauth_callback(session, state, code, error=None):
     audit(session, st.created_by or 'alpaca-oauth', 'oauth_connected', rec.id,
           detail={'env': st.env, 'scope': tok.get('scope') or ''})
     session.flush()
+    _account_decision(session, rec, prev_acct, st.created_by or 'alpaca-oauth')
     return {'ok': True, 'client_id': rec.id, 'client_name': rec.name, 'env': st.env}
 
 

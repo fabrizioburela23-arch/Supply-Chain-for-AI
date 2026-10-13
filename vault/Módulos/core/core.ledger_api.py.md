@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ledger_api.py"
 lenguaje: "python"
-lineas: 238
+lineas: 240
 aliases: ["core/ledger_api.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ledger_api.py
 
-> Módulo · capa [[Capa Infraestructura]] · 238 líneas · `core/ledger_api.py`
+> Módulo · capa [[Capa Infraestructura]] · 240 líneas · `core/ledger_api.py`
 
 ## Para qué sirve
 
@@ -22,9 +22,9 @@ lectura del libro de decisiones: /api/ledger/\* (docs/INFRA_OPERATIVA.md §2.9; 
 - `ledger_decisions()` _(línea 95)_
 - `ledger_decision(decision_id)` _(línea 127)_
 - `ledger_verify()` _(línea 155)_
-- `ledger_anchor()` — Ancla diaria PÚBLICA: SOLO la cabeza de la cadena (ningún contenido). Sin ancla todavía → anchor:null. _(línea 178)_
-- `ledger_chain()` _(línea 196)_
-- `ledger_chain_ack()` — Reconocer la cadena rota (PIN estricto, persona). Cuerpo: {note?, break_id?}. _(línea 211)_
+- `ledger_anchor()` — Ancla diaria PÚBLICA: SOLO la cabeza de la cadena (ningún contenido). Sin ancla todavía → anchor:null. _(línea 180)_
+- `ledger_chain()` _(línea 198)_
+- `ledger_chain_ack()` — Reconocer la cadena rota (PIN estricto, persona). Cuerpo: {note?, break_id?}. _(línea 213)_
 
 **Internas** (empiezan con `_`): `_db`, `_unavailable`, `_operator`, `_require_operator`, `_err`
 

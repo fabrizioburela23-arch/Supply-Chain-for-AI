@@ -208,8 +208,9 @@ def _gate_g1(session, ev, link, prev_obj, source_id):
             p = ev.payload or {}
             if (p.get('rel_type') or p.get('type')) == 'affects':
                 _gates.defer_object(session, ev.object_id, _gates.UNCHANGED, _gates.UNCHANGED, False)
-    except Exception:  # noqa: BLE001 — vigilar nunca tumba una escritura
-        pass
+    except Exception as e:  # noqa: BLE001 — vigilar nunca tumba una escritura (salvo una puerta que BLOQUEA, paso 11)
+        if getattr(e, 'code', None) == 'gate_violation':
+            raise
 
 
 def _same_weight(a, b):
@@ -286,11 +287,24 @@ def _wkey(w):
         return None
 
 
-def _pair_history(session, src, tgt):
-    """(creaciones, retracciones dirigidas {creación: evento}, remociones no dirigidas [(fecha, rel, registrada)])."""
-    evs = session.scalars(select(Event).where(
+def _known_clause(known):
+    """G(t, κ) (paso 23): cláusula "el evento ya se conocía en κ" (ontology/bitemporal.visible). None = sin κ."""
+    if known is None:
+        return None
+    from ontology import bitemporal
+    return bitemporal.visible(known)
+
+
+def _kq(q, kc):
+    return q if kc is None else q.where(kc)
+
+
+def _pair_history(session, src, tgt, known=None):
+    """(creaciones, retracciones dirigidas {creación: evento}, remociones no dirigidas [(fecha, rel, registrada)]).
+    `known` (paso 23): solo lo que se conocía en κ."""
+    evs = session.scalars(_kq(select(Event).where(
         Event.object_id == src, Event.target_id == tgt,
-        Event.event_type.in_([EventType.LINK_CREATED.value, EventType.LINK_REMOVED.value]))
+        Event.event_type.in_([EventType.LINK_CREATED.value, EventType.LINK_REMOVED.value])), _known_clause(known))
         .order_by(Event.recorded_at, Event.id)).all()
     created, dirs, rms = [], {}, []
     for e in evs:
@@ -313,7 +327,7 @@ def _killed(e, rel, rms, at):
                for rm_at, rm_rel, rm_rec in rms)
 
 
-def _promotion_choice(session, src, tgt, rel, wk, now=None):
+def _promotion_choice(session, src, tgt, rel, wk, now=None, known=None):
     """G5 — regla ÚNICA (tablas y replay) para un LinkCreated deduplicado:
     asciende el más antiguo cuya creación gemela fue retractada por un DESHACER
     (LinkRemoved dirigido con `promote_dedups: true`, solo lo emite rollback_run)
@@ -322,7 +336,7 @@ def _promotion_choice(session, src, tgt, rel, wk, now=None):
     Una CORRECCIÓN ("esta fila es falsa": dirección, peso, sobrante, fusión) no
     asciende nada: el mismo hecho repetido es igual de falso. Devuelve el evento o None."""
     now = now or _utcnow()
-    created, dirs, rms = _pair_history(session, src, tgt)
+    created, dirs, rms = _pair_history(session, src, tgt, known=known)
 
     def same(e):
         p = e.payload or {}
@@ -364,18 +378,18 @@ def _promote_dedup(session, src, tgt, rel, weight):
                            properties=props, valid_from=d.valid_from, valid_to=d.valid_to, event_id=d.id))
 
 
-def _replay_promotions(session):
-    """Replay: el conjunto de eventos deduplicados que ascienden (misma regla)."""
-    dedups = session.scalars(select(Event).where(
+def _replay_promotions(session, known=None):
+    """Replay: el conjunto de eventos deduplicados que ascienden (misma regla). `known`: en κ (paso 23)."""
+    dedups = session.scalars(_kq(select(Event).where(
         Event.event_type == EventType.LINK_CREATED.value,
-        Event.payload['properties']['dedup_of'].astext.isnot(None))).all()
+        Event.payload['properties']['dedup_of'].astext.isnot(None)), _known_clause(known))).all()
     keys = set()
     for d in dedups:
         p = d.payload or {}
         keys.add((d.object_id, d.target_id, p.get('rel_type') or p.get('type') or 'supply', _wkey(p.get('weight'))))
     out = set()
     for src, tgt, rel, wk in keys:
-        d = _promotion_choice(session, src, tgt, rel, wk)
+        d = _promotion_choice(session, src, tgt, rel, wk, known=known)
         if d is not None:
             out.add(d.id)
     return out
@@ -553,31 +567,43 @@ def object_links(session, object_id, direction='out'):
     return session.scalars(q).all()
 
 
-def object_history(session, object_id):
+def object_history(session, object_id, known=None):
     """Todos los eventos donde el objeto participó (como object_id o target_id),
-    ordenados por valid_from. Es la 'línea de tiempo' del objeto."""
-    q = select(Event).where(
+    ordenados por valid_from. Es la 'línea de tiempo' del objeto. `known` (paso 23): solo lo conocido en κ."""
+    q = _kq(select(Event).where(
         or_(Event.object_id == object_id, Event.target_id == object_id)
-    ).order_by(Event.valid_from)
+    ), _known_clause(known)).order_by(Event.valid_from)
     return session.scalars(q).all()
 
 
-def _links_active_at(session, as_of_dt):
+def _links_active_at(session, as_of_dt, known=None):
     """Reconstruye desde EVENTS (no desde la tabla materializada) qué vínculos
     estaban vigentes en `as_of_dt` (tiempo de VALIDEZ). Es el time-travel real:
     un LinkCreated con valid_from<=as_of y (sin LinkRemoved antes de as_of, o
-    su propio valid_to>as_of) cuenta como activo en esa fecha."""
-    created = session.scalars(
+    su propio valid_to>as_of) cuenta como activo en esa fecha.
+
+    `known` (paso 23, G(t, κ); ontology/bitemporal.Known): además, solo los eventos que Khipus YA conocía en κ —
+    una retracción registrada después de κ no borra, una creación registrada después de κ no aparece, un cambio
+    de estado posterior no se aplica. Sin `known`, exactamente el camino de siempre.
+
+    `as_of_dt=None` (revisión del paso 23): semántica de la TABLA MATERIALIZADA ("vigente" = valid_to IS NULL), no
+    de validez: cuenta toda creación sin valid_to propio (también las de valid_from futuro), una remoción mata lo
+    registrado antes que ella sin mirar fechas de validez, y todo cambio de estado se aplica. Con κ = ahora es
+    EXACTAMENTE la tabla `links` de hoy (G(ahora, ahora) = el grafo vivo, también con vínculos con ventana o
+    fechados a futuro); con un κ pasado, la tabla tal como estaba en κ."""
+    kc = _known_clause(known)
+    mat = as_of_dt is None
+    created = session.scalars(_kq(
         select(Event).where(
             Event.event_type == EventType.LINK_CREATED.value,
-            Event.valid_from <= as_of_dt,
-        )
+            *(() if mat else (Event.valid_from <= as_of_dt,)),
+        ), kc)
     ).all()
-    removed = session.scalars(
+    removed = session.scalars(_kq(
         select(Event).where(
             Event.event_type == EventType.LINK_REMOVED.value,
-            Event.valid_from <= as_of_dt,
-        )
+            *(() if mat else (Event.valid_from <= as_of_dt,)),
+        ), kc)
     ).all()
     # remociones por (source,target): lista de (fecha, rel). rel=None actúa de
     # COMODÍN (igual que _materialize, que sin rel_type cierra todos los rel de
@@ -593,7 +619,7 @@ def _links_active_at(session, as_of_dt):
         rel = (ev.payload or {}).get('rel_type') or (ev.payload or {}).get('type')
         removals.setdefault((ev.object_id, ev.target_id), []).append((ev.valid_from, rel, ev.recorded_at))
     # G5: deduplicadas que "ascienden" (misma regla que las tablas: _promotion_choice)
-    promoted = _replay_promotions(session)
+    promoted = _replay_promotions(session, known=known)
 
     active = []
     for ev in created:
@@ -601,17 +627,21 @@ def _links_active_at(session, as_of_dt):
         rel = p.get('rel_type') or p.get('type') or 'supply'
         if (p.get('properties') or {}).get('dedup_of') and ev.id not in promoted:
             continue                                   # G2: creación duplicada = no-op
-        if str(ev.id) in directed and directed[str(ev.id)] <= as_of_dt:
+        if str(ev.id) in directed and (mat or directed[str(ev.id)] <= as_of_dt):
             continue                                   # G2: retractada exactamente esta creación
-        # ¿este evento propio ya expiró (valid_to) antes de as_of?
-        if ev.valid_to is not None and ev.valid_to <= as_of_dt:
+        # ¿este evento propio ya expiró (valid_to) antes de as_of? (tabla: cualquier valid_to la cierra)
+        if ev.valid_to is not None and (mat or ev.valid_to <= as_of_dt):
             continue
+        if mat:
+            if any(rm_rel in (None, rel) and (ev.recorded_at is None or rm_rec is None or ev.recorded_at <= rm_rec)
+                   for _rm_at, rm_rel, rm_rec in removals.get((ev.object_id, ev.target_id), [])):
+                continue                               # tabla: la remoción cerró las filas abiertas en su momento
         # una remoción solo mata creaciones ANTERIORES a ella: si el vínculo se
         # re-creó después de la remoción, sigue vigente en as_of. G5: "anterior"
         # también en tiempo de REGISTRO — una re-creación registrada DESPUÉS de
         # la remoción (fusión, reconciliación, deshacer) no muere aunque su
         # valid_from sea viejo; igual que en las tablas.
-        if _killed(ev, rel, removals.get((ev.object_id, ev.target_id), []), as_of_dt):
+        elif _killed(ev, rel, removals.get((ev.object_id, ev.target_id), []), as_of_dt):
             continue
         row = {
             'source': ev.object_id, 'target': ev.target_id, 'rel_type': rel,
@@ -628,16 +658,16 @@ def _links_active_at(session, as_of_dt):
     # (ActionExecuted sin status_event_id, base de producción) se siguen aplicando como antes.
     if active:
         status = {}
-        for a in session.scalars(select(Event).where(
+        for a in session.scalars(_kq(select(Event).where(
                 Event.event_type == 'ActionExecuted',
-                Event.payload['action'].astext == 'ConfirmarVinculo')).all():
+                Event.payload['action'].astext == 'ConfirmarVinculo'), kc)).all():
             pa = a.payload or {}
             cid = pa.get('creation_event_id')
             if cid and not pa.get('status_event_id'):
                 status[_uuid_str(cid)] = ('confirmed', a.actor)
-        for e in session.scalars(select(Event).where(
+        for e in session.scalars(_kq(select(Event).where(
                 Event.event_type == EventType.LINK_STATUS_CHANGED.value,
-                Event.valid_from <= as_of_dt).order_by(Event.recorded_at, Event.id)).all():
+                *(() if mat else (Event.valid_from <= as_of_dt,))), kc).order_by(Event.recorded_at, Event.id)).all():
             pe = e.payload or {}
             cid = pe.get('creation_event_id')
             if cid and pe.get('status') in LINK_STATUSES:
@@ -650,13 +680,23 @@ def _links_active_at(session, as_of_dt):
     return active
 
 
-def as_of_graph(session, as_of_dt=None):
+def as_of_graph(session, as_of_dt=None, known_at=None):
     """Grafo (nodos + aristas) vigente en `as_of_dt` (default: ahora).
 
     Acepta datetime o texto ('2026-04-01'). Antes asumía datetime y reventaba
     con un string —la ruta HTTP lo esquivaba porque parsea antes de llamar—,
-    así que el fallo solo aparecía al usar la función directamente."""
+    así que el fallo solo aparecía al usar la función directamente.
+
+    `known_at` (paso 23, G(t, κ)): ISO, versión del grafo (123 / g123) o un `bitemporal.Known` → el grafo de
+    esa fecha TAL COMO SE CONOCÍA en κ: vínculos y estados registrados hasta κ, nodos con sus etiquetas de
+    entonces (props_at) y sin los que aún no existían (un vínculo hacia un nodo todavía no creado no se
+    muestra: `counts.links_without_node`). Sin known_at: exactamente el camino de siempre."""
     as_of_dt = _parse_dt(as_of_dt) or _utcnow()
+    if known_at is not None:
+        from ontology import bitemporal
+        known = bitemporal.resolve(session, known_at)
+        if known is not None:
+            return _as_of_graph_known(session, as_of_dt, known)
     links = _links_active_at(session, as_of_dt)
     node_ids = set()
     for l in links:
@@ -667,20 +707,56 @@ def as_of_graph(session, as_of_dt=None):
             'counts': {'nodes': len(nodes), 'links': len(links)}}
 
 
-def diff_graph(session, from_dt, to_dt):
-    """Qué vínculos aparecieron/desaparecieron entre dos fechas de validez.
+def _as_of_graph_known(session, as_of_dt, known):
+    from ontology import bitemporal
+    links = _links_active_at(session, as_of_dt, known=known)
+    node_ids = set()
+    for l in links:
+        node_ids.add(l['source']); node_ids.add(l['target'])
+    then = bitemporal.props_at(session, ids=node_ids, t=as_of_dt, known=known) if node_ids else {}
+    # un extremo que HOY existe pero en (t, κ) todavía no: el vínculo no se muestra (DT-M2). Un extremo que nunca
+    # tuvo evento de objeto sigue como en el camino de siempre (el vínculo queda, sin nodo).
+    now_ids = {r for (r,) in session.execute(select(ObjectRecord.id).where(
+        ObjectRecord.id.in_(node_ids))).all()} if node_ids else set()
+    missing = (now_ids - set(then))
+    kept = [l for l in links if l['source'] not in missing and l['target'] not in missing]
+    nodes = []
+    for oid in sorted({x for l in kept for x in (l['source'], l['target'])} & set(then)):
+        o = then[oid]
+        n = {'id': oid, 'type': o['type'], 'label': o['label']}
+        if o['retired']:
+            n['retired'] = True
+        nodes.append(n)
+    return {'as_of': as_of_dt.isoformat(), **known.to_dict(), 'nodes': nodes, 'links': kept,
+            'counts': {'nodes': len(nodes), 'links': len(kept), 'links_without_node': len(links) - len(kept)}}
+
+
+def diff_graph(session, from_dt, to_dt, known_at=None):
+    """Qué vínculos aparecieron/desaparecieron entre dos fechas de validez, y Δθ (paso 23, L3-07): qué propiedades
+    de los nodos económicos y factores cambiaron (`changed`) y qué nodos aparecieron (`nodes_added`).
 
     Acepta datetime o texto, igual que as_of_graph: ambas tenían el mismo fallo
-    latente (asumían datetime y la ruta HTTP lo tapaba parseando antes)."""
+    latente (asumían datetime y la ruta HTTP lo tapaba parseando antes).
+    `known_at`: las dos fotos tal como se conocían en κ (ver as_of_graph)."""
+    from ontology import bitemporal
     from_dt = _parse_dt(from_dt) or _utcnow()
     to_dt = _parse_dt(to_dt) or _utcnow()
-    a = {(l['source'], l['target'], l['rel_type']) for l in _links_active_at(session, from_dt)}
-    b = {(l['source'], l['target'], l['rel_type']) for l in _links_active_at(session, to_dt)}
+    known = bitemporal.resolve(session, known_at) if known_at is not None else None
+    a = {(l['source'], l['target'], l['rel_type']) for l in _links_active_at(session, from_dt, known=known)}
+    b = {(l['source'], l['target'], l['rel_type']) for l in _links_active_at(session, to_dt, known=known)}
     added = b - a
     removed = a - b
-    return {
+    dth = bitemporal.delta_theta(session, from_dt, to_dt, known=known)
+    out = {
         'from': from_dt.isoformat(), 'to': to_dt.isoformat(),
         'added': [{'source': s, 'target': t, 'rel_type': r} for s, t, r in sorted(added)],
         'removed': [{'source': s, 'target': t, 'rel_type': r} for s, t, r in sorted(removed)],
-        'counts': {'added': len(added), 'removed': len(removed)},
+        'changed': dth['changed'], 'nodes_added': dth['nodes_added'],
+        'counts': {'added': len(added), 'removed': len(removed), 'changed': len(dth['changed']),
+                   'nodes_added': len(dth['nodes_added'])},
     }
+    if dth['truncated']:
+        out['changed_truncated'] = True
+    if known is not None:
+        out.update(known.to_dict())
+    return out

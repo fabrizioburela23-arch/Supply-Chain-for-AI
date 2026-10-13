@@ -9,6 +9,50 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-13 (f) — PASOS 22, 23, 25, 26 Y 11 (guardia, grafo bitemporal, flujo de gobernanza, purga de 90 días, puertas en bloqueo listas) — sw v262
+
+- Paso 23, G(t, κ): el grafo "como era en la fecha t según lo que se sabía en κ" (`ontology/bitemporal.py`, `known_at`
+  = fecha ISO o versión del grafo) en /api/ontology/graph|graph/diff|objects/<id>[/history|/timeline], /api/hot/impact
+  (vista AsOf con LRU de 16, nunca toca la vista viva) y MCP get_ontology_object. Sin `known_at` todo es igual que hoy;
+  con κ = ahora, 0 diferencias en 969 choques. `diff_graph` añade `changed` (Δθ) y `nodes_added`. object_versions solo si
+  los eventos de objetos pasan ~20.000 (hoy ~5.000).
+- Paso 25, gobernanza completa en 🩺 ⚖ Gobernanza: «Proponer cambio» (solo los números de `governance/tunables.json`,
+  con mín/máx; el tope por orden nunca > US$100.000), regresión en segundo plano (qué-pasaría-si reales del libro, 969
+  choques, memos, montos de órdenes, NRS de todos, formas nuevas en sombra), «¿Qué cambia para mí?» con tus posiciones,
+  activar ya / programar / cancelar / deshacer, historial y atribución (`/api/governance/attribution`). Un cambio MAYOR
+  nuevo necesita su regresión: si pulsas «Activar» sin ella, la app la lanza sola y te pide volver a pulsar.
+- Paso 22, guardia en AVISO: 14 disparadores en 7 tablas cuentan toda escritura sin decisión (`kh_guard_violations`,
+  línea «Guardia» en 🩺); enforce = policy.guard 2.0.0 con PIN (cuando el contador quede en 0 una semana).
+- Paso 26, purga: cada día; vacía SOLO el cuerpo de blobs de chat y qué-pasaría-si con más de 90 días que nada vigente
+  cite (guarda el hash; dinero, ontología, comité y gobernanza nunca); la primera purga real llega ~enero 2027. Limpia las
+  filas viejas de decision_shadow con texto plano (`hmac0:`). Puntos de control del grafo apagados hasta 20.000 eventos.
+- Paso 11, puertas en BLOQUEO listas pero apagadas: policy.gates 2.0.0 (PIN) → acciones de ontología no conformes = 422
+  con explicación ES/EN; `extra='forbid'` en las acciones; reconcile exige `expect` con `plan_sha`. Línea «Puertas (7
+  días)» en 🩺: cuántas escrituras se habrían rechazado.
+- Revisión: 12 hallazgos, 12 arreglados (ver el bloque siguiente). Suite completa: 2.611 aprobadas.
+
+---
+
+# SESIÓN 2026-10-13 (g-rev) — REVISIÓN DEL BATCH G (12 hallazgos, todos corregidos con prueba)
+
+- G(t, κ): `props_at` pliega en orden de REGISTRO (el de `_materialize`): una corrección retroactiva registrada después
+  ya no queda tapada; `_links_active_at(None, κ)` = semántica de la TABLA (κ = ahora es EXACTAMENTE el grafo vivo, también
+  con vínculos con ventana o fechados a futuro); `Known.key()` lleva la marca de huérfanos (eventos económicos sin
+  versión) → la LRU AsOf y el índice de nodos ya no sirven otro grafo. Prueba: tests/test_bitemporal_review.py.
+- Gobernanza: una variable de Railway NUNCA enciende una versión "activation: pin" (ni sin base ni como fallback de un
+  release viejo); una programada cancelada o futura no cuenta como aprobada; una programada vencida que el reloj aún no
+  aplicó se pone en vigor ANTES de otra activación (409 `scheduled_due` si no se puede); un MAYOR nuevo exige su
+  regresión (409 `regression_required`: botón «Regresión (PIN)» primero; deshacer a una versión que ya rigió no la
+  pide) y `validation_id` debe ser de esa versión (409 `validation_mismatch`); semver estricto ASCII sin ceros.
+- Libro: la purga no vacía un contenido que algo citó en los últimos 90 días (llamada de IA, decisión o referencia; la
+  base lo exige también); `purge_decision_id` debe ser una decisión retention.purge de ESA transacción (disparador
+  diferido `decision_blobs_purge_check`); el 🩺 separa «pendientes» (lo que la próxima purga vaciaría) de «protegidos».
+- Guardia: caducar propuestas (GET /api/brokerage/approvals) deja `order.expire` y el cambio de cuenta de la casa
+  (ALPACA_BASE/KEY) deja `policy.change broker.house_account` → el contador de avisos puede llegar a 0 y en enforce no
+  fallan. Prueba: tests/test_review_batch_g.py.
+
+---
+
 # SESIÓN 2026-10-13 (e) — PASOS 18-21 Y BLOQUES 4-5 (cada decisión con su registro, llamadas a la IA, motor de contexto, MCP con contrato, listas de revisión)
 
 - Pasos 18-19: comité (committee.run en la misma transacción que el memo, aprobar/rechazar como approval.*, puerta G5 en

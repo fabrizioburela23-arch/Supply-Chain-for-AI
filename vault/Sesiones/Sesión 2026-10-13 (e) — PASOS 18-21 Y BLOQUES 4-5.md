@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L56"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (e) — PASOS 18-21 Y BLOQUES 4-5 (cada decisión con su registro, llamadas a la IA, motor de contexto, MCP con contrato, listas de revisión)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (30 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 56 (30 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,4 +18,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 - [[Doc REVISION_GRAFO]]
 
-← más antigua: [[Sesión 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2]]
+← más antigua: [[Sesión 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2]] · más nueva: [[Sesión 2026-10-13 (g-rev) — REVISIÓN DEL BATCH G]] →

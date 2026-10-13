@@ -1,0 +1,31 @@
+{
+  "id": "policy.gates",
+  "semver": "2.0.0",
+  "kind": "policy",
+  "change_kind": "major",
+  "parent": "policy.gates@1.1.0",
+  "activation": "pin",
+  "params": {
+    "mode": "block",
+    "severity_overrides": {},
+    "limits": {
+      "max_weight": 6.0,
+      "severity_scale": 10.0,
+      "high_conf_min": 0.5,
+      "min_trust": 2,
+      "max_member_coef": 1.0,
+      "max_quote_age_s": 60,
+      "max_account_age_s": 30
+    },
+    "block_gates": [
+      "ontology.g1.link",
+      "ontology.g1.object",
+      "ontology.g1.factor",
+      "ontology.g2.action",
+      "ontology.g_prop",
+      "ontology.g_bulk"
+    ]
+  },
+  "changelog_es": "Paso 11: las puertas de la ONTOLOGÍA pasan a BLOQUEAR (vínculos, objetos, factores, acciones, propuestas de agentes e importación masiva). Una escritura que rompe una regla «block» se rechaza con el motivo en español e inglés (422) y queda en el libro como 'blocked'; los campos desconocidos en una Acción se rechazan. Las ÓRDENES, el comité y el libro siguen en sombra (esperan BRECHAS #1). Antes de activarla con tu PIN mira el resumen de 7 días de «Puertas» en 🩺 → Gobernanza; deshacer = volver a 1.1.0.",
+  "changelog_en": "Step 11: the ONTOLOGY gates start BLOCKING (links, objects, factors, actions, agent proposals and bulk import). A write that breaks a \"block\" rule is rejected with the reason in Spanish and English (422) and is recorded in the ledger as 'blocked'; unknown fields in an Action are rejected. ORDERS, the committee and the ledger stay in shadow (they wait for BRECHAS #1). Before activating it with your PIN check the 7-day \"Gates\" summary in 🩺 → Governance; undo = go back to 1.1.0."
+}

@@ -1,0 +1,19 @@
+{
+  "id": "ledger.retention",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "params": {
+    "standard_days": 90,
+    "purge_enabled": true,
+    "purge_max_per_run": 20000,
+    "classes": {
+      "legal": "forever",
+      "standard_90d": "90 days"
+    },
+    "checkpoint_min_events": 20000,
+    "checkpoint_every_events": 10000
+  },
+  "changelog_es": "Paso 26 (decisión D3): dinero, ontología, comité y gobernanza = para siempre; chat y qué-pasaría-si = 90 días. La purga diaria deja el contenido vacío y CONSERVA la huella (sha256), así la integridad sigue demostrable. Los puntos de control del grafo se encienden solos cuando la ontología pase 20.000 eventos (hoy ~5.000).",
+  "changelog_en": "Step 26 (decision D3): money, ontology, committee and governance = forever; chat and what-if = 90 days. The daily purge empties the content and KEEPS the fingerprint (sha256), so integrity stays provable. Graph checkpoints switch on by themselves once the ontology passes 20,000 events (today ~5,000)."
+}

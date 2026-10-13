@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-172 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+179 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -24,6 +24,8 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_ai_usage_cache.py]] | 6 | 3 |
 | [[tests.test_analytics.py]] | 6 | 3 |
 | [[tests.test_ask_agent.py]] | 16 | 8 |
+| [[tests.test_bitemporal.py]] | 15 | 10 |
+| [[tests.test_bitemporal_review.py]] | 3 | 6 |
 | [[tests.test_block0_ci.py]] | 4 | 1 |
 | [[tests.test_block0_committee.py]] | 9 | 4 |
 | [[tests.test_block0_guardian_corpus.py]] | 4 | 1 |
@@ -35,6 +37,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_canvas_charts.py]] | 4 | 2 |
 | [[tests.test_chat_commands.py]] | 3 | 2 |
 | [[tests.test_chat_portfolio_agent.py]] | 3 | 6 |
+| [[tests.test_checkpoints.py]] | 4 | 7 |
 | [[tests.test_cleanup_client.py]] | 9 | 8 |
 | [[tests.test_cleanup_dialogs.py]] | 10 | 16 |
 | [[tests.test_cleanup_modules_theme_i18n.py]] | 18 | 6 |
@@ -53,10 +56,11 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_gates_conformance.py]] | 5 | 2 |
 | [[tests.test_gates_ir_fresh.py]] | 7 | 6 |
 | [[tests.test_gates_orders_parity.py]] | 4 | 3 |
-| [[tests.test_gates_resulting_state.py]] | 11 | 10 |
+| [[tests.test_gates_resulting_state.py]] | 17 | 14 |
 | [[tests.test_gdelt_events.py]] | 4 | 2 |
-| [[tests.test_governance.py]] | 19 | 16 |
-| [[tests.test_governance_activation.py]] | 4 | 10 |
+| [[tests.test_governance.py]] | 20 | 17 |
+| [[tests.test_governance_activation.py]] | 4 | 12 |
+| [[tests.test_governance_flow.py]] | 11 | 17 |
 | [[tests.test_governance_seed_parity.py]] | 7 | 12 |
 | [[tests.test_gpr.py]] | 3 | 2 |
 | [[tests.test_graph_api.py]] | 15 | 8 |
@@ -86,9 +90,10 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_ledger_anchor.py]] | 10 | 9 |
 | [[tests.test_ledger_callsites.py]] | 4 | 6 |
 | [[tests.test_ledger_callsites_chat.py]] | 8 | 17 |
-| [[tests.test_ledger_callsites_committee.py]] | 10 | 19 |
+| [[tests.test_ledger_callsites_committee.py]] | 10 | 20 |
 | [[tests.test_ledger_chain.py]] | 7 | 7 |
 | [[tests.test_ledger_core.py]] | 15 | 12 |
+| [[tests.test_ledger_guard.py]] | 14 | 11 |
 | [[tests.test_ledger_privacy.py]] | 7 | 9 |
 | [[tests.test_ledger_review_fixes.py]] | 8 | 15 |
 | [[tests.test_live_caps.py]] | 5 | 3 |
@@ -153,7 +158,9 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_repair_risk.py]] | 10 | 1 |
 | [[tests.test_repair_world.py]] | 7 | 2 |
 | [[tests.test_research.py]] | 23 | 15 |
+| [[tests.test_retention_purge.py]] | 6 | 8 |
 | [[tests.test_review_batch_e.py]] | 4 | 5 |
+| [[tests.test_review_batch_g.py]] | 8 | 15 |
 | [[tests.test_review_infra_c.py]] | 16 | 18 |
 | [[tests.test_review_lists.py]] | 14 | 7 |
 | [[tests.test_risk_easy.py]] | 5 | 4 |

@@ -1,5 +1,5 @@
 {
- "ir_hash": "9ef5603a5daa7fb001765deb502e11e14b77050032da040647d69b9a34cfd21e",
+ "ir_hash": "45f63eaf356a64c1dea16b5a2ca53875eb5d2ec81ca510465d608107b9748fa5",
  "rules": [
   "khr:action.agent_needs_human",
   "khr:action.auto_apply_allowed",
@@ -366,6 +366,7 @@
         "reconcile.rollback",
         "research.job",
         "research.run",
+        "retention.migrate",
         "retention.purge",
         "simulation.save",
         "trade.agent_signal",
@@ -1555,5 +1556,5 @@
    "target": "kh:UnvalidatedMemo"
   }
  ],
- "source_sha": "063d9e77ed34aa7ac9b72e6fb096705041bae8b1e17de40a41239bfcfadffaa2"
+ "source_sha": "8a16ee7541e4b5deffa2157bdaa1b244a8fe26082b31c0e250b550374d43c8da"
 }

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_ledger_callsites_committee.py"
 lenguaje: "python"
-lineas: 465
+lineas: 466
 aliases: ["tests/test_ledger_callsites_committee.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_ledger_callsites_committee.py
 
-> Prueba · capa [[Capa Pruebas]] · 465 líneas · `tests/test_ledger_callsites_committee.py`
+> Prueba · capa [[Capa Pruebas]] · 466 líneas · `tests/test_ledger_callsites_committee.py`
 
 ## Qué prueba
 
@@ -26,6 +26,7 @@ INFRA_OPERATIVA §2.5 (sitios de llamada del libro), pasos 18 y 19: COMITÉ, INV
 - [[core.ai_usage.py]]
 - [[core.decision_sites.py]]
 - [[core.decisions.py]]
+- [[core.governance.py]]
 - [[core.http.py]]
 - [[core.identity.py]]
 - [[core.pin.py]]

@@ -260,3 +260,126 @@ def test_interruptor_de_emergencia(monkeypatch):
     assert gates.evaluate('x', t, f)['results']
     monkeypatch.setenv('KHIPU_GATES', 'off')
     assert gates.mode() == 'off' and gates.evaluate('x', t, f) is None
+
+
+# ── paso 11: BLOQUEO con policy.gates@2.0.0 (activación con PIN); el vigente (1.1.0) sigue en sombra ──────────────
+def _block():
+    from core import governance
+    return governance.counterfactual({'policy.gates': '2.0.0'})
+
+
+def test_bloqueo_solo_en_puertas_de_la_ontologia():
+    import core.gates as gates
+    from core import governance
+    governance._reset_for_tests()
+    assert gates.mode() == 'shadow' and gates.mode_for('ontology.g1.link') == 'shadow'     # el vigente: sombra
+    doc = governance.available_artifact('policy.gates', '2.0.0')
+    assert doc['activation'] == 'pin' and doc['change_kind'] == 'major' and doc['params']['mode'] == 'block'
+    with _block():
+        assert gates.mode() == 'block'
+        for g in ('ontology.g1.link', 'ontology.g1.object', 'ontology.g1.factor', 'ontology.g2.action',
+                  'ontology.g_prop', 'ontology.g_bulk'):
+            assert gates.mode_for(g) == 'block', g
+        for g in ('order.pre_trade', 'committee.g5', 'ledger.g8'):                 # esperan BRECHAS #1
+            assert gates.mode_for(g) == 'shadow', g
+
+
+def test_entradas_del_catalogo_con_extra_forbid():
+    from ontology.actions import ACTION_CATALOG
+    for name, (schema, _h) in ACTION_CATALOG.items():
+        assert schema.model_config.get('extra') == 'forbid', name
+
+
+@needs_db
+def test_bloqueo_rechaza_y_queda_blocked_en_el_libro(db):
+    from sqlalchemy import text
+
+    import core.gates as gates
+    from core import identity
+    from ontology.actions import execute_action
+    from ontology.db import session_scope
+    with db.connect() as c:
+        n0 = c.execute(text("SELECT count(*) FROM links WHERE source_id = 'APPLE' AND target_id = 'APPLE'")).scalar()
+    meta = {}
+    with _block():
+        with pytest.raises(gates.GateViolation) as ei:
+            with session_scope() as s:
+                execute_action(s, 'ProponerVinculo', {'from_id': 'APPLE', 'to_id': 'APPLE', 'tipo': 'supply',
+                                                      'metadata': {}, 'fuente': 'prueba'},
+                               'op:fabrizio', principal=identity.operator(), meta=meta)
+    e = ei.value
+    assert e.code == 'gate_violation' and e.error_es and e.error_en and e.error_es != e.error_en
+    p = e.payload(meta.get('decision_id'))
+    assert p['report']['schema'] == 'gate-report/1' and p['report']['mode'] == 'block'
+    assert 'khr:link.no_self_loop' in {r['rule'] for r in p['report']['results'] if r['effective'] == 'block'}
+    with db.connect() as c:
+        assert c.execute(text("SELECT count(*) FROM links WHERE source_id = 'APPLE' AND target_id = 'APPLE'")).scalar() == n0
+    rows, dec = _viol(db, meta['decision_id'])
+    assert dec.status == 'blocked'
+    assert any(r.rule_iri == 'khr:link.no_self_loop' and r.severity == 'block' for r in rows)
+    # en sombra (el vigente) la MISMA escritura pasa y solo avisa
+    did, out = _act('ProponerVinculo', {'from_id': 'APPLE', 'to_id': 'APPLE', 'tipo': 'supply', 'metadata': {},
+                                        'fuente': 'prueba'})
+    assert out['status'] == 'proposed'
+
+
+@needs_db
+def test_api_422_bilingue_y_campo_desconocido(db, monkeypatch):
+    import server
+    from core import pin
+    from core import http as _h
+    pin._reset_for_tests(); _h._rate_buckets.clear()
+    monkeypatch.setenv('TRADE_PIN', 'pin-gates-2468')
+    c = server.app.test_client()
+    h = {'X-Trade-Pin': 'pin-gates-2468'}
+    body = {'actor': 'fabrizio', 'company_id': 'NVDA', 'nivel': 40, 'razon': 'prueba', 'nivell': 99}
+    r0 = c.post('/api/ontology/actions/MarcarRiesgo', json=body, headers=h)          # sombra: se ignora y avisa
+    assert r0.status_code == 200, r0.get_data(as_text=True)[:300]
+    with _block():
+        r = c.post('/api/ontology/actions/MarcarRiesgo', json=body, headers=h)
+    assert r.status_code == 422, r.get_data(as_text=True)[:300]
+    j = r.get_json()
+    assert j['code'] == 'gate_violation' and j['error'] and j['error_en'] and j['decision_id']
+    assert 'khr:action.no_unknown_fields' in {x['rule'] for x in j['report']['results']}
+    rows, dec = _viol(db, j['decision_id'])
+    assert dec.status == 'blocked'
+    body.pop('nivell')
+    with _block():                                                                     # conforme: pasa igual
+        assert c.post('/api/ontology/actions/MarcarRiesgo', json=body, headers=h).status_code == 200
+
+
+@needs_db
+def test_g_bulk_bloquea_el_lote_entero(db):
+    from sqlalchemy import text
+
+    import core.gates as gates
+    from ontology.bulk_import import import_links_bulk
+    from ontology.db import session_scope
+    with db.connect() as c:
+        n0 = c.execute(text("SELECT count(*) FROM events WHERE source = 'gleif'")).scalar()
+    with _block():
+        with pytest.raises(gates.GateViolation):
+            with session_scope() as s:
+                import_links_bulk(s, [{'source': 'NVDA', 'target': 'APPLE', 'rel_type': 'supply', 'weight': 3},
+                                      {'source': 'APPLE', 'target': 'NVDA', 'rel_type': 'supply', 'weight': 9}],
+                                  provenance='gleif')                     # peso 9 > 6: link.weight_range (block)
+    with db.connect() as c:
+        assert c.execute(text("SELECT count(*) FROM events WHERE source = 'gleif'")).scalar() == n0
+
+
+@needs_db
+def test_g_prop_bloquea_solo_block_no_requires_approval(db):
+    import core.gates as gates
+    from ontology.agents import _gate_prop
+    from ontology.db import session_scope
+    with _block():
+        with session_scope() as s:
+            with pytest.raises(gates.GateViolation):
+                _gate_prop(s, 'Cartografo', {'action_type': 'ProponerVinculo', 'confidence': 0.9,
+                                            'payload': {'from_id': 'NVDA', 'to_id': 'NVDA', 'tipo': 'supply',
+                                                        'fuente': 'agente'}})
+            # una propuesta siempre espera a una persona: 'requires_approval' NO bloquea la propuesta
+            rep = _gate_prop(s, 'Cartografo', {'action_type': 'CrearTesis', 'confidence': 0.9,
+                                              'payload': {'company_id': 'NVDA', 'stance': 'long', 'confidence': 0.5,
+                                                          'rationale': 'x'}})
+    assert rep['mode'] == 'block' and rep['outcome'] in ('requires_approval', 'warn', 'pass', 'info')

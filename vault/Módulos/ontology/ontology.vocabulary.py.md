@@ -48,6 +48,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 ## Lo usan
 
 - [[core.context_engine.py]] — lo importa
+- [[core.governance_lint.py]] — lo importa
 - [[core.scenario_engine.py]] — lo importa
 - [[core.semantic.py]] — lo importa
 - [[core.world.py]] — lo importa
@@ -56,6 +57,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[ontology.bitemporal.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.service.py]] — lo importa
 - [[research.context.py]] — lo importa

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_ledger_core.py"
 lenguaje: "python"
-lineas: 448
+lineas: 460
 aliases: ["tests/test_ledger_core.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_ledger_core.py
 
-> Prueba · capa [[Capa Pruebas]] · 448 líneas · `tests/test_ledger_core.py`
+> Prueba · capa [[Capa Pruebas]] · 460 líneas · `tests/test_ledger_core.py`
 
 ## Qué prueba
 

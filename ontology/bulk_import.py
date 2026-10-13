@@ -168,7 +168,8 @@ def _apply_accepted(session, accepted, seen, provenance, valid_from, actor, batc
 
 
 def _gate_bulk(session, accepted, existing_ids, valid_from):
-    """G-BULK: un reporte para todo el lote (resumen en la respuesta; detalle en el libro). Nunca lanza."""
+    """G-BULK: un reporte para todo el lote (resumen en la respuesta; detalle en el libro). En sombra nunca lanza; con
+    policy.gates@2.0.0 (bloqueo) un lote con una regla 'block' se rechaza ENTERO (GateViolation, antes de escribir)."""
     try:
         import core.gates as _gates
         from core.gates import focus as _gf
@@ -188,10 +189,14 @@ def _gate_bulk(session, accepted, existing_ids, valid_from):
         if rep is None:
             return None
         _gr.record(rep, session=session)
+        if _gates.blocks(rep):                 # paso 11 (bloqueo): el lote entero se rechaza (422 con el reporte)
+            raise _gates.GateViolation(rep)
         by_rule = _gr.by_rule_of(rep)          # conteo completo (también lo que pasó de MAX_RESULTS)
         return {'mode': rep['mode'], 'outcome': rep['outcome'], 'checked': len(accepted), 'by_rule': by_rule,
                 'truncated': rep.get('truncated', 0), 'latency_us': rep.get('latency_us')}
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
+        if getattr(e, 'code', None) == 'gate_violation':
+            raise
         return None
 
 

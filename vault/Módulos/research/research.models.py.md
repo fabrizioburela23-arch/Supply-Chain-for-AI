@@ -68,7 +68,7 @@ tablas de la capa DERIVED CLAIMS (Phase 2).
 - herramienta MCP `get_research` → [[API herramientas MCP]]
 - herramienta MCP `get_research_job` → [[API herramientas MCP]]
 
-_Además lo importan 20 pruebas (lista abajo)._
+_Además lo importan 21 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -81,6 +81,7 @@ _Además lo importan 20 pruebas (lista abajo)._
 - [[tests.test_ledger_callsites.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_order_single_path.py]]

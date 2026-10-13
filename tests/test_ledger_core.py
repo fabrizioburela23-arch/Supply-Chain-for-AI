@@ -275,15 +275,27 @@ def test_purga_de_blob_solo_si_es_valida(db):
                        "VALUES (:a, 'payload', :b, 3, 'standard_90d', now() - interval '120 days'), "
                        "(:c, 'payload', :b, 3, 'legal', now() - interval '120 days')"),
                   {'a': old, 'b': zlib.compress(b'{}'), 'c': cited})
-    def purge(sha, job=True):
-        with db.begin() as c:
-            if job:
-                c.execute(text("SELECT set_config('khipus.retention_job', 'on', true)"))
-            c.execute(text('UPDATE decision_blobs SET body = NULL, purged_at = now() WHERE sha256 = :s'), {'s': sha})
+    def purge(sha, job=True, with_decision=True, real_decision=True):
+        # paso 26: la forma EXACTA de la purga lleva purged_at Y purge_decision_id (la decisión retention.purge);
+        # revisión batch G: esa decisión debe existir y escribirse en la MISMA transacción (disparador diferido)
+        from core import decisions, identity
+        from ontology.db import session_scope
+        with session_scope() as s:
+            with decisions.decision_scope('retention.purge', identity.system('pytest_purge'), session=s) as ctx:
+                if job:
+                    s.execute(text("SELECT set_config('khipus.retention_job', 'on', true)"))
+                s.execute(text('UPDATE decision_blobs SET body = NULL, purged_at = now(), purge_decision_id = '
+                               + ("CAST(:d AS uuid)" if with_decision else 'NULL') + ' WHERE sha256 = :s'),
+                          {'s': sha, 'd': str(ctx.id) if real_decision else str(uuid.uuid4())})
+                ctx.output = {'purged': 1}
     with pytest.raises(Exception):
         purge(old, job=False)                  # sin el job de retención: no
     with pytest.raises(Exception):
+        purge(old, with_decision=False)        # sin la decisión de la purga: no
+    with pytest.raises(Exception):
         purge(cited)                           # 'legal': nunca
+    with pytest.raises(Exception):
+        purge(old, real_decision=False)        # un UUID cualquiera, sin su decisión retention.purge: no
     purge(old)                                 # standard_90d, viejo, sin decisión sync que lo cite: sí
     with db.connect() as c:
         assert c.execute(text('SELECT body IS NULL FROM decision_blobs WHERE sha256 = :s'), {'s': old}).scalar()

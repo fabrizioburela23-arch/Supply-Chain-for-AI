@@ -834,11 +834,18 @@ PROVENANCE_NOTE_ES = 'solo catálogo: curado por Khipus, sin documento fuente pr
       '(what changed, when it was valid, when it was recorded, by whom), active links and the provenance '
       'sources (documents with trust score) that back it. valid_from 2000-01-01 is the migration sentinel '
       '("since tracking began", flagged valid_from_known=false), not a real start date; an empty provenance '
-      'list means catalog-only curation (provenance_note).',
+      'list means catalog-only curation (provenance_note). Time travel (G(t, κ)): as_of = the date the facts '
+      'were VALID, known_at = what Khipus had RECORDED by then (ISO date/time or a graph version like 123): '
+      'properties, events and links are rebuilt from the append-only events as known at that moment.',
       {'id': {'type': 'string', 'maxLength': 120, 'minLength': 1, 'description': 'Object id, ticker or name.'},
-       'events_limit': {'type': 'integer', 'minimum': 1, 'maximum': 50, 'default': 15}},
+       'events_limit': {'type': 'integer', 'minimum': 1, 'maximum': 50, 'default': 15},
+       'as_of': {'type': 'string', 'maxLength': 40,
+                 'description': 'Optional valid time (YYYY-MM-DD or ISO 8601): the object as it was on that date.'},
+       'known_at': {'type': 'string', 'maxLength': 40,
+                    'description': 'Optional knowledge time: ISO date/time or graph version (123 / g123) — only '
+                                   'what Khipus had recorded by then (corrections recorded later are not applied).'}},
       required=['id'])
-def t_get_ontology_object(ctx, id, events_limit=15):  # noqa: A002
+def t_get_ontology_object(ctx, id, events_limit=15, as_of=None, known_at=None):  # noqa: A002
     _need_db('get_ontology_object')
     from sqlalchemy import or_, select
 
@@ -851,6 +858,8 @@ def t_get_ontology_object(ctx, id, events_limit=15):  # noqa: A002
             o = s.get(ObjectRecord, r['id']) if r else None
         if o is None:
             raise ToolError(f'object not found in the ontology: "{str(id)[:80]}"', code='not_found')
+        if as_of or known_at:
+            return _ontology_object_at(s, o.id, events_limit, as_of, known_at)
         evs = s.scalars(select(Event).where(or_(Event.object_id == o.id, Event.target_id == o.id))
                         .order_by(Event.recorded_at.desc()).limit(events_limit)).all()
         links = s.scalars(select(LinkRecord).where(or_(LinkRecord.source_id == o.id, LinkRecord.target_id == o.id),
@@ -888,6 +897,59 @@ def t_get_ontology_object(ctx, id, events_limit=15):  # noqa: A002
             out['provenance_note'] = PROVENANCE_NOTE_EN
             out['provenance_note_es'] = PROVENANCE_NOTE_ES
         return out
+
+
+def _ontology_object_at(s, oid, events_limit, as_of, known_at):
+    """get_ontology_object en G(t, κ) (paso 23): props_at + eventos conocidos en κ + vínculos vigentes en t."""
+    from sqlalchemy import or_, select
+
+    from ontology import bitemporal
+    from ontology.models import Event
+    from ontology.service import OntologyError, _links_active_at, _parse_dt, _utcnow
+    try:
+        t = _parse_dt(as_of) if as_of else None
+        known = bitemporal.resolve(s, known_at) if known_at else None
+    except bitemporal.KnownAtError as e:
+        raise ToolError(e.en, code='invalid_params')
+    except OntologyError:
+        raise ToolError('invalid as_of (use YYYY-MM-DD or ISO 8601)', code='invalid_params')
+    kmeta = known.to_dict() if known is not None else {'known_at': _now_iso(), 'known_graph_version': None,
+                                                       'known_mode': 'now'}
+    o = bitemporal.props_at(s, ids=[oid], t=t, known=known).get(oid)
+    if o is None:
+        raise ToolError(f'"{oid}" did not exist yet at that time (as_of/known_at)', code='not_found')
+    q = select(Event).where(or_(Event.object_id == oid, Event.target_id == oid))
+    if t is not None:
+        q = q.where(Event.valid_from <= t)
+    if known is not None:
+        q = q.where(bitemporal.visible(known))
+    evs = s.scalars(q.order_by(Event.recorded_at.desc()).limit(events_limit)).all()
+    links = [l for l in _links_active_at(s, t or _utcnow(), known=known) if oid in (l['source'], l['target'])]
+
+    def _ln(l, other):
+        d = {other: l['target'] if other == 'target' else l['source'], 'rel_type': l['rel_type'],
+             'weight': l.get('weight'), 'relation_class': relation_class(l['rel_type']),
+             'valid_from': l.get('valid_from')}
+        if l.get('valid_from_known') is False:
+            d['valid_from_known'] = False
+        st = (l.get('properties') or {}).get('status')
+        if st:
+            d['status'] = st
+        return d
+    return {
+        'object': bitemporal.object_props_dict(o),
+        'recent_events': [_with_genesis({'id': str(e.id), 'event_type': e.event_type, 'object_id': e.object_id,
+                                         'target_id': e.target_id, 'payload': e.payload,
+                                         'valid_from': _iso(e.valid_from), 'valid_to': _iso(e.valid_to),
+                                         'recorded_at': _iso(e.recorded_at), 'channel': e.source,
+                                         'actor': e.actor, 'source_id': e.source_id,
+                                         'confidence': e.confidence}, e.valid_from) for e in evs],
+        'active_links': {'outgoing': [_ln(l, 'target') for l in links if l['source'] == oid][:40],
+                         'incoming': [_ln(l, 'source') for l in links if l['target'] == oid][:40],
+                         'total': len(links)},
+        'source': 'Khipus ontology (Postgres, append-only events) — G(t, κ) rebuilt from events',
+        'method': 'props_at@1 + links_active_at(t, known)',
+        'as_of': t.isoformat() if t is not None else _now_iso(), **kmeta}
 
 
 def _claim_brief(c, n_sup=0, n_cnt=0):

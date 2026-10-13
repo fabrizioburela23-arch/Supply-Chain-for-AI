@@ -44,7 +44,9 @@ ART_DIR = os.path.join(GOV_DIR, 'artifacts')
 MANIFEST_PATH = os.path.join(GOV_DIR, 'manifest.json')
 SCHEMA = 'gov-manifest/1'
 HASHED_KEYS = ('id', 'semver', 'kind', 'params', 'deprecated')
-_SEMVER = re.compile(r'^(\d+)\.(\d+)\.(\d+)$')
+# ASCII y sin ceros a la izquierda (revisión batch G: '02.0.0' o '２.0.0' pasaban el lint y registraban un duplicado
+# de 2.0.0 — semver_key los normalizaba a la misma clave pero el registro compara el TEXTO)
+_SEMVER = re.compile(r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$', re.ASCII)
 _MISSING = object()
 
 # D2: variables de entorno numéricas que ANTES fijaban un número → (artefacto, clave). Hoy se ignoran y avisan.
@@ -58,7 +60,7 @@ LEGACY_NUMERIC_ENV = {
 
 _LOCK = threading.RLock()
 _STATE = {'repo': None, 'db': None, 'db_error': None, 'refreshed_at': None, 'bindings': [], 'last_applied': None,
-          'listeners': []}
+          'listeners': [], 'registered': {}}
 
 
 class GovernanceError(RuntimeError):
@@ -176,10 +178,16 @@ def repo_bundle():
                                   f'(¿cambió sin subir la versión? corre scripts/build_governance.py)')
         arts[aid] = {'semver': doc['semver'], 'hash': h, 'params': doc['params'], 'kind': doc['kind']}
     sel = {}
+    plain = dict(arts)                         # la versión del manifest, SIN selección por entorno
     for aid in list(arts):                     # D2: <ARTEFACTO>=<semver> selecciona otra versión DEL REPO
         want = (os.getenv(env_name(aid)) or '').strip()
         if want and want != arts[aid]['semver']:
             doc = docs.get((aid, want))
+            if doc is not None and doc.get('activation') == 'pin':
+                # revisión batch G: una versión "activation: pin" (guardia en enforce, puertas que bloquean,
+                # kernel 2.0.0…) SOLO la enciende Fabrizio con su PIN; una variable de Railway nunca
+                log.warning('governance: %s=%s es una versión que se activa con PIN → se ignora', env_name(aid), want)
+                continue
             if doc is not None:
                 arts[aid] = {'semver': want, 'hash': artifact_hash(doc), 'params': doc['params'], 'kind': doc['kind']}
                 sel[aid] = want
@@ -187,7 +195,15 @@ def repo_bundle():
                 selected=sel)
     with _LOCK:
         _STATE['repo'] = b
+        _STATE['repo_plain'] = plain
     return b
+
+
+def repo_plain_artifact(aid):
+    """La versión del MANIFEST de `aid` (sin selección por entorno) o None. Es lo que lee un artefacto que el release
+    vigente de la base no trae (fallback): fuera de un release aprobado, una variable no elige nada (D2)."""
+    repo_bundle()
+    return (_STATE.get('repo_plain') or {}).get(aid)
 
 
 def env_name(aid):
@@ -230,7 +246,8 @@ def _art(aid):
     b = active()
     a = b.artifacts.get(aid)
     if a is None:                      # el release de la base no tiene este artefacto (código más nuevo)
-        a = repo_bundle().artifacts.get(aid)
+        # con release de la base: la versión del manifest, nunca la que elija una variable (no está aprobada)
+        a = repo_plain_artifact(aid) if b.source == 'db' else repo_bundle().artifacts.get(aid)
         if a is None:
             raise GovernanceError(f'artefacto desconocido: {aid}')
     return a
@@ -245,10 +262,11 @@ def fallbacks():
         b = active()
         if b.source != 'db':
             return {}
-        repo = repo_bundle()
+        repo_bundle()
+        plain = dict(_STATE.get('repo_plain') or {})
     except Exception:  # noqa: BLE001
         return {}
-    return {a: {'semver': v['semver'], 'hash': v['hash']} for a, v in sorted(repo.artifacts.items())
+    return {a: {'semver': v['semver'], 'hash': v['hash']} for a, v in sorted(plain.items())
             if a not in b.artifacts}
 
 
@@ -459,16 +477,68 @@ def _parent_hash(doc):
         return None
 
 
+# paso 25: la cancelación de una activación programada es OTRA decisión (nunca un UPDATE/DELETE de gov_releases)
+_CANCELLED_SQL = ("SELECT 1 FROM decisions x WHERE x.kind = 'governance.activate' AND x.status = 'rejected' "
+                  "AND x.subject->>'cancels' = {ref}::text")
+
+
+def _load_registered(conn):
+    """Caché en memoria de gov_artifacts (sin cuerpos): {(id, semver): {hash, change_kind, changelog_es/en,
+    proposed_by, recorded_at, origin}}. Lo usan proposals() y available_artifact() para las versiones PROPUESTAS en
+    la app (paso 25), que no tienen archivo en el repositorio. Barato (decenas de filas)."""
+    from sqlalchemy import text
+    reg = {}
+    for r in conn.execute(text("SELECT artifact_id, semver, hash, change_kind, changelog_es, changelog_en, "
+                               "proposed_by, recorded_at, body->>'origin' AS origin, body->>'parent' AS parent "
+                               "FROM gov_artifacts")):
+        reg[(r.artifact_id, r.semver)] = {'hash': r.hash, 'change_kind': r.change_kind, 'parent': r.parent,
+                                          'changelog_es': r.changelog_es, 'changelog_en': r.changelog_en,
+                                          'proposed_by': r.proposed_by, 'origin': r.origin or 'repo',
+                                          'recorded_at': r.recorded_at.isoformat() if r.recorded_at else None}
+    with _LOCK:
+        _STATE['registered'] = reg
+    return reg
+
+
+def registered():
+    """{(id, semver): {...}} de gov_artifacts (vacío sin base)."""
+    return dict(_STATE.get('registered') or {}) if _db_on() else {}
+
+
+def _registered_doc(aid, semver):
+    """Cuerpo REGISTRADO en la base (verificado por hash) de aid@semver, o None."""
+    ent = registered().get((aid, semver))
+    if ent is None:
+        return None
+    from sqlalchemy import text
+    with _engine().connect() as c:
+        r = c.execute(text('SELECT hash, body, change_kind, changelog_es, changelog_en FROM gov_artifacts '
+                           'WHERE artifact_id = :a AND semver = :v'), {'a': aid, 'v': semver}).first()
+    if r is None:
+        return None
+    body = r.body if isinstance(r.body, dict) else json.loads(r.body)
+    if artifact_hash(body) != r.hash or body.get('id') != aid:
+        raise GovernanceError(f'{aid}@{semver}: el cuerpo registrado no coincide con su hash')
+    return dict(body, change_kind=r.change_kind, changelog_es=r.changelog_es, changelog_en=r.changelog_en,
+                _hash=r.hash)
+
+
 def _ratified_releases(conn):
     """Releases aprobados por una persona con PIN: ratificados (governance.ratify) o ACTIVADOS (governance.activate
     — `activate` exige PIN; también al volver a una versión anterior, que reactiva el release sin fila nueva: antes
     el 1.0.0 del arranque volvía a pedir «Ratificar» justo después de que Fabrizio lo aprobara, revisión batch E)."""
     from sqlalchemy import text
-    rows = conn.execute(text("SELECT subject->>'release_hash' FROM decisions WHERE "
-                             "(kind = 'governance.ratify' AND status = 'approved') OR "
-                             "(kind = 'governance.activate' AND status = 'executed' AND auth = 'pin' "
-                             "AND coalesce(subject->>'bootstrap', 'false') <> 'true')")).all()
+    # revisión batch G: una activación PROGRAMADA que todavía no empezó, o que se CANCELÓ, no es una aprobación
+    # vigente — si contara, GOV_RELEASE o <ARTEFACTO>=<semver> podían poner en vigor un cambio cancelado o antes de hora
+    rows = conn.execute(text(
+        "SELECT d.subject->>'release_hash' FROM decisions d WHERE "
+        "(d.kind = 'governance.ratify' AND d.status = 'approved') OR "
+        "(d.kind = 'governance.activate' AND d.status IN ('executed', 'approved') AND d.auth = 'pin' "
+        "AND coalesce(d.subject->>'bootstrap', 'false') <> 'true' "
+        "AND coalesce((d.subject->>'effective_from')::timestamptz, '-infinity'::timestamptz) <= clock_timestamp() "
+        "AND NOT EXISTS (" + _CANCELLED_SQL.format(ref='d.id') + "))")).all()
     return {r[0] for r in rows if r[0]}
+
 
 
 def refresh(engine=None):
@@ -489,23 +559,28 @@ def refresh(engine=None):
             if want:
                 row = c.execute(text("SELECT * FROM gov_releases WHERE release_hash LIKE :p "
                                      "ORDER BY recorded_at DESC LIMIT 1"), {'p': want[:64] + '%'}).first()
-                if row is None or not (row.ratified or row.release_hash in ratified) or len(want) < 8:
+                # `gov_releases.ratified` es true también en filas PROGRAMADAS o canceladas: manda la decisión
+                if row is None or row.release_hash not in ratified or len(want) < 8:
                     log.warning('governance: GOV_RELEASE=%s no es un release ratificado → se ignora', want[:12])
                     row = None
                 else:
                     selected['release'] = row.release_hash
             if row is None:
-                row = c.execute(text('SELECT * FROM gov_releases WHERE effective_from <= clock_timestamp() '
-                                     'ORDER BY effective_from DESC, recorded_at DESC LIMIT 1')).first()
+                # paso 25: una activación PROGRAMADA (effective_from futuro) entra sola al llegar su hora; si se
+                # CANCELÓ antes (decisión governance.activate 'rejected' con subject.cancels) nunca entra
+                row = c.execute(text('SELECT * FROM gov_releases r WHERE r.effective_from <= clock_timestamp() '
+                                     'AND NOT EXISTS (' + _CANCELLED_SQL.format(ref='r.approval_decision_id') + ') '
+                                     'ORDER BY r.effective_from DESC, r.recorded_at DESC LIMIT 1')).first()
                 # paso 12: deshacer = REACTIVAR un release que ya existía (su release_hash es la clave: no se
                 # inserta otra fila; manda la decisión governance.activate más reciente con reactivation=true)
                 if row is not None:
                     re_ = c.execute(text(
                         "SELECT subject->>'release_hash' AS rh, (subject->>'effective_from')::timestamptz AS eff "
-                        "FROM decisions WHERE kind = 'governance.activate' AND status = 'executed' "
-                        "AND subject->>'reactivation' = 'true' "
-                        "AND (subject->>'effective_from')::timestamptz <= clock_timestamp() "
-                        "ORDER BY (subject->>'effective_from')::timestamptz DESC, recorded_at DESC LIMIT 1")).first()
+                        "FROM decisions d WHERE d.kind = 'governance.activate' AND d.status IN ('executed', 'approved') "
+                        "AND d.auth = 'pin' AND d.subject->>'reactivation' = 'true' "
+                        "AND (d.subject->>'effective_from')::timestamptz <= clock_timestamp() "
+                        "AND NOT EXISTS (" + _CANCELLED_SQL.format(ref='d.id') + ") "
+                        "ORDER BY (d.subject->>'effective_from')::timestamptz DESC, d.recorded_at DESC LIMIT 1")).first()
                     if re_ is not None and re_.eff is not None and row.effective_from is not None \
                             and re_.eff > row.effective_from:
                         alt = c.execute(text('SELECT * FROM gov_releases WHERE release_hash = :r'),
@@ -513,6 +588,7 @@ def refresh(engine=None):
                         if alt is not None:
                             row = alt
                             selected['reactivated_at'] = re_.eff.isoformat()
+            _load_registered(c)
             if row is None:
                 return None
             arts_ref = dict(row.artifacts or {})
@@ -526,7 +602,7 @@ def refresh(engine=None):
                     alt = c.execute(text(
                         "SELECT a.hash, a.artifact_id, a.semver, a.body FROM gov_artifacts a WHERE a.artifact_id = :a "
                         "AND a.semver = :v AND EXISTS (SELECT 1 FROM gov_releases r WHERE "
-                        "r.artifacts -> :a ->> 'hash' = a.hash AND (r.ratified OR r.release_hash = ANY(:rr)))"),
+                        "r.artifacts -> :a ->> 'hash' = a.hash AND r.release_hash = ANY(:rr))"),
                         {'a': aid, 'v': v, 'rr': sorted(ratified)}).first()
                     if alt is None:
                         log.warning('governance: %s=%s no es una versión aprobada → se ignora', env_name(aid), v)
@@ -566,9 +642,18 @@ def refresh(engine=None):
 
 
 def refresh_job():
-    """Tarea del reloj (system:governance_refresh)."""
+    """Tarea del reloj (system:governance_refresh). Paso 25: una activación PROGRAMADA entra aquí al llegar su hora
+    (refresh toma el release de mayor effective_from ≤ ahora) y `apply_due` deja su decisión; las formas propuestas
+    se (re)arman para correr en sombra."""
     b = refresh()
-    return {'release': b.release_hash[:12] if b else None, 'error': _STATE['db_error']}
+    out = {'release': b.release_hash[:12] if b else None, 'error': _STATE['db_error']}
+    try:
+        from core import governance_flow, governance_shadow
+        out['scheduled_applied'] = governance_flow.apply_due()
+        out['shapes_shadow'] = governance_shadow.arm().get('semver')
+    except Exception as e:  # noqa: BLE001
+        out['flow_error'] = type(e).__name__
+    return out
 
 
 def ratify(session, principal, release_hash=None, note=None):
@@ -607,12 +692,25 @@ def available_artifact(aid, semver):
     try:
         doc = read_artifact_file(artifact_path(aid, semver))
     except FileNotFoundError:
-        raise LookupError(f'{aid}@{semver} no existe') from None
+        doc = None
+    # paso 25: una versión PROPUESTA en la app vive solo en gov_artifacts; y si el archivo del repositorio y lo
+    # registrado difieren con la misma versión, manda la base (el arranque no registra el archivo cambiado)
+    ent = registered().get((aid, semver))
+    if ent is not None and (doc is None or artifact_hash(doc) != ent['hash']):
+        try:
+            doc = _registered_doc(aid, semver) or doc
+        except GovernanceError:
+            raise
+        except Exception:  # noqa: BLE001
+            pass
+    if doc is None:
+        raise LookupError(f'{aid}@{semver} no existe')
     h = artifact_hash(doc)
     return {'semver': doc['semver'], 'hash': h, 'params': doc['params'], 'kind': doc['kind'],
             'change_kind': doc.get('change_kind') or 'initial', 'parent': doc.get('parent'),
             'changelog_es': doc.get('changelog_es') or '', 'changelog_en': doc.get('changelog_en') or '',
-            'activation': doc.get('activation'), 'summary_es': doc.get('summary_es'), 'summary_en': doc.get('summary_en')}
+            'activation': doc.get('activation'), 'summary_es': doc.get('summary_es'), 'summary_en': doc.get('summary_en'),
+            'origin': doc.get('origin') or 'repo'}
 
 
 class counterfactual:
@@ -642,6 +740,12 @@ def proposals():
     except Exception:  # noqa: BLE001
         return []
     out = []
+    reg = registered()
+    for (aid, sv), ent in reg.items():          # paso 25: propuestas hechas en la app (solo en la base)
+        if (aid, sv) not in docs and ent.get('origin') == 'app':
+            docs[(aid, sv)] = {'id': aid, 'semver': sv, 'change_kind': ent['change_kind'], 'activation': 'pin',
+                               'changelog_es': ent['changelog_es'], 'changelog_en': ent['changelog_en'],
+                               'origin': 'app', 'proposed_by': ent['proposed_by'], 'recorded_at': ent['recorded_at']}
     for (aid, sv), doc in sorted(docs.items()):
         cur = (b.artifacts.get(aid) or {}).get('semver')
         if cur == sv:
@@ -654,7 +758,9 @@ def proposals():
                     'activation': doc.get('activation'), 'newer': newer,
                     'changelog_es': doc.get('changelog_es') or '', 'changelog_en': doc.get('changelog_en') or '',
                     'summary_es': doc.get('summary_es'), 'summary_en': doc.get('summary_en'),
-                    'four_eyes': 'unavailable' if doc.get('change_kind') == 'major' else None})
+                    'four_eyes': 'unavailable' if doc.get('change_kind') == 'major' else None,
+                    'origin': doc.get('origin') or 'repo', 'proposed_by': doc.get('proposed_by'),
+                    'registered': (aid, sv) in reg})
     return out
 
 
@@ -682,13 +788,55 @@ def _bump_release_semver(cur_semver, changes):
     return f'{x}.{y}.{z + 1}'
 
 
-def activate(session, principal, selection, note=None):
+class GovernanceConflict(ValueError):
+    """Conflicto del flujo (paso 25) con su código para la API: 'scheduled_pending', 'not_cancellable'…"""
+
+    def __init__(self, code, es, en):
+        super().__init__(es)
+        self.code, self.es, self.en = code, es, en
+
+
+def scheduled_pending(conn_or_session):
+    """Activaciones PROGRAMADAS que aún no empezaron y no se cancelaron: [{decision_id, release_hash, semver,
+    effective_from, changes, principal_id, recorded_at}]."""
+    from sqlalchemy import text
+    rows = conn_or_session.execute(text(
+        "SELECT d.id, d.subject, d.principal_id, d.recorded_at FROM decisions d WHERE d.kind = 'governance.activate' "
+        "AND d.status = 'approved' AND d.subject->>'scheduled' = 'true' "
+        "AND (d.subject->>'effective_from')::timestamptz > clock_timestamp() "
+        "AND NOT EXISTS (" + _CANCELLED_SQL.format(ref='d.id') + ") ORDER BY d.recorded_at")).all()
+    return [{'decision_id': str(r.id), 'release_hash': r.subject.get('release_hash'),
+             'semver': r.subject.get('semver'), 'effective_from': r.subject.get('effective_from'),
+             'changes': r.subject.get('changes'), 'principal_id': r.principal_id,
+             'recorded_at': r.recorded_at.isoformat() if r.recorded_at else None} for r in rows]
+
+
+_DUE_SQL = ("SELECT d.id, d.subject FROM decisions d WHERE d.kind = 'governance.activate' AND d.status = 'approved' "
+            "AND d.subject->>'scheduled' = 'true' AND (d.subject->>'effective_from')::timestamptz <= clock_timestamp() "
+            "AND NOT EXISTS (" + _CANCELLED_SQL.format(ref='d.id') + ") "
+            "AND NOT EXISTS (SELECT 1 FROM decisions y WHERE y.kind = 'governance.activate' "
+            "AND y.subject->>'applies' = d.id::text) ORDER BY d.recorded_at")
+
+
+def due_unapplied(conn_or_session):
+    """Activaciones PROGRAMADAS cuya hora ya llegó y que el reloj todavía no aplicó (sin decisión 'applies')."""
+    from sqlalchemy import text
+    return conn_or_session.execute(text(_DUE_SQL)).all()
+
+
+def activate(session, principal, selection, note=None, effective_from=None, validation_id=None):
     """Activa YA (D5: inmediato) el release vigente con las versiones de `selection` ({artifact_id: semver})
     sustituidas → fila nueva en gov_releases (ratified=true: lo aprueba una persona con PIN) + decisión
     `governance.activate` de op:… en la MISMA transacción. Deshacer = activar la versión anterior (otra decisión;
     si ese release ya existía, la decisión lo REACTIVA: `refresh` toma la activación más reciente).
     Nunca UPDATE/DELETE. PermissionError sin persona con PIN; LookupError si una versión no existe; ValueError si
-    no cambia nada. Quien llama hace `refresh()` después del commit (las vistas se reconstruyen solas)."""
+    no cambia nada. Quien llama hace `refresh()` después del commit (las vistas se reconstruyen solas).
+    Paso 25: `effective_from` (datetime con zona) en el FUTURO = activación PROGRAMADA: la fila de gov_releases (o la
+    reactivación) lleva esa hora y la decisión queda 'approved' con subject.scheduled; el reloj la pone en vigor al
+    llegar (refresh cada 60 s; `apply_due` deja la decisión del sistema) y se puede cancelar antes
+    (`cancel_scheduled`). Con una programada pendiente no se activa otra cosa (GovernanceConflict 'scheduled_pending':
+    la programada es una foto del release y pisaría el cambio intermedio). `validation_id` = la decisión
+    governance.validate (regresión contrafactual) que vio Fabrizio: queda citada y su blob en gov_releases."""
     from sqlalchemy import text
 
     from core import decisions
@@ -697,6 +845,30 @@ def activate(session, principal, selection, note=None):
     if not isinstance(selection, dict) or not selection:
         raise ValueError('selection vacía: {artifact_id: semver}')
     session.execute(text('SELECT pg_advisory_xact_lock(hashtextextended(:k, 0))'), {'k': 'khipus:governance'})
+    pend = scheduled_pending(session)
+    if pend:
+        p0 = pend[0]
+        raise GovernanceConflict(
+            'scheduled_pending',
+            f"Hay un cambio programado para {p0['effective_from']} (release {str(p0['release_hash'])[:8]}): "
+            'cancélalo antes de activar otra cosa.',
+            f"A change is scheduled for {p0['effective_from']} (release {str(p0['release_hash'])[:8]}): cancel it "
+            'before activating anything else.')
+    due = due_unapplied(session)
+    if due:
+        # revisión batch G: una programada cuya hora YA llegó pero que el reloj (60 s) aún no puso en vigor: el
+        # release en memoria es el VIEJO y construir sobre él borraría en silencio el cambio aprobado. Primero
+        # se pone en vigor (refresh lee lo confirmado) y se deja su decisión 'applies' en ESTA transacción.
+        refresh()
+        last = (due[-1].subject or {}).get('release_hash')
+        if active().source != 'db' or active().release_hash != last:
+            raise GovernanceConflict(
+                'scheduled_due',
+                'Un cambio programado acaba de llegar a su hora y todavía no está en vigor: espera un minuto y vuelve '
+                'a intentarlo.',
+                'A scheduled change just came due and is not in force yet: wait a minute and try again.')
+        from core import governance_flow
+        governance_flow.record_applied(session, due)
     cur = active()
     if cur.source != 'db':
         raise LookupError('sin release de la base no hay nada que activar (rige el del repositorio)')
@@ -726,12 +898,22 @@ def activate(session, principal, selection, note=None):
     existing = session.execute(text('SELECT release_hash, semver FROM gov_releases WHERE release_hash = :r'),
                                {'r': rh}).first()
     rel_semver = existing.semver if existing is not None else _bump_release_semver(cur.semver, changes)
-    eff = session.execute(text('SELECT clock_timestamp()')).scalar()
+    now = session.execute(text('SELECT clock_timestamp()')).scalar()
+    eff, scheduled = now, False
+    if effective_from is not None:
+        if getattr(effective_from, 'tzinfo', None) is None:
+            raise ValueError('effective_from debe llevar zona horaria')
+        if effective_from > now:
+            eff, scheduled = effective_from, True
     major = any(_semver_major_changed(o, n) for o, n in changes.values())
+    vrow = _regression_for(session, changes, arts, validation_id)
     subject = {'release_hash': rh, 'semver': rel_semver, 'from_release': cur.release_hash,
                'changes': {a: {'from': o, 'to': n} for a, (o, n) in changes.items()},
                'effective_from': eff.isoformat(), 'reactivation': existing is not None,
-               'four_eyes': 'unavailable' if major else None}
+               'four_eyes': 'unavailable' if major else None,
+               'regression': str(vrow.id) if vrow is not None else 'not_run'}
+    if scheduled:
+        subject['scheduled'] = True
     if register:
         docs = [read_artifact_file(artifact_path(a, v)) for a, v in register]
         with decisions.decision_scope('governance.propose', principal, session=session,
@@ -753,24 +935,85 @@ def activate(session, principal, selection, note=None):
         for a, v in sorted(arts.items()):
             ctx.policy(f"{a}@{v['semver']}", v['hash'])
         ctx.cause('gov_release', cur.release_hash)
+        if vrow is not None:
+            ctx.evidence('decision', str(vrow.id), ref_hash=vrow.inputs_sha)
         if note:
             ctx.extra['note_blob'] = ctx.blob('payload', {'note': str(note)[:2000]})
         if existing is None:
             ch_es = '; '.join(f'{a}: {o} → {n}' for a, (o, n) in sorted(changes.items()))
+            when_es = f' (programado para {eff.isoformat()})' if scheduled else ''
+            when_en = f' (scheduled for {eff.isoformat()})' if scheduled else ''
             session.execute(text(
                 'INSERT INTO gov_releases (release_hash, semver, artifacts, effective_from, approval_decision_id, '
-                'ratified, note_es, note_en) VALUES (:r, :v, CAST(:a AS jsonb), :eff, CAST(:d AS uuid), true, '
-                ':es, :en)'),
+                'validation_blob, ratified, note_es, note_en) VALUES (:r, :v, CAST(:a AS jsonb), :eff, '
+                'CAST(:d AS uuid), :vb, true, :es, :en)'),
                 {'r': rh, 'v': rel_semver, 'a': json.dumps(arts), 'eff': eff, 'd': str(ctx.id),
-                 'es': f'Activado con PIN por {principal.id}: {ch_es}.',
-                 'en': f'Activated with PIN by {principal.id}: {ch_es}.'})
+                 'vb': (vrow.inputs_sha if vrow is not None else None),
+                 'es': f'Activado con PIN por {principal.id}{when_es}: {ch_es}.',
+                 'en': f'Activated with PIN by {principal.id}{when_en}: {ch_es}.'})
         ctx.effect('gov_release', rh)
         ctx.output = {'release_hash': rh, 'semver': rel_semver, 'changes': subject['changes'],
-                      'reactivation': existing is not None}
-        ctx.status = 'executed'
+                      'reactivation': existing is not None, 'scheduled': scheduled,
+                      'effective_from': eff.isoformat()}
+        ctx.status = 'approved' if scheduled else 'executed'
     return {'decision_id': str(ctx.id), 'release_hash': rh, 'semver': rel_semver, 'changes': subject['changes'],
             'reactivation': existing is not None, 'from_release': cur.release_hash,
-            'four_eyes': subject['four_eyes']}
+            'four_eyes': subject['four_eyes'], 'scheduled': scheduled, 'effective_from': eff.isoformat(),
+            'regression': subject['regression']}
+
+
+def _regression_for(session, changes, arts, validation_id):
+    """Revisión batch G (§5.2: un MAJOR exige su reporte de regresión ANTES de activarse). Devuelve la fila de la
+    decisión governance.validate que se cita (o None). GovernanceConflict:
+      · 'validation_mismatch' si `validation_id` no es una regresión de ALGUNA de las versiones que cambian
+        (antes se citaba —y se guardaba su blob— la regresión de otro artefacto);
+      · 'regression_required' si una versión MAYOR NUEVA no tiene regresión registrada de ese mismo contenido
+        (hash). Volver a una versión que YA rigió (deshacer) no la exige: no es nueva."""
+    from sqlalchemy import text
+    want = {(a, arts[a]['hash']) for a in changes}
+    vrow = None
+    if validation_id:
+        import uuid as _uuid
+        try:
+            vid = str(_uuid.UUID(str(validation_id)))
+        except (TypeError, ValueError):
+            vid = None                                 # no es un UUID: nunca a SQL (abortaría la transacción)
+        vrow = session.execute(text("SELECT id, inputs_sha, output, subject FROM decisions WHERE "
+                                    "id = CAST(:i AS uuid) AND kind = 'governance.validate'"),
+                               {'i': vid}).first() if vid else None
+        sub = (vrow.subject or {}) if vrow is not None else {}
+        if vrow is None or (sub.get('artifact'), sub.get('hash')) not in want:
+            raise GovernanceConflict(
+                'validation_mismatch',
+                'Esa regresión no corresponde a la versión que se activa: vuelve a correr «Regresión» para esta versión.',
+                'That regression does not belong to the version being activated: run «Regression» again for this '
+                'version.')
+    for a, (o, n) in sorted(changes.items()):
+        if not _semver_major_changed(o, n):
+            continue
+        h = arts[a]['hash']
+        if vrow is not None and ((vrow.subject or {}).get('artifact'), (vrow.subject or {}).get('hash')) == (a, h):
+            continue
+        ruled = session.execute(text(
+            "SELECT 1 FROM gov_releases r WHERE r.artifacts -> :a ->> 'hash' = :h "
+            "AND r.effective_from <= clock_timestamp() AND NOT EXISTS (" +
+            _CANCELLED_SQL.format(ref='r.approval_decision_id') + ") LIMIT 1"), {'a': a, 'h': h}).first()
+        if ruled is not None:
+            continue                                   # ya rigió (arranque o activación): deshacer no la exige
+        found = session.execute(text("SELECT id, inputs_sha, output, subject FROM decisions WHERE "
+                                     "kind = 'governance.validate' AND subject->>'artifact' = :a "
+                                     "AND subject->>'hash' = :h ORDER BY recorded_at DESC LIMIT 1"),
+                                {'a': a, 'h': h}).first()
+        if found is None:
+            raise GovernanceConflict(
+                'regression_required',
+                f'{a} {n} es un cambio MAYOR: antes de activarlo corre «Regresión (PIN)» y revisa qué cambia '
+                '(§5.2).',
+                f'{a} {n} is a MAJOR change: before activating it run «Regression (PIN)» and review what changes '
+                '(§5.2).')
+        if vrow is None:
+            vrow = found
+    return vrow
 
 
 def _semver_major_changed(old, new):

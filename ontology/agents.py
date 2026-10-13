@@ -761,11 +761,15 @@ def _gate_prop(session, agent_name, proposal):
         if rep is None:
             return None
         _gr.record(rep, session=session)
+        if _gates.blocks(rep):    # paso 11 (bloqueo): una propuesta con una regla 'block' NO se crea
+            raise _gates.GateViolation(rep)
         return {'schema': rep['schema'], 'mode': rep['mode'], 'outcome': rep['outcome'],
                 'ir_hash': rep['shapes'].get('ir_hash'),
                 'results': [{k: r[k] for k in ('rule', 'severity', 'effective', 'value', 'message')}
                             for r in rep['results'][:20]]}
-    except Exception:  # noqa: BLE001 — vigilar nunca tumba un agente
+    except Exception as e:  # noqa: BLE001 — vigilar nunca tumba un agente
+        if getattr(e, 'code', None) == 'gate_violation':
+            raise
         return None
 
 
@@ -831,7 +835,7 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
     agents = [a for a in AGENTS if not only or a.name in only]
     for agent in agents:
         t0 = _time.time()
-        created = 0
+        created = blocked = 0
         # SAVEPOINT por agente: si un agente falla a nivel SQL, el error NO
         # envenena la transacción de los demás (InFailedSqlTransaction).
         sp = session.begin_nested()
@@ -849,20 +853,28 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
                 # paso 19: proposal.create (sync, en el SAVEPOINT del agente): sin ficha no hay propuesta; la
                 # puerta G-PROP (sombra) queda en ESTA decisión
                 from core import decision_sites as _ds
-                with _ds.proposal_create(session, agent.name, proposal) as done:
-                    pa = ProposedAction(
-                        agent=agent.name, action_type=proposal['action_type'],
-                        payload=proposal['payload'], object_id=proposal.get('object_id'),
-                        confidence=proposal.get('confidence'), explanation=proposal.get('explanation'),
-                        status='pending', gate_report=_gate_prop(session, agent.name, proposal),
-                    )
-                    session.add(pa)
-                    session.flush()
-                    done(pa)
+                try:
+                    with _ds.proposal_create(session, agent.name, proposal) as done:
+                        pa = ProposedAction(
+                            agent=agent.name, action_type=proposal['action_type'],
+                            payload=proposal['payload'], object_id=proposal.get('object_id'),
+                            confidence=proposal.get('confidence'), explanation=proposal.get('explanation'),
+                            status='pending', gate_report=_gate_prop(session, agent.name, proposal),
+                        )
+                        session.add(pa)
+                        session.flush()
+                        done(pa)
+                except Exception as e:  # noqa: BLE001 — paso 11: bloqueada por G-PROP → queda 'blocked' en el libro
+                    if getattr(e, 'code', None) != 'gate_violation':
+                        raise
+                    blocked += 1
+                    continue
                 created += 1
             sp.commit()
             summary[agent.name] = {'ok': True, 'signals': len(signals), 'proposals': created,
                                     'ms': int((_time.time() - t0) * 1000)}
+            if blocked:
+                summary[agent.name]['blocked_by_gates'] = blocked
         except Exception as e:  # noqa: BLE001
             try:
                 sp.rollback()

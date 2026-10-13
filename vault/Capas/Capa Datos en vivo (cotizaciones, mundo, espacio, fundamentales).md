@@ -9,11 +9,11 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.473 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.488 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[core.world.py]] — 2.118 líneas · WORLD MONITOR geopolítico: /api/world/\*.
+- [[core.world.py]] — 2.133 líneas · WORLD MONITOR geopolítico: /api/world/\*.
 - [[core.company_data.py]] — 1.332 líneas · estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del mundo (Dossier, 2026-09-28).
 - [[engine.worldmonitor.js]] — 1.326 líneas · WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 - [[engine.spacemonitor.js]] — 1.324 líneas · SPACE MONITOR (pestaña 🚀 Espacio).
@@ -47,7 +47,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 |---|---|---|
 | usa a | [[Capa Infraestructura]] | 21 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 20 |
-| la usa | [[Capa Infraestructura]] | 15 |
+| la usa | [[Capa Infraestructura]] | 16 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |

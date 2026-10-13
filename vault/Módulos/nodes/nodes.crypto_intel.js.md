@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **80 de 95** (línea 7945), después de [[engine.pricehist.js]] y antes de [[nodes.crypto_intel2.js]].
+Se carga en [[app.html]] en la posición **80 de 95** (línea 7947), después de [[engine.pricehist.js]] y antes de [[nodes.crypto_intel2.js]].
 
 ## Lo usan
 

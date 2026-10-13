@@ -21,7 +21,7 @@ tags: ["capa/mcp-api", "tipo/api"]
 | `get_conclusions_board` | read | sí | `t_get_conclusions_board` | [[mcp_server.contract.py]], [[ontology.db.py]], [[research.committee.py]] |
 | `get_exposure` | read | sí | `t_get_exposure` | [[core.__init__.py]], [[core.portfolio_advisor.py]], [[core.quotes.py]], [[matrix.tensor.py]] |
 | `get_history` | read | sí | `t_get_history` | [[core.__init__.py]], [[core.entities.py]], [[core.risk_report.py]] |
-| `get_ontology_object` | read | sí | `t_get_ontology_object` | [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.models.py]], [[ontology.provenance.py]], [[ontology.service.py]] |
+| `get_ontology_object` | read | sí | `t_get_ontology_object` | [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.bitemporal.py]], [[ontology.db.py]], [[ontology.models.py]], [[ontology.provenance.py]], [[ontology.service.py]] |
 | `get_option_greeks` | read | sí | `t_get_option_greeks` | [[core.options.py]], [[mcp_server.contract.py]] |
 | `get_order_status` | trade | sí | `t_get_order_status` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 | `get_positions` | trade | sí | `t_get_positions` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |

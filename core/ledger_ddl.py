@@ -33,7 +33,11 @@ APPEND_ONLY_TABLES = ('events', 'kh_tx_versions', 'hot_view_builds',
                       'ai_calls',              # paso 21: cada pedido a la IA (lo escribe solo core/ai.py)
                       'broker_fills',          # paso 16: avances de ejecución observados en Alpaca
                       # BRECHAS bloque 2: la memoria de los números (ontology/history_models.py)
-                      'prices_eod', 'price_adjustments', 'fx_daily', 'metrics_eod', 'positions_eod')
+                      'prices_eod', 'price_adjustments', 'fx_daily', 'metrics_eod', 'positions_eod',
+                      # paso 22: contador y modo de la guardia de proyecciones (core/ledger_guard.py)
+                      'kh_guard_violations', 'kh_guard_modes',
+                      # paso 26: puntos de control del grafo (ontology/checkpoints.py)
+                      'graph_checkpoints')
 
 # Tablas con txid/seq añadidos como columnas tardías (ontology/db._COLUMNAS_TARDIAS): aquí solo el DEFAULT.
 TXID_SEQ_TABLES = ('events', 'broker_audit')
@@ -178,9 +182,12 @@ def ensure_events(conn):
 
 
 # ── paso 6: libro de decisiones ─────────────────────────────────────────────
-# decision_blobs: DELETE/TRUNCATE siempre prohibidos; UPDATE solo como PURGA por retención (§2.7): el job
-# marca khipus.retention_job=on, el blob es standard_90d con > 90 días, queda body NULL con el MISMO sha y
-# ninguna decisión 'sync' lo cita.
+# decision_blobs: DELETE/TRUNCATE siempre prohibidos; UPDATE solo como PURGA por retención (§2.7; paso 26,
+# core/retention.py): el job marca khipus.retention_job=on, el blob es standard_90d con > 90 días y TODAVÍA tiene
+# cuerpo, queda body NULL con el MISMO sha/kind/tamaño/clase/fecha, purged_at y purge_decision_id puestos (la
+# decisión retention.purge de esa corrida), y ninguna decisión 'sync' ni llamada de IA 'legal' lo cita. Cualquier
+# otra forma de UPDATE se rechaza. El sello del libro nunca hashea el cuerpo (las decisiones citan el sha): verify
+# sigue OK tras una purga (tests/test_retention_purge.py).
 _FN_BLOB_GUARD = """
 CREATE OR REPLACE FUNCTION kh_blob_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -188,13 +195,24 @@ BEGIN
      AND coalesce(current_setting('khipus.retention_job', true), '') = 'on'
      AND OLD.retention_class = 'standard_90d'
      AND OLD.created_at < now() - interval '90 days'
+     AND OLD.body IS NOT NULL AND OLD.purged_at IS NULL
      AND NEW.body IS NULL AND NEW.sha256 = OLD.sha256 AND NEW.kind = OLD.kind
      AND NEW.size_bytes = OLD.size_bytes AND NEW.retention_class = OLD.retention_class
      AND NEW.created_at = OLD.created_at
+     AND NEW.purged_at IS NOT NULL AND NEW.purge_decision_id IS NOT NULL
      AND NOT EXISTS (SELECT 1 FROM decision_refs r JOIN decisions d ON d.id = r.decision_id
                      WHERE r.ref_kind = 'blob' AND r.ref_id = OLD.sha256 AND d.durability = 'sync')
      AND NOT EXISTS (SELECT 1 FROM decisions d
                      WHERE d.durability = 'sync' AND (d.inputs_sha = OLD.sha256 OR d.output_sha = OLD.sha256))
+     AND NOT EXISTS (SELECT 1 FROM ai_calls a WHERE a.retention_class = 'legal'
+                     AND (a.system_blob = OLD.sha256 OR a.input_blob = OLD.sha256 OR a.output_blob = OLD.sha256))
+     -- revisión batch G: tampoco si algo lo citó DENTRO de los 90 días (el blob guarda su PRIMERA aparición)
+     AND NOT EXISTS (SELECT 1 FROM ai_calls a WHERE a.started_at >= now() - interval '90 days'
+                     AND (a.system_blob = OLD.sha256 OR a.input_blob = OLD.sha256 OR a.output_blob = OLD.sha256))
+     AND NOT EXISTS (SELECT 1 FROM decisions d WHERE d.recorded_at >= now() - interval '90 days'
+                     AND (d.inputs_sha = OLD.sha256 OR d.output_sha = OLD.sha256))
+     AND NOT EXISTS (SELECT 1 FROM decision_refs r WHERE r.ref_kind = 'blob' AND r.ref_id = OLD.sha256
+                     AND r.recorded_at >= now() - interval '90 days')
   THEN
     RETURN NEW;
   END IF;
@@ -220,6 +238,34 @@ BEGIN
 END $$
 """
 
+# Revisión batch G: la fila sola no puede ver la decisión de la purga (se escribe DESPUÉS del UPDATE, en la misma
+# transacción). Este disparador DIFERIDO lo comprueba al confirmar: purge_decision_id debe ser una decisión
+# 'retention.purge' escrita en ESA transacción (antes bastaba cualquier UUID con el GUC puesto).
+_FN_BLOB_PURGE_CHECK = """
+CREATE OR REPLACE FUNCTION kh_blob_purge_check() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.body IS NULL AND OLD.body IS NOT NULL AND NOT EXISTS (
+       SELECT 1 FROM decisions d WHERE d.id = NEW.purge_decision_id AND d.kind = 'retention.purge'
+       AND d.txid = {txid}) THEN
+    RAISE EXCEPTION 'purga de decision_blobs sin su decision retention.purge en esta transaccion / blob purge without '
+                    'its retention.purge decision in this transaction';
+  END IF;
+  RETURN NULL;
+END $$
+"""
+
+_BLOB_PURGE_TRIGGER = """
+DO $$
+BEGIN
+  IF to_regclass('decision_blobs') IS NOT NULL AND to_regclass('decisions') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'decision_blobs_purge_check'
+                     AND tgrelid = 'decision_blobs'::regclass) THEN
+    CREATE CONSTRAINT TRIGGER decision_blobs_purge_check AFTER UPDATE ON decision_blobs
+      DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE kh_blob_purge_check();
+  END IF;
+END $$
+"""
+
 _LEDGER_INDEXES = (
     ('ix_dec_corr', 'CREATE INDEX IF NOT EXISTS ix_dec_corr ON decisions (correlation_id) '
                     'WHERE correlation_id IS NOT NULL'),
@@ -238,6 +284,8 @@ def ensure_ledger(conn):
     from sqlalchemy import text
     if safe_ddl(conn, _FN_BLOB_GUARD):
         safe_ddl(conn, _BLOB_TRIGGERS)
+    if safe_ddl(conn, _FN_BLOB_PURGE_CHECK.replace('{txid}', txid_expr())):
+        safe_ddl(conn, _BLOB_PURGE_TRIGGER)
     have = {n for (n,) in conn.execute(text(
         "SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()")).all()}
     tables = {n for (n,) in conn.execute(text(
@@ -284,8 +332,23 @@ def ensure_all(engine):
                 ok = safe_ddl(conn, sql) and ok
             ensure_events(conn)
             ensure_ledger(conn)
+            try:   # paso 22: guardia de proyecciones kh_require_decision (modo warn por defecto)
+                from core import ledger_guard
+                ledger_guard.ensure(conn)
+            except Exception as e:  # noqa: BLE001
+                log.warning('ledger_ddl: guardia no instalada (%s)', type(e).__name__)
+            try:   # paso 26: índices parciales que usa la purga por retención (y la guardia de blobs)
+                from core import retention
+                retention.ensure(conn)
+            except Exception as e:  # noqa: BLE001
+                log.warning('ledger_ddl: índices de retención no creados (%s)', type(e).__name__)
             ok = ensure_append_only(conn) and ok
         STATE['ready'] = bool(ok)
+        try:   # paso 22: oyente del camino del código + modo de la guardia según el release vigente
+            from core import ledger_guard
+            ledger_guard.on_schema_init(engine)
+        except Exception as e:  # noqa: BLE001
+            log.warning('ledger_ddl: modo de la guardia no sincronizado (%s)', type(e).__name__)
         try:   # paso 6: el linaje del libro (ledger_meta) se crea una vez y se cachea en el proceso
             from core import ledger
             ledger.on_schema_init(engine)

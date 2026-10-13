@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/agents.py"
 lenguaje: "python"
-lineas: 1027
+lineas: 1039
 aliases: ["ontology/agents.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/agents.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.027 líneas · `ontology/agents.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.039 líneas · `ontology/agents.py`
 
 ## Para qué sirve
 
@@ -26,11 +26,11 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - clase `RadarEmpresas` _(línea 287)_
 - clase `TejedorHiperaristas` — Teje HIPERARISTAS: cuando detecta en noticias un golpe SISTÉMICO que toca a VARIAS empresas del grafo a la vez (sanción, escasez de un … _(línea 357)_
 - clase `InvestigadorAutonomo` — Dos caminos: manual (endpoint /agents/investigar, SIEMPRE disponible) o reactivo (Annotations recientes de otros agentes — gateado por … _(línea 505)_
-- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 772)_
-- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 827)_
-- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 877)_
-- `evaluate_alert(session, rule, values=…)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). `values` = el lote de AlertIndex (core/hotviews/views/alerts.values): NRS … _(línea 948)_
-- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 998)_
+- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 776)_
+- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 831)_
+- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 889)_
+- `evaluate_alert(session, rule, values=…)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). `values` = el lote de AlertIndex (core/hotviews/views/alerts.values): NRS … _(línea 960)_
+- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 1010)_
 
 **Internas** (empiezan con `_`): `_utcnow`, `_recently_proposed`, `_ai_explain`, `_compute_server_nrs`, `_hot_nrs`, `_slug`, `_gate_prop`, `_get_live_price`
 

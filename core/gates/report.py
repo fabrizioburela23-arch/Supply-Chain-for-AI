@@ -198,3 +198,69 @@ def write_audit(reports):
     with _LOCK:
         STATS['recorded'] += len(reports)
     return did
+
+
+# ── 🩺 «Puertas»: 7 días de avisos en sombra (paso 11: para decidir si activar el bloqueo) ──────────────────────
+_SUMMARY_CACHE = {'at': 0.0, 'key': None, 'data': None}
+
+
+def shadow_summary(days=7, engine=None, fresh=False):
+    """Por regla, en los últimos `days` días: cuántos avisos, en qué puerta, con qué severidad DECLARADA, y cuántas
+    escrituras se habrían BLOQUEADO con policy.gates@2.0.0 (declarada 'block' en una puerta de block_gates).
+    {'days', 'total', 'would_block', 'decisions_would_block', 'rules': [{rule, gate, declared, n, decisions, last}]}.
+    Caché 60 s (lo lee el 🩺). Nunca lanza."""
+    import time as _t
+    key = int(days)
+    if not fresh and _SUMMARY_CACHE['data'] is not None and _SUMMARY_CACHE['key'] == key \
+            and _t.time() - _SUMMARY_CACHE['at'] < 60:
+        return _SUMMARY_CACHE['data']
+    out = {'days': key, 'total': 0, 'would_block': 0, 'decisions_would_block': 0, 'rules': []}
+    try:
+        from sqlalchemy import text
+        if engine is None:
+            from ontology.db import _get_engine, ontology_available
+            if not ontology_available():
+                return {**out, 'available': False}
+            engine = _get_engine()
+        blockable = _blockable_in_v2()
+        with engine.connect() as c:
+            rows = c.execute(text(
+                "SELECT v.rule_iri AS rule, coalesce(v.value->>'gate', '') AS gate, "
+                "coalesce(v.value->>'declared', v.severity) AS declared, count(*) AS n, "
+                "count(DISTINCT v.decision_id) AS d, max(d.recorded_at) AS last "
+                "FROM decision_violations v JOIN decisions d ON d.id = v.decision_id "
+                "WHERE d.recorded_at > clock_timestamp() - make_interval(days => :days) "
+                "GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 60"), {'days': key}).all()
+            wb = c.execute(text(
+                "SELECT count(DISTINCT v.decision_id) FROM decision_violations v JOIN decisions d "
+                "ON d.id = v.decision_id WHERE d.recorded_at > clock_timestamp() - make_interval(days => :days) "
+                "AND coalesce(v.value->>'declared', v.severity) = 'block' AND v.value->>'gate' = ANY(:g)"),
+                {'days': key, 'g': sorted(blockable)}).scalar()
+        for r in rows:
+            item = {'rule': r.rule, 'gate': r.gate or None, 'declared': r.declared, 'n': int(r.n),
+                    'decisions': int(r.d), 'last': r.last.isoformat() if r.last else None}
+            out['rules'].append(item)
+            out['total'] += item['n']
+            if item['declared'] == 'block' and item['gate'] in blockable:
+                out['would_block'] += item['n']
+        out['decisions_would_block'] = int(wb or 0)
+        out['available'] = True
+    except Exception as e:  # noqa: BLE001
+        out['available'] = False
+        out['error'] = type(e).__name__
+    _SUMMARY_CACHE.update(at=_t.time(), key=key, data=out)
+    return out
+
+
+def _blockable_in_v2():
+    """Las puertas que BLOQUEARÍA la versión 2.x de policy.gates disponible (o, si ya rige, la vigente)."""
+    import core.gates as G
+    try:
+        from core import governance
+        cur = governance.param('policy.gates', 'block_gates', None)
+        if cur:
+            return set(cur) & set(G.BLOCKABLE)
+        doc = governance.available_artifact('policy.gates', '2.0.0')
+        return set(doc['params'].get('block_gates') or ()) & set(G.BLOCKABLE)
+    except Exception:  # noqa: BLE001
+        return set(G.BLOCKABLE)

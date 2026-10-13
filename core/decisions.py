@@ -58,6 +58,7 @@ KINDS = frozenset((
     'retention.purge', 'ledger.lineage_break', 'ledger.chain_break', 'ledger.chain_ack', 'audit.replay',
     'audit.gates',
     'data.backfill',          # BRECHAS bloque 2: relleno de historia de precios a pedido del operador (PIN)
+    'retention.migrate',      # paso 26: limpieza única de datos viejos (claves en texto plano de decision_shadow)
 ))
 SYNC_PREFIXES = ('order.', 'approval.', 'ontology.', 'proposal.', 'committee.', 'research.', 'claim.', 'alert.rule',
                  'reconcile.', 'policy.', 'governance.', 'trade.', 'audit.', 'retention.', 'ledger.')
@@ -588,14 +589,16 @@ def decision_scope(kind, principal, *, session, subject=None, durability=None, p
             try:
                 from core import gates as _gates
                 _gates.flush_deferred(session)
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as _ge:  # noqa: BLE001
+                if getattr(_ge, 'code', None) == 'gate_violation':     # paso 11: puerta que BLOQUEA
+                    raise
     except BaseException as e:
         _CTX.reset(tok)
         tok = None
         ctx.error = e
         if isinstance(e, Exception):
-            st = (rejection_status(e) if rejection_status else
+            st = ('blocked' if getattr(e, 'code', None) == 'gate_violation' else
+                  rejection_status(e) if rejection_status else
                   ('rejected' if isinstance(e, ValueError) else 'failed'))
             record_rejection(ctx, status=st, error=e)
         raise

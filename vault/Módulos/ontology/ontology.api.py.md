@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/api.py"
 lenguaje: "python"
-lineas: 1247
+lineas: 1351
 aliases: ["ontology/api.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/api.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.247 líneas · `ontology/api.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.351 líneas · `ontology/api.py`
 
 ## Para qué sirve
 
@@ -18,50 +18,50 @@ API REST de la ontología: /api/ontology/\*
 
 ## API pública
 
-- `status()` _(línea 151)_
-- `gates_status()` — Puertas de validación (INFRA_OPERATIVA paso 10): modo (sombra), versión e ir_hash de las formas, reglas, cuántas veces avisó cada regla … _(línea 168)_
-- `objects_list()` _(línea 187)_
-- `objects_get(object_id)` _(línea 201)_
-- `objects_links(object_id)` _(línea 211)_
-- `objects_history(object_id)` _(línea 220)_
-- `graph()` _(línea 228)_
-- `graph_diff()` _(línea 240)_
-- `actions_list()` — Panel '📋 Registro': timeline de Acciones ejecutadas, filtrable. _(línea 261)_
-- `actions_execute(action_type)` — Catálogo de Acciones (Fase 2): CrearTesis, AnotarObjeto, MarcarRiesgo, ProponerVinculo, Confirmar/RechazarVinculo, RegistrarDecision, … _(línea 280)_
-- `agents_run()` — Dispara una corrida de todos los agentes (o los que pida `only`). Pensado para un botón manual o un cron externo — ver ontology/agents.py … _(línea 316)_
-- `agents_cycle()` — Ciclo EN VIVO (elección de Fabrizio 2026-07-10: automático + reversible): corre los 5 agentes, auto-aprueba las propuestas SEGURAS (anotar, … _(línea 380)_
-- `bulk_import_route()` — Carga masiva AUDITADA: objects (solo tipos NO económicos del registro, p.ej. Seat) + links (vía ontology.bulk_import: validación de … _(línea 412)_
-- `agents_investigar()` — Body: {query, actor, empresa_id?}. Responde al instante; el resultado aparece como ProposedAction en 🔔 Propuestas (y en GET de este estado). _(línea 503)_
-- `agents_proposals_list()` _(línea 536)_
-- `select_proposed(status, limit)` _(línea 549)_
-- `agents_proposal_approve(proposal_id)` — Aprueba (con ediciones opcionales) → ejecuta la Acción real, auditada con actor='&lt;agente>, aprobado por &lt;humano>'. Reclamo atómico: ver … _(línea 629)_
-- `agents_proposal_reject(proposal_id)` _(línea 671)_
-- `agents_brief()` — Cronista: Brief Matinal — no requiere aprobación, es informativo. _(línea 696)_
-- `alerts_list()` _(línea 715)_
-- `select_alerts(owner)` _(línea 724)_
-- `alerts_create()` — Body: {owner, rule:{entity,metric,op,value} o {region,event_type}, channel?}. _(línea 736)_
-- `alerts_delete(alert_id)` _(línea 764)_
-- `alerts_check()` — Evalúa las alertas activas (de `owner` si se pasa) y devuelve las que dispararon ahora — el cliente las convierte en notificaciones del … _(línea 787)_
-- `search_objects()` — Búsqueda de entidades desde el SERVIDOR (Phase 1 · M5). _(línea 799)_
-- `event_detail(event_id)` — Un evento concreto, con su procedencia resuelta (Phase 1 · M5). _(línea 851)_
-- `object_timeline(object_id)` — Qué le ha pasado a esta entidad, en un solo hilo (Phase 1 · M5). Fusiona eventos del grafo y noticias, ordenado por cuándo fue cierto en el … _(línea 885)_
-- `global_feed_route()` — Lo último que entró al grafo ENTERO (M6): noticias, relaciones nuevas o terminadas, tesis y acciones — sin la migración ni los precios. … _(línea 910)_
-- `object_news(object_id)` — Noticias que informan sobre una entidad, ya en el grafo (Phase 1 · M4). Solo LEE: no dispara ingesta, para que abrir una ficha no provoque … _(línea 954)_
-- `ingest_news()` — Ingiere noticias de una entidad AL GRAFO (Phase 1 · M4). Body: {entity_id, query?, limit?, actor?}. _(línea 975)_
-- `sources_list()` — Documentos que respaldan hechos del grafo (Phase 1 · M1). Query: ?kind=primary&min_trust=2&limit=50. Ordenadas por confiabilidad. _(línea 1021)_
-- `object_provenance(object_id)` — De dónde salió lo que sabemos de este objeto: las fuentes que lo evidencian y los eventos que las citan (con fecha y confianza). _(línea 1051)_
-- `events_create()` — Escritura de bajo nivel. En Fase 2 esto se envuelve con el catálogo de Acciones (validación por tipo, auditoría de actor humano). Por ahora … _(línea 1072)_
-- `reconcile_plan()` — Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1. No escribe nada. _(línea 1135)_
-- `reconcile_apply()` — Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id. _(línea 1196)_
-- `reconcile_rollback()` — Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos. _(línea 1230)_
+- `status()` _(línea 158)_
+- `gates_status()` — Puertas de validación (INFRA_OPERATIVA paso 10): modo (sombra), versión e ir_hash de las formas, reglas, cuántas veces avisó cada regla … _(línea 178)_
+- `objects_list()` _(línea 197)_
+- `objects_get(object_id)` — Objeto materializado de hoy. Con ?as_of= y/o ?known_at= (paso 23, props_at): sus propiedades en la fecha as_of TAL COMO SE CONOCÍAN en κ, … _(línea 216)_
+- `objects_links(object_id)` _(línea 247)_
+- `objects_history(object_id)` — ?known_at= (paso 23): solo los eventos que Khipus ya conocía en κ (ISO o versión del grafo). _(línea 256)_
+- `graph()` _(línea 276)_
+- `graph_diff()` _(línea 298)_
+- `actions_list()` — Panel '📋 Registro': timeline de Acciones ejecutadas, filtrable. _(línea 323)_
+- `actions_execute(action_type)` — Catálogo de Acciones (Fase 2): CrearTesis, AnotarObjeto, MarcarRiesgo, ProponerVinculo, Confirmar/RechazarVinculo, RegistrarDecision, … _(línea 342)_
+- `agents_run()` — Dispara una corrida de todos los agentes (o los que pida `only`). Pensado para un botón manual o un cron externo — ver ontology/agents.py … _(línea 380)_
+- `agents_cycle()` — Ciclo EN VIVO (elección de Fabrizio 2026-07-10: automático + reversible): corre los 5 agentes, auto-aprueba las propuestas SEGURAS (anotar, … _(línea 444)_
+- `bulk_import_route()` — Carga masiva AUDITADA: objects (solo tipos NO económicos del registro, p.ej. Seat) + links (vía ontology.bulk_import: validación de … _(línea 476)_
+- `agents_investigar()` — Body: {query, actor, empresa_id?}. Responde al instante; el resultado aparece como ProposedAction en 🔔 Propuestas (y en GET de este estado). _(línea 587)_
+- `agents_proposals_list()` _(línea 620)_
+- `select_proposed(status, limit)` _(línea 633)_
+- `agents_proposal_approve(proposal_id)` — Aprueba (con ediciones opcionales) → ejecuta la Acción real, auditada con actor='&lt;agente>, aprobado por &lt;humano>'. Reclamo atómico: ver … _(línea 713)_
+- `agents_proposal_reject(proposal_id)` _(línea 757)_
+- `agents_brief()` — Cronista: Brief Matinal — no requiere aprobación, es informativo. _(línea 782)_
+- `alerts_list()` _(línea 801)_
+- `select_alerts(owner)` _(línea 810)_
+- `alerts_create()` — Body: {owner, rule:{entity,metric,op,value} o {region,event_type}, channel?}. _(línea 822)_
+- `alerts_delete(alert_id)` _(línea 850)_
+- `alerts_check()` — Evalúa las alertas activas (de `owner` si se pasa) y devuelve las que dispararon ahora — el cliente las convierte en notificaciones del … _(línea 873)_
+- `search_objects()` — Búsqueda de entidades desde el SERVIDOR (Phase 1 · M5). _(línea 885)_
+- `event_detail(event_id)` — Un evento concreto, con su procedencia resuelta (Phase 1 · M5). _(línea 937)_
+- `object_timeline(object_id)` — Qué le ha pasado a esta entidad, en un solo hilo (Phase 1 · M5). Fusiona eventos del grafo y noticias, ordenado por cuándo fue cierto en el … _(línea 971)_
+- `global_feed_route()` — Lo último que entró al grafo ENTERO (M6): noticias, relaciones nuevas o terminadas, tesis y acciones — sin la migración ni los precios. … _(línea 1007)_
+- `object_news(object_id)` — Noticias que informan sobre una entidad, ya en el grafo (Phase 1 · M4). Solo LEE: no dispara ingesta, para que abrir una ficha no provoque … _(línea 1051)_
+- `ingest_news()` — Ingiere noticias de una entidad AL GRAFO (Phase 1 · M4). Body: {entity_id, query?, limit?, actor?}. _(línea 1072)_
+- `sources_list()` — Documentos que respaldan hechos del grafo (Phase 1 · M1). Query: ?kind=primary&min_trust=2&limit=50. Ordenadas por confiabilidad. _(línea 1118)_
+- `object_provenance(object_id)` — De dónde salió lo que sabemos de este objeto: las fuentes que lo evidencian y los eventos que las citan (con fecha y confianza). _(línea 1148)_
+- `events_create()` — Escritura de bajo nivel. En Fase 2 esto se envuelve con el catálogo de Acciones (validación por tipo, auditoría de actor humano). Por ahora … _(línea 1169)_
+- `reconcile_plan()` — Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1. No escribe nada. _(línea 1232)_
+- `reconcile_apply()` — Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id. _(línea 1294)_
+- `reconcile_rollback()` — Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos. _(línea 1334)_
 
-**Internas** (empiezan con `_`): `_unavailable`, `_body`, `_BadArg`, `_int_arg`, `_bad_arg`, `_ledger_unavailable`, `_principal`, `_require_db`, `_obj_to_dict`, `_mark_genesis`, `_link_to_dict`, `_event_to_dict`, `_action_event_to_dict`, `_proposal_to_dict`, `_cycle_bg`, `_try_start_cycle`, `_invest_bg`, `_claim_proposal`, `_cycle_may_auto_apply`, `_proposal_actor_and_id`, `_alert_to_dict`, `_recon_plan`, `_strict_operator`, `_strict_operator_required`, `_str_arg`
+**Internas** (empiezan con `_`): `_unavailable`, `_body`, `_BadArg`, `_int_arg`, `_bad_arg`, `_gate_violation`, `_ledger_unavailable`, `_principal`, `_require_db`, `_obj_to_dict`, `_mark_genesis`, `_link_to_dict`, `_event_to_dict`, `_known_bad`, `_action_event_to_dict`, `_proposal_to_dict`, `_cycle_bg`, `_try_start_cycle`, `_bulk_import_apply`, `_invest_bg`, `_claim_proposal`, `_cycle_may_auto_apply`, `_proposal_actor_and_id`, `_alert_to_dict`, `_recon_plan`, `_strict_operator`, `_strict_operator_required`, `_str_arg`
 
 ## Depende de
 
-- [[core.__init__.py]] — importa `core.gates`
+- [[core.__init__.py]] — importa `GateViolation`, `core.gates`
 - [[core.decision_sites.py]] — importa `decision_sites`
-- [[core.decisions.py]] — importa `LedgerUnavailable`
+- [[core.decisions.py]] — importa `LedgerUnavailable`, `decisions`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `resolve`
 - [[core.http.py]] — importa `rate_limit`
 - [[core.identity.py]] — importa `identity`
@@ -69,7 +69,9 @@ API REST de la ontología: /api/ontology/\*
 - [[core.websearch.py]] — importa `_web_search_available`
 - [[ontology.actions.py]] — importa `ActionError`, `execute_action`, `list_actions`
 - [[ontology.agents.py]] — importa `AGENTS`, `AUTO_MIN_CONFIDENCE`, `SAFE_AUTO`, `auto_cycle`, `brief_matinal`, `check_alerts`, `run_agents`
-- [[ontology.bulk_import.py]] — importa `import_links_bulk`
+- [[ontology.bitemporal.py]] — importa `KnownAtError`, `bitemporal`
+- [[ontology.bulk_import.py]] — importa `(dinámico: ontology.bulk_import)`, `import_links_bulk`
+- [[ontology.checkpoints.py]] — importa `checkpoints`
 - [[ontology.db.py]] — importa `ontology_available`, `session_scope`
 - [[ontology.ingest_news.py]] — importa `ingest_news_for`, `news_for_object`
 - [[ontology.models.py]] — importa `Alert`, `Event`, `LinkRecord`, `ObjectRecord`, `ProposedAction`
@@ -91,7 +93,7 @@ _Además lo importan 6 pruebas (lista abajo)._
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
 | `GET` | `/api/ontology/actions` | `actions_list` | [[app.html]], 1 prueba |
-| `POST` | `/api/ontology/actions/<action_type>` | `actions_execute` | [[engine.khipu_lang.js]], [[engine.temporal-graph.js]], 4 pruebas |
+| `POST` | `/api/ontology/actions/<action_type>` | `actions_execute` | [[engine.khipu_lang.js]], [[engine.temporal-graph.js]], 5 pruebas |
 | `GET` | `/api/ontology/agents/brief` | `agents_brief` | 2 pruebas |
 | `POST` | `/api/ontology/agents/cycle` | `agents_cycle` | [[engine.live.js]], 2 pruebas |
 | `POST` | `/api/ontology/agents/investigar` | `agents_investigar` | [[app.html]], 2 pruebas |
@@ -108,22 +110,22 @@ _Además lo importan 6 pruebas (lista abajo)._
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | 1 prueba |
 | `GET` | `/api/ontology/feed` | `global_feed_route` | [[app.html]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | — |
-| `GET` | `/api/ontology/graph` | `graph` | — |
-| `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[engine.khipu_lang.js]] |
+| `GET` | `/api/ontology/graph` | `graph` | 2 pruebas |
+| `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[engine.khipu_lang.js]], 1 prueba |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[app.html]], [[engine.temporal-graph.js]], 3 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[engine.fincard.js]], 1 prueba |
-| `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[engine.fincard.js]], [[engine.temporal-graph.js]] |
-| `GET` | `/api/ontology/objects/<object_id>/history` | `objects_history` | [[engine.fincard.js]] |
+| `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
+| `GET` | `/api/ontology/objects/<object_id>/history` | `objects_history` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/links` | `objects_links` | [[engine.fincard.js]] |
 | `GET` | `/api/ontology/objects/<object_id>/news` | `object_news` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/provenance` | `object_provenance` | [[engine.fincard.js]], 1 prueba |
-| `GET` | `/api/ontology/objects/<object_id>/timeline` | `object_timeline` | [[app.html]], [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
+| `GET` | `/api/ontology/objects/<object_id>/timeline` | `object_timeline` | [[app.html]], [[engine.fincard.js]], [[engine.temporal-graph.js]], 2 pruebas |
 | `POST` | `/api/ontology/reconcile/apply` | `reconcile_apply` | [[engine.reconcile.js]], 3 pruebas |
 | `GET` | `/api/ontology/reconcile/plan` | `reconcile_plan` | [[engine.reconcile.js]], 3 pruebas |
 | `POST` | `/api/ontology/reconcile/rollback` | `reconcile_rollback` | [[engine.reconcile.js]], 3 pruebas |
 | `GET` | `/api/ontology/search` | `search_objects` | 1 prueba |
 | `GET` | `/api/ontology/sources` | `sources_list` | 1 prueba |
-| `GET` | `/api/ontology/status` | `status` | [[engine.temporal-graph.js]] |
+| `GET` | `/api/ontology/status` | `status` | [[engine.temporal-graph.js]], 1 prueba |
 
 Grupos: [[API ontology]]
 
@@ -133,6 +135,9 @@ Grupos: [[API ontology]]
 
 ## Pruebas que lo cubren
 
+- [[tests.test_bitemporal.py]]
+- [[tests.test_checkpoints.py]]
+- [[tests.test_gates_resulting_state.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]

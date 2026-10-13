@@ -31,6 +31,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from core import governance as G  # noqa: E402
+from core import governance_lint as GL  # noqa: E402
 
 IR_PATH = os.path.join(ROOT, 'governance', 'shapes', 'compiled.ir.json')
 # artefactos GENERADOS desde otra fuente del repo: --write los regenera (si la fuente cambió hay que subir versión)
@@ -87,75 +88,14 @@ def mirror_problems(latest):
     return probs
 
 
-def _diff_kind(old, new):
-    """'none' | 'add' (solo claves nuevas) | 'change' (algo quitado o distinto)."""
-    if old == new:
-        return 'none'
-    if isinstance(old, dict) and isinstance(new, dict):
-        if any(k not in new for k in old):
-            return 'change'
-        kinds = [_diff_kind(old[k], new[k]) for k in old]
-        if 'change' in kinds:
-            return 'change'
-        return 'add'
-    return 'change'
-
-
-def _bump_matches(ck, psv, sv):
-    """¿El salto de versión parent→sv es del tamaño que declara change_kind? major sube X; minor sube Y con el
-    mismo X; patch sube Z con el mismo X.Y."""
-    p, n = G.semver_key(psv), G.semver_key(sv)
-    if ck == 'major':
-        return n[0] > p[0]
-    if ck == 'minor':
-        return n[0] == p[0] and n[1] > p[1]
-    if ck == 'patch':
-        return n[:2] == p[:2] and n[2] > p[2]
-    return True
+# el lint vive en core/governance_lint.py (bilingüe; lo usa también la propuesta hecha en la app con PIN, paso 25)
+_diff_kind = GL.diff_kind
+_bump_matches = GL.bump_matches
 
 
 def semver_problems(docs):
-    probs = []
-    first = {}                                      # id → semver más baja (la única que puede ser 'initial')
-    for (aid, sv) in docs:
-        if aid not in first or G.semver_key(sv) < G.semver_key(first[aid]):
-            first[aid] = sv
-    for (aid, sv), doc in sorted(docs.items()):
-        ck = doc.get('change_kind') or 'initial'
-        par = doc.get('parent')
-        if ck == 'initial':
-            # 'initial' (también el valor por omisión) solo vale para la PRIMERA versión de un artefacto: antes
-            # cualquier archivo nuevo sin change_kind se saltaba todo el lint (un 1.0.1 que cambiaba el kernel
-            # pasaba --check)
-            if sv != first[aid] or par:
-                probs.append(f'{aid}@{sv}: solo la primera versión puede ser "initial"; declara change_kind '
-                             '(patch|minor|major) y "parent"')
-            continue
-        if not par:
-            probs.append(f'{aid}@{sv}: change_kind={ck} exige "parent" (<id>@<semver>)')
-            continue
-        try:
-            paid, psv = par.split('@', 1)
-        except ValueError:
-            probs.append(f'{aid}@{sv}: parent inválido {par!r}')
-            continue
-        pdoc = docs.get((paid, psv))
-        if pdoc is None or paid != aid:
-            probs.append(f'{aid}@{sv}: el parent {par} no existe')
-            continue
-        if G.semver_key(sv) <= G.semver_key(psv):
-            probs.append(f'{aid}@{sv}: la versión debe ser mayor que la del parent {psv}')
-        elif ck in ('patch', 'minor', 'major') and not _bump_matches(ck, psv, sv):
-            probs.append(f'{aid}@{sv}: change_kind={ck} no coincide con el salto {psv} → {sv} (major sube X, '
-                         'minor sube Y con el mismo X, patch sube Z con el mismo X.Y)')
-        d = _diff_kind(pdoc['params'], doc['params'])
-        if ck == 'patch' and d != 'none':
-            probs.append(f'{aid}@{sv}: un PATCH no puede cambiar parámetros (gov.semver_matches_diff); usa major')
-        if ck == 'minor' and d == 'change':
-            probs.append(f'{aid}@{sv}: un MINOR solo agrega claves; cambiar o quitar un número/conjunto es MAJOR')
-        if ck not in ('patch', 'minor', 'major'):
-            probs.append(f'{aid}@{sv}: change_kind inválido {ck!r}')
-    return probs
+    """Textos (es) de los problemas semver — core.governance_lint.semver_problems los da bilingües."""
+    return [p['es'] for p in GL.semver_problems(docs)]
 
 
 def releasable(docs):
@@ -212,6 +152,7 @@ def check(verbose=True):
         probs.append('el release de manifest.json no es el de los archivos: corre scripts/build_governance.py --write')
     probs += semver_problems(docs)
     probs += mirror_problems(G.latest_per_id(docs))
+    probs += GL.tunables_problems(G.latest_per_id(docs))
     if verbose:
         for p in probs:
             print('✗', p)

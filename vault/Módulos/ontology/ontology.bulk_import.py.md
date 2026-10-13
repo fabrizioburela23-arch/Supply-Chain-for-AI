@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/bulk_import.py"
 lenguaje: "python"
-lineas: 213
+lineas: 218
 aliases: ["ontology/bulk_import.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/bulk_import.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 213 líneas · `ontology/bulk_import.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 218 líneas · `ontology/bulk_import.py`
 
 ## Para qué sirve
 

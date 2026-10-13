@@ -2051,12 +2051,20 @@ def mark_executed(session, memo_id, order=None, actor='brokerage'):
 
 
 def fail_memo(session, memo_id, error, error_en=None):
+    """Marca un memo 'running' como fallido. Paso 22 (guardia «sin decisión no hay cambio»): el cambio de estado va
+    dentro de una decisión committee.run 'failed' de system:committee en la MISMA transacción (el comité murió o el
+    servidor se reinició a mitad: la ficha dice cuál memo y por qué)."""
     m = session.get(CommitteeMemo, str(memo_id)[:40])
     if m and m.status == 'running':
-        m.status, m.error = 'failed', str(error)[:500]
-        m.error_en = str(error_en or error)[:500]
-        _audit(m, 'committee', 'failed', {'error': str(error)[:200]})
-        session.flush()
+        from core import decisions, identity
+        with decisions.decision_scope('committee.run', identity.system('committee'), session=session,
+                                      subject={'memo_id': m.id, 'entity_ids': [m.entity_id], 'memo_failed': True}) as ctx:
+            m.status, m.error = 'failed', str(error)[:500]
+            m.error_en = str(error_en or error)[:500]
+            _audit(m, 'committee', 'failed', {'error': str(error)[:200]})
+            session.flush()
+            ctx.output = {'memo_id': m.id, 'status': 'failed', 'error': str(error)[:300]}
+            ctx.status = 'failed'
 
 
 def create_placeholder(session, entity_id, requested_by, client_id=None):

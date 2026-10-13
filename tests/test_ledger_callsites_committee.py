@@ -117,7 +117,8 @@ def test_g5_memo_sin_validar_a_la_mitad_pasa_y_sin_mitad_avisa():
     # SOMBRA: lo que el TTL declara 'block' rige como aviso (nada se rechaza en el paso 18)
     assert rules['khr:memo.unvalidated_half']['severity'] == 'block'
     assert rules['khr:memo.unvalidated_half']['effective'] == 'warn' and bad['outcome'] == 'warn'
-    assert bad['mode'] == 'shadow' and bad['shapes']['semver'] == '4.0.0'
+    from core import governance as _gov
+    assert bad['mode'] == 'shadow' and bad['shapes']['semver'] == _gov.artifact_semver('ontology.shapes')
     assert 'mitad' in rules['khr:memo.unvalidated_half']['message']['es']
     assert 'halved' in rules['khr:memo.unvalidated_half']['message']['en']
 

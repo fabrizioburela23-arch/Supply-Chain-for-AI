@@ -113,7 +113,7 @@ def _titulo(ev, object_id, etiquetas, t):
     return tipo, ''
 
 
-def entity_timeline(session, object_id, limit=60, lang='es', include_news=True):
+def entity_timeline(session, object_id, limit=60, lang='es', include_news=True, known=None):
     """Todo lo que le ha pasado a una entidad, en un solo hilo ordenado.
 
     Devuelve las entradas de la más reciente a la más antigua por `at`
@@ -121,11 +121,11 @@ def entity_timeline(session, object_id, limit=60, lang='es', include_news=True):
     t = _T.get(lang if lang in _T else 'es')
     limit = max(1, min(int(limit or 60), 300))
 
-    eventos = session.scalars(
-        select(Event).where(or_(Event.object_id == object_id,
-                                Event.target_id == object_id))
-        .order_by(Event.valid_from.desc()).limit(limit)
-    ).all()
+    q = select(Event).where(or_(Event.object_id == object_id, Event.target_id == object_id))
+    if known is not None:                 # paso 23: solo lo que Khipus ya conocía en κ (ontology/bitemporal)
+        from ontology.bitemporal import visible
+        q = q.where(visible(known))
+    eventos = session.scalars(q.order_by(Event.valid_from.desc()).limit(limit)).all()
 
     # etiquetas de la otra punta, en UNA consulta (no una por evento)
     otros = {e.target_id if e.object_id == object_id else e.object_id
@@ -175,7 +175,10 @@ def entity_timeline(session, object_id, limit=60, lang='es', include_news=True):
 
     if include_news:
         from ontology.ingest_news import news_for_object
+        k_ts = known.ts.isoformat() if (known is not None and known.ts is not None) else None
         for n in news_for_object(session, object_id, limit=limit):
+            if k_ts and str(n.get('published_at') or n.get('valid_from') or '') > k_ts:
+                continue                  # κ: noticia posterior (aprox. por fecha: la noticia no trae registro)
             entradas.append({
                 'kind': 'news',
                 'at': n.get('published_at') or n.get('valid_from'),

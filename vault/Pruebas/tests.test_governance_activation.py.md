@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_governance_activation.py"
 lenguaje: "python"
-lineas: 148
+lineas: 155
 aliases: ["tests/test_governance_activation.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_governance_activation.py
 
-> Prueba · capa [[Capa Pruebas]] · 148 líneas · `tests/test_governance_activation.py`
+> Prueba · capa [[Capa Pruebas]] · 155 líneas · `tests/test_governance_activation.py`
 
 ## Qué prueba
 
@@ -23,8 +23,10 @@ INFRA_OPERATIVA paso 12: activar kernel.params@2.0.0 con el PIN de Fabrizio (pie
 - [[core.__init__.py]]
 - [[core.governance.py]]
 - [[core.governance_api.py]]
+- [[core.governance_flow.py]]
 - [[core.governance_preview.py]]
 - [[core.http.py]]
+- [[core.identity.py]]
 - [[core.pin.py]]
 - [[matrix.engine.py]]
 - [[ontology.db.py]]

@@ -5786,7 +5786,8 @@ const DIAG_META = {
   fmp:        { icon:'📑', name:'FMP',                 why:'Estados financieros · perfil · precio objetivo (plan con cobertura limitada)', why_en:'Financial statements · profile · price target (limited-coverage plan)' },
   grafo:      { icon:'◈',  name:'Grafo Temporal', name_en:'Temporal Graph', why:'Memoria temporal (nativa · Neo4j opcional)', why_en:'Temporal memory (native · optional Neo4j)' },
   ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', name_en:'Ontology (Postgres)', why:'Fuente única de verdad · eventos bitemporales', why_en:'Single source of truth · bitemporal events' },
-  gobernanza: { icon:'⚖', name:'Gobernanza', name_en:'Governance', why:'Reglas y motor versionados · se activan con tu PIN', why_en:'Versioned rules and engine · activated with your PIN' },
+  gobernanza: { icon:'⚖', name:'Gobernanza', name_en:'Governance', why:'Reglas y motor versionados · se activan con tu PIN', why_en:'Versioned rules and engine · activated with your PIN',
+    explain:[['gov_gates_7d','Puertas','Gates'],['gov_guard','Guardia','Guard'],['gov_retention','Retención','Retention']] },
   market_extra:{icon:'🗂', name:'Fuentes de respaldo', name_en:'Backup sources', why:'FMP · MarketStack · AlphaVantage', why_en:'FMP · MarketStack · AlphaVantage' },
   investigacion:{icon:'🔬', name:'Investigación IA', name_en:'AI research', why:'Proveedores en pausa · cola · presupuesto diario · reloj del servidor (R6)', why_en:'Paused providers · queue · daily budget · server clock (R6)' },
 };
@@ -5884,6 +5885,7 @@ function _diagCard(key, s, routing){
       ${lat}
     </div>
     ${why ? `<div class="ksys-why">${esc(why)}</div>` : ''}
+    ${(m.explain && window.explainChip) ? `<div class="ksys-why">${m.explain.map(x=>esc(en ? x[2] : x[1]) + window.explainChip(x[0])).join(' · ')}</div>` : ''}
     ${tx.detail ? `<div class="ksys-detail">${_diagDetailHTML(tx.detail)}</div>` : ''}
     ${fix}
   </div>`;

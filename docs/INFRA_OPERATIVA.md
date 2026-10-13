@@ -1143,7 +1143,7 @@ Todas corren sin red. Las que necesitan base se saltan sin `DATABASE_URL`; en CI
 
 **Criterio de orden:** primero lo que da más auditoría y velocidad con menos riesgo. Los pasos 1 a 10 no necesitan ninguna decisión de Fabrizio.
 
-**Avance (2026-10-13):** hechos y publicados los pasos 1-10 y 12-21 (el 12 queda listo y APAGADO hasta que Fabrizio active kernel.params 2.0.0 con PIN; las puertas de órdenes del 17 corren en sombra cuando active ontology.shapes 3.0.0) (detalle en `docs/ESTADO.md`). El paso 9 dejó el release 1.0.0 *sin ratificar* (Fabrizio lo ratifica con PIN; no bloquea nada).
+**Avance (2026-10-13):** hechos y publicados los pasos 1-23, 25 y 26 (el 11 y el 22 quedan listos en modo aviso; su bloqueo se enciende con PIN; falta el 24, replay + ⚖ Auditoría) (el 12 queda listo y APAGADO hasta que Fabrizio active kernel.params 2.0.0 con PIN; las puertas de órdenes del 17 corren en sombra cuando active ontology.shapes 3.0.0) (detalle en `docs/ESTADO.md`). El paso 9 dejó el release 1.0.0 *sin ratificar* (Fabrizio lo ratifica con PIN; no bloquea nada).
 
 | # | Paso | Pilar | Necesita de Fabrizio |
 |---|---|---|---|

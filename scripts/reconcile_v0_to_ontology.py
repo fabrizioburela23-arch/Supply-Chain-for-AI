@@ -38,6 +38,8 @@ def main(argv=None):
     ap.add_argument('--include', default='alias,duplicates',
                     help='categorías a aplicar, separadas por coma (default: alias,duplicates — lo seguro)')
     ap.add_argument('--confirm-db', default=None, help='nombre EXACTO de la base (SELECT current_database())')
+    ap.add_argument('--plan-sha', default=None, help='huella del plan revisado (plan_sha del dry-run): si la lista '
+                    'cambió desde entonces, no se aplica (paso 11)')
     ap.add_argument('--rollback-run', default=None, help='run_id a deshacer (requiere --confirm-db)')
     ap.add_argument('--list-runs', action='store_true')
     ap.add_argument('--json', action='store_true', help='imprimir el resultado como JSON')
@@ -70,7 +72,8 @@ def main(argv=None):
     if args.apply:
         include = [x.strip() for x in args.include.split(',') if x.strip()]
         try:
-            res = R.apply_plan(session_scope, snap, include=include, confirm_db=args.confirm_db, log=print)
+            res = R.apply_plan(session_scope, snap, include=include, confirm_db=args.confirm_db, log=print,
+                               expect={'plan_sha': args.plan_sha} if args.plan_sha else None)
         except R.ReconcileError as e:
             print(f'❌ {e}', file=sys.stderr)
             return 1

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "research/committee.py"
 lenguaje: "python"
-lineas: 2328
+lineas: 2336
 aliases: ["research/committee.py"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # research/committee.py
 
-> Módulo · capa [[Capa Comité]] · 2.328 líneas · `research/committee.py`
+> Módulo · capa [[Capa Comité]] · 2.336 líneas · `research/committee.py`
 
 ## Para qué sirve
 
@@ -51,14 +51,14 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - `reject_memo(session, memo_id, actor, reason=…, brokerage=…)` — approval.deny (paso 18) sobre el committee.run del memo; el retiro de la orden pendiente queda como hijo. _(línea 1961)_
 - `memo_allows_order(session, memo_id, preview_id=…)` — SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una orden source='committee'): solo se envía si su memo está … _(línea 2018)_
 - `mark_executed(session, memo_id, order=…, actor=…)` — Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera un bloqueo (SKIP LOCKED): la llama el corretaje con su orden … _(línea 2032)_
-- `fail_memo(session, memo_id, error, error_en=…)` _(línea 2053)_
-- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 2062)_
-- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 2091)_
-- `release_run_slot()` _(línea 2096)_
-- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 2103)_
-- `invalidate_board_cache()` _(línea 2147)_
-- `board(session, limit=…)` _(línea 2177)_
-- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2288)_
+- `fail_memo(session, memo_id, error, error_en=…)` — Marca un memo 'running' como fallido. Paso 22 (guardia «sin decisión no hay cambio»): el cambio de estado va dentro de una decisión … _(línea 2053)_
+- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 2070)_
+- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 2099)_
+- `release_run_slot()` _(línea 2104)_
+- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 2111)_
+- `invalidate_board_cache()` _(línea 2155)_
+- `board(session, limit=…)` _(línea 2185)_
+- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2296)_
 
 **Internas** (empiezan con `_`): `_now`, `_ttl_hours`, `_frac`, `_usd_or_none`, `_decide_core`, `_downgrade_reason`, `_schema_hint`, `_money_check`, `_default_risk`, `_default_live`, `_bounded`, `_daily_used`, `_same_symbol`, `_client_context`, `_fmt_pct`, `_audit`, `_resolve_entity`, `_dominant_horizon`, `_run_committee`, `_ai_ready`, `_entity_node`, `_entity_listed`, `_unlisted_tech_lines`, `_room_names`, `_mascot_voice`, `_research_request_lines`, `_auto_research`, `_seat_run`, `_run_debate`, `_src_dict`, `_evidence_rows`, `_top_evidence`, `_chair`, `_scrub`, `_redact_audit`, `_client_mode`, `_lock_memo`, `_err`, `_preview_error`, `_approve_memo`, `_reject_memo`, `_max_concurrent`, `_board_fingerprint`, `_board_uncached`, `_prefer_canonical`, `_entity_ids_for`
 
@@ -68,8 +68,10 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - [[core.ai_usage.py]] — importa `ai_context`
 - [[core.company_data.py]] — importa `get_live_profile`
 - [[core.decision_sites.py]] — importa `decision_sites`
+- [[core.decisions.py]] — importa `decisions`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `entity_ids_for`, `get_index`, `resolve`
 - [[core.governance.py]] — importa `governance`
+- [[core.identity.py]] — importa `identity`
 - [[core.live_facts.py]] — importa `_fact_for`
 - [[core.numbers.py]] — importa `check_numbers`
 - [[core.risk_report.py]] — importa `build_report`

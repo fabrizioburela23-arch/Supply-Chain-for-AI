@@ -43,7 +43,9 @@ esquema SQLAlchemy de la ontología.
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[ontology.bitemporal.py]] — lo importa
 - [[ontology.bulk_import.py]] — lo importa
+- [[ontology.checkpoints.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.governance_models.py]] — lo importa
 - [[ontology.history_models.py]] — lo importa
@@ -61,17 +63,21 @@ esquema SQLAlchemy de la ontología.
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 50 pruebas (lista abajo)._
+_Además lo importan 57 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_agent_dudosos.py]]
 - [[tests.test_ai_calls.py]]
+- [[tests.test_bitemporal.py]]
+- [[tests.test_bitemporal_review.py]]
 - [[tests.test_brokerage.py]]
+- [[tests.test_checkpoints.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
+- [[tests.test_governance_flow.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
@@ -85,6 +91,7 @@ _Además lo importan 50 pruebas (lista abajo)._
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
+- [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_matrix.py]]
@@ -111,6 +118,8 @@ _Además lo importan 50 pruebas (lista abajo)._
 - [[tests.test_repair_research.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_research.py]]
+- [[tests.test_retention_purge.py]]
+- [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_security.py]]
 - [[tests.test_tensor_autolink.py]]

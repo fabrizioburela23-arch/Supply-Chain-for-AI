@@ -295,7 +295,19 @@ def build_plan(session, snap):
     plan['snapshot'] = {'exported_at': snap.get('exported_at')}      # G5: sin rutas del servidor
     plan['as_of'] = _now().isoformat(timespec='seconds')
     plan['default_apply'] = list(DEFAULT_APPLY)
+    plan['plan_sha'] = plan_sha(plan)
     return plan
+
+
+def plan_sha(plan):
+    """Paso 11: huella del CONTENIDO del plan (las filas de cada categoría, sin el orden ni la hora) + el catálogo. La
+    API exige `expect.plan_sha` = la huella del plan que la persona revisó: si cualquier fila cambió, no se aplica."""
+    import hashlib
+
+    from core.decisions import canonical
+    body = {c: sorted(canonical(x).decode('utf-8') for x in (plan.get(c) or ())) for c in CATEGORIES}
+    body['snapshot'] = (plan.get('snapshot') or {}).get('exported_at')
+    return hashlib.sha256(canonical(body)).hexdigest()
 
 
 _HUBS = {'TSMC', 'Nvidia', 'ASML', 'Samsung', 'SKHynix', 'Micron', 'Intel', 'AMD', 'Apple', 'Microsoft', 'Amazon',
@@ -573,6 +585,10 @@ def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, 
     with session_scope() as s:
         dbname = _check_confirm(s, confirm_db)
         before = build_plan(s, snap)
+    if expect and expect.get('plan_sha') and expect['plan_sha'] != before.get('plan_sha'):   # paso 11: por huella
+        raise ReconcileError('la lista cambió desde que la revisaste (otra huella del plan): vuelve a mirarla antes de '
+                             'aplicar', 'the list changed since you reviewed it (different plan fingerprint): review it '
+                             'again before applying')
     if expect:                      # G5: se aplica SOLO el plan que la persona revisó
         changed = {c: (expect.get(c), before['summary'][c]) for c in include
                    if c in expect and int(expect.get(c) or 0) != before['summary'][c]}

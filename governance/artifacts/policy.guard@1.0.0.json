@@ -1,0 +1,11 @@
+{
+  "id": "policy.guard",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "params": {
+    "mode": "warn"
+  },
+  "changelog_es": "Paso 22: guardia de proyecciones «sin decisión no hay cambio» en modo AVISO. Toda escritura sobre claims, memos del comité, órdenes, propuestas, alertas, clientes del corretaje y ajustes de IA sin una decisión del libro se CUENTA (🩺 → Gobernanza) pero NO se bloquea.",
+  "changelog_en": "Step 22: projection guard \"no decision, no change\" in WARN mode. Every write to claims, committee memos, orders, proposals, alerts, brokerage clients and AI settings without a ledger decision is COUNTED (🩺 → Governance) but NOT blocked."
+}

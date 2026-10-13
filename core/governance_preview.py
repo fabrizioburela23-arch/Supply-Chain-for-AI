@@ -124,8 +124,10 @@ def _summary(aid, sv, doc, k, flags):
     return ' '.join(es), ' '.join(en)
 
 
-def preview(selection):
-    """{selection, release_hash, generation, params_diff, kernel?, nrs_affected, summary_es/en, compute_ms}."""
+def preview(selection, focus=None):
+    """{selection, release_hash, generation, params_diff, kernel?, nrs_affected, summary_es/en, for_me, compute_ms}.
+    `focus` (paso 25): ids de las posiciones del usuario para «¿qué cambia para mí?» (sin ellas, las 10 empresas más
+    críticas) — core/governance_flow.for_me."""
     from core import governance
     from core.hotviews import hot
     if not isinstance(selection, dict) or not selection:
@@ -138,7 +140,8 @@ def preview(selection):
         gen = gen.generation if gen is not None else None
     except Exception:  # noqa: BLE001
         gen = None
-    key = (rel, tuple(sorted(sel.items())), gen)
+    focus = [str(f)[:120] for f in (focus or ())][:25]
+    key = (rel, tuple(sorted(sel.items())), gen, tuple(focus))
     hit = _CACHE.get(key)
     if hit is not None:
         return dict(hit, cached=True)
@@ -154,6 +157,7 @@ def preview(selection):
                                  'activation': d['activation']} for a, d in docs.items()}}
         flags = {'nrs_affected': 'nrs.formula' in sel}
         kern = None
+        before = after = None
         if 'kernel.params' in sel:
             before = _build()
             with governance.counterfactual(sel):
@@ -168,6 +172,11 @@ def preview(selection):
             kern['graph_version'] = before[0].graph_version
             out['kernel'] = kern
         out['nrs_affected'] = flags['nrs_affected']
+        try:
+            from core import governance_flow
+            out['for_me'] = governance_flow.for_me(sel, before, after, focus)
+        except Exception:  # noqa: BLE001
+            out['for_me'] = None
         aid0 = next(iter(sel))
         out['summary_es'], out['summary_en'] = _summary(aid0, sel[aid0], docs[aid0], kern, flags)
         out['compute_ms'] = round((time.perf_counter() - t0) * 1000, 1)

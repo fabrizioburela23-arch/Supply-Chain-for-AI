@@ -6,7 +6,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 
 # Índice de variables de entorno
 
-162 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
+163 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
 
 | Variable | La leen | En CLAUDE.md |
 |---|---|---|
@@ -92,6 +92,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV KHIPU_MCP_TOKEN]] | 2 | sí |
 | [[ENV KHIPU_SCHEDULER]] | 1 | sí |
 | [[ENV KHIPU_URL]] | 3 | **no** |
+| [[ENV KH_GUARD_TRACE]] | 1 | **no** |
 | [[ENV LIVE_DEADLINE_S]] | 1 | **no** |
 | [[ENV LOG_JSON]] | 1 | sí |
 | [[ENV MARKETSTACK_KEY]] | 3 | sí |

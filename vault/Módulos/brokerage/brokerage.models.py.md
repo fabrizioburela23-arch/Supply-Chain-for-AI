@@ -36,7 +36,7 @@ tablas del corretaje multi-cliente.
 - [[brokerage.service.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 11 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -44,6 +44,7 @@ _Además lo importan 10 pruebas (lista abajo)._
 - [[tests.test_infra.py]]
 - [[tests.test_ledger_callsites.py]]
 - [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_order_single_path.py]]

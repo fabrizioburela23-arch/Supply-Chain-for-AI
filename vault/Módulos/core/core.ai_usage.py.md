@@ -51,6 +51,7 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 - [[core.ai.py]] — lo importa
 - [[core.ai_calls.py]] — lo importa
 - [[core.decide.py]] — lo importa
+- [[core.governance_flow.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
 - [[core.portfolio_report.py]] — lo importa

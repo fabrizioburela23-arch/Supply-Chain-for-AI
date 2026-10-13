@@ -65,7 +65,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 28 pruebas (lista abajo)._
+_Además lo importan 31 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -102,7 +102,9 @@ _Además lo importan 28 pruebas (lista abajo)._
 
 - [[tests.test_brokerage.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance_activation.py]]
+- [[tests.test_governance_flow.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
@@ -124,6 +126,7 @@ _Además lo importan 28 pruebas (lista abajo)._
 - [[tests.test_repair_ontology_review.py]]
 - [[tests.test_repair_ops.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_security.py]]
 - [[tests.test_trading_agent_ledger.py]]

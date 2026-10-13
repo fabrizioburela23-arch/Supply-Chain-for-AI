@@ -200,7 +200,7 @@ def _transpose_csr(m):
 
 
 # ── índice de nodos + caché con invalidación por época del grafo ───────────
-def node_index(session, as_of=None):
+def node_index(session, as_of=None, known=None):
     """Índice estable id→posición (orden alfabético de ids de objetos).
 
     Usa la lista BLANCA del registro (ontology/vocabulary.json): solo los tipos
@@ -213,11 +213,21 @@ def node_index(session, as_of=None):
     índice desde Postgres en CADA request es el cuello de botella real, no la
     matemática (spec §"Estabilidad estructural"). La clave (graph_key: versión
     tomada al confirmar + linaje + release) cambia con cada escritura ECONÓMICA
-    → invalida sin tocar nada más."""
-    ck = ('nodeidx', graph_key(session), as_of or 'now')
+    → invalida sin tocar nada más.
+
+    `known` (paso 23, G(t, κ); ontology/bitemporal.Known): solo los nodos que EXISTEN en (as_of, κ), con su tipo
+    de entonces (DT-M2). Sin `known`, el índice de siempre (todos los objetos económicos de hoy)."""
+    ck = ('nodeidx', graph_key(session), as_of or 'now', known.key() if known is not None else None)
     hit = _cache_get(ck)
     if hit is not None:
         return hit
+    if known is not None:
+        from ontology import bitemporal
+        t = _parse_dt(as_of) if as_of is not None else None
+        ids = bitemporal.economic_ids_at(session, t=t, known=known)
+        out = ({oid: i for i, oid in enumerate(ids)}, ids)
+        _cache_set(ck, out)
+        return out
     # Tipos presentes en la BD que NO están en el registro: se EXCLUYEN del
     # grafo (seguro) pero se REPORTAN — el modo de fallo que hay que evitar es
     # el silencioso. Consulta barata: DISTINCT sobre una columna indexada.
@@ -281,15 +291,25 @@ def build_matrices_from_triples(triples, idx, sparse=None):
     return mats, idx, ids
 
 
-def build_matrices(session, as_of=None, sparse=None):
+def build_matrices(session, as_of=None, sparse=None, known=None):
     """{rel_type: matriz NxN} con A[i,j]=peso i→j (i PROVEE a j).
 
     Sin as_of: lee la vista materializada (links vigentes ahora) — rápido.
     Con as_of: reconstruye por VALIDEZ desde events (time-travel real).
     `sparse`: None → flag MATRIX_ENGINE; True/False fuerza la representación.
     Aplica el descuento de procedencia (bulto vs curado) en la lectura, así el
-    núcleo numérico permanece agnóstico al peso y ambos caminos coinciden."""
-    idx, ids = node_index(session, as_of=as_of)
+    núcleo numérico permanece agnóstico al peso y ambos caminos coinciden.
+    `known` (paso 23): G(as_of, κ) — vínculos y nodos tal como se conocían en κ (as_of None = ahora)."""
+    idx, ids = node_index(session, as_of=as_of, known=known)    # as_of None + κ: sin límite de validez (cacheable)
+    if known is not None and as_of is None:
+        # G(ahora, κ): la tabla `links` tal como estaba en κ (valid_to IS NULL) — con κ = ahora, EXACTAMENTE el
+        # camino vivo de abajo, también con vínculos con ventana o fechados a futuro (revisión del paso 23)
+        links = _links_active_at(session, None, known=known)
+        triples = ((l['source'], l['target'], l['rel_type'],
+                    _eff_weight(l.get('weight'), (l.get('properties') or {}).get('source'),
+                                link_confidence(l.get('properties'))))
+                   for l in links)
+        return build_matrices_from_triples(triples, idx, sparse=sparse)
     if as_of is None:
         rows = session.scalars(
             select(LinkRecord).where(LinkRecord.valid_to.is_(None))).all()
@@ -298,7 +318,7 @@ def build_matrices(session, as_of=None, sparse=None):
                    for l in rows)
     else:
         as_of_dt = _parse_dt(as_of)
-        links = _links_active_at(session, as_of_dt)
+        links = _links_active_at(session, as_of_dt, known=known)
         triples = ((l['source'], l['target'], l['rel_type'],
                     _eff_weight(l.get('weight'), (l.get('properties') or {}).get('source'),
                                 link_confidence(l.get('properties'))))
@@ -306,13 +326,18 @@ def build_matrices(session, as_of=None, sparse=None):
     return build_matrices_from_triples(triples, idx, sparse=sparse)
 
 
-def active_factors(session, as_of=None):
+def active_factors(session, as_of=None, known=None):
     """Hiperaristas activas: objetos type='Factor' + links 'affects' vigentes.
 
     Devuelve [{id, label, severity, members:{obj_id: coef}}]. El coeficiente
     es el weight del link 'affects' (>0 amplifica el daño, p.ej. 0.5 = +50%
     de sensibilidad de las dependencias del afectado mientras el factor rige).
+
+    `known` (paso 23, L3-06): G(as_of, κ) — vínculos 'affects' conocidos en κ y la severidad del factor de
+    ENTONCES (props_at: historia de propiedades desde events), no la de la fila materializada de hoy.
     """
+    if known is not None:
+        return _active_factors_known(session, as_of, known)
     factors = []
     if as_of is None:
         rows = session.scalars(select(LinkRecord).where(
@@ -360,6 +385,41 @@ def active_factors(session, as_of=None):
                             'since': _iso_or_none(since.get(fid) or o.created_at),
                             'updated': _iso_or_none(o.updated_at),
                             'members': members})
+    return factors
+
+
+def _active_factors_known(session, as_of, known, links=None):
+    """`links`: los vínculos de G(as_of, κ) ya reconstruidos (la vista AsOf no repite el replay)."""
+    from ontology import bitemporal
+    as_of_dt = _parse_dt(as_of) if as_of is not None else None     # None: semántica de la tabla (= vivo con κ=ahora)
+    by_factor, since = {}, {}
+    for l in (links if links is not None else _links_active_at(session, as_of_dt, known=known)):
+        if l['rel_type'] != 'affects':
+            continue
+        by_factor.setdefault(l['source'], {})[l['target']] = factor_coef(l.get('weight'))
+        vf = l.get('valid_from')
+        if vf is not None and (l['source'] not in since or vf < since[l['source']]):
+            since[l['source']] = vf
+    if not by_factor:
+        return []
+    objs = bitemporal.props_at(session, ids=list(by_factor), t=as_of_dt, known=known, types=('Factor',))
+    factors = []
+    for fid, members in by_factor.items():
+        o = objs.get(fid)
+        if not o:
+            continue  # el source del 'affects' no es un Factor (o todavía no existía en (t, κ))
+        props = o['properties'] or {}
+        try:
+            sev_crisis = float(props['severity_crisis'])
+        except (KeyError, TypeError, ValueError):
+            sev_crisis = None
+        factors.append({'id': fid, 'label': o['label'],
+                        'severity': factor_severity(props.get('severity')),
+                        'severity_crisis': sev_crisis,
+                        'rationale': props.get('razon') or props.get('rationale', ''),
+                        'since': _iso_or_none(since.get(fid) or o.get('valid_from')),
+                        'updated': _iso_or_none(o.get('updated_from')),
+                        'members': members})
     return factors
 
 
@@ -786,12 +846,12 @@ def _spectral_power_iter(M, iters=1000, tol=1e-9):
     return max(0.0, rho)
 
 
-def compute_metrics(session, as_of=None):
+def compute_metrics(session, as_of=None, known=None):
     """Métricas por nodo: grado in/out ponderado, tamaño de cascada
     (¿a cuántos arrastra si cae?), ranking de chokepoints y PageRank
     (centralidad complementaria robusta a componentes desconectados)."""
-    mats, idx, ids = build_matrices(session, as_of=as_of)
-    factors = active_factors(session, as_of=as_of)
+    mats, idx, ids = build_matrices(session, as_of=as_of, known=known)
+    factors = active_factors(session, as_of=as_of, known=known)
     frag = fragility(idx, factors)
     agg = None
     for m in mats.values():

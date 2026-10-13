@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import select
 
 from ontology.models import Event, ObjectRecord, LinkRecord
@@ -36,6 +36,15 @@ class ActionError(ValueError):
 
 
 # ── Esquemas de entrada (uno por Acción del catálogo) ────────────────────────
+
+class ActionInput(BaseModel):
+    """Base de las entradas del catálogo (paso 11): Pydantic `extra='forbid'` — un campo desconocido es un error,
+    no algo que se ignora en silencio. Mientras las puertas estén en SOMBRA (policy.gates 1.x), execute_action quita
+    los campos desconocidos ANTES de validar (lo de siempre) y la puerta G2 los registra (`action.no_unknown_fields`);
+    con policy.gates@2.0.0 (bloqueo, activado con PIN) se rechazan (422 con el GateReport). Los objetos anidados
+    (FuenteCitada) siguen tolerantes: los arma un agente y su forma no decide nada."""
+    model_config = ConfigDict(extra='forbid')
+
 
 class FuenteCitada(BaseModel):
     """Fuente citable de una tesis (Track C, Investigador Autónomo): la regla
@@ -49,7 +58,7 @@ class FuenteCitada(BaseModel):
     consultado_at: str = Field(default='', max_length=40)
 
 
-class CrearTesisInput(BaseModel):
+class CrearTesisInput(ActionInput):
     company_id: str
     stance: str = Field(pattern='^(long|short|watch|avoid)$')
     confidence: float = Field(ge=0, le=1)
@@ -61,18 +70,18 @@ class CrearTesisInput(BaseModel):
     datos_no_verificados: List[str] = Field(default_factory=list, max_length=20)
 
 
-class AnotarObjetoInput(BaseModel):
+class AnotarObjetoInput(ActionInput):
     object_id: str
     texto: str = Field(min_length=1, max_length=2000)
 
 
-class MarcarRiesgoInput(BaseModel):
+class MarcarRiesgoInput(ActionInput):
     company_id: str
     nivel: int = Field(ge=0, le=100)
     razon: str = Field(min_length=1, max_length=1000)
 
 
-class ProponerVinculoInput(BaseModel):
+class ProponerVinculoInput(ActionInput):
     from_id: str
     to_id: str
     tipo: str = Field(min_length=1, max_length=40)
@@ -80,31 +89,31 @@ class ProponerVinculoInput(BaseModel):
     fuente: str = Field(min_length=1, max_length=200)
 
 
-class ResolverVinculoInput(BaseModel):
+class ResolverVinculoInput(ActionInput):
     link_id: str
 
 
-class RegistrarDecisionInput(BaseModel):
+class RegistrarDecisionInput(ActionInput):
     decision: str = Field(min_length=1, max_length=2000)
     company_id: Optional[str] = None
     contexto: dict = Field(default_factory=dict)  # ej. {'origin':'stress_test','affected_count':12}
 
 
-class AjustarPosicionInput(BaseModel):
+class AjustarPosicionInput(ActionInput):
     ticker: str = Field(min_length=1, max_length=20)
     delta: float
     razon: str = Field(min_length=1, max_length=1000)
     decision_id: Optional[str] = None
 
 
-class CorregirDatoInput(BaseModel):
+class CorregirDatoInput(ActionInput):
     object_id: str
     campo: str = Field(min_length=1, max_length=100)
     valor_nuevo: object
     fuente: str = Field(min_length=1, max_length=200)
 
 
-class IncorporarEmpresaInput(BaseModel):
+class IncorporarEmpresaInput(ActionInput):
     """Alta de una empresa nueva detectada en vivo (Radar). Reversible con
     RetirarEmpresa; todo queda como eventos inmutables."""
     company_id: str = Field(min_length=2, max_length=80)
@@ -123,7 +132,7 @@ class IncorporarEmpresaInput(BaseModel):
     auto_proponer: bool = True
 
 
-class RetractarVinculoInput(BaseModel):
+class RetractarVinculoInput(ActionInput):
     """G2: retracta UNA fila concreta de `links` (por su id) con un LinkRemoved
     DIRIGIDO (retracts_event_id). A diferencia de RechazarVinculo, no cierra las
     demás filas del mismo par. Append-only: la fila queda con valid_to."""
@@ -131,7 +140,7 @@ class RetractarVinculoInput(BaseModel):
     razon: str = Field(min_length=1, max_length=1000)
 
 
-class FusionarEntidadInput(BaseModel):
+class FusionarEntidadInput(ActionInput):
     """G2: fusiona un objeto duplicado (alias) en el canónico: el alias queda
     retired + merged_into, sus vínculos vigentes se retractan (dirigido,
     retroactivo) y se re-crean en el canónico conservando valid_from/peso/
@@ -142,7 +151,7 @@ class FusionarEntidadInput(BaseModel):
     razon: str = Field(min_length=1, max_length=1000)
 
 
-class RetirarEmpresaInput(BaseModel):
+class RetirarEmpresaInput(ActionInput):
     """Baja lógica (reversible): marca retired=true; el objeto y su historia
     quedan intactos en la ontología."""
     company_id: str
@@ -150,7 +159,7 @@ class RetirarEmpresaInput(BaseModel):
     restaurar: bool = False                # true = deshacer el retiro
 
 
-class CrearFactorInput(BaseModel):
+class CrearFactorInput(ActionInput):
     """Crea una HIPERARISTA (Factor): un golpe que toca a VARIAS empresas a la vez
     (sanción, escasez de HBM, conflicto). El motor de matrices lo lee (active_factors
     → fragility) y MODULA cómo se propaga cualquier shock. Bitemporal (con fecha) y
@@ -168,16 +177,18 @@ class CrearFactorInput(BaseModel):
     razon: str = Field(min_length=1, max_length=1000)
     fuente: str = Field(default='tejedor', max_length=300)
     confidence: float = Field(default=0.6, ge=0, le=1)
+    # el Tejedor (ontology/agents.py) anota qué nombres de la noticia quedaron FUERA y por qué (auditable; no decide)
+    dudosos: List[str] = Field(default_factory=list, max_length=40)
 
 
-class RetirarFactorInput(BaseModel):
+class RetirarFactorInput(ActionInput):
     """Expira una hiperarista: cierra sus links 'affects' (valid_to). La historia
     queda en events — consultable as_of para verla activa antes de expirar."""
     factor_id: str
     razon: str = Field(min_length=1, max_length=1000)
 
 
-class ActivarFactorInput(BaseModel):
+class ActivarFactorInput(ActionInput):
     """Sube un Factor de su nivel LATENTE a su nivel de crisis, de forma
     PERSISTENTE y auditada.
 
@@ -212,7 +223,7 @@ def _check_severity(sev):
     return scale
 
 
-class DesactivarFactorInput(BaseModel):
+class DesactivarFactorInput(ActionInput):
     """Devuelve un Factor activado a su severidad latente (la que tenía antes de
     ActivarFactor; 1.0 si no hay registro). NO lo expira — para eso está
     RetirarFactor, que además cierra sus links 'affects'."""
@@ -804,11 +815,24 @@ def _gate_g2(session, action_type, payload, principal, schema, validated, ctx, p
     try:
         import core.gates as _gates
         from core.gates import focus as _gf
-        _gates.check('ontology.g2.action', _gf.gather_action, action_type, payload, principal, schema, validated,
-                     auto_apply=getattr(principal, 'id', '') == 'system:auto_apply', ident=str(ctx.id),
-                     confidence=proposal_confidence, session=session)
+        rep = _gates.check('ontology.g2.action', _gf.gather_action, action_type, payload, principal, schema,
+                           validated, auto_apply=getattr(principal, 'id', '') == 'system:auto_apply',
+                           ident=str(ctx.id), confidence=proposal_confidence, session=session)
+        # paso 11 (bloqueo): 'requires_approval' = una PERSONA con PIN; un agente, una IA o el reloj no pasan
+        if (rep and rep.get('mode') == 'block' and rep.get('outcome') == 'requires_approval'
+                and not getattr(principal, 'is_human_pin', False)):
+            raise _gates.GateViolation(rep)
+    except Exception as e:  # noqa: BLE001
+        if getattr(e, 'code', None) == 'gate_violation':
+            raise
+
+
+def _g2_blocks():
+    try:
+        import core.gates as _gates
+        return _gates.mode_for('ontology.g2.action') == 'block'
     except Exception:  # noqa: BLE001
-        pass
+        return False
 
 
 def execute_action(session, action_type, payload, actor, principal=None, *, meta=None, correlation_id=None,
@@ -836,8 +860,16 @@ def execute_action(session, action_type, payload, actor, principal=None, *, meta
             raise ActionError(f'Acción desconocida: {action_type}. Catálogo: {", ".join(ACTION_CATALOG)}')
         schema, handler = entry
         ctx.payload_blob({'action': action_type, 'payload': payload or {}})
+        payload = payload or {}
+        unknown = sorted(k for k in payload if k not in schema.model_fields)
+        if unknown:
+            if _g2_blocks():      # paso 11: con las puertas en bloqueo, un campo desconocido se RECHAZA (422)
+                _gate_g2(session, action_type, payload, principal, schema, None, ctx, proposal_confidence)
+            else:                 # sombra: lo de siempre (se ignora); la puerta G2 lo deja registrado abajo
+                ctx.extra['unknown_fields'] = unknown[:20]
         try:
-            validated = schema(**(payload or {}))
+            validated = schema(**(payload if (unknown and _g2_blocks()) else
+                                  {k: v for k, v in payload.items() if k in schema.model_fields}))
         except ValidationError as e:
             raise ActionError(f'Entrada inválida para {action_type}: {e.errors()}') from e
         if not actor or not str(actor).strip():

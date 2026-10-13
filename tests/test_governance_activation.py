@@ -108,9 +108,16 @@ def test_activar_2_0_0_con_pin_y_deshacer(db, monkeypatch):
     body = {'artifact': 'kernel.params', 'semver': '2.0.0', 'note': 'probado'}
     assert c.post('/api/governance/activate', json=body).status_code == 401           # sin PIN
     assert c.post('/api/governance/activate', json=body, headers={'X-Trade-Pin': 'malo'}).status_code in (401, 403)
+    # revisión batch G (§5.2): un MAYOR nuevo exige su regresión registrada ANTES de activarse
+    r = c.post('/api/governance/activate', json=body, headers={'X-Trade-Pin': PIN})
+    assert r.status_code == 409 and r.get_json()['code'] == 'regression_required', r.get_json()
+    assert 'Regresión' in r.get_json()['error'] and 'Regression' in r.get_json()['error_en']
+    from core import governance_flow, identity
+    vid = governance_flow.validate(identity.operator(), 'kernel.params', '2.0.0')['decision_id']
     r = c.post('/api/governance/activate', json=body, headers={'X-Trade-Pin': PIN})
     assert r.status_code == 200, r.get_json()
     d = r.get_json()
+    assert d['regression'] == vid                                              # el release cita SU regresión
     assert d['in_force'] is True and d['changes'] == {'kernel.params': {'from': '1.0.0', 'to': '2.0.0'}}
     assert d['semver'] == '2.0.0' and d['reactivation'] is False and d['four_eyes'] == 'unavailable'
     assert governance.artifact_semver('kernel.params') == '2.0.0' and governance.active().ratified is True

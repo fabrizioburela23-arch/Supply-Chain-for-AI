@@ -3,7 +3,7 @@
   GET /api/ledger/status              público: conteo, cabeza de la cadena, estado del sellador (sin cuerpos)
   GET /api/ledger/decisions           ?kind=&principal=&status=&entity=&since=&limit=
   GET /api/ledger/decision/<id>       ?blobs=1 (solo operador) · ?lang=es|en
-  GET /api/ledger/verify              ?from_seal=&limit=   — SOLO operador (PIN); una ruptura queda en el libro
+  GET /api/ledger/verify              ?from_seal=&limit=&blobs=1 — SOLO operador (PIN); una ruptura queda en el libro
   GET /api/ledger/anchor              PÚBLICO: solo {day, head_seal, head_hash} de la última ancla diaria (paso 7;
                                       el GitHub Action smoke-mcp.yml la guarda fuera de la base — D7)
   GET /api/ledger/chain               público: ¿cadena rota? ¿dinero real bloqueado? (sin cuerpos)
@@ -168,6 +168,8 @@ def ledger_verify():
         from core import ledger
         out = ledger.verify(from_seal=from_seal, limit=limit, record_break=True)
         out.pop('broken_keys', None)        # la lista completa es interna (dedupe de rupturas); va el total
+        if request.args.get('blobs') == '1':  # paso 26: blobs por su sha (presentes) o purgados por retention.purge
+            out['blobs'] = ledger.verify_blobs()
         return jsonify(out)
     except Exception as e:  # noqa: BLE001
         return _err(e)

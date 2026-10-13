@@ -1,0 +1,13 @@
+{
+  "id": "policy.guard",
+  "semver": "2.0.0",
+  "kind": "policy",
+  "change_kind": "major",
+  "parent": "policy.guard@1.0.0",
+  "activation": "pin",
+  "params": {
+    "mode": "enforce"
+  },
+  "changelog_es": "Paso 22 (fase 2): la guardia pasa a BLOQUEAR. Una escritura sin decisión del libro sobre esas tablas se RECHAZA. Actívala con tu PIN solo cuando el contador de la guardia lleve una semana en 0 (🩺 → Gobernanza); deshacer = volver a 1.0.0.",
+  "changelog_en": "Step 22 (phase 2): the guard starts BLOCKING. A write without a ledger decision on those tables is REJECTED. Activate it with your PIN only after the guard counter has been at 0 for a week (🩺 → Governance); undo = go back to 1.0.0."
+}

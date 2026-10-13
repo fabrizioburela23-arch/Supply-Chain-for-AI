@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-29"
-ruta: "docs/ESTADO.md#L1413"
+ruta: "docs/ESTADO.md#L1457"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-29 (noche) — TODO EN VIVO + AUDITORÍA DE DATOS FALSOS (sw v161)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1413 (32 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1457 (32 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

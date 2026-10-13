@@ -267,7 +267,9 @@ def apply(name, res, detail=None, max_chars=None, question=None):
         elif detail != 'full' and name in RELEVANCE_PACKERS:
             out = RELEVANCE_PACKERS[name](out, int(mc * 0.55), question)   # el resto: cola, socios, contrato
         was_truncated = bool(out.get('truncated')) if isinstance(out.get('truncated'), bool) else False
-        env = {'detail': detail, 'as_of': out.get('as_of') or _now_iso(), 'known_at': _now_iso(),
+        # known_at = κ: lo que Khipus había registrado (paso 23). Una herramienta que lee el pasado (as_of/known_at)
+        # trae el suyo; si no, es "ahora" (la lectura de este momento).
+        env = {'detail': detail, 'as_of': out.get('as_of') or _now_iso(), 'known_at': out.get('known_at') or _now_iso(),
                'sources': out.get('sources') if isinstance(out.get('sources'), list) else
                ([out['source']] if out.get('source') else []),
                'method': out.get('method') or f'khipus:{name}'}

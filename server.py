@@ -532,6 +532,13 @@ try:
             # paso 7: ancla diaria (una fila por día; GET /api/ledger/anchor la publica y GitHub Actions la guarda)
             # + detección de restauración (linaje). Cada hora: si el ancla del día ya existe, no hace nada.
             _sched.register('ledger_anchor', _ledger.anchor_job, every_s=3600, run_at_start=True)
+            # paso 26 (D3): purga por retención (cuerpos de chat/qué-pasaría-si > 90 días → NULL, el sha queda) +
+            # claves viejas de la sombra a HMAC; UNA vez por día UTC (la tarea mira cada hora). Y los puntos de
+            # control del grafo: apagados hasta que la ontología pase ledger.retention.checkpoint_min_events.
+            from core import retention as _retention
+            from ontology import checkpoints as _checkpoints
+            _sched.register('retention_daily', _retention.daily_job, every_s=3600, run_at_start=False)
+            _sched.register('graph_checkpoints', _checkpoints.job, every_s=3600, run_at_start=False)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: ledger_seal no registrado (%s)', type(_e).__name__)
     try:   # INFRA_OPERATIVA paso 9: release de gobernanza vigente (la base manda; barato: 2 consultas indexadas)
@@ -1500,13 +1507,17 @@ def _diag_gobernanza():
                 es += f" Puertas NO disponibles: {gs.get('error') or 'sin IR'}."
                 en += f" Gates UNAVAILABLE: {gs.get('error') or 'no IR'}."
             else:
-                es += (f" Puertas en {'SOMBRA' if gs['mode'] == 'shadow' else 'APAGADAS (KHIPU_GATES=off)'}: "
-                       f"{gs.get('rules', 0)} reglas, {n_warn} aviso(s) desde el arranque.")
-                en += (f" Gates in {'SHADOW' if gs['mode'] == 'shadow' else 'OFF (KHIPU_GATES=off)'}: "
-                       f"{gs.get('rules', 0)} rules, {n_warn} warning(s) since start.")
+                _gm_es = {'shadow': 'SOMBRA', 'block': 'BLOQUEO (ontología)'}.get(gs['mode'], 'APAGADAS (KHIPU_GATES=off)')
+                _gm_en = {'shadow': 'SHADOW', 'block': 'BLOCKING (ontology)'}.get(gs['mode'], 'OFF (KHIPU_GATES=off)')
+                es += f" Puertas en {_gm_es}: {gs.get('rules', 0)} reglas, {n_warn} aviso(s) desde el arranque."
+                en += f" Gates in {_gm_en}: {gs.get('rules', 0)} rules, {n_warn} warning(s) since start."
         except Exception:  # noqa: BLE001
             gs = None
+        g3 = _diag_g3_bullets()            # pasos 11, 22 y 26: Puertas 7 días · guardia · retención
+        es += g3['es']
+        en += g3['en']
         return _diag_card(es, en, fix, configured=True, ok=ok, release=st['release_hash'][:16],
+                          gates_7d=g3.get('gates_7d'), guard=g3.get('guard'), retention=g3.get('retention'),
                           gates_mode=(gs or {}).get('mode'),
                           semver=st['semver'], label=st['label'], ratified=st['ratified'],
                           env_warnings=[w['env'] for w in st['env_warnings']],
@@ -1514,6 +1525,65 @@ def _diag_gobernanza():
     except Exception as e:  # noqa: BLE001
         return _diag_card('Registro de gobernanza no disponible: ' + type(e).__name__,
                           'Governance registry unavailable: ' + type(e).__name__, configured=True, ok=False)
+
+
+def _diag_g3_bullets():
+    """Viñetas de la tarjeta ⚖ Gobernanza (sin tarjeta nueva): «Puertas» = 7 días de avisos en sombra por regla y
+    cuántas escrituras se habrían bloqueado con policy.gates@2.0.0 (paso 11); «Guardia» = cambios sin decisión del
+    libro en 7 días y el camino del código (paso 22); «Retención» = última purga (paso 26). Nunca lanza."""
+    out = {'es': '', 'en': ''}
+    try:
+        from ontology.db import ontology_available
+        if not ontology_available():
+            return out
+    except Exception:  # noqa: BLE001
+        return out
+    try:
+        from core.gates import report as _grep
+        g = _grep.shadow_summary(7)
+        if g.get('available'):
+            top = ', '.join(f"{r['rule'].replace('khr:', '')} ×{r['n']}" for r in g['rules'][:4]) or '—'
+            out['es'] += (f" • Puertas (7 días): {g['total']} aviso(s) en sombra; con la versión 2.0.0 (bloqueo) se "
+                          f"habrían rechazado {g['decisions_would_block']} escritura(s). Más frecuentes: {top}.")
+            out['en'] += (f" • Gates (7 days): {g['total']} shadow warning(s); with version 2.0.0 (blocking) "
+                          f"{g['decisions_would_block']} write(s) would have been rejected. Most frequent: {top}.")
+            out['gates_7d'] = {k: g[k] for k in ('total', 'would_block', 'decisions_would_block')} | {
+                'rules': g['rules'][:12]}
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from core import ledger_guard as _lg
+        gd = _lg.status()
+        if gd.get('available'):
+            by = ', '.join(f"{r['table']} {r['op']} ×{r['n']}" for r in gd['by_table'][:4]) or '—'
+            mode_es = 'AVISO' if (gd.get('mode') or 'warn') == 'warn' else 'BLOQUEO'
+            mode_en = 'WARN' if (gd.get('mode') or 'warn') == 'warn' else 'ENFORCE'
+            out['es'] += (f" • Guardia «sin decisión no hay cambio» en {mode_es}: {gd['total']} cambio(s) sin decisión "
+                          f"en 7 días ({by}); disparadores {gd.get('triggers')}/{gd.get('triggers_expected')}.")
+            out['en'] += (f" • \"No decision, no change\" guard in {mode_en}: {gd['total']} change(s) without a "
+                          f"decision in 7 days ({by}); triggers {gd.get('triggers')}/{gd.get('triggers_expected')}.")
+            out['guard'] = gd
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from core import retention as _ret
+        rt = _ret.status()
+        last = rt.get('last') or {}
+        when = (last.get('at') or '')[:16].replace('T', ' ') or None
+        out['es'] += (f" • Retención (D3): chat y qué-pasaría-si {rt['params']['standard_days']} días, lo demás para "
+                      f"siempre; última purga {when or 'aún no'}"
+                      f"{' (' + str(last.get('purged', 0)) + ' contenidos vaciados, huellas intactas)' if when else ''}; "
+                      f"pendientes {rt.get('pending') if rt.get('pending') is not None else '—'}"
+                      f"{' (' + str(rt['protected']) + ' viejos protegidos: algo vigente los cita)' if rt.get('protected') else ''}.")
+        out['en'] += (f" • Retention (D3): chat and what-if {rt['params']['standard_days']} days, the rest forever; "
+                      f"last purge {when or 'not yet'}"
+                      f"{' (' + str(last.get('purged', 0)) + ' contents emptied, fingerprints intact)' if when else ''}; "
+                      f"pending {rt.get('pending') if rt.get('pending') is not None else '—'}"
+                      f"{' (' + str(rt['protected']) + ' old ones protected: something in force cites them)' if rt.get('protected') else ''}.")
+        out['retention'] = rt
+    except Exception:  # noqa: BLE001
+        pass
+    return out
 
 
 def _diag_hot_views():

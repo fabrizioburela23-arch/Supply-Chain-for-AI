@@ -6,7 +6,7 @@ cabecera `X-Khipu-Graph-Version`. Leer NUNCA reconstruye: si la vista va atrasad
 `lag_versions`); si todavía no existe ninguna (arranque), se espera hasta 2 s y si no, 503 `view_warming`.
 
     GET  /api/hot/status
-    GET  /api/hot/impact/<id>?severity=0-100&kind=collapse|shock&top=50
+    GET  /api/hot/impact/<id>?severity=0-100&kind=collapse|shock&top=50[&as_of=…&known_at=…]   (paso 23: G(t, κ))
     GET  /api/hot/chokepoints?by=sum|count&limit=25
     GET  /api/hot/factors
     GET  /api/hot/card/<id>?lang=es|en&structure=1   tarjeta V3 (NRS + 5 términos, flujo en pares distintos, estructura)
@@ -103,7 +103,7 @@ def hot_status():
     data = {'warming': g is None, 'builder': builder.state(), 'signals': signals.stats(),
             'derived': derived.stats(), 'geo': _geo.status(), 'quote': _quote.stats(), 'alerts': _alerts.stats(),
             'known': {k: v for k, v in signals.known().items() if k != 'ids'},
-            'history': registry.history()[:10], 'readers': hot.status()}
+            'history': registry.history()[:10], 'readers': hot.status(), 'asof': _asof_stats()}
     if g is not None:
         data.update({
             'generation': g.id, 'graph_version': g.graph_version, 'lineage': g.lineage, 'source': g.source,
@@ -118,17 +118,62 @@ def hot_status():
     return envelope('status', data, g, etag=False)
 
 
+def _asof_stats():
+    from core.hotviews.views import asof
+    return asof.stats()
+
+
 def _card_status(g):
     from core.hotviews import derived
     from core.hotviews.views import card
     return card.status(derived.peek(g, 'card'))
 
 
+def _asof_gen():
+    """Paso 23 (V7 AsOf): ?as_of= y/o ?known_at= → (Generation G(t, κ), meta, None) o (None, None, respuesta de
+    error). Sin ninguno de los dos → (None, None, None): el camino vivo de siempre."""
+    as_of, known_at = request.args.get('as_of') or None, request.args.get('known_at') or None
+    if as_of is None and known_at is None:
+        return None, None, None
+    from core.hotviews.views import asof
+    from ontology.bitemporal import KnownAtError
+    from ontology.service import OntologyError
+    try:
+        g, meta = asof.get(as_of, known_at)
+    except KnownAtError as e:
+        return None, None, (jsonify({'error': e.es, 'error_en': e.en, 'param': 'known_at'}), 400)
+    except OntologyError as e:
+        return None, None, _bad('as_of', f'as_of inválido: {e}', 'invalid as_of (use YYYY-MM-DD or ISO 8601)')
+    except asof.AsOfUnavailable:
+        return None, None, (jsonify({'error': 'la historia (as_of/known_at) necesita la base de datos',
+                                     'error_en': 'history (as_of/known_at) needs the database',
+                                     'code': 'asof_unavailable'}), 503)
+    except asof.AsOfBusy:
+        r = jsonify({'error': 'la vista histórica está ocupada; reintenta en unos segundos',
+                     'error_en': 'the historical view is busy; retry in a few seconds', 'code': 'asof_busy',
+                     'retry_after': 5})
+        r.headers['Retry-After'] = '5'
+        return None, None, (r, 503)
+    return g, meta, None
+
+
+def _asof_envelope(name, data, g, meta):
+    from core.hotviews.views import asof
+    r = jsonify({'data': data, 'view': asof.view_meta(g, meta, name=name)})
+    r.headers['X-Khipu-Graph-Version'] = str(g.graph_version)
+    return r
+
+
 @hot_bp.get('/impact/<path:node_id>')
 @rate_limit(240, 60)
 def hot_impact(node_id):
+    """?as_of=&known_at= (paso 23, opcionales): el mismo impacto sobre G(t, κ) (vista AsOf, LRU de 16)."""
     from core.hotviews.views import impact
-    g = _gen()
+    g, ameta, err = _asof_gen()
+    if err is not None:
+        return err
+    if g is None:
+        g = _gen()
     if g is None:
         return _warming()
     core, imp = g.views['graph_core'], g.views['impact']
@@ -147,7 +192,7 @@ def hot_impact(node_id):
         return _bad('kind', "kind inválido: usa 'collapse' o 'shock'", "invalid kind: use 'collapse' or 'shock'")
     if kind == 'collapse' and sev >= 100.0:
         data = impact.impact_payload(core, imp, oid, top=int(top))
-        return envelope('impact', data, g)
+        return _asof_envelope('impact', data, g, ameta) if ameta is not None else envelope('impact', data, g)
     # choque parcial: el MISMO kernel sobre las matrices de la vista (~1-2 ms), no precalculado
     import numpy as np
     x0 = np.zeros(len(core.ids))
@@ -158,7 +203,7 @@ def hot_impact(node_id):
             'reach_1': sc['reach_1'], 'reach_10': sc['reach_10'], 'sum_impact': sc['sum_impact'],
             'by_hop': sc['by_hop'], 'victims': sc['victims'], 'precomputed': False,
             'compute_ms': round((time.perf_counter() - t0) * 1000, 3)}
-    return envelope('impact', data, g)
+    return _asof_envelope('impact', data, g, ameta) if ameta is not None else envelope('impact', data, g)
 
 
 @hot_bp.get('/chokepoints')

@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 205 |
-| Líneas de código | 123.754 |
+| Archivos de código (Python, JS, HTML) | 212 |
+| Líneas de código | 127.979 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 172 |
+| Archivos de prueba | 179 |
 | Documentos | 28 |
-| Rutas HTTP | 247 |
+| Rutas HTTP | 253 |
 | Grupos de API | 61 |
 | Herramientas MCP | 29 |
-| Variables de entorno | 162 |
-| Sesiones de trabajo | 98 |
-| Aristas `calls_endpoint` | 627 |
-| Aristas `defines_endpoint` | 276 |
-| Aristas `imports` | 1.652 |
+| Variables de entorno | 163 |
+| Sesiones de trabajo | 100 |
+| Aristas `calls_endpoint` | 649 |
+| Aristas `defines_endpoint` | 282 |
+| Aristas `imports` | 1.784 |
 | Aristas `loads_script` | 81 |
-| Aristas `mentions_in_session` | 501 |
-| Aristas `reads_env` | 226 |
-| Aristas `references_file` | 59 |
-| Aristas `tested_by` | 1.197 |
+| Aristas `mentions_in_session` | 505 |
+| Aristas `reads_env` | 227 |
+| Aristas `references_file` | 60 |
+| Aristas `tested_by` | 1.279 |
 | Aristas `uses_global` | 346 |
 
 ## Nodos "dios" (más conectados)
@@ -44,25 +44,25 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
 | [[app.html]] | 142 | 54 | 88 | [[Capa Interfaz (Khipus OS)]] |
-| [[server.py]] | 85 | 24 | 61 | [[Capa Infraestructura]] |
-| [[ontology.db.py]] | 45 | 37 | 8 | [[Capa Ontología y grafo temporal]] |
+| [[server.py]] | 88 | 24 | 64 | [[Capa Infraestructura]] |
+| [[ontology.db.py]] | 50 | 41 | 9 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 41 | 11 | 30 | [[Capa Interfaz (Khipus OS)]] |
 | [[nodes.nodes_seed.js]] | 36 | 36 | 0 | [[Capa Datos del catálogo]] |
 | [[core.http.py]] | 35 | 33 | 2 | [[Capa Infraestructura]] |
-| [[mcp_server.tools.py]] | 33 | 6 | 27 | [[Capa MCP y API]] |
+| [[core.__init__.py]] | 34 | 34 | 0 | [[Capa Infraestructura]] |
+| [[mcp_server.tools.py]] | 34 | 6 | 28 | [[Capa MCP y API]] |
 | [[core.khipu_chat.py]] | 32 | 6 | 26 | [[Capa Chat y agentes]] |
-| [[core.__init__.py]] | 31 | 31 | 0 | [[Capa Infraestructura]] |
-| [[ontology.api.py]] | 27 | 7 | 20 | [[Capa Ontología y grafo temporal]] |
+| [[core.decisions.py]] | 31 | 24 | 7 | [[Capa Infraestructura]] |
+| [[core.governance.py]] | 31 | 26 | 5 | [[Capa Infraestructura]] |
+| [[ontology.api.py]] | 29 | 7 | 22 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.models.py]] | 28 | 25 | 3 | [[Capa Ontología y grafo temporal]] |
+| [[core.identity.py]] | 27 | 25 | 2 | [[Capa Infraestructura]] |
+| [[research.committee.py]] | 27 | 7 | 20 | [[Capa Comité]] |
 | [[research.committee_api.py]] | 27 | 7 | 20 | [[Capa Comité]] |
-| [[core.decisions.py]] | 26 | 19 | 7 | [[Capa Infraestructura]] |
 | [[engine.resolve.js]] | 26 | 17 | 9 | [[Capa Chat y agentes]] |
 | [[engine.voice.js]] | 26 | 5 | 21 | [[Capa Voz]] |
-| [[ontology.models.py]] | 26 | 23 | 3 | [[Capa Ontología y grafo temporal]] |
 | [[research.runner.py]] | 26 | 8 | 18 | [[Capa Investigación]] |
-| [[research.committee.py]] | 25 | 7 | 18 | [[Capa Comité]] |
-| [[brokerage.service.py]] | 24 | 9 | 15 | [[Capa Dinero (carteras, trading, corretaje)]] |
-| [[core.identity.py]] | 24 | 22 | 2 | [[Capa Infraestructura]] |
-| [[core.world.py]] | 24 | 15 | 9 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
+| [[core.world.py]] | 25 | 16 | 9 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 
 ## Módulos sin pruebas (28)
 
@@ -91,7 +91,7 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[core.providers.coingecko.py]] | 123 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.nav4.js]] | 118 | [[Capa Interfaz (Khipus OS)]] |
 | [[scripts.build_instrument_review.py]] | 118 | [[Capa Datos del catálogo]] |
-| [[scripts.reconcile_v0_to_ontology.py]] | 101 | [[Capa Ontología y grafo temporal]] |
+| [[scripts.reconcile_v0_to_ontology.py]] | 104 | [[Capa Ontología y grafo temporal]] |
 | [[engine.canvas-data.js]] | 72 | [[Capa Chat y agentes]] |
 | [[scripts.build_private_valuations.py]] | 71 | [[Capa Datos del catálogo]] |
 | [[scripts.build_listing_status.py]] | 63 | [[Capa Datos del catálogo]] |
@@ -150,14 +150,13 @@ Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo"
 | `window.togglePortfolio` | [[app.html]] | **no** | no |
 | `window.xrayImpact` | [[engine.xray.js]] | **no** | sí (solo pruebas) |
 
-## Rutas definidas que nadie llama (10)
+## Rutas definidas que nadie llama (9)
 
 Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los scripts nombran la ruta.
 
 | Método | Ruta | Función | Módulo |
 |---|---|---|---|
 | `GET` | `/api/ontology/gates` | `gates_status` | [[ontology.api.py]] |
-| `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] |
 | `GET` | `/api/prices/eod/<path:symbol>` | `prices_eod` | [[core.prices_api.py]] |
 | `GET` | `/api/research/agents` | `agents` | [[research.api.py]] |
 | `GET` | `/api/research/budget` | `budget` | [[research.api.py]] |
@@ -167,7 +166,7 @@ Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los s
 | `GET` | `/api/trade/diag` | `trade_diag` | [[server.py]] |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | [[server.py]] |
 
-**Solo las llaman las pruebas** (33): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/rank`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
+**Solo las llaman las pruebas** (35): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/governance/attribution`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/graph`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/rank`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
 
 ## Llamadas a rutas que no existen (7)
 
@@ -183,11 +182,11 @@ Textos con forma de ruta (`/api/…`) en el código que no coinciden con ninguna
 | [[engine.hotclient.js]] | `/api/hot/scenario` |
 | [[engine.hotclient.js]] | `/api/hot/status` |
 
-## Variables leídas en el código que faltan en CLAUDE.md (63)
+## Variables leídas en el código que faltan en CLAUDE.md (64)
 
 Se pueden configurar en Railway pero nadie las anotó en la lista de CLAUDE.md.
 
-[[ENV AI_BUSY_WAIT_S]], [[ENV AI_CLAUDE_TIMEOUT_DEEP_S]], [[ENV AI_DAILY_LIMIT_USD]], [[ENV AI_MONTHLY_LIMIT_USD]], [[ENV AI_PER_USER_DAILY_USD]], [[ENV AI_PRICES_JSON]], [[ENV ALPHA_VANTAGE_KEY]], [[ENV ANTHROPIC_ADMIN_KEY]], [[ENV BIXBY_AUTOSYNC]], [[ENV CLAUDE_KEY]], [[ENV CLOUDFLARE_RADAR_TOKEN]], [[ENV COINGECKO_KEY]], [[ENV COMMITTEE_MAX_SEATS]], [[ENV CSP_ENABLED]], [[ENV CSP_REPORT_ONLY]], [[ENV DB_CONNECT_TIMEOUT_S]], [[ENV DB_POOL_TIMEOUT_S]], [[ENV DECIDE_ENABLED]], [[ENV ELEVENLABS_LLM]], [[ENV GEMINI_HOT_S]], [[ENV GEMINI_THINKING]], [[ENV GITHUB_OUTPUT]], [[ENV GITHUB_STEP_SUMMARY]], [[ENV GOOGLE_API_KEY]], [[ENV INSIGHTS_INFLIGHT_WAIT_S]], [[ENV INVESTIGADOR_AUTO]], [[ENV INVESTIGADOR_AUTO_CUTOFF_HORAS]], [[ENV KHIPU_URL]], [[ENV LIVE_DEADLINE_S]], [[ENV MATRIX_BUSY_WAIT_S]], [[ENV MATRIX_ENGINE]], [[ENV MCP_MAX_INFLIGHT]], [[ENV MCP_MAX_INFLIGHT_TOTAL]], [[ENV MCP_OAUTH_TTL_HOURS]], [[ENV MCP_PIN_LOCK_MIN]], [[ENV MCP_PIN_MAX_FAILS]], [[ENV MCP_RATE_PER_MIN]], [[ENV MCP_RESEARCH_PER_HOUR]], [[ENV MCP_STATIC_TOKEN]], [[ENV MCP_TRADE_PER_HOUR]], [[ENV MCP_TRUSTED_PROXY_HOPS]], [[ENV NVIDIA_API_KEY]], [[ENV RAILWAY_GIT_COMMIT_SHA]], [[ENV RAILWAY_PUBLIC_DOMAIN]], [[ENV REDIS_URL]], [[ENV RESEARCH_DEDUPE_MINUTES]], [[ENV RESEARCH_HEARTBEAT_STALE_MIN]], [[ENV RESEARCH_MAX_AGENTS_PER_JOB]], [[ENV SEC_USER_AGENT]], [[ENV SMOKE_RETRIES]], [[ENV SPACE_LL2_BASE]], [[ENV TAVILY_KEY]], [[ENV TYPESAFE_API_URL]], [[ENV TYPESAFE_KEY]], [[ENV WORLD_ADVISORIES_URL]], [[ENV WORLD_FEDREG_URL]], [[ENV WORLD_GDACS_URL]], [[ENV WORLD_GDELT_BACKFILL]], [[ENV WORLD_GDELT_EVENTS]], [[ENV WORLD_GDELT_EVENTS_BASE]], [[ENV WORLD_GPR_DAILY_URL]], [[ENV WORLD_GPR_MONTHLY_URL]], [[ENV WORLD_PORTWATCH_URL]]
+[[ENV AI_BUSY_WAIT_S]], [[ENV AI_CLAUDE_TIMEOUT_DEEP_S]], [[ENV AI_DAILY_LIMIT_USD]], [[ENV AI_MONTHLY_LIMIT_USD]], [[ENV AI_PER_USER_DAILY_USD]], [[ENV AI_PRICES_JSON]], [[ENV ALPHA_VANTAGE_KEY]], [[ENV ANTHROPIC_ADMIN_KEY]], [[ENV BIXBY_AUTOSYNC]], [[ENV CLAUDE_KEY]], [[ENV CLOUDFLARE_RADAR_TOKEN]], [[ENV COINGECKO_KEY]], [[ENV COMMITTEE_MAX_SEATS]], [[ENV CSP_ENABLED]], [[ENV CSP_REPORT_ONLY]], [[ENV DB_CONNECT_TIMEOUT_S]], [[ENV DB_POOL_TIMEOUT_S]], [[ENV DECIDE_ENABLED]], [[ENV ELEVENLABS_LLM]], [[ENV GEMINI_HOT_S]], [[ENV GEMINI_THINKING]], [[ENV GITHUB_OUTPUT]], [[ENV GITHUB_STEP_SUMMARY]], [[ENV GOOGLE_API_KEY]], [[ENV INSIGHTS_INFLIGHT_WAIT_S]], [[ENV INVESTIGADOR_AUTO]], [[ENV INVESTIGADOR_AUTO_CUTOFF_HORAS]], [[ENV KHIPU_URL]], [[ENV KH_GUARD_TRACE]], [[ENV LIVE_DEADLINE_S]], [[ENV MATRIX_BUSY_WAIT_S]], [[ENV MATRIX_ENGINE]], [[ENV MCP_MAX_INFLIGHT]], [[ENV MCP_MAX_INFLIGHT_TOTAL]], [[ENV MCP_OAUTH_TTL_HOURS]], [[ENV MCP_PIN_LOCK_MIN]], [[ENV MCP_PIN_MAX_FAILS]], [[ENV MCP_RATE_PER_MIN]], [[ENV MCP_RESEARCH_PER_HOUR]], [[ENV MCP_STATIC_TOKEN]], [[ENV MCP_TRADE_PER_HOUR]], [[ENV MCP_TRUSTED_PROXY_HOPS]], [[ENV NVIDIA_API_KEY]], [[ENV RAILWAY_GIT_COMMIT_SHA]], [[ENV RAILWAY_PUBLIC_DOMAIN]], [[ENV REDIS_URL]], [[ENV RESEARCH_DEDUPE_MINUTES]], [[ENV RESEARCH_HEARTBEAT_STALE_MIN]], [[ENV RESEARCH_MAX_AGENTS_PER_JOB]], [[ENV SEC_USER_AGENT]], [[ENV SMOKE_RETRIES]], [[ENV SPACE_LL2_BASE]], [[ENV TAVILY_KEY]], [[ENV TYPESAFE_API_URL]], [[ENV TYPESAFE_KEY]], [[ENV WORLD_ADVISORIES_URL]], [[ENV WORLD_FEDREG_URL]], [[ENV WORLD_GDACS_URL]], [[ENV WORLD_GDELT_BACKFILL]], [[ENV WORLD_GDELT_EVENTS]], [[ENV WORLD_GDELT_EVENTS_BASE]], [[ENV WORLD_GPR_DAILY_URL]], [[ENV WORLD_GPR_MONTHLY_URL]], [[ENV WORLD_PORTWATCH_URL]]
 
 Solo aparecen en archivos de despliegue (Dockerfile, docker-compose.yml, workflows) y no en CLAUDE.md (2): [[ENV GUNICORN_MAX_REQUESTS_JITTER]], [[ENV OPENAI_KEY]]
 

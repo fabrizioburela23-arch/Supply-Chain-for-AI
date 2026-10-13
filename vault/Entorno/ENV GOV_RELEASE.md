@@ -17,6 +17,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_governance.py]]
+- [[tests.test_review_batch_g.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

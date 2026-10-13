@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 36
+archivos: 41
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,38 +9,43 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**36 archivos · 21.771 líneas.** Volver al [[00 Mapa de Khipus]].
+**41 archivos · 24.583 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 6.428 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[server.py]] — 6.498 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 - [[scripts.build_vault.py]] — 3.483 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 - [[core.ai.py]] — 1.196 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
-- [[core.decisions.py]] — 896 líneas · EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan).
+- [[core.governance.py]] — 1.089 líneas · EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan).
+- [[core.governance_flow.py]] — 1.016 líneas · FLUJO DE GOBERNANZA COMPLETO (docs/INFRA_OPERATIVA.md §5.3; paso 25 del plan).
+- [[core.decisions.py]] — 899 líneas · EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan).
 - [[core.numbers.py]] — 869 líneas · guardián de CIFRAS (anti-alucinación numérica).
-- [[core.governance.py]] — 846 líneas · EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan).
 - [[core.prices_store.py]] — 832 líneas · LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, §20.1 #1-#3).
 - [[core.context_engine.py]] — 794 líneas · EL motor de contexto (ARQUITECTURA_V2 §13; BRECHAS bloque 4: L4-01, L4-05, L4-10).
+- [[core.ledger.py]] — 729 líneas · sellado y verificación del libro (docs/INFRA_OPERATIVA.md §2.8; paso 6 del plan).
 - [[core.decision_sites.py]] — 697 líneas · decisiones del COMITÉ, la INVESTIGACIÓN, las PROPUESTAS y las ALERTAS (docs/INFRA_OPERATIVA.md §2.5; pasos 18 y 19 del plan).
-- [[core.ledger.py]] — 685 líneas · sellado y verificación del libro (docs/INFRA_OPERATIVA.md §2.8; paso 6 del plan).
 - [[core.ai_usage.py]] — 654 líneas · CONTROL DE GASTO DE IA (registro, límites y reporte).
+- [[core.ledger_guard.py]] — 450 líneas · GUARDIA DE PROYECCIONES «sin decisión no hay cambio» (docs/INFRA_OPERATIVA.md §2.1; paso 22).
+- [[core.governance_api.py]] — 381 líneas · /api/governance/\* (docs/INFRA_OPERATIVA.md §5.1; paso 9). Nunca bajo /v1/\*.
+- [[core.ledger_ddl.py]] — 372 líneas · DDL idempotente de los registros que SOLO crecen (docs/INFRA_OPERATIVA.md §2.1, §4.3).
 - [[core.ai_calls.py]] — 317 líneas · registro append-only de CADA pedido a la IA (docs/INFRA_OPERATIVA.md §2.6, paso 21; GV-11).
-- [[core.ledger_ddl.py]] — 309 líneas · DDL idempotente de los registros que SOLO crecen (docs/INFRA_OPERATIVA.md §2.1, §4.3).
-- [[scripts.build_governance.py]] — 285 líneas · mantiene governance/manifest.json (docs/INFRA_OPERATIVA.md §5.1-§5.3; paso 9).
+- [[core.retention.py]] — 312 líneas · PURGA POR RETENCIÓN del libro (docs/INFRA_OPERATIVA.md §2.7; paso 26; decisión D3).
 - [[engine.aispend.js]] — 283 líneas · 💰 GASTO DE IA (🩺 Sistema → pestaña "Gasto IA")
 - [[sw.js]] — 277 líneas · Khipu Finance — Service Worker Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / CACHE va en la línea 6 (regla de despliegue #1: …
+- [[core.governance_lint.py]] — 270 líneas · EL lint de los artefactos de gobernanza (docs/INFRA_OPERATIVA.md §5.2; pasos 9 y 25).
 - [[scripts.build_shapes.py]] — 265 líneas · compila las formas SHACL a IR (docs/INFRA_OPERATIVA.md §3.3; paso 10).
 - [[core.pin.py]] — 260 líneas · verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[core.ops_check.py]] — 257 líneas · O1 (misión de reparación 2026-10-04): chequeo del sistema EN el servidor, guardado y consultable.
-- [[core.ledger_api.py]] — 238 líneas · lectura del libro de decisiones: /api/ledger/\* (docs/INFRA_OPERATIVA.md §2.9; paso 6).
+- [[core.ledger_api.py]] — 240 líneas · lectura del libro de decisiones: /api/ledger/\* (docs/INFRA_OPERATIVA.md §2.9; paso 6).
 - [[core.identity.py]] — 227 líneas · QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del plan).
+- [[scripts.build_governance.py]] — 226 líneas · mantiene governance/manifest.json (docs/INFRA_OPERATIVA.md §5.1-§5.3; paso 9).
 - [[core.instruments.py]] — 213 líneas · EMPRESA ≠ INSTRUMENTO (docs/BRECHAS_V2.md L3-13; ARQUITECTURA_V2 §3.2, §17.3, §20.1 #3).
+- [[core.governance_preview.py]] — 191 líneas · "¿qué cambia para mí?" de una versión de artefacto ANTES de activarla (paso 12; pieza mínima del flujo de gobernanza §5.3 de docs/INFRA_OPERATIVA.md).
 - [[core.http.py]] — 189 líneas · llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology y matrix).
-- [[core.governance_preview.py]] — 182 líneas · "¿qué cambia para mí?" de una versión de artefacto ANTES de activarla (paso 12; pieza mínima del flujo de gobernanza §5.3 de docs/INFRA_OPERATIVA.md).
 - [[security_audit.py]] — 182 líneas · Khipu Finance (Fase 2H)
-- [[core.governance_api.py]] — 171 líneas · /api/governance/\* (docs/INFRA_OPERATIVA.md §5.1; paso 9). Nunca bajo /v1/\*.
+- [[core.governance_shadow.py]] — 179 líneas · FORMAS PROPUESTAS EN SOMBRA junto a las vigentes (docs/INFRA_OPERATIVA.md §5.3; paso 25).
 - [[engine.sync.js]] — 128 líneas · SINCRONIZACIÓN ENTRE DISPOSITIVOS (carteras, perfil, posiciones)
 - [[core.prices_api.py]] — 125 líneas · /api/prices/\* y /api/instruments/\* (BRECHAS bloque 2: la memoria de los números). Nunca /v1/\*.
 - [[core.scheduler.py]] — 116 líneas · tareas periódicas del SERVIDOR (misión de reparación 2026-10-04, R5).
@@ -56,17 +61,17 @@ Variables de entorno: [[Índice de variables de entorno]].
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
+| la usa | [[Capa Ontología y grafo temporal]] | 36 |
+| usa a | [[Capa Ontología y grafo temporal]] | 33 |
 | la usa | [[Capa Chat y agentes]] | 30 |
-| la usa | [[Capa Ontología y grafo temporal]] | 30 |
-| usa a | [[Capa Ontología y grafo temporal]] | 28 |
 | la usa | [[Capa Investigación]] | 27 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 24 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 23 |
+| la usa | [[Capa Comité]] | 21 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 21 |
-| la usa | [[Capa Comité]] | 19 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 16 |
 | la usa | [[Capa MCP y API]] | 15 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 15 |
-| usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 9 |
+| usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 10 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 8 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
 | usa a | [[Capa Chat y agentes]] | 7 |

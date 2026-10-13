@@ -24,6 +24,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_phase3.py]]
+- [[tests.test_review_batch_g.py]]
 - [[tests.test_security.py]]
 - [[tests.test_trading_agent_ledger.py]]
 
@@ -33,5 +34,6 @@ Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
 
 ## Mencionada en sesiones
 
+- [[Sesión 2026-10-13 (g-rev) — REVISIÓN DEL BATCH G]]
 - [[Sesión 2026-07-13 — Etapa M — Trading cripto en papel, integrado en Khipu (sw v80)]]
 - [[Sesión 2026-07-13 — Etapa O — Khipus Finance AI - 9 frentes + rebrand + Cabina inicial]]

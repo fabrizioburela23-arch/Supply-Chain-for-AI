@@ -750,12 +750,27 @@ def client_nrs(node, degree):
     return nrs_terms(node, degree)['total']
 
 
-def nrs_terms(node, degree):
+def nrs_terms(node, degree, params=None):
     """LA fórmula NRS con sus 5 términos (= app.html `_nrsTerms`): {geo, degree, chain, market, fundamental,
     concentration, total}. `client_nrs` devuelve su `total`; la tarjeta V3 (core/hotviews/views/card.py) sirve el
-    vector completo. Una sola implementación: nunca re-escribirla en otro archivo."""
-    geo = nrs_geo(node.get('country'))
-    chain = min(_NRS_CHAIN_CAP, degree * _NRS_CHAIN_PER_DEGREE)
+    vector completo. Una sola implementación: nunca re-escribirla en otro archivo.
+    `params` (paso 25): los parámetros de OTRA versión de nrs.formula (regresión contrafactual de gobernanza,
+    core/governance_flow) — sin él, los del release vigente. Nunca toca las constantes del módulo."""
+    if params is None:
+        geo_t, geo_def, cpd, ccap = _NRS_GEO, _NRS_GEO_DEFAULT, _NRS_CHAIN_PER_DEGREE, _NRS_CHAIN_CAP
+        mdef, mref, mcap, fcap = _NRS_MARGIN_DEFAULT, _NRS_MARGIN_REF, _NRS_MARKET_CAP, _NRS_FUNDAMENTAL_CAP
+        pre, gred, gyel, conc_set = _NRS_PREIPO, _NRS_GROWTH_RED, _NRS_GROWTH_YELLOW, _NRS_CONCENTRATED
+        chi, clo, tcap = _NRS_CONC_HIGH, _NRS_CONC_LOW, _NRS_TOTAL_CAP
+    else:
+        p = params
+        geo_t, geo_def, cpd, ccap = p['geo'], p['geo_default'], p['chain_per_degree'], p['chain_cap']
+        mdef, mref, mcap, fcap = p['margin_default'], p['margin_ref'], p['market_cap'], p['fundamental_cap']
+        pre, gred, gyel, conc_set = (p['preipo_points'], p['growth_red_points'], p['growth_yellow_points'],
+                                     tuple(p['concentrated']))
+        chi, clo, tcap = p['concentrated_points'], p['other_points'], p['total_cap']
+    key = nrs_country(node.get('country'))
+    geo = geo_t.get(key, geo_def)
+    chain = min(ccap, degree * cpd)
     margin = node.get('margin')
     try:   # 2026-10-05: el margen REAL (core/live_fundamentals) manda sobre el del catálogo, como en el cliente
         from core.live_fundamentals import live_margin
@@ -764,17 +779,17 @@ def nrs_terms(node, degree):
     except Exception:  # noqa: BLE001
         pass
     try:
-        margin = _NRS_MARGIN_DEFAULT if margin is None else float(margin)
+        margin = mdef if margin is None else float(margin)
     except (TypeError, ValueError):
-        margin = _NRS_MARGIN_DEFAULT
-    market = max(0, min(_NRS_MARKET_CAP, _js_round((1 - min(1, margin / _NRS_MARGIN_REF)) * _NRS_MARKET_CAP)))
+        margin = mdef
+    market = max(0, min(mcap, _js_round((1 - min(1, margin / mref)) * mcap)))
     growth = str(node.get('growth') or '').lower()
-    fundamental = min(_NRS_FUNDAMENTAL_CAP, (_NRS_PREIPO if node.get('preipo') else 0) +
-                      (_NRS_GROWTH_RED if '🔴' in growth else _NRS_GROWTH_YELLOW if '🟡' in growth else 0))
-    conc = _NRS_CONC_HIGH if nrs_concentrated(node.get('country')) else _NRS_CONC_LOW
+    fundamental = min(fcap, (pre if node.get('preipo') else 0) +
+                      (gred if '🔴' in growth else gyel if '🟡' in growth else 0))
+    conc = chi if key in conc_set else clo
     return {'geo': geo, 'degree': degree, 'chain': chain, 'market': market, 'fundamental': fundamental,
             'concentration': conc,
-            'total': min(_NRS_TOTAL_CAP, max(0, _js_round(geo + chain + market + fundamental + conc)))}
+            'total': min(tcap, max(0, _js_round(geo + chain + market + fundamental + conc)))}
 
 
 _GRAPH = {'data': None}

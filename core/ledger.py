@@ -330,6 +330,50 @@ def verify(from_seal=1, limit=None, engine=None, max_broken=20, record_break=Fal
     return out
 
 
+def verify_blobs(engine=None, limit=None, batch=500):
+    """Paso 26: los blobs se verifican POR SU SHA (la cadena de sellos nunca hashea cuerpos: las decisiones citan el
+    sha, así una purga por retención no rompe `verify`). Cada cuerpo presente debe descomprimir a bytes cuyo sha256
+    es su clave; cada cuerpo ausente debe estar purgado (purged_at) por una decisión `retention.purge`.
+    {'ok', 'checked', 'present', 'purged', 'mismatch': [sha…], 'unexplained_null': [sha…], 'ms'}."""
+    from sqlalchemy import text
+    if engine is None:
+        from ontology.db import _get_engine
+        engine = _get_engine()
+    t0 = time.perf_counter()
+    out = {'checked': 0, 'present': 0, 'purged': 0, 'mismatch': [], 'unexplained_null': []}
+    with engine.connect() as c:
+        purge_ids = {str(r[0]) for r in c.execute(text(
+            "SELECT id FROM decisions WHERE kind = 'retention.purge'")).all()}
+        last = ''
+        while limit is None or out['checked'] < limit:
+            n = batch if limit is None else min(batch, limit - out['checked'])
+            rows = c.execute(text('SELECT sha256, body, purged_at, purge_decision_id FROM decision_blobs '
+                                  'WHERE sha256 > :last ORDER BY sha256 LIMIT :n'), {'last': last, 'n': n}).all()
+            if not rows:
+                break
+            for r in rows:
+                out['checked'] += 1
+                if r.body is None:
+                    if r.purged_at is not None and str(r.purge_decision_id) in purge_ids:
+                        out['purged'] += 1
+                    else:
+                        out['unexplained_null'].append(r.sha256)
+                    continue
+                try:
+                    ok = hashlib.sha256(zlib.decompress(bytes(r.body))).hexdigest() == r.sha256
+                except Exception:  # noqa: BLE001
+                    ok = False
+                if ok:
+                    out['present'] += 1
+                else:
+                    out['mismatch'].append(r.sha256)
+            last = rows[-1].sha256
+    out['ok'] = not out['mismatch'] and not out['unexplained_null']
+    out['mismatch'], out['unexplained_null'] = out['mismatch'][:50], out['unexplained_null'][:50]
+    out['ms'] = round((time.perf_counter() - t0) * 1000, 2)
+    return out
+
+
 def status(engine=None):
     """Resumen barato para el 🩺 y /api/ledger/status (sin cuerpos)."""
     from sqlalchemy import text

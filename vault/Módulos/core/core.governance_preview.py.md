@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/governance_preview.py"
 lenguaje: "python"
-lineas: 182
+lineas: 191
 aliases: ["core/governance_preview.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/governance_preview.py
 
-> Módulo · capa [[Capa Infraestructura]] · 182 líneas · `core/governance_preview.py`
+> Módulo · capa [[Capa Infraestructura]] · 191 líneas · `core/governance_preview.py`
 
 ## Para qué sirve
 
@@ -18,8 +18,8 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 
 ## API pública
 
-- `preview(selection)` — {selection, release_hash, generation, params_diff, kernel?, nrs_affected, summary_es/en, compute_ms}. _(línea 127)_
-- `reset()` _(línea 180)_
+- `preview(selection, focus=…)` — {selection, release_hash, generation, params_diff, kernel?, nrs_affected, summary_es/en, for_me, compute_ms}. `focus` (paso 25): ids de las … _(línea 127)_
+- `reset()` _(línea 189)_
 
 **Internas** (empiezan con `_`): `_build`, `_params_diff`, `_victims`, `_kernel_compare`, `_summary`
 
@@ -27,14 +27,17 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 
 - [[core.__init__.py]] — importa `graph_core`, `hot`, `impact`, `source`
 - [[core.governance.py]] — importa `governance`
+- [[core.governance_flow.py]] — importa `governance_flow`
 - [[matrix.engine.py]] — importa `engine`
 
 ## Lo usan
 
 - [[core.governance_api.py]] — lo importa
+- [[core.governance_flow.py]] — lo importa
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_governance_activation.py]]
+- [[tests.test_governance_flow.py]]

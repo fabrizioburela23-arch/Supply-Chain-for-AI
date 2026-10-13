@@ -213,6 +213,71 @@
            '<li><b>Chokepoints</b> are ranked by the total strength of the hit, not by how many companies they touch slightly.</li>' +
            '<li><b>Agent simulation</b>: the % come from the engine; the AI only explains.</li></ul>' +
            'The NRS does not change. These are structural estimates, <b>not prices</b> or recommendations.' } },
+    // pasos 11, 22 y 26 (INFRA_OPERATIVA): Puertas en bloqueo, guardia «sin decisión no hay cambio», retención
+    gov_gates_7d: {
+      es: { t: '¿Qué son las «Puertas» y el resumen de 7 días?',
+        b: 'Las puertas son <b>reglas que revisan cada cambio del grafo</b> antes de guardarlo (por ejemplo: un vínculo de una empresa consigo misma, un peso fuera de 1-6, un campo que no existe). ' +
+           'Hoy están en <b>sombra</b>: solo avisan y queda registrado, no rechazan nada.<br><br>' +
+           'El resumen cuenta los avisos de los últimos 7 días por regla y <b>cuántas escrituras se habrían rechazado</b> con la versión 2.0.0 (bloqueo). ' +
+           'Si ese número es 0 o lo que sale está mal de verdad, puedes activar el bloqueo con tu PIN en Gobernanza; se deshace volviendo a la versión anterior. Las órdenes de dinero no cambian.' },
+      en: { t: 'What are the "Gates" and the 7-day summary?',
+        b: 'Gates are <b>rules that check every graph change</b> before it is saved (for example: a link from a company to itself, a weight outside 1-6, a field that does not exist). ' +
+           'Today they are in <b>shadow</b>: they only warn and it is recorded, nothing is rejected.<br><br>' +
+           'The summary counts the warnings of the last 7 days per rule and <b>how many writes would have been rejected</b> with version 2.0.0 (blocking). ' +
+           'If that number is 0, or what shows up is really wrong, you can activate blocking with your PIN in Governance; undo by going back to the previous version. Money orders do not change.' } },
+    gov_guard: {
+      es: { t: '¿Qué es la «guardia sin decisión no hay cambio»?',
+        b: 'Khipus anota en un libro que nadie puede borrar <b>cada decisión</b> (quién, qué, con qué datos). La guardia es una regla de la base de datos que mira las tablas importantes ' +
+           '(órdenes, clientes, memos del comité, conclusiones, propuestas, alertas, ajustes de IA) y <b>cuenta cada cambio que llegó sin su decisión en el libro</b>.<br><br>' +
+           'Hoy solo <b>cuenta</b> (modo aviso). Cuando el contador lleve una semana en 0, puedes pasarla a <b>bloquear</b> con tu PIN (versión 2.0.0): desde ahí, un cambio sin decisión no se guarda.' },
+      en: { t: 'What is the "no decision, no change" guard?',
+        b: 'Khipus writes <b>every decision</b> (who, what, with which data) to a ledger nobody can erase. The guard is a database rule that watches the important tables ' +
+           '(orders, clients, committee memos, conclusions, proposals, alerts, AI settings) and <b>counts every change that arrived without its decision in the ledger</b>.<br><br>' +
+           'Today it only <b>counts</b> (warn mode). Once the counter has been at 0 for a week, you can switch it to <b>block</b> with your PIN (version 2.0.0): from then on, a change without a decision is not saved.' } },
+    gov_retention: {
+      es: { t: '¿Qué es la «retención»?',
+        b: 'Lo que tiene que ver con <b>dinero, el grafo, el comité y las reglas se guarda para siempre</b>. Las preguntas del chat y las simulaciones «qué pasaría si» se guardan <b>90 días</b>.<br><br>' +
+           'Pasado ese plazo, una tarea diaria vacía su contenido pero <b>conserva su huella</b> (un código único): así se puede seguir demostrando que el libro no fue alterado. Cada vaciado queda registrado como una decisión.' },
+      en: { t: 'What is "retention"?',
+        b: 'Everything about <b>money, the graph, the committee and the rules is kept forever</b>. Chat questions and "what if" simulations are kept <b>90 days</b>.<br><br>' +
+           'After that, a daily task empties their content but <b>keeps their fingerprint</b> (a unique code): so it can still be proven that the ledger was not altered. Every purge is recorded as a decision.' } },
+    // paso 25 (INFRA_OPERATIVA): flujo de gobernanza completo — proponer, regresión, programar, ¿qué cambia para mí?
+    gov_propose: {
+      es: { t: '¿Qué es «Proponer cambio»?',
+        b: 'Puedes pedir que un número de las reglas cambie (por ejemplo, cuánto se debilita una crisis en cada paso de la cadena, o el umbral del comité para sugerir comprar). ' +
+           'Solo se pueden mover los números que Khipus marca como ajustables y <b>dentro de su rango</b>; lo demás se cambia con una actualización del código.<br><br>' +
+           'Proponer <b>no cambia nada todavía</b>: queda guardado con tu PIN como una versión nueva, Khipus calcula qué cambiaría y tú decides si activarla. ' +
+           'Si el cambio altera números, es un cambio <b>mayor</b> (por ahora solo tú lo apruebas).' },
+      en: { t: 'What is "Propose a change"?',
+        b: 'You can ask for a number in the rules to change (for example, how much a crisis weakens at each step of the chain, or the committee threshold to suggest buying). ' +
+           'Only the numbers Khipus marks as adjustable can move, and <b>within their range</b>; everything else changes with a code update.<br><br>' +
+           'Proposing <b>changes nothing yet</b>: it is saved with your PIN as a new version, Khipus computes what would change and you decide whether to activate it. ' +
+           'If the change alters numbers it is a <b>major</b> change (for now only you approve it).' } },
+    gov_regression: {
+      es: { t: '¿Qué es la «regresión contrafactual»?',
+        b: 'Antes de activar una versión, Khipus <b>vuelve a calcular con ella</b> lo que ya pasó, sin tocar lo vigente: las simulaciones «qué pasaría si» que hiciste en los últimos 30 días, ' +
+           'la caída de cada empresa del grafo, los memos del comité, los controles de monto de las órdenes recientes y el NRS.<br><br>' +
+           'Te dice <b>cuántos resultados cambiarían</b>. Si una versión dice ser «menor» pero cambia resultados, te avisa. Queda registrado y no se borra.' },
+      en: { t: 'What is the "counterfactual regression"?',
+        b: 'Before activating a version, Khipus <b>recomputes with it</b> what already happened, without touching what is in force: the what-if simulations you ran in the last 30 days, ' +
+           'the fall of every company in the graph, the committee memos, the amount checks of recent orders and the NRS.<br><br>' +
+           'It tells you <b>how many results would change</b>. If a version claims to be "minor" but changes results, it warns you. It is recorded and never deleted.' } },
+    gov_schedule: {
+      es: { t: '¿Qué es «Programar» un cambio?',
+        b: 'En vez de activar ya, eliges <b>cuándo</b> entra en vigor (por ejemplo, después del cierre de la bolsa). Hasta esa hora nada cambia y puedes <b>cancelarlo</b>.<br><br>' +
+           'Los límites del corretaje se aplican por defecto después del cierre de Nueva York, para no cambiar las reglas a mitad de una sesión. Mientras haya un cambio programado no se activa otro (para que uno no pise al otro).' },
+      en: { t: 'What is "Schedule" a change?',
+        b: 'Instead of activating now, you choose <b>when</b> it takes effect (for example, after the market close). Until then nothing changes and you can <b>cancel it</b>.<br><br>' +
+           'Brokerage limits apply by default after the New York close, so rules do not change in the middle of a session. While a change is scheduled no other one is activated (so one does not overwrite the other).' } },
+    gov_for_me: {
+      es: { t: '¿Cómo se calcula «¿Qué cambia para mí?»?',
+        b: 'Para cada empresa de <b>tus posiciones</b> (si no tienes, las 10 más críticas del grafo) Khipus compara, con la versión vigente y con la nueva: ' +
+           'el <b>peor golpe</b> que puede recibir si cae cualquier otra empresa, y <b>a cuántas arrastra</b> si cae ella.<br><br>' +
+           'Para reglas que no son del motor (comité, corretaje…) te muestra los números que cambian, con su nombre. Son estimaciones estructurales, <b>no precios</b>.' },
+      en: { t: 'How is "What changes for me?" computed?',
+        b: 'For each company in <b>your positions</b> (if you have none, the 10 most critical in the graph) Khipus compares, with the version in force and with the new one: ' +
+           'the <b>worst hit</b> it can take if any other company fails, and <b>how many it drags</b> if it fails.<br><br>' +
+           'For rules outside the engine (committee, brokerage…) it shows you the numbers that change, by name. These are structural estimates, <b>not prices</b>.' } },
     choke_sum: {
       es: { t: '¿Qué es el «impacto total» de un cuello de botella?',
         b: 'Si esa empresa cae, sumamos cuánto pierde cada empresa golpeada (100 % = una empresa entera). Un impacto total de 40 equivale a ' +

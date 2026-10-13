@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "scripts/reconcile_v0_to_ontology.py"
 lenguaje: "python"
-lineas: 101
+lineas: 104
 aliases: ["scripts/reconcile_v0_to_ontology.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # scripts/reconcile_v0_to_ontology.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 101 líneas · `scripts/reconcile_v0_to_ontology.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 104 líneas · `scripts/reconcile_v0_to_ontology.py`
 
 ## Para qué sirve
 

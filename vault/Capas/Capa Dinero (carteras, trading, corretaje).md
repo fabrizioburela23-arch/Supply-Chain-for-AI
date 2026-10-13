@@ -9,11 +9,11 @@ tags: ["capa/dinero", "tipo/capa"]
 
 > Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana.
 
-**13 archivos · 8.811 líneas.** Volver al [[00 Mapa de Khipus]].
+**13 archivos · 8.861 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[brokerage.service.py]] — 2.262 líneas · lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
+- [[brokerage.service.py]] — 2.312 líneas · lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - [[engine.portfolios.js]] — 1.369 líneas · 🧪 CARTERAS SIMULADAS (paper trading local)
 - [[core.portfolio_ai.py]] — 1.266 líneas · ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
 - [[engine.clients.js]] — 1.060 líneas · 👥 CLIENTES E INVERSIÓN (corretaje multi-cliente vía Alpaca).

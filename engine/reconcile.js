@@ -189,6 +189,8 @@
     var latest;
     try { latest = await freshCounts(); } catch (e) { render('❌ ' + esc(String(e && e.message || e))); return; }
     var changed = cats.filter(function (c) { return ((latest.summary || {})[c] || 0) !== ((_plan.summary || {})[c] || 0); });
+    // paso 11: además de los conteos, la HUELLA del plan (cualquier fila distinta = otra lista)
+    if (latest.plan_sha && _plan.plan_sha && latest.plan_sha !== _plan.plan_sha) changed.push('plan_sha');
     if (changed.length) {
       _plan = latest; render('⚠ ' + L('La lista cambió desde que la miraste. Revísala de nuevo antes de aplicar.',
                                        'The list changed since you looked at it. Review it again before applying.'));
@@ -213,6 +215,7 @@
     _busy = true; render('⏳ ' + L('Aplicando…', 'Applying…'));
     try {
       var expect = {}; cats.forEach(function (c) { expect[c] = (_plan.summary || {})[c] || 0; });
+      expect.plan_sha = _plan.plan_sha || latest.plan_sha;   // paso 11: el servidor exige la huella del plan revisado
       var res = await post('/api/ontology/reconcile/apply', { actor: who, confirm_db: _plan.db, include: cats, expect: expect });
       _busy = false;
       if (!res.ok) {

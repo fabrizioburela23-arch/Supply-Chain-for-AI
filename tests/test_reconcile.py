@@ -230,7 +230,13 @@ def test_g3_api_plan_lectura_y_apply_con_pin(db, monkeypatch):
     h = c.get('/api/ontology/reconcile/plan?format=html&lang=en')
     assert h.status_code == 200 and 'text/html' in h.content_type and b'Graph review' in h.data
     assert c.post('/api/ontology/reconcile/apply', json={'actor': 'x', 'confirm_db': j['db']}).status_code == 401
-    r2 = c.post('/api/ontology/reconcile/apply', json={'actor': 'fabrizio', 'confirm_db': 'otra-base'},
+    # paso 11: sin `expect` con la huella del plan revisado (plan_sha) no se aplica nada
+    r1 = c.post('/api/ontology/reconcile/apply', json={'actor': 'fabrizio', 'confirm_db': j['db']},
+                headers={'X-Trade-Pin': 'pin-g3-1234'})
+    assert r1.status_code == 400 and r1.get_json()['code'] == 'expect_required' and r1.get_json()['error_en']
+    assert len(j['plan_sha']) == 64
+    r2 = c.post('/api/ontology/reconcile/apply', json={'actor': 'fabrizio', 'confirm_db': 'otra-base',
+                                                       'expect': {'plan_sha': j['plan_sha']}},
                 headers={'X-Trade-Pin': 'pin-g3-1234'})
     assert r2.status_code == 400 and 'confirm-db' in r2.get_json()['error']
     r3 = c.post('/api/ontology/reconcile/apply', json={'actor': 'fabrizio', 'confirm_db': j['db'], 'include': ['bogus']},

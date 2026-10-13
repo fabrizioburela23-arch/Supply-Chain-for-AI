@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "engine/reconcile.js"
 lenguaje: "javascript"
-lineas: 254
+lineas: 257
 aliases: ["engine/reconcile.js"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # engine/reconcile.js
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 254 líneas · `engine/reconcile.js`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 257 líneas · `engine/reconcile.js`
 
 ## Para qué sirve
 
@@ -26,7 +26,7 @@ G3 (misión de reparación 2026-10-04) 🩺 Diagnóstico → "Grafo: base vs cat
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **77 de 95** (línea 7942), después de [[engine.explain.js]] y antes de [[engine.governance.js]].
+Se carga en [[app.html]] en la posición **77 de 95** (línea 7944), después de [[engine.explain.js]] y antes de [[engine.governance.js]].
 
 ## Lo usan
 

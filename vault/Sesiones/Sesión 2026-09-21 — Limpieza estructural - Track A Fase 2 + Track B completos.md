@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-21"
-ruta: "docs/ESTADO.md#L1843"
+ruta: "docs/ESTADO.md#L1887"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-21 — Limpieza estructural: Track A Fase 2 + Track B completos
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1843 (77 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1887 (77 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

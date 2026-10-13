@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-06"
-ruta: "docs/ESTADO.md#L478"
+ruta: "docs/ESTADO.md#L522"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-06 (ii) — KHIPUS OS v1 (sw v245)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 478 (40 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 522 (40 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

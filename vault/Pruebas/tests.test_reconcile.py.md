@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_reconcile.py"
 lenguaje: "python"
-lineas: 238
+lineas: 244
 aliases: ["tests/test_reconcile.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_reconcile.py
 
-> Prueba · capa [[Capa Pruebas]] · 238 líneas · `tests/test_reconcile.py`
+> Prueba · capa [[Capa Pruebas]] · 244 líneas · `tests/test_reconcile.py`
 
 ## Qué prueba
 

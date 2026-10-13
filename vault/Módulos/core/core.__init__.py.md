@@ -31,7 +31,9 @@ _Nada interno._
 - [[core.decision_sites.py]] — lo importa
 - [[core.decisions.py]] — lo importa
 - [[core.entities.py]] — lo importa
+- [[core.governance_flow.py]] — lo importa
 - [[core.governance_preview.py]] — lo importa
+- [[core.governance_shadow.py]] — lo importa
 - [[core.instruments.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
@@ -49,6 +51,7 @@ _Nada interno._
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[ontology.bitemporal.py]] — lo importa
 - [[ontology.bulk_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.service.py]] — lo importa
@@ -67,17 +70,20 @@ _Nada interno._
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 25 pruebas (lista abajo)._
+_Además lo importan 29 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
+- [[tests.test_bitemporal.py]]
+- [[tests.test_bitemporal_review.py]]
 - [[tests.test_gates_conformance.py]]
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_gates_orders_parity.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
+- [[tests.test_governance_flow.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
@@ -92,6 +98,7 @@ _Además lo importan 25 pruebas (lista abajo)._
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_order_single_path.py]]
+- [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]
 - [[tests.test_scenario_kernel.py]]

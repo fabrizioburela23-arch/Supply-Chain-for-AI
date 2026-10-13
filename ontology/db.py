@@ -198,7 +198,8 @@ def init_schema(retries=6, delay=2.0):
         import research.models  # noqa: F401 — Phase 2: registra research_* en el mismo Base
     except Exception as e:  # noqa: BLE001
         log.warning('init_schema: research.models no cargó (%s)', type(e).__name__)
-    for _m in ('brokerage.models', 'mcp_server.models', 'core.ops_check'):   # Phase 3 + O1 (ops_checks), opcionales
+    for _m in ('brokerage.models', 'mcp_server.models', 'core.ops_check',   # Phase 3 + O1 (ops_checks), opcionales
+               'ontology.checkpoints'):                                     # paso 26: graph_checkpoints
         try:
             __import__(_m)
         except Exception as e:  # noqa: BLE001

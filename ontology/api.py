@@ -90,6 +90,13 @@ def _bad_arg(name):
 
 
 from core.decisions import LedgerUnavailable as _LedgerUnavailable  # noqa: E402
+from core.gates import GateViolation as _GateViolation  # noqa: E402
+
+
+def _gate_violation(e, decision_id=None):
+    """Paso 11 (puertas en BLOQUEO, policy.gates@2.0.0 activado con PIN): 422 con el GateReport/1 y el motivo ES/EN
+    (§3.6); la decisión quedó 'blocked' en el libro (record_rejection, sesión propia)."""
+    return jsonify(e.payload(decision_id)), 422
 
 
 def _ledger_unavailable():
@@ -158,7 +165,10 @@ def status():
             n_obj = s.query(ObjectRecord).count()
             n_link = s.query(LinkRecord).count()
             n_ev = s.query(Event).count()
-        return jsonify({'configured': True, 'ok': True, 'objects': n_obj, 'links': n_link, 'events': n_ev})
+            from ontology import bitemporal          # paso 23: ¿ya conviene object_versions? (umbral ~20.000)
+            bt = bitemporal.scale_note(s)
+        return jsonify({'configured': True, 'ok': True, 'objects': n_obj, 'links': n_link, 'events': n_ev,
+                        'bitemporal': bt})
     except Exception as e:  # noqa: BLE001
         return jsonify({'configured': True, 'ok': False, 'detail': str(e)[:200]}), 500
 
@@ -196,9 +206,35 @@ def objects_list():
         return jsonify({'count': len(objs), 'objects': [_obj_to_dict(o) for o in objs]})
 
 
+def _known_bad(e):
+    """known_at inválido (paso 23): 400 bilingüe."""
+    return jsonify({'error': e.es, 'error_en': e.en, 'param': 'known_at'}), 400
+
+
 @ontology_bp.route('/objects/<object_id>')
 @_require_db
 def objects_get(object_id):
+    """Objeto materializado de hoy. Con ?as_of= y/o ?known_at= (paso 23, props_at): sus propiedades en la fecha
+    as_of TAL COMO SE CONOCÍAN en κ, plegadas desde `events` (no la fila de hoy)."""
+    as_of_raw, known_raw = request.args.get('as_of'), request.args.get('known_at')
+    if as_of_raw or known_raw:
+        from ontology import bitemporal
+        try:
+            as_of_dt = _parse_dt(as_of_raw) if as_of_raw else None
+        except OntologyError as e:
+            return jsonify({'error': str(e), 'error_en': 'invalid as_of (use YYYY-MM-DD or ISO 8601)'}), 400
+        with session_scope() as s:
+            try:
+                known = bitemporal.resolve(s, known_raw) if known_raw else None
+            except bitemporal.KnownAtError as e:
+                return _known_bad(e)
+            o = bitemporal.props_at(s, ids=[object_id], t=as_of_dt, known=known).get(object_id)
+            if o is None:
+                return jsonify({'error': 'no existía en esa fecha / not found at that time',
+                                'as_of': as_of_dt.isoformat() if as_of_dt else None,
+                                **(known.to_dict() if known else {})}), 404
+            return jsonify({**bitemporal.object_props_dict(o), 'as_of': as_of_dt.isoformat() if as_of_dt else None,
+                            **(known.to_dict() if known else {}), 'method': 'props_at@1'})
     with session_scope() as s:
         o = get_object(s, object_id)
         if not o:
@@ -218,21 +254,43 @@ def objects_links(object_id):
 @ontology_bp.route('/objects/<object_id>/history')
 @_require_db
 def objects_history(object_id):
+    """?known_at= (paso 23): solo los eventos que Khipus ya conocía en κ (ISO o versión del grafo)."""
+    known_raw = request.args.get('known_at')
     with session_scope() as s:
-        events = object_history(s, object_id)
-        return jsonify({'count': len(events), 'events': [_event_to_dict(e) for e in events]})
+        known = None
+        if known_raw:
+            from ontology import bitemporal
+            try:
+                known = bitemporal.resolve(s, known_raw)
+            except bitemporal.KnownAtError as e:
+                return _known_bad(e)
+        events = object_history(s, object_id, known=known)
+        out = {'count': len(events), 'events': [_event_to_dict(e) for e in events]}
+        if known is not None:
+            out.update(known.to_dict())
+        return jsonify(out)
 
 
 @ontology_bp.route('/graph')
 @_require_db
 def graph():
     as_of_raw = request.args.get('as_of')
+    known_raw = request.args.get('known_at') or None      # paso 23: G(t, κ) — ISO o versión del grafo
     try:
         as_of_dt = _parse_dt(as_of_raw) if as_of_raw else _utcnow()
     except OntologyError as e:
         return jsonify({'error': str(e)}), 400
+    from ontology.bitemporal import KnownAtError
     with session_scope() as s:
-        return jsonify(as_of_graph(s, as_of_dt))
+        if known_raw is None:      # paso 26: punto de control EXACTO (solo por encima del umbral; si no, sin consultas)
+            from ontology import checkpoints as _cp
+            hit = _cp.lookup(s, as_of_dt)
+            if hit is not None:
+                return jsonify(hit)
+        try:
+            return jsonify(as_of_graph(s, as_of_dt, known_at=known_raw))
+        except KnownAtError as e:
+            return _known_bad(e)
 
 
 @ontology_bp.route('/graph/diff')
@@ -245,8 +303,12 @@ def graph_diff():
         from_dt, to_dt = _parse_dt(from_raw), _parse_dt(to_raw)
     except OntologyError as e:
         return jsonify({'error': str(e)}), 400
+    from ontology.bitemporal import KnownAtError
     with session_scope() as s:
-        return jsonify(diff_graph(s, from_dt, to_dt))
+        try:
+            return jsonify(diff_graph(s, from_dt, to_dt, known_at=request.args.get('known_at') or None))
+        except KnownAtError as e:
+            return _known_bad(e)
 
 
 def _action_event_to_dict(e):
@@ -292,6 +354,8 @@ def actions_execute(action_type):
             result = execute_action(s, action_type, body, principal.id, principal=principal, meta=meta)
             return jsonify({'status': 'ok', 'action': action_type, 'result': result,
                             'decision_id': meta.get('decision_id'), 'principal': principal.id})
+    except _GateViolation as e:
+        return _gate_violation(e, meta.get('decision_id'))
     except ActionError as e:
         return jsonify({'error': str(e), 'decision_id': meta.get('decision_id')}), 400
     except OntologyError as e:
@@ -427,34 +491,54 @@ def bulk_import_route():
     if len(objects) > 200 or len(links) > 1000:
         return jsonify({'error': 'máx 200 objects / 1000 links por request'}), 400
     out = {'objects_created': 0, 'objects_skipped': [], 'links': None}
-    with session_scope() as s:
-        if objects:
-            from ontology.models import ObjectRecord
-            from ontology.service import apply_event
-            from ontology.vocabulary import is_economic, object_types
-            known_types = object_types()
-            for o in objects:
-                oid = str(o.get('id') or '').strip()[:120]
-                otype = str(o.get('type') or '').strip()[:40]
-                if not oid or otype not in known_types or is_economic(otype):
-                    out['objects_skipped'].append({'id': oid, 'reason':
-                        'tipo económico o fuera del registro — usa IncorporarEmpresa/acciones'})
-                    continue
-                if s.get(ObjectRecord, oid):
-                    out['objects_skipped'].append({'id': oid, 'reason': 'ya existe'})
-                    continue
-                apply_event(s, 'ObjectCreated',
-                            {'label': str(o.get('label') or oid)[:300], 'type': otype,
-                             'properties': dict(o.get('properties') or {})},
-                            valid_from=None,   # _parse_dt → ahora (default)
-                            source=provenance, actor=actor, object_id=oid)
-                out['objects_created'] += 1
-        if links:
-            from ontology.bulk_import import import_links_bulk
-            res = import_links_bulk(s, links, provenance, actor=actor)
-            res['quarantined'] = res.get('quarantined', [])[:15]   # muestra, no todo
-            out['links'] = res
+    from core import decisions as _decisions
+    principal = _principal(declared)
+    did = {}
+    try:
+        with session_scope() as s, _decisions.decision_scope(
+                'ontology.bulk_import', principal, session=s,
+                subject={'provenance': provenance, 'n_objects': len(objects), 'n_links': len(links)}) as dctx:
+            did['id'] = str(dctx.id)
+            _bulk_import_apply(s, objects, links, provenance, actor, out)
+            dctx.output = {'objects_created': out['objects_created'],
+                           'links_created': (out['links'] or {}).get('created')}
+    except _GateViolation as e:
+        return _gate_violation(e, did.get('id'))
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
+    out['decision_id'] = did.get('id')
     return jsonify(out)
+
+
+def _bulk_import_apply(s, objects, links, provenance, actor, out):
+    """Lo que escribe la carga masiva, dentro de la decisión ontology.bulk_import del llamador."""
+    if objects:
+        from ontology.models import ObjectRecord
+        from ontology.service import apply_event
+        from ontology.vocabulary import is_economic, object_types
+        known_types = object_types()
+        for o in objects:
+            oid = str(o.get('id') or '').strip()[:120]
+            otype = str(o.get('type') or '').strip()[:40]
+            if not oid or otype not in known_types or is_economic(otype):
+                out['objects_skipped'].append({'id': oid, 'reason':
+                    'tipo económico o fuera del registro — usa IncorporarEmpresa/acciones'})
+                continue
+            if s.get(ObjectRecord, oid):
+                out['objects_skipped'].append({'id': oid, 'reason': 'ya existe'})
+                continue
+            apply_event(s, 'ObjectCreated',
+                        {'label': str(o.get('label') or oid)[:300], 'type': otype,
+                         'properties': dict(o.get('properties') or {})},
+                        valid_from=None,   # _parse_dt → ahora (default)
+                        source=provenance, actor=actor, object_id=oid)
+            out['objects_created'] += 1
+    if links:
+        from ontology.bulk_import import import_links_bulk
+        res = import_links_bulk(s, links, provenance, actor=actor)
+        res['quarantined'] = res.get('quarantined', [])[:15]   # muestra, no todo
+        out['links'] = res
+    return out
 
 
 # ── Investigador Autónomo (Track C): investigación puntual bajo demanda ─────
@@ -657,6 +741,8 @@ def agents_proposal_approve(proposal_id):
                                         correlation_id=f'proposal:{pid}')
             return jsonify({'status': 'ok', 'result': result, 'decision_id': meta.get('decision_id'),
                             'principal': principal.id})
+    except _GateViolation as e:
+        return _gate_violation(e, meta.get('decision_id'))
     except ActionError as e:
         return jsonify({'error': str(e), 'decision_id': meta.get('decision_id')}), 400
     except OntologyError as e:
@@ -894,15 +980,26 @@ def object_timeline(object_id):
     except (TypeError, ValueError):
         limit = 60
 
+    known_raw = request.args.get('known_at')        # paso 23: ?known_at= (ISO o versión del grafo)
     with session_scope() as s:
         obj = get_object(s, object_id)
         if not obj:
             return jsonify({'error': f'objeto no encontrado: {object_id}'}), 404
+        known = None
+        if known_raw:
+            from ontology import bitemporal
+            try:
+                known = bitemporal.resolve(s, known_raw)
+            except bitemporal.KnownAtError as e:
+                return _known_bad(e)
         entradas = entity_timeline(s, object_id, limit=limit, lang=lang,
-                                   include_news=incluir_noticias)
-        return jsonify({'object_id': object_id, 'label': obj.label,
-                        'type': obj.type, 'count': len(entradas),
-                        'timeline': entradas})
+                                   include_news=incluir_noticias, known=known)
+        out = {'object_id': object_id, 'label': obj.label,
+               'type': obj.type, 'count': len(entradas),
+               'timeline': entradas}
+        if known is not None:
+            out.update(known.to_dict())
+        return jsonify(out)
 
 
 @ontology_bp.route('/feed')
@@ -1161,7 +1258,8 @@ def reconcile_plan():
         return Response(R.markdown_to_html(md, title='Khipus · ' + ('Graph review' if lang == 'en' else 'Revisión del grafo')),
                         mimetype='text/html; charset=utf-8')
     if request.args.get('summary') == '1':
-        return jsonify({k: plan[k] for k in ('summary', 'out_of_scope', 'db', 'as_of', 'snapshot', 'default_apply', 'runs')})
+        return jsonify({k: plan.get(k) for k in ('summary', 'out_of_scope', 'db', 'as_of', 'snapshot', 'default_apply', 'runs',
+                                                 'plan_sha')})
     return jsonify(plan)
 
 
@@ -1206,8 +1304,14 @@ def reconcile_apply():
         return jsonify({'error': f'include inválido; válidas: {list(R.CATEGORIES)}',
                         'error_en': f'invalid include; valid: {list(R.CATEGORIES)}'}), 400
     expect = b.get('expect') if isinstance(b.get('expect'), dict) else None
-    if expect is not None and not all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for v in expect.values()):
-        return jsonify({'error': 'expect debe ser {categoría: número}', 'error_en': 'expect must be {category: number}'}), 400
+    # paso 11: `expect` OBLIGATORIO y atado a la huella del plan revisado (GET /reconcile/plan → plan_sha)
+    if expect is None or not isinstance(expect.get('plan_sha'), str) or len(expect['plan_sha']) != 64:
+        return jsonify({'error': 'falta expect con la huella del plan que revisaste (plan_sha): vuelve a abrir la lista',
+                        'error_en': 'expect with the fingerprint of the plan you reviewed (plan_sha) is required: '
+                                    'reopen the list', 'code': 'expect_required'}), 400
+    if not all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for k, v in expect.items() if k != 'plan_sha'):
+        return jsonify({'error': 'expect debe ser {categoría: número, plan_sha}',
+                        'error_en': 'expect must be {category: number, plan_sha}'}), 400
     try:
         res = R.apply_plan(session_scope, R.load_snapshot(), include=include, confirm_db=_str_arg(b, 'confirm_db', 120),
                            actor=actor, expect=expect)

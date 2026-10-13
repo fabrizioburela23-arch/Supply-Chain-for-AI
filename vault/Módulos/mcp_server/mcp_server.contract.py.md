@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/contract.py"
 lenguaje: "python"
-lineas: 296
+lineas: 298
 aliases: ["mcp_server/contract.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/contract.py
 
-> Módulo · capa [[Capa MCP y API]] · 296 líneas · `mcp_server/contract.py`
+> Módulo · capa [[Capa MCP y API]] · 298 líneas · `mcp_server/contract.py`
 
 ## Para qué sirve
 
@@ -20,7 +20,7 @@ EL contrato común de las respuestas MCP (ARQUITECTURA_V2 §15; BRECHAS L4-08).
 
 - `fit(payload, max_chars, tail_paths=…)` — Recorta `payload` (copia) hasta que su JSON compacto (más la lista `truncation`) entre en max_chars: 1. la lista más pesada se corta un 25 … _(línea 193)_
 - `apply(name, res, detail=…, max_chars=…, question=…)` — Resultado crudo de una herramienta → resultado con el contrato (nunca lanza; ante un fallo, el crudo). _(línea 250)_
-- `split_common(args)` — Saca detail/max_chars de los argumentos (para el handler) → (args_sin_comunes, detail, max_chars). _(línea 291)_
+- `split_common(args)` — Saca detail/max_chars de los argumentos (para el handler) → (args_sin_comunes, detail, max_chars). _(línea 293)_
 
 **Internas** (empiezan con `_`): `_now_iso`, `_dump`, `_finite`, `_nb`, `_sum_company`, `_supply_chain`, `_largest_list`, `_longest_str`, `_size`, `_cut_list`, `_norm_detail`
 
@@ -55,8 +55,9 @@ EL contrato común de las respuestas MCP (ARQUITECTURA_V2 §15; BRECHAS L4-08).
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_bitemporal.py]]
 - [[tests.test_mcp_contract.py]]

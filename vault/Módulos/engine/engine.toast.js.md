@@ -24,7 +24,7 @@ NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que 
 
 - [[app.html]] — usa `LANG`, `_tradeFetch`, `_tradeStatusInfo`
 
-Se carga en [[app.html]] en la posición **27 de 95** (línea 7826), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
+Se carga en [[app.html]] en la posición **27 de 95** (línea 7828), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
 
 ## Lo usan
 

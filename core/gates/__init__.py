@@ -16,9 +16,14 @@ Dónde corren (todas síncronas, en el mismo proceso; §3.4):
     G-BULK  ontology/bulk_import.import_links_bulk, por lote
     G8      core/decisions.record (meta-puerta del libro)
 
-Modo (artefacto `policy.gates.mode`): 'shadow' = TODO solo avisa y queda registrado (no se rechaza nada); el
-paso 11 pasará a bloquear con una versión MAJOR aprobada con PIN. `KHIPU_GATES=off` es solo un interruptor de
-emergencia (no cambia ninguna regla; el 🩺 lo muestra). Nunca IA. Nunca lanzan en sombra.
+Modo (artefacto `policy.gates.mode`): 'shadow' = TODO solo avisa y queda registrado (no se rechaza nada).
+Paso 11: 'block' (policy.gates@2.0.0, `"activation": "pin"`: SOLO Fabrizio lo activa con su PIN) bloquea en las
+puertas de `policy.gates.block_gates` (G1 vínculo/objeto/factor, G2 acción, G-PROP, G-BULK): un resultado efectivo
+'block' lanza `GateViolation` (ValueError, code='gate_violation', mensaje ES/EN de la primera regla, GateReport/1
+completo) DESPUÉS de dejar el reporte en la decisión en curso — el libro la registra 'blocked' y la API responde 422.
+Las demás puertas (órdenes G3, comité G5, libro G8) siguen en SOMBRA aunque el modo sea 'block' (esperan BRECHAS #1).
+`KHIPU_GATES=off` es solo un interruptor de emergencia (no cambia ninguna regla; el 🩺 lo muestra). Nunca IA.
+En sombra nunca lanzan.
 """
 import logging
 import os
@@ -26,6 +31,28 @@ import time
 
 log = logging.getLogger('khipu')
 _INSTALLED = [False]
+BLOCKABLE = ('ontology.g1.link', 'ontology.g1.object', 'ontology.g1.factor', 'ontology.g2.action', 'ontology.g_prop',
+             'ontology.g_bulk')
+
+
+class GateViolation(ValueError):
+    """Una escritura no conforme en una puerta que BLOQUEA (paso 11). `report` = GateReport/1 completo."""
+    code = 'gate_violation'
+
+    def __init__(self, report):
+        self.report = report
+        first = next((r for r in (report.get('results') or []) if r.get('effective') == 'block'), None) or {}
+        msg = first.get('message') or {}
+        n = sum(1 for r in (report.get('results') or []) if r.get('effective') == 'block')
+        more_es = f' (+{n - 1} regla(s) más)' if n > 1 else ''
+        more_en = f' (+{n - 1} more rule(s))' if n > 1 else ''
+        self.error_es = (msg.get('es') or first.get('rule') or 'regla de la ontología') + more_es
+        self.error_en = (msg.get('en') or first.get('rule') or 'ontology rule') + more_en
+        super().__init__(f'Bloqueado por la puerta {report.get("gate")}: {self.error_es}')
+
+    def payload(self, decision_id=None):
+        return {'code': self.code, 'error': f'Bloqueado: {self.error_es}', 'error_en': f'Blocked: {self.error_en}',
+                'report': self.report, 'decision_id': decision_id}
 
 
 def mode():
@@ -36,14 +63,31 @@ def mode():
         m = governance.param('policy.gates', 'mode')
     except Exception:  # noqa: BLE001
         m = 'shadow'
-    # paso 10: este código SOLO sabe avisar. Aunque un release pidiera 'enforce', rige la sombra hasta el paso 11.
-    return 'off' if m == 'off' else 'shadow'
+    # paso 11: 'block' solo si el release VIGENTE lo pide (policy.gates@2.0.0, activado con PIN); lo demás = sombra
+    return 'off' if m == 'off' else ('block' if m == 'block' else 'shadow')
+
+
+def mode_for(gate):
+    """El modo que rige en UNA puerta: 'block' solo en las de policy.gates.block_gates (nunca órdenes/comité/libro)."""
+    m = mode()
+    if m != 'block':
+        return m
+    try:
+        from core import governance
+        allowed = set(governance.param('policy.gates', 'block_gates', ()) or ()) & set(BLOCKABLE)
+    except Exception:  # noqa: BLE001
+        allowed = set()
+    return 'block' if gate in allowed else 'shadow'
+
+
+def blocks(rep):
+    return bool(rep) and rep.get('mode') == 'block' and rep.get('outcome') == 'block'
 
 
 def evaluate(gate, triples, focus=None):
     """GateReport/1 de un grafo foco (o None si las puertas están apagadas o no disponibles)."""
     from core.gates import engine, report
-    m = mode()
+    m = mode_for(gate)
     if m == 'off':
         return None
     comp = engine.load()
@@ -51,6 +95,11 @@ def evaluate(gate, triples, focus=None):
         return None
     t0 = time.perf_counter()
     raw = engine.run(comp, triples)
+    try:   # paso 25: formas PROPUESTAS en sombra junto a las vigentes (cola acotada, se evalúa en otro hilo)
+        from core import governance_shadow
+        governance_shadow.tap(gate, triples, raw)
+    except Exception:  # noqa: BLE001
+        pass
     from core import governance
     try:
         overrides = governance.param('policy.gates', 'severity_overrides') or {}
@@ -64,14 +113,19 @@ def evaluate(gate, triples, focus=None):
 
 
 def check(gate, builder, *args, session=None, **kw):
-    """Arma el foco con `builder(*args, **kw)` → (tripletas, foco), evalúa y REGISTRA. Nunca lanza (sombra)."""
+    """Arma el foco con `builder(*args, **kw)` → (tripletas, foco), evalúa y REGISTRA. En sombra nunca lanza; en una
+    puerta que BLOQUEA (paso 11) lanza GateViolation después de registrar el reporte."""
     try:
         triples, focus = builder(*args, **kw)
         rep = evaluate(gate, triples, focus)
         if rep is not None:
             from core.gates import report
             report.record(rep, session=session)
+            if blocks(rep):
+                raise GateViolation(rep)
         return rep
+    except GateViolation:
+        raise
     except Exception as e:  # noqa: BLE001 — vigilar nunca tumba una escritura
         from core.gates import report
         with report._LOCK:
@@ -120,6 +174,8 @@ def flush_deferred(session):
                 check('ontology.g1.object', _gf.gather_object, obj, pt, session=session)
             if obj.type == 'Factor':
                 check('ontology.g1.factor', _gf.gather_factor, session, obj, pp, st['touches'], session=session)
+    except GateViolation:
+        raise
     except Exception as e:  # noqa: BLE001
         log.warning('gates: diferidos no evaluados (%s)', type(e).__name__)
 

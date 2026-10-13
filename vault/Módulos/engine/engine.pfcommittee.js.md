@@ -32,7 +32,7 @@ tags: ["capa/comite", "tipo/modulo"]
 - [[engine.sync.js]] — usa `KhipuSync`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **59 de 95** (línea 7909), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
+Se carga en [[app.html]] en la posición **59 de 95** (línea 7911), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
 
 ## Lo usan
 

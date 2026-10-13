@@ -24,6 +24,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_phase3.py]]
+- [[tests.test_review_batch_g.py]]
 - [[tests.test_security.py]]
 - [[tests.test_trading_agent_ledger.py]]
 

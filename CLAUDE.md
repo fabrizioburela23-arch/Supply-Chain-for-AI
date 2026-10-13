@@ -132,6 +132,23 @@ docs/REVISION_GRAFO.md + docs/revision_grafo.json (cada ítem con `mark: null` y
 aplicado): 27 vínculos con fecha, 17 direcciones que el texto contradice (ratchet `text_direction` en audit_graph), escala de
 pesos (462 con peso 1), 58 verbos fuera del vocabulario + 12 márgenes, 200 vínculos pesados sin fecha. Puertas compiladas:
 69 reglas.
+**PASOS 22, 23, 25, 26 Y 11 (2026-10-13)**: G(t,κ) — `ontology/bitemporal.py` (`known_at` = ISO o versión del grafo;
+visible = versión ≤ κ, o recorded_at ≤ κ para eventos sin versión; `props_at` pliega en orden de REGISTRO) en
+/api/ontology/graph|graph/diff|objects/<id>, /api/hot/impact (`core/hotviews/views/asof.py`, LRU 16, 503 asof_busy) y MCP
+get_ontology_object; sin `known_at` el camino es el de siempre. GOBERNANZA COMPLETA — `core/governance_flow.py`
+(proponer con PIN solo lo de `governance/tunables.json`, regresión en hilo → decisión governance.validate, programar con
+effective_from / cancelar / deshacer, atribución), `core/governance_lint.py` (el MISMO lint que build_governance),
+`core/governance_shadow.py` (formas propuestas en sombra), /api/governance/propose|validate|validation|cancel|history|
+attribution; un MAYOR nuevo exige regresión (409 regression_required); una programada vencida se aplica antes de otra
+activación; env NUNCA enciende una versión `activation: pin`. GUARDIA — `core/ledger_guard.py`: disparadores en
+research_claims, committee_memos, broker_orders, proposed_actions, alerts, broker_clients, ai_settings que al COMMIT
+exigen decisión (GUC `khipus.decision_id` o fila en decisions/decision_outcomes con el mismo txid); modo de
+policy.guard (1.0.0 warn; 2.0.0 enforce con PIN); columnas de observación exentas. RETENCIÓN — `core/retention.py`
+(ledger.retention 1.0.0, D3): purga diaria del CUERPO de blobs vencidos que nada citó en la ventana (decision_blobs solo
+admite ese UPDATE, con una decisión retention.purge de la misma transacción); `verify_blobs` comprueba hashes.
+`ontology/checkpoints.py` apagado bajo 20.000 eventos. PUERTAS EN BLOQUEO — policy.gates 2.0.0 (PIN): G1/G2/G-PROP/G-BULK
+devuelven 422 (`GateViolation`, GateReport ES/EN); órdenes, comité y libro siguen en sombra; acciones con
+`extra='forbid'` (lista blanca: `dudosos`); reconcile exige `expect` con `plan_sha`.
 
 ## Arquitectura
 

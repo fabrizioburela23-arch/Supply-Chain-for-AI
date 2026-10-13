@@ -1,0 +1,99 @@
+{
+  "_doc": "Esquema de lo que se puede PROPONER desde la app (🩺 ⚖ Gobernanza → «Proponer cambio», paso 25): por artefacto, la ruta de cada número afinable con su tipo, mínimo y máximo y su nombre ES/EN. Lo que no está aquí solo cambia con un PR. No es un artefacto (no fija ningún número): solo acota las propuestas. Lo revisa scripts/build_governance.py --check (cada ruta existe y su valor de hoy está dentro del rango). BRECHAS #1 sin respuesta: el tope por orden nunca supera los US$100.000 de hoy.",
+  "kernel.params": {
+    "damping": {"type": "float", "min": 0.3, "max": 0.9, "step": 0.05,
+      "label_es": "Amortiguación por salto", "label_en": "Damping per hop",
+      "help_es": "Cuánto se debilita un golpe en cada paso de la cadena (0,6 = el siguiente recibe el 60 %).",
+      "help_en": "How much a hit weakens at each step of the chain (0.6 = the next one receives 60%)."},
+    "max_hops": {"type": "int", "min": 1, "max": 12, "step": 1,
+      "label_es": "Saltos máximos", "label_en": "Maximum hops",
+      "help_es": "Hasta cuántos pasos de la cadena se sigue un golpe.", "help_en": "How many steps of the chain a hit is followed."},
+    "threshold": {"type": "float", "min": 0.001, "max": 0.1, "step": 0.001,
+      "label_es": "Umbral mínimo de golpe", "label_en": "Minimum hit threshold",
+      "help_es": "Debajo de este tamaño un golpe se ignora (0,01 = 1 %).", "help_en": "Below this size a hit is ignored (0.01 = 1%)."},
+    "sole_link_floor": {"type": "float", "min": 1, "max": 20, "step": 0.5,
+      "label_es": "Piso de proveedor único", "label_en": "Sole-supplier floor",
+      "help_es": "Evita que un proveedor único transmita el 100 % solo por ser el único vínculo.",
+      "help_en": "Keeps a sole supplier from passing 100% just because it is the only link."},
+    "fragility_cap": {"type": "float", "min": 1, "max": 5, "step": 0.1,
+      "label_es": "Tope de fragilidad", "label_en": "Fragility cap",
+      "help_es": "Cuánto pueden agravar los factores de crisis el golpe sobre una empresa.",
+      "help_en": "How much crisis factors can worsen the hit on one company."},
+    "unverified_conf": {"type": "float", "min": 0, "max": 1, "step": 0.05,
+      "label_es": "Peso de un vínculo no verificado", "label_en": "Weight of an unverified link",
+      "help_es": "Un vínculo sin confirmar cuenta solo esta fracción.", "help_en": "An unconfirmed link counts only this fraction."},
+    "bulk_weight_factor": {"type": "float", "min": 0, "max": 1, "step": 0.05,
+      "label_es": "Peso de vínculos importados en lote", "label_en": "Weight of bulk-imported links",
+      "help_es": "Los vínculos de GLEIF/Wikidata cuentan esta fracción.", "help_en": "GLEIF/Wikidata links count this fraction."}
+  },
+  "policy.committee": {
+    "buy_threshold": {"type": "float", "min": 10, "max": 90, "step": 1,
+      "label_es": "Convicción para COMPRAR", "label_en": "Conviction to BUY",
+      "help_es": "El comité sugiere comprar desde esta convicción (de −100 a 100).", "help_en": "The committee suggests buying from this conviction (−100 to 100)."},
+    "trim_threshold": {"type": "float", "min": -90, "max": 0, "step": 1,
+      "label_es": "Convicción para RECORTAR", "label_en": "Conviction to TRIM",
+      "help_es": "Por debajo, sugiere recortar la posición.", "help_en": "Below it, it suggests trimming the position."},
+    "sell_threshold": {"type": "float", "min": -100, "max": -10, "step": 1,
+      "label_es": "Convicción para VENDER", "label_en": "Conviction to SELL",
+      "help_es": "Por debajo, sugiere vender.", "help_en": "Below it, it suggests selling."},
+    "min_claims": {"type": "int", "min": 1, "max": 10, "step": 1,
+      "label_es": "Conclusiones mínimas", "label_en": "Minimum conclusions",
+      "help_es": "Cuántas conclusiones con evidencia necesita el comité.", "help_en": "How many evidence-backed conclusions the committee needs."},
+    "unvalidated_factor": {"type": "float", "min": 0.1, "max": 1, "step": 0.05,
+      "label_es": "Tamaño si no está validado", "label_en": "Size when not validated",
+      "help_es": "Sin historial suficiente, el tamaño sugerido se multiplica por esto (0,5 = la mitad).",
+      "help_en": "Without enough track record, the suggested size is multiplied by this (0.5 = half)."},
+    "memo_ttl_hours": {"type": "float", "min": 1, "max": 720, "step": 1,
+      "label_es": "Vigencia del memo (horas)", "label_en": "Memo validity (hours)",
+      "help_es": "Después de esto, un memo del comité caduca.", "help_en": "After this, a committee memo expires."}
+  },
+  "policy.broker_risk": {
+    "hard_max_order_usd": {"type": "float", "min": 1, "max": 100000, "step": 100,
+      "label_es": "Tope absoluto por orden (US$)", "label_en": "Absolute cap per order (US$)",
+      "help_es": "Ninguna orden puede superar este monto (nunca más de US$100.000).", "help_en": "No order may exceed this amount (never more than US$100,000)."},
+    "min_order_usd": {"type": "float", "min": 0.01, "max": 1000, "step": 1,
+      "label_es": "Orden mínima (US$)", "label_en": "Minimum order (US$)",
+      "help_es": "Órdenes más chicas se rechazan.", "help_en": "Smaller orders are rejected."},
+    "duplicate_window_s": {"type": "int", "min": 0, "max": 3600, "step": 10,
+      "label_es": "Ventana de duplicados (s)", "label_en": "Duplicate window (s)",
+      "help_es": "La misma orden repetida dentro de esta ventana se frena.", "help_en": "The same order repeated within this window is stopped."},
+    "limit_deviation_pct": {"type": "float", "min": 0.5, "max": 50, "step": 0.5,
+      "label_es": "Desvío máximo del precio límite (%)", "label_en": "Maximum limit-price deviation (%)",
+      "help_es": "Un precio límite más lejos que esto del precio de mercado se frena.", "help_en": "A limit price further than this from the market price is stopped."},
+    "profiles.conservador.max_order_usd": {"type": "float", "min": 1, "max": 100000, "step": 100,
+      "label_es": "Conservador: tope por orden (US$)", "label_en": "Conservative: cap per order (US$)",
+      "help_es": "Monto máximo por orden del perfil conservador.", "help_en": "Maximum amount per order of the conservative profile."},
+    "profiles.moderado.max_order_usd": {"type": "float", "min": 1, "max": 100000, "step": 100,
+      "label_es": "Moderado: tope por orden (US$)", "label_en": "Moderate: cap per order (US$)",
+      "help_es": "Monto máximo por orden del perfil moderado.", "help_en": "Maximum amount per order of the moderate profile."},
+    "profiles.agresivo.max_order_usd": {"type": "float", "min": 1, "max": 100000, "step": 100,
+      "label_es": "Agresivo: tope por orden (US$)", "label_en": "Aggressive: cap per order (US$)",
+      "help_es": "Monto máximo por orden del perfil agresivo.", "help_en": "Maximum amount per order of the aggressive profile."}
+  },
+  "policy.decide": {
+    "min_conf": {"type": "float", "min": 0.3, "max": 0.95, "step": 0.05,
+      "label_es": "Confianza mínima de Jev", "label_en": "Jev minimum confidence",
+      "help_es": "Jev solo decide si está al menos así de seguro.", "help_en": "Jev only decides if it is at least this sure."},
+    "control_wait_s": {"type": "float", "min": 0.2, "max": 5, "step": 0.1,
+      "label_es": "Espera máxima de Jev (s)", "label_en": "Jev maximum wait (s)",
+      "help_es": "Si Jev tarda más, decide el sistema de siempre.", "help_en": "If Jev takes longer, the usual system decides."}
+  },
+  "policy.auto_apply": {
+    "auto_min_confidence": {"type": "float", "min": 0.3, "max": 0.99, "step": 0.01,
+      "label_es": "Confianza para aplicar solo", "label_en": "Confidence to auto-apply",
+      "help_es": "Una propuesta de un agente se aplica sola solo con esta confianza o más (y si su tipo está permitido).",
+      "help_en": "An agent proposal is applied on its own only with this confidence or more (and if its type is allowed)."}
+  },
+  "_relations": {
+    "policy.committee": [
+      {"lt": ["sell_threshold", "trim_threshold"], "es": "vender exige menos convicción que recortar", "en": "selling requires less conviction than trimming"},
+      {"lt": ["trim_threshold", "buy_threshold"], "es": "recortar exige menos convicción que comprar", "en": "trimming requires less conviction than buying"}
+    ],
+    "policy.broker_risk": [
+      {"lt": ["min_order_usd", "hard_max_order_usd"], "es": "la orden mínima debe ser menor que el tope", "en": "the minimum order must be below the cap"},
+      {"le": ["profiles.conservador.max_order_usd", "hard_max_order_usd"], "es": "ningún perfil supera el tope absoluto", "en": "no profile exceeds the absolute cap"},
+      {"le": ["profiles.moderado.max_order_usd", "hard_max_order_usd"], "es": "ningún perfil supera el tope absoluto", "en": "no profile exceeds the absolute cap"},
+      {"le": ["profiles.agresivo.max_order_usd", "hard_max_order_usd"], "es": "ningún perfil supera el tope absoluto", "en": "no profile exceeds the absolute cap"}
+    ]
+  }
+}

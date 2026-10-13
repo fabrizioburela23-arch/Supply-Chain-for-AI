@@ -351,3 +351,16 @@ def test_cuerpo_manipulado_no_entra_en_vigor(db):
     assert governance.refresh() is None
     assert governance.release()[0] == before and E.SOLE_LINK_FLOOR == floor_before
     assert 'no coincide con su hash' in (governance.status()['db_error'] or '')
+
+
+# ── paso 25: el lint del script y el de la app son EL MISMO (bilingüe) ──────
+def test_lint_bilingue_compartido_con_la_app(repo_copy):
+    from core import governance_lint as GL
+    from scripts import build_governance as B
+    _new_version(repo_copy, 'minor', lambda p: p.update(buy_threshold=30.0), semver='1.1.0')
+    bi = GL.semver_problems(B.G.scan_repo())
+    assert [p['es'] for p in bi] == B.semver_problems(B.G.scan_repo())
+    assert bi and all(p['en'] and p['code'] for p in bi)
+    assert GL.needed_kind({'a': 1}, {'a': 1, 'b': 2}) == 'minor' and GL.needed_kind({'a': 1}, {'a': 2}) == 'major'
+    assert GL.next_semver({'1.0.0', '2.0.0'}, '1.0.0', 'major') == '3.0.0'
+    assert GL.next_semver({'1.0.0', '1.1.0'}, '1.0.0', 'minor') == '1.2.0'

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/db.py"
 lenguaje: "python"
-lineas: 274
+lineas: 275
 aliases: ["ontology/db.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/db.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 274 líneas · `ontology/db.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 275 líneas · `ontology/db.py`
 
 ## Para qué sirve
 
@@ -34,6 +34,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[core.ledger_ddl.py]] — importa `ledger_ddl`
 - [[core.ops_check.py]] — importa `(dinámico: core.ops_check)`
 - [[mcp_server.models.py]] — importa `(dinámico: mcp_server.models)`
+- [[ontology.checkpoints.py]] — importa `(dinámico: ontology.checkpoints)`
 - [[ontology.models.py]] — importa `Base`
 - [[research.models.py]] — importa `research.models`
 
@@ -50,21 +51,25 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[core.geosit.py]] — lo importa
 - [[core.governance.py]] — lo importa
 - [[core.governance_api.py]] — lo importa
+- [[core.governance_flow.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 - [[core.ledger.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
+- [[core.ledger_guard.py]] — lo importa
 - [[core.live_caps.py]] — lo importa
 - [[core.ops_check.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
+- [[core.retention.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
 - [[mcp_server.auth.py]] — lo importa
 - [[mcp_server.oauth.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[ontology.checkpoints.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 - [[research.api.py]] — lo importa
 - [[research.auto_events.py]] — lo importa
@@ -76,6 +81,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[scripts.reconcile_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
+- [[core.ledger_guard.py]] — lo nombra por su ruta
 - herramienta MCP `cancel_order` → [[API herramientas MCP]]
 - herramienta MCP `get_account` → [[API herramientas MCP]]
 - herramienta MCP `get_claim_evidence` → [[API herramientas MCP]]
@@ -94,7 +100,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 62 pruebas (lista abajo)._
+_Además lo importan 69 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -112,12 +118,16 @@ _Además lo importan 62 pruebas (lista abajo)._
 - [[tests.test_ai_usage.py]]
 - [[tests.test_ai_usage_cache.py]]
 - [[tests.test_ask_agent.py]]
+- [[tests.test_bitemporal.py]]
+- [[tests.test_bitemporal_review.py]]
 - [[tests.test_brokerage.py]]
+- [[tests.test_checkpoints.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
+- [[tests.test_governance_flow.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
@@ -136,6 +146,7 @@ _Además lo importan 62 pruebas (lista abajo)._
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
+- [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_matrix.py]]
@@ -168,6 +179,8 @@ _Además lo importan 62 pruebas (lista abajo)._
 - [[tests.test_repair_research.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_research.py]]
+- [[tests.test_retention_purge.py]]
+- [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]
 - [[tests.test_risk_on_history.py]]

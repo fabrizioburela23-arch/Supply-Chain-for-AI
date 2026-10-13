@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 773
+lineas: 790
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 773 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 790 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -36,12 +36,16 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.decisions.py]]
 - [[core.entities.py]]
 - [[core.governance.py]]
+- [[core.governance_flow.py]]
+- [[core.governance_lint.py]]
+- [[core.governance_shadow.py]]
 - [[core.http.py]]
 - [[core.identity.py]]
 - [[core.instruments.py]]
 - [[core.khipu_chat.py]]
 - [[core.ledger.py]]
 - [[core.ledger_ddl.py]]
+- [[core.ledger_guard.py]]
 - [[core.live_caps.py]]
 - [[core.live_facts.py]]
 - [[core.logjson.py]]
@@ -56,6 +60,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.portfolio_reports_api.py]]
 - [[core.prices_store.py]]
 - [[core.quotes.py]]
+- [[core.retention.py]]
 - [[core.risk_report.py]]
 - [[core.scenario_engine.py]]
 - [[core.scheduler.py]]
@@ -141,6 +146,8 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[nodes.preipo_intel.js]]
 - [[ontology.actions.py]]
 - [[ontology.agents.py]]
+- [[ontology.bitemporal.py]]
+- [[ontology.checkpoints.py]]
 - [[ontology.db.py]]
 - [[ontology.history_models.py]]
 - [[ontology.ledger_models.py]]
