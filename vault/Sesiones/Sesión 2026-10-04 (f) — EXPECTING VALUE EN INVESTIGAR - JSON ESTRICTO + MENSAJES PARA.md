@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1123"
+ruta: "docs/ESTADO.md#L1126"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (f) — "EXPECTING VALUE" EN INVESTIGAR: JSON ESTRICTO + MENSAJES PARA PERSONAS
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1123 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1126 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

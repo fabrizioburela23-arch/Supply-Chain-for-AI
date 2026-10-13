@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L747"
+ruta: "docs/ESTADO.md#L750"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (cc) — GRÁFICOS: DATOS EN VIVO + MÁS PREGUNTAS SIN IA (sw v237)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 747 (11 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 750 (11 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

@@ -247,7 +247,7 @@ se corrigieron al cierre (sección 4).
 1. **`TRADE_PIN`** debe existir. Sin ella, en producción, las escrituras de operador y las órdenes dan 403.
 2. **`SECRET_KEY`** larga y aleatoria (G5-18). Ojo: también es la llave de las huellas privadas del libro; ponla una
    sola vez y no la cambies después (las huellas viejas dejarían de compararse con las nuevas).
-3. **«Wait for CI»**: Railway → tu servicio → *Settings* → sección *Source* → activa **Wait for CI** (así nada llega a
+3. ✅ **«Wait for CI»** (hecho el 2026-10-13): Railway → tu servicio → *Settings* → sección *Source* → **Wait for CI** (así nada llega a
    producción sin pasar las pruebas de `.github/workflows/ci.yml`; G5-02).
 4. Borra las variables numéricas viejas que ya no mandan (el 🩺 avisa si siguen): `FRAGILITY_CAP`,
    `IMPORT_BULK_WEIGHT_FACTOR`, `DECIDE_MIN_CONF`, `DECIDE_WAIT_S`, `COMMITTEE_MEMO_TTL_HOURS`, `RESEARCH_CALIBRATION_K`,
@@ -317,7 +317,7 @@ disparador append-only. Lo que queda, en el orden en que lo haría:
 Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PIN** (activar una versión) · 🔶 parcial ·
 👤 necesita tu decisión o revisión (#n de BRECHAS §2) · ⬜ abierto (Fase 2+ o pendiente).
 
-**Resumen: ✅ 43 cerrados · 🟡 14 listos, esperan tu PIN · 🔶 9 parciales · 👤 10 esperan tu decisión o revisión · ⬜ 23 abiertos (total 99).** Si activas el motor 2.0.0, los 14 🟡 pasan a ✅. L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
+**Resumen: ✅ 44 cerrados · 🟡 14 listos, esperan tu PIN · 🔶 8 parciales · 👤 10 esperan tu decisión o revisión · ⬜ 23 abiertos (total 99).** Si activas el motor 2.0.0, los 14 🟡 pasan a ✅. L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
 
 | Id | Qué era | Estado | Evidencia (código / prueba) |
 |---|---|---|---|
@@ -397,7 +397,7 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | L4-M2 | scenario_engine usa el grado total | 🟡 | 2.0.0 (test_scenario_kernel) |
 | L4-12 | La voz repite cifras sin guardián | 🔶 | órdenes por voz con lectura confirmada (readback_sha); las cifras habladas siguen sin guardián |
 | G5-01 | Tres caminos de órdenes con controles distintos | ✅ | todo por brokerage.service (test_order_single_path) |
-| G5-02 | Se desplegaba sin pruebas | 🔶 #2 | .github/workflows/ci.yml existe (test_block0_ci); falta que actives «Wait for CI» en Railway |
+| G5-02 | Se desplegaba sin pruebas | ✅ | .github/workflows/ci.yml (test_block0_ci) + «Wait for CI» activado en Railway por Fabrizio (2026-10-13) |
 | G5-03 | statematrix.js decía «idéntica» y no lo era | ✅ | test_no_client_engine |
 | G5-05 | server.py gigante | ⬜ | 6.529 líneas (antes 5.977): creció |
 | G5-06 | app.html gigante | ⬜ | 12.700 líneas (antes 12.665) |

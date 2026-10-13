@@ -8,11 +8,11 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # SESIÓN 2026-10-13 (i) — NEO4J RETIRADO (decisión #6 de Fabrizio) — sw v264
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (20 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 12 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
-\- Fabrizio decidió: «si crees que es lo mejor quita neo4j» (BRECHAS §2 #6; ARQUITECTURA_V2: Postgres es la única base). Nadie leía Neo4j: solo recibía hechos (`POST /api/grafo/seed`) y el 🩺 probaba la conexión. - Borrado: en server.py la lectura de `NEO4J_\*`, `_neo4j_available`, `_temporal_mode`, `_get_neo4j_driver`, `_neo4j_add_fact`, `_FACT_CYPHER`, `_neo4j_estado_cache` y `POST /api/grafo/seed`; `NEO4J_\*` de las listas de
+\- HECHO POR FABRIZIO (2026-10-13): borró NEO4J_URI/USER/PASSWORD en Railway y activó «Wait for CI» (Railway → servicio → Settings → Source). Desde ahora un push a main despliega SOLO si .github/workflows/ci.yml pasa (G5-02 cerrado). - Fabrizio decidió: «si crees que es lo mejor quita neo4j» (BRECHAS §2 #6; ARQUITECTURA_V2: Postgres es la única base). Nadie leía Neo4j: solo recibía hechos (`POST /api/grafo/seed`) y el 🩺 probaba la conexión.
 
 ## Archivos que menciona
 

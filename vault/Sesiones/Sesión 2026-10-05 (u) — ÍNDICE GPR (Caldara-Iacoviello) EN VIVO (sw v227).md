@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L836"
+ruta: "docs/ESTADO.md#L839"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (u) — ÍNDICE GPR (Caldara-Iacoviello) EN VIVO (sw v227)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 836 (8 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 839 (8 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

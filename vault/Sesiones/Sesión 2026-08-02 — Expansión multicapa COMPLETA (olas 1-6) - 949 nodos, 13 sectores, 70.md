@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-08-02"
-ruta: "docs/ESTADO.md#L2043"
+ruta: "docs/ESTADO.md#L2046"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-08-02 — Expansión multicapa COMPLETA (olas 1-6): 949 nodos, 13 sectores, 70 factores latentes
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2043 (43 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2046 (43 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

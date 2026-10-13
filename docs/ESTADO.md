@@ -11,6 +11,9 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 # SESIÓN 2026-10-13 (i) — NEO4J RETIRADO (decisión #6 de Fabrizio) — sw v264
 
+- HECHO POR FABRIZIO (2026-10-13): borró NEO4J_URI/USER/PASSWORD en Railway y activó «Wait for CI» (Railway → servicio →
+  Settings → Source). Desde ahora un push a main despliega SOLO si .github/workflows/ci.yml pasa (G5-02 cerrado).
+
 - Fabrizio decidió: «si crees que es lo mejor quita neo4j» (BRECHAS §2 #6; ARQUITECTURA_V2: Postgres es la única base).
   Nadie leía Neo4j: solo recibía hechos (`POST /api/grafo/seed`) y el 🩺 probaba la conexión.
 - Borrado: en server.py la lectura de `NEO4J_*`, `_neo4j_available`, `_temporal_mode`, `_get_neo4j_driver`,
