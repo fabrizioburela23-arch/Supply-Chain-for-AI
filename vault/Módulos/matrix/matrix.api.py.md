@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "matrix/api.py"
 lenguaje: "python"
-lineas: 1070
+lineas: 1098
 aliases: ["matrix/api.py"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # matrix/api.py
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 1.070 líneas · `matrix/api.py`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 1.098 líneas · `matrix/api.py`
 
 ## Para qué sirve
 
@@ -18,19 +18,19 @@ blueprint Flask del motor de matrices: /api/matrix/\*.
 
 ## API pública
 
-- `matrix_status()` _(línea 275)_
-- `matrix_get(rel_type)` _(línea 324)_
-- `matrix_impact()` — Body: {shock: [ids], magnitude?, damping?, max_hops?, rel_weights?, as_of?} → {impacts: {id: pct}, cascade: [{id, hop, impact}], … _(línea 354)_
-- `matrix_save_sim()` — Guarda una simulación en la ontología (objeto type='Simulation') → hereda fecha (recorded_at) e historial. Body: {actor, name, targets, … _(línea 439)_
-- `matrix_list_sims()` — Historial de simulaciones guardadas, más recientes primero. _(línea 478)_
-- `matrix_insights()` — El hipergrafo corre una simulación EN VIVO con los factores activos y la NARRA. Body: {as_of?, tier?='fast', lang?='es', shock?=[ids]}. Sin … _(línea 589)_
-- `matrix_insights_history()` — Historial de insights: cómo fue cambiando la lectura de la red. _(línea 824)_
-- `matrix_metrics()` — Métricas por nodo (chokepoints, PageRank, ρ). PESADO sin caché (~50 s de CPU con el grafo completo): caché por época+as_of, presupuesto de … _(línea 856)_
-- `matrix_factors()` — Track B: detalle COMPLETO de los Factor activos — /status solo expone un conteo de members; el motor cliente (livesim) necesita el dict … _(línea 925)_
-- `matrix_factor_fire()` — WHAT-IF de crisis: dispara UN factor a su severity_crisis SIN mutar la ontología (los factores viven LATENTES — severity 1.0 — para no … _(línea 947)_
-- `matrix_parity()` — CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre AMBOS motores sobre los MISMOS datos y reporta la discrepancia … _(línea 1026)_
+- `matrix_status()` _(línea 285)_
+- `matrix_get(rel_type)` _(línea 334)_
+- `matrix_impact()` — Body: {shock: [ids], magnitude?, damping?, max_hops?, rel_weights?, as_of?} → {impacts: {id: pct}, cascade: [{id, hop, impact}], … _(línea 364)_
+- `matrix_save_sim()` — Guarda una simulación en la ontología (objeto type='Simulation') → hereda fecha (recorded_at) e historial. Body: {actor, name, targets, … _(línea 449)_
+- `matrix_list_sims()` — Historial de simulaciones guardadas, más recientes primero. _(línea 488)_
+- `matrix_insights()` — El hipergrafo corre una simulación EN VIVO con los factores activos y la NARRA. Body: {as_of?, tier?='fast', lang?='es', shock?=[ids]}. Sin … _(línea 599)_
+- `matrix_insights_history()` — Historial de insights: cómo fue cambiando la lectura de la red. _(línea 834)_
+- `matrix_metrics()` — Métricas por nodo (chokepoints, PageRank, ρ). PESADO sin caché (~50 s de CPU con el grafo completo): caché por época+as_of, presupuesto de … _(línea 866)_
+- `matrix_factors()` — Track B: detalle COMPLETO de los Factor activos — /status solo expone un conteo de members; el motor cliente (livesim) necesita el dict … _(línea 935)_
+- `matrix_factor_fire()` — WHAT-IF de crisis: dispara UN factor a su severity_crisis SIN mutar la ontología (los factores viven LATENTES — severity 1.0 — para no … _(línea 957)_
+- `matrix_parity()` — CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre AMBOS motores sobre los MISMOS datos y reporta la discrepancia … _(línea 1054)_
 
-**Internas** (empiezan con `_`): `_kdef`, `_env_num`, `_BadParam`, `_Busy`, `_heavy_slot`, `_busy_response`, `_budget_response`, `_compute_allowed`, `_num`, `_bad_param`, `_as_of_norm`, `_as_of_error`, `_rel_weights`, `_ttl_get`, `_ttl_set`, `_db`, `_hot`, `_view_meta`, `_with_view`, `_age_days`, `_fallback_insights`, `_narrate_insights`, `_Flight`, `_flight_join`, `_flight_done`, `_insights_build`, `_insights_tier`, `_persist_insight`
+**Internas** (empiezan con `_`): `_kdef`, `_magnitude_max`, `_env_num`, `_BadParam`, `_Busy`, `_heavy_slot`, `_busy_response`, `_budget_response`, `_compute_allowed`, `_num`, `_bad_param`, `_as_of_norm`, `_as_of_error`, `_rel_weights`, `_ttl_get`, `_ttl_set`, `_db`, `_hot`, `_view_meta`, `_with_view`, `_age_days`, `_fallback_insights`, `_narrate_insights`, `_Flight`, `_flight_join`, `_flight_done`, `_insights_build`, `_insights_tier`, `_persist_insight`
 
 ## Depende de
 
@@ -55,8 +55,8 @@ _Además lo importan 7 pruebas (lista abajo)._
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
 | `GET` | `/api/matrix/<rel_type>` | `matrix_get` | [[engine.cockpit.js]], [[engine.khipu_lang.js]], [[engine.livesim.js]], [[engine.voice.js]], [[engine.worldmonitor.js]], 10 pruebas |
-| `POST` | `/api/matrix/factor/fire` | `matrix_factor_fire` | [[app.html]], [[engine.khipu_lang.js]], 2 pruebas |
-| `GET` | `/api/matrix/factors` | `matrix_factors` | [[engine.khipu_lang.js]], 4 pruebas |
+| `POST` | `/api/matrix/factor/fire` | `matrix_factor_fire` | [[app.html]], [[engine.khipu_lang.js]], 3 pruebas |
+| `GET` | `/api/matrix/factors` | `matrix_factors` | [[engine.khipu_lang.js]], 5 pruebas |
 | `POST` | `/api/matrix/impact` | `matrix_impact` | [[engine.worldmonitor.js]], 5 pruebas |
 | `POST` | `/api/matrix/insights` | `matrix_insights` | [[engine.cockpit.js]], [[engine.voice.js]], 4 pruebas |
 | `GET` | `/api/matrix/insights/history` | `matrix_insights_history` | [[engine.insights.js]], 1 prueba |

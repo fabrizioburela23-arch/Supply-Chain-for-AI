@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 16
+archivos: 18
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,20 +9,22 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**16 archivos · 25.225 líneas.** Volver al [[00 Mapa de Khipus]].
+**18 archivos · 25.691 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[app.html]] — 12.680 líneas
+- [[app.html]] — 12.689 líneas
 - [[engine.cockpit.js]] — 5.007 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
-- [[engine.oswindows.js]] — 1.506 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
+- [[engine.oswindows.js]] — 1.518 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.graph3d.js]] — 1.216 líneas · Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos como esferas en el espacio, con tamaño por market cap, links de …
 - [[engine.desktop.js]] — 1.161 líneas · ESCRITORIO KHIPU (K1, 2026-10-04)
 - [[engine.universe2d.js]] — 1.048 líneas · Universo 2D: respaldo TOTAL del mapa 3D sin WebGL.
 - [[engine.toast.js]] — 767 líneas · NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que te avise cuando estás comprando con una notificación pop up o …
 - [[engine.xray.js]] — 666 líneas · X-RAY DE EMPRESA · "desarmar el alma" (Etapa 4, wow #1) Overlay NEXUS-styled que abre para cualquier nodo: - anatomía (sector, país, precio en vivo, …
+- [[engine.explain.js]] — 275 líneas · EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversionista preguntó "¿qué es el NRS y cómo se calcula?" y la app no se lo …
 - [[engine.guide.js]] — 271 líneas · pestaña "❓ Guía": explica la app en lenguaje simple. Sin jerga técnica. Expone window.initGuiaTab (mismo patrón que initTKGTab). Actualizada …
-- [[engine.explain.js]] — 231 líneas · EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversionista preguntó "¿qué es el NRS y cómo se calcula?" y la app no se lo …
+- [[engine.governance.js]] — 212 líneas · 🩺 Sistema → Gobernanza (INFRA_OPERATIVA paso 12; pieza mínima del paso 25). Muestra el RELEASE vigente (reglas y números versionados), «Ratificar …
+- [[engine.pricehist.js]] — 189 líneas · 🩺 Sistema → «Historia de precios» (BRECHAS bloque 2: la memoria de los números). Muestra cuánta historia guarda Khipus (cierres diarios ajustados, …
 - [[engine.loading.js]] — 159 líneas · Sistema de animaciones de carga por NIVEL DE ESPERA. Pedido de Fabrizio (2026-07-14): "que todo lo que tarde tenga una animación de carga adecuada; …
 - [[engine.mascot.js]] — 136 líneas · MASCOTAS BURBUJA de Khipus OS (2026-10-06)
 - [[engine.layers.js]] — 133 líneas · SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "todo o nada": enciendes/apagas información como capas. Cada capa = un …
@@ -46,9 +48,9 @@ tags: ["capa/interfaz", "tipo/capa"]
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Comité]] | 8 |
 | la usa | [[Capa Voz]] | 8 |
+| usa a | [[Capa Infraestructura]] | 8 |
 | usa a | [[Capa Comité]] | 6 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
-| usa a | [[Capa Infraestructura]] | 6 |
 | la usa | [[Capa Infraestructura]] | 5 |
 | la usa | [[Capa Investigación]] | 4 |
 | usa a | [[Capa Investigación]] | 4 |

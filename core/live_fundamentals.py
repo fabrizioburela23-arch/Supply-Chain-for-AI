@@ -112,3 +112,10 @@ def live_margin(nid):
         return None if v is None or r.get('missing') else float(v) / 100.0
     except (TypeError, ValueError):
         return None
+
+
+def version():
+    """Contador de tandas terminadas: la tarjeta V3 (core/hotviews/views/card.py) recalcula el vector NRS solo
+    cuando cambia (el margen en vivo entra en la fórmula; el precio NO)."""
+    with _LOCK:
+        return int(_STATE['runs'])

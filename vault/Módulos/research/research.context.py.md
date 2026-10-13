@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Investigación"
 ruta: "research/context.py"
 lenguaje: "python"
-lineas: 578
+lineas: 611
 aliases: ["research/context.py"]
 tags: ["capa/investigacion", "tipo/modulo"]
 ---
 
 # research/context.py
 
-> Módulo · capa [[Capa Investigación]] · 578 líneas · `research/context.py`
+> Módulo · capa [[Capa Investigación]] · 611 líneas · `research/context.py`
 
 ## Para qué sirve
 
@@ -18,10 +18,11 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 
 ## API pública
 
-- `price_indicators(series)` — Indicadores deterministas (sin IA) para el TechnicalAgent. _(línea 129)_
-- `graph_version()` — La generación del grafo que usa el armador de contexto (tests/test_ops_single_source.py). _(línea 191)_
-- clase `ContextBuilder` _(línea 197)_
-- `render_context(ctx)` — Texto para el prompt. El contenido externo va dentro de &lt;data>…&lt;/data>. _(línea 548)_
+- clase `Candles` — [(ts, cierre AJUSTADO)] + de dónde salió (`source`) y hasta qué día (`as_of`): toda serie servida lo dice. _(línea 116)_
+- `price_indicators(series)` — Indicadores deterministas (sin IA) para el TechnicalAgent. _(línea 158)_
+- `graph_version()` — La generación del grafo que usa el armador de contexto (tests/test_ops_single_source.py). _(línea 220)_
+- clase `ContextBuilder` _(línea 226)_
+- `render_context(ctx)` — Texto para el prompt. El contenido externo va dentro de &lt;data>…&lt;/data>. _(línea 581)_
 
 **Internas** (empiezan con `_`): `_now`, `_clean`, `_fetch_profile`, `_fetch_financials`, `_fetch_news`, `_fetch_company_news`, `_fetch_candles`, `_fetch_web`, `_fetch_sec_filings`, `_fetch_sec_sections`, `_fetch_mcap`, `_reliability_for_url`, `_fmt_series`, `_entity_ids_for`
 
@@ -32,6 +33,7 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 - [[core.config.py]] — importa `FINNHUB`
 - [[core.entities.py]] — importa `entity_ids_for`, `get_index`
 - [[core.http.py]] — importa `_safe_get`, `_safe_ticker`
+- [[core.prices_store.py]] — importa `prices_store`
 - [[core.quotes.py]] — importa `fetch_market_cap_yahoo`
 - [[core.sec.py]] — importa `filing_sections`, `latest_filings`
 - [[core.websearch.py]] — importa `web_search`
@@ -49,7 +51,7 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 - [[research.outcomes.py]] — lo importa
 - [[research.runner.py]] — lo importa
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -65,6 +67,7 @@ _Además lo importan 7 pruebas (lista abajo)._
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_committee.py]]
 - [[tests.test_research.py]]
+- [[tests.test_rsi_wilder.py]]
 - [[tests.test_sec.py]]
 
 ## Mencionado en sesiones de trabajo

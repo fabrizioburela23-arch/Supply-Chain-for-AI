@@ -314,6 +314,10 @@ def _round_prompt(scenario, company_agents, externals, edges, state, rnd, total,
         'cadena_de_suministro': edges,
         'estado_acumulado_previo_pct': estado,
     }
+    fixed = kernel_pcts(analysis, company_agents) if (analysis and _pct_from_kernel()) else None
+    if fixed:
+        # 2.0.0 (PROP-10/L4-04): los % YA están calculados por el motor (κ · impacto del kernel). La IA no los cambia.
+        payload['impactos_calculados_pct'] = fixed
     if analysis:
         payload['analisis_estructural'] = {
             'tema': analysis.get('theme_es'), 'actor': analysis.get('actor_es'), 'evento': analysis.get('event'),
@@ -330,15 +334,29 @@ def _round_prompt(scenario, company_agents, externals, edges, state, rnd, total,
         '  "watch": ["<dato concreto que conviene vigilar>", ...]\n'
         '}'
     )
+    rule = ('Los porcentajes de "impactos_calculados_pct" los calculó el motor de la cadena: NO los cambies ni '
+            'inventes otros; en "impacts" devuelve esos MISMOS números y explica el porqué de cada uno. ') if fixed else ''
     return (
         f"Contexto de la simulación (JSON):\n{json.dumps(payload, ensure_ascii=False)}\n\n"
-        f"Es la ronda {rnd} de {total}. Razona cómo reacciona CADA agente al escenario "
+        f"{rule}Es la ronda {rnd} de {total}. Razona cómo reacciona CADA agente al escenario "
         f"y cómo se propaga por la cadena de suministro, partiendo del estado acumulado. "
         f"Actualiza los impactos ACUMULADOS (no incrementales) de las empresas afectadas, "
         f"respetando 'limite_pct'. Usa 'analisis_estructural' (si existe) como base: quién recibe el golpe, "
         f"quién podría ganar y por qué camino; corrígelo si tu razonamiento lo justifica. "
         f"Devuelve SOLO este JSON:\n{forma}"
     )
+
+
+def kernel_pcts(analysis, company_agents):
+    """{id: %} del kernel para el elenco (2.0.0): signo · κ[tamaño] · |impacto estructural|, con el tope por tamaño."""
+    size = {a['id']: a['size'] for a in company_agents}
+    out = {}
+    for x in (analysis or {}).get('impacts') or []:
+        if x['id'] in size:
+            p = _struct_pct(x['sev'], size[x['id']], direct=x['channel'] == 'direct')
+            if abs(p) >= 0.5:
+                out[x['id']] = p
+    return out
 
 
 # ── Síntesis / fallback de textos ───────────────────────────────────────────
@@ -368,7 +386,26 @@ def _default_event(rnd, lang):
 
 
 # ── Análisis estructural (core/scenario_engine) → impactos y extras ─────────
+def _pct_from_kernel():
+    """kernel.params.sim_pct_source: 1.0.0 'ai' (los % los escribe la IA dentro de topes; se conserva idéntico) ·
+    2.0.0 'kernel' (PROP-10, L4-04): % = signo · κ[tamaño] · impacto del kernel; la IA solo narra."""
+    try:
+        from matrix import engine as E
+        return E._P('sim_pct_source', 'ai') == 'kernel'
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _kappa():
+    """κ (% de movimiento por impacto estructural 1,0) por tamaño — constante versionada en kernel.params hasta
+    calibrarla con historia EOD (bloque 2)."""
+    from matrix import engine as E
+    return dict(E._P('scenario_kappa_pct', None) or _BOUNDS)
+
+
 def _struct_pct(sev, size, direct=False):
+    if _pct_from_kernel():
+        return _clamp_pct(sev * float(_kappa().get(size, 20.0)), size)
     return _clamp_pct(sev * _BOUNDS.get(size, 20.0) * (1.0 if direct else 0.7), size)
 
 
@@ -433,6 +470,8 @@ def _fallback(scenario, seed_ids, company_agents, externals, snap, lang, analysi
         out = {'ok': True, 'fallback': True, 'structural': True, 'seeds': list(seed_ids),
                'narrative': prefix + _struct_narrative(scenario, analysis, impacts, lang),
                'impacts': impacts, 'agents': agents, 'rounds': analysis['timeline']}
+        if _pct_from_kernel():
+            out.update(pct_source='kernel', kappa_pct=_kappa())
         out.update(_struct_extras(analysis, lang))
         return out
     return _fallback_basic(scenario, seed_ids, company_agents, externals, snap, lang)
@@ -622,11 +661,26 @@ def _run_impl(scenario, seeds, lang):
         return _res
 
     impacts = []
-    for nid, v in state.items():
-        a = cast_by_id[nid]
-        p = _clamp_pct(v['pct'], a['size'])
-        impacts.append({'id': nid, 'label': a['label'], 'pct': p,
-                        'rationale': v['rationale'] or ''})
+    kernel_fixed = kernel_pcts(analysis, company_agents) if (analysis and _pct_from_kernel()) else None
+    overridden = 0
+    if kernel_fixed:
+        # 2.0.0: los % son los del kernel; de la IA solo queda el porqué. Se cuenta cuántos % de la IA NO coincidían.
+        for nid, p in kernel_fixed.items():
+            a = cast_by_id[nid]
+            v = state.get(nid) or {}
+            try:
+                if v and abs(float(v.get('pct', p)) - p) > 0.5:
+                    overridden += 1
+            except (TypeError, ValueError):
+                overridden += 1
+            impacts.append({'id': nid, 'label': a['label'], 'pct': p, 'rationale': v.get('rationale') or ''})
+        overridden += sum(1 for nid in state if nid not in kernel_fixed)
+    else:
+        for nid, v in state.items():
+            a = cast_by_id[nid]
+            p = _clamp_pct(v['pct'], a['size'])
+            impacts.append({'id': nid, 'label': a['label'], 'pct': p,
+                            'rationale': v['rationale'] or ''})
     impacts.sort(key=lambda i: -abs(i['pct']))
 
     narrative = model_narrative or _synth_narrative(scenario, impacts, lang)
@@ -634,6 +688,12 @@ def _run_impl(scenario, seeds, lang):
 
     out = {'ok': True, 'narrative': narrative, 'impacts': impacts,
            'agents': agents, 'rounds': rounds_out, 'model': used_model, 'quotes': quotes[:8]}
+    if kernel_fixed:
+        out.update(pct_source='kernel', kappa_pct=_kappa(), ai_pct_overridden=overridden,
+                   pct_note=('Los % salen del motor de la cadena (κ · impacto estructural): estimación estructural, no precio. '
+                             'La IA solo explica.' if _es(lang) else
+                             'The % come from the chain engine (κ · structural impact): a structural estimate, not a price. '
+                             'The AI only explains.'))
     if analysis:
         paths = {x['id']: x['path'] for x in analysis['impacts']}
         chans = {x['id']: x['channel'] for x in analysis['impacts']}

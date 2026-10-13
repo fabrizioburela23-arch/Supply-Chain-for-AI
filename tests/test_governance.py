@@ -292,7 +292,8 @@ def test_ratificar_exige_pin_y_queda_como_decision(db, monkeypatch):
     assert isinstance(full['env_warnings'], list)
 
 
-def _insert_release(db, params_patch, semver_art='2.0.0', rel_semver='2.0.0', tamper=False):
+def _insert_release(db, params_patch, semver_art='8.0.0', rel_semver='2.0.0', tamper=False):
+    # (kernel.params@2.0.0 ya existe de verdad en el repositorio desde el paso 12: la prueba usa otra versión)
     from sqlalchemy import text
 
     from core import governance as G

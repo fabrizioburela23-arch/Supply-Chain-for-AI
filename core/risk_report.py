@@ -42,6 +42,19 @@ def fetch_history(symbol, rng='1y', getter=None):
     if e and time.time() - e[0] < _HIST_TTL:
         return e[1], e[2]
     if getter is None:
+        # BRECHAS bloque 2 (L2-12): la historia PROPIA de Khipus primero (cierres ajustados guardados día a día);
+        # si la base no cubre el rango o no hay base, la descarga en vivo de siempre.
+        try:
+            from core import prices_store
+            db = prices_store.history(symbol, rng)
+        except Exception:  # noqa: BLE001
+            db = None
+        if db:
+            out, cur, m = db
+            _HIST_CACHE[key] = (time.time(), out, cur)
+            _HIST_META[key] = {'adjusted': bool(m.get('adjusted', True)), 'tz': None, 'gmtoffset': None, 'n': len(out),
+                               'source': m.get('source'), 'as_of': m.get('as_of')}
+            return out, cur
         from core.company_data import _get_json as getter
     data, err = getter(f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
                        params={'interval': '1d', 'range': rng}, timeout=10)
@@ -70,13 +83,50 @@ def fetch_history(symbol, rng='1y', getter=None):
     if out:
         _HIST_CACHE[key] = (time.time(), out, cur)
         _HIST_META[key] = {'adjusted': adjusted, 'tz': meta.get('exchangeTimezoneName'), 'gmtoffset': off,
-                           'n': len(out)}
+                           'n': len(out), 'source': 'yahoo_live', 'as_of': max(out)}
     return out, cur
 
 
 def history_meta(symbol, rng='1y'):
-    """{adjusted, tz, gmtoffset, n} de la última serie bajada (D1) o None."""
+    """{adjusted, tz, gmtoffset, n, source, as_of} de la última serie bajada (D1) o None."""
     return _HIST_META.get((symbol, rng))
+
+
+def fx_series(cur, rng='1y', getter=None):
+    """L2-01 / L3-14: tipo de cambio DIARIO moneda→USD ({fecha: tasa}, meta) — base primero (fx_daily), si no la
+    serie {CUR}USD=X de Yahoo. Subunidades (GBp, ZAc, ILA) ya divididas. None si no hay serie (→ tasa spot)."""
+    from core.instruments import major_ccy
+    maj, mult = major_ccy(cur)
+    if maj == 'USD':
+        return None
+    if getter is None:
+        try:
+            from core import prices_store
+            db = prices_store.fx_history(maj, rng)
+        except Exception:  # noqa: BLE001
+            db = None
+        if db:
+            return {d: r * mult for d, r in db[0].items()}, db[1]
+    h, _c = fetch_history(f'{maj}USD=X', rng, getter)
+    if len(h) < 20:
+        return None
+    m = history_meta(f'{maj}USD=X', rng) or {}
+    return {d: r * mult for d, r in h.items()}, {'source': m.get('source') or 'yahoo_live', 'as_of': max(h)}
+
+
+def align_fx(prices, fx, max_gap_days=7):
+    """{fecha: tasa} para cada fecha de `prices`: la tasa de ese día o la última anterior (≤ max_gap_days; los
+    feriados de cada mercado no coinciden). Las fechas sin tasa cercana quedan fuera."""
+    from datetime import date as _date
+    fd = sorted(fx)
+    out, j, last = {}, 0, None
+    for d in sorted(prices):
+        while j < len(fd) and fd[j] <= d:
+            last = fd[j]
+            j += 1
+        if last is not None and (_date.fromisoformat(d) - _date.fromisoformat(last)).days <= max_gap_days:
+            out[d] = fx[last]
+    return out
 
 
 # ── matemática pura (testeable sin red) ──────────────────────────────────────
@@ -156,28 +206,74 @@ def rolling_backtest(port, srt, conf=0.95):
             'in_sample': {'breaches': sum(1 for r in port if r < thr), 'days': n, 'expected': round(n * q, 1)}}
 
 
-def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=None):
-    """histories: {sym: {date: price}} · shares: {sym: n} · fx: {sym: moneda→USD}.
+def _fx_at(fx, s, d):
+    v = fx.get(s, 1.0)
+    return v.get(d) if isinstance(v, dict) else v
+
+
+def _solve(a, b):
+    """Gauss-Jordan con pivote parcial (sistemas chicos: OLS de Dimson). None si es singular."""
+    n = len(b)
+    m = [list(a[i]) + [b[i]] for i in range(n)]
+    for c in range(n):
+        p = max(range(c, n), key=lambda r: abs(m[r][c]))
+        if abs(m[p][c]) < 1e-18:
+            return None
+        m[c], m[p] = m[p], m[c]
+        for r in range(n):
+            if r != c:
+                f = m[r][c] / m[c][c]
+                m[r] = [x - f * y for x, y in zip(m[r], m[c])]
+    return [m[i][n] / m[i][i] for i in range(n)]
+
+
+def dimson_beta(y, b_lag, b_0, b_lead):
+    """L2-M1: beta de Dimson = suma de las pendientes de r_p,t sobre r_m,t−1, r_m,t y r_m,t+1 (OLS con constante).
+    Las bolsas de Asia/Europa cierran ANTES que Nueva York: su reacción a la sesión de EE.UU. llega al día siguiente
+    y la beta del mismo día sale ~0."""
+    rows = [(1.0, x1, x2, x3) for x1, x2, x3 in zip(b_lag, b_0, b_lead)]
+    k = 4
+    xtx = [[sum(r[i] * r[j] for r in rows) for j in range(k)] for i in range(k)]
+    xty = [sum(r[i] * yy for r, yy in zip(rows, y)) for i in range(k)]
+    sol = _solve(xtx, xty)
+    return None if sol is None else sol[1] + sol[2] + sol[3]
+
+
+def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=None, nonsync=None):
+    """histories: {sym: {date: price}} · shares: {sym: n} · fx: {sym: moneda→USD} — un número (tasa de hoy) o
+    {fecha: tasa} (L2-01/L3-14: la serie en USD se arma FECHA A FECHA y el riesgo cambiario queda dentro).
     bench: {date: price} del S&P 500 (opcional). rf: tasa libre de riesgo anual
-    (decimal; D2: T-bill 13 semanas ^IRX) con su fuente. Devuelve el reporte (dict)."""
+    (decimal; D2: T-bill 13 semanas ^IRX) con su fuente. nonsync: símbolos cuya bolsa cierra en otro horario que
+    Nueva York (L2-M1 → beta de Dimson y varianza con 1 rezago). Devuelve el reporte (dict)."""
     syms = [s for s in shares if histories.get(s)]
     if not syms:
         return {'ok': False, 'error': 'sin historia de precios para ninguna posición'}
+    for s in syms:          # con FX diario, solo cuentan las fechas que tienen tasa
+        if isinstance(fx.get(s), dict):
+            histories = dict(histories, **{s: {d: p for d, p in histories[s].items() if fx[s].get(d)}})
     common = sorted(set.intersection(*(set(histories[s]) for s in syms)))
     if len(common) < 60:
         return {'ok': False, 'error': f'historia común insuficiente ({len(common)} días; se necesitan ≥ 60)'}
     last = common[-1]
-    values = {s: shares[s] * histories[s][last] * fx.get(s, 1.0) for s in syms}
+    values = {s: shares[s] * histories[s][last] * _fx_at(fx, s, last) for s in syms}
     total = sum(values.values())
     if total <= 0:
         return {'ok': False, 'error': 'valor de cartera cero'}
     w = {s: values[s] / total for s in syms}
-    rets = {s: _returns(histories[s], common) for s in syms}
+    rets = {s: _returns({d: histories[s][d] * fx[s][d] for d in common} if isinstance(fx.get(s), dict)
+                        else histories[s], common) for s in syms}
     n = len(common) - 1
     port = [sum(w[s] * rets[s][i] for s in syms) for i in range(n)]
 
     sig_d = _std(port)
     mu_d = _mean(port)
+    # L2-M1: con bolsas no sincronizadas la covarianza del mismo día se pierde; la varianza de largo plazo con
+    # 1 rezago (var + 2·autocov₁) la recupera. Solo sube (conservador): nunca baja la volatilidad medida.
+    ns = sorted(s for s in syms if s in set(nonsync or ()) and w[s] > 0)
+    sig_same_day = sig_d
+    if ns and n > 3:
+        ac1 = _cov(port[1:], port[:-1])
+        sig_d = math.sqrt(max(sig_d ** 2, sig_d ** 2 + 2 * ac1))
     srt = sorted(port)
 
     def var_block(conf):
@@ -216,6 +312,7 @@ def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=Non
     # beta vs S&P 500 (mismos pares de días consecutivos en ambas series)
     beta = corr_mkt = None
     overlap = 0
+    nonsync_info = {'symbols': ns, 'beta_method': 'same_day', 'beta_same_day': None} if ns else None
     if bench:
         pr, br = [], []
         for i in range(1, len(common)):
@@ -229,6 +326,22 @@ def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=Non
             beta = round(_cov(pr, br) / vb, 3)
             sp, sb = _std(pr), _std(br)
             corr_mkt = round(_cov(pr, br) / (sp * sb), 3) if sp and sb else None
+        if ns:
+            b = [bench[common[i + 1]] / bench[common[i]] - 1 if (common[i] in bench and common[i + 1] in bench)
+                 else None for i in range(n)]
+            y, x1, x2, x3 = [], [], [], []
+            for i in range(1, n - 1):
+                if None not in (b[i - 1], b[i], b[i + 1]):
+                    y.append(port[i])
+                    x1.append(b[i - 1])
+                    x2.append(b[i])
+                    x3.append(b[i + 1])
+            beta_same_day = beta
+            bd = dimson_beta(y, x1, x2, x3) if len(y) > 30 else None
+            if bd is not None:
+                beta = round(bd, 3)
+            nonsync_info = {'symbols': ns, 'beta_method': 'dimson' if bd is not None else 'same_day',
+                            'beta_same_day': beta_same_day, 'dimson_days': len(y)}
     # D1: cuántos días se emparejaron de verdad con el índice y qué rango usó cada símbolo
     # (un índice corrido un día hunde la correlación: aquí se ve, no se adivina)
     aligned = {s: {'from': common[0], 'to': common[-1], 'n': len(common)} for s in syms}
@@ -244,7 +357,12 @@ def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=Non
     rf = float(rf or 0.0)
     sharpe = round((ret_geom - rf) / vol_ann, 2) if vol_ann else None
 
+    if nonsync_info is not None:
+        nonsync_info.update(vol_ann_same_day_pct=round(sig_same_day * math.sqrt(TRADING_DAYS) * 100, 2),
+                            vol_method='var + 2·autocov(1) (bolsas en otro horario)')
     positions = [{'symbol': s, 'shares': shares[s], 'price': round(histories[s][last], 4),
+                  'fx_to_usd': round(_fx_at(fx, s, last), 8), 'fx_method': 'daily' if isinstance(fx.get(s), dict)
+                  else 'spot',
                   'value_usd': round(values[s], 2), 'weight_pct': round(w[s] * 100, 2),
                   'vol_ann_pct': round(sd[s] * math.sqrt(TRADING_DAYS) * 100, 2),
                   'risk_contrib_pct': round(contrib[s] * 100, 2)} for s in syms]
@@ -263,6 +381,7 @@ def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=Non
         'var95': v95, 'var99': v99,
         'max_drawdown_pct': round(mdd * 100, 2), 'max_drawdown_date': mdd_date,
         'beta_spy': beta, 'corr_spy': corr_mkt, 'bench_overlap_days': overlap, 'aligned_dates': aligned,
+        'nonsync_adjusted': bool(nonsync_info), 'nonsync': nonsync_info,
         'diversification_ratio': round(divers, 2) if divers else None,
         'backtest95': backtest,
         'worst_days': [{'date': d, 'pct': round(r * 100, 2), 'usd': round(r * total, 2)} for r, d in worst],
@@ -338,14 +457,29 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None, max_p
             irx = {}
     rf, rf_source = (irx[max(irx)] / 100.0, f'T-bill 13 semanas ({RF_SYMBOL}) {irx[max(irx)]:.2f} % al {max(irx)}') \
         if irx else (0.0, 'sin dato — 0 % (no se pudo bajar ^IRX)')
-    histories, fx, excluded = {}, {}, []
+    histories, fx, excluded, fx_info = {}, {}, [], {}
     for s in clean:
         h, cur = got[s]
         if len(h) < 60:
             excluded.append({'symbol': s, 'label': labels[s], 'reason': 'sin historia suficiente de precios',
                              'reason_code': 'no_history'})
             continue
+        raw_cur = cur or 'USD'
         cur = 'GBP' if cur == 'GBp' else (cur or 'USD').upper()
+        if cur != 'USD':
+            # L2-01 / L3-14: tipo de cambio DIARIO alineado por fecha (el riesgo cambiario entra en el cálculo);
+            # sin serie → la tasa de hoy, como antes, y se dice
+            try:
+                fxs = fx_series(raw_cur, rng, getter)
+            except Exception:  # noqa: BLE001
+                fxs = None
+            if fxs:
+                al = align_fx(h, fxs[0])
+                if len(al) >= 60:
+                    histories[s], fx[s] = {d: h[d] for d in al}, al
+                    fx_info[s] = {'ccy': raw_cur, 'method': 'daily', 'source': fxs[1].get('source'),
+                                  'as_of': fxs[1].get('as_of')}
+                    continue
         rate = fx_fn(cur)
         if not rate:
             excluded.append({'symbol': s, 'label': labels[s], 'reason': f'sin tipo de cambio {cur}→USD',
@@ -354,6 +488,10 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None, max_p
         if (got[s][1] or '') == 'GBp':
             rate = rate / 100.0            # precio en peniques
         histories[s], fx[s] = h, rate
+        if cur != 'USD':
+            fx_info[s] = {'ccy': raw_cur, 'method': 'spot', 'source': 'yahoo_live (tasa de hoy)',
+                          'note_es': 'tipo de cambio de HOY aplicado a toda la serie: el riesgo cambiario no entra',
+                          'note_en': "TODAY's exchange rate applied to the whole series: currency risk is not included"}
     # dólares → acciones al último cierre COMÚN (la fecha que usa compute)
     converted = []
     if usd_amt and histories:
@@ -364,7 +502,7 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None, max_p
                 continue
             h = histories[s]
             d = last if last in h else max(h)
-            px_usd = h[d] * fx[s]
+            px_usd = h[d] * _fx_at(fx, s, d)
             if px_usd > 0:
                 n = usd_amt[s] / px_usd
                 clean[s] += n
@@ -375,8 +513,9 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None, max_p
         rep = {'ok': False, 'error_code': 'data_unavailable',
                'error': 'no se pudieron obtener precios históricos (proveedor de datos no disponible o tickers sin historia)'}
     else:
+        from core.instruments import nonsync as _nonsync
         rep = compute({s: histories[s] for s in shares}, shares, fx, bench=got[BENCH][0] or None,
-                      horizon=horizon, rf=rf, rf_source=rf_source)
+                      horizon=horizon, rf=rf, rf_source=rf_source, nonsync={s for s in shares if _nonsync(s)})
         if not rep.get('ok') and 'error_code' not in rep:
             err = rep.get('error') or ''
             rep['error_code'] = ('short_history' if 'insuficiente' in err
@@ -392,7 +531,23 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None, max_p
         if not p['adjusted']:
             unadj.append(p['symbol'])
     rep['unadjusted_symbols'] = unadj
-    rep['source'] = ('Yahoo Finance (precios diarios ajustados' +
+    # cada serie usada lleva su fuente y su fecha (BRECHAS bloque 2: la historia propia primero)
+    series = {}
+    for sym in list(shares) + [BENCH]:
+        m = history_meta(sym, rng) or {}
+        if m:
+            series[sym] = {'source': m.get('source') or 'yahoo_live', 'as_of': m.get('as_of'),
+                           'adjusted': bool(m.get('adjusted', True)), 'n': m.get('n')}
+    rep['series'] = series
+    rep['fx'] = fx_info
+    own = sorted(k for k, v in series.items() if str(v.get('source') or '').startswith('khipus_eod'))
+    rep['source'] = (('Historia propia de Khipus (cierres diarios guardados) para: ' + ', '.join(own) + '; '
+                      if own else '') + 'Yahoo Finance (precios diarios ajustados' +
                      ('; cierres SIN ajustar por dividendos/splits en: ' + ', '.join(unadj) if unadj else '') + ')')
+    # REGLA BILINGÜE: la misma frase en inglés (engine/riskreport.js elige por idioma)
+    rep['source_es'] = rep['source']
+    rep['source_en'] = (('Khipus own history (stored daily closes) for: ' + ', '.join(own) + '; '
+                         if own else '') + 'Yahoo Finance (adjusted daily prices' +
+                        ('; closes NOT adjusted for dividends/splits in: ' + ', '.join(unadj) if unadj else '') + ')')
     rep['generated_at'] = datetime.now(timezone.utc).isoformat()
     return rep

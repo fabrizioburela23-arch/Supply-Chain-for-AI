@@ -113,17 +113,46 @@ def _fetch_company_news(symbol, limit):
     return out
 
 
+class Candles(list):
+    """[(ts, cierre AJUSTADO)] + de dónde salió (`source`) y hasta qué día (`as_of`): toda serie servida lo dice."""
+    source = None
+    as_of = None
+
+
 def _fetch_candles(symbol):
-    """Cierres diarios ~1 año (Yahoo chart) → lista de (ts, close)."""
+    """Cierres diarios AJUSTADOS por splits y dividendos, ~1 año (L2-03). Primero la historia propia de Khipus
+    (core/prices_store, tabla prices_eod); si no la cubre, el adjclose de Yahoo (el 'close' crudo solo si Yahoo no
+    trae adjclose). → Candles [(ts, close)] con .source y .as_of."""
+    out = Candles()
+    try:
+        from core import prices_store
+        db = prices_store.history(symbol, '1y')
+    except Exception:  # noqa: BLE001
+        db = None
+    if db:
+        prices, _cur, meta = db
+        for d in sorted(prices):
+            out.append((int(datetime.fromisoformat(d).replace(tzinfo=timezone.utc).timestamp()), prices[d]))
+        out.source, out.as_of = meta.get('source'), meta.get('as_of')
+        if meta.get('adjusted') is False:
+            out.source = (out.source or '') + ' (cierres sin ajustar)'
+        return out
     from core.company_data import _get_json
     data, err = _get_json(f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
                           params={'interval': '1d', 'range': '1y'}, timeout=10)
     if err or not isinstance(data, dict):
-        return []
+        return out
     res = ((data.get('chart') or {}).get('result') or [None])[0] or {}
     ts = res.get('timestamp') or []
-    cl = (((res.get('indicators') or {}).get('quote') or [{}])[0].get('close')) or []
-    return [(t, c) for t, c in zip(ts, cl) if c is not None]
+    ind = res.get('indicators') or {}
+    adj = ((ind.get('adjclose') or [{}])[0] or {}).get('adjclose') or []
+    cl = (((ind.get('quote') or [{}])[0] or {}).get('close')) or []
+    use_adj = bool(adj) and len(adj) == len(ts)
+    out.extend((t, c) for t, c in zip(ts, adj if use_adj else cl) if c is not None)
+    out.source = 'yahoo_live' + ('' if use_adj else ' (cierres sin ajustar)')
+    if out:
+        out.as_of = datetime.fromtimestamp(int(out[-1][0]), tz=timezone.utc).date().isoformat()
+    return out
 
 
 def price_indicators(series):
@@ -389,7 +418,11 @@ class ContextBuilder:
             except Exception:  # noqa: BLE001
                 txt = ''
             if txt:
-                add('market', f'Análisis técnico de {mkt} (1 año diario vs S&P 500, calculado por Khipus)', txt,
+                src_note = ''
+                if getattr(series, 'source', None):
+                    src_note = (f'; cierres ajustados: {"historia propia de Khipus" if str(series.source).startswith("khipus") else series.source}'
+                                f' al {series.as_of}')
+                add('market', f'Análisis técnico de {mkt} (1 año diario vs S&P 500, calculado por Khipus{src_note})', txt,
                     reference=f'https://finance.yahoo.com/quote/{mkt}/history', reliability=0.85,
                     source_kind='primary', max_chars=1200)
             else:

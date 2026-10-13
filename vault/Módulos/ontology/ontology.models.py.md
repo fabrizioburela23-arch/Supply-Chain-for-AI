@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/models.py"
 lenguaje: "python"
-lineas: 197
+lineas: 199
 aliases: ["ontology/models.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/models.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 197 líneas · `ontology/models.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 199 líneas · `ontology/models.py`
 
 ## Para qué sirve
 
@@ -29,6 +29,7 @@ esquema SQLAlchemy de la ontología.
 ## Depende de
 
 - [[ontology.governance_models.py]] — importa `governance_models`
+- [[ontology.history_models.py]] — importa `history_models`
 - [[ontology.ledger_models.py]] — importa `ledger_models`
 
 ## Lo usan
@@ -45,6 +46,7 @@ esquema SQLAlchemy de la ontología.
 - [[ontology.bulk_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.governance_models.py]] — lo importa
+- [[ontology.history_models.py]] — lo importa
 - [[ontology.ingest_news.py]] — lo importa
 - [[ontology.ledger_models.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
@@ -59,7 +61,7 @@ esquema SQLAlchemy de la ontología.
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 42 pruebas (lista abajo)._
+_Además lo importan 46 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -68,6 +70,7 @@ _Además lo importan 42 pruebas (lista abajo)._
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
+- [[tests.test_governance_activation.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
@@ -76,6 +79,7 @@ _Además lo importan 42 pruebas (lista abajo)._
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_ledger_anchor.py]]
+- [[tests.test_ledger_callsites.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
@@ -91,6 +95,7 @@ _Además lo importan 42 pruebas (lista abajo)._
 - [[tests.test_ops_link_status_event.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_provenance.py]]
 - [[tests.test_reconcile.py]]
@@ -105,3 +110,4 @@ _Además lo importan 42 pruebas (lista abajo)._
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_security.py]]
 - [[tests.test_tensor_autolink.py]]
+- [[tests.test_trading_agent_ledger.py]]

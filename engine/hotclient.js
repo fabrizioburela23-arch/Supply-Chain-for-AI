@@ -9,6 +9,8 @@
      KhipuHot.impact(id, {severity, top})        GET  /api/hot/impact/<id>   (colapso precalculado o choque parcial)
      KhipuHot.chokepoints({by, limit})           GET  /api/hot/chokepoints   (ranking por Σ impacto o por conteo)
      KhipuHot.factors()                          GET  /api/hot/factors       (factores sistémicos activos)
+     KhipuHot.card(id, {structure}) / cardCached GET  /api/hot/card/<id>     (tarjeta V3: NRS, flujo, estructura)
+     KhipuHot.nrs(ids)                           GET  /api/hot/nrs?ids=      (vector NRS, LA fórmula del servidor)
      KhipuHot.scenario(body)                     POST /api/hot/scenario      (varias fuentes; factores 'active')
      KhipuHot.simulate({targets, kind, severity}) → la forma única que usan las pantallas (ver abajo)
      KhipuHot.stamp(view) / stampHTML(view)       "g18 · base · hace 3 s" (generación y edad, discreto)
@@ -203,6 +205,30 @@
     return request('GET', path, null, 'choke:' + path);
   }
   function factors() { return request('GET', '/api/hot/factors', null, 'factors'); }
+  // ── paso 14: tarjeta V3 (NRS + 5 términos, proveedores/clientes en pares distintos de FLUJO, estructura) ──
+  function cardPath(id, structure) {
+    return '/api/hot/card/' + encodeURIComponent(String(id || '').slice(0, 120)) + '?lang=' + (isEn() ? 'en' : 'es') +
+      (structure === false ? '&structure=0' : '');
+  }
+  function card(id, opts) {
+    opts = opts || {};
+    var path = cardPath(id, opts.structure);
+    return request('GET', path, null, 'card:' + path);
+  }
+  // la tarjeta ya descargada (cualquier idioma/variante) de la generación vigente, o null — para código síncrono
+  function cardCached(id) {
+    var pre = 'card:/api/hot/card/' + encodeURIComponent(String(id || '').slice(0, 120)) + '?';
+    var best = null;
+    _cache.forEach(function (e, k) {
+      if (k.indexOf(pre) === 0 && e && e.res && e.res.ok && e.gen === _gen && (!best || e.at > best.at)) best = e;
+    });
+    return best ? best.res.data : null;
+  }
+  function nrs(ids) {
+    ids = (ids || []).filter(function (x) { return x != null && String(x).length; }).map(String).slice(0, 1000);
+    var path = '/api/hot/nrs' + (ids.length ? '?ids=' + encodeURIComponent(ids.join(',')) : '');
+    return request('GET', path, null, 'nrs:' + path);
+  }
   function status() { return request('GET', '/api/hot/status', null, null); }
   function scenario(body) {
     body = body || {};
@@ -307,6 +333,7 @@
 
   var api = {
     impact: impact, chokepoints: chokepoints, factors: factors, scenario: scenario, status: status,
+    card: card, cardCached: cardCached, nrs: nrs,
     simulate: simulate, rivals: rivals, stamp: stamp, stampHTML: stampHTML,
     kinds: function () { return Object.keys(KINDS); },
     kindSpec: function (k) { var s = KINDS[k]; return s ? { direction: s.direction, mapped: !!s.mapped, note: s.mapped ? L(s.note_es, s.note_en) : '' } : null; },

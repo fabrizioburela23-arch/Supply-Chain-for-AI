@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 715
+lineas: 749
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 715 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 749 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -20,6 +20,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 
 - [[Doc REPAIR_LOG]]
 - [[app.html]]
+- [[brokerage.alpaca.py]]
 - [[brokerage.risk.py]]
 - [[brokerage.service.py]]
 - [[core.agents_api.py]]
@@ -34,6 +35,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.governance.py]]
 - [[core.http.py]]
 - [[core.identity.py]]
+- [[core.instruments.py]]
 - [[core.khipu_chat.py]]
 - [[core.ledger.py]]
 - [[core.ledger_ddl.py]]
@@ -49,6 +51,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.portfolio_ai.py]]
 - [[core.portfolio_report.py]]
 - [[core.portfolio_reports_api.py]]
+- [[core.prices_store.py]]
 - [[core.quotes.py]]
 - [[core.risk_report.py]]
 - [[core.scenario_engine.py]]
@@ -71,6 +74,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[Doc MCP]]
 - [[Doc PHASE3]]
 - [[Doc REPARACION_DIAGNOSTICO]]
+- [[Doc REVISION_INSTRUMENTOS]]
 - [[engine.agents_registry.js]]
 - [[engine.aispend.js]]
 - [[engine.brief.js]]
@@ -84,6 +88,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[engine.explain.js]]
 - [[engine.geo_coords.js]]
 - [[engine.globe.js]]
+- [[engine.governance.js]]
 - [[engine.graph3d.js]]
 - [[engine.guide.js]]
 - [[engine.hotclient.js]]
@@ -100,6 +105,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[engine.pfcommittee.js]]
 - [[engine.pfreports.js]]
 - [[engine.portfolios.js]]
+- [[engine.pricehist.js]]
 - [[engine.reconcile.js]]
 - [[engine.research.js]]
 - [[engine.resolve.js]]
@@ -130,6 +136,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[ontology.actions.py]]
 - [[ontology.agents.py]]
 - [[ontology.db.py]]
+- [[ontology.history_models.py]]
 - [[ontology.ledger_models.py]]
 - [[ontology.provenance.py]]
 - [[ontology.reconcile.py]]
@@ -171,6 +178,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_graph_audit.py]]
 - [[tests.test_no_client_engine.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_vault.py]]
 
 ## Mencionado en sesiones de trabajo

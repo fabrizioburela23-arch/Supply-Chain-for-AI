@@ -3,26 +3,31 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_hot_views_parity.py"
 lenguaje: "python"
-lineas: 185
+lineas: 352
 aliases: ["tests/test_hot_views_parity.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_hot_views_parity.py
 
-> Prueba · capa [[Capa Pruebas]] · 185 líneas · `tests/test_hot_views_parity.py`
+> Prueba · capa [[Capa Pruebas]] · 352 líneas · `tests/test_hot_views_parity.py`
 
 ## Qué prueba
 
 INFRA_OPERATIVA paso 4: las vistas dan EXACTAMENTE los números del kernel.
 
-**7** funciones `test_…`.
+**15** funciones `test_…`.
 
 ## Cubre
 
 - [[core.__init__.py]]
+- [[core.khipu_chat.py]]
+- [[core.live_fundamentals.py]]
+- [[core.world.py]]
 - [[matrix.api.py]]
 - [[matrix.engine.py]]
+- [[matrix.tensor.py]]
+- [[mcp_server.tools.py]]
 - [[ontology.db.py]]
 - [[ontology.models.py]]
 - [[ontology.service.py]]

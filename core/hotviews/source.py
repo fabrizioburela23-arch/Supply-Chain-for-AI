@@ -306,11 +306,12 @@ def from_snapshot(g, sha=None, t0=None):
         fdata = {}
     for f in fdata.get('factors') or []:
         fid = (f.get('id') or '').strip()
-        members = {m: float(c or 1) for m, c in (f.get('members') or {}).items() if m in known}
+        members = {m: E.factor_coef(c) for m, c in (f.get('members') or {}).items() if m in known}
         if not fid or not members:
             continue
         crisis = f.get('severity')
-        factors.append({'id': fid, 'label': f.get('label') or fid, 'severity': FACTOR_LATENT_SEVERITY,
+        factors.append({'id': fid, 'label': f.get('label') or fid,
+                        'severity': float(_gov.param('kernel.params', 'factor_latent_severity')),
                         'severity_crisis': float(crisis) if crisis is not None else None,
                         'rationale': f.get('rationale') or '', 'since': None, 'updated': None,
                         'members': members})

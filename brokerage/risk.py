@@ -52,6 +52,54 @@ from core import governance as _gov  # noqa: E402
     'PROFILES': 'profiles', 'ASSET_CLASSES': ('asset_classes', tuple)})
 LIMIT_KEYS = ('max_position_pct', 'max_order_usd', 'max_daily_usd', 'max_drawdown_stop_pct')
 
+# INFRA_OPERATIVA paso 15 — UN SOLO CAMINO: la cuenta de la casa por sus rutas clásicas (/api/trade/order,
+# /api/trade/close, el agente de trading, la voz, cripto y la terminal) pasa por estos MISMOS controles. Mientras
+# Fabrizio no fije los límites de su cuenta (BRECHAS #1, sin respuesta) rigen los de HOY: tope US$100.000 por orden
+# (también en ventas, como hasta ahora) y NINGÚN tope nuevo. Los controles que esas rutas no tenían se evalúan igual
+# pero en SOMBRA (avisan y quedan en el libro de decisiones, nunca bloquean) — así Fabrizio ve qué habrían frenado
+# antes de decidir. Bloquear con ellos = policy.broker_risk@1.1.0 aprobado con PIN (paso 17), no un cambio de código.
+CHECK_MODES = ('standard', 'house_today', 'house_reduce')
+HOUSE_TODAY_SHADOW = ('daily_limit', 'position_limit', 'drawdown_stop', 'buying_power', 'holdings', 'duplicate',
+                      'limit_price')
+
+
+def check_policy(mode=None):
+    """Política de controles por camino: 'standard' (👥 Clientes, MCP, comité) o 'house_today' (rutas clásicas de
+    la casa con los límites de hoy). → {shadow, limits, cap_sells, allow_margin} (vacío = estándar)."""
+    if mode in ('house_today', 'house_reduce'):
+        pol = {'mode': mode, 'shadow': HOUSE_TODAY_SHADOW,
+               'limits': {'max_order_usd': HARD_MAX_ORDER_USD}, 'cap_sells': True, 'allow_margin': True}
+        if mode == 'house_reduce':
+            # SALIDAS de la casa (botón CLOSE, stop-loss del agente): hoy nunca tuvieron tope por orden (antes eran
+            # DELETE /v2/positions o una venta directa) — la orden que REDUCE o aplana una posición existente, hasta la
+            # cantidad que se tiene, no se frena por el tope de US$100.000. Lo que abra o aumente exposición, sí.
+            pol['reduce_only'] = True
+        return pol
+    return {}
+
+
+def reduces_position(order, positions):
+    """True si `order` (por CANTIDAD) solo reduce o cierra una posición existente: del lado contrario a la posición
+    (venta de una larga, compra de una corta) y sin pasar de la cantidad que hay. Por monto (notional) → False."""
+    od = order or {}
+    try:
+        q = float(od.get('qty')) if od.get('qty') is not None else None
+    except (TypeError, ValueError):
+        q = None
+    if not q or q <= 0:
+        return False
+    key = str(od.get('symbol') or '').upper().replace('/', '')
+    pos = next((p for p in positions or [] if str(p.get('symbol') or '').upper().replace('/', '') == key), None)
+    if pos is None:
+        return False
+    try:
+        pq = float(pos.get('qty') or 0)
+    except (TypeError, ValueError):
+        return False
+    short = str(pos.get('side') or '').lower() == 'short' or pq < 0
+    held = abs(pq)
+    return held > 0 and od.get('side') == ('buy' if short else 'sell') and q <= held + 1e-9
+
 _STOCK_RE = re.compile(r'^[A-Z][A-Z0-9.\-]{0,9}$')
 
 
@@ -62,9 +110,8 @@ def env_on(name, default='off'):
 def trading_enabled():
     """Interruptor global del CORRETAJE. Por defecto ENCENDIDO (el papel debe
     funcionar); BROKERAGE_TRADING_ENABLED=off bloquea al instante toda orden
-    nueva que pase por brokerage/ (👥 Clientes, agentes MCP y comité).
-    OJO: las rutas clásicas /api/trade/* y el agente de trading de server.py
-    solo lo respetan si server.py lo consulta (ver docs/BROKERAGE.md §2.6)."""
+    nueva que pase por brokerage/ (👥 Clientes, agentes MCP, comité y — desde el paso 15 — las rutas clásicas
+    /api/trade/order y /api/trade/close y el agente de trading de server.py, que ya salen por aquí)."""
     return env_on('BROKERAGE_TRADING_ENABLED', 'on')
 
 
@@ -199,8 +246,8 @@ def run_checks(ctx):
     sym = str(od.get('symbol') or '').upper()
     side = od.get('side')
     est = ctx.get('est_usd')
-    limits = effective_limits(cl.get('risk_profile'), cl.get('risk_limits'))
-    mandate = effective_mandate(cl.get('risk_profile'), cl.get('mandate'))
+    pol = ctx.get('policy') or {}
+    limits, mandate = _limits_and_mandate(cl, pol)
     checks = []
 
     # 1. interruptor global
@@ -285,10 +332,16 @@ def run_checks(ctx):
     elif est < MIN_ORDER_USD:
         checks.append(_c('order_size', False, f'Monto demasiado pequeño ({_usd(est)}; mínimo US$1)',
                          f'Amount too small ({_usd(est)}; minimum US$1)'))
-    elif side == 'sell':
+    elif side == 'sell' and not pol.get('cap_sells'):
         checks.append(_c('order_size', True,
                          f'Venta de {_usd(est)}: las ventas no tienen tope por orden (solo se vende lo que se tiene)',
                          f'Sale of {_usd(est)}: sells have no per-order cap (only what is held can be sold)'))
+    elif pol.get('reduce_only') and reduces_position(od, ctx.get('positions')):
+        checks.append(_c('order_size', True,
+                         f'Cierre de una posición existente ({_usd(est)}): las salidas no tienen tope por orden '
+                         f'(solo hasta la cantidad que se tiene)',
+                         f'Closing an existing position ({_usd(est)}): exits have no per-order cap (only up to '
+                         f'the quantity held)'))
     elif est > limits['max_order_usd']:
         checks.append(_c('order_size', False,
                          f'Monto {_usd(est)} supera el máximo por orden del cliente ({_usd(limits["max_order_usd"])})',
@@ -438,6 +491,38 @@ def run_checks(ctx):
         else:
             checks.append(_c('market_hours', True, 'Mercado de EE.UU. abierto' + suf_es,
                              'US market open' + suf_en, severity='warn'))
+    return _apply_shadow(checks, pol.get('shadow'))
+
+
+def _limits_and_mandate(cl, pol=None):
+    """Límites y mandato EFECTIVOS de un contexto (perfil + overrides del cliente + política del camino)."""
+    pol = pol or {}
+    limits = effective_limits(cl.get('risk_profile'), cl.get('risk_limits'))
+    for k, v in (pol.get('limits') or {}).items():
+        limits[k] = float(v)
+    mandate = effective_mandate(cl.get('risk_profile'), cl.get('mandate'))
+    if pol.get('allow_margin'):
+        mandate['allow_margin'] = True
+    return limits, mandate
+
+
+_SHADOW_ES = ' — solo aviso: tus límites aún no están fijados (BRECHAS #1), no bloquea'
+_SHADOW_EN = ' — warning only: your limits are not set yet (BRECHAS #1), it does not block'
+
+
+def _apply_shadow(checks, shadow):
+    """Los controles en SOMBRA se evalúan igual (mismo texto, misma cifra) pero nunca bloquean: quedan como aviso
+    (`shadow: true`, `warn` = habría bloqueado) y entran al libro de decisiones como violaciones de aviso."""
+    names = set(shadow or ())
+    if not names:
+        return checks
+    for c in checks:
+        if c['name'] in names and c.get('severity', 'block') == 'block':
+            would_block = not c['ok']
+            c.update(severity='warn', ok=True, warn=would_block, shadow=True)
+            if would_block:
+                c['detail'] = c['detail'] + _SHADOW_ES
+                c['detail_en'] = (c.get('detail_en') or c['detail']) + _SHADOW_EN
     return checks
 
 
@@ -447,3 +532,120 @@ def is_blocked(checks):
 
 def failed(checks):
     return [c for c in checks or [] if (not c.get('ok')) and c.get('severity', 'block') == 'block']
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Paso 17 — los MISMOS controles como HECHOS del grafo foco de las puertas SHACL (governance/shapes/order.ttl)
+# ════════════════════════════════════════════════════════════════════════════
+# Cada control de run_checks → una o más reglas con IRI estable (khr:order.*). tests/test_gates_orders_parity.py
+# exige que, sobre miles de contextos aleatorios, run_checks y las puertas compiladas den EXACTAMENTE el mismo
+# veredicto por control. Las reglas nuevas (sector, país, cadena, frescura, origen IA, lectura por voz, política
+# cambiada) solo existen en las puertas (en SOMBRA hasta que Fabrizio apruebe sus topes, BRECHAS #1).
+CHECK_RULES = {
+    'kill_switch': ('khr:order.kill_switch',),
+    'mode': ('khr:order.mode_live_enabled',),
+    'ledger_chain': ('khr:order.ledger_chain',),
+    'client_status': ('khr:order.client_active',),
+    'account': ('khr:order.account_readable',),
+    'symbol': ('khr:order.symbol_tradable', 'khr:order.asset_class_allowed'),
+    'restricted': ('khr:order.restricted', 'khr:order.not_allowed'),
+    'order_size': ('khr:order.price_known', 'khr:order.min_order_usd', 'khr:order.max_order_usd'),
+    'daily_limit': ('khr:order.daily_cap',),
+    'buying_power': ('khr:order.buying_power',),
+    'position_limit': ('khr:order.position_pct_after',),
+    'drawdown_stop': ('khr:order.drawdown_stop',),
+    'holdings': ('khr:order.no_short',),
+    'duplicate': ('khr:order.duplicate_window',),
+    'unresolved': ('khr:order.unresolved',),
+    'limit_price': ('khr:order.limit_deviation', 'khr:order.limit_passive', 'khr:order.limit_reference'),
+    'market_hours': ('khr:order.market_hours',),
+}
+POSITION_TOL = 1e-9          # la tolerancia de run_checks en el % de la posición (se aplica al HECHO, igual)
+
+
+def _available(acct, mandate, crypto):
+    bp, cash = _num(acct.get('buying_power')), _num(acct.get('cash'))
+    nmbp = _num(acct.get('non_marginable_buying_power'))
+    if mandate.get('allow_margin'):
+        return (nmbp if nmbp is not None else _min(bp, cash)) if crypto else bp
+    return _min(bp, cash, nmbp if crypto else None)
+
+
+def order_facts(ctx, extra=None):
+    """Los hechos de una orden para el grafo foco (core/gates/focus.order_triples), con EXACTAMENTE la semántica de
+    run_checks (mismas fórmulas, mismos límites efectivos, misma política del camino). `extra` agrega los hechos de
+    las reglas nuevas: origin, channel, readback_sha, paper_auto_approved, quote_age_s, account_age_s, pesos
+    después de la orden (sector/país/cadena, de la vista AccountRisk), policy_changed y sus límites de política."""
+    cl, od = ctx.get('client') or {}, ctx.get('order') or {}
+    acct = ctx.get('account') or {}
+    pol = ctx.get('policy') or {}
+    limits, mandate = _limits_and_mandate(cl, pol)
+    sym = str(od.get('symbol') or '').upper()
+    side = od.get('side')
+    est = ctx.get('est_usd')
+    mode = cl.get('mode') or 'paper'
+    f = {'id': od.get('id') or 'req', 'symbol': sym, 'side': side, 'order_type': od.get('order_type') or 'market',
+         'trading_enabled': trading_enabled(), 'account_mode': mode, 'client_status': cl.get('status') or 'active',
+         'account_readable': bool(cl.get('connected')) and not ctx.get('account_error'),
+         'symbol_valid': valid_symbol(sym), 'restricted_symbols': mandate['restricted_symbols'],
+         'allowed_symbols': mandate['allowed_symbols'], 'duplicate_recent': bool(ctx.get('recent_duplicate')),
+         'unresolved': bool(ctx.get('unresolved_order')), 'min_order_usd': MIN_ORDER_USD, 'est_usd': est}
+    if mode == 'live':
+        f['live_env_enabled'] = live_env_enabled()
+        f['client_live_enabled'] = bool(cl.get('live_enabled'))
+        lc = ctx.get('ledger_chain')
+        if lc is None:
+            try:
+                from core.ledger import money_gate
+                lc = money_gate()
+            except Exception:  # noqa: BLE001
+                lc = (False, '', '')
+        f['ledger_chain_ok'] = bool(lc[0])
+    if f['symbol_valid']:
+        f['asset_class'] = asset_class(sym)
+        f['allowed_asset_classes'] = list(mandate['allowed_asset_classes'])
+    if (side != 'sell' or pol.get('cap_sells')) and not (pol.get('reduce_only')
+                                                          and reduces_position(od, ctx.get('positions'))):
+        f['max_order_usd'] = limits['max_order_usd']
+    if side != 'sell' and est is not None:
+        f['daily_after_usd'] = float(ctx.get('daily_used_usd') or 0) + est
+        f['max_daily_usd'] = limits['max_daily_usd']
+    positions = ctx.get('positions') or []
+    pos = next((p for p in positions if str(p.get('symbol') or '').upper().replace('/', '') == sym.replace('/', '')),
+               None)
+    pos_mv = float((pos or {}).get('market_value') or 0)
+    pos_qty = float((pos or {}).get('qty') or 0)
+    equity = acct.get('equity')
+    if side == 'buy':
+        f['needs_funds'] = True
+        f['available_usd'] = _available(acct, mandate, asset_class(sym) == 'crypto')
+        f['max_position_pct'] = limits['max_position_pct']
+        if equity and float(equity) > 0 and est is not None:
+            after = (pos_mv + est) / float(equity) * 100.0
+            mx = limits['max_position_pct']
+            f['position_pct_after'] = after if after > mx + POSITION_TOL else min(after, mx)
+        hwm = cl.get('hwm_equity')
+        if hwm and equity is not None and float(hwm) > 0:
+            f['drawdown_pct'] = max(0.0, (float(hwm) - float(equity)) / float(hwm) * 100.0)
+            f['max_drawdown_pct'] = limits['max_drawdown_stop_pct']
+    elif side == 'sell':
+        if not pos:
+            short = True
+        elif od.get('qty') is not None:
+            short = not (float(od['qty']) <= pos_qty + 1e-9)
+        else:
+            short = not (est is not None and est <= pos_mv * 1.001)
+        f['short_sale'] = short
+    if od.get('order_type') == 'limit' and od.get('limit_price'):
+        lp, ref = _num(od.get('limit_price')), _num(ctx.get('ref_price'))
+        f['ref_price_known'] = bool(ref and ref > 0)
+        if ref and ref > 0:
+            f['limit_dev_pct'] = (lp - ref) / ref * 100.0
+            f['max_limit_dev_pct'] = LIMIT_DEVIATION_PCT
+            f['min_limit_dev_pct'] = -LIMIT_DEVIATION_PCT
+    if asset_class(sym) == 'us_equity' and valid_symbol(sym):
+        f['market_open'] = ctx.get('market_open') is not False
+    for k, v in (extra or {}).items():
+        if v is not None:
+            f[k] = v
+    return f

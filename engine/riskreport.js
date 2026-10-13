@@ -539,7 +539,7 @@
   /* ── detalle técnico (lo de antes, plegado) ──────────────────────────── */
   function techVar(r) {
     var v95 = r.var95, v99 = r.var99, h = '';
-    h += '<div class="note">' + esc(L('Datos: ', 'Data: ')) + esc(r.source) + ' · ' + esc(r.from) + ' → ' + esc(r.as_of) + ' (' + r.days + ' ' + esc(L('días', 'days')) + ')</div>';
+    h += '<div class="note">' + esc(L('Datos: ', 'Data: ')) + esc(L(r.source_es || r.source, r.source_en || r.source)) + ' · ' + esc(r.from) + ' → ' + esc(r.as_of) + ' (' + r.days + ' ' + esc(L('días', 'days')) + ')</div>';
     h += '<div class="cards">' +
       card(L('Valor de la cartera', 'Portfolio value'), usd(r.portfolio_value_usd), L('a precio de cierre', 'at closing price')) +
       card(L('Volatilidad anual', 'Annual volatility') + chip('vol_ann'), pct(r.vol_ann_pct, 1), L('diaria ', 'daily ') + pct(r.vol_daily_pct)) +

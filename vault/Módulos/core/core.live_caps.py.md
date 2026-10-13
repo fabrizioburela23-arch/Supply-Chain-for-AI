@@ -36,6 +36,7 @@ capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[core.khipu_chat.py]] — lo importa
 - [[core.live_fundamentals.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
+- [[core.prices_store.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
 - [[research.health.py]] — lo importa
 - [[server.py]] — lo importa

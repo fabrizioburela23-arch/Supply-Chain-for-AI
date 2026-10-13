@@ -252,6 +252,62 @@ def decision_triples(d):
     return list(t), D
 
 
+# hechos de la orden (brokerage/risk.order_facts) → propiedad del foco. Booleanos, textos y números tal cual.
+_ORDER_PROPS = (
+    ('symbol', 'symbol', str), ('side', 'side', str), ('order_type', 'orderType', str),
+    ('trading_enabled', 'tradingEnabled', bool), ('account_mode', 'accountMode', str),
+    ('live_env_enabled', 'liveEnvEnabled', bool), ('client_live_enabled', 'clientLiveEnabled', bool),
+    ('ledger_chain_ok', 'ledgerChainOk', bool), ('client_status', 'clientStatus', str),
+    ('account_readable', 'accountReadable', bool), ('symbol_valid', 'symbolValid', bool),
+    ('asset_class', 'assetClass', str), ('est_usd', 'estUsd', 'num'), ('min_order_usd', 'minOrderUsd', 'num'),
+    ('max_order_usd', 'maxOrderUsd', 'num'), ('daily_after_usd', 'dailyAfterUsd', 'num'),
+    ('max_daily_usd', 'maxDailyUsd', 'num'), ('needs_funds', 'needsFunds', bool),
+    ('available_usd', 'availableUsd', 'num'), ('position_pct_after', 'positionPctAfter', 'num'),
+    ('max_position_pct', 'maxPositionPct', 'num'), ('drawdown_pct', 'drawdownPct', 'num'),
+    ('max_drawdown_pct', 'maxDrawdownPct', 'num'), ('short_sale', 'shortSale', bool),
+    ('duplicate_recent', 'duplicateRecent', bool), ('unresolved', 'unresolvedOrder', bool),
+    ('ref_price_known', 'refPriceKnown', bool), ('limit_dev_pct', 'limitDeviationPct', 'num'),
+    ('max_limit_dev_pct', 'maxLimitDeviationPct', 'num'), ('min_limit_dev_pct', 'minLimitDeviationPct', 'num'),
+    ('market_open', 'marketOpen', bool), ('origin', 'origin', str), ('channel', 'channel', str),
+    ('paper_auto_approved', 'paperAutoApproved', bool), ('readback_sha', 'readbackSha', str),
+    ('quote_age_s', 'quoteAgeS', 'num'), ('max_quote_age_s', 'maxQuoteAgeS', 'num'),
+    ('account_age_s', 'accountAgeS', 'num'), ('max_account_age_s', 'maxAccountAgeS', 'num'),
+    ('sector_weight_after', 'sectorWeightAfter', 'num'), ('max_sector_weight', 'maxSectorWeight', 'num'),
+    ('country_weight_after', 'countryWeightAfter', 'num'), ('max_country_weight', 'maxCountryWeight', 'num'),
+    ('chain_exposure_after', 'chainExposureAfter', 'num'), ('max_chain_exposure', 'maxChainExposure', 'num'),
+    ('policy_changed', 'policyChangedSincePreview', bool),
+)
+_ORDER_LISTS = (('allowed_asset_classes', 'allowedAssetClass'), ('restricted_symbols', 'restrictedSymbol'),
+                ('allowed_symbols', 'allowedSymbol'))
+
+
+def order_triples(o):
+    """o = brokerage.risk.order_facts(...) → (tripletas, foco). Foco `a kh:OrderIntent` (puerta G3, §3.4).
+    Las cifras agregadas (peso del sector/país, exposición a la cadena Σw·Ψ) ya vienen calculadas por la vista
+    AccountRisk (core/hotviews/views/account.py): entran como literales, nunca SPARQL en vivo."""
+    t = _T()
+    O = node('order', o.get('id') or 'req')
+    t.add(O, TYPE, kh('OrderIntent'))
+    for key, local, kind in _ORDER_PROPS:
+        v = o.get(key)
+        if v is None:
+            continue
+        if kind == 'num':
+            t.add(O, kh(local), num(v))
+        elif kind is bool:
+            t.add(O, kh(local), v if isinstance(v, bool) else str(v))
+        else:
+            t.add(O, kh(local), str(v))
+    for key, local in _ORDER_LISTS:
+        for v in o.get(key) or ():
+            t.add(O, kh(local), str(v))
+    return list(t), O
+
+
+def gather_order(facts):
+    return order_triples(facts)
+
+
 # ── para pySHACL (pruebas, auditoría): importado de forma perezosa ───────────
 def to_rdflib(triples):
     from rdflib import Graph, Literal, URIRef

@@ -111,9 +111,26 @@ def guarded(f):
             return bad
         if not _db_ok():
             return _unavailable()
+        from brokerage import service as _bs
+        _bs.send_trace_begin()
         try:
             return _with_schema(lambda: f(*args, **kwargs))
         except Exception as e:  # noqa: BLE001
+            sent = _bs.send_trace()
+            if sent:   # revisión batch E: ya salió hacia Alpaca y falló guardar el resultado → DESCONOCIDA
+                _bs.record_unknown_after_send(sent, 'ui', type(e).__name__, source='ui', client_id=None)
+                return jsonify({'ok': False, 'code': 'unknown_state', 'client_order_id': sent[-1],
+                                'error': 'La orden se envió a Alpaca pero no se pudo guardar su resultado: estado '
+                                         'DESCONOCIDO. Revisa las órdenes antes de repetir (repetir la confirmación '
+                                         'usa el mismo identificador y no la duplica)',
+                                'error_en': 'The order was sent to Alpaca but its result could not be saved: state '
+                                            'UNKNOWN. Check the orders before repeating (repeating the confirmation '
+                                            'uses the same identifier and does not duplicate it)'}), 502
+            if type(e).__name__ == 'LedgerUnavailable':      # paso 15: sin decisión no hay orden (D4)
+                log.error('brokerage %s: libro de decisiones no disponible (%s)', f.__name__, e)
+                return jsonify({'ok': False, 'code': 'ledger_unavailable',
+                                'error': 'El libro de decisiones no está disponible: no se hizo nada',
+                                'error_en': 'The decision ledger is unavailable: nothing was done'}), 503
             log.warning('brokerage %s: %s', f.__name__, e)
             return jsonify({'error': 'error interno del corretaje', 'error_en': 'internal brokerage error',
                             'detail': f'{type(e).__name__}: {str(e).splitlines()[0][:200] if str(e) else ""}'}), 500

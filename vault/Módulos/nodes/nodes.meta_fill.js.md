@@ -30,7 +30,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
 
-Se carga en [[app.html]] en la posición **10 de 93** (línea 1445), después de [[nodes.nodes_expand5.js]] y antes de [[nodes.nodes_china.js]].
+Se carga en [[app.html]] en la posición **10 de 95** (línea 1445), después de [[nodes.nodes_expand5.js]] y antes de [[nodes.nodes_china.js]].
 
 ## Lo usan
 

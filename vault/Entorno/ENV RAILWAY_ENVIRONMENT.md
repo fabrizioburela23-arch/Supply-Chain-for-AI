@@ -23,7 +23,9 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_ops_review_steps568.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_security.py]]
+- [[tests.test_trading_agent_ledger.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

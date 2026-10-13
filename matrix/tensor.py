@@ -303,14 +303,16 @@ class Model:
         return self.block.get((cs, ct, r), 0.0) / float(a * b)
 
 
-def model(force=False, snap=None):
+def model(force=False, snap=None, view=None):
     """Modelo vigente (caché). Se reconstruye si cambia la GENERACIÓN del grafo (paso 8: antes, la fecha del
-    archivo del snapshot) o la versión de las caps en vivo."""
+    archivo del snapshot) o la versión de las caps en vivo. `view` (GraphView): el de UNA generación concreta (la
+    tarjeta V3 de esa generación, paso 14) — sin pasar por hot.graph() (que puede esperar al constructor)."""
     caps_live, caps_as_of = _caps_live()
     if snap is not None:
         return Model(snap, caps_live, _caps_private(), caps_as_of)
-    from core.hotviews import hot
-    view = hot.graph()
+    if view is None:
+        from core.hotviews import hot
+        view = hot.graph()
     key = (view.generation, caps_as_of, len(caps_live))
     with _LOCK:
         if not force and _MODEL['m'] is not None and _MODEL['key'] == key:

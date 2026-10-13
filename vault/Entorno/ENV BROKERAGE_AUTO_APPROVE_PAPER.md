@@ -17,7 +17,9 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_brokerage.py]]
+- [[tests.test_ledger_callsites.py]]
 - [[tests.test_mcp.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_phase3.py]]
 
 ## ¿Está documentada en CLAUDE.md?

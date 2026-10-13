@@ -77,6 +77,37 @@ clientInsights/clientChokepoint, el 55 % fijo del X-Ray y el 4/0,85 de la sala d
 (`run_live_simulation` con `engine_generation`), insights, brief, secondbrain y el Grafo Temporal muestran el MISMO
 número que /api/hot/impact (TSMC: 318 empresas ≥1 %). "Ganadores" = rivales poco golpeados con su % de DAÑO (nunca un
 % de ganancia). tests/test_no_client_engine.py lo vigila.
+**PASOS 12, 14, 15-17 y BLOQUE 2 (2026-10-13)**: VISTAS DERIVADAS (paso 14) — `core/hotviews/derived.py` + views
+card/quote/geo/alerts/account: `/api/hot/card/<id>` (NRS con sus 5 términos = la fórmula única, proveedores/clientes
+como PARES distintos de flujo, socios/inversores aparte, impacto, valuación privada verificada, estructura),
+`/api/hot/nrs` (lote), `/api/hot/geo`, `/api/hot/quote` (con sello de fuente/edad); MCP get_company, chat, voz
+(`_flow`, comparar), oswindows, agent_skills, World Monitor, Centinela/Guardián y el evaluador de alertas leen la
+ficha (NRS de todos 22 ms; Centinela 1.049 → 35 ms). KERNEL 2.0.0 (paso 12) — `governance/artifacts/kernel.params@2.0.0.json`
+(`"activation": "pin"`: NUNCA entra solo al release del repo): socios/inversores sin daño (#4), severidad de factores
+0-10 (#5), dirección 'up' con el piso, estrés severo que amplifica, ranking por Σ impacto, scenario_engine solo siembra y
+sim_agents toma los % del kernel. TODO es parámetro: con 1.0.0 (el vigente) los números son idénticos. Se activa con
+`POST /api/governance/activate {artifact, semver}` (PIN → decisión governance.activate de op:fabrizio; deshacer = activar
+la versión anterior) tras ver `GET /api/governance/preview` ("¿qué cambia?" sin tocar el kernel vivo); UI: 🩺 →
+Gobernanza (engine/governance.js: ¿Qué cambia? / Activar (PIN) / Ratificar (PIN)). Con 2.0.0: TSMC 318 → 254 empresas,
+ρ 1,21 → 0,91. UN CAMINO DE ÓRDENES (pasos 15-17) — `brokerage/alpaca.py` es el ÚNICO archivo que hace POST/DELETE a
+`/v2/orders|positions` (tests/test_order_single_path.py lo escanea); /api/trade/order|close → `brokerage.service.house_order|
+house_close` (cliente house, mismos run_checks con los límites de HOY — US$100.000 por orden, política `house_today`; cerrar
+o reducir una posición por cantidad no tiene ese tope: `house_reduce`), decisiones order.preview/confirm/submit
+(submit se escribe ANTES de llamar a Alpaca; sin libro → 503), approval.grant/deny, order.cancel; fallo tras enviar →
+`order_unknown_after_send` + 502 con el client_order_id. Dinero real de la casa = `BROKERAGE_LIVE_ENABLED=on` +
+"dinero real habilitado" en 👥 Clientes (si no → 403 live_not_enabled). Agente de trading: `trade.agent_signal` antes de
+actuar, sus órdenes por el mismo camino (source='agent', aprobación salvo papel), config como `policy.change`; tras un
+despliegue queda APAGADO con aviso (#14). Voz: `readback_sha` del resumen leído. Fills → `broker_fills` (append-only) +
+decision_outcomes (tarea cada 60 s). Puertas de órdenes: `governance/shapes/order.ttl` (62 reglas en total) + vista
+AccountRisk (Σw·Ψ) en SOMBRA; en producción corren cuando Fabrizio active ontology.shapes 3.0.0 + policy.gates 1.1.0
+con PIN. MEMORIA DE LOS NÚMEROS (bloque 2) — `ontology/history_models.py` (instruments, prices_eod, price_adjustments,
+fx_daily, metrics_eod, positions_eod; append-only salvo instruments) + `core/instruments.py` (empresa ≠ instrumento; el
+ticker de hoy es el principal; 16 multi-listados + 28 OTC/ADR en docs/REVISION_INSTRUMENTOS.md para que Fabrizio marque)
++ `core/prices_store.py` (carga diaria tras las 22:00 UTC en su hilo; splits/dividendos como factores, nunca reescritura;
+historia con huecos >12 días = incompleta; relleno de 5 años SOLO con PIN, reanudable, decisión data.backfill) +
+`/api/prices/*`, `/api/instruments/review` + 🩺 "📈 Historia de precios" (engine/pricehist.js). Riesgo: cierres
+ajustados alineados por fecha, FX diario por fecha, beta de Dimson para bolsas que cierran a otra hora; RSI de Wilder.
+`/v1/*` sigue con su cálculo (decisión #12 pendiente).
 
 ## Arquitectura
 
@@ -401,7 +432,9 @@ número que /api/hot/impact (TSMC: 318 empresas ≥1 %). "Ganadores" = rivales p
   `brokerage.service.preview_order → confirm_order/approve_preview`. Lo que
   proponen `mcp` o `committee` SIEMPRE espera aprobación humana (PIN) salvo
   BROKERAGE_AUTO_APPROVE_PAPER=on en cuentas de papel. Nunca crear otro camino
-  que envíe órdenes a Alpaca.
+  que envíe órdenes a Alpaca: desde el paso 15 también el panel, la voz, cripto, la terminal, el cierre y el
+  agente de trading van por `brokerage.service` (house_order/house_close) y SOLO brokerage/alpaca.py habla con
+  /v2/orders|positions (un test lo escanea).
 
 ## Convenciones de datos críticas
 
@@ -584,6 +617,7 @@ RESEARCH_BUSY_RETRIES (4)  ← R2: esperas ante "IA ocupada" (3/6/12/24 s) antes
 RESEARCH_PARALLEL (2; nunca más que los cupos de fondo), RESEARCH_JOB_CONCURRENCY (2), RESEARCH_STALE_MIN (30), RESEARCH_RESUME_MAX (3)  ← R3/R5: cola de investigación
 KHIPU_SCHEDULER (on; off en tests)  ← R5: reloj del servidor (core/scheduler.py) para lo diario
 HOTVIEWS (on), HOT_WAIT_S (2), HOTVIEWS_COALESCE_S (1), HOTVIEWS_LISTEN (on)  ← vistas rápidas (core/hotviews)
+PRICES_EOD (on), PRICES_REQ_INTERVAL_S (0.6)  ← historia de precios (core/prices_store: carga diaria tras las 22:00 UTC; el relleno de 5 años SOLO con PIN)
 GOV_RELEASE (vacío = el vigente de la base), <ARTEFACTO>=<semver> p. ej. KERNEL_PARAMS  ← SOLO eligen un release aprobado (D2)
 KHIPU_GATES (on; 'off' = emergencia: apaga las puertas SHACL en sombra)
 ```

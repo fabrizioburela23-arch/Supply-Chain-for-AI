@@ -249,7 +249,10 @@
         (alts.length ? `\nTambién coinciden con "${query}": ${alts.join(', ')} — dispara por id exacto si querías otro.` : '');
       // feedback visual: livesim sobre el miembro más golpeado del factor
       const members = Object.entries(r.factor.members || {}).sort((a, b) => b[1] - a[1]);
-      const actions = members.length ? [{ type: 'livesim', arg: { id: members[0][0], sev: Math.round((r.factor.severity_crisis / 5) * 100) } }] : [];
+      // la escala la da el servidor (kernel vigente: 1.0.0 → 0-5, 2.0.0 → 0-10); nunca más de 100 %
+      const scale = Number(r.factor.severity_scale) > 0 ? Number(r.factor.severity_scale) : 5;
+      const sev = Math.max(0, Math.min(100, Math.round((Number(r.factor.severity_crisis) / scale) * 100)));
+      const actions = members.length ? [{ type: 'livesim', arg: { id: members[0][0], sev } }] : [];
       return { answer: ans, actions };
     } catch (e) {
       return { answer: 'No pude disparar el factor (¿server caído?).', actions: [] };

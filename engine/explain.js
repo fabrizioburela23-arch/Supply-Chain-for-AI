@@ -178,6 +178,50 @@
       es: { t: "¿Qué es la Theta?", b: "La <b>Theta</b> mide cómo cambia el valor de tu cartera <b>a medida que pasa el tiempo</b>, suponiendo que nada más cambia en el mercado.<br><br>Theta de <b>−$20</b> = cada día que pasa tus opciones valen ~$20 menos (el \"costo del tiempo\"). Quien compra opciones suele tener Theta negativa; quien las vende, positiva." },
       en: { t: "What is Theta?", b: "<b>Theta</b> measures how your portfolio's value changes <b>as time passes</b>, assuming nothing else in the market changes.<br><br>Theta of <b>−$20</b> = each day that passes your options are worth ~$20 less (the \"cost of time\"). Option buyers usually have negative Theta; sellers, positive." },
     },
+    // paso 12 (INFRA_OPERATIVA): gobernanza de las reglas y el motor de contagio versionado
+    gov_release: {
+      es: { t: '¿Qué es el "release" y por qué se activa con tu PIN?',
+        b: 'Las reglas y los números de Khipus (cómo se contagia una crisis, la fórmula del riesgo NRS, los límites del corretaje…) ' +
+           'son <b>versiones guardadas con huella digital</b>. El conjunto vigente se llama <b>release</b>.<br><br>' +
+           'Una versión nueva llega con un despliegue pero <b>no manda</b> hasta que tú la activas con tu PIN. Antes puedes ver ' +
+           '<b>«¿Qué cambia?»</b>: Khipus recalcula todas las simulaciones con la versión nueva SIN tocar la vigente y te muestra las diferencias.<br><br>' +
+           'Cada activación queda registrada con tu nombre y la hora, y nunca se borra. <b>Deshacer</b> es activar la versión anterior (también queda registrado).' },
+      en: { t: 'What is the "release" and why is it activated with your PIN?',
+        b: 'Khipus\' rules and numbers (how a crisis spreads, the NRS risk formula, brokerage limits…) are <b>versions saved with a ' +
+           'digital fingerprint</b>. The set in force is called the <b>release</b>.<br><br>' +
+           'A new version arrives with a deploy but <b>does not rule</b> until you activate it with your PIN. Before that you can see ' +
+           '<b>"What changes?"</b>: Khipus recomputes every simulation with the new version WITHOUT touching the current one and shows you the differences.<br><br>' +
+           'Every activation is recorded with your name and the time, and is never deleted. <b>Undo</b> means activating the previous version (also recorded).' } },
+    kernel_v2: {
+      es: { t: '¿Qué cambia con el motor de contagio 2.0.0?',
+        b: '<ul style="margin:6px 0;padding-left:20px;line-height:1.7">' +
+           '<li><b>Solo contagian las relaciones de suministro</b> (fabricación, nube, licencias, energía, propiedad, despliegue). Una alianza o una inversión ya no ' +
+           'cuenta como si te dejaran sin piezas; se muestran aparte como «relacionadas».</li>' +
+           '<li><b>La gravedad de las crisis usa su escala real 0-10</b>: al disparar una crisis nadie arranca por encima del 100 %.</li>' +
+           '<li><b>Los auges de demanda</b> se calculan con el mismo motor: un vínculo débil ya no le pasa todo el auge a un proveedor.</li>' +
+           '<li><b>«Estrés severo»</b> ahora agrava el golpe (antes, por un error de fórmula, lo suavizaba).</li>' +
+           '<li><b>Los cuellos de botella</b> se ordenan por la fuerza total del golpe, no por cuántas empresas toca un poquito.</li>' +
+           '<li><b>Simulación por agentes</b>: los % salen del motor; la IA solo explica.</li></ul>' +
+           'El NRS no cambia. Son estimaciones estructurales, <b>no precios</b> ni recomendaciones.' },
+      en: { t: 'What changes with contagion engine 2.0.0?',
+        b: '<ul style="margin:6px 0;padding-left:20px;line-height:1.7">' +
+           '<li><b>Only supply relationships spread damage</b> (manufacturing, cloud, licenses, power, ownership, deployment). An alliance or an investment no longer ' +
+           'counts as if it left you without parts; they are shown separately as "related".</li>' +
+           '<li><b>Crisis severity uses its real 0-10 scale</b>: when a crisis fires nobody starts above 100%.</li>' +
+           '<li><b>Demand booms</b> are computed with the same engine: a weak link no longer passes the whole boom to a supplier.</li>' +
+           '<li><b>"Severe stress"</b> now worsens the hit (before, due to a formula error, it softened it).</li>' +
+           '<li><b>Chokepoints</b> are ranked by the total strength of the hit, not by how many companies they touch slightly.</li>' +
+           '<li><b>Agent simulation</b>: the % come from the engine; the AI only explains.</li></ul>' +
+           'The NRS does not change. These are structural estimates, <b>not prices</b> or recommendations.' } },
+    choke_sum: {
+      es: { t: '¿Qué es el «impacto total» de un cuello de botella?',
+        b: 'Si esa empresa cae, sumamos cuánto pierde cada empresa golpeada (100 % = una empresa entera). Un impacto total de 40 equivale a ' +
+           '<b>40 empresas completas</b> sin suministro. Ordenar por esto premia a quien golpea <b>fuerte</b>, no a quien toca a muchas un poquito. ' +
+           'Junto se muestra cuántas reciben ≥1 % y ≥10 %.' },
+      en: { t: 'What is a chokepoint\'s "total impact"?',
+        b: 'If that company fails, we add up how much every hit company loses (100% = one whole company). A total impact of 40 equals ' +
+           '<b>40 whole companies</b> without supply. Ranking by it rewards whoever hits <b>hard</b>, not whoever touches many slightly. ' +
+           'Next to it we show how many get ≥1% and ≥10%.' } },
     dilucion: {
       es: { t: '¿Qué es la dilución?', b: 'Cuando una empresa <b>emite acciones nuevas</b>, tu porción del pastel se achica: eso es <b>dilución</b>.<br><br>Dilución positiva (+%) = imprimieron acciones (malo para ti, salvo que el dinero se invierta muy bien). Dilución negativa (−%) = la empresa <b>recompró</b> acciones: tu porción crece sin que hagas nada (Nvidia y Apple lo hacen).' },
       en: { t: 'What is dilution?', b: 'When a company <b>issues new shares</b>, your slice of the pie shrinks: that’s <b>dilution</b>.<br><br>Positive dilution (+%) = they printed shares (bad for you unless the money is invested brilliantly). Negative dilution (−%) = the company <b>bought back</b> shares: your slice grows while you do nothing (Nvidia and Apple do this).' },

@@ -489,6 +489,13 @@ def x_rank_companies(by='connections', sector=None, country=None, listed_only=Fa
         from core.world import client_nrs
     except Exception:  # noqa: BLE001
         client_nrs = None
+    hot_nrs = {}
+    if by == 'risk':
+        try:   # paso 14: el vector NRS de la tarjeta V3 de la generación vigente (una vez, no una por empresa)
+            from core.hotviews.views import card as _card
+            hot_nrs = _card.nrs_map()
+        except Exception:  # noqa: BLE001
+            hot_nrs = {}
     for nid, n in snap['nodes'].items():
         if listed_only and not mt._listed(n):
             continue
@@ -506,7 +513,7 @@ def x_rank_companies(by='connections', sector=None, country=None, listed_only=Fa
                 raise ToolFailure('risk score is not available on this server')
             try:
                 # G4d: el NRS usa el grado ESTRUCTURAL (pares de flujo), igual que get_company y la app
-                row['nrs'] = client_nrs(n, snap['flow_deg'].get(nid, 0))
+                row['nrs'] = hot_nrs[nid] if nid in hot_nrs else client_nrs(n, snap['flow_deg'].get(nid, 0))
             except Exception:  # noqa: BLE001
                 continue
         rows.append(row)

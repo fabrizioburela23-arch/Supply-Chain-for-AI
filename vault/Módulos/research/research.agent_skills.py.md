@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "research/agent_skills.py"
 lenguaje: "python"
-lineas: 400
+lineas: 410
 aliases: ["research/agent_skills.py"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # research/agent_skills.py
 
-> Módulo · capa [[Capa Chat y agentes]] · 400 líneas · `research/agent_skills.py`
+> Módulo · capa [[Capa Chat y agentes]] · 410 líneas · `research/agent_skills.py`
 
 ## Para qué sirve
 
@@ -23,17 +23,17 @@ HABILIDADES PROPIAS de cada agente (2026-10-06).
 - `join_names(names, lang=…)` — ['A', 'B', 'C'] → 'A, B y C' (en: 'A, B and C'). _(línea 134)_
 - `working_line(seat)` — (es, en): lo que hace este analista mientras investiga. _(línea 182)_
 - `role_actions(seat, eid, label, listed)` _(línea 188)_
-- `skill_packet(seat, eid)` — → {text, facts, sources, n_evidence, ok}. Corre la evidencia del rol y sus extras EN PARALELO; nunca lanza. _(línea 345)_
-- `note_for(seat, label, facts, lang=…)` — Resumen DETERMINISTA (para la tarjeta de aportes del chat): solo valores de `facts`. _(línea 380)_
+- `skill_packet(seat, eid)` — → {text, facts, sources, n_evidence, ok}. Corre la evidencia del rol y sus extras EN PARALELO; nunca lanza. _(línea 355)_
+- `note_for(seat, label, facts, lang=…)` — Resumen DETERMINISTA (para la tarjeta de aportes del chat): solo valores de `facts`. _(línea 390)_
 
 **Internas** (empiezan con `_`): `_fmt_pct`, `_supply_extras`, `_geo_extras`, `_news_extras`, `_fund_extras`, `_macro_extras`, `_context`, `_indicator_facts`
 
 ## Depende de
 
+- [[core.__init__.py]] — importa `card`, `geo`
 - [[core.agents_registry.py]] — importa `AGENT_LABEL`, `CALL_ROLE`, `SEAT_AGENT`
 - [[core.gpr.py]] — importa `gpr_cached`
 - [[core.live_fundamentals.py]] — importa `get_all`
-- [[core.world.py]] — importa `entity_geo_risks`
 - [[matrix.tensor.py]] — importa `tensor`
 - [[research.context.py]] — importa `ContextBuilder`, `render_context`
 

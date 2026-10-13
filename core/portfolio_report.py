@@ -69,7 +69,19 @@ def build(positions, start_value=None, start_date=None, period='month', profile=
         if not h or len(h) < 2:
             missing.append(s)
             continue
+        raw_cur = cur or 'USD'
         cur = 'GBP' if cur == 'GBp' else (cur or 'USD').upper()
+        if cur != 'USD' and fetch is None:
+            # L2-01: el valor de cada FECHA con el tipo de cambio de ESA fecha (antes: la tasa de hoy para todo)
+            try:
+                from core.risk_report import align_fx, fx_series
+                fxs = fx_series(raw_cur, rng)
+                al = align_fx(h, fxs[0]) if fxs else {}
+            except Exception:  # noqa: BLE001
+                al = {}
+            if len(al) >= 2:
+                series[s], fx[s] = {d: h[d] for d in al}, al
+                continue
         rate = fx_fn(cur) or None
         if not rate:
             missing.append(s)
@@ -92,8 +104,12 @@ def build(positions, start_value=None, start_date=None, period='month', profile=
     spy = (got.get('SPY') or ({}, None))[0] or {}
     cash = max(0.0, _f(cash_usd, 0.0))
 
+    def rate(s, d):
+        v = fx[s]
+        return v.get(d, 0.0) if isinstance(v, dict) else v
+
     def value_at(d):
-        return sum(shares[s] * series[s][d] * fx[s] for s in shares) + cash
+        return sum(shares[s] * series[s][d] * rate(s, d) for s in shares) + cash
     curve = []
     v0 = value_at(dates[0])
     spy0 = spy.get(dates[0])
@@ -113,10 +129,13 @@ def build(positions, start_value=None, start_date=None, period='month', profile=
             continue
         n = _f(p['shares'], 0.0)
         cost = _f(p.get('cost_usd'))
-        contrib.append({'symbol': s, 'label': p.get('label') or s, 'value_usd': round(n * b * fx[s], 2),
-                        'change_pct': round((b / a - 1) * 100, 2), 'contrib_usd': round(n * (b - a) * fx[s], 2),
-                        'pnl_vs_cost_usd': round(n * b * fx[s] - cost, 2) if cost else None,
-                        'pnl_vs_cost_pct': round((n * b * fx[s] / cost - 1) * 100, 2) if cost else None})
+        ua, ub = a * rate(s, dates[0]), b * rate(s, dates[-1])      # en USD de cada fecha
+        if not ua or not ub:
+            continue
+        contrib.append({'symbol': s, 'label': p.get('label') or s, 'value_usd': round(n * ub, 2),
+                        'change_pct': round((ub / ua - 1) * 100, 2), 'contrib_usd': round(n * (ub - ua), 2),
+                        'pnl_vs_cost_usd': round(n * ub - cost, 2) if cost else None,
+                        'pnl_vs_cost_pct': round((n * ub / cost - 1) * 100, 2) if cost else None})
     contrib.sort(key=lambda x: -x['contrib_usd'])
     cost_total = sum(_f(p.get('cost_usd'), 0.0) for p in pos)
     base = _f(start_value) or (cost_total + cash if cost_total else None)

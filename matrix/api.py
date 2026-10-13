@@ -51,6 +51,16 @@ MAGNITUDE_MAX = 5.0
 SHOCK_IDS_CAP = 200
 
 
+def _magnitude_max():
+    """Tope de `magnitude` de /impact: 5 con kernel.params 1.0.0 (lo de siempre); con 2.0.0 (`fire_mode` member_coef,
+    PROP-05) 1 — ninguna entrada del kernel supera el 100 %, igual que /factor/fire y /api/hot/scenario."""
+    try:
+        from matrix import engine as _E
+        return 1.0 if _E._P('fire_mode', 'legacy') == 'member_coef' else MAGNITUDE_MAX
+    except Exception:  # noqa: BLE001
+        return MAGNITUDE_MAX
+
+
 def _env_num(name, default, lo, hi, cast=float):
     try:
         v = cast(os.getenv(name, default))
@@ -369,7 +379,7 @@ def matrix_impact():
         return jsonify({'error': 'shock: lista de ids requerida', 'error_en': 'shock: list of ids required'}), 400
     try:
         kw = dict(
-            magnitude=_num(body, 'magnitude', 1.0, 0.0, MAGNITUDE_MAX),
+            magnitude=_num(body, 'magnitude', 1.0, 0.0, _magnitude_max()),
             damping=_num(body, 'damping', _kdef('DAMPING'), 0.0, DAMPING_MAX),
             max_hops=_num(body, 'max_hops', _kdef('MAX_HOPS'), 1, MAX_HOPS_CAP, int),
             rel_weights=_rel_weights(body.get('rel_weights')),
@@ -983,25 +993,40 @@ def matrix_factor_fire():
     if target is None:
         return jsonify({'error': f'factor no activo o inexistente: {fid}',
                         'activos': [f['id'] for f in factors][:60]}), 404
-    crisis = target.get('severity_crisis') or min(5.0, target['severity'] * 2)
+    from matrix import engine as _E
+    member_coef = _E._P('fire_mode', 'legacy') == 'member_coef'
+    if member_coef:   # 2.0.0 (PROP-05): escala 0-10 de los datos; por defecto, el doble de la latente hasta 10
+        crisis = target.get('severity_crisis') or min(float(_E._P('fire_crisis_default_max', 10.0)),
+                                                      target['severity'] * 2)
+    else:
+        crisis = target.get('severity_crisis') or min(5.0, target['severity'] * 2)
     factors_crisis = [dict(f, severity=crisis) if f['id'] == fid else f
                       for f in factors]
     frag = fragility(idx, factors_crisis)
     shock_ids = [m for m in target['members'] if m in idx]
     if not shock_ids:
         return jsonify({'error': f'ningún miembro del factor existe en la matriz: {fid}'}), 400
-    # magnitud del golpe inicial = coeficiente del miembro × (crisis/5): un
-    # miembro coef 0.9 en una crisis sev 4 arranca al 72%, no al 100%
-    base_mag = magnitude if magnitude is not None else max(0.0, min(MAGNITUDE_MAX, float(crisis) / 5.0))
-    impacts, cascade = propagate(
-        mats, idx, ids, shock_ids, frag=frag,
-        magnitude=base_mag, damping=damping,
-        max_hops=max_hops)
-    # el golpe inicial por miembro respeta su coeficiente relativo
-    for m in shock_ids:
-        coef = min(1.0, float(target['members'][m]))
-        if m in impacts:
-            impacts[m] = round(impacts[m] * coef, 2)
+    if member_coef:
+        # 2.0.0 (PROP-05): x0 del miembro = magnitud × coeficiente, magnitud = crisis/escala ≤ 1 — ninguna entrada del
+        # kernel supera 1 (antes 60 de 69 factores arrancaban entre 120 % y 200 %)
+        div = float(_E._P('severity_divisor'))
+        base_mag = min(1.0, magnitude if magnitude is not None else max(0.0, float(crisis) / div))
+        x0 = {m: base_mag * min(1.0, max(0.0, float(target['members'][m]))) for m in shock_ids}
+        impacts, cascade = propagate(mats, idx, ids, shock_ids, frag=frag, damping=damping, max_hops=max_hops,
+                                     x0=x0)
+    else:
+        # magnitud del golpe inicial = coeficiente del miembro × (crisis/5): un
+        # miembro coef 0.9 en una crisis sev 4 arranca al 72%, no al 100%
+        base_mag = magnitude if magnitude is not None else max(0.0, min(MAGNITUDE_MAX, float(crisis) / 5.0))
+        impacts, cascade = propagate(
+            mats, idx, ids, shock_ids, frag=frag,
+            magnitude=base_mag, damping=damping,
+            max_hops=max_hops)
+        # el golpe inicial por miembro respeta su coeficiente relativo
+        for m in shock_ids:
+            coef = min(1.0, float(target['members'][m]))
+            if m in impacts:
+                impacts[m] = round(impacts[m] * coef, 2)
     rho_lat = spectral_radius(mats, factors, idx, damping=damping)
     rho_cri = spectral_radius(mats, factors_crisis, idx, damping=damping)
     top = sorted(((k, v) for k, v in impacts.items() if k not in target['members']),
@@ -1010,6 +1035,9 @@ def matrix_factor_fire():
         'factor': {'id': fid, 'label': target['label'],
                    'severity_latente': target['severity'],
                    'severity_crisis': crisis,
+                   # escala de la severidad del release vigente (1.0.0: 0-5; 2.0.0: 0-10, PROP-05) — el cliente
+                   # convierte crisis → % con ESTA escala, nunca con un /5 fijo
+                   'severity_scale': float(_E._P('severity_divisor')) if member_coef else 5.0,
                    'rationale': target.get('rationale', ''),
                    'members': target['members']},
         'rho': {'latente': rho_lat.get('rho'), 'crisis': rho_cri.get('rho'),

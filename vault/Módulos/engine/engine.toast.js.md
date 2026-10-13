@@ -24,7 +24,7 @@ NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que 
 
 - [[app.html]] — usa `LANG`, `_tradeFetch`, `_tradeStatusInfo`
 
-Se carga en [[app.html]] en la posición **27 de 93** (línea 7819), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
+Se carga en [[app.html]] en la posición **27 de 95** (línea 7826), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
 
 ## Lo usan
 
@@ -36,6 +36,7 @@ Se carga en [[app.html]] en la posición **27 de 93** (línea 7819), después de
 - [[engine.committee.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.crypto.js]] — usa `KhipuToast`
 - [[engine.desktop.js]] — usa `KhipuToast`
+- [[engine.governance.js]] — usa `KhipuToast`
 - [[engine.khipu_chat.js]] — usa `khipuActor`
 - [[engine.khipu_lang.js]] — usa `khipuActor`
 - [[engine.livesim.js]] — usa `khipuActor`
@@ -43,6 +44,7 @@ Se carga en [[app.html]] en la posición **27 de 93** (línea 7819), después de
 - [[engine.pfcommittee.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.pfreports.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.portfolios.js]] — usa `KhipuToast`
+- [[engine.pricehist.js]] — usa `KhipuToast`
 - [[engine.reconcile.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.research.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.temporal-graph.js]] — usa `khipuActor`

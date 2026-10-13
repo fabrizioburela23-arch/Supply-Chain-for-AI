@@ -77,8 +77,11 @@ def _momentum(symbol):
         res = ((r.json().get('chart') or {}).get('result') or [None])[0]
         if not res:
             return None
-        closes = [c for c in (res.get('indicators', {}).get('quote', [{}])[0]
-                              .get('close') or []) if c is not None]
+        ind = res.get('indicators') or {}
+        adj = ((ind.get('adjclose') or [{}])[0] or {}).get('adjclose') or []
+        raw = (ind.get('quote') or [{}])[0].get('close') or []
+        # L2-03: cierres AJUSTADOS por splits/dividendos (el 'close' crudo solo si Yahoo no trae adjclose)
+        closes = [c for c in (adj if adj and len(adj) == len(raw) else raw) if c is not None]
         if len(closes) < 21:
             return None
         last = closes[-1]

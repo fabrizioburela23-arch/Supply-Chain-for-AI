@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/governance.py"
 lenguaje: "python"
-lineas: 636
+lineas: 846
 aliases: ["core/governance.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/governance.py
 
-> Módulo · capa [[Capa Infraestructura]] · 636 líneas · `core/governance.py`
+> Módulo · capa [[Capa Infraestructura]] · 846 líneas · `core/governance.py`
 
 ## Para qué sirve
 
@@ -34,23 +34,27 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - `env_name(aid)` _(línea 193)_
 - `active()` — El Bundle vigente: el de la base si hay base y se pudo cargar; si no, el del repositorio. _(línea 206)_
 - `release()` — (release_hash, etiqueta) — κ de configuración para decisiones, eventos y vistas. _(línea 214)_
-- `fallbacks()` — {artifact_id: {semver, hash}} que el release VIGENTE de la base NO trae y que el código lee del archivo del repositorio (sin aprobar; p. … _(línea 233)_
-- `param(aid, key, default=…)` _(línea 249)_
-- `section(aid)` — Copia de los parámetros del artefacto vigente (para inicializar estructuras del módulo). _(línea 258)_
-- `artifact_hash_of(aid)` _(línea 263)_
-- `artifact_semver(aid)` _(línea 267)_
-- `policy_ref(aid)` — 'policy.broker_risk@1.0.0' + hash — para citar la política en una decisión. _(línea 271)_
-- `bind(target, aid, mapping)` — Asigna constantes de un módulo desde el artefacto `aid` y las re-asigna si cambia el release. `target`: dict de globals() o nombre de … _(línea 278)_
-- `on_release_change(fn)` — Oyente: fn(old_hash, new_hash) tras un cambio de release (vistas, cachés). _(línea 308)_
-- `bootstrap_db(engine=…)` — init_schema: registra en gov_artifacts los artefactos del repo cuyo hash es nuevo (decisión governance.propose) y, si la base no tiene … _(línea 357)_
-- `refresh(engine=…)` — Lee el release vigente de la base (y la selección por entorno), verifica los cuerpos por hash y lo pone en vigor. Barato (2 consultas … _(línea 463)_
-- `refresh_job()` — Tarea del reloj (system:governance_refresh). _(línea 539)_
-- `ratify(session, principal, release_hash=…, note=…)` — Ratifica (con PIN, una persona) el release vigente o `release_hash` → decisión governance.ratify. No es un UPDATE: el estado ratificado se … _(línea 545)_
-- `env_warnings()` — D2: variables de entorno numéricas que ya no mandan y CONTRADICEN al artefacto vigente. _(línea 574)_
-- `status()` _(línea 597)_
-- `explain(lang=…)` _(línea 609)_
+- `fallbacks()` — {artifact_id: {semver, hash}} que el release VIGENTE de la base NO trae y que el código lee del archivo del repositorio (sin aprobar; p. … _(línea 239)_
+- `param(aid, key, default=…)` _(línea 255)_
+- `section(aid)` — Copia de los parámetros del artefacto vigente (para inicializar estructuras del módulo). _(línea 264)_
+- `artifact_hash_of(aid)` _(línea 269)_
+- `artifact_semver(aid)` _(línea 273)_
+- `policy_ref(aid)` — 'policy.broker_risk@1.0.0' + hash — para citar la política en una decisión. _(línea 277)_
+- `bind(target, aid, mapping)` — Asigna constantes de un módulo desde el artefacto `aid` y las re-asigna si cambia el release. `target`: dict de globals() o nombre de … _(línea 284)_
+- `on_release_change(fn)` — Oyente: fn(old_hash, new_hash) tras un cambio de release (vistas, cachés). _(línea 314)_
+- `bootstrap_db(engine=…)` — init_schema: registra en gov_artifacts los artefactos del repo cuyo hash es nuevo (decisión governance.propose) y, si la base no tiene … _(línea 363)_
+- `refresh(engine=…)` — Lee el release vigente de la base (y la selección por entorno), verifica los cuerpos por hash y lo pone en vigor. Barato (2 consultas … _(línea 474)_
+- `refresh_job()` — Tarea del reloj (system:governance_refresh). _(línea 568)_
+- `ratify(session, principal, release_hash=…, note=…)` — Ratifica (con PIN, una persona) el release vigente o `release_hash` → decisión governance.ratify. No es un UPDATE: el estado ratificado se … _(línea 574)_
+- `available_artifact(aid, semver)` — {semver, hash, params, kind, change_kind, changelog_es/en, activation} de una versión DISPONIBLE (archivo del repositorio; con base, además … _(línea 603)_
+- clase `counterfactual` — `with counterfactual({'kernel.params': '2.0.0'}):` — ESTE hilo lee esas versiones (archivo del repositorio, verificado por hash) en vez de … _(línea 618)_
+- `proposals()` — Versiones DISPONIBLES (repositorio) distintas de la vigente, por artefacto: lo que el 🩺 ofrece activar con PIN. [{id, semver, … _(línea 636)_
+- `activate(session, principal, selection, note=…)` — Activa YA (D5: inmediato) el release vigente con las versiones de `selection` ({artifact_id: semver}) sustituidas → fila nueva en … _(línea 685)_
+- `env_warnings()` — D2: variables de entorno numéricas que ya no mandan y CONTRADICEN al artefacto vigente. _(línea 784)_
+- `status()` _(línea 807)_
+- `explain(lang=…)` _(línea 819)_
 
-**Internas** (empiezan con `_`): `_bundle`, `_db_on`, `_art`, `_apply_one`, `_apply_bindings`, `_swap`, `_engine`, `_tables_ready`, `_bootstrap_write`, `_parent_hash`, `_ratified_releases`, `_reset_for_tests`
+**Internas** (empiezan con `_`): `_bundle`, `_db_on`, `_art`, `_apply_one`, `_apply_bindings`, `_swap`, `_engine`, `_tables_ready`, `_bootstrap_write`, `_parent_hash`, `_ratified_releases`, `_bump_release_semver`, `_semver_major_changed`, `_reset_for_tests`
 
 ## Depende de
 
@@ -61,10 +65,13 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 ## Lo usan
 
 - [[brokerage.risk.py]] — lo importa
+- [[brokerage.service.py]] — lo importa
 - [[core.decide.py]] — lo importa
 - [[core.decisions.py]] — lo importa
 - [[core.governance_api.py]] — lo importa
+- [[core.governance_preview.py]] — lo importa
 - [[core.numbers.py]] — lo importa
+- [[core.scenario_engine.py]] — lo importa
 - [[core.world.py]] — lo importa
 - [[matrix.engine.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
@@ -77,7 +84,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 11 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -88,8 +95,14 @@ _Además lo importan 5 pruebas (lista abajo)._
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
+- [[tests.test_governance_activation.py]]
 - [[tests.test_governance_seed_parity.py]]
+- [[tests.test_kernel_monotone_severity.py]]
+- [[tests.test_kernel_reference_figures.py]]
+- [[tests.test_matrix.py]]
+- [[tests.test_ontology_actions.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_scenario_kernel.py]]
 
 ## Mencionado en sesiones de trabajo
 

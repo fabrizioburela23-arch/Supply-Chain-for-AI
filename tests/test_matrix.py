@@ -131,6 +131,27 @@ def test_api_endpoints(db):
     assert bad.status_code == 400
 
 
+def test_impact_magnitud_acotada_a_1_con_kernel_2(db):
+    """Revisión batch E (PROP-05): con kernel.params 2.0.0 ninguna entrada del kernel supera 1 — /impact acota
+    `magnitude` a [0, 1] (como /factor/fire y /api/hot/scenario); con 1.0.0 sigue el tope 5 de siempre."""
+    import server
+    from core import governance
+    client = server.app.test_client()
+    r1 = client.post('/api/matrix/impact', json={'shock': ['TSMC'], 'magnitude': 1}).get_json()
+    r3 = client.post('/api/matrix/impact', json={'shock': ['TSMC'], 'magnitude': 3}).get_json()
+    assert sum(r3['impacts'].values()) > sum(r1['impacts'].values())        # 1.0.0: igual que siempre
+    with governance.counterfactual({'kernel.params': '2.0.0'}):
+        a = client.post('/api/matrix/impact', json={'shock': ['TSMC'], 'magnitude': 1}).get_json()
+        b = client.post('/api/matrix/impact', json={'shock': ['TSMC'], 'magnitude': 3}).get_json()
+        assert a['impacts'] == b['impacts'] and a['impacts']['TSMC'] == 100.0
+        f = client.get('/api/matrix/factors').get_json()
+        fid = next(x['id'] for x in (f.get('factors') or f.get('items') or []) if x.get('severity_crisis'))
+        fr = client.post('/api/matrix/factor/fire', json={'factor_id': fid}).get_json()
+        assert fr['factor']['severity_scale'] == 10.0             # el cliente convierte crisis → % con esta escala
+    fr = client.post('/api/matrix/factor/fire', json={'factor_id': fid}).get_json()
+    assert fr['factor']['severity_scale'] == 5.0
+
+
 # ── Historial de insights (Track B) ─────────────────────────────────────────
 # OJO: /api/matrix/insights YA EXISTÍA (sim narrada del hipergrafo). El
 # historial es una ruta NUEVA bajo /insights/history para no colisionar.

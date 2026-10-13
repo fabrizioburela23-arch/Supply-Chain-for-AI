@@ -2524,6 +2524,10 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <div id="diag-body"><div class="ksys-empty" data-ksys-t="diag_loading">Cargando diagnóstico…</div></div>
     <!-- G3 (misión de reparación): grafo base vs catálogo — engine/reconcile.js -->
     <div id="recon-box"></div>
+    <!-- paso 12 (INFRA_OPERATIVA): release vigente, «¿Qué cambia?» y «Activar (PIN)» — engine/governance.js -->
+    <div id="gov-box"></div>
+    <!-- BRECHAS bloque 2: historia de precios + descarga de 5 años (PIN) — engine/pricehist.js -->
+    <div id="prices-box"></div>
   </div>
 
   <div id="sistema-registro" role="tabpanel" style="display:none">
@@ -5782,6 +5786,7 @@ const DIAG_META = {
   fmp:        { icon:'📑', name:'FMP',                 why:'Estados financieros · perfil · precio objetivo (plan con cobertura limitada)', why_en:'Financial statements · profile · price target (limited-coverage plan)' },
   grafo:      { icon:'◈',  name:'Grafo Temporal', name_en:'Temporal Graph', why:'Memoria temporal (nativa · Neo4j opcional)', why_en:'Temporal memory (native · optional Neo4j)' },
   ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', name_en:'Ontology (Postgres)', why:'Fuente única de verdad · eventos bitemporales', why_en:'Single source of truth · bitemporal events' },
+  gobernanza: { icon:'⚖', name:'Gobernanza', name_en:'Governance', why:'Reglas y motor versionados · se activan con tu PIN', why_en:'Versioned rules and engine · activated with your PIN' },
   market_extra:{icon:'🗂', name:'Fuentes de respaldo', name_en:'Backup sources', why:'FMP · MarketStack · AlphaVantage', why_en:'FMP · MarketStack · AlphaVantage' },
   investigacion:{icon:'🔬', name:'Investigación IA', name_en:'AI research', why:'Proveedores en pausa · cola · presupuesto diario · reloj del servidor (R6)', why_en:'Paused providers · queue · daily budget · server clock (R6)' },
 };
@@ -5900,12 +5905,14 @@ window.openDiagnostics = async function(fresh){
     const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
-    const order = ['claude','gemini','nvidia','investigacion','elevenlabs','finnhub','yahoo','fmp','grafo','ontologia','market_extra'];
+    const order = ['claude','gemini','nvidia','investigacion','elevenlabs','finnhub','yahoo','fmp','grafo','ontologia','gobernanza','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k], d.routing)).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const lv = ok===tot ? 'ok' : (ok===0 ? 'bad' : 'warn');
     sum.innerHTML = `<b class="ksys-sumb ksys-lv-${lv}">${esc(ok)}/${esc(tot)} ${esc(_sysL('operativos', 'operational'))}</b> · ${esc(_sysL('ruta de la IA', 'AI route'))}: <code>${esc((d.routing && (_sysEN() ? d.routing.hint_en : d.routing.hint_es)) || '?')}</code>${d.cached ? ' · ' + esc(_sysL('caché', 'cached')) : ''}`;
     if(window.KhipuReconcile && d.services && d.services.ontologia && d.services.ontologia.configured) window.KhipuReconcile.mount('recon-box');
+    if(window.KhipuGovernance) window.KhipuGovernance.mount('gov-box');
+    if(window.KhipuPriceHistory) window.KhipuPriceHistory.mount('prices-box');
   }catch(e){
     body.innerHTML = _sysErrCard(_sysL('No se pudo obtener el diagnóstico', 'Could not load the diagnostics'), String(e.message||e),
       _sysL('El diagnóstico en vivo necesita el servidor de Khipus (backend Flask). Si acabas de desplegar, espera un minuto y pulsa ↻ Re-probar.',
@@ -7933,6 +7940,8 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <script src="engine/termdata.js"></script>
 <script src="engine/explain.js"></script>
 <script src="engine/reconcile.js"></script>
+<script src="engine/governance.js"></script>
+<script src="engine/pricehist.js"></script>
 <script src="nodes/crypto_intel.js"></script>
 <script src="nodes/crypto_intel2.js"></script>
 <script src="engine/crypto.js"></script>
@@ -8448,7 +8457,7 @@ window._simGroundFactor = async function (presetId) {
     const top = (r.top_contagio || []).slice(0, 6).map(t => `<b>${h(t.id)}</b> ${t.impact}%`).join(' · ');
     const estab = r.rho && r.rho.estable_en_crisis === false ? '⚠ régimen supercrítico' : 'estable';
     box.innerHTML = `<div style="margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--violet);border-radius:8px;background:var(--surface);font-size:12px;line-height:1.65">
-      <b>📐 Ancla del motor de matrices</b> — factor real disparado: <b>${h(r.factor.label)}</b> (severidad ${h(r.factor.severity_crisis)}/5)<br>
+      <b>📐 Ancla del motor de matrices</b> — factor real disparado: <b>${h(r.factor.label)}</b> (severidad ${h(r.factor.severity_crisis)}/${h(r.factor.severity_scale || 5)})<br>
       Contagio determinista, sin IA: alcanza <b>${r.affected}</b> empresas · ${top}<br>
       ρ(T) en crisis: ${h(r.rho && r.rho.crisis)} (${estab}). Contrasta la narrativa de abajo con estos números.</div>`;
   } catch (e) { box.innerHTML = ''; }

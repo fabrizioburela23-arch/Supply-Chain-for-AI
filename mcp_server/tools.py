@@ -484,6 +484,20 @@ def _edges(nid, direction, min_w=0.0, kinds=None):
     return out
 
 
+def _distinct_pairs(lst, nid):
+    """Una arista por contraparte (la de mayor peso; empate → la primera), sin lazos, ordenadas por (-peso, id de la
+    contraparte): la MISMA regla que la tarjeta V3 (`card.build`: put + top)."""
+    best = {}
+    for e in lst:
+        other = e['target'] if e['source'] == nid else e['source']
+        if other == nid:
+            continue
+        cur = best.get(other)
+        if cur is None or (e.get('w') or 0) > (cur.get('w') or 0):
+            best[other] = e
+    return sorted(best.values(), key=lambda e: (-(e.get('w') or 0), e['target'] if e['source'] == nid else e['source']))
+
+
 def _neighbor(e, nid):
     """Arista vista desde `nid`: la otra punta + peso/relación/clase/confianza."""
     other = e['target'] if e['source'] == nid else e['source']
@@ -498,6 +512,21 @@ def _nrs(nid, node):
     que la app (computeNRS) sobre el catálogo."""
     expl = ('Network Risk Score 0-100 (higher = more fragile position in the AI supply chain): country/geo '
             'risk + graph centrality + margin + fundamentals + concentration. A heuristic, not a forecast.')
+    try:   # paso 14: la tarjeta V3 de la generación vigente (LA fórmula + sus 5 términos; sin una consulta por empresa)
+        from core.hotviews.views import card as _card
+        cv = _card.reader_view()
+        # con base pero leyendo el snapshot (base sin el catálogo / calentando): manda el objeto de la ontología
+        use = cv is not None and (cv.source == 'pg') == bool(_auth.db_available())
+        t = cv.nrs_all().get(nid) if use else None
+        if t is not None:
+            return {'value': t['total'],
+                    'terms': {k: t[k] for k in ('geo', 'chain', 'market', 'fundamental', 'concentration')},
+                    'method': (('server' if cv.source == 'pg' else 'catalog formula') +
+                               ' via hot view V3 card (same formula as the app computeNRS; structural degree = flow '
+                               'relations, distinct pairs, of the current graph generation)'),
+                    'generation': cv.generation, 'explain': expl}
+    except Exception as e:  # noqa: BLE001
+        log.info('mcp nrs card: %s', type(e).__name__)
     if _auth.db_available():
         try:
             from ontology.agents import _compute_server_nrs
@@ -636,9 +665,11 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
     # (partner/invest) van en `related` con la misma forma. Antes Equinix tenía
     # a Colliers/Fitch/Carlyle como "top_suppliers" por ser `partner`.
     fl = flow_types()
-    ups, downs = _edges(nid, 'up', kinds=fl), _edges(nid, 'down', kinds=fl)
-    rel = _edges(nid, 'up', kinds=RELATED_TYPES) + _edges(nid, 'down', kinds=RELATED_TYPES)
-    rel.sort(key=lambda e: (-(e.get('w') or 0), e['source'], e['target']))
+    # Conteos y listas en PARES DISTINTOS (una contraparte = una fila, la de mayor peso), igual que la tarjeta V3
+    # (core/hotviews/views/card.py) que leen la voz y /api/hot/card: antes TSMC tenía 95 clientes aquí y 78 allí.
+    ups = _distinct_pairs(_edges(nid, 'up', kinds=fl), nid)
+    downs = _distinct_pairs(_edges(nid, 'down', kinds=fl), nid)
+    rel = _distinct_pairs(_edges(nid, 'up', kinds=RELATED_TYPES) + _edges(nid, 'down', kinds=RELATED_TYPES), nid)
     out['top_suppliers'] = [_neighbor(x, nid) for x in ups[:10]]
     out['top_customers'] = [_neighbor(x, nid) for x in downs[:10]]
     out['related'] = [_neighbor(x, nid) for x in rel[:10]]
@@ -652,16 +683,24 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
     # 2026-10-05: geopolítica EN VIVO de la empresa (World Monitor: reglas/sanciones que la nombran,
     # rutas con caída, eventos cerca de su sede, riesgo país oficial). Solo caché: no bloquea.
     if include_live:
-        try:
-            world = importlib.import_module('core.world')
-            out['geo_live'] = {'items': (world.entity_geo_risks([nid], wait=0) or {}).get(nid, []),
+        try:   # paso 14: la vista V6 GeoRisk (≤3 hechos por empresa, armada una vez por versión del mundo)
+            from core.hotviews.views import geo as _geo
+            facts, wv = _geo.facts([nid], wait=0)
+            out['geo_live'] = {'items': facts.get(nid, []), 'world_version': wv,
                                'source': 'Khipus World Monitor (official + live layers, cached)'}
         except Exception:  # noqa: BLE001
             out['geo_live'] = {'items': [], 'source': 'world monitor unavailable'}
     # 2026-10-06: ONTOLOGÍA NIVEL 2 (matrix/tensor.py) — concentración de proveedores, países de
     # origen, capitalización aguas abajo en riesgo, fuentes de riesgo aguas arriba y comparables.
     try:
-        st = importlib.import_module('matrix.tensor').structure(nid, top=3)
+        try:   # paso 14: la estructura de la tarjeta V3 (memo por generación y caps); respaldo: el tensor directo
+            from core.hotviews.views import card as _card
+            cv = _card.reader_view()
+            st = cv.structure(nid) if cv is not None and nid in cv.cards else None
+        except Exception:  # noqa: BLE001
+            st = None
+        if st is None:
+            st = importlib.import_module('matrix.tensor').structure(nid, top=3)
         if st:   # resumen compacto (el chat tiene ~7.000 caracteres por herramienta); detalle: /api/tensor/node
             sc, dn = st['supplier_concentration'], st['downstream']
             out['structure'] = {
@@ -671,7 +710,7 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
                 'downstream_cap_at_risk_usd_b': dn['cap_at_risk_usd_b'], 'systemic_rank': dn['systemic_rank'],
                 'cap_coverage_pct': dn['cap_coverage_pct'],
                 'risk_sources': [f"{x['label']} {x['exposure_pct']}%" + ('' if x['direct'] else ' (indirect)')
-                                 for x in st['upstream_risk_sources']],
+                                 for x in st['upstream_risk_sources'][:3]],
                 'peers': [x['label'] for x in st['peers'][:3]],
                 'note': 'supplier shares = weight of supplier links, not spend; cap at risk counts only companies '
                         'with a known (live or verified) market cap'}

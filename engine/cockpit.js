@@ -2708,7 +2708,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var kicon = { riesgo: '⚠️', oportunidad: '📈', estructura: '🕸' };
     var facts = (d.factors || []).map(function (f) {
       return '<span class="bcp-fact">⚡ <b>' + esc(f.label) + '</b> · ' + (en ? 'sev' : 'sev') + ' ' +
-        Math.round(f.severity || 5) + '/10 · ' + (f.members || []).length + (en ? ' hit' : ' afecta') + '</span>';
+        Math.round(f.severity != null ? f.severity : 1) + '/10 · ' + (f.members || []).length + (en ? ' hit' : ' afecta') + '</span>';
     }).join('');
     var cards = (d.insights || []).map(function (it) {
       var k = (it.kind === 'riesgo' || it.kind === 'oportunidad' || it.kind === 'estructura') ? it.kind : 'estructura';

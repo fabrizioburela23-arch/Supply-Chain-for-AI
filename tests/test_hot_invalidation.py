@@ -222,3 +222,98 @@ def test_linaje_nuevo_invalida_aunque_la_version_no_retroceda(db):
     g2 = builder.ensure(v1, lin1, timeout=10)
     assert g2 is not None and g2.lineage == lin1 and g2.views['graph_core'].ids == ['HI_Z']
     assert registry.lag(g)[1] is True                 # la generación vieja queda marcada stale
+
+
+# ── paso 14: la tarjeta V3 vive con SU generación; el NRS se renueva con los fundamentales en vivo ──
+def test_tarjeta_por_generacion_y_nrs_por_version_de_fundamentales(monkeypatch):
+    import core.live_fundamentals as lf
+    import ontology.db as odb
+    from core.hotviews import builder, derived, registry
+    from core.hotviews.views import card
+    monkeypatch.setattr(odb, 'ontology_available', lambda: False)
+    registry.reset()
+    derived.reset()
+    try:
+        g1 = builder.build_once()
+        c1 = card.view(g1)
+        assert card.view(g1) is c1                              # una vez por generación
+        monkeypatch.setattr(lf, 'version', lambda: 1)
+        monkeypatch.setattr(lf, 'live_margin', lambda nid: None)
+        n_before = c1.nrs('TSMC')
+        monkeypatch.setattr(lf, 'live_margin', lambda nid: -1.0 if nid == 'TSMC' else None)
+        assert c1.nrs('TSMC') == n_before                       # misma versión de fundamentales: no recalcula
+        monkeypatch.setattr(lf, 'version', lambda: 2)
+        assert c1.nrs('TSMC') != n_before                       # tanda nueva → el margen real entra
+        g2 = builder.build_once()                               # mismo contenido → MISMA generación → misma tarjeta
+        assert g2.id == g1.id and card.view(g2) is c1
+
+        class _G:                                               # generaciones distintas (ids distintos)
+            def __init__(self, i):
+                self.id = i
+        built = []
+        for i in ('gA', 'gB', 'gC'):
+            derived.get(_G(i), 'probe', lambda g: built.append(g.id) or {'gen': g.id})
+        assert built == ['gA', 'gB', 'gC']
+        assert derived.peek(_G('gA'), 'probe') is None          # se guardan solo las 2 últimas generaciones
+        assert derived.peek(_G('gC'), 'probe') == {'gen': 'gC'}
+    finally:
+        registry.reset()
+        derived.reset()
+
+
+@needs_db
+def test_tarjeta_refleja_la_escritura_en_la_generacion_nueva(db):
+    from core.hotviews import builder
+    from core.hotviews.views import card
+    from ontology.db import session_scope
+    from ontology.service import apply_event
+    with session_scope() as s:
+        for oid in ('HC_X', 'HC_Y'):
+            apply_event(s, 'ObjectCreated', {'label': oid, 'type': 'Company'}, valid_from='2000-01-01',
+                        source='test', actor='pytest', object_id=oid)
+    v0, lin = _db_version()
+    g0 = builder.ensure(v0, lin, timeout=10)
+    c0 = card.view(g0).cards.get('HC_Y')
+    with session_scope() as s:
+        apply_event(s, 'LinkCreated', {'rel_type': 'supply', 'weight': 3.0}, valid_from='2000-01-01',
+                    source='test', actor='pytest', object_id='HC_X', target_id='HC_Y')
+    g1 = builder.ensure(v0 + 1, lin, timeout=10)
+    assert g1 is not None and g1.id != g0.id
+    c1 = card.view(g1).cards.get('HC_Y')
+    assert c0 is not None and c1 is not None and card.view(g1) is not card.view(g0)
+    assert c0['counts']['suppliers'] == 0 and c1['counts']['suppliers'] == 1
+    assert c1['top_suppliers'][0]['id'] == 'HC_X'
+
+
+@needs_db
+def test_alertas_en_lote_iguales_a_una_por_una(db):
+    from core.hotviews.views import alerts
+    from ontology.agents import evaluate_alert
+    from ontology.db import session_scope
+    from ontology.service import apply_event
+    with session_scope() as s:
+        apply_event(s, 'ObjectCreated', {'label': 'AIdx', 'type': 'Company', 'properties': {'nrs_override': 77}},
+                    valid_from='2000-01-01', source='test', actor='pytest', object_id='AIdx')
+    rules = [{'entity': 'AIdx', 'metric': 'nrs', 'op': '>', 'value': 70},
+             {'entity': 'HI_A', 'metric': 'nrs', 'op': '<', 'value': 101},
+             {'entity': 'NoSuch', 'metric': 'nrs', 'op': '>', 'value': 1}]
+    with session_scope() as s:
+        vals = alerts.values(s, rules)
+        batch = [evaluate_alert(s, r, values=vals) for r in rules]
+        one = [evaluate_alert(s, r) for r in rules]
+    assert batch == one
+    assert batch[0][:2] == (True, 77) and batch[2] == (False, None, 'objeto no encontrado')
+    assert alerts.index(rules)[('nrs', 'AIdx')] == [0]
+    # la lectura pidió ponerse al día en segundo plano (modo perezoso): se espera a que termine para no dejar una
+    # construcción en vuelo que publique después en la prueba siguiente
+    from core.hotviews import builder
+    v, lin = _db_version()
+    builder.ensure(v, lin, timeout=10)
+    _settle()
+
+
+def _settle(timeout=10.0):
+    from core.hotviews import builder
+    t0 = time.time()
+    while builder.state().get('building') and time.time() - t0 < timeout:
+        time.sleep(0.02)

@@ -9,7 +9,8 @@ Qué revisa (falla con código 1 y la lista de problemas):
   · cada governance/artifacts/<id>@<semver>.json: forma, nombre, hash (sha256 del JSON canónico de
     {id, semver, kind, params[, deprecated]}) igual al del manifiesto; NINGÚN archivo ya listado cambió de
     contenido con la misma versión (un cambio = archivo NUEVO con otra versión: el registro solo crece);
-  · el release del manifiesto = la versión más alta de cada artefacto; release_hash = sha256({id: hash});
+  · el release del manifiesto = la versión más alta de cada artefacto, salvo las `"activation": "pin"` (un MAJOR que
+    solo entra en vigor cuando Fabrizio lo activa con PIN: queda disponible); release_hash = sha256({id: hash});
   · lint de semver (`gov.semver_matches_diff`): un 'patch' no cambia ningún parámetro; un 'minor' solo AGREGA
     claves; quitar o cambiar un número o un conjunto exige 'major'; el salto de versión debe ser del tamaño que
     declara change_kind; 'initial' (o sin change_kind) solo para la primera versión de cada artefacto;
@@ -157,8 +158,15 @@ def semver_problems(docs):
     return probs
 
 
+def releasable(docs):
+    """Las versiones que pueden entrar en el release PROPUESTO del repositorio: todas menos las marcadas
+    `"activation": "pin"` (un MAJOR que solo entra en vigor cuando Fabrizio lo activa con su PIN en el 🩺 —
+    core.governance.activate; hasta entonces queda 'disponible' y el release propuesto conserva la versión anterior)."""
+    return {k: d for k, d in docs.items() if d.get('activation') != 'pin'}
+
+
 def build_manifest(docs, release_semver):
-    latest = G.latest_per_id(docs)
+    latest = G.latest_per_id(releasable(docs))
     arts = {aid: {'semver': d['semver'], 'hash': G.artifact_hash(d), 'file': f'artifacts/{aid}@{d["semver"]}.json'}
             for aid, d in sorted(latest.items())}
     return {
@@ -167,8 +175,10 @@ def build_manifest(docs, release_semver):
                  'una PROPUESTA; manda el aprobado en la base (core/governance.py).'),
         'release': {'semver': release_semver, 'release_hash': G.release_hash_of({a: v['hash'] for a, v in arts.items()}),
                     'artifacts': arts},
-        'available': [{'id': aid, 'semver': sv, 'hash': G.artifact_hash(d), 'change_kind': d.get('change_kind'),
-                       'file': f'artifacts/{aid}@{sv}.json'} for (aid, sv), d in sorted(docs.items())],
+        'available': [dict({'id': aid, 'semver': sv, 'hash': G.artifact_hash(d), 'change_kind': d.get('change_kind'),
+                            'file': f'artifacts/{aid}@{sv}.json'}, **({'activation': d['activation']}
+                                                                     if d.get('activation') else {}))
+                      for (aid, sv), d in sorted(docs.items())],
     }
 
 

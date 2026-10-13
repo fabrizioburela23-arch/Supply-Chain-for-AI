@@ -6,6 +6,11 @@
   GET  /api/governance/status             público: resumen sin parámetros (+ avisos de entorno con PIN)
   POST /api/governance/ratify             SOLO operador (PIN, persona): {release_hash?, note?} → decisión
                                           governance.ratify (el bootstrap 1.0.0 queda ratificado; no bloquea nada)
+  GET  /api/governance/preview?artifact=kernel.params&semver=2.0.0
+                                          público: "¿qué cambia para mí?" — contrafactual SIN tocar el kernel vivo
+                                          (core/governance_preview.py; ~0,3-1 s la primera vez, luego caché)
+  POST /api/governance/activate           SOLO operador (PIN, persona): {artifact, semver, note?} → fila nueva en
+                                          gov_releases + decisión governance.activate; deshacer = activar la anterior
 """
 import logging
 
@@ -94,5 +99,73 @@ def gov_ratify():
                         'code': 'already_ratified'}), 409
     except Exception as e:  # noqa: BLE001
         log.warning('governance ratify: %s', type(e).__name__)
+        return jsonify({'error': 'error del registro de gobernanza', 'error_en': 'governance registry error',
+                        'detail': type(e).__name__}), 500
+
+
+@governance_bp.route('/preview')
+@rate_limit(12, 60)
+def gov_preview():
+    from core import governance_preview
+    aid = (request.args.get('artifact') or '').strip()[:48]
+    sv = (request.args.get('semver') or '').strip()[:16]
+    if not aid or not sv:
+        return jsonify({'error': 'faltan artifact y semver', 'error_en': 'artifact and semver are required',
+                        'code': 'bad_request'}), 400
+    try:
+        out = governance_preview.preview({aid: sv})
+    except LookupError:
+        return jsonify({'error': f'{aid}@{sv} no existe', 'error_en': f'{aid}@{sv} does not exist',
+                        'code': 'not_found'}), 404
+    except Exception as e:  # noqa: BLE001
+        log.warning('governance preview: %s', type(e).__name__)
+        return jsonify({'error': 'no se pudo calcular la vista previa', 'error_en': 'could not compute the preview',
+                        'detail': type(e).__name__}), 500
+    resp = jsonify(out)
+    resp.headers['Cache-Control'] = 'no-cache'
+    return resp
+
+
+@governance_bp.route('/activate', methods=['POST'])
+@rate_limit(6, 60)
+def gov_activate():
+    from core import governance, identity, pin
+    from ontology.db import ontology_available
+    if not ontology_available():
+        return jsonify({'error': 'Sin base de datos no hay release que activar (rige el del repositorio)',
+                        'error_en': 'Without a database there is no release to activate (the repository one rules)',
+                        'code': 'ledger_unavailable'}), 503
+    err = pin.pin_error(where='governance_activate', strict=True)
+    if err:
+        return err
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        body = {}
+    sel = body.get('selection')
+    if not isinstance(sel, dict) or not sel:
+        aid, sv = str(body.get('artifact') or '').strip()[:48], str(body.get('semver') or '').strip()[:16]
+        sel = {aid: sv} if aid and sv else None
+    if not sel:
+        return jsonify({'error': 'falta {artifact, semver}', 'error_en': '{artifact, semver} is required',
+                        'code': 'bad_request'}), 400
+    try:
+        from ontology.db import session_scope
+        principal = identity.principal_from_request(declared=body.get('actor'))
+        with session_scope() as s:
+            out = governance.activate(s, principal, sel, note=body.get('note'))
+        b = governance.refresh()          # pone en vigor el release nuevo: re-asigna constantes y reconstruye vistas
+        st = governance.status()
+        return jsonify({'ok': True, **out, 'in_force': (b.release_hash if b else None) == out['release_hash'],
+                        'status': {'semver': st['semver'], 'label': st['label'], 'release_hash': st['release_hash'],
+                                   'artifacts': st['artifacts']}})
+    except PermissionError as e:
+        return jsonify({'error': str(e), 'error_en': 'activating requires a person authenticated with the PIN',
+                        'code': 'forbidden'}), 403
+    except LookupError as e:
+        return jsonify({'error': str(e), 'error_en': 'artifact version or release not found', 'code': 'not_found'}), 404
+    except ValueError as e:
+        return jsonify({'error': str(e), 'error_en': 'those versions are already in force', 'code': 'no_change'}), 409
+    except Exception as e:  # noqa: BLE001
+        log.warning('governance activate: %s', type(e).__name__)
         return jsonify({'error': 'error del registro de gobernanza', 'error_en': 'governance registry error',
                         'detail': type(e).__name__}), 500

@@ -29,7 +29,10 @@ log = logging.getLogger('khipu')
 APPEND_ONLY_TABLES = ('events', 'kh_tx_versions', 'hot_view_builds',
                       'decisions', 'decision_refs', 'decision_outcomes', 'decision_violations',
                       'ledger_seals', 'ledger_meta', 'ledger_anchors',
-                      'gov_artifacts', 'gov_releases')
+                      'gov_artifacts', 'gov_releases',
+                      'broker_fills',          # paso 16: avances de ejecución observados en Alpaca
+                      # BRECHAS bloque 2: la memoria de los números (ontology/history_models.py)
+                      'prices_eod', 'price_adjustments', 'fx_daily', 'metrics_eod', 'positions_eod')
 
 # Tablas con txid/seq añadidos como columnas tardías (ontology/db._COLUMNAS_TARDIAS): aquí solo el DEFAULT.
 TXID_SEQ_TABLES = ('events', 'broker_audit')

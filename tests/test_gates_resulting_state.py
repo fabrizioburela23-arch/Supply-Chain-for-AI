@@ -89,8 +89,8 @@ def test_autovinculo_y_relacion_fuera_del_vocabulario_quedan_registrados(db):
     assert {g['gate'] for g in gr} >= {'ontology.g1.link', 'ontology.g2.action'}
     assert all(len(g['ir_hash']) == 64 and g['mode'] == 'shadow' for g in gr)
     from core.gates import engine
-    assert all(r.value is not None for r in rows) and rows[0].value['shapes_semver'] == '1.0.0'
-    assert engine.state()['available'] and engine.state()['rules'] == 31
+    assert all(r.value is not None for r in rows) and rows[0].value['shapes_semver'] == __import__('core.governance', fromlist=['x']).artifact_semver('ontology.shapes')
+    assert engine.state()['available'] and engine.state()['rules'] == 62          # + 31 de órdenes (paso 17)
 
 
 @needs_db

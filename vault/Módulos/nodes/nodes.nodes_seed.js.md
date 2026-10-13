@@ -32,7 +32,7 @@ De nivel superior (globales del script): `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `C
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **2 de 93** (línea 1437) y antes de [[nodes.nodes_expand.js]].
+Se carga en [[app.html]] en la posición **2 de 95** (línea 1437) y antes de [[nodes.nodes_expand.js]].
 
 ## Lo usan
 

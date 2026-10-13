@@ -239,7 +239,8 @@ for _mod, _bp_name in (('core.world', 'world_bp'), ('research.committee_api', 'c
                        ('core.khipu_chat', 'khipu_chat_bp'),
                        ('core.portfolio_reports_api', 'portfolio_reports_bp'), ('core.decide_api', 'decide_bp'),
                        ('core.ledger_api', 'ledger_bp'),    # INFRA_OPERATIVA paso 6: libro de decisiones /api/ledger/*
-                       ('core.governance_api', 'governance_bp')):   # paso 9: registro de gobernanza /api/governance/*
+                       ('core.governance_api', 'governance_bp'),    # paso 9: registro de gobernanza /api/governance/*
+                       ('core.prices_api', 'prices_bp')):   # BRECHAS bloque 2: historia de precios /api/prices/*
     try:
         app.register_blueprint(getattr(_importlib.import_module(_mod), _bp_name))
     except Exception as _e:  # noqa: BLE001
@@ -538,6 +539,19 @@ try:
         _sched.register('governance_refresh', _gov_mod.refresh_job, every_s=60, run_at_start=False)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: governance_refresh no registrado (%s)', type(_e).__name__)
+    try:   # INFRA_OPERATIVA paso 16: avances de ejecución de las órdenes abiertas → broker_fills + decision_outcomes
+        from ontology.db import ontology_available as _fills_db_on
+        if _fills_db_on():
+            from brokerage.service import poll_fills_job as _poll_fills
+            _sched.register('broker_fills', _poll_fills, every_s=60, run_at_start=False)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: broker_fills no registrado (%s)', type(_e).__name__)
+    try:   # BRECHAS bloque 2: cierres del día + FX + fotos diarias (días hábiles tras las 22:00 UTC, en su hilo;
+        # sin base no hace nada). El relleno de 5 años NO está aquí: solo a pedido del operador con PIN.
+        from core import prices_store as _prices_store
+        _sched.register('prices_eod_daily', _prices_store.daily_tick, every_s=900, run_at_start=False)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: prices_eod_daily no registrado (%s)', type(_e).__name__)
     try:   # O1: humo 5 min tras cada arranque (= tras cada deploy) y luego 1×/día, guardado en ops_checks
         from core.ops_check import scheduled as _ops_scheduled, FIRST_AFTER_BOOT_S as _OPS_FIRST
         _sched.register('ops_daily_check', _ops_scheduled, every_s=_OPS_FIRST, run_at_start=False)
@@ -1454,6 +1468,11 @@ def _diag_gobernanza():
         if st['db_error']:
             es += f" Error al leer el release de la base: {st['db_error'][:120]} (sigue el anterior)."
             en += f" Error reading the release from the database: {st['db_error'][:120]} (the previous one stays)."
+        _props = [p for p in (st.get('proposals') or []) if p.get('newer')]
+        if _props:   # paso 12: versiones disponibles que SOLO entran en vigor con el PIN de Fabrizio
+            _names = ', '.join(f"{p['id']} {p['semver']}" for p in _props[:4])
+            es += f' Disponible para activar con tu PIN: {_names} (mira «¿Qué cambia?» abajo).'
+            en += f' Available to activate with your PIN: {_names} (see "What changes?" below).'
         if st['needs_ratification'] and fix is None:
             fix = ('ratifica el release una vez: 🩺 → Gobernanza → «Ratificar» con tu PIN (no bloquea nada).',
                    'ratify the release once: 🩺 → Governance → "Ratify" with your PIN (it blocks nothing).')
@@ -2491,27 +2510,6 @@ def _alpaca_json(r):
         return None
 
 
-def _house_price(sym):
-    """Último precio (USD) para acotar qty × precio. None si no se pudo verificar."""
-    try:
-        if '/' in sym:
-            r = requests.get('https://data.alpaca.markets/v1beta3/crypto/us/latest/trades',
-                             params={'symbols': sym}, headers=_alpaca_hdrs(), timeout=6)
-            p = (((_alpaca_json(r) or {}).get('trades') or {}).get(sym) or {}).get('p')
-            return float(p) if p and float(p) > 0 else None
-        if FINNHUB:
-            data, err = _fetch_quote_raw(sym, timeout=5)
-            if not err and data and float(data.get('c') or 0) > 0:
-                return float(data['c'])
-        from urllib.parse import quote as _q
-        r = requests.get(f'https://data.alpaca.markets/v2/stocks/{_q(sym, safe="")}/trades/latest',
-                         headers=_alpaca_hdrs(), timeout=6)
-        p = ((_alpaca_json(r) or {}).get('trade') or {}).get('p')
-        return float(p) if p and float(p) > 0 else None
-    except Exception:  # noqa: BLE001
-        return None
-
-
 def _finite_pos(v):
     try:
         f = float(v)
@@ -2725,14 +2723,141 @@ def trade_crypto_assets():
     return jsonify({'assets': assets, 'paper': _paper()})
 
 
+# ── UN SOLO CAMINO DE DINERO (INFRA_OPERATIVA pasos 15-16; BRECHAS G5-01, M-code-03) ─────────────────────────
+# /api/trade/order y /api/trade/close (panel, cripto, voz, terminal, Cabina) y el agente de trading ya NO hablan
+# con Alpaca: validan la forma del pedido y llaman a brokerage.service.house_order / house_close = preview_order
+# (cuenta «house») + confirm_order con los MISMOS controles (run_checks; límites de HOY mientras BRECHAS #1 siga
+# abierta), client_order_id, broker_audit, candado del libro (money_gate) y decisiones order.* en el libro. La
+# respuesta conserva el contrato de siempre (id, status, paper, duplicate) para no romper la UI.
+_HOUSE_BLOCK_HTTP = (       # control que bloqueó → (HTTP, code); el primero de la lista que haya fallado manda
+    ('kill_switch', 423, 'trading_halted'), ('ledger_chain', 423, 'ledger_chain_broken'),
+    ('mode', 403, 'live_not_enabled'), ('client_status', 423, 'client_paused'),
+    ('account', 502, 'account_unavailable'), ('symbol', 400, 'not_tradable'), ('restricted', 403, 'restricted'),
+    ('order_size', 400, 'over_cap'), ('unresolved', 409, 'unresolved_order'),
+)
+_HOUSE_ERR_HTTP = {'bad_request': 400, 'over_cap': 400, 'not_found': 404, 'no_position': 404,
+                   'trading_halted': 423, 'unknown_state': 502, 'broker_error': 502, 'ledger_unavailable': 503,
+                   'paper_only_without_db': 403, 'broker_not_configured': 400, 'requires_human_approval': 202,
+                   'expired': 409, 'used': 409, 'account_changed': 409, 'source_mismatch': 403,
+                   'memo_not_approved': 409}
+
+
+def _house_http(res):
+    """Resultado de brokerage.service.house_order/house_close → (cuerpo, HTTP) con el contrato de /api/trade/order:
+    éxito = la orden de Alpaca (id, status…) + paper + duplicate; error = {error, error_en, code} bilingüe."""
+    res = res or {}
+    order = res.get('order') if isinstance(res.get('order'), dict) else (res if res.get('preview_id') else {})
+    paper = (order.get('mode') or ('paper' if _paper() else 'live')) != 'live'
+    warn = [c.get('detail_en') or c.get('detail') for c in (order.get('checks') or [])
+            if c.get('warn') and c.get('shadow')]
+    common = {'paper': paper, 'decision_id': res.get('decision_id'), 'preview_id': order.get('id')}
+    if res.get('ok') and not res.get('blocked') and not res.get('requires_human_approval'):
+        body = dict(res.get('alpaca') or {})
+        body.setdefault('id', order.get('alpaca_order_id'))
+        body.setdefault('status', order.get('alpaca_status') or order.get('status'))
+        body.setdefault('client_order_id', order.get('client_order_id'))
+        body.update(common, order=order)
+        if warn:
+            body['warnings'] = warn
+        if res.get('duplicate'):
+            body['duplicate'] = True
+        return body, 200
+    if res.get('requires_human_approval') and not res.get('blocked'):
+        return dict(common, status='pending_approval', order=order, duplicate=bool(res.get('duplicate')),
+                    error='La orden espera tu aprobación con PIN en 👥 Clientes → Aprobaciones',
+                    error_en='The order awaits your approval with the PIN in 👥 Clients → Approvals',
+                    code='pending_approval'), 202
+    failed = set(res.get('failed_checks') or [c.get('name') for c in (order.get('checks') or [])
+                                               if not c.get('ok') and c.get('severity', 'block') == 'block'])
+    code, http = res.get('code') or 'error', None
+    if failed or res.get('blocked') or code == 'blocked':
+        http, code = 422, 'risk_blocked'
+        for name, st, c in _HOUSE_BLOCK_HTTP:
+            if name in failed:
+                http, code = st, c
+                if name == 'order_size' and order.get('est_usd') is None:
+                    http, code = 422, 'price_unavailable'
+                break
+    elif code == 'broker_rejected':
+        http = res.get('http_status') if isinstance(res.get('http_status'), int) and \
+            400 <= res.get('http_status') < 600 else 422
+    elif code == 'unknown_state':
+        http, code = 502, 'broker_unreachable'
+    if http is None:
+        http = _HOUSE_ERR_HTTP.get(code, 400)
+    body = dict(common, error=res.get('error') or 'Orden no enviada', error_en=res.get('error_en') or
+                res.get('error') or 'Order not sent', code=code, order=order or None,
+                failed_checks=sorted(failed) or None)
+    if code == 'broker_unreachable':
+        body['client_order_id'] = order.get('client_order_id')
+    return body, http
+
+
+def _house_call(fn, *args, **kw):
+    """brokerage.service.<fn>(session, …) con la base (sesión propia, se confirma al volver) o sin ella (D4: solo
+    desarrollo y papel). El libro caído → 503 ledger_unavailable: sin decisión no hay orden."""
+    from brokerage import service as _bsvc
+    from ontology.db import ontology_available
+    _bsvc.send_trace_begin()
+    try:
+        if ontology_available():
+            from ontology.db import session_scope
+            with session_scope() as s:
+                return getattr(_bsvc, fn)(s, *args, **kw)
+        return getattr(_bsvc, fn)(None, *args, **kw)
+    except Exception as e:  # noqa: BLE001
+        sent = _bsvc.send_trace()
+        if not sent:
+            return _house_call_error(fn, e)
+        # revisión batch E: la orden YA salió hacia Alpaca y lo que falló fue guardar el resultado (commit caído,
+        # timeout): NUNCA «no se envió nada» — estado DESCONOCIDO (502), con su client_order_id para que el
+        # navegador lo conserve y un reintento idéntico ADOPTE la orden en vez de crear otra.
+        _bsvc.record_unknown_after_send(sent, kw.get('requested_by') or 'ui', type(e).__name__,
+                                        source=kw.get('source') or 'ui')
+        return {'ok': False, 'code': 'unknown_state', 'order': {'client_order_id': sent[-1]},
+                'error': (f'La orden se envió a Alpaca pero no se pudo guardar su resultado ({type(e).__name__}): '
+                          'su estado es DESCONOCIDO. Revisa tus órdenes antes de repetirla; repetirla con el mismo '
+                          'identificador no la duplica'),
+                'error_en': (f'The order was sent to Alpaca but its result could not be saved ({type(e).__name__}): '
+                             'its state is UNKNOWN. Check your orders before repeating it; repeating it with the '
+                             'same identifier does not duplicate it')}
+
+
+def _house_call_error(fn, e):
+    """Error de _house_call ANTES de tocar Alpaca: no salió nada (D4: falla cerrado)."""
+    from core.decisions import LedgerUnavailable
+    if isinstance(e, LedgerUnavailable):
+        log.error('trade: libro de decisiones no disponible (%s)', e)
+        return {'ok': False, 'code': 'ledger_unavailable',
+                'error': 'El libro de decisiones no está disponible: no se envió ninguna orden',
+                'error_en': 'The decision ledger is unavailable: no order was sent'}
+    log.error('trade: %s falló (%s)', fn, type(e).__name__)      # base caída (D4: falla cerrado) u otro error
+    return {'ok': False, 'code': 'ledger_unavailable' if 'OperationalError' in type(e).__name__ else 'error',
+            'error': f'No se pudo procesar la orden ({type(e).__name__}): no se envió nada',
+            'error_en': f'The order could not be processed ({type(e).__name__}): nothing was sent'}
+
+
+def _trade_channel_proof(data, channel):
+    """Voz (paso 16): el sha del resumen que se LEYÓ en voz alta antes del «sí» + cuándo se confirmó."""
+    if channel != 'voice':
+        return None
+    sha = str(data.get('readback_sha') or '').strip().lower()
+    proof = {'kind': 'voice_readback', 'window_s': 180}
+    if re.fullmatch(r'[0-9a-f]{64}', sha):
+        proof['readback_sha'] = sha
+    ca = str(data.get('confirmed_at') or '').strip()[:40]
+    if ca:
+        proof['confirmed_at'] = ca
+    return proof
+
+
 @app.route('/api/trade/close', methods=['POST'])
 @rate_limit(limit=30, window=60)
 @_trade_auth
 def trade_close():
-    """Cierra por completo UNA posición (1-clic 'CLOSE' del scalping). Alpaca:
-    DELETE /v2/positions/{symbol} (cripto va SIN barra en el path: BTCUSD).
-    Auditoría #8: el símbolo se valida estricto y va url-encodeado — antes '.'
-    o '?cancel_orders=true' podían acabar en DELETE /v2/positions (= cerrar TODO)."""
+    """Cierra por completo UNA posición (1-clic 'CLOSE' del scalping) por el camino único: una orden de mercado por
+    TODA la cantidad (brokerage.service.house_close: mismos controles, client_order_id, auditoría y decisiones).
+    Antes era DELETE /v2/positions sin controles (M-code-03). El símbolo se valida estricto (auditoría #8)."""
     if not ALPACA_KEY:
         return _broker_missing_response()
     body = request.get_json(force=True, silent=True)
@@ -2754,41 +2879,43 @@ def trade_close():
     if _lb is not None:
         _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'blocked_ledger_chain'})
         return _lb
-    from urllib.parse import quote as _q
-    path_sym = _q(symbol.replace('/', ''), safe='')   # Alpaca usa BTCUSD en el path de posiciones
+    coid = str(body.get('client_order_id') or '').strip()
+    if coid and not _CLIENT_ORDER_ID_RE.match(coid):
+        return _bad('client_order_id inválido (8-64 caracteres: letras, números, - o _)',
+                    'Invalid client_order_id (8-64 chars: letters, digits, - or _)')
+    coid = coid or ('kh-close-' + uuid.uuid4().hex[:24])
+    channel = _identity_channel()
+    res = _house_call('house_close', symbol, client_order_id=coid, channel=channel, requested_by=_trade_actor())
+    payload, st = _house_http(res)
+    _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'submitted' if st == 200 else (
+                                     'unknown_error' if st == 502 and payload.get('code') == 'broker_unreachable'
+                                     else 'rejected'),
+                                 'http_status': st, 'code': payload.get('code'), 'client_order_id': coid,
+                                 'alpaca_order_id': payload.get('id') if st == 200 else None,
+                                 'preview_id': payload.get('preview_id'), 'decision_id': payload.get('decision_id')})
+    return jsonify(payload), st
+
+
+def _identity_channel():
     try:
-        r = requests.delete(f'{ALPACA_BASE}/v2/positions/{path_sym}', headers=_alpaca_hdrs(), timeout=10)
-    except Exception as e:  # noqa: BLE001
-        _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'error', 'error': type(e).__name__})
-        return _bad('No se pudo contactar con Alpaca', 'Could not reach Alpaca', code='broker_unreachable',
-                    status=502, detail=_diag_redact(e))
-    payload = _alpaca_json(r)
-    if payload is None:
-        payload = {'ok': r.status_code < 300}
-    ok = 200 <= r.status_code < 300
-    _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'submitted' if ok else 'rejected',
-                                 'http_status': r.status_code,
-                                 'alpaca_order_id': (payload.get('id') if isinstance(payload, dict) else None),
-                                 'alpaca_message': (str(payload.get('message'))[:160]
-                                                    if isinstance(payload, dict) and payload.get('message') else None)})
-    if isinstance(payload, dict):
-        payload.setdefault('paper', _paper())
-    return jsonify(payload), r.status_code
+        from core import identity
+        return identity.channel_from_request('ui')
+    except Exception:  # noqa: BLE001
+        return 'ui'
 
 
 @app.route('/api/trade/order', methods=['POST'])
 @rate_limit(20, 60)
 @_trade_auth
 def trade_order():
-    """Orden de la cuenta de la casa (Alpaca). Auditoría #9/#21:
-    · tope $100.000 por orden en notional O en qty × precio (limit_price, o el
-      último precio si es market; sin precio verificable → se rechaza);
-    · limit_price numérico > 0; time_in_force ∈ day|gtc|ioc|fok (cripto → gtc);
-    · client_order_id (UUID del cliente) se reenvía a Alpaca: un reintento o el
-      doble clic voz+botón NO duplica la orden (Alpaca la rechaza como repetida
-      y aquí se devuelve la ya existente con duplicate=true);
-    · interruptor BROKERAGE_TRADING_ENABLED=off → 423 'trading_halted';
-    · cada intento queda en broker_audit (o en el log sin base)."""
+    """Orden de la cuenta de la casa por el camino ÚNICO (brokerage.service.house_order). Aquí solo se valida la
+    FORMA del pedido (auditoría #9/#21): símbolo estricto, side, type market|limit, limit_price > 0, time_in_force,
+    exactamente uno de qty | notional, client_order_id (8-64), cripto del catálogo de Alpaca (cripto → gtc). Los
+    montos, el tope de US$100.000, el dinero real, el interruptor y el candado del libro los decide run_checks.
+    · client_order_id (el del cliente o uno del servidor) es el de la orden en Alpaca: un reintento o el doble clic
+      voz+botón NO duplica (200 + duplicate:true con la orden que ya existía);
+    · voz: X-Khipu-Channel: voice + readback_sha (sha del resumen leído en voz alta) + confirmed_at;
+    · cada intento queda en broker_audit (trade_order) y, con base, en el libro de decisiones."""
     if not ALPACA_KEY:
         return _broker_missing_response()
     data = request.get_json(silent=True)
@@ -2804,6 +2931,7 @@ def trade_order():
     otype = str(data.get('type') or 'market').lower().strip()
     tif = str(data.get('time_in_force') or 'day').lower().strip()
     coid = data.get('client_order_id')
+
     def _short(v):
         return str(v)[:32] if isinstance(v, (int, float, str)) and not isinstance(v, bool) else None
     summary = {'symbol': ticker or raw_sym[:24], 'side': side[:8], 'type': otype[:16], 'tif': tif[:8],
@@ -2841,8 +2969,7 @@ def trade_order():
     if (qty is None) == (notional is None):
         return reject('Envía exactamente uno de: qty O notional (monto en USD)',
                       'Send exactly one of: qty OR notional (USD amount)')
-    is_crypto = '/' in ticker
-    if is_crypto:
+    if '/' in ticker:
         # Cripto ('BTC/USD'): validar contra el catálogo de Alpaca; si el
         # catálogo no carga, fallback PERMISIVO (que Alpaca decida el 4xx).
         catalog = _fetch_crypto_assets()
@@ -2857,9 +2984,9 @@ def trade_order():
             return reject('notional debe ser un número mayor que 0 (monto en USD)',
                           'notional must be a number greater than 0 (USD amount)')
         if not (1 <= notional <= MAX_ORDER_USD):
-            return reject('notional fuera de rango: mínimo $1, máximo $100,000 por orden',
-                          'notional out of range: minimum $1, maximum $100,000 per order', 'over_cap')
-        est_usd = notional
+            return reject(f'notional fuera de rango: mínimo $1, máximo ${MAX_ORDER_USD:,.0f} por orden',
+                          f'notional out of range: minimum $1, maximum ${MAX_ORDER_USD:,.0f} per order', 'over_cap')
+        notional = round(notional, 2)
     else:
         q = _finite_pos(qty)
         if q is None or _num_str(q) in ('', '0'):      # 1e-10 → '0' en Alpaca: se rechaza aquí
@@ -2867,27 +2994,7 @@ def trade_order():
                           'qty must be a number greater than 0 (up to 9 decimals)')
         if q > 1e7:
             return reject('qty demasiado grande', 'qty too large', 'over_cap')
-        # Monto a acotar: una COMPRA limit se llena a ≤ limit_price → qty × limit
-        # es el techo. Una VENTA limit se llena a ≥ limit_price: con el limit muy
-        # por debajo del mercado se llena AL MERCADO → el techo es qty × max(limit,
-        # mercado); sin precio de mercado verificable se rechaza (como market).
-        if otype == 'limit' and side == 'buy':
-            px = limit_price
-        else:
-            mkt = _house_price(ticker)
-            px = None if mkt is None else (max(mkt, limit_price) if otype == 'limit' else mkt)
-        if px is None:
-            return reject('No se pudo verificar el precio de mercado para acotar el monto: usa notional (USD)'
-                          + (' o una orden limit de compra' if side == 'buy' else ''),
-                          'Could not verify the market price to cap the amount: use notional (USD)'
-                          + (' or a buy limit order' if side == 'buy' else ''),
-                          'price_unavailable', 422)
-        est_usd = q * px
-        if est_usd > MAX_ORDER_USD:
-            return reject(f'La orden supera el tope de $100,000 (≈ ${est_usd:,.0f})',
-                          f'The order exceeds the $100,000 cap (≈ ${est_usd:,.0f})', 'over_cap')
-        qty = q
-    summary['est_usd'] = round(est_usd, 2)
+        qty = float(_num_str(q))
     if not _house_trading_enabled():
         _trade_audit('trade_order', dict(summary, outcome='blocked_kill_switch'))
         return _trading_halted_response()
@@ -2895,56 +3002,22 @@ def trade_order():
     if _lb is not None:
         _trade_audit('trade_order', dict(summary, outcome='blocked_ledger_chain'))
         return _lb
-    body = {'symbol': ticker, 'side': side, 'type': otype, 'time_in_force': tif, 'client_order_id': coid}
-    if notional is not None:
-        body['notional'] = f'{notional:.2f}'
-    else:
-        body['qty'] = _num_str(qty)
-    if otype == 'limit':
-        body['limit_price'] = _num_str(limit_price)
-    try:
-        r = requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(), json=body, timeout=15)
-    except Exception as e:  # noqa: BLE001
-        # Estado DESCONOCIDO (timeout): la orden pudo llegar. Reintentar con el
-        # MISMO client_order_id es seguro — Alpaca no la duplica.
-        _trade_audit('trade_order', dict(summary, outcome='unknown_error', error=type(e).__name__))
-        return _bad('No se pudo confirmar con Alpaca; reintenta con el mismo client_order_id o revisa el historial',
-                    'Could not confirm with Alpaca; retry with the same client_order_id or check the history',
-                    code='broker_unreachable', status=502, client_order_id=coid)
-    payload = _alpaca_json(r)
-    if payload is None:
-        _trade_audit('trade_order', dict(summary, outcome='error', http_status=r.status_code))
-        return _bad(f'Alpaca respondió HTTP {r.status_code} sin JSON', f'Alpaca answered HTTP {r.status_code} without JSON',
-                    code='broker_bad_response', status=502, client_order_id=coid)
-    if r.status_code == 422 and 'client_order_id' in json.dumps(payload).lower():
-        # Repetida (reintento/doble clic): devolver la orden que YA existe.
-        try:
-            r2 = requests.get(f'{ALPACA_BASE}/v2/orders:by_client_order_id', params={'client_order_id': coid},
-                              headers=_alpaca_hdrs(), timeout=10)
-            prev = _alpaca_json(r2)
-            if r2.status_code == 200 and isinstance(prev, dict) and prev.get('id'):
-                prev['duplicate'] = True
-                prev['paper'] = _paper()
-                _trade_audit('trade_order', dict(summary, outcome='duplicate', alpaca_order_id=prev.get('id')))
-                return jsonify(prev), 200
-        except Exception:  # noqa: BLE001
-            pass
-    ok = 200 <= r.status_code < 300
+    channel = _identity_channel()
+    res = _house_call('house_order', ticker, side, notional=notional if notional is not None else None,
+                      qty=qty if notional is None else None, order_type=otype, limit_price=limit_price,
+                      time_in_force=tif, client_order_id=coid, source='ui', channel=channel,
+                      requested_by=_trade_actor(), channel_proof=_trade_channel_proof(data, channel))
+    payload, st = _house_http(res)
+    o = payload.get('order') or {}
+    outcome = {200: 'duplicate' if payload.get('duplicate') else 'submitted', 202: 'pending_approval'}.get(
+        st, 'unknown_error' if st == 502 and payload.get('code') == 'broker_unreachable' else 'rejected')
     _trade_audit('trade_order', dict(
-        summary, outcome='submitted' if ok else 'rejected', http_status=r.status_code,
-        alpaca_order_id=(payload.get('id') if isinstance(payload, dict) else None),
-        alpaca_status=(payload.get('status') if isinstance(payload, dict) else None),
-        alpaca_message=(str(payload.get('message'))[:160] if isinstance(payload, dict) and payload.get('message')
-                        else None)))
-    if isinstance(payload, dict):
-        payload.setdefault('paper', _paper())
-        if not ok:
-            payload.setdefault('error', payload.get('message') or f'Alpaca HTTP {r.status_code}')
-            payload.setdefault('error_en', payload.get('message') or f'Alpaca HTTP {r.status_code}')
-            if 'code' in payload:
-                payload['alpaca_code'] = payload['code']       # el código numérico de Alpaca se conserva
-            payload['code'] = 'broker_rejected'
-    return jsonify(payload), r.status_code
+        summary, outcome=outcome, http_status=st, reason=payload.get('code') if st >= 400 else None,
+        est_usd=o.get('est_usd'), alpaca_order_id=payload.get('id') if st == 200 else None,
+        alpaca_status=payload.get('status') if st == 200 else None, preview_id=payload.get('preview_id'),
+        decision_id=payload.get('decision_id'), channel=channel,
+        alpaca_message=(str(payload.get('error'))[:160] if st >= 400 else None)))
+    return jsonify(payload), st
 
 
 @app.route('/api/news/<ticker>')
@@ -5524,8 +5597,10 @@ def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> 
             'You are a quantitative trading analyst. Respond with a JSON object ONLY, no markdown.',
             prompt, max_tokens=250, tier='fast')
         out = _extract_json(text)
-        return out if isinstance(out, dict) else {'action': 'hold', 'confidence': 0,
-                                                  'reason': 'respuesta no-JSON', 'size_pct': 0}
+        if isinstance(out, dict):
+            out['_model'] = _model          # paso 16: el modelo real queda en la decisión trade.agent_signal
+            return out
+        return {'action': 'hold', 'confidence': 0, 'reason': 'respuesta no-JSON', 'size_pct': 0}
     except Exception as e:  # noqa: BLE001
         return {'action': 'hold', 'confidence': 0, 'reason': _diag_redact(e)[:80], 'size_pct': 0}
 
@@ -5622,42 +5697,116 @@ def _alpaca_tradable(sym):
     return ok
 
 
-def _agent_submit(body, action, detail):
-    """POST /v2/orders. 2xx con id → payload; si no → _AgentOrderError. Audita SIEMPRE."""
-    body = dict(body)
-    body.setdefault('client_order_id', 'kh-agent-' + uuid.uuid4().hex[:24])
-    detail = dict(detail, client_order_id=body['client_order_id'], tif=body.get('time_in_force'))
+def _agent_principal():
+    """QUIÉN actúa en el hilo del agente: system:trading_agent (paso 5); fuera del hilo (pruebas) el mismo."""
+    from core import identity
+    cur = identity.current()
+    return cur if cur is not None and cur.id.startswith('system:') else identity.system('trading_agent')
+
+
+def _agent_signal_ctx(ticker, action, info):
+    """trade.agent_signal (INFRA_OPERATIVA paso 16): lo que el agente decidió y POR QUÉ (precio que vio, tono de
+    noticias, confianza, razón de la IA y su modelo, configuración vigente), escrito ANTES de actuar. Su hija es la
+    order.preview de la orden (si la hubo). Sin base → None (no hay libro)."""
     try:
-        r = requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(), json=body, timeout=15)
+        from ontology.db import ontology_available
+        if not ontology_available():
+            return None
+        from core import decisions
+        ctx = decisions.DecisionCtx('trade.agent_signal', _agent_principal(),
+                                    subject={'symbol': ticker, 'action': action, 'mode': _AGENT.get('mode')})
+        if info.get('price'):
+            ctx.quote({'ticker': ticker, 'px': info['price'], 'prev': info.get('prev'),
+                       'src': info.get('price_src') or 'finnhub', 'currency': 'USD',
+                       'as_of': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())})
+        if info.get('model'):
+            ctx.model = {'model': str(info['model'])[:80], 'agent': 'trading_agent'}
+        ctx.extra['agent_config'] = {k: v for k, v in _agent_config_view().items() if k != 'universe'}
+        ctx.output = {k: info.get(k) for k in ('action', 'confidence', 'reason', 'size_pct', 'sentiment', 'price',
+                                               'notional', 'skipped', 'stop_loss_pl_pct') if info.get(k) is not None}
+        return ctx
     except Exception as e:  # noqa: BLE001
-        _trade_audit(action, dict(detail, outcome='unknown_error', error=type(e).__name__), actor='agente-trading')
-        raise _AgentOrderError(f'sin respuesta de Alpaca · no answer from Alpaca ({type(e).__name__})') from e
-    payload = _alpaca_json(r)
-    ok = 200 <= r.status_code < 300 and isinstance(payload, dict) and bool(payload.get('id'))
-    msg = ''
-    if isinstance(payload, dict):
-        msg = str(payload.get('message') or payload.get('error') or '')[:140]
-    elif r.text:
-        msg = r.text[:140]
-    _trade_audit(action, dict(detail, outcome='submitted' if ok else 'rejected', http_status=r.status_code,
-                              alpaca_order_id=(payload.get('id') if isinstance(payload, dict) else None),
-                              alpaca_status=(payload.get('status') if isinstance(payload, dict) else None),
-                              alpaca_message=msg or None), actor='agente-trading')
+        log.warning('agente: señal no preparada (%s)', type(e).__name__)
+        return None
+
+
+def _agent_record_signal(ctx, status):
+    """Señal SIN orden (consejo en modo manual, o una orden que el agente decidió no enviar): su propia transacción.
+    Nunca rompe el ciclo."""
+    if ctx is None:
+        return None
+    try:
+        from core import decisions
+        from ontology.db import session_scope
+        with session_scope() as s:
+            return decisions.record(s, ctx, status=status)
+    except Exception as e:  # noqa: BLE001
+        log.warning('agente: señal no registrada en el libro (%s)', type(e).__name__)
+        return None
+
+
+def _agent_order(order, action, detail, signal=None, checks_mode='house_today'):
+    """La orden del agente por EL camino único (brokerage.service.house_order, source='agent'): mismos controles,
+    client_order_id, broker_audit y decisiones (trade.agent_signal → order.preview → order.confirm → order.submit).
+    En papel no espera a nadie (el agente en AUTO lo encendió Fabrizio con su PIN); con dinero real quedaría
+    pendiente de aprobación (y AUTO ya está prohibido en real). → payload (id, status…) o _AgentOrderError."""
+    from brokerage import service as _bsvc
+    from core import identity
+    from ontology.db import ontology_available
+    coid = 'kh-agent-' + uuid.uuid4().hex[:24]
+    detail = dict(detail, client_order_id=coid, tif=order.get('time_in_force'))
+    kw = dict(notional=order.get('notional'), qty=order.get('qty'), order_type='market',
+              time_in_force=order.get('time_in_force'), client_order_id=coid, source='agent', channel='agent',
+              requested_by='agente-trading', checks_mode=checks_mode,
+              rationale=(signal.output.get('reason') if signal is not None and signal.output else None))
+    _bsvc.send_trace_begin()
+    try:
+        with identity.use(_agent_principal()):
+            if ontology_available():
+                from core import decisions
+                from ontology.db import session_scope
+                with session_scope() as s:
+                    sig_id = None
+                    if signal is not None:          # la señal ANTES de la orden (misma transacción)
+                        decisions.record(s, signal, status='executed')
+                        sig_id = signal.id
+                    res = _bsvc.house_order(s, order['symbol'], order['side'], parent_decision_id=sig_id, **kw)
+            else:
+                res = _bsvc.house_order(None, order['symbol'], order['side'], **kw)
+    except Exception as e:  # noqa: BLE001 — base/libro caídos (D4: falla cerrado)
+        sent = _bsvc.send_trace()
+        _trade_audit(action, dict(detail, outcome='unknown_error', error=type(e).__name__,
+                                  sent_to_broker=bool(sent)), actor='agente-trading')
+        if sent:   # revisión batch E: salió hacia Alpaca y no se pudo guardar → DESCONOCIDA, nunca «nada salió»
+            _bsvc.record_unknown_after_send(sent, 'agente-trading', type(e).__name__, source='agent')
+            err = _AgentOrderError(f'orden enviada con estado DESCONOCIDO (no se pudo guardar) · order sent, state '
+                                   f'UNKNOWN (could not be saved) ({type(e).__name__})')
+            err.unknown = True
+            _AGENT.setdefault('unknown_orders', {})[str(order.get('symbol') or '').replace('/', '').upper()] = \
+                time.time()
+            raise err from e
+        raise _AgentOrderError(f'no se pudo procesar la orden · the order could not be processed '
+                               f'({type(e).__name__})') from e
+    payload, st = _house_http(res)
+    ok = st == 200 and bool(payload.get('id'))
+    _trade_audit(action, dict(detail, outcome='submitted' if ok else ('pending_approval' if st == 202 else 'rejected'),
+                              http_status=st, code=None if ok else payload.get('code'),
+                              alpaca_order_id=payload.get('id') if ok else None,
+                              alpaca_status=payload.get('status') if ok else None,
+                              alpaca_message=None if ok else (str(payload.get('error') or '')[:140] or None),
+                              preview_id=payload.get('preview_id'), decision_id=payload.get('decision_id')),
+                 actor='agente-trading')
     if not ok:
-        raise _AgentOrderError(f'Alpaca HTTP {r.status_code}: {msg or "orden rechazada · order rejected"}')
+        raise _AgentOrderError(f"{payload.get('error') or 'orden no enviada'} · "
+                               f"{payload.get('error_en') or 'order not sent'}"[:300])
     return payload
 
 
-def _agent_place(ticker: str, side: str, notional: float) -> dict:
-    """Orden market por monto (USD). Lanza _AgentOrderError si Alpaca no la acepta."""
-    body = {
-        'symbol': ticker,
-        'notional': f'{notional:.2f}',
-        'side': side,
-        'type': 'market',
-        'time_in_force': 'gtc' if '/' in ticker else 'day',   # cripto: Alpaca exige gtc/ioc
-    }
-    return _agent_submit(body, 'agent_order', {'symbol': ticker, 'side': side, 'notional': round(notional, 2)})
+def _agent_place(ticker: str, side: str, notional: float, signal=None) -> dict:
+    """Orden market por monto (USD). Lanza _AgentOrderError si no se envió."""
+    return _agent_order({'symbol': ticker, 'side': side, 'notional': round(float(notional), 2),
+                         'time_in_force': 'gtc' if '/' in ticker else 'day'},     # cripto: Alpaca exige gtc/ioc
+                        'agent_order', {'symbol': ticker, 'side': side, 'notional': round(notional, 2)}, signal)
 
 
 def _agent_stop_losses(positions, block):
@@ -5693,16 +5842,23 @@ def _agent_stop_losses(positions, block):
                         'msg': '⏳ Stop-loss: ya hay un cierre pendiente — no se reenvía · close already pending'})
             continue
         is_crypto = str(p.get('asset_class') or '') == 'crypto' or '/' in str(sym)
-        body = {'symbol': sym, 'qty': _num_str(abs(qty)), 'side': close_side,
-                'type': 'market', 'time_in_force': 'gtc' if is_crypto else 'day'}
+        from brokerage.service import crypto_pair as _crypto_pair
+        order = {'symbol': _crypto_pair(sym) if is_crypto else str(sym).upper(), 'qty': float(_num_str(abs(qty))),
+                 'side': close_side, 'time_in_force': 'gtc' if is_crypto else 'day'}
+        sig = _agent_signal_ctx(str(sym), close_side, {'action': close_side, 'stop_loss_pl_pct': round(pl_pct, 2),
+                                                       'reason': f'stop-loss {pl_pct:.1f}% '
+                                                                 f'(≤ -{_AGENT["stop_loss_pct"]}%)'})
         try:
-            res = _agent_submit(body, 'agent_stop_loss', {'symbol': sym, 'side': body['side'], 'qty': body['qty'],
-                                                           'pl_pct': round(pl_pct, 2)})
+            res = _agent_order(order, 'agent_stop_loss', {'symbol': sym, 'side': close_side,
+                                                          'qty': _num_str(abs(qty)), 'pl_pct': round(pl_pct, 2)},
+                               sig, checks_mode='house_reduce')   # salida: nunca frenada por el tope por orden
             pend[key] = now
             _agent_log({'ticker': sym, 'level': 'warn', 'order_id': str(res.get('id') or '')[:12],
                         'msg': f'🛑 Stop-loss {pl_pct:.1f}% — orden de cierre enviada · close order sent '
                                f'({res.get("status") or "accepted"})'})
         except Exception as e:  # noqa: BLE001
+            if getattr(e, 'unknown', False):
+                pend[key] = now        # quizá ya salió: no reenviar otro cierre (podría abrir un corto)
             _agent_log({'ticker': sym, 'level': 'error',
                         'msg': f'Stop-loss error: {_diag_redact(e)[:160]}'})
     return touched
@@ -5778,7 +5934,14 @@ def _agent_run_cycle():
         if price <= 0:
             continue
 
-        action, confidence, reason, size_pct = _agent_clean_analysis(_agent_analyze(ticker, price, prev, sentiment))
+        _raw = _agent_analyze(ticker, price, prev, sentiment)
+        action, confidence, reason, size_pct = _agent_clean_analysis(_raw)
+        sig = (_agent_signal_ctx(ticker, action, {'action': action, 'confidence': confidence, 'reason': reason,
+                                                  'size_pct': size_pct, 'sentiment': round(sentiment, 3),
+                                                  'price': price, 'prev': prev, 'price_src': 'finnhub',
+                                                  'model': (_raw or {}).get('_model') if isinstance(_raw, dict)
+                                                  else None})
+               if action != 'hold' else None)
         entry = {
             'ts': time.strftime('%H:%M:%S'),
             'ticker': ticker,
@@ -5804,6 +5967,9 @@ def _agent_run_cycle():
                 skip = block
             elif ticker in stopped:
                 skip = 'stop-loss en este ciclo · stop-loss this cycle'
+            elif time.time() - (_AGENT.get('unknown_orders') or {}).get(ticker.replace('/', '').upper(), 0) < \
+                    _AGENT_PENDING_CLOSE_S:
+                skip = 'orden anterior en estado desconocido · previous order in unknown state'
             elif orders_this_cycle >= _AGENT.get('max_orders_per_cycle', 3):
                 skip = 'freno: tope de órdenes por ciclo'
             elif size_pct <= 0:
@@ -5816,6 +5982,9 @@ def _agent_run_cycle():
                 skip = 'no operable en Alpaca · not tradable on Alpaca'
             if skip:
                 entry['skipped'] = skip
+                if sig is not None:
+                    sig.output['skipped'] = skip
+                    _agent_record_signal(sig, 'noop')
             else:
                 notional = equity * size_pct / 100
                 notional = max(1.0, min(notional, equity * _AGENT['max_pos_pct'] / 100, MAX_ORDER_USD))
@@ -5823,8 +5992,10 @@ def _agent_run_cycle():
                     # que la orden no empuje la posición total por encima del tope
                     room = equity * _AGENT['max_pos_pct'] / 100 - existing_mv
                     notional = min(notional, max(1.0, room))
+                if sig is not None:
+                    sig.output['notional'] = round(notional, 2)
                 try:
-                    result = _agent_place(ticker, action, notional)
+                    result = _agent_place(ticker, action, notional, sig)
                     entry['executed'] = True
                     entry['order_id'] = str(result.get('id') or '')[:12]
                     entry['order_status'] = result.get('status')
@@ -5834,6 +6005,9 @@ def _agent_run_cycle():
                 except Exception as e:  # noqa: BLE001 — rechazo de Alpaca o red: ERROR, no ejecutada
                     entry['exec_error'] = _diag_redact(e)[:160]
                     entry['level'] = 'error'
+        elif sig is not None:          # consejo (modo manual) o señal por debajo del umbral: queda en el libro
+            sig.output['executed'] = False
+            _agent_record_signal(sig, 'recorded')
 
         _agent_log(entry)
 
@@ -5861,6 +6035,81 @@ def _agent_thread_fn():
         _AGENT['status'] = 'stopped'
 
 
+# BRECHAS #14 (sin respuesta → lo recomendado): tras un despliegue el agente queda APAGADO con un aviso visible y SIN
+# perder su configuración. Cada encendido/apagado/cambio es una decisión policy.change (subject.policy =
+# trade.agent_config) en el libro append-only; la última se restaura al primer uso del panel del agente.
+_AGENT_RESTORE = {'done': False}
+_AGENT_NOTICE_ES = ('⏸ El agente quedó APAGADO tras una actualización de la app (no se reanuda solo). Tu configuración '
+                    'se conservó: pulsa Iniciar para volver a encenderlo.')
+_AGENT_NOTICE_EN = ('⏸ The agent was left OFF after an app update (it does not resume by itself). Your settings were '
+                    'kept: press Start to turn it on again.')
+
+
+def _agent_persist(running, reason, principal=None):
+    """policy.change del agente: configuración + ¿debería estar corriendo? Nunca rompe la ruta (sin base: nada)."""
+    try:
+        from ontology.db import ontology_available
+        if not ontology_available():
+            return None
+        from core import decisions, identity
+        from ontology.db import session_scope
+        p = principal
+        if p is None:
+            try:
+                p = identity.principal_from_request()
+            except Exception:  # noqa: BLE001
+                p = _agent_principal()
+        with session_scope() as s:
+            with decisions.decision_scope('policy.change', p, session=s,
+                                          subject={'policy': 'trade.agent_config'}) as ctx:
+                ctx.output = {'config': _agent_config_view(), 'running': bool(running), 'reason': reason,
+                              'paper': _paper()}
+                ctx.status = 'executed'
+        return str(ctx.id)
+    except Exception as e:  # noqa: BLE001
+        log.warning('agente: configuración no guardada en el libro (%s)', type(e).__name__)
+        return None
+
+
+def _agent_restore():
+    """Una vez por proceso (= por despliegue): la última configuración del libro vuelve a _AGENT (acotada por
+    _agent_parse); si el agente estaba corriendo, queda apagado con aviso y se anota el apagado (system)."""
+    if _AGENT_RESTORE['done']:
+        return
+    try:
+        from ontology.db import ontology_available
+        if not ontology_available():
+            _AGENT_RESTORE['done'] = True
+            return
+        from sqlalchemy import text
+        from ontology.db import session_scope
+        with session_scope() as s:
+            row = s.execute(text(
+                "SELECT output, recorded_at FROM decisions WHERE kind = 'policy.change' "
+                "AND subject @> CAST(:sub AS jsonb) ORDER BY seq DESC LIMIT 1"),
+                {'sub': json.dumps({'policy': 'trade.agent_config'})}).first()
+        _AGENT_RESTORE['done'] = True
+        if row is None or not isinstance(row[0], dict):
+            return
+        out = row[0]
+        cfg = out.get('config') or {}
+        changes, _notes, err = _agent_parse(cfg)
+        with _AGENT_LOCK:
+            if _AGENT['running']:            # ya lo encendieron en este proceso: manda lo de ahora
+                return
+            if not err and changes:
+                if changes.get('mode') == 'auto' and not _paper():
+                    changes['mode'] = 'manual'
+                _AGENT.update(changes)
+        if out.get('running'):
+            _AGENT['notice'] = {'es': _AGENT_NOTICE_ES, 'en': _AGENT_NOTICE_EN,
+                                'stopped_at': row[1].isoformat() if row[1] else None}
+            _agent_log({'level': 'warn', 'msg': _AGENT_NOTICE_ES + ' · ' + _AGENT_NOTICE_EN})
+            _agent_persist(False, 'stopped_by_restart', principal=_agent_principal())
+    except Exception as e:  # noqa: BLE001 — base caída: se reintenta en el próximo uso
+        log.warning('agente: no se restauró la configuración (%s)', type(e).__name__)
+
+
 @app.route('/api/trade/agent/start', methods=['POST'])
 @rate_limit(limit=10, window=60)
 @_trade_auth
@@ -5875,6 +6124,7 @@ def agent_start():
         return _bad(*err)
     if changes.get('mode', _AGENT['mode']) == 'auto' and not _paper():
         return _auto_live_refused()
+    _agent_restore()
     with _AGENT_LOCK:
         _AGENT.update(changes)
         if _AGENT['running']:
@@ -5886,9 +6136,11 @@ def agent_start():
                         'The agent is still stopping; retry in a few seconds', code='agent_stopping', status=409)
         _AGENT['running'] = True
         _AGENT['daily_pnl_pct'] = 0.0
+        _AGENT.pop('notice', None)
         t = threading.Thread(target=_agent_thread_fn, daemon=True, name='khipu-trading-agent')
         _AGENT['thread'] = t
         t.start()
+    _agent_persist(True, 'start')
     _trade_audit('agent_start', {'outcome': 'started', **{k: v for k, v in _agent_config_view().items()
                                                           if k != 'universe'},
                                  'universe_n': len(_AGENT['universe'])})
@@ -5900,8 +6152,10 @@ def agent_start():
 @rate_limit(limit=20, window=60)
 @_trade_auth
 def agent_stop():
+    _agent_restore()
     with _AGENT_LOCK:
         _AGENT['running'] = False
+    _agent_persist(False, 'stop')
     _trade_audit('agent_stop', {'outcome': 'stopping'})
     return jsonify({'status': 'stopping'})
 
@@ -5910,6 +6164,7 @@ def agent_stop():
 @rate_limit(limit=120, window=60)
 @_trade_auth
 def agent_status():
+    _agent_restore()
     with _AGENT_LOG_LOCK:
         recent = list(_AGENT['log'][-20:])
     return jsonify({
@@ -5930,6 +6185,7 @@ def agent_status():
         'last_run': _AGENT['last_run'],
         'daily_pnl_pct': _AGENT['daily_pnl_pct'],
         'broker_error': _AGENT.get('broker_error'),
+        'notice': _AGENT.get('notice'),          # BRECHAS #14: apagado por una actualización (ES/EN)
         'log': recent,
     })
 
@@ -5946,9 +6202,11 @@ def agent_config():
         return _bad(*err)
     if changes.get('mode', _AGENT['mode']) == 'auto' and not _paper():
         return _auto_live_refused()
+    _agent_restore()
     with _AGENT_LOCK:
         _AGENT.update(changes)
     if changes:
+        _agent_persist(_AGENT['running'], 'config')
         _trade_audit('agent_config', {'outcome': 'updated', **{k: v for k, v in changes.items() if k != 'universe'},
                                       **({'universe_n': len(changes['universe'])} if 'universe' in changes else {})})
     return jsonify({'status': 'updated', 'notes': notes, **_agent_config_view()})

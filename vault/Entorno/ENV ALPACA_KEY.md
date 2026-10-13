@@ -19,10 +19,13 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_brokerage.py]]
+- [[tests.test_ledger_callsites.py]]
 - [[tests.test_mcp.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_security.py]]
+- [[tests.test_trading_agent_ledger.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

@@ -38,13 +38,14 @@ CAPA 2 (PRECONSCIENTE): el grafo semántico activo.
 - [[core.sim_agents.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_ai_usage.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_scenario_kernel.py]]
 
 ## Mencionado en sesiones de trabajo
 

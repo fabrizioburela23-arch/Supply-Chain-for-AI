@@ -6,7 +6,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 
 # Índice de la API
 
-239 rutas HTTP en 59 grupos + 23 herramientas MCP.
+247 rutas HTTP en 61 grupos + 23 herramientas MCP.
 
 | Grupo | Rutas | Definidas en |
 |---|---|---|
@@ -28,10 +28,11 @@ tags: ["capa/mcp-api", "tipo/indice"]
 | [[API findossier]] | 1 | [[server.py]] |
 | [[API fundamentals]] | 1 | [[server.py]] |
 | [[API geo]] | 1 | [[core.geosit.py]] |
-| [[API governance]] | 3 | [[core.governance_api.py]] |
+| [[API governance]] | 5 | [[core.governance_api.py]] |
 | [[API grafo]] | 2 | [[server.py]] |
 | [[API health]] | 1 | [[server.py]] |
 | [[API insiders]] | 1 | [[server.py]] |
+| [[API instruments]] | 1 | [[core.prices_api.py]] |
 | [[API investors]] | 1 | [[server.py]] |
 | [[API ipo_calendar]] | 1 | [[server.py]] |
 | [[API khipu]] | 3 | [[core.khipu_chat.py]] |
@@ -49,6 +50,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 | [[API portfolio-ai]] | 3 | [[core.portfolio_ai.py]] |
 | [[API portfolio-report]] | 6 | [[core.portfolio_reports_api.py]] |
 | [[API portfolio-risk]] | 1 | [[server.py]] |
+| [[API prices]] | 5 | [[core.prices_api.py]] |
 | [[API páginas y archivos estáticos]] | 8 | [[server.py]] |
 | [[API quote]] | 1 | [[server.py]] |
 | [[API quotes]] | 2 | [[server.py]] |

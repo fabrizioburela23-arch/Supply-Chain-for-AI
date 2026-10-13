@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/db.py"
 lenguaje: "python"
-lineas: 268
+lineas: 271
 aliases: ["ontology/db.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/db.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 268 líneas · `ontology/db.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 271 líneas · `ontology/db.py`
 
 ## Para qué sirve
 
@@ -21,8 +21,8 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - `ontology_available()` _(línea 20)_
 - `get_session_factory()` _(línea 104)_
 - `session_scope()` — Sesión con commit/rollback automático. Uso: with session_scope() as s: ... _(línea 110)_
-- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 152)_
-- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 175)_
+- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 155)_
+- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 178)_
 
 **Internas** (empiezan con `_`): `_normalize_url`, `_env_int`, `_engine_kwargs`, `_get_engine`
 
@@ -56,6 +56,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[core.portfolio_advisor.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
+- [[core.prices_store.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
 - [[mcp_server.auth.py]] — lo importa
@@ -90,7 +91,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 48 pruebas (lista abajo)._
+_Además lo importan 56 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -111,6 +112,7 @@ _Además lo importan 48 pruebas (lista abajo)._
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
+- [[tests.test_governance_activation.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
@@ -118,10 +120,13 @@ _Además lo importan 48 pruebas (lista abajo)._
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
+- [[tests.test_instruments.py]]
 - [[tests.test_jev_router.py]]
+- [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_ledger_anchor.py]]
+- [[tests.test_ledger_callsites.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
@@ -138,11 +143,13 @@ _Además lo importan 48 pruebas (lista abajo)._
 - [[tests.test_ops_link_status_event.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_portfolio_persist.py]]
 - [[tests.test_portfolio_reports.py]]
+- [[tests.test_prices_eod.py]]
 - [[tests.test_provenance.py]]
 - [[tests.test_reconcile.py]]
 - [[tests.test_repair_committee.py]]
@@ -154,5 +161,7 @@ _Además lo importan 48 pruebas (lista abajo)._
 - [[tests.test_repair_review2.py]]
 - [[tests.test_research.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_risk_on_history.py]]
 - [[tests.test_security.py]]
 - [[tests.test_tensor_autolink.py]]
+- [[tests.test_trading_agent_ledger.py]]

@@ -1,0 +1,80 @@
+{
+  "id": "kernel.params",
+  "semver": "2.0.0",
+  "kind": "params",
+  "change_kind": "major",
+  "parent": "kernel.params@1.0.0",
+  "activation": "pin",
+  "params": {
+    "rel_weights": {
+      "supply": 1.0,
+      "cloud": 0.9,
+      "fab": 1.0,
+      "license": 0.5,
+      "partner": 0.3,
+      "invest": 0.25,
+      "deploy": 0.4,
+      "owns": 0.6,
+      "ppa": 0.7
+    },
+    "sole_link_floor": 6.0,
+    "fragility_cap": 2.5,
+    "bulk_weight_factor": 0.5,
+    "bulk_sources": [
+      "gleif",
+      "wikidata"
+    ],
+    "unverified_conf": 0.3,
+    "magnitude": 1.0,
+    "damping": 0.6,
+    "max_hops": 6,
+    "threshold": 0.01,
+    "severity_divisor": 10.0,
+    "factor_latent_severity": 1.0,
+    "pagerank_alpha": 0.85,
+    "supplier_rels": [
+      "supply",
+      "fab",
+      "cloud",
+      "license",
+      "ppa"
+    ],
+    "tensor_n_peers": 15,
+    "tensor_w_peers": 0.7,
+    "tensor_w_cat": 0.3,
+    "damage_rels": [
+      "supply",
+      "fab",
+      "cloud",
+      "license",
+      "ppa",
+      "owns",
+      "deploy"
+    ],
+    "direction_up": true,
+    "nonlinear_mode": "amplify",
+    "factor_inputs_strict": true,
+    "fire_mode": "member_coef",
+    "fire_crisis_default_max": 10.0,
+    "chokepoint_rank_by": "sum",
+    "scenario_mode": "kernel",
+    "scenario_event_magnitude": {
+      "export_ban": 1.0,
+      "disruption": 1.0,
+      "import_ban": 0.5,
+      "boost": 0.8
+    },
+    "scenario_substitute_gain": 0.55,
+    "scenario_min_impact": 0.01,
+    "sim_pct_source": "kernel",
+    "scenario_kappa_pct": {
+      "mega": 12.0,
+      "mid": 20.0,
+      "small": 35.0
+    }
+  },
+  "changelog_es": "MAJOR (bloque 1 de BRECHAS, paso 12). Un solo motor de contagio con las decisiones por defecto de Fabrizio: (1) socios e inversores NO transmiten daño (damage_rels = solo flujo; se muestran aparte como 'relacionadas', BRECHAS #4, PROP-07); (2) la severidad de los factores está en escala 0-10 (severity_divisor 5→10; al disparar un factor cada miembro arranca en magnitud×coeficiente ≤ 1, nunca 160 %; BRECHAS #5, PROP-05); (3) auge de demanda 'up' con el mismo piso SOLE_LINK_FLOOR (PROP-17); (4) la opción 'estrés severo' AMPLIFICA en vez de atenuar (PROP-15); (5) un coeficiente 0 vale 0 y una severidad ausente es la latente (PROP-20); (6) el ranking de cuellos de botella es por Σ impacto (PROP-06); (7) los escenarios solo SIEMBRAN el golpe y propaga el kernel único con grado de flujo (PROP-09, L4-03, L4-M2); (8) en la simulación por agentes los % salen del kernel (κ por tamaño, constante hasta calibrar con historia EOD), la IA solo narra (PROP-10, L4-04). Entra en vigor SOLO cuando Fabrizio lo activa con su PIN (🩺 → Gobernanza → «Activar»); deshacer = activar 1.0.0.",
+  "changelog_en": "MAJOR (BRECHAS block 1, step 12). One contagion engine with Fabrizio's default decisions: (1) partners and investors do NOT transmit damage (damage_rels = flow only; shown separately as 'related', BRECHAS #4, PROP-07); (2) factor severity is on a 0-10 scale (severity_divisor 5→10; when a factor fires each member starts at magnitude×coefficient ≤ 1, never 160%; BRECHAS #5, PROP-05); (3) demand boom 'up' with the same SOLE_LINK_FLOOR (PROP-17); (4) the 'severe stress' option AMPLIFIES instead of attenuating (PROP-15); (5) a 0 coefficient is 0 and a missing severity is the latent one (PROP-20); (6) chokepoints are ranked by Σ impact (PROP-06); (7) scenarios only SEED the shock and the single kernel propagates it with the flow degree (PROP-09, L4-03, L4-M2); (8) in the agent simulation the % come from the kernel (κ by size, constant until calibrated with EOD history), the AI only narrates (PROP-10, L4-04). It takes effect ONLY when Fabrizio activates it with his PIN (🩺 → Governance → \"Activate\"); undo = activate 1.0.0.",
+  "summary_es": "Las crisis se calculan solo por relaciones de suministro (las alianzas y las inversiones dejan de contagiar), la severidad de los factores usa su escala real 0-10 (nunca más de 100 %), los auges de demanda se calculan con el mismo motor y las simulaciones por agentes toman sus % del motor, no de la IA.",
+  "summary_en": "Crises are computed only through supply relationships (alliances and investments no longer spread damage), factor severity uses its real 0-10 scale (never above 100%), demand booms are computed with the same engine and agent simulations take their % from the engine, not from the AI."
+}

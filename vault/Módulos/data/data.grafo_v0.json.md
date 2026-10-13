@@ -41,6 +41,7 @@ _Nada interno._
 
 - [[ontology.reconcile.py]] — lo nombra por su ruta
 - [[scripts.audit_graph.py]] — lo nombra por su ruta
+- [[scripts.build_instrument_review.py]] — lo nombra por su ruta
 - [[scripts.ingest_multicapa.py]] — lo nombra por su ruta
 - [[scripts.migrate_v0_to_ontology.py]] — lo nombra por su ruta
 
@@ -51,6 +52,8 @@ _Nada interno._
 - [[tests.test_docs_facts.py]]
 - [[tests.test_entities.py]]
 - [[tests.test_graph_audit.py]]
+- [[tests.test_instruments.py]]
+- [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
 - [[tests.test_no_client_engine.py]]

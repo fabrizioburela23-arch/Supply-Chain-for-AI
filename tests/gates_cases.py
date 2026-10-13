@@ -7,7 +7,7 @@ como prefijo: varios casos pueden ir en UN grafo de datos para pySHACL sin mezcl
 import random
 from datetime import datetime, timezone
 
-KINDS = ('link', 'object', 'factor', 'action', 'decision')
+KINDS = ('link', 'object', 'factor', 'action', 'decision', 'order')
 LIMITS = {'max_weight': 6.0, 'severity_scale': 10.0, 'high_conf_min': 0.5, 'min_trust': 2, 'max_member_coef': 1.0}
 
 
@@ -103,8 +103,43 @@ def decision_case(rng, n, kinds):
             'verdict': rng.choice([None, 'pass', 'warn', 'block']), 'quotes': quotes}
 
 
+def order_case(rng, n):
+    """Hechos de una orden (brokerage/risk.order_facts) con valores buenos, malos y de tipo equivocado."""
+    side = rng.choice(['buy', 'sell', 'buy', 'hold', None])
+    pick = rng.choice
+    f = {'id': f'c{n}_O', 'symbol': pick(['NVDA', 'BTC/USD', 'NV DA', 'AAPL']), 'side': side,
+         'order_type': pick(['market', 'limit']), 'trading_enabled': pick([True, True, False, None, 'on']),
+         'account_mode': pick(['paper', 'live', 'paper', None]), 'client_status': pick(['active', 'paused', None]),
+         'account_readable': pick([True, False, None]), 'symbol_valid': pick([True, True, False, None]),
+         'asset_class': pick(['us_equity', 'crypto', None]),
+         'allowed_asset_classes': pick([['us_equity'], ['us_equity', 'crypto'], []]),
+         'restricted_symbols': pick([[], [], ['NVDA'], ['TSLA', 'AAPL']]),
+         'allowed_symbols': pick([[], [], ['NVDA', 'AMD'], ['AAPL']]),
+         'est_usd': pick([None, 0.5, 50, 500, 6000, 150000, 'x']), 'min_order_usd': pick([1, 1.0, None]),
+         'max_order_usd': pick([None, 5000, 100000]), 'daily_after_usd': pick([None, 1000, 16000]),
+         'max_daily_usd': pick([None, 15000]), 'needs_funds': pick([True, False, None]),
+         'available_usd': pick([None, 100, 10000, 'abc']), 'position_pct_after': pick([None, 5, 20, 23.5]),
+         'max_position_pct': pick([None, 20, 20.0]), 'drawdown_pct': pick([None, 0, 25.0]),
+         'max_drawdown_pct': pick([None, 20]), 'short_sale': pick([None, True, False]),
+         'duplicate_recent': pick([None, False, True]), 'unresolved': pick([None, False, True]),
+         'ref_price_known': pick([None, True, False]), 'limit_dev_pct': pick([None, -12.0, -2, 0, 3, 15.5, 'x']),
+         'max_limit_dev_pct': pick([None, 10]), 'min_limit_dev_pct': pick([None, -10]),
+         'market_open': pick([None, True, False]), 'origin': pick(['ui', 'mcp', 'committee', 'agent', None]),
+         'channel': pick(['ui', 'voice', 'crypto', None]), 'paper_auto_approved': pick([None, True, False]),
+         'readback_sha': pick([None, 'a' * 64]), 'quote_age_s': pick([None, 2, 75]),
+         'max_quote_age_s': pick([None, 60]), 'account_age_s': pick([None, 1, 45]),
+         'max_account_age_s': pick([None, 30]), 'sector_weight_after': pick([None, 0.2, 0.55]),
+         'max_sector_weight': pick([None, None, 0.4]), 'country_weight_after': pick([None, 0.3, 0.8]),
+         'max_country_weight': pick([None, 0.6]), 'chain_exposure_after': pick([None, 0.1, 0.5]),
+         'max_chain_exposure': pick([None, 0.3]), 'policy_changed': pick([None, False, True])}
+    if rng.random() < 0.5:
+        f.update(live_env_enabled=pick([True, False]), client_live_enabled=pick([True, False]),
+                 ledger_chain_ok=pick([True, False, None]))
+    return f
+
+
 def random_cases(seed, n):
-    """[(kind, entrada)] — n casos repartidos entre los 5 focos."""
+    """[(kind, entrada)] — n casos repartidos entre los 6 focos."""
     rng = random.Random(seed)
     rels, otypes, flow, kinds = _vocab()
     out = []
@@ -118,6 +153,8 @@ def random_cases(seed, n):
             out.append(('factor', factor_case(rng, i)))
         elif k == 'action':
             out.append(('action', action_case(rng, i)))
+        elif k == 'order':
+            out.append(('order', order_case(rng, i)))
         else:
             out.append(('decision', decision_case(rng, i, kinds)))
     return out
@@ -134,6 +171,8 @@ def triples_of(kind, inp):
         return F.factor_triples(inp['f'], inp['limits'])
     if kind == 'action':
         return F.action_triples(inp)
+    if kind == 'order':
+        return F.order_triples(inp)
     return F.decision_triples(inp)
 
 
@@ -218,5 +257,62 @@ def single_defect_cases():
         D('khr:decision.release_present', release_hash='0' * 64),
         D('khr:decision.quotes_have_asof_src', quotes=[{'ticker': 'NVDA', 'as_of': None, 'src': 'finnhub'}]),
         D('khr:decision.money_executed_not_blocked', kind='order.confirm', verdict='block'),
+    ]
+    # orden limpia (compra en papel, todo dentro de los límites) y un defecto por regla
+    obase = {'id': 'X_O', 'symbol': 'NVDA', 'side': 'buy', 'order_type': 'market', 'trading_enabled': True,
+             'account_mode': 'paper', 'client_status': 'active', 'account_readable': True, 'symbol_valid': True,
+             'asset_class': 'us_equity', 'allowed_asset_classes': ['us_equity', 'crypto'], 'restricted_symbols': [],
+             'allowed_symbols': [], 'est_usd': 500, 'min_order_usd': 1, 'max_order_usd': 5000,
+             'daily_after_usd': 500, 'max_daily_usd': 15000, 'needs_funds': True, 'available_usd': 10000,
+             'position_pct_after': 5, 'max_position_pct': 20, 'drawdown_pct': 0, 'max_drawdown_pct': 20,
+             'duplicate_recent': False, 'unresolved': False, 'market_open': True, 'origin': 'ui', 'channel': 'ui',
+             'quote_age_s': 1, 'max_quote_age_s': 60, 'account_age_s': 1, 'max_account_age_s': 30,
+             'sector_weight_after': 0.2, 'max_sector_weight': 0.4, 'country_weight_after': 0.3,
+             'max_country_weight': 0.6, 'chain_exposure_after': 0.1, 'max_chain_exposure': 0.3,
+             'policy_changed': False}
+
+    def O(rule, **kw):
+        return (rule, 'order', dict(obase, **kw))
+    sell = {'side': 'sell', 'needs_funds': None, 'available_usd': None, 'position_pct_after': None,
+            'max_position_pct': None, 'daily_after_usd': None, 'short_sale': False}
+    lim = {'order_type': 'limit', 'ref_price_known': True, 'max_limit_dev_pct': 10, 'min_limit_dev_pct': -10}
+    cases += [
+        O(None),
+        O('khr:order.kill_switch', trading_enabled=False),
+        O('khr:order.ledger_chain', account_mode='live', live_env_enabled=True, client_live_enabled=True,
+          ledger_chain_ok=False),
+        O('khr:order.mode_live_enabled', account_mode='live', live_env_enabled=True, client_live_enabled=False,
+          ledger_chain_ok=True),
+        O('khr:order.client_active', client_status='paused'),
+        O('khr:order.account_readable', account_readable=False),
+        O('khr:order.symbol_tradable', symbol_valid=False, asset_class=None),
+        O('khr:order.asset_class_allowed', symbol='BTC/USD', asset_class='crypto', allowed_asset_classes=['us_equity'],
+          market_open=None),
+        O('khr:order.restricted', restricted_symbols=['NVDA']),
+        O('khr:order.not_allowed', allowed_symbols=['AAPL', 'MSFT']),
+        O('khr:order.price_known', est_usd=None, daily_after_usd=None, available_usd=10000, needs_funds=None,
+          position_pct_after=None, max_position_pct=None, side='sell', short_sale=False),
+        O('khr:order.min_order_usd', est_usd=0.5, daily_after_usd=0.5),
+        O('khr:order.max_order_usd', est_usd=6000, daily_after_usd=6000),
+        O('khr:order.daily_cap', daily_after_usd=16000),
+        O('khr:order.buying_power', available_usd=100),
+        O('khr:order.position_pct_after', position_pct_after=23.5),
+        O('khr:order.drawdown_stop', drawdown_pct=25.0),
+        O('khr:order.no_short', **dict(sell, short_sale=True)),
+        O('khr:order.duplicate_window', duplicate_recent=True),
+        O('khr:order.unresolved', unresolved=True),
+        O('khr:order.limit_deviation', **dict(lim, limit_dev_pct=15.5)),
+        O('khr:order.limit_passive', **dict(lim, limit_dev_pct=-15.5)),
+        O('khr:order.limit_reference', **dict(lim, ref_price_known=False, max_limit_dev_pct=None,
+                                              min_limit_dev_pct=None)),
+        O('khr:order.market_hours', market_open=False),
+        O('khr:order.sector_pct_after', sector_weight_after=0.55),
+        O('khr:order.country_pct_after', country_weight_after=0.8),
+        O('khr:order.chain_exposure_after', chain_exposure_after=0.5),
+        O('khr:order.quote_fresh', quote_age_s=75),
+        O('khr:order.account_fresh', account_age_s=45),
+        O('khr:order.ai_origin_needs_human', origin='mcp'),
+        O('khr:order.voice_readback', channel='voice'),
+        O('khr:order.policy_changed_since_preview', policy_changed=True),
     ]
     return cases

@@ -92,6 +92,16 @@ def _compute_server_nrs(session, company):
     return client_nrs(node, server_flow_degree(session, company.id))
 
 
+def _hot_nrs():
+    """{id: NRS} de la tarjeta V3 de la generación vigente (core/hotviews/views/card.py: LA fórmula, grado de flujo en
+    pares distintos del grafo de los lectores). {} si las vistas no están: quien llama usa el cálculo directo."""
+    try:
+        from core.hotviews.views import card
+        return card.nrs_map(db_only=True)
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 class CentinelaNRS:
     name = 'centinela_nrs'
     THRESHOLD = 70
@@ -99,9 +109,12 @@ class CentinelaNRS:
     def observe(self, session):
         companies = session.scalars(select(ObjectRecord).where(ObjectRecord.type == 'Company')).all()
         signals = []
+        hot = _hot_nrs()            # paso 14: el vector NRS de la tarjeta V3 (antes una consulta por empresa: 870 ms)
         for c in companies:
             existing_override = (c.properties or {}).get('nrs_override')
-            score = _compute_server_nrs(session, c)
+            score = hot.get(c.id)
+            if score is None:
+                score = _compute_server_nrs(session, c)
             if score >= self.THRESHOLD and existing_override != score:
                 signals.append({'company': c, 'score': score})
         return signals
@@ -202,7 +215,7 @@ class GuardianCartera:
             c = session.get(ObjectRecord, cid)
             if not c:
                 continue
-            score = (c.properties or {}).get('nrs_override') or _compute_server_nrs(session, c)
+            score = (c.properties or {}).get('nrs_override') or _hot_nrs().get(c.id) or _compute_server_nrs(session, c)
             if score >= self.RISK_THRESHOLD:
                 signals.append({'company': c, 'qty': qty, 'score': score})
         return signals
@@ -923,9 +936,24 @@ _OPS = {
 }
 
 
-def evaluate_alert(session, rule):
-    """Evalúa UNA regla y devuelve (fired: bool, current_value, detail)."""
+def evaluate_alert(session, rule, values=None):
+    """Evalúa UNA regla y devuelve (fired: bool, current_value, detail). `values` = el lote de AlertIndex
+    (core/hotviews/views/alerts.values): NRS de la tarjeta V3 y precio de la cotización con sello, leídos una vez
+    para todas las alertas; sin lote se calcula esta sola regla (mismo resultado)."""
     metric = rule.get('metric')
+    if values is None and metric in ('price', 'nrs'):
+        try:
+            from core.hotviews.views import alerts as _ai
+            values = _ai.values(session, [rule])
+        except Exception:  # noqa: BLE001
+            values = None
+    hit = (values or {}).get((metric, rule.get('entity'))) if metric in ('price', 'nrs') else None
+    if hit is not None:
+        val, detail = hit
+        if val is None:
+            return False, None, detail
+        op = _OPS.get(rule.get('op'), _OPS['>'])
+        return op(val, float(rule.get('value', 0))), val, detail
     if metric == 'price':
         entity = rule.get('entity')
         obj = session.get(ObjectRecord, entity)
@@ -968,8 +996,13 @@ def check_alerts(session, owner=None):
         q = q.where(Alert.owner == owner)
     alerts = session.scalars(q).all()
     fired_now = []
+    try:   # paso 14 (AlertIndex): los valores de TODAS las alertas en un lote (un NRS y un precio por entidad)
+        from core.hotviews.views import alerts as _ai
+        vals = _ai.values(session, [a.rule for a in alerts])
+    except Exception:  # noqa: BLE001
+        vals = None
     for a in alerts:
-        fired, value, detail = evaluate_alert(session, a.rule)
+        fired, value, detail = evaluate_alert(session, a.rule, values=vals)
         if fired:
             a.last_fired_at = _utcnow()
             fired_now.append({'id': str(a.id), 'rule': a.rule, 'value': value, 'detail': detail})

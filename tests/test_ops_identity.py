@@ -149,7 +149,8 @@ def test_cliente_manda_el_canal():
     assert "opts.headers['X-Khipu-Channel']" in block and "'X-Khipu-Pin-Source'" in block
     assert "Object.assign({ channel: 'terminal' }, opts || {})" in html
     voice = _read('engine/voice.js')
-    assert "window._executeTradeOrder(Object.assign({ channel: 'voice' }, orderObj))" in voice
+    assert "window._executeTradeOrder(Object.assign({ channel: 'voice', readback: pv.summary || '' }, orderObj))" in voice
+    assert "body.readback_sha" in voice and "body.confirmed_at" in voice     # paso 16: prueba de lectura por voz
     assert "channel: o.channel === 'voice' ? 'voice' : 'ui'" in voice
     crypto = _read('engine/crypto.js')
     assert crypto.count("channel: 'crypto'") >= 2

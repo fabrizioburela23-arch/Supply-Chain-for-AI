@@ -10,7 +10,7 @@ rechazaba sus resultados). Ahora Khipus CALCULA y les entrega el resultado:
   rendimiento del flujo de caja libre (FCF ÷ capitalización en vivo), ROIC/ROE,
   dilución de acciones.
 - technical_indicators(series, bench): 1 año diario vs S&P 500 — medias de 50 y
-  200 días (cruce dorado/de la muerte), RSI(14), distancia al máximo/mínimo de
+  200 días (cruce dorado/de la muerte), RSI(14) de Wilder, distancia al máximo/mínimo de
   52 semanas, máxima caída, rendimientos 1/3/6/12 meses y fuerza RELATIVA vs SPY.
 - peer_table(entity, peers): valuación y calidad frente a sus pares del grafo
   (P/E, márgenes, crecimiento) con mediana, prima/descuento y posición.
@@ -143,17 +143,20 @@ def _sma(xs, n):
 
 
 def _rsi(xs, n=14):
+    """RSI de WILDER (L2-11; el que muestran las plataformas de bolsa): semilla = media simple de las primeras n
+    variaciones y después suavizado (prev·(n−1) + x)/n sobre TODA la serie. Antes: media simple de las últimas n
+    (Cutler), que en 1 de cada 7 casos cambiaba la zona sobrecompra/sobreventa."""
     if len(xs) <= n:
         return None
-    gains = losses = 0.0
-    for i in range(len(xs) - n, len(xs)):
-        d = xs[i] - xs[i - 1]
-        gains += max(d, 0)
-        losses += max(-d, 0)
-    if losses == 0:
+    ch = [xs[i] - xs[i - 1] for i in range(1, len(xs))]
+    ag = sum(max(d, 0.0) for d in ch[:n]) / n
+    al = sum(max(-d, 0.0) for d in ch[:n]) / n
+    for d in ch[n:]:
+        ag = (ag * (n - 1) + max(d, 0.0)) / n
+        al = (al * (n - 1) + max(-d, 0.0)) / n
+    if al == 0:
         return 100.0
-    rs = (gains / n) / (losses / n)
-    return round(100 - 100 / (1 + rs), 1)
+    return round(100 - 100 / (1 + ag / al), 1)
 
 
 def _ret(xs, n):
@@ -161,7 +164,8 @@ def _ret(xs, n):
 
 
 def technical_indicators(series, bench=None):
-    """series/bench: [(ts, close)] diarios (~1 año). Devuelve (dict, texto)."""
+    """series/bench: [(ts, close)] diarios (~1 año) — cierres AJUSTADOS por splits y dividendos (L2-03; los da
+    research/context._fetch_candles desde la historia propia de Khipus o el adjclose de Yahoo). Devuelve (dict, texto)."""
     xs = [c for _t, c in series or [] if c]
     if len(xs) < 30:
         return None, ''
@@ -204,7 +208,7 @@ def technical_indicators(series, bench=None):
         parts.append(f"media 50 días {out['sma50']} (precio {'sobre' if last > s50 else 'bajo'} ella)")
     if out['rsi14'] is not None:
         tag = 'sobrecompra' if out['rsi14'] >= 70 else 'sobreventa' if out['rsi14'] <= 30 else 'zona neutral'
-        parts.append(f"RSI(14) {out['rsi14']} ({tag})")
+        parts.append(f"RSI(14) de Wilder {out['rsi14']} ({tag})")
     parts.append(f"a {out['pct_from_52w_high']} % de su máximo de 52 semanas; máxima caída del año "
                  f"{out['max_drawdown_1y_pct']} %")
     if out['vol_20d_pct'] is not None:

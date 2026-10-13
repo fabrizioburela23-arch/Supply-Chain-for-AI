@@ -18,6 +18,10 @@ importar este módulo). Son tablas propias: la ontología nunca las toca.
                          trigger de Postgres (UPDATE/DELETE/TRUNCATE → error),
                          creado por `_after_create` al correr init_schema.
   broker_oauth_states  — `state` de un solo uso del flujo OAuth de Alpaca.
+  broker_fills         — APPEND-ONLY (INFRA_OPERATIVA paso 16): cada avance de ejecución observado en Alpaca
+                         (cantidad acumulada, precio medio, estado). Una fila por (orden, cantidad acumulada):
+                         sondear dos veces lo mismo no duplica. Su gemela sellada es el `decision_outcomes`
+                         'fill' de la decisión order.submit.
 """
 import uuid
 
@@ -34,7 +38,10 @@ RISK_PROFILES = ('conservador', 'moderado', 'agresivo')
 CLIENT_STATUSES = ('active', 'paused')
 ORDER_STATUSES = ('previewed', 'pending_approval', 'approved', 'submitted', 'filled',
                   'partially_filled', 'canceled', 'rejected', 'expired', 'failed')
-SOURCES = ('ui', 'mcp', 'committee')
+# 'agent' (paso 16): el agente de trading del servidor — sus órdenes pasan por el MISMO camino y requieren aprobación
+# humana salvo en PAPEL (BRECHAS #14 / D4). 'ui' = una persona en la app (panel, cripto, voz, terminal: el canal
+# va aparte, en meta.channel).
+SOURCES = ('ui', 'mcp', 'committee', 'agent')
 
 log = logging.getLogger('khipu')
 
@@ -104,6 +111,10 @@ class BrokerOrder(Base):
     # huella de la cuenta (modo + URL + credenciales) al previsualizar: si cambia
     # antes de ejecutar (p. ej. papel → dinero real), la orden NO se envía
     account_fp = Column(String(64), nullable=True)
+    # INFRA_OPERATIVA pasos 15-17: canal (ui|voice|crypto|terminal|agent|mcp), modo de controles, release de reglas
+    # al previsualizar (policy_changed_since_preview), decisiones del libro (preview/confirm/submit) y prueba del
+    # canal de voz (readback_sha). Columna tardía (ontology/db._COLUMNAS_TARDIAS).
+    meta = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
     submitted_at = Column(DateTime(timezone=True), nullable=True)
@@ -125,6 +136,29 @@ class BrokerAudit(Base):
     client_id = Column(String(40), nullable=True, index=True)
     order_id = Column(String(40), nullable=True, index=True)
     detail = Column(JSONB, nullable=False, default=dict)
+
+
+class BrokerFill(Base):
+    """APPEND-ONLY (kh_append_only, core/ledger_ddl.APPEND_ONLY_TABLES). Avance de ejecución observado."""
+    __tablename__ = 'broker_fills'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    order_id = Column(String(40), nullable=False, index=True)          # broker_orders.id
+    client_id = Column(String(40), nullable=False, index=True)
+    alpaca_order_id = Column(String(64), nullable=True)
+    symbol = Column(String(20), nullable=False)
+    side = Column(String(4), nullable=False)
+    cum_qty = Column(Float, nullable=False)                            # cantidad ACUMULADA ejecutada
+    delta_qty = Column(Float, nullable=False)                          # lo nuevo desde la observación anterior
+    avg_price = Column(Float, nullable=True)                           # precio medio acumulado (Alpaca)
+    status = Column(String(20), nullable=True)                         # estado de la orden al observarlo
+    source = Column(String(40), nullable=False, default='alpaca:orders')
+    decision_id = Column(String(40), nullable=True)                    # decisión order.submit (si la hay)
+    observed_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    __table_args__ = (
+        Index('ux_broker_fills_order_cum', 'order_id', 'cum_qty', unique=True),
+    )
 
 
 class BrokerOAuthState(Base):

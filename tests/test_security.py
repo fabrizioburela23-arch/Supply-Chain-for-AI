@@ -8,7 +8,7 @@ Sin red: Alpaca/Finnhub se sustituyen por un bróker FALSO (monkeypatch de
   · /api/trade/order: tope $100k (notional y qty × precio), limit_price,
     time_in_force, tipos no soportados, client_order_id reenviado y
     duplicados idempotentes, interruptor BROKERAGE_TRADING_ENABLED;
-  · /api/trade/close: regex estricta del símbolo (nunca DELETE /v2/positions);
+  · /api/trade/close: regex estricta del símbolo; cerrar = orden por brokerage.service (nunca DELETE);
   · agente: orden rechazada = ERROR, stop-loss cripto 'gtc' sin re-cierre,
     parámetros acotados, AUTO prohibido con dinero real, arranque único;
   · caché sin errores, rate-limit por el último salto de XFF, redacción de
@@ -118,6 +118,15 @@ class FakeAlpaca:
         self.calls.append(('DELETE', url, None, None))
         return FakeResp(200, {'id': 'close-1', 'status': 'accepted'})
 
+    def deletes(self):
+        return [c for c in self.calls if c[0] == 'DELETE']
+
+
+def _dispatch(method, url, **kw):
+    """brokerage/alpaca.AlpacaClient usa requests.request(método, …): se reparte al get/post/delete VIGENTE
+    (las pruebas pueden sustituir requests.get después de armar el bróker falso)."""
+    return getattr(requests, str(method).lower())(url, **kw)
+
 
 # ════════════════════════════════════════════════════════════════════════════
 # fixtures
@@ -159,10 +168,15 @@ def alpaca(monkeypatch):
     monkeypatch.setattr(requests, 'get', fake.get)
     monkeypatch.setattr(requests, 'post', fake.post)
     monkeypatch.setattr(requests, 'delete', fake.delete)
+    monkeypatch.setattr(requests, 'request', _dispatch)
     monkeypatch.setattr(server, 'ALPACA_KEY', 'PKFAKEKEY0001')
     monkeypatch.setattr(server, 'ALPACA_SECRET', ALPACA_SECRET_VALUE)
     monkeypatch.setattr(server, 'ALPACA_BASE', 'https://paper-api.alpaca.markets')
     monkeypatch.setattr(server, 'FINNHUB', 'fh-server-key-000')
+    # paso 15: las órdenes de la casa salen por brokerage.service (cuenta «house» = ALPACA_KEY/SECRET/BASE del entorno)
+    monkeypatch.setenv('ALPACA_KEY', 'PKFAKEKEY0001')
+    monkeypatch.setenv('ALPACA_SECRET', ALPACA_SECRET_VALUE)
+    monkeypatch.setenv('ALPACA_BASE', 'https://paper-api.alpaca.markets')
     return fake
 
 
@@ -456,6 +470,7 @@ def test_order_attempts_are_audited(client, alpaca, db, no_rate):
     assert ok[0]['detail']['paper'] is True and ok[0]['detail']['symbol'] == 'NVDA'
     assert any(r['detail'].get('outcome') == 'rejected' and r['detail'].get('reason') == 'over_cap' for r in rows)
     assert ALPACA_SECRET_VALUE not in json.dumps(rows) and PIN not in json.dumps(rows)
+    alpaca.positions = [{'symbol': 'NVDA', 'qty': '2', 'side': 'long', 'market_value': '200'}]
     client.post('/api/trade/close', data=json.dumps({'symbol': 'NVDA'}), headers=H())
     assert any(r['detail'].get('outcome') == 'submitted' for r in _audit_rows('trade_close'))
 
@@ -472,14 +487,27 @@ def test_close_rejects_bad_symbols(client, alpaca, nodb, no_rate, sym):
     assert not [c for c in alpaca.calls if c[0] == 'DELETE']
 
 
-def test_close_valid_symbols_are_encoded(client, alpaca, nodb, no_rate):
-    for sym, path in (('btc/usd', '/v2/positions/BTCUSD'), ('BRK.B', '/v2/positions/BRK.B'),
-                      ('NVDA', '/v2/positions/NVDA')):
+def test_close_is_a_market_order_through_the_single_path(client, alpaca, nodb, no_rate):
+    """Paso 15 (M-code-03): cerrar = orden de mercado por TODA la posición por brokerage.service (mismos
+    controles, client_order_id, auditoría) — nunca más DELETE /v2/positions (ni /v2/positions = cerrar TODO)."""
+    alpaca.positions = [{'symbol': 'BTCUSD', 'asset_class': 'crypto', 'qty': '0.25', 'side': 'long',
+                         'market_value': '15000', 'current_price': '60000'},
+                        {'symbol': 'BRK.B', 'asset_class': 'us_equity', 'qty': '3', 'side': 'long',
+                         'market_value': '1200', 'current_price': '400'},
+                        {'symbol': 'NVDA', 'asset_class': 'us_equity', 'qty': '-4', 'side': 'short',
+                         'market_value': '-720', 'current_price': '180'}]
+    for sym, want in (('btc/usd', {'symbol': 'BTC/USD', 'side': 'sell', 'qty': '0.25', 'time_in_force': 'gtc'}),
+                      ('BRK.B', {'symbol': 'BRK.B', 'side': 'sell', 'qty': '3', 'time_in_force': 'day'}),
+                      ('NVDA', {'symbol': 'NVDA', 'side': 'buy', 'qty': '4', 'time_in_force': 'day'})):
         r = client.post('/api/trade/close', data=json.dumps({'symbol': sym}), headers=H())
-        assert r.status_code == 200, sym
-        assert [c for c in alpaca.calls if c[0] == 'DELETE'][-1][1].endswith(path)
+        assert r.status_code == 200, (sym, r.get_json())
+        sent = alpaca.posts()[-1][3]
+        assert {k: sent[k] for k in want} == want and sent['type'] == 'market', sent
+        assert sent['client_order_id'].startswith('kh-close-') and r.get_json()['paper'] is True
+    r = client.post('/api/trade/close', data=json.dumps({'symbol': 'AMD'}), headers=H())     # sin posición
+    assert r.status_code == 404 and r.get_json()['code'] == 'no_position' and r.get_json()['error_en']
     assert client.post('/api/trade/close', data=json.dumps({}), headers=H()).status_code == 400
-    assert not any(c[1].endswith('/v2/positions') for c in alpaca.calls if c[0] == 'DELETE')
+    assert not alpaca.deletes()
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -901,6 +929,7 @@ def test_global_lock_keeps_trusted_owner_ip_for_emergency_actions(client, alpaca
     assert client.get('/api/trade/account', headers=H(ip=owner)).status_code == 200      # IP de confianza
     for i in range(30):
         assert client.get('/api/trade/account', headers=H(pin='bad', ip=f'192.0.2.{i + 1}')).status_code == 401
+    alpaca.positions = [{'symbol': 'NVDA', 'qty': '2', 'side': 'long', 'market_value': '200'}]
     fresh = client.post('/api/trade/close', data=json.dumps({'symbol': 'NVDA'}), headers=H(ip='198.51.100.99'))
     assert fresh.status_code == 429 and fresh.get_json()['code'] == 'pin_locked_global'
     r = client.post('/api/trade/close', data=json.dumps({'symbol': 'NVDA'}), headers=H(ip=owner))

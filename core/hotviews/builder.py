@@ -161,6 +161,12 @@ def _loop():
             with _COND:
                 _ST.update(builds=_ST['builds'] + 1, consecutive_failures=0, retry_at=0.0, last_build_ms=g.build_ms,
                            last_build_at=time.time())
+            if _ST['eager']:
+                try:   # paso 14: tarjeta V3 + vector NRS + estructura, en segundo plano (la primera lectura no espera)
+                    from core.hotviews import derived
+                    derived.prewarm(g)
+                except Exception:  # noqa: BLE001
+                    pass
         except Exception as e:  # noqa: BLE001
             with _COND:
                 from core.hotviews.signals import _redact

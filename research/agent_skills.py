@@ -210,9 +210,18 @@ def _fmt_pct(v, en=False):
 def _supply_extras(eid):
     """S#: el tensor de la cadena (matrix/tensor.py) + eventos en vivo en sus proveedores."""
     lines, facts, sources = [], {}, []
-    try:
-        from matrix import tensor
-        st = tensor.structure(eid) or {}
+    try:   # paso 14: la estructura de la tarjeta V3 (memo por generación y caps); respaldo: el tensor directo
+        st = None
+        try:
+            from core.hotviews.views import card as _card
+            cv = _card.reader_view()
+            st = cv.structure(eid) if cv is not None and eid in cv.cards else None
+        except Exception:  # noqa: BLE001
+            st = None
+        if st is None:
+            from matrix import tensor
+            st = tensor.structure(eid)
+        st = st or {}
     except Exception as e:  # noqa: BLE001
         log.info('skills tensor: %s', type(e).__name__)
         st = {}
@@ -252,9 +261,10 @@ def _supply_extras(eid):
     else:
         ids = [eid]
     try:
-        from core.world import entity_geo_risks
-        # con su PROPIO plazo: si el World Monitor está frío, la cadena (tensor) igual llega
-        geo = _GEO_POOL.submit(entity_geo_risks, ids, wait=2.5).result(timeout=GEO_TIMEOUT_S) or {}
+        from core.hotviews.views import geo as _geo
+        # con su PROPIO plazo: si el World Monitor está frío, la cadena (tensor) igual llega. Paso 14: la vista V6
+        # GeoRisk (armada una vez por versión del mundo) en vez de re-escanear los eventos en cada pregunta
+        geo = _GEO_POOL.submit(lambda: _geo.facts(ids, wait=2.5)[0]).result(timeout=GEO_TIMEOUT_S) or {}
         for nid in ids:
             for it in (geo.get(nid) or [])[:2]:
                 who = 'la empresa' if nid == eid else f'su proveedor {nid}'
@@ -276,8 +286,8 @@ def _geo_extras(eid):
 def _news_extras(eid):
     lines, sources = [], []
     try:
-        from core.world import entity_geo_risks
-        for it in (entity_geo_risks([eid], wait=2.5) or {}).get(eid, [])[:3]:
+        from core.hotviews.views import geo as _geo
+        for it in (_geo.facts([eid], wait=2.5)[0] or {}).get(eid, [])[:3]:
             lines.append(f"Evento en vivo que la nombra o la toca: {it.get('title_es')} ({it.get('why_es')}, "
                          f"fuente {it.get('source')}, {it.get('time') or 's/f'})")
         if lines:

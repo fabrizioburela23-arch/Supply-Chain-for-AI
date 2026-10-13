@@ -20,6 +20,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[tests.test_company_data.py]]
 - [[tests.test_ontology_alerts.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_providers.py]]
 - [[tests.test_quotes_live.py]]
 - [[tests.test_security.py]]

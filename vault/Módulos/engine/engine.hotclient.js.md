@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/hotclient.js"
 lenguaje: "javascript"
-lineas: 321
+lineas: 348
 aliases: ["engine/hotclient.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/hotclient.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 321 líneas · `engine/hotclient.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 348 líneas · `engine/hotclient.js`
 
 ## Para qué sirve
 
@@ -24,13 +24,13 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **28 de 93** (línea 7820), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
+Se carga en [[app.html]] en la posición **28 de 95** (línea 7827), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 28)
 
-**Rutas que nombra y no existen en el servidor** (¿restos viejos?): `/api/hot/chokepoints`, `/api/hot/factors`, `/api/hot/impact/`, `/api/hot/scenario`, `/api/hot/status`
+**Rutas que nombra y no existen en el servidor** (¿restos viejos?): `/api/hot/card/`, `/api/hot/chokepoints`, `/api/hot/factors`, `/api/hot/impact/`, `/api/hot/nrs`, `/api/hot/scenario`, `/api/hot/status`
 
 ## Pruebas que lo cubren
 

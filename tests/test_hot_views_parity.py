@@ -183,3 +183,170 @@ def test_metrics_delegado_es_identico_al_calculo_directo(pg):
         imp, order = E.propagate(mats, idx, ids, [oid], frag=frag)
         assert r['impacts'] == imp and r['cascade'] == order and r['view']['source'] == 'pg'
     assert M.HOT_WAIT_S > 0
+
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# Paso 14 (INFRA_OPERATIVA §4.2 V3 Card + NRS, V4 Quote, V6 GeoRisk, AlertIndex): las vistas nuevas dan
+# EXACTAMENTE lo que daban los cálculos directos que reemplazan.
+# ════════════════════════════════════════════════════════════════════════════════════════════════════════════
+@pytest.fixture(scope='module')
+def cardv(monkeypatch_module=None):
+    import ontology.db as odb
+    from core.hotviews import builder, derived, hot, registry
+    from core.hotviews.views import card
+    real = odb.ontology_available
+    odb.ontology_available = lambda: False
+    registry.reset()
+    hot.reset()
+    derived.reset()
+    try:
+        g = builder.build_once()
+        yield g, card.view(g)
+    finally:
+        odb.ontology_available = real
+        registry.reset()
+        hot.reset()
+        derived.reset()
+
+
+def test_card_nrs_es_la_formula_unica_en_todas_las_empresas(cardv, monkeypatch):
+    import core.live_fundamentals as lf
+    from core import world
+    monkeypatch.setattr(lf, 'live_margin', lambda *_a, **_k: None)
+    monkeypatch.setattr(lf, 'version', lambda: -7)        # fuerza recalcular con el margen del catálogo
+    g, cv = cardv
+    gv = g.views['graph']
+    allv = cv.nrs_all()
+    assert len(allv) == len(gv.nodes) >= 937
+    bad = [n['id'] for n in gv.nodes if allv[n['id']]['total'] != world.client_nrs(n, gv.flow_degree.get(n['id'], 0))]
+    assert bad == []
+    t = allv['TSMC']
+    assert t['total'] == min(100, max(0, int(t['geo'] + t['chain'] + t['market'] + t['fundamental'] +
+                                             t['concentration'] + 0.5)))
+
+
+def test_card_flujo_en_pares_distintos_y_relacionadas_aparte(cardv):
+    from ontology import vocabulary as vocab
+    g, cv = cardv
+    gv = g.views['graph']
+    flow = set(vocab.flow_relation_types())
+    sup, cus, rel = {}, {}, {}
+    for l in gv.links:
+        s, t, typ = l['source'], l['target'], l.get('type') or 'supply'
+        if s == t or s not in gv.by_id or t not in gv.by_id:
+            continue
+        if typ in flow:
+            sup.setdefault(t, set()).add(s)
+            cus.setdefault(s, set()).add(t)
+        elif typ in ('partner', 'invest'):
+            rel.setdefault(s, set()).add(t)
+            rel.setdefault(t, set()).add(s)
+    for oid, c in cv.cards.items():
+        assert c['counts']['suppliers'] == len(sup.get(oid, ())), oid
+        assert c['counts']['customers'] == len(cus.get(oid, ())), oid
+        assert c['counts']['related'] == len(rel.get(oid, ())), oid
+        ws = [x['w'] or 0 for x in c['top_suppliers']]
+        assert ws == sorted(ws, reverse=True) and len(c['top_suppliers']) <= 5
+        assert all(x['type'] in flow for x in c['top_suppliers'] + c['top_customers'])
+        assert all(x['type'] in ('partner', 'invest') for x in c['related'])
+
+
+def test_card_impacto_y_estructura_salen_de_las_vistas_de_la_misma_generacion(cardv):
+    from matrix import tensor
+    g, cv = cardv
+    imp = g.views['impact']
+    for oid in ('TSMC', 'Nvidia', 'ASML', 'Microsoft'):
+        st = imp.stats[oid]
+        c = cv.cards[oid]['impact']
+        assert (c['reach_1'], c['reach_10'], c['sum_impact']) == (st['reach_1'], st['reach_10'], st['sum_impact'])
+        assert c['rank_by_sum'] == imp.by_sum.index(oid) + 1
+        m = cv.structure_model()
+        assert cv.structure(oid) == tensor.structure(oid, m=m, top=5)
+
+
+def test_mcp_y_chat_leen_el_nrs_de_la_tarjeta(cardv, monkeypatch):
+    import core.live_fundamentals as lf
+    import mcp_server.tools as T
+    from core import khipu_chat
+    monkeypatch.setattr(lf, 'live_margin', lambda *_a, **_k: None)
+    g, cv = cardv
+    out = T.t_get_company(None, 'TSMC', include_live=False)
+    assert out['network_risk_score']['value'] == cv.nrs('TSMC')
+    assert out['network_risk_score']['terms']['geo'] == cv.nrs_all()['TSMC']['geo']
+    rk = khipu_chat.x_rank_companies(by='risk', limit=25)
+    assert all(r['nrs'] == cv.nrs(r['id']) for r in rk['items'])
+
+
+def test_mcp_get_company_cuenta_pares_distintos_como_la_tarjeta(cardv):
+    """Revisión batch E: el MCP (y el chat local_fact, que lo resume) contaba ARISTAS de flujo (TSMC 95 clientes)
+    mientras la tarjeta que lee la voz cuenta CONTRAPARTES distintas (78). Mismo número en TODAS las empresas."""
+    import mcp_server.tools as T
+    g, cv = cardv
+    bad = []
+    for oid in cv.cards:
+        out = T.t_get_company(None, oid, include_live=False)
+        c = cv.cards[oid]
+        if out['counts'] != {k: c['counts'][k] for k in ('suppliers', 'customers', 'related')}:
+            bad.append(oid)
+            continue
+        for k in ('top_suppliers', 'top_customers', 'related'):
+            mine = [(x['id'], x['weight'] or 0) for x in out[k][:5]]
+            theirs = [(x['id'], x['w'] or 0) for x in c[k]]
+            if mine != theirs:
+                bad.append((oid, k))
+        ids = [x['id'] for x in out['top_customers']]
+        assert len(ids) == len(set(ids)) and oid not in ids
+    assert bad == []
+    assert T.t_get_company(None, 'TSMC', include_live=False)['counts']['customers'] == cv.cards['TSMC']['counts'][
+        'customers']
+
+
+def test_api_card_y_nrs_con_sobre_etag_y_304(cardv):
+    import server
+    g, cv = cardv
+    c = server.app.test_client()
+    r = c.get('/api/hot/card/TSM?lang=en')
+    assert r.status_code == 200
+    d = r.get_json()
+    assert d['data']['id'] == 'TSMC' and d['data']['lang'] == 'en' and d['view']['generation'] == g.id
+    assert d['data']['nrs']['value'] == cv.nrs('TSMC') and d['data']['structure']['id'] == 'TSMC'
+    et = r.headers['ETag']
+    assert et.startswith('"card:') and r.headers['X-Khipu-Graph-Version'] == '0'
+    assert c.get('/api/hot/card/TSM?lang=en', headers={'If-None-Match': et}).status_code == 304
+    n = c.get('/api/hot/nrs?ids=TSMC,Nvidia,NoExiste&terms=1').get_json()['data']
+    assert n['values'] == {'TSMC': cv.nrs('TSMC'), 'Nvidia': cv.nrs('Nvidia')} and n['unknown_ids'] == ['NoExiste']
+    assert set(n['terms']['TSMC']) == {'geo', 'chain', 'market', 'fundamental', 'concentration', 'degree'}
+    allv = c.get('/api/hot/nrs').get_json()['data']
+    assert allv['n'] == len(cv.cards)
+    assert c.get('/api/hot/card/NoExisteNada').status_code == 404
+
+
+def test_quote_con_sello_no_inventa_y_marca_lo_viejo():
+    from core.hotviews.views import quote
+    fake = lambda syms: {'quotes': {'NVDA': {'close': 181.2, 'prev': 180.0, 'live': 181.2, 'src': 'finnhub',
+                                             'as_of': '2026-10-13T14:00:00+00:00', 'age_seconds': 4},
+                                    'OLD': {'close': 10.0, 'prev': 10.0, 'src': 'yahoo', 'as_of': 'x',
+                                            'age_seconds': 7200}}, 'cached': False}
+    out = quote.stamped(['NVDA', 'OLD', 'NADA'], fetch=fake)
+    assert set(out) == {'NVDA', 'OLD'}
+    assert out['NVDA']['px'] == 181.2 and out['NVDA']['stamp']['live'] is True and out['NVDA']['stamp']['src'] == 'finnhub'
+    assert out['OLD']['stamp']['stale'] is True and out['OLD']['stamp']['live'] is False
+
+
+def test_geo_vista_igual_al_escaneo_directo(cardv, monkeypatch):
+    import core.world as W
+    from core.hotviews.views import geo
+    g, cv = cardv
+    tsmc = W._graph()['by_id']['TSMC']
+    ev = {'items': [{'id': 'p1', 'layer': 'policy', 'lat': 0, 'lon': 0, 'title': 'Export rule names TSMC',
+                     'severity': 70, 'affected': ['TSMC', 'SMIC'], 'time': '2026-10-13T00:00:00Z', 'source': 'BIS'},
+                    {'id': 'q1', 'layer': 'quakes', 'lat': tsmc['lat'], 'lon': tsmc['lng'], 'title': 'M6 quake',
+                     'severity': 60, 'time': '2026-10-13T01:00:00Z', 'source': 'USGS'}],
+          'sources': {'policy': {'ok': True, 'count': 1, 'as_of': 't1'}}}
+    monkeypatch.setattr(W, 'world_events', lambda window='24h', wait=0, layers=None: ev)
+    geo.reset()
+    facts, wv = geo.facts(['TSMC', 'SMIC', 'Nvidia'])
+    direct = W.entity_geo_risks(['TSMC', 'SMIC', 'Nvidia'], wait=0)
+    assert facts == direct and facts['TSMC'] and wv
+    assert all(len(v) <= 3 for v in facts.values())
+    geo.reset()

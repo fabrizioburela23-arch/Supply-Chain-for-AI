@@ -55,7 +55,7 @@ sellado y verificación del libro (docs/INFRA_OPERATIVA.md §2.8; paso 6 del pla
 - [[core.ledger_ddl.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -63,4 +63,5 @@ _Además lo importan 4 pruebas (lista abajo)._
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ops_review_steps568.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_review_infra_c.py]]

@@ -54,6 +54,8 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - [[core.ledger.py]] — lo importa
 - [[core.ledger_api.py]] — lo importa
 - [[core.pin.py]] — lo importa
+- [[core.prices_api.py]] — lo importa
+- [[core.prices_store.py]] — lo importa
 - [[core.scheduler.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
@@ -63,7 +65,7 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - [[research.committee_api.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 8 pruebas (lista abajo)._
+_Además lo importan 11 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -73,9 +75,12 @@ _Además lo importan 8 pruebas (lista abajo)._
 
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
+- [[tests.test_ledger_callsites.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_ops_review_steps568.py]]
+- [[tests.test_order_single_path.py]]
+- [[tests.test_prices_eod.py]]
 - [[tests.test_review_infra_c.py]]

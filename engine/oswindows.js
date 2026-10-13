@@ -309,7 +309,19 @@
   function apiEntity(id) { return getJSON('/api/committee/entity/' + encodeURIComponent(id), 30000); }
   function apiMemo(mid) { return getJSON('/api/committee/memo/' + encodeURIComponent(mid), 30000); }
   function apiBoard() { return getJSON('/api/committee/board?limit=80', 60000); }       // el servidor topa en 80
-  function apiTensor(id) { return getJSON('/api/tensor/node/' + encodeURIComponent(id), 600000); }
+  // paso 14: la estructura sale de la tarjeta V3 del servidor (/api/hot/card, misma generación que el resto de las
+  // vistas); se entrega con la forma de antes ({ok, data: estructura}) para no tocar a quien la pinta
+  function apiTensor(id) {
+    var KH = window.KhipuHot;
+    if (KH && KH.card) {
+      return KH.card(id).then(function (r) {
+        if (r && r.ok && r.data && r.data.structure) return { ok: true, status: 200, data: r.data.structure, view: r.view, card: r.data };
+        if (r && r.ok) return { ok: false, status: 404, error: L('sin estructura para esta empresa', 'no structure for this company') };
+        return { ok: false, status: r && r.status || 0, error: (r && r.error) || 'error', offline: !!(r && r.code === 'offline') };
+      });
+    }
+    return getJSON('/api/tensor/node/' + encodeURIComponent(id), 600000);
+  }
   function apiProfiles() { return getJSON('/api/agents/profiles?lang=' + lang(), 60000); }
   function noDb(r) { return r && !r.ok && r.status === 503; }
 

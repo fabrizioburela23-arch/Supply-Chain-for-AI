@@ -157,7 +157,9 @@ class CrearFactorInput(BaseModel):
     reversible con RetirarFactor. Es la pieza que cierra el circuito noticia→cascada."""
     factor_id: Optional[str] = None
     label: str = Field(min_length=3, max_length=160)
-    severity: float = Field(default=3.0, ge=0, le=5)      # 0-5: qué tan fuerte es el golpe
+    # Qué tan fuerte es el golpe. Tope duro 10 (la escala de los DATOS y de policy.gates); el handler lo acota a la
+    # escala del kernel VIGENTE (kernel.params.severity_divisor: 1.0.0 → 0-5 como siempre, 2.0.0 → 0-10, PROP-05).
+    severity: float = Field(default=3.0, ge=0, le=10)
     affects: List[str] = Field(min_length=1, max_length=40)  # ids de empresas afectadas
     coef: float = Field(default=0.5, ge=0, le=3)          # sensibilidad extra por miembro
     # Track B: coeficiente POR MIEMBRO ({obj_id: coef}) — si viene, manda sobre
@@ -187,8 +189,27 @@ class ActivarFactorInput(BaseModel):
     Guarda la severidad previa en `severity_latente` para poder revertir exacto.
     Si no se pasa `severity`, usa la `severity_crisis` del propio factor."""
     factor_id: str
-    severity: Optional[float] = Field(default=None, ge=0, le=5)
+    severity: Optional[float] = Field(default=None, ge=0, le=10)   # acotada a la escala del kernel vigente (ver arriba)
     razon: str = Field(min_length=1, max_length=1000)
+
+
+def _severity_scale():
+    """Escala de severidad del kernel VIGENTE (kernel.params.severity_divisor): 5 con 1.0.0 (comportamiento de
+    siempre), 10 con 2.0.0 (BRECHAS #5: la escala de los datos). Sin el motor de matrices → 5."""
+    try:
+        from matrix import engine as _E
+        v = float(_E._P('severity_divisor'))
+        return v if v > 0 else 5.0
+    except Exception:  # noqa: BLE001
+        return 5.0
+
+
+def _check_severity(sev):
+    scale = _severity_scale()
+    if sev is not None and float(sev) > scale + 1e-9:
+        raise ActionError(f'severidad {float(sev):g} fuera de la escala 0-{scale:g} del motor vigente '
+                          f'(severity {float(sev):g} is outside the active engine scale 0-{scale:g})')
+    return scale
 
 
 class DesactivarFactorInput(BaseModel):
@@ -619,6 +640,7 @@ def crear_factor(session, inp: CrearFactorInput, actor):
     'affects' bitemporales hacia las empresas afectadas. Solo enlaza empresas que
     EXISTEN (evita links colgantes que corromperían la matriz)."""
     fid = inp.factor_id or f'factor_{uuid.uuid4().hex[:12]}'
+    scale = _check_severity(inp.severity)
     if session.get(ObjectRecord, fid):
         raise ActionError(f'el factor ya existe: {fid}')
     # forma por-miembro (Track B, presets) o uniforme (affects+coef, histórica)
@@ -644,7 +666,8 @@ def crear_factor(session, inp: CrearFactorInput, actor):
         'label': inp.label, 'severity': inp.severity, 'members': members,
         'razon': inp.razon, 'fuente': inp.fuente,
     }, actor, source=inp.fuente)
-    return {'factor_id': fid, 'label': inp.label, 'severity': inp.severity, 'members': members}
+    return {'factor_id': fid, 'label': inp.label, 'severity': inp.severity, 'severity_scale': scale,
+            'members': members}
 
 
 def retirar_factor(session, inp: RetirarFactorInput, actor):
@@ -684,6 +707,7 @@ def activar_factor(session, inp: ActivarFactorInput, actor):
         raise ActionError(f'el factor está retirado: {inp.factor_id} — recréalo con CrearFactor')
     prev = float(props.get('severity', 1.0))
     target = inp.severity
+    scale = _check_severity(target)      # explícita: en la escala del kernel vigente; la de crisis del propio dato pasa
     if target is None:
         try:
             target = float(props['severity_crisis'])
@@ -707,7 +731,7 @@ def activar_factor(session, inp: ActivarFactorInput, actor):
         'severity_anterior': prev, 'severity': target, 'razon': inp.razon,
     }, actor)
     return {'factor_id': inp.factor_id, 'severity_anterior': prev,
-            'severity': target, 'severity_latente': float(latente)}
+            'severity': target, 'severity_latente': float(latente), 'severity_scale': scale}
 
 
 def desactivar_factor(session, inp: DesactivarFactorInput, actor):

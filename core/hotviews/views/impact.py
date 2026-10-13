@@ -16,7 +16,17 @@ import numpy as np
 def default_kernel():
     """Parámetros del kernel con que se construyó la vista (kernel.params del release vigente, paso 9)."""
     from matrix import engine as E
-    return {'magnitude': E.MAGNITUDE, 'damping': E.DAMPING, 'max_hops': E.MAX_HOPS, 'threshold': E.THRESHOLD}
+    return {'magnitude': E._P('magnitude'), 'damping': E._P('damping'), 'max_hops': E._P('max_hops'),
+            'threshold': E._P('threshold'), 'damage_rels': E._P('damage_rels', None),
+            'chokepoint_rank_by': E._P('chokepoint_rank_by', 'count'), 'semver': _kernel_semver()}
+
+
+def _kernel_semver():
+    try:
+        from core import governance
+        return governance.artifact_semver('kernel.params')
+    except Exception:  # noqa: BLE001
+        return None
 
 
 class ImpactView:
@@ -65,6 +75,7 @@ def build(core):
 
 def _metrics(core, v):
     """EXACTAMENTE matrix.engine.compute_metrics (mismo orden de inserción, mismos redondeos, mismos rangos)."""
+    from matrix import engine as E
     metrics = {}
     for oid, i in core.idx.items():
         if core.out_w[i] == 0 and core.in_w[i] == 0:
@@ -75,9 +86,13 @@ def _metrics(core, v):
             'cascade_size': v.stats[oid]['reach_1'],
             'pagerank': round(float(core.pagerank[i]), 6),
         }
-    ranked = sorted(metrics.items(), key=lambda kv: -kv[1]['cascade_size'])
+    sums = {oid: v.stats[oid]['sum_impact'] for oid in metrics}
+    ranked = E.chokepoint_order(metrics, sums)          # 1.0.0: por conteo · 2.0.0: por Σ impacto (PROP-06)
     for rank, (oid, m) in enumerate(ranked, 1):
         m['chokepoint_rank'] = rank
+    if E._P('chokepoint_rank_by', 'count') == 'sum':
+        for oid, m in metrics.items():
+            m['sum_impact'] = sums[oid]
     pr_ranked = sorted(metrics.items(), key=lambda kv: -kv[1]['pagerank'])
     for rank, (oid, m) in enumerate(pr_ranked, 1):
         m['pagerank_rank'] = rank
@@ -137,9 +152,11 @@ def status(v):
             'top_by_sum': v.by_sum[:5], 'top_by_count': v.by_count[:5]}
 
 
-def scenario(core, x0, factors='active', damping=None, max_hops=None, threshold=None, top=50):
+def scenario(core, x0, factors='active', damping=None, max_hops=None, threshold=None, top=50, direction='down'):
     """Choque con varias fuentes y magnitudes (vector inicial x0) con el MISMO kernel en lote.
-    factors: 'active' (fragilidad de la vista) | 'none' | lista de ids de factores activos."""
+    factors: 'active' (fragilidad de la vista) | 'none' | lista de ids de factores activos.
+    direction='up' (auge de demanda, PROP-17): misma regla con la matriz normalizada por fila y el mismo piso; solo
+    si el release lo habilita (matrix.engine.direction_up_enabled) — si no, ValueError."""
     from matrix import engine as E
     if factors == 'none':
         frag = None
@@ -148,7 +165,8 @@ def scenario(core, x0, factors='active', damping=None, max_hops=None, threshold=
         frag = E.fragility(core.idx, [f for f in core.factors if f['id'] in want])
     else:
         frag = core.frag
-    total, first = E.propagate_block(core.dt, frag, x0, damping=damping, max_hops=max_hops, threshold=threshold)
+    dt = core.dt if direction != 'up' else E.dependency_transpose(core.mats, direction='up')
+    total, first = E.propagate_block(dt, frag, x0, damping=damping, max_hops=max_hops, threshold=threshold)
     col, fh = total[:, 0], first[:, 0]
     seeds = {core.ids[i] for i in np.nonzero(x0)[0].tolist()}
     impacts = {core.ids[j]: round(float(min(1.0, col[j])) * 100, 2) for j in np.nonzero(col > 0)[0].tolist()}

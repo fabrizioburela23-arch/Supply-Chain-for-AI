@@ -3,23 +3,24 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_matrix.py"
 lenguaje: "python"
-lineas: 306
+lineas: 327
 aliases: ["tests/test_matrix.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_matrix.py
 
-> Prueba · capa [[Capa Pruebas]] · 306 líneas · `tests/test_matrix.py`
+> Prueba · capa [[Capa Pruebas]] · 327 líneas · `tests/test_matrix.py`
 
 ## Qué prueba
 
 Etapa 3: motor de matrices + hiperaristas.
 
-**12** funciones `test_…`.
+**13** funciones `test_…`.
 
 ## Cubre
 
+- [[core.governance.py]]
 - [[data.multicapa_factors_seats.json]]
 - [[matrix.api.py]]
 - [[matrix.engine.py]]
@@ -32,7 +33,7 @@ Etapa 3: motor de matrices + hiperaristas.
 
 ## Rutas HTTP que llama
 
-5 rutas, de los grupos: [[API matrix]]
+7 rutas, de los grupos: [[API matrix]]
 
 ## Variables de entorno que fija o nombra
 

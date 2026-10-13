@@ -146,6 +146,9 @@ _COLUMNAS_TARDIAS = (
     ('broker_audit', 'seq', 'BIGINT'),
     # INFRA_OPERATIVA paso 10 — G-PROP: el GateReport de la propuesta queda adjunto para quien la apruebe
     ('proposed_actions', 'gate_report', 'JSONB'),
+    # INFRA_OPERATIVA pasos 15-17 — un solo camino de órdenes: canal, modo de controles, release al previsualizar,
+    # decisiones del libro y prueba de lectura por voz de cada orden (brokerage/models.BrokerOrder.meta)
+    ('broker_orders', 'meta', 'JSONB'),
 )
 
 

@@ -28,7 +28,7 @@ PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **51 de 93** (línea 7843), después de [[engine.xray.js]] y antes de [[engine.riskreport.js]].
+Se carga en [[app.html]] en la posición **51 de 95** (línea 7850), después de [[engine.xray.js]] y antes de [[engine.riskreport.js]].
 
 ## Lo usan
 

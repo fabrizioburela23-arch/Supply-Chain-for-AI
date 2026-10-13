@@ -1426,3 +1426,57 @@ def test_pin_lockout_uses_last_proxy_hop_and_global_backstop(db, client, env):
     from brokerage import service
     with session_scope() as s:
         assert any(a['action'] == 'pin_lockout' for a in service.list_audit(s, limit=50))
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# INFRA_OPERATIVA pasos 15-17: la casa por el camino único con los límites de HOY (BRECHAS #1)
+# ════════════════════════════════════════════════════════════════════════════
+def test_house_today_policy_keeps_todays_caps_and_shadows_the_rest(monkeypatch):
+    """La casa por sus rutas clásicas: tope US$100.000 por orden (también ventas); los topes del perfil
+    (orden/día/posición/caída), fondos sin margen, cortos, duplicados y desvío del límite se evalúan en SOMBRA."""
+    from brokerage import risk
+    monkeypatch.delenv('BROKERAGE_TRADING_ENABLED', raising=False)
+    pol = risk.check_policy('house_today')
+    assert pol['limits']['max_order_usd'] == risk.HARD_MAX_ORDER_USD == 100000.0 and pol['cap_sells']
+    assert risk.check_policy(None) == {} and risk.check_policy('standard') == {}
+    ctx = _ctx(est_usd=20000.0, daily_used_usd=14800.0, recent_duplicate=True, client={'hwm_equity': 20000.0},
+               account={'equity': 10000.0, 'cash': 100.0, 'buying_power': 100.0}, policy=pol)
+    ch = _by(risk.run_checks(ctx))
+    assert not risk.is_blocked(list(ch.values())), [c for c in ch.values() if not c['ok']]
+    for n in ('daily_limit', 'buying_power', 'position_limit', 'drawdown_stop', 'duplicate'):
+        assert ch[n]['shadow'] and ch[n]['warn'] and ch[n]['severity'] == 'warn', n
+        assert 'BRECHAS #1' in ch[n]['detail'] and 'BRECHAS #1' in ch[n]['detail_en']
+    assert ch['order_size']['ok'] and not ch['order_size'].get('shadow')       # US$20.000 < US$100.000
+    over = _by(risk.run_checks(_ctx(est_usd=120000.0, policy=pol)))
+    assert over['order_size']['ok'] is False                                   # el tope de hoy SÍ bloquea
+    sell = _by(risk.run_checks(_ctx(order={'side': 'sell', 'notional': 120000.0}, est_usd=120000.0, policy=pol,
+                                    positions=[{'symbol': 'NVDA', 'qty': 5000, 'market_value': 500000.0}])))
+    assert sell['order_size']['ok'] is False                                   # ventas también (como hasta hoy)
+    std = _by(risk.run_checks(_ctx(order={'side': 'sell', 'notional': 120000.0}, est_usd=120000.0,
+                                   positions=[{'symbol': 'NVDA', 'qty': 5000, 'market_value': 500000.0}])))
+    assert std['order_size']['ok'] is True                                     # el estándar: ventas sin tope
+    # el dinero real y el interruptor NO se relajan nunca
+    monkeypatch.setenv('BROKERAGE_TRADING_ENABLED', 'off')
+    assert _by(risk.run_checks(_ctx(policy=pol)))['kill_switch']['ok'] is False
+    monkeypatch.setenv('BROKERAGE_TRADING_ENABLED', 'on')
+    live = _by(risk.run_checks(_ctx(client={'mode': 'live', 'live_enabled': False}, policy=pol,
+                                    ledger_chain=(True, 'ok', 'ok'))))
+    assert live['mode']['ok'] is False and not live['mode'].get('shadow')
+
+
+@needs_db
+def test_sell_limit_without_market_price_cannot_be_bounded(db, fakes):
+    """Una venta LÍMITE sin precio de mercado se llena al mercado si el límite es bajo: no se puede acotar el
+    monto → bloqueada (antes se estimaba con el límite: 1M × US$0,10 «pasaba» el tope). Regla de /api/trade/order,
+    ahora para todos los caminos (paso 15)."""
+    from ontology.db import session_scope
+    from brokerage import service
+    with session_scope() as s:
+        cid = _new_client(s, name='Venta Sin Precio')
+    fakes[cid].price = None
+    fakes[cid].positions = [{'symbol': 'NVDA', 'qty': '1000000', 'market_value': '0'}]
+    with session_scope() as s:
+        p = service.preview_order(s, cid, 'NVDA', 'sell', qty=1000000, order_type='limit', limit_price=0.1,
+                                  requested_by='pytest')
+    assert p['blocked'] and p['est_usd'] is None
+    assert any(c['name'] == 'order_size' and not c['ok'] for c in p['checks'])

@@ -747,6 +747,13 @@ def nrs_concentrated(country):
 def client_nrs(node, degree):
     """MISMA fórmula que computeNRS() de app.html (margen acotado a [0,20] desde 2026-10-05: antes una
     empresa sin ganancias — OpenAI, margen muy negativo — daba NRS 100)."""
+    return nrs_terms(node, degree)['total']
+
+
+def nrs_terms(node, degree):
+    """LA fórmula NRS con sus 5 términos (= app.html `_nrsTerms`): {geo, degree, chain, market, fundamental,
+    concentration, total}. `client_nrs` devuelve su `total`; la tarjeta V3 (core/hotviews/views/card.py) sirve el
+    vector completo. Una sola implementación: nunca re-escribirla en otro archivo."""
     geo = nrs_geo(node.get('country'))
     chain = min(_NRS_CHAIN_CAP, degree * _NRS_CHAIN_PER_DEGREE)
     margin = node.get('margin')
@@ -765,7 +772,9 @@ def client_nrs(node, degree):
     fundamental = min(_NRS_FUNDAMENTAL_CAP, (_NRS_PREIPO if node.get('preipo') else 0) +
                       (_NRS_GROWTH_RED if '🔴' in growth else _NRS_GROWTH_YELLOW if '🟡' in growth else 0))
     conc = _NRS_CONC_HIGH if nrs_concentrated(node.get('country')) else _NRS_CONC_LOW
-    return min(_NRS_TOTAL_CAP, max(0, _js_round(geo + chain + market + fundamental + conc)))
+    return {'geo': geo, 'degree': degree, 'chain': chain, 'market': market, 'fundamental': fundamental,
+            'concentration': conc,
+            'total': min(_NRS_TOTAL_CAP, max(0, _js_round(geo + chain + market + fundamental + conc)))}
 
 
 _GRAPH = {'data': None}
@@ -783,12 +792,24 @@ def _graph():
         log.warning('world: grafo no disponible: %s', e)
         view = None
     gen = view.generation if view is not None else None
+    # paso 14: el NRS sale de la tarjeta V3 de la MISMA generación (vector completo, ~10 ms, se renueva cuando
+    # cambian los fundamentales en vivo); sin vista, la misma fórmula aquí (client_nrs)
+    hot_nrs, fund_v = {}, None
+    try:
+        if view is not None and view.generation_obj is not None:
+            from core.hotviews.views import card as _card
+            cv = _card.view(view.generation_obj)
+            hot_nrs = {k: t['total'] for k, t in cv.nrs_all().items()}
+            fund_v = cv.nrs_version()
+    except Exception as e:  # noqa: BLE001
+        log.info('world: NRS de la tarjeta no disponible (%s): se calcula aquí', type(e).__name__)
+    key = (gen, fund_v)
     cur = _GRAPH['data']
-    if cur is not None and cur.get('generation') == gen:
+    if cur is not None and cur.get('key') == key:
         return cur
     with _GRAPH_LOCK:
         cur = _GRAPH['data']
-        if cur is not None and cur.get('generation') == gen:
+        if cur is not None and cur.get('key') == key:
             return cur
         snap = view.snapshot if view is not None else {'nodes': [], 'links': []}
         deg = {}
@@ -816,7 +837,7 @@ def _graph():
                 'lat': g['lat'], 'lng': g['lng'], 'precision': g['precision'],
                 'place': g.get('label'), 'country_key': g.get('country'),
                 'degree': deg.get(n['id'], 0), 'flow_degree': flow_deg.get(n['id'], 0),
-                'nrs': client_nrs(n, flow_deg.get(n['id'], 0)),
+                'nrs': hot_nrs[n['id']] if n['id'] in hot_nrs else client_nrs(n, flow_deg.get(n['id'], 0)),
             }
             nodes.append(rec)
             by_id[rec['id']] = rec
@@ -825,7 +846,7 @@ def _graph():
             lst.sort(key=lambda r: (-r['degree'], r['id']))
         _GRAPH['data'] = {'nodes': nodes, 'by_id': by_id, 'by_country': by_country,
                           'precise': [r for r in nodes if r['precision'] in ('hq', 'city')],
-                          'generation': gen}
+                          'generation': gen, 'key': key}
         return _GRAPH['data']
 
 

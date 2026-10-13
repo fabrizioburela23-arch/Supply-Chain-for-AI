@@ -195,3 +195,5 @@ class Alert(Base):
 from ontology import ledger_models as _ledger_models  # noqa: E402,F401
 # INFRA_OPERATIVA paso 9: registro de gobernanza (gov_artifacts, gov_releases), también append-only.
 from ontology import governance_models as _governance_models  # noqa: E402,F401
+# BRECHAS bloque 2 (memoria de los números): instrumentos, precios EOD, FX diario y fotos diarias.
+from ontology import history_models as _history_models  # noqa: E402,F401

@@ -44,6 +44,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[core.options.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
+- [[core.prices_api.py]] — lo importa
 - [[core.providers.coingecko.py]] — lo importa
 - [[core.providers.market.py]] — lo importa
 - [[core.providers.news.py]] — lo importa
@@ -64,7 +65,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 23 pruebas (lista abajo)._
+_Además lo importan 26 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -101,6 +102,7 @@ _Además lo importan 23 pruebas (lista abajo)._
 
 - [[tests.test_brokerage.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_governance_activation.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
@@ -111,6 +113,7 @@ _Además lo importan 23 pruebas (lista abajo)._
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_ops_review_steps568.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_overnight_voice_server.py]]
 - [[tests.test_portfolio_ai.py]]
@@ -121,6 +124,7 @@ _Además lo importan 23 pruebas (lista abajo)._
 - [[tests.test_repair_review2.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_security.py]]
+- [[tests.test_trading_agent_ledger.py]]
 - [[tests.test_voice_tour.py]]
 
 ## Mencionado en sesiones de trabajo

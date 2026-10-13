@@ -9,6 +9,10 @@ cabecera `X-Khipu-Graph-Version`. Leer NUNCA reconstruye: si la vista va atrasad
     GET  /api/hot/impact/<id>?severity=0-100&kind=collapse|shock&top=50
     GET  /api/hot/chokepoints?by=sum|count&limit=25
     GET  /api/hot/factors
+    GET  /api/hot/card/<id>?lang=es|en&structure=1   tarjeta V3 (NRS + 5 términos, flujo en pares distintos, estructura)
+    GET  /api/hot/nrs?ids=a,b[&terms=1]              vector NRS (todas sin ids) — LA fórmula, una vez por generación
+    GET  /api/hot/geo?ids=a,b                        V6 GeoRisk: ≤3 hechos vivos por empresa (versión del mundo)
+    GET  /api/hot/quote?symbols=NVDA,TSM             V4 cotización con sello {src, as_of, age_s, live, stale}
     POST /api/hot/scenario   {shocks:[{id, magnitude}]|[ids], factors:'active'|'none'|[ids], direction:'down',
                               damping?, max_hops?, top?}
 """
@@ -45,11 +49,12 @@ def _warming():
     return r, 503
 
 
-def envelope(name, data, g, status=200, etag=True, extra=None):
-    """Respuesta con el sobre `view` + ETag/304 + X-Khipu-Graph-Version."""
+def envelope(name, data, g, status=200, etag=True, extra=None, etag_extra=None):
+    """Respuesta con el sobre `view` + ETag/304 + X-Khipu-Graph-Version. `etag_extra`: lo que ADEMÁS de la
+    generación define el contenido (p. ej. la versión de los fundamentales en vivo del NRS)."""
     from core.hotviews import registry
     meta = registry.meta(name, g)
-    tag = f'"{name}:{g.id}"' if (etag and g is not None) else None
+    tag = f'"{name}:{g.id}{(":" + str(etag_extra)) if etag_extra is not None else ""}"' if (etag and g is not None) else None
     if tag and request.method == 'GET' and request.headers.get('If-None-Match') == tag and not meta['stale']:
         resp = jsonify({})
         resp.status_code = 304
@@ -91,7 +96,12 @@ def hot_status():
     g = registry.generation()
     if g is None:
         builder.request_build()
+    from core.hotviews import derived
+    from core.hotviews.views import alerts as _alerts
+    from core.hotviews.views import geo as _geo
+    from core.hotviews.views import quote as _quote
     data = {'warming': g is None, 'builder': builder.state(), 'signals': signals.stats(),
+            'derived': derived.stats(), 'geo': _geo.status(), 'quote': _quote.stats(), 'alerts': _alerts.stats(),
             'known': {k: v for k, v in signals.known().items() if k != 'ids'},
             'history': registry.history()[:10], 'readers': hot.status()}
     if g is not None:
@@ -101,10 +111,17 @@ def hot_status():
             'build_ms': g.build_ms, 'read_ms': g.read_ms,
             'views': {'graph_core': graph_core.status(g.views['graph_core']),
                       'impact': impact.status(g.views['impact']),
-                      'graph': graph_view.status(g.views.get('graph'))},
+                      'graph': graph_view.status(g.views.get('graph')),
+                      'card': _card_status(g)},
             'snapshot': {k: g.extra.get(k) for k in ('snapshot_sha', 'exported_at')} if g.source == 'snapshot' else None,
         })
     return envelope('status', data, g, etag=False)
+
+
+def _card_status(g):
+    from core.hotviews import derived
+    from core.hotviews.views import card
+    return card.status(derived.peek(g, 'card'))
 
 
 @hot_bp.get('/impact/<path:node_id>')
@@ -189,9 +206,13 @@ def hot_scenario():
     if not isinstance(body, dict):
         body = {}
     direction = str(body.get('direction') or 'down').lower()
-    if direction != 'down':
-        return _bad('direction', "direction 'up' todavía no está disponible (bloque 1, paso 12 del plan)",
-                    "direction 'up' is not available yet (block 1, step 12 of the plan)")
+    from matrix import engine as _E
+    if direction not in ('down', 'up') or (direction == 'up' and not _E.direction_up_enabled()):
+        # 'up' (auge de demanda, PROP-17) lo calcula el kernel desde kernel.params 2.0.0 (activación con PIN)
+        return _bad('direction', "direction 'up' todavía no está disponible (paso 12: llega con kernel.params 2.0.0 "
+                                 'cuando Fabrizio lo active con su PIN, 🩺 → Gobernanza)',
+                    "direction 'up' is not available yet (step 12: it comes with kernel.params 2.0.0 once Fabrizio "
+                    'activates it with his PIN, 🩺 → Governance)')
     raw = body.get('shocks')
     if not isinstance(raw, list) or not raw:
         return _bad('shocks', 'shocks: lista de ids o de {id, magnitude} requerida',
@@ -230,10 +251,110 @@ def hot_scenario():
     if bad:
         return bad
     t0 = time.perf_counter()
-    sc = impact.scenario(core, x0, factors=factors, damping=damping, max_hops=int(hops), top=int(top))
+    sc = impact.scenario(core, x0, factors=factors, damping=damping, max_hops=int(hops), top=int(top),
+                         direction=direction)
     if not body.get('full'):
         sc.pop('impacts', None)            # el vector completo solo si se pide (full: true)
     data = {'shocks': used, 'unknown_ids': unknown, 'factors': factors, 'direction': direction,
             'params': {'damping': damping, 'max_hops': int(hops), 'threshold': _kdef('THRESHOLD')},
             'compute_ms': round((time.perf_counter() - t0) * 1000, 3), **sc}
     return envelope('impact', data, g, etag=False)
+
+
+# ── paso 14: V3 Card + NRS, V6 GeoRisk, V4 Quote con sello ─────────────────────────────────────────────────────
+def _reader_gen():
+    """La generación del grafo de los LECTORES (la publicada; si todavía no sirve, la privada del snapshot) —
+    la misma que leen el MCP, el chat y el World Monitor."""
+    from core.hotviews import hot
+    gv = hot.graph(timeout=WARM_WAIT_S)
+    return gv.generation_obj if gv is not None else None
+
+
+def _ids_arg(raw, cap=1000):
+    out = []
+    for x in str(raw or '').split(','):
+        x = x.strip()[:120]
+        if x and x not in out:
+            out.append(x)
+    return out[:cap]
+
+
+@hot_bp.get('/card/<path:node_id>')
+@rate_limit(240, 60)
+def hot_card(node_id):
+    from core.hotviews.views import card
+    g = _reader_gen()
+    if g is None:
+        return _warming()
+    cv = card.view(g)
+    oid = cv.resolve(node_id[:120])
+    if oid is None:
+        return jsonify({'error': f'empresa desconocida: {node_id[:120]}', 'error_en': f'unknown company: {node_id[:120]}',
+                        'code': 'unknown_id'}), 404
+    lang = 'en' if (request.args.get('lang') or '').lower().startswith('en') else 'es'
+    want_struct = (request.args.get('structure') or '1') not in ('0', 'false', 'no')
+    t0 = time.perf_counter()
+    data = cv.card(oid, lang=lang, structure=want_struct)
+    data['compute_ms'] = round((time.perf_counter() - t0) * 1000, 3)
+    caps = ((data.get('structure') or {}).get('caps_as_of')) if want_struct else None
+    return envelope('card', data, g, etag_extra=f'{lang}.{int(want_struct)}.f{cv.nrs_version()}.{caps}')
+
+
+@hot_bp.get('/nrs')
+@rate_limit(240, 60)
+def hot_nrs():
+    from core.hotviews.views import card
+    g = _reader_gen()
+    if g is None:
+        return _warming()
+    cv = card.view(g)
+    allv = cv.nrs_all()
+    ids = _ids_arg(request.args.get('ids'))
+    terms = (request.args.get('terms') or '') in ('1', 'true', 'yes')
+    if ids:
+        resolved = {i: cv.resolve(i) for i in ids}
+        unknown = [i for i, r in resolved.items() if r is None]
+        pick = {i: r for i, r in resolved.items() if r is not None}
+    else:
+        unknown, pick = [], {k: k for k in allv}
+    vals = {i: allv[r]['total'] for i, r in pick.items() if r in allv}
+    data = {'values': vals, 'n': len(vals), 'unknown_ids': unknown, 'fund_version': cv.nrs_version(),
+            'method': 'core.world.nrs_terms (= app computeNRS) · structural flow degree, distinct pairs'}
+    if terms:
+        data['terms'] = {i: {k: allv[r][k] for k in ('geo', 'chain', 'market', 'fundamental', 'concentration', 'degree')}
+                         for i, r in pick.items() if r in allv}
+    return envelope('card', data, g, etag_extra=f'nrs.f{cv.nrs_version()}.{len(ids)}.{int(terms)}' if not ids else None,
+                    etag=not ids)
+
+
+@hot_bp.get('/geo')
+@rate_limit(120, 60)
+def hot_geo():
+    from core.hotviews.views import geo
+    g = _reader_gen()
+    ids = _ids_arg(request.args.get('ids'), cap=50)
+    if not ids:
+        return _bad('ids', 'ids: lista de empresas separadas por coma', 'ids: comma-separated list of companies')
+    facts, wv = geo.facts(ids, wait=0)
+    data = {'facts': facts, 'world_version': wv, 'max_per_entity': 3,
+            'source': 'Khipus World Monitor (official + live layers, cached; never forces downloads)'}
+    resp = envelope('geo', data, g, etag=False)
+    return resp
+
+
+@hot_bp.get('/quote')
+@rate_limit(120, 60)
+def hot_quote():
+    from core.hotviews.views import quote
+    syms = _ids_arg(request.args.get('symbols'), cap=150)
+    if not syms:
+        return _bad('symbols', 'symbols: lista de tickers separados por coma', 'symbols: comma-separated tickers')
+    t0 = time.perf_counter()
+    q = quote.stamped(syms)
+    r = jsonify({'data': {'quotes': q, 'n': len(q), 'missing': [s for s in syms if s.upper() not in q and s not in q],
+                          'stale_after_s': quote.STALE_AFTER_S,
+                          'compute_ms': round((time.perf_counter() - t0) * 1000, 2)},
+                 'view': {'name': 'quote', 'live': True, 'generation': None,
+                          'note': 'live view: each quote carries its own stamp (src, as_of, age_s)'}})
+    r.headers['Cache-Control'] = 'no-store'
+    return r

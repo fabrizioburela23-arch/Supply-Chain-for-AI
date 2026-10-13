@@ -1274,9 +1274,37 @@ const BixbyVoice = {
     if (v == null || !isFinite(v)) return null;
     return v >= 70 ? _voiceL('alto', 'high') : v >= 40 ? _voiceL('medio', 'medium') : _voiceL('bajo', 'low');
   },
+  // paso 14: la tarjeta V3 del servidor (/api/hot/card) si ya está en la caché de KhipuHot (o null) — los mismos
+  // proveedores/clientes en pares distintos y el MISMO NRS que el chat y el MCP
+  _card(id) {
+    try { const KH = (typeof window !== 'undefined') ? window.KhipuHot : null; return (KH && KH.cardCached) ? KH.cardCached(id) : null; } catch (e) { return null; }
+  },
+  // pide las tarjetas (máx. `ms`) antes de responder; nunca falla (sin servidor, el respaldo local de siempre)
+  _cards(ids, ms) {
+    const KH = (typeof window !== 'undefined') ? window.KhipuHot : null;
+    if (!KH || !KH.card) return Promise.resolve(null);
+    let timer = null;
+    return Promise.race([
+      Promise.all(ids.map(id => Promise.resolve(KH.card(id, { structure: false })).catch(() => null))),
+      new Promise(res => { timer = setTimeout(() => res(null), ms || 2500); }),
+    ]).then((v) => { clearTimeout(timer); return v; }, () => { clearTimeout(timer); return null; });
+  },
+  _cardNrs(id) {
+    const c = this._card(id);
+    if (!c || !c.nrs || c.nrs.value == null) return null;
+    const T = c.nrs.terms || {}, en = _voiceL('es', 'en') === 'en';
+    const K = { geo: ['Geopolítica', 'Geopolitics', 30], chain: ['Cadena', 'Chain', 25], market: ['Mercado', 'Market', 20],
+      fundamental: ['Fundamental', 'Fundamental', 15], concentration: ['Concentración', 'Concentration', 10] };
+    return { nrs: c.nrs.value, terms: Object.keys(K).filter(k => T[k] != null).map(k => ({ key: en ? K[k][1] : K[k][0], val: T[k], max: K[k][2] })) };
+  },
   // proveedores / clientes = SOLO relaciones de FLUJO (G4a), pares distintos, más pesados primero
   _flow(id) {
     const W = (typeof window !== 'undefined') ? window : {};
+    const c = this._card(id);
+    if (c && c.counts && Array.isArray(c.top_suppliers)) {
+      return { suppliers: c.top_suppliers.map(x => this._label(x.id)), customers: (c.top_customers || []).map(x => this._label(x.id)),
+        suppliers_count: c.counts.suppliers, customers_count: c.counts.customers, source: 'card' };
+    }
     const FT = W.NRS_FLOW_TYPES || { supply: 1, fab: 1, cloud: 1, license: 1, ppa: 1, owns: 1, deploy: 1 };
     const canon = (x) => { try { return W._canonId ? W._canonId(x) : x; } catch (e) { return x; } };
     const lidf = (x) => (x && typeof x === 'object') ? x.id : x;
@@ -1290,7 +1318,7 @@ const BixbyVoice = {
       if (s === id) cus.set(t, Math.max(cus.get(t) || 0, w));
     });
     const out = (m) => Array.from(m.entries()).sort((a, b) => b[1] - a[1]).map(e => this._label(e[0]));
-    return { suppliers: out(sup), customers: out(cus) };
+    return { suppliers: out(sup), customers: out(cus), suppliers_count: sup.size, customers_count: cus.size, source: 'catalog' };
   },
   // precio SOLO si MKT.quotes lo tiene (window.quotePx); con fuente, fecha y si es en vivo
   _livePx(n) {
@@ -1303,9 +1331,10 @@ const BixbyVoice = {
     return { value: v, currency: q.currency || null, as_of: q.as_of || null, src: q.src || null, live };
   },
   _companyFacts(n) {
-    const nrs = (typeof computeNRS === 'function') ? computeNRS(n.id) : null;
-    let terms = [];
-    try {
+    const cn = this._cardNrs(n.id);
+    const nrs = cn ? cn.nrs : ((typeof computeNRS === 'function') ? computeNRS(n.id) : null);
+    let terms = cn ? cn.terms : [];
+    if (!cn) try {
       const b = window.computeNRSBreakdown ? window.computeNRSBreakdown(n.id) : null;
       if (b && Array.isArray(b.terms)) terms = b.terms.map(t => ({ key: t.key, val: t.val, max: t.max }));
     } catch (e) { terms = []; }
@@ -1415,8 +1444,7 @@ const BixbyVoice = {
           out.opened = this._title('supplychain', { id: n.id }, n.label);
           go = () => { if (!W.KhipuOSWin.open('supplychain', { id: n.id })) this._osStage('graph', n.id); };
         } else { out.opened = this._title('graph', n.id, n.label); go = () => this._osStage('graph', n.id); }
-        out.suppliers_count = this._flow(n.id).suppliers.length;
-        out.customers_count = this._flow(n.id).customers.length;
+        { const fl2 = this._flow(n.id); out.suppliers_count = fl2.suppliers_count; out.customers_count = fl2.customers_count; }
         break;
       case 'map':
         out.opened = this._title('graph', n.id, n.label);
@@ -1476,15 +1504,17 @@ const BixbyVoice = {
     const meta = (W.NODE_META || {})[n.id] || {};
     const S9 = W.SECTORS9 || {}, C2S = W.CAT_TO_SECTOR || {};
     const sec = S9[C2S[n.cat]];
+    await this._cards([n.id], 2500);   // paso 14: la tarjeta V3 del servidor (mismo NRS y flujo que el chat y el MCP)
     const fl = this._flow(n.id);
-    const nrs = (typeof computeNRS === 'function') ? computeNRS(n.id) : null;
-    let terms = [];
-    try { const b = W.computeNRSBreakdown ? W.computeNRSBreakdown(n.id) : null; if (b && Array.isArray(b.terms)) terms = b.terms.map(t => ({ key: t.key, val: t.val, max: t.max })); } catch (e) {}
+    const cn = this._cardNrs(n.id);
+    const nrs = cn ? cn.nrs : ((typeof computeNRS === 'function') ? computeNRS(n.id) : null);
+    let terms = cn ? cn.terms : [];
+    if (!cn) try { const b = W.computeNRSBreakdown ? W.computeNRSBreakdown(n.id) : null; if (b && Array.isArray(b.terms)) terms = b.terms.map(t => ({ key: t.key, val: t.val, max: t.max })); } catch (e) {}
     const out = {
       success: true, company: n.label, ticker: n.mkt || null, listed,
       listing_status: (n.listing && n.listing.status) || (listed ? 'public' : 'private'),
       live, nrs, nrs_level: this._nrsLevel(nrs), nrs_terms: terms,
-      suppliers_count: fl.suppliers.length, customers_count: fl.customers.length,
+      suppliers_count: fl.suppliers_count, customers_count: fl.customers_count,
       top_suppliers: fl.suppliers.slice(0, 3), top_customers: fl.customers.slice(0, 3),
       catalog_role: n.role || null, catalog_moat: n.moat || null, catalog_growth: n.growth || null,
       catalog_margin_pct: n.margin != null ? Math.round(n.margin * 100) : null,
@@ -1545,11 +1575,16 @@ const BixbyVoice = {
   _toolCompare(params, respond) {
     const a = this._resolveNode(params.company_a || params.a), b = this._resolveNode(params.company_b || params.b);
     if (!a || !b) { respond(this._notFound(!a ? (params.company_a || params.a) : (params.company_b || params.b))); return; }
-    const nrsA = (typeof computeNRS === 'function') ? computeNRS(a.id) : null, nrsB = (typeof computeNRS === 'function') ? computeNRS(b.id) : null;
-    const lower = (nrsA == null || nrsB == null || nrsA === nrsB) ? 'tie' : (nrsA < nrsB ? a.label : b.label);
-    respond({ success: true, a: a.label, b: b.label, nrs_a: nrsA, nrs_b: nrsB, lower_risk: lower,
-      opened: this._title('compare', { a: a.id, b: b.id }, a.label + ' vs ' + b.label) });
-    this._defer(() => { this._osStage('compare', { a: a.id, b: b.id }); this._updateContextSoon(); });
+    // paso 14: el NRS de la tarjeta V3 del servidor (respaldo: la fórmula local, idéntica)
+    const local = (id) => (typeof computeNRS === 'function') ? computeNRS(id) : null;
+    const nrsOf = (id) => { const cn = this._cardNrs(id); return cn ? cn.nrs : local(id); };
+    this._cards([a.id, b.id], 2500).then(() => {
+      const nrsA = nrsOf(a.id), nrsB = nrsOf(b.id);
+      const lower = (nrsA == null || nrsB == null || nrsA === nrsB) ? 'tie' : (nrsA < nrsB ? a.label : b.label);
+      respond({ success: true, a: a.label, b: b.label, nrs_a: nrsA, nrs_b: nrsB, lower_risk: lower,
+        opened: this._title('compare', { a: a.id, b: b.id }, a.label + ' vs ' + b.label) });
+      this._defer(() => { this._osStage('compare', { a: a.id, b: b.id }); this._updateContextSoon(); });
+    });
   },
 
   // ── 6) run_live_simulation: shock/auge sobre la cadena, con la MISMA intensidad que la ventana ──
@@ -1924,13 +1959,14 @@ const BixbyVoice = {
         ? `${mode}: ${verb} ${amountTxt} of ${res.label} (${res.symbol}). Do you confirm?`
         : `${mode}: ${verb} ${amountTxt} de ${res.label} (${res.symbol}). ¿Confirmas?`;
       const out = { success: false, needs_confirmation: true, summary, symbol: res.symbol, side, amount_usd: notional, qty, paper };
+      this._orderPreview.summary = summary;   // paso 16: lo que se LEE en voz alta → su sha viaja con la orden
       if (confirmed) out.note = 'Nothing was sent: this order had no summary read to the user yet. Read this summary and ask for an explicit yes before calling again with confirmed=true.';
       return out;
     }
 
     // confirmed=true tras SU resumen → enviar de verdad (con guard anti-doble-envío compartido); el sí se usa una vez
     this._orderPreview = null;
-    const r = await window._executeTradeOrder(Object.assign({ channel: 'voice' }, orderObj));
+    const r = await window._executeTradeOrder(Object.assign({ channel: 'voice', readback: pv.summary || '' }, orderObj));
     this._defer(() => { if (window._openBrokerStage) window._openBrokerStage({}); });
     if (!r.ok) return { success: false, error: r.error };
     if (paper === null) {
@@ -2965,6 +3001,16 @@ if (typeof document !== 'undefined' && document.addEventListener) {
     // Alpaca rechaza el duplicado en vez de ejecutarla dos veces.
     var sig = 'khipu|' + key;
     if (window._tradeOrderId) body.client_order_id = window._tradeOrderId(sig);
+    // paso 16 (INFRA_OPERATIVA §2.5): orden por VOZ → prueba de que el resumen se leyó en voz alta antes del «sí»:
+    // sha256 del texto leído + hora de la confirmación (el servidor lo guarda en la decisión; nunca el audio).
+    if (o.channel === 'voice' && o.readback) {
+      try {
+        var _dg = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(o.readback)));
+        body.readback_sha = Array.prototype.map.call(new Uint8Array(_dg), function (b) {
+          return ('0' + b.toString(16)).slice(-2); }).join('');
+      } catch (e) {}
+      body.confirmed_at = new Date().toISOString();
+    }
     info.client_order_id = body.client_order_id;
     var settle = function (ambiguous) { if (window._tradeOrderSettle) window._tradeOrderSettle(sig, ambiguous); };
     var tid = KT ? KT.order.sending(info) : null;

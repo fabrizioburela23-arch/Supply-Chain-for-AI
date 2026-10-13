@@ -26,9 +26,14 @@ _Nada interno._
 
 ## Lo usan
 
+- [[brokerage.service.py]] — lo importa
 - [[core.decisions.py]] — lo importa
 - [[core.entities.py]] — lo importa
+- [[core.governance_preview.py]] — lo importa
+- [[core.instruments.py]] — lo importa
+- [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
+- [[core.scenario_engine.py]] — lo importa
 - [[core.screener.py]] — lo importa
 - [[core.semantic.py]] — lo importa
 - [[core.sim_agents.py]] — lo importa
@@ -36,6 +41,7 @@ _Nada interno._
 - [[matrix.api.py]] — lo importa
 - [[matrix.engine.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
+- [[matrix.tensor_api.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
@@ -43,6 +49,7 @@ _Nada interno._
 - [[ontology.bulk_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.service.py]] — lo importa
+- [[research.agent_skills.py]] — lo importa
 - [[research.context.py]] — lo importa
 - [[research.router.py]] — lo importa
 - [[scripts.build_shapes.py]] — lo importa
@@ -53,22 +60,28 @@ _Nada interno._
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 15 pruebas (lista abajo)._
+_Además lo importan 21 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
 - [[tests.test_gates_conformance.py]]
 - [[tests.test_gates_ir_fresh.py]]
+- [[tests.test_gates_orders_parity.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
+- [[tests.test_governance_activation.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_kernel_monotone_severity.py]]
+- [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_order_single_path.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_scenario_kernel.py]]
 - [[tests.test_tensor.py]]

@@ -71,6 +71,20 @@ SYMMETRIC = vocab.symmetric_relations()
     'SEVERITY_DIVISOR': 'severity_divisor', 'PAGERANK_ALPHA': 'pagerank_alpha'})
 
 
+def _P(key, default=None):
+    """Parámetro del kernel del release VIGENTE para este hilo (core.governance.param: respeta el contrafactual
+    `governance.counterfactual(...)` de /api/governance/preview, que corre otra versión SIN cambiar la vigente).
+    Las claves nuevas de 2.0.0 no existen en 1.0.0: su `default` reproduce EXACTAMENTE el comportamiento de 1.0.0."""
+    return _gov.param('kernel.params', key, default)
+
+
+def _damage_rels():
+    """Relaciones que TRANSMITEN daño (kernel.params.damage_rels; 1.0.0: todas — None). 2.0.0 (BRECHAS #4, valor por
+    defecto): solo FLUJO; socios e inversores no transmiten daño (se muestran aparte como "relacionadas")."""
+    dr = _P('damage_rels', None)
+    return None if dr is None else set(dr)
+
+
 def _utcnow():
     return datetime.now(timezone.utc)
 
@@ -111,9 +125,9 @@ def link_confidence(props):
         if props.get('verified') is True:
             return None
         if props.get('verified') is False:
-            return UNVERIFIED_CONF
+            return _P('unverified_conf')
         if props.get('verified') is None and vocab.text_says_unverified(props.get('rel_label')):
-            return UNVERIFIED_CONF
+            return _P('unverified_conf')
         return None
     try:
         c = float(c)
@@ -133,7 +147,7 @@ def _eff_weight(raw, source, confidence=None):
     verificado" (0.3) ya no pesa igual que uno verificado. Sin confianza
     (None) o con 1.0 el resultado es idéntico al histórico."""
     w = float(raw or 2)
-    if source in BULK_SOURCES:
+    if source in set(_P('bulk_sources') or ()):
         w *= bulk_weight_factor()
     if confidence is not None:
         try:
@@ -305,11 +319,11 @@ def active_factors(session, as_of=None):
             LinkRecord.rel_type == 'affects',
             LinkRecord.valid_to.is_(None))).all()
         links = [{'source': l.source_id, 'target': l.target_id,
-                  'weight': float(l.weight or 1), 'valid_from': l.valid_from} for l in rows]
+                  'weight': factor_coef(l.weight), 'valid_from': l.valid_from} for l in rows]
     else:
         as_of_dt = _parse_dt(as_of)
         links = [{'source': l['source'], 'target': l['target'],
-                  'weight': float(l.get('weight') or 1), 'valid_from': l.get('valid_from')}
+                  'weight': factor_coef(l.get('weight')), 'valid_from': l.get('valid_from')}
                  for l in _links_active_at(session, as_of_dt)
                  if l['rel_type'] == 'affects']
 
@@ -333,7 +347,7 @@ def active_factors(session, as_of=None):
             except (KeyError, TypeError, ValueError):
                 sev_crisis = None
             factors.append({'id': fid, 'label': o.label,
-                            'severity': float(props.get('severity', 5)),
+                            'severity': factor_severity(props.get('severity')),
                             # nivel al que sube si el factor se DISPARA (los
                             # factores viven latentes; ver /factor/fire)
                             'severity_crisis': sev_crisis,
@@ -347,6 +361,25 @@ def active_factors(session, as_of=None):
                             'updated': _iso_or_none(o.updated_at),
                             'members': members})
     return factors
+
+
+def factor_coef(raw):
+    """Coeficiente de un miembro de un factor (peso del vínculo 'affects'). 1.0.0: `float(w or 1)` — un 0 se volvía
+    1 (+100 % de sensibilidad). 2.0.0 (`factor_inputs_strict`, PROP-20): solo lo AUSENTE vale 1; un 0 es 0."""
+    if _P('factor_inputs_strict', False):
+        try:
+            return 1.0 if raw is None else max(0.0, float(raw))
+        except (TypeError, ValueError):
+            return 1.0
+    return float(raw or 1)
+
+
+def factor_severity(raw):
+    """Severidad de un factor. 1.0.0: ausente → 5. 2.0.0 (`factor_inputs_strict`, PROP-20): ausente → la severidad
+    LATENTE (factor_latent_severity); 0 = sin efecto en los dos."""
+    if raw is None:
+        return float(_P('factor_latent_severity')) if _P('factor_inputs_strict', False) else 5.0
+    return float(raw)
 
 
 def _iso_or_none(v):
@@ -373,10 +406,11 @@ def fragility(idx, factors):
     escalar una columna cruda antes de normalizar)."""
     n = len(idx)
     f = np.ones(n)
+    div = float(_P('severity_divisor'))          # 1.0.0: 5 · 2.0.0: 10 (la escala de los datos es 0-10, PROP-05)
     for factor in factors or []:
         for oid, coef in factor['members'].items():
             if oid in idx:
-                f[idx[oid]] += coef * (factor['severity'] / SEVERITY_DIVISOR)
+                f[idx[oid]] += coef * (factor['severity'] / div)
     np.minimum(f, fragility_cap(), out=f)
     return f
 
@@ -400,7 +434,7 @@ def modulate(mats, idx, factors):
 # paso 13 (2026-10-13) el navegador ya NO propaga: lee estas cifras de /api/hot/* (engine/hotclient.js).
 
 
-def _dependency_matrix(mats, rel_weights=None):
+def _dependency_matrix(mats, rel_weights=None, direction='down'):
     """Matriz de transmisión de daño T[i,j] = cuánto del shock de i llega a j.
 
     Se normaliza POR TIPO de relación (no en agregado): dentro de cada tipo,
@@ -412,34 +446,65 @@ def _dependency_matrix(mats, rel_weights=None):
 
     Denso: (m / col[None,:]) * w — histórico. Sparse: m @ diags(w/col) — mismo
     resultado sin densificar (spec §"Detalles numéricos obligatorios")."""
-    w = dict(DEFAULT_REL_WEIGHTS)
+    w = dict(_P('rel_weights'))
     if rel_weights:
         w.update(rel_weights)
+    floor = float(_P('sole_link_floor'))
+    damage = _damage_rels()
     T = None
     for r, m in mats.items():
-        col = np.maximum(_colsum(m), SOLE_LINK_FLOOR)
-        Dr = _scale_cols(m, w.get(r, 0.5) / col)   # columna normalizada × criticidad
+        if damage is not None and r not in damage:
+            continue                                # 2.0.0: socios/inversores no transmiten daño (BRECHAS #4)
+        if direction == 'up':
+            # AUGE / DEMANDA (PROP-17): el impulso del cliente j llega al proveedor i según qué parte de las VENTAS
+            # de i van a j — fila normalizada con el MISMO piso: un vínculo débil ya no pasa todo el auge.
+            # Se devuelve U^T (U[i,j] = A[i,j]/max(fila_i, piso)·α) para que la transpuesta sea U.
+            row = np.maximum(_rowsum(m), floor)
+            Dr = _transpose_csr(_scale_rows(m, w.get(r, 0.5) / row))
+        else:
+            col = np.maximum(_colsum(m), floor)
+            Dr = _scale_cols(m, w.get(r, 0.5) / col)   # columna normalizada × criticidad
         T = Dr if T is None else T + Dr
+    if T is None and mats:                      # ninguna relación transmite: matriz nula del tamaño correcto
+        m0 = next(iter(mats.values()))
+        T = (sp.csr_matrix(m0.shape) if _issparse(m0) else np.zeros(m0.shape))
     return T
 
 
 def _kp(magnitude=None, damping=None, max_hops=None, threshold=None):
     """Valores por defecto del kernel (kernel.params del release vigente) para lo que el caller no fijó."""
-    return (MAGNITUDE if magnitude is None else magnitude, DAMPING if damping is None else damping,
-            MAX_HOPS if max_hops is None else max_hops, THRESHOLD if threshold is None else threshold)
+    return (_P('magnitude') if magnitude is None else magnitude, _P('damping') if damping is None else damping,
+            _P('max_hops') if max_hops is None else max_hops, _P('threshold') if threshold is None else threshold)
+
+
+def _nonlinear(cur):
+    """La opción `nonlinear` (estrés severo). 1.0.0 'saturate': 1−e^(−x) — ATENÚA siempre (PROP-15: se llamaba
+    'estrés severo' y bajaba los impactos; se conserva idéntica para repetir decisiones viejas). 2.0.0 'amplify':
+    1−(1−x)² sobre x∈[0,1] — nunca baja (≥ x), acotada a 1 y monótona."""
+    if _P('nonlinear_mode', 'saturate') == 'amplify':
+        c = np.minimum(cur, 1.0)
+        return 1.0 - (1.0 - c) ** 2
+    return 1.0 - np.exp(-cur)
 
 
 def propagate(mats, idx, ids, shock_ids, magnitude=None, damping=None,
               max_hops=None, threshold=None, rel_weights=None, frag=None,
-              nonlinear=False, eps=None, dt=None):
+              nonlinear=False, eps=None, dt=None, x0=None, direction='down'):
     """EL kernel de propagación: shock en `shock_ids` → impacto 0..1 por nodo.
 
-    impacto(hop k) = damping · Tᵀ·x_{k-1} · fragilidad; el impacto total por
-    nodo es el MÁXIMO alcanzado por cualquier ruta (no la suma — evita doble
-    conteo en diamantes). `frag`: vector de fragilidad por hiperaristas (de
-    fragility()); si None, sin modulación. Devuelve (impactos dict id→pct
-    0..100, orden de cascada). Funciona con matrices densas o dispersas (Tᵀ se
-    precalcula UNA vez, no dentro del loop de hops).
+    REGLA ESCRITA (PROP-19; la cumplen propagate, propagate_block/propagate_many y las pruebas de paridad):
+      x_k = clamp₁( umbral( damping · diag(frag) · Tᵀ · x_{k-1} ) ),  k = 1..max_hops
+      · DENTRO de un salto se SUMA sobre los proveedores (Tᵀ·x: dos caminos de igual largo se suman — un diamante
+        de igual longitud SÍ suma);
+      · ENTRE saltos se toma el MÁXIMO: impacto(nodo) = max_k x_k (incluido x_0);
+      · x_0 solo existe en el salto 0 (el origen no re-emite); umbral = THRESHOLD (debajo → 0); tope 1 por salto;
+      · T = Σ_r α_r · A_r / max(Σ columna, SOLE_LINK_FLOOR) sobre las relaciones que transmiten daño (damage_rels).
+    (Antes este texto decía "el MÁXIMO por cualquier ruta, no la suma" — falso: el cliente copió esa frase.)
+    `frag`: vector de fragilidad por hiperaristas (de fragility()); si None, sin modulación. Devuelve (impactos
+    dict id→pct 0..100, orden de cascada). Funciona con matrices densas o dispersas (Tᵀ se precalcula UNA vez).
+    `x0` {id: magnitud 0..1}: magnitud POR semilla (p. ej. factor disparado: magnitud × coeficiente del miembro,
+    PROP-05); manda sobre `magnitude`. `direction='up'`: auge de demanda (cliente → proveedor), misma regla con la
+    matriz normalizada por FILA y el mismo piso (PROP-17); solo si kernel.params.direction_up.
 
     Flags ADITIVOS (default apagados → comportamiento idéntico al histórico):
     - nonlinear: kernel no-lineal estilo Bardoscia 2015 (el daño transmitido
@@ -450,12 +515,17 @@ def propagate(mats, idx, ids, shock_ids, magnitude=None, damping=None,
       matrices (compute_metrics): antes se reconstruía por cada nodo — O(N·R·N²), ~30 s."""
     magnitude, damping, max_hops, threshold = _kp(magnitude, damping, max_hops, threshold)
     n = len(ids)
-    DT = dt if dt is not None else _transpose_csr(_dependency_matrix(mats, rel_weights))
+    DT = dt if dt is not None else dependency_transpose(mats, rel_weights, direction=direction)
     fvec = frag if frag is not None else np.ones(n)
     x = np.zeros(n)
-    for sid in shock_ids:
-        if sid in idx:
-            x[idx[sid]] = magnitude
+    if x0 is not None:
+        for sid, v in x0.items():
+            if sid in idx:
+                x[idx[sid]] = max(x[idx[sid]], float(v))
+    else:
+        for sid in shock_ids:
+            if sid in idx:
+                x[idx[sid]] = magnitude
     total = x.copy()
     order = []
     reached = set(np.nonzero(x)[0].tolist())
@@ -464,7 +534,7 @@ def propagate(mats, idx, ids, shock_ids, magnitude=None, damping=None,
         prev = cur
         cur = damping * (DT @ cur) * fvec
         if nonlinear:
-            cur = 1.0 - np.exp(-cur)     # saturación no-lineal (flag)
+            cur = _nonlinear(cur)        # 1.0.0 satura (atenúa) · 2.0.0 amplifica (PROP-15)
         cur = np.minimum(cur, 1.0)
         cur[cur < threshold] = 0.0
         if not cur.any():
@@ -504,7 +574,7 @@ def propagate_block(DT, frag, X0, damping=None, max_hops=None, threshold=None, n
     for hop in range(1, max_hops + 1):
         cur = damping * np.asarray(DT @ cur) * fcol
         if nonlinear:
-            cur = 1.0 - np.exp(-cur)
+            cur = _nonlinear(cur)
         cur = np.minimum(cur, 1.0)
         cur[cur < threshold] = 0.0
         if not cur.any():
@@ -524,7 +594,7 @@ def propagate_many(mats, idx, ids, sources, magnitude=None, damping=None, max_ho
     que {o['id']: o['hop']} de la cascada de `propagate`). 46 ms en lote contra 268-357 ms del bucle (MAP 3)."""
     magnitude, damping, max_hops, threshold = _kp(magnitude, damping, max_hops, threshold)
     n = len(ids)
-    DT = dt if dt is not None else _transpose_csr(_dependency_matrix(mats, rel_weights))
+    DT = dt if dt is not None else dependency_transpose(mats, rel_weights)
     cols = [idx[s] for s in sources if s in idx]
     out = {}
     for start in range(0, len(cols), max(1, int(chunk))):
@@ -544,9 +614,28 @@ def propagate_many(mats, idx, ids, sources, magnitude=None, damping=None, max_ho
     return out
 
 
-def dependency_transpose(mats, rel_weights=None):
-    """Tᵀ lista para `propagate(..., dt=…)`: se calcula UNA vez y se reutiliza en todos los choques."""
-    return _transpose_csr(_dependency_matrix(mats, rel_weights))
+def dependency_transpose(mats, rel_weights=None, direction='down'):
+    """Tᵀ lista para `propagate(..., dt=…)`: se calcula UNA vez y se reutiliza en todos los choques.
+    direction='up' (auge de demanda) solo si el release lo habilita (kernel.params.direction_up; 1.0.0: no)."""
+    if direction == 'up' and not direction_up_enabled():
+        raise ValueError("direction 'up' no habilitada en kernel.params vigente / not enabled in kernel.params")
+    return _transpose_csr(_dependency_matrix(mats, rel_weights, direction=direction))
+
+
+def direction_up_enabled():
+    """¿El release vigente calcula AUGES de demanda (cliente → proveedor) con el kernel? 1.0.0: no (la API lo dice
+    con honestidad: 'unsupported'); 2.0.0: sí, con el piso SOLE_LINK_FLOOR (PROP-17)."""
+    return bool(_P('direction_up', False))
+
+
+def chokepoint_order(metrics, sums):
+    """Orden del ranking de cuellos de botella (kernel.params.chokepoint_rank_by). 1.0.0 'count': por cantidad de
+    empresas golpeadas ≥ 1 % (orden estable de inserción, como siempre). 2.0.0 'sum' (PROP-06): por Σ impacto
+    (empresas-equivalentes perdidas), con el conteo como desempate — premia a quien golpea FUERTE, no a quien toca
+    a muchas un poquito."""
+    if _P('chokepoint_rank_by', 'count') == 'sum':
+        return sorted(metrics.items(), key=lambda kv: (-sums.get(kv[0], 0.0), -kv[1]['cascade_size'], kv[0]))
+    return sorted(metrics.items(), key=lambda kv: -kv[1]['cascade_size'])
 
 
 def propagate_bands(mats, idx, ids, shock_ids, n_samples=200, seed=0,
@@ -565,7 +654,7 @@ def propagate_bands(mats, idx, ids, shock_ids, n_samples=200, seed=0,
     point, order = propagate(mats, idx, ids, shock_ids, frag=base_frag, **kw)
     samples = np.zeros((max(1, int(n_samples)), n))
     for s in range(samples.shape[0]):
-        mag = float(MAGNITUDE if kw.get('magnitude') is None else kw['magnitude']) * \
+        mag = float(_P('magnitude') if kw.get('magnitude') is None else kw['magnitude']) * \
             float(max(0.0, rng.normal(1.0, mag_sigma)))
         fs = base_frag * rng.normal(1.0, frag_sigma, size=n)
         fs = np.maximum(fs, 0.0)
@@ -598,7 +687,7 @@ def pagerank(agg, alpha=None, tol=1e-10, max_iter=200, personalization=None):
     redistribuyendo su masa al vector de teleportación (tratamiento estándar).
     `personalization`: vector de teleportación NO uniforme (Personalized
     PageRank — centralidad relativa a un portafolio); si None, uniforme."""
-    alpha = PAGERANK_ALPHA if alpha is None else alpha
+    alpha = _P('pagerank_alpha') if alpha is None else alpha
     A = _transpose_csr(agg)                      # grafo de dependencia (customer→supplier)
     n = A.shape[0]
     if n == 0:
@@ -644,7 +733,7 @@ def spectral_radius(mats, factors=None, idx=None, rel_weights=None, damping=None
     M ≥ 0 (todo no-negativo) ⇒ por Perron-Frobenius el autovalor dominante es
     real no-negativo. Se intenta scipy.sparse.linalg.eigs (LM); si falla o el
     grafo es diminuto, se usa power iteration (robusto para matrices ≥ 0)."""
-    damping = DAMPING if damping is None else damping
+    damping = _P('damping') if damping is None else damping
     D = _dependency_matrix(mats, rel_weights)
     T = _transpose_csr(D)                         # Tᵀ (transmisión efectiva)
     n = T.shape[0]
@@ -713,21 +802,25 @@ def compute_metrics(session, as_of=None):
     in_w = _colsum(agg)
     pr = pagerank(agg)
     dt = dependency_transpose(mats)          # UNA vez para los N choques (limpieza 2026-10-11)
-    metrics = {}
+    metrics, sums = {}, {}
     for oid, i in idx.items():
         if out_w[i] == 0 and in_w[i] == 0:
             continue
         impacts, _ = propagate(mats, idx, ids, [oid], frag=frag, dt=dt)
         cascade = sum(1 for v in impacts.values() if v >= 1.0) - 1
+        sums[oid] = round(sum(v for k, v in impacts.items() if k != oid) / 100.0, 4)
         metrics[oid] = {
             'out_weight': round(float(out_w[i]), 2),
             'in_weight': round(float(in_w[i]), 2),
             'cascade_size': max(0, cascade),
             'pagerank': round(float(pr[i]), 6),
         }
-    ranked = sorted(metrics.items(), key=lambda kv: -kv[1]['cascade_size'])
+    ranked = chokepoint_order(metrics, sums)
     for rank, (oid, m) in enumerate(ranked, 1):
         m['chokepoint_rank'] = rank
+    if _P('chokepoint_rank_by', 'count') == 'sum':
+        for oid, m in metrics.items():
+            m['sum_impact'] = sums.get(oid, 0.0)
     # ranking de PageRank (1 = más central) como campo complementario
     pr_ranked = sorted(metrics.items(), key=lambda kv: -kv[1]['pagerank'])
     for rank, (oid, m) in enumerate(pr_ranked, 1):

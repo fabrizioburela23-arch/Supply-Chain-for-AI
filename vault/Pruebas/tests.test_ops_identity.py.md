@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_ops_identity.py"
 lenguaje: "python"
-lineas: 261
+lineas: 262
 aliases: ["tests/test_ops_identity.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_ops_identity.py
 
-> Prueba · capa [[Capa Pruebas]] · 261 líneas · `tests/test_ops_identity.py`
+> Prueba · capa [[Capa Pruebas]] · 262 líneas · `tests/test_ops_identity.py`
 
 ## Qué prueba
 

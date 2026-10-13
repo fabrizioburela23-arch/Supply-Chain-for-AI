@@ -9,6 +9,43 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2 (kernel 2.0.0 con PIN, fichas rápidas, un camino de órdenes, historia de precios) — sw v261
+
+- Paso 14: ficha de empresa, NRS en lote, geo, cotización con sello y alertas desde las vistas rápidas; MCP, chat, voz,
+  ventanas, agentes, World Monitor y Centinela leen la misma ficha (p50 0,4-1 ms; Centinela 1.049 → 35 ms). Cambia el NRS
+  que ven el MCP y los agentes de fondo en unas pocas empresas (en la base de prueba 4 de 937: xAI 55→52, SoftBank 39→36,
+  ScaleAI 47→45, KairosPower 43→40) porque ahora usan el mismo grafo que el chat (sin vínculos propuestos/rechazados).
+  MCP get_company cuenta clientes/proveedores como pares distintos (TSMC: 78 clientes, igual que la ficha).
+- Paso 12: kernel.params 2.0.0 listo pero APAGADO. Producción sigue en 1.0.0 (números idénticos; paridad 0 diferencias).
+  Fabrizio lo enciende en 🩺 → Gobernanza → «¿Qué cambia?» → «Activar (PIN)»; deshacer = activar 1.0.0 (también con PIN).
+  Con 2.0.0: TSMC 318 → 254 empresas golpeadas ≥1 % (CBCTaiwan sale: solo llegaba por un vínculo de socio), ρ 1,21 → 0,91,
+  ningún factor arranca una empresa por encima del 100 %, el auge de demanda da cifras reales (OpenAI → Tesla 13,2 %, antes
+  60), escenarios y simulación por agentes con % del kernel (la IA solo explica). Probado en la copia de producción:
+  activar → 254, deshacer → 318, cadena íntegra.
+- Pasos 15-17: TODAS las órdenes (panel, cripto, voz, terminal, Cabina, cerrar, agente de trading, MCP, comité) van por
+  brokerage.service; solo brokerage/alpaca.py habla con Alpaca. Límites de hoy (US$100.000 por orden; cerrar/reducir una
+  posición no tiene ese tope). Nuevos bloqueos: orden repetida mientras otra igual está en estado desconocido, y venta
+  limitada sin precio de mercado. La cuenta principal está en PAPEL (verificado por MCP): nada cambia para Fabrizio hoy;
+  si algún día pasa a dinero real necesita BROKERAGE_LIVE_ENABLED=on + "dinero real habilitado" en 👥 Clientes. El agente
+  de trading queda apagado tras este despliegue (su configuración vieja no estaba guardada): pulsar «Iniciar» una vez.
+  Puertas de órdenes (31 reglas nuevas, incluida concentración por sector/país/cadena) y AccountRisk en SOMBRA; corren en
+  producción cuando Fabrizio active ontology.shapes 3.0.0 + policy.gates 1.1.0 (y ledger.kinds 2.0.0 para data.backfill).
+- Bloque 2: tablas de historia (instrumentos, precios diarios, ajustes, FX, métricas y posiciones diarias); carga diaria
+  automática pequeña (~600 consultas a Yahoo tras las 22:00 UTC, PRICES_EOD=off la apaga); relleno de 5 años SOLO con el
+  botón «Descargar 5 años (PIN)» en 🩺 → 📈 Historia de precios (~115 MB). Riesgo con FX diario y beta de Dimson
+  (acciones asiáticas/europeas: la volatilidad puede SUBIR, ahora es la real); RSI de Wilder en la investigación.
+  docs/REVISION_INSTRUMENTOS.md: 44 empresas con varios listados u OTC/ADR para que Fabrizio marque ✔/✘.
+- Revisión (3 lentes): 14 hallazgos, 13 arreglados con prueba (MCP contaba aristas y no pares; escala 0-5 en acciones de
+  factores; magnitud >1 con 2.0.0; FACTOR FIRE /5 fijo; CERRAR no podía cerrar posiciones >US$100k; fallo tras enviar
+  borraba el rastro; huecos de meses aceptados; fotos con cierres viejos; fechas con el desfase horario de hoy; "ajustado"
+  siempre; re-ratificar tras deshacer; aviso "cambio mayor" siempre; texto solo en español). 1 diferido = decisión de
+  Fabrizio (activar shapes 3.0.0 + ledger.kinds 2.0.0 antes de la primera descarga de precios).
+- Simulación de la actualización (base creada con 623890c → código nuevo): 16 artefactos registrados como propuestas, el
+  release vigente sigue siendo el 1.0.0 de la base, 7 tablas nuevas, impacto TSMC 318, cadena íntegra, dinero real
+  permitido, backfill sin PIN → 401, segundo arranque idempotente.
+
+---
+
 # SESIÓN 2026-10-13 (c) — INFRAESTRUCTURA OPERATIVA, PASOS 7, 9, 10 y 13 (ancla, gobernanza, puertas SHACL en sombra, un kernel en el cliente) — sw v260
 
 - Paso 7: ancla diaria del libro (`ledger_anchors`, `/api/ledger/anchor` público, artefacto diario de GitHub Actions);

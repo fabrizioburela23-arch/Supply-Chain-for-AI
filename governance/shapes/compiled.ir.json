@@ -1,5 +1,5 @@
 {
- "ir_hash": "ed21dd761951bc274774e539a6f357bb67df277896a66daa9b41f838ab4dc7b4",
+ "ir_hash": "854622bc3b313fc59aadf5b4d6f9e556b0b2d0e6f71be9626349a60ded066129",
  "rules": [
   "khr:action.agent_needs_human",
   "khr:action.auto_apply_allowed",
@@ -31,7 +31,38 @@
   "khr:object.margin_range",
   "khr:object.numeric_props",
   "khr:object.type_immutable",
-  "khr:object.type_in_vocab"
+  "khr:object.type_in_vocab",
+  "khr:order.account_fresh",
+  "khr:order.account_readable",
+  "khr:order.ai_origin_needs_human",
+  "khr:order.asset_class_allowed",
+  "khr:order.buying_power",
+  "khr:order.chain_exposure_after",
+  "khr:order.client_active",
+  "khr:order.country_pct_after",
+  "khr:order.daily_cap",
+  "khr:order.drawdown_stop",
+  "khr:order.duplicate_window",
+  "khr:order.kill_switch",
+  "khr:order.ledger_chain",
+  "khr:order.limit_deviation",
+  "khr:order.limit_passive",
+  "khr:order.limit_reference",
+  "khr:order.market_hours",
+  "khr:order.max_order_usd",
+  "khr:order.min_order_usd",
+  "khr:order.mode_live_enabled",
+  "khr:order.no_short",
+  "khr:order.not_allowed",
+  "khr:order.policy_changed_since_preview",
+  "khr:order.position_pct_after",
+  "khr:order.price_known",
+  "khr:order.quote_fresh",
+  "khr:order.restricted",
+  "khr:order.sector_pct_after",
+  "khr:order.symbol_tradable",
+  "khr:order.unresolved",
+  "khr:order.voice_readback"
  ],
  "schema": "shapes-ir/1",
  "shapes": [
@@ -234,6 +265,7 @@
         "claim.status",
         "committee.portfolio_advice",
         "committee.run",
+        "data.backfill",
         "governance.activate",
         "governance.propose",
         "governance.ratify",
@@ -832,7 +864,537 @@
     }
    ],
    "target": "kh:Object"
+  },
+  {
+   "iri": "khs:OrderAiOriginShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.ai_origin_needs_human@1",
+     "iri": "khs:OrderAiOriginShape",
+     "msg_en": "The order was proposed by \"{value}\" (AI or agent): it awaits your approval with the PIN.",
+     "msg_es": "La orden la propuso «{value}» (IA o agente): espera tu aprobación con PIN.",
+     "name": "orden de una IA o un agente: aprobación humana",
+     "rule": "khr:order.ai_origin_needs_human",
+     "select": "SELECT $this ?value WHERE { $this kh:origin ?value . FILTER (?value = \"mcp\" || ?value = \"committee\" || ?value = \"agent\") FILTER NOT EXISTS { $this kh:accountMode \"paper\" ; kh:paperAutoApproved true } }",
+     "severity": "khs:RequiresApproval"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderAssetClassAllowedShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.asset_class_allowed@1",
+     "iri": "khs:OrderAssetClassAllowedShape",
+     "msg_en": "The mandate does not allow this asset class ({value}).",
+     "msg_es": "El mandato no permite esta clase de activo ({value}).",
+     "name": "clase de activo permitida por el mandato",
+     "rule": "khr:order.asset_class_allowed",
+     "select": "SELECT $this ?value WHERE { $this kh:assetClass ?value . FILTER NOT EXISTS { $this kh:allowedAssetClass ?value } }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderBuyingPowerShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.buying_power@1",
+     "iri": "khs:OrderBuyingPowerShape",
+     "msg_en": "Available funds are insufficient or unknown for this buy (US${value}).",
+     "msg_es": "Dinero disponible insuficiente o desconocido para esta compra (US${value}).",
+     "name": "dinero disponible para la compra",
+     "rule": "khr:order.buying_power",
+     "select": "SELECT $this ?value WHERE { $this kh:needsFunds true . OPTIONAL { $this kh:estUsd ?value } OPTIONAL { $this kh:availableUsd ?a } FILTER (!BOUND(?value) || !BOUND(?a) || (isNumeric(?value) && isNumeric(?a) && ?value > ?a)) }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderIntentShape",
+   "props": [
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxAccountAgeS"
+      }
+     ],
+     "iri": "khs:OrderAccountFresh",
+     "msg_en": "The account was read {value} s ago (maximum {limit} s): preview again.",
+     "msg_es": "La cuenta se leyó hace {value} s (máximo {limit} s): vuelve a previsualizar.",
+     "name": "cuenta leída hace poco",
+     "path": "kh:accountAgeS",
+     "rule": "khr:order.account_fresh",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:OrderAccountReadable",
+     "msg_en": "The Alpaca account could not be read live.",
+     "msg_es": "No se pudo leer la cuenta de Alpaca en vivo.",
+     "name": "cuenta de Alpaca conectada y legible",
+     "path": "kh:accountReadable",
+     "rule": "khr:order.account_readable",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxChainExposure"
+      }
+     ],
+     "iri": "khs:OrderChainExposureAfter",
+     "msg_en": "After the order, the collapse of a single key supplier would hit {value} of your portfolio (reference {limit}).",
+     "msg_es": "Tras la orden, el colapso de un solo proveedor clave golpearía {value} de tu cartera (referencia {limit}).",
+     "name": "exposición a un cuello de botella de la cadena",
+     "path": "kh:chainExposureAfter",
+     "rule": "khr:order.chain_exposure_after",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        "active"
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:OrderClientActive",
+     "msg_en": "The client is \"{value}\": resume it to trade.",
+     "msg_es": "El cliente está «{value}»: reactívalo para operar.",
+     "name": "cliente activo",
+     "path": "kh:clientStatus",
+     "rule": "khr:order.client_active",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxCountryWeight"
+      }
+     ],
+     "iri": "khs:OrderCountryPctAfter",
+     "msg_en": "After the order, its country would be {value} of your equity (reference {limit}).",
+     "msg_es": "Tras la orden, su país pesaría {value} de tu patrimonio (referencia {limit}).",
+     "name": "peso del país después de la orden",
+     "path": "kh:countryWeightAfter",
+     "rule": "khr:order.country_pct_after",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxDailyUsd"
+      }
+     ],
+     "iri": "khs:OrderDailyCap",
+     "msg_en": "With this buy today's total would be US${value} (daily limit US${limit}).",
+     "msg_es": "Con esta compra hoy sumarías US${value} (límite diario US${limit}).",
+     "name": "límite diario de compras",
+     "path": "kh:dailyAfterUsd",
+     "rule": "khr:order.daily_cap",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxDrawdownPct"
+      }
+     ],
+     "iri": "khs:OrderDrawdownStop",
+     "msg_en": "Equity fell {value}% from its peak (stop at {limit}%): buys blocked, sells allowed.",
+     "msg_es": "El patrimonio cayó {value} % desde su máximo (stop en {limit} %): compras bloqueadas, ventas permitidas.",
+     "name": "stop por caída desde el máximo",
+     "path": "kh:drawdownPct",
+     "rule": "khr:order.drawdown_stop",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      }
+     ],
+     "iri": "khs:OrderDuplicateWindow",
+     "msg_en": "An identical order (same symbol and side) was sent less than a minute ago.",
+     "msg_es": "Ya se envió una orden igual (mismo símbolo y lado) hace menos de un minuto.",
+     "name": "sin orden igual reciente",
+     "path": "kh:duplicateRecent",
+     "rule": "khr:order.duplicate_window",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:OrderKillSwitch",
+     "msg_en": "Master switch OFF (BROKERAGE_TRADING_ENABLED=off): no orders are sent.",
+     "msg_es": "Interruptor general APAGADO (BROKERAGE_TRADING_ENABLED=off): no se envía ninguna orden.",
+     "name": "interruptor general",
+     "path": "kh:tradingEnabled",
+     "rule": "khr:order.kill_switch",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      }
+     ],
+     "iri": "khs:OrderLedgerChain",
+     "msg_en": "The decision-ledger chain is broken: real money stays blocked until it is acknowledged with the PIN.",
+     "msg_es": "La cadena del libro de decisiones está rota: el dinero real queda bloqueado hasta reconocerla con PIN.",
+     "name": "cadena del libro íntegra (dinero real)",
+     "path": "kh:ledgerChainOk",
+     "rule": "khr:order.ledger_chain",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      }
+     ],
+     "iri": "khs:OrderLimitReference",
+     "msg_en": "No market price to compare the limit price with.",
+     "msg_es": "Sin precio de mercado para comparar el precio límite.",
+     "name": "precio de mercado para comparar el límite",
+     "path": "kh:refPriceKnown",
+     "rule": "khr:order.limit_reference",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      }
+     ],
+     "iri": "khs:OrderMarketHours",
+     "msg_en": "US market closed: the order will queue until the open.",
+     "msg_es": "Mercado de EE.UU. cerrado: la orden quedará en cola hasta la apertura.",
+     "name": "horario de mercado",
+     "path": "kh:marketOpen",
+     "rule": "khr:order.market_hours",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxOrderUsd"
+      }
+     ],
+     "iri": "khs:OrderMaxUsd",
+     "msg_en": "The order (≈ US${value}) exceeds the per-order maximum (US${limit}).",
+     "msg_es": "La orden (≈ US${value}) supera el máximo por orden (US${limit}).",
+     "name": "monto máximo por orden",
+     "path": "kh:estUsd",
+     "rule": "khr:order.max_order_usd",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:estUsd"
+      }
+     ],
+     "iri": "khs:OrderMinUsd",
+     "msg_en": "Amount too small (minimum US${value}; the order: US${limit}).",
+     "msg_es": "Monto demasiado pequeño (mínimo US${value}; la orden: US${limit}).",
+     "name": "monto mínimo",
+     "path": "kh:minOrderUsd",
+     "rule": "khr:order.min_order_usd",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      }
+     ],
+     "iri": "khs:OrderNoShort",
+     "msg_en": "The sale exceeds what you hold: short selling is not allowed.",
+     "msg_es": "La venta supera lo que tienes: no se permiten ventas en corto.",
+     "name": "sin ventas en corto",
+     "path": "kh:shortSale",
+     "rule": "khr:order.no_short",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      }
+     ],
+     "iri": "khs:OrderPolicyUnchanged",
+     "msg_en": "The rules (governance release) changed since the preview: preview again.",
+     "msg_es": "Las reglas (release de gobernanza) cambiaron desde la previsualización: vuelve a previsualizar.",
+     "name": "mismas reglas que al previsualizar",
+     "path": "kh:policyChangedSincePreview",
+     "rule": "khr:order.policy_changed_since_preview",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "minCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:OrderPriceKnown",
+     "msg_en": "The USD amount could not be estimated (no reference price): use a USD amount.",
+     "msg_es": "No se pudo estimar el monto en USD (sin precio de referencia): usa un monto en USD.",
+     "name": "monto estimable en USD",
+     "path": "kh:estUsd",
+     "rule": "khr:order.price_known",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxQuoteAgeS"
+      }
+     ],
+     "iri": "khs:OrderQuoteFresh",
+     "msg_en": "The price used is {value} s old (maximum {limit} s): preview again.",
+     "msg_es": "El precio usado tiene {value} s (máximo {limit} s): vuelve a previsualizar.",
+     "name": "cotización fresca",
+     "path": "kh:quoteAgeS",
+     "rule": "khr:order.quote_fresh",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:maxSectorWeight"
+      }
+     ],
+     "iri": "khs:OrderSectorPctAfter",
+     "msg_en": "After the order, its sector would be {value} of your equity (cap {limit}).",
+     "msg_es": "Tras la orden, su sector pesaría {value} de tu patrimonio (tope {limit}).",
+     "name": "peso del sector después de la orden",
+     "path": "kh:sectorWeightAfter",
+     "rule": "khr:order.sector_pct_after",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:OrderSymbolTradable",
+     "msg_en": "The symbol is not valid (stocks: NVDA; crypto: BTC/USD).",
+     "msg_es": "El símbolo no es válido (acciones: NVDA; cripto: BTC/USD).",
+     "name": "símbolo válido",
+     "path": "kh:symbolValid",
+     "rule": "khr:order.symbol_tradable",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      }
+     ],
+     "iri": "khs:OrderUnresolved",
+     "msg_en": "There is an identical order in UNKNOWN state (it may have executed): sync before repeating it.",
+     "msg_es": "Hay una orden igual en estado DESCONOCIDO (puede haberse ejecutado): sincroniza antes de repetirla.",
+     "name": "sin orden en estado desconocido",
+     "path": "kh:unresolvedOrder",
+     "rule": "khr:order.unresolved",
+     "severity": "sh:Violation"
+    }
+   ],
+   "sparql": [],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderLimitDeviationShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.limit_deviation@1",
+     "iri": "khs:OrderLimitDeviationShape",
+     "msg_en": "The limit price is {value}% from the market: it would fill at market (max ±{limit}%).",
+     "msg_es": "El precio límite está {value} % del mercado: se ejecutaría a precio de mercado (máx. ±{limit} %).",
+     "name": "precio límite que se ejecutaría a mercado",
+     "rule": "khr:order.limit_deviation",
+     "select": "SELECT $this ?value ?limit WHERE { $this kh:limitDeviationPct ?value ; kh:side ?s ; kh:maxLimitDeviationPct ?limit ; kh:minLimitDeviationPct ?n . FILTER (isNumeric(?value) && isNumeric(?limit) && isNumeric(?n) && ((?s = \"sell\" && ?value < ?n) || (?s = \"buy\" && ?value > ?limit))) }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderLimitPassiveShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.limit_passive@1",
+     "iri": "khs:OrderLimitPassiveShape",
+     "msg_en": "The limit price is {value}% from the market: it will probably not fill soon.",
+     "msg_es": "El precio límite está {value} % del mercado: probablemente no se ejecute pronto.",
+     "name": "precio límite lejos del mercado (no se ejecutaría pronto)",
+     "rule": "khr:order.limit_passive",
+     "select": "SELECT $this ?value ?limit WHERE { $this kh:limitDeviationPct ?value ; kh:side ?s ; kh:maxLimitDeviationPct ?limit ; kh:minLimitDeviationPct ?n . FILTER (isNumeric(?value) && isNumeric(?limit) && isNumeric(?n) && ((?s = \"sell\" && ?value > ?limit) || (?s = \"buy\" && ?value < ?n))) }",
+     "severity": "sh:Warning"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderModeLiveEnabledShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.mode_live_enabled@1",
+     "iri": "khs:OrderModeLiveEnabledShape",
+     "msg_en": "REAL MONEY account blocked: it needs BROKERAGE_LIVE_ENABLED=on AND \"real money enabled\" on the client.",
+     "msg_es": "Cuenta de DINERO REAL bloqueada: hace falta BROKERAGE_LIVE_ENABLED=on Y «dinero real habilitado» en el cliente.",
+     "name": "dinero real habilitado en servidor y cliente",
+     "rule": "khr:order.mode_live_enabled",
+     "select": "SELECT $this ?value WHERE { $this kh:accountMode ?value . FILTER (?value = \"live\") FILTER NOT EXISTS { $this kh:liveEnvEnabled true ; kh:clientLiveEnabled true } }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderNotAllowedShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.not_allowed@1",
+     "iri": "khs:OrderNotAllowedShape",
+     "msg_en": "{value} is not in the client's allowed list.",
+     "msg_es": "{value} no está en la lista de símbolos permitidos del cliente.",
+     "name": "símbolo fuera de la lista permitida",
+     "rule": "khr:order.not_allowed",
+     "select": "SELECT $this ?value WHERE { $this kh:symbol ?value . FILTER EXISTS { $this kh:allowedSymbol ?a } FILTER NOT EXISTS { $this kh:allowedSymbol ?value } }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderPositionPctShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.position_pct_after@1",
+     "iri": "khs:OrderPositionPctShape",
+     "msg_en": "The position would become {value}% of equity (max {limit}%), or equity is unknown.",
+     "msg_es": "La posición pasaría a ser {value} % del patrimonio (máx. {limit} %), o el patrimonio es desconocido.",
+     "name": "tamaño de la posición después de la compra",
+     "rule": "khr:order.position_pct_after",
+     "select": "SELECT $this ?value ?limit WHERE { $this kh:side \"buy\" ; kh:maxPositionPct ?limit . OPTIONAL { $this kh:positionPctAfter ?value } FILTER (!BOUND(?value) || (isNumeric(?value) && isNumeric(?limit) && ?value > ?limit)) }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderRestrictedShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.restricted@1",
+     "iri": "khs:OrderRestrictedShape",
+     "msg_en": "{value} is RESTRICTED in the client's mandate.",
+     "msg_es": "{value} está RESTRINGIDO en el mandato del cliente.",
+     "name": "símbolo restringido por el mandato",
+     "rule": "khr:order.restricted",
+     "select": "SELECT $this ?value WHERE { $this kh:symbol ?value ; kh:restrictedSymbol ?value . }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
+  },
+  {
+   "iri": "khs:OrderVoiceReadbackShape",
+   "props": [],
+   "sparql": [
+    {
+     "impl": "order.voice_readback@1",
+     "iri": "khs:OrderVoiceReadbackShape",
+     "msg_en": "Voice order without proof that the summary was read aloud before the \"yes\".",
+     "msg_es": "Orden por voz sin prueba de que se leyó el resumen en voz alta antes del «sí».",
+     "name": "orden por voz con resumen leído en voz alta",
+     "rule": "khr:order.voice_readback",
+     "select": "SELECT $this ?value WHERE { $this kh:channel ?value . FILTER (?value = \"voice\") FILTER NOT EXISTS { $this kh:readbackSha ?r } }",
+     "severity": "sh:Violation"
+    }
+   ],
+   "target": "kh:OrderIntent"
   }
  ],
- "source_sha": "7992c4ffe72f0af820f28a46ddd33fffb790880e8322cf8a5429d71234e4a1ba"
+ "source_sha": "57b07a9b19f449f6eaf160832746e71e2fbd5503c9bc503f9cabfcd264cd1c1a"
 }

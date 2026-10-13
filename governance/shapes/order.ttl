@@ -1,0 +1,277 @@
+# governance/shapes/order.ttl — puerta G3 de órdenes (docs/INFRA_OPERATIVA.md §3.1, §3.4; paso 17).
+# Foco (core/gates/focus.order_triples ← brokerage/risk.order_facts): `a kh:OrderIntent` con los HECHOS de la orden
+# (símbolo, lado, monto estimado, modo de la cuenta, interruptores, fondos, % de la posición después, caída desde el
+# máximo, duplicados…) y los LÍMITES de política como literales del foco (policy.broker_risk / policy.gates.limits:
+# ningún número de política se escribe aquí). Las cifras agregadas (peso del sector y del país después de la orden,
+# exposición a la cadena Σw·Ψ) las calcula la vista AccountRisk con el kernel; entran ya calculadas.
+#
+# Las 17 comprobaciones de brokerage/risk.run_checks tienen aquí su IRI (mapa en brokerage/risk.CHECK_RULES;
+# tests/test_gates_orders_parity.py exige el mismo veredicto que run_checks). Reglas NUEVAS (en SOMBRA: solo avisan
+# hasta que Fabrizio apruebe sus topes, BRECHAS #1): sector, país, cadena, frescura de cotización y de cuenta, origen
+# IA, lectura por voz y política cambiada desde la previsualización. Un límite ausente del release = la regla no
+# aplica (sin literal no hay comparación).
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:OrderIntentShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ;
+  sh:name "Intención de orden (antes de enviarla)" ;
+  sh:property khs:OrderKillSwitch, khs:OrderLedgerChain, khs:OrderClientActive, khs:OrderAccountReadable,
+              khs:OrderSymbolTradable, khs:OrderPriceKnown, khs:OrderMinUsd, khs:OrderMaxUsd, khs:OrderDailyCap,
+              khs:OrderDrawdownStop, khs:OrderNoShort, khs:OrderDuplicateWindow, khs:OrderUnresolved,
+              khs:OrderLimitReference, khs:OrderMarketHours, khs:OrderSectorPctAfter, khs:OrderCountryPctAfter,
+              khs:OrderChainExposureAfter, khs:OrderQuoteFresh, khs:OrderAccountFresh, khs:OrderPolicyUnchanged .
+
+# ── las 17 comprobaciones de hoy ──────────────────────────────────────────────
+khs:OrderKillSwitch a sh:PropertyShape ;
+  sh:path kh:tradingEnabled ; sh:minCount 1 ; sh:in ( true ) ;
+  sh:name "interruptor general" ; khs:rule khr:order.kill_switch ; sh:severity sh:Violation ;
+  sh:message "Interruptor general APAGADO (BROKERAGE_TRADING_ENABLED=off): no se envía ninguna orden."@es ,
+             "Master switch OFF (BROKERAGE_TRADING_ENABLED=off): no orders are sent."@en .
+
+khs:OrderLedgerChain a sh:PropertyShape ;
+  sh:path kh:ledgerChainOk ; sh:in ( true ) ;
+  sh:name "cadena del libro íntegra (dinero real)" ; khs:rule khr:order.ledger_chain ; sh:severity sh:Violation ;
+  sh:message "La cadena del libro de decisiones está rota: el dinero real queda bloqueado hasta reconocerla con PIN."@es ,
+             "The decision-ledger chain is broken: real money stays blocked until it is acknowledged with the PIN."@en .
+
+khs:OrderClientActive a sh:PropertyShape ;
+  sh:path kh:clientStatus ; sh:minCount 1 ; sh:in ( "active" ) ;
+  sh:name "cliente activo" ; khs:rule khr:order.client_active ; sh:severity sh:Violation ;
+  sh:message "El cliente está «{value}»: reactívalo para operar."@es ,
+             "The client is \"{value}\": resume it to trade."@en .
+
+khs:OrderAccountReadable a sh:PropertyShape ;
+  sh:path kh:accountReadable ; sh:minCount 1 ; sh:in ( true ) ;
+  sh:name "cuenta de Alpaca conectada y legible" ; khs:rule khr:order.account_readable ; sh:severity sh:Violation ;
+  sh:message "No se pudo leer la cuenta de Alpaca en vivo."@es ,
+             "The Alpaca account could not be read live."@en .
+
+khs:OrderSymbolTradable a sh:PropertyShape ;
+  sh:path kh:symbolValid ; sh:minCount 1 ; sh:in ( true ) ;
+  sh:name "símbolo válido" ; khs:rule khr:order.symbol_tradable ; sh:severity sh:Violation ;
+  sh:message "El símbolo no es válido (acciones: NVDA; cripto: BTC/USD)."@es ,
+             "The symbol is not valid (stocks: NVDA; crypto: BTC/USD)."@en .
+
+khs:OrderPriceKnown a sh:PropertyShape ;
+  sh:path kh:estUsd ; sh:minCount 1 ;
+  sh:name "monto estimable en USD" ; khs:rule khr:order.price_known ; sh:severity sh:Violation ;
+  sh:message "No se pudo estimar el monto en USD (sin precio de referencia): usa un monto en USD."@es ,
+             "The USD amount could not be estimated (no reference price): use a USD amount."@en .
+
+khs:OrderMinUsd a sh:PropertyShape ;
+  sh:path kh:minOrderUsd ; sh:lessThanOrEquals kh:estUsd ;
+  sh:name "monto mínimo" ; khs:rule khr:order.min_order_usd ; sh:severity sh:Violation ;
+  sh:message "Monto demasiado pequeño (mínimo US${value}; la orden: US${limit})."@es ,
+             "Amount too small (minimum US${value}; the order: US${limit})."@en .
+
+khs:OrderMaxUsd a sh:PropertyShape ;
+  sh:path kh:estUsd ; sh:lessThanOrEquals kh:maxOrderUsd ;
+  sh:name "monto máximo por orden" ; khs:rule khr:order.max_order_usd ; sh:severity sh:Violation ;
+  sh:message "La orden (≈ US${value}) supera el máximo por orden (US${limit})."@es ,
+             "The order (≈ US${value}) exceeds the per-order maximum (US${limit})."@en .
+
+khs:OrderDailyCap a sh:PropertyShape ;
+  sh:path kh:dailyAfterUsd ; sh:lessThanOrEquals kh:maxDailyUsd ;
+  sh:name "límite diario de compras" ; khs:rule khr:order.daily_cap ; sh:severity sh:Violation ;
+  sh:message "Con esta compra hoy sumarías US${value} (límite diario US${limit})."@es ,
+             "With this buy today's total would be US${value} (daily limit US${limit})."@en .
+
+khs:OrderDrawdownStop a sh:PropertyShape ;
+  sh:path kh:drawdownPct ; sh:lessThanOrEquals kh:maxDrawdownPct ;
+  sh:name "stop por caída desde el máximo" ; khs:rule khr:order.drawdown_stop ; sh:severity sh:Violation ;
+  sh:message "El patrimonio cayó {value} % desde su máximo (stop en {limit} %): compras bloqueadas, ventas permitidas."@es ,
+             "Equity fell {value}% from its peak (stop at {limit}%): buys blocked, sells allowed."@en .
+
+khs:OrderNoShort a sh:PropertyShape ;
+  sh:path kh:shortSale ; sh:in ( false ) ;
+  sh:name "sin ventas en corto" ; khs:rule khr:order.no_short ; sh:severity sh:Violation ;
+  sh:message "La venta supera lo que tienes: no se permiten ventas en corto."@es ,
+             "The sale exceeds what you hold: short selling is not allowed."@en .
+
+khs:OrderDuplicateWindow a sh:PropertyShape ;
+  sh:path kh:duplicateRecent ; sh:in ( false ) ;
+  sh:name "sin orden igual reciente" ; khs:rule khr:order.duplicate_window ; sh:severity sh:Violation ;
+  sh:message "Ya se envió una orden igual (mismo símbolo y lado) hace menos de un minuto."@es ,
+             "An identical order (same symbol and side) was sent less than a minute ago."@en .
+
+khs:OrderUnresolved a sh:PropertyShape ;
+  sh:path kh:unresolvedOrder ; sh:in ( false ) ;
+  sh:name "sin orden en estado desconocido" ; khs:rule khr:order.unresolved ; sh:severity sh:Violation ;
+  sh:message "Hay una orden igual en estado DESCONOCIDO (puede haberse ejecutado): sincroniza antes de repetirla."@es ,
+             "There is an identical order in UNKNOWN state (it may have executed): sync before repeating it."@en .
+
+khs:OrderLimitReference a sh:PropertyShape ;
+  sh:path kh:refPriceKnown ; sh:in ( true ) ;
+  sh:name "precio de mercado para comparar el límite" ; khs:rule khr:order.limit_reference ; sh:severity sh:Warning ;
+  sh:message "Sin precio de mercado para comparar el precio límite."@es ,
+             "No market price to compare the limit price with."@en .
+
+khs:OrderMarketHours a sh:PropertyShape ;
+  sh:path kh:marketOpen ; sh:in ( true ) ;
+  sh:name "horario de mercado" ; khs:rule khr:order.market_hours ; sh:severity sh:Warning ;
+  sh:message "Mercado de EE.UU. cerrado: la orden quedará en cola hasta la apertura."@es ,
+             "US market closed: the order will queue until the open."@en .
+
+# ── reglas nuevas (paso 17): solo aplican si el release trae su límite ────────
+khs:OrderSectorPctAfter a sh:PropertyShape ;
+  sh:path kh:sectorWeightAfter ; sh:lessThanOrEquals kh:maxSectorWeight ;
+  sh:name "peso del sector después de la orden" ; khs:rule khr:order.sector_pct_after ; sh:severity sh:Violation ;
+  sh:message "Tras la orden, su sector pesaría {value} de tu patrimonio (tope {limit})."@es ,
+             "After the order, its sector would be {value} of your equity (cap {limit})."@en .
+
+khs:OrderCountryPctAfter a sh:PropertyShape ;
+  sh:path kh:countryWeightAfter ; sh:lessThanOrEquals kh:maxCountryWeight ;
+  sh:name "peso del país después de la orden" ; khs:rule khr:order.country_pct_after ; sh:severity sh:Warning ;
+  sh:message "Tras la orden, su país pesaría {value} de tu patrimonio (referencia {limit})."@es ,
+             "After the order, its country would be {value} of your equity (reference {limit})."@en .
+
+khs:OrderChainExposureAfter a sh:PropertyShape ;
+  sh:path kh:chainExposureAfter ; sh:lessThanOrEquals kh:maxChainExposure ;
+  sh:name "exposición a un cuello de botella de la cadena" ; khs:rule khr:order.chain_exposure_after ;
+  sh:severity sh:Warning ;
+  sh:message "Tras la orden, el colapso de un solo proveedor clave golpearía {value} de tu cartera (referencia {limit})."@es ,
+             "After the order, the collapse of a single key supplier would hit {value} of your portfolio (reference {limit})."@en .
+
+khs:OrderQuoteFresh a sh:PropertyShape ;
+  sh:path kh:quoteAgeS ; sh:lessThanOrEquals kh:maxQuoteAgeS ;
+  sh:name "cotización fresca" ; khs:rule khr:order.quote_fresh ; sh:severity sh:Violation ;
+  sh:message "El precio usado tiene {value} s (máximo {limit} s): vuelve a previsualizar."@es ,
+             "The price used is {value} s old (maximum {limit} s): preview again."@en .
+
+khs:OrderAccountFresh a sh:PropertyShape ;
+  sh:path kh:accountAgeS ; sh:lessThanOrEquals kh:maxAccountAgeS ;
+  sh:name "cuenta leída hace poco" ; khs:rule khr:order.account_fresh ; sh:severity sh:Violation ;
+  sh:message "La cuenta se leyó hace {value} s (máximo {limit} s): vuelve a previsualizar."@es ,
+             "The account was read {value} s ago (maximum {limit} s): preview again."@en .
+
+khs:OrderPolicyUnchanged a sh:PropertyShape ;
+  sh:path kh:policyChangedSincePreview ; sh:in ( false ) ;
+  sh:name "mismas reglas que al previsualizar" ; khs:rule khr:order.policy_changed_since_preview ;
+  sh:severity sh:Violation ;
+  sh:message "Las reglas (release de gobernanza) cambiaron desde la previsualización: vuelve a previsualizar."@es ,
+             "The rules (governance release) changed since the preview: preview again."@en .
+
+# ── reglas que cruzan hechos (SPARQL con su impl en core/gates/rules.py) ─────
+khs:OrderModeLiveEnabledShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.mode_live_enabled ;
+  sh:name "dinero real habilitado en servidor y cliente" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.mode_live_enabled@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Cuenta de DINERO REAL bloqueada: hace falta BROKERAGE_LIVE_ENABLED=on Y «dinero real habilitado» en el cliente."@es ,
+               "REAL MONEY account blocked: it needs BROKERAGE_LIVE_ENABLED=on AND \"real money enabled\" on the client."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:accountMode ?value .
+        FILTER (?value = "live")
+        FILTER NOT EXISTS { $this kh:liveEnvEnabled true ; kh:clientLiveEnabled true }
+      }""" ] .
+
+khs:OrderAssetClassAllowedShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.asset_class_allowed ;
+  sh:name "clase de activo permitida por el mandato" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.asset_class_allowed@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El mandato no permite esta clase de activo ({value})."@es ,
+               "The mandate does not allow this asset class ({value})."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:assetClass ?value .
+        FILTER NOT EXISTS { $this kh:allowedAssetClass ?value }
+      }""" ] .
+
+khs:OrderRestrictedShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.restricted ;
+  sh:name "símbolo restringido por el mandato" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.restricted@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "{value} está RESTRINGIDO en el mandato del cliente."@es ,
+               "{value} is RESTRICTED in the client's mandate."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:symbol ?value ; kh:restrictedSymbol ?value .
+      }""" ] .
+
+khs:OrderNotAllowedShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.not_allowed ;
+  sh:name "símbolo fuera de la lista permitida" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.not_allowed@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "{value} no está en la lista de símbolos permitidos del cliente."@es ,
+               "{value} is not in the client's allowed list."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:symbol ?value .
+        FILTER EXISTS { $this kh:allowedSymbol ?a }
+        FILTER NOT EXISTS { $this kh:allowedSymbol ?value }
+      }""" ] .
+
+khs:OrderBuyingPowerShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.buying_power ;
+  sh:name "dinero disponible para la compra" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.buying_power@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Dinero disponible insuficiente o desconocido para esta compra (US${value})."@es ,
+               "Available funds are insufficient or unknown for this buy (US${value})."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:needsFunds true .
+        OPTIONAL { $this kh:estUsd ?value }
+        OPTIONAL { $this kh:availableUsd ?a }
+        FILTER (!BOUND(?value) || !BOUND(?a) || (isNumeric(?value) && isNumeric(?a) && ?value > ?a))
+      }""" ] .
+
+khs:OrderPositionPctShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.position_pct_after ;
+  sh:name "tamaño de la posición después de la compra" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.position_pct_after@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "La posición pasaría a ser {value} % del patrimonio (máx. {limit} %), o el patrimonio es desconocido."@es ,
+               "The position would become {value}% of equity (max {limit}%), or equity is unknown."@en ;
+    sh:select """SELECT $this ?value ?limit WHERE {
+        $this kh:side "buy" ; kh:maxPositionPct ?limit .
+        OPTIONAL { $this kh:positionPctAfter ?value }
+        FILTER (!BOUND(?value) || (isNumeric(?value) && isNumeric(?limit) && ?value > ?limit))
+      }""" ] .
+
+khs:OrderLimitDeviationShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.limit_deviation ;
+  sh:name "precio límite que se ejecutaría a mercado" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.limit_deviation@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El precio límite está {value} % del mercado: se ejecutaría a precio de mercado (máx. ±{limit} %)."@es ,
+               "The limit price is {value}% from the market: it would fill at market (max ±{limit}%)."@en ;
+    sh:select """SELECT $this ?value ?limit WHERE {
+        $this kh:limitDeviationPct ?value ; kh:side ?s ; kh:maxLimitDeviationPct ?limit ;
+              kh:minLimitDeviationPct ?n .
+        FILTER (isNumeric(?value) && isNumeric(?limit) && isNumeric(?n)
+                && ((?s = "sell" && ?value < ?n) || (?s = "buy" && ?value > ?limit)))
+      }""" ] .
+
+khs:OrderLimitPassiveShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Warning ; khs:rule khr:order.limit_passive ;
+  sh:name "precio límite lejos del mercado (no se ejecutaría pronto)" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.limit_passive@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "El precio límite está {value} % del mercado: probablemente no se ejecute pronto."@es ,
+               "The limit price is {value}% from the market: it will probably not fill soon."@en ;
+    sh:select """SELECT $this ?value ?limit WHERE {
+        $this kh:limitDeviationPct ?value ; kh:side ?s ; kh:maxLimitDeviationPct ?limit ;
+              kh:minLimitDeviationPct ?n .
+        FILTER (isNumeric(?value) && isNumeric(?limit) && isNumeric(?n)
+                && ((?s = "sell" && ?value > ?limit) || (?s = "buy" && ?value < ?n)))
+      }""" ] .
+
+khs:OrderAiOriginShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity khs:RequiresApproval ; khs:rule khr:order.ai_origin_needs_human ;
+  sh:name "orden de una IA o un agente: aprobación humana" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.ai_origin_needs_human@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "La orden la propuso «{value}» (IA o agente): espera tu aprobación con PIN."@es ,
+               "The order was proposed by \"{value}\" (AI or agent): it awaits your approval with the PIN."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:origin ?value .
+        FILTER (?value = "mcp" || ?value = "committee" || ?value = "agent")
+        FILTER NOT EXISTS { $this kh:accountMode "paper" ; kh:paperAutoApproved true }
+      }""" ] .
+
+khs:OrderVoiceReadbackShape a sh:NodeShape ;
+  sh:targetClass kh:OrderIntent ; sh:severity sh:Violation ; khs:rule khr:order.voice_readback ;
+  sh:name "orden por voz con resumen leído en voz alta" ;
+  sh:sparql [ a sh:SPARQLConstraint ; khs:impl "order.voice_readback@1" ; sh:prefixes khs:Prefixes ;
+    sh:message "Orden por voz sin prueba de que se leyó el resumen en voz alta antes del «sí»."@es ,
+               "Voice order without proof that the summary was read aloud before the \"yes\"."@en ;
+    sh:select """SELECT $this ?value WHERE {
+        $this kh:channel ?value .
+        FILTER (?value = "voice")
+        FILTER NOT EXISTS { $this kh:readbackSha ?r }
+      }""" ] .

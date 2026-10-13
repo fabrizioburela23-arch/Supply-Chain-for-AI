@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Datos del catálogo"
-archivos: 33
+archivos: 34
 tags: ["capa/datos-catalogo", "tipo/capa"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 
 > El catálogo curado de empresas y vínculos (nodes/\*.js), el snapshot data/grafo_v0.json y sus generadores.
 
-**33 archivos · 64.240 líneas.** Volver al [[00 Mapa de Khipus]].
+**34 archivos · 64.358 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -34,6 +34,7 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 - [[nodes.legal_names.js]] — 191 líneas · NOMBRES LEGALES y nombres alternativos → id del grafo (Phase 1 · M2, pendiente "Enriquecer alias con nombres legales completos").
 - [[nodes.links_connect.js]] — 186 líneas · Conexiones de cadena de suministro para nodos huérfanos Conecta los ~82 nodos que se habían añadido (expand2/expand3) sin enlaces, con relaciones …
 - [[nodes.nodes_nuclear.js]] — 150 líneas · Sector Energía Nuclear (Khipu Finance) SMR (reactores modulares pequeños) + Fusión + Uranio. La demanda 24/7 de energía de la IA es la tesis: los …
+- [[scripts.build_instrument_review.py]] — 118 líneas · genera docs/REVISION_INSTRUMENTOS.md (BRECHAS_V2 L3-13, decisión #9).
 - [[nodes.preipo_intel.js]] — 104 líneas · Inteligencia de empresas privadas / pre-IPO (Khipu Finance) Datos de financiación, inversores, timeline a IPO e hitos para el panel de empresa …
 - [[scripts.export_graph_v0.js]] — 100 líneas · Exporta el grafo canónico a data/grafo_v0.json v2 (Etapa 2, 2026-07): carga los nodes/\*.js reales en un sandbox vm y usa LA MISMA función de merge …
 - [[nodes.ontology_facts.js]] — 99 líneas · Hechos tipados de la ontología (Khipus AI Finance) Relaciones reales empresa↔objeto y objeto↔objeto, con tipo de relación (rel) y ventana temporal. …
@@ -59,3 +60,4 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 | la usa | [[Capa Voz]] | 3 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa MCP y API]] | 1 |
+| usa a | [[Capa Infraestructura]] | 1 |

@@ -31,7 +31,7 @@ De nivel superior (globales del script): `LINKS_EXPAND`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **17 de 93** (línea 1452), después de [[nodes.links_all.js]] y antes de [[nodes.links_connect.js]].
+Se carga en [[app.html]] en la posición **17 de 95** (línea 1452), después de [[nodes.links_all.js]] y antes de [[nodes.links_connect.js]].
 
 ## Lo usan
 

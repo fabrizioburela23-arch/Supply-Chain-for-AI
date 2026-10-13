@@ -57,6 +57,7 @@ KINDS = frozenset((
     'policy.change', 'governance.propose', 'governance.validate', 'governance.activate', 'governance.ratify',
     'retention.purge', 'ledger.lineage_break', 'ledger.chain_break', 'ledger.chain_ack', 'audit.replay',
     'audit.gates',
+    'data.backfill',          # BRECHAS bloque 2: relleno de historia de precios a pedido del operador (PIN)
 ))
 SYNC_PREFIXES = ('order.', 'approval.', 'ontology.', 'proposal.', 'committee.', 'research.', 'claim.', 'alert.rule',
                  'reconcile.', 'policy.', 'governance.', 'trade.', 'audit.', 'retention.', 'ledger.')

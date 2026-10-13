@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/explain.js"
 lenguaje: "javascript"
-lineas: 231
+lineas: 275
 aliases: ["engine/explain.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/explain.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 231 líneas · `engine/explain.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 275 líneas · `engine/explain.js`
 
 ## Para qué sirve
 
@@ -24,7 +24,7 @@ EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversi
 
 - [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **76 de 93** (línea 7934), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
+Se carga en [[app.html]] en la posición **76 de 95** (línea 7941), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
 
 ## Lo usan
 
@@ -34,11 +34,13 @@ Se carga en [[app.html]] en la posición **76 de 93** (línea 7934), después de
 - [[engine.cockpit.js]] — usa `explainMetric`
 - [[engine.committee.js]] — usa `explainChip`, `explainRegister`
 - [[engine.fincard.js]] — usa `explainChip`
+- [[engine.governance.js]] — usa `explainChip`
 - [[engine.insights.js]] — usa `explainMetric`
 - [[engine.mcpconnect.js]] — usa `explainChip`, `explainRegister`
 - [[engine.oswindows.js]] — usa `explainMetric`, `explainRegister`
 - [[engine.pfcommittee.js]] — usa `explainMetric`
 - [[engine.portfolios.js]] — usa `explainChip`, `explainRegister`
+- [[engine.pricehist.js]] — usa `explainChip`, `explainRegister`
 - [[engine.reconcile.js]] — usa `explainChip`, `explainRegister`
 - [[engine.research.js]] — usa `explainChip`
 - [[engine.riskreport.js]] — usa `explainChip`, `explainRegister`

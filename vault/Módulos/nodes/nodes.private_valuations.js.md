@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
-Se carga en [[app.html]] en la posición **15 de 93** (línea 1450), después de [[nodes.listing_status.js]] y antes de [[nodes.links_all.js]].
+Se carga en [[app.html]] en la posición **15 de 95** (línea 1450), después de [[nodes.listing_status.js]] y antes de [[nodes.links_all.js]].
 
 ## Lo usan
 

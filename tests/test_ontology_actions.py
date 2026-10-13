@@ -348,3 +348,31 @@ def test_activar_factor_mueve_la_linea_base_del_motor(db):
     with session_scope() as s:
         despues = {f['id']: f for f in active_factors(s)}['f_motor']
         assert despues['severity'] == 4.0
+
+
+def test_severidad_de_factor_sigue_la_escala_del_kernel_vigente(db):
+    """Revisión batch E (PROP-05 / BRECHAS #5): con kernel.params 1.0.0 la escala de las acciones sigue 0-5 (lo de
+    siempre); con 2.0.0 es 0-10 (la de los datos y de policy.gates): una crisis 10 se puede escribir a mano."""
+    from core import governance
+    from ontology.db import session_scope
+    from ontology.actions import execute_action, ActionError
+
+    _crear_factor_latente('f_esc', severity=1.0, severity_crisis=10.0)
+    with session_scope() as s:            # 1.0.0 (vigente en los tests): > 5 explícito se rechaza como antes
+        with pytest.raises(ActionError):
+            execute_action(s, 'ActivarFactor', {'factor_id': 'f_esc', 'severity': 8, 'razon': 'x'}, actor='ana')
+        with pytest.raises(ActionError):
+            execute_action(s, 'CrearFactor', {'factor_id': 'f_esc6', 'label': 'Factor seis', 'severity': 6,
+                                              'affects': ['ACME'], 'razon': 'x'}, actor='ana')
+    with governance.counterfactual({'kernel.params': '2.0.0'}):
+        with session_scope() as s:
+            r = execute_action(s, 'ActivarFactor', {'factor_id': 'f_esc', 'severity': 10, 'razon': 'x'}, actor='ana')
+            assert r['severity'] == 10.0 and r['severity_scale'] == 10.0
+        with session_scope() as s:
+            r = execute_action(s, 'CrearFactor', {'factor_id': 'f_esc8', 'label': 'Factor ocho', 'severity': 8,
+                                                  'affects': ['ACME'], 'razon': 'x'}, actor='ana')
+            assert r['severity_scale'] == 10.0
+        with session_scope() as s:
+            with pytest.raises(Exception):   # el tope duro sigue siendo 10 (pydantic)
+                execute_action(s, 'CrearFactor', {'factor_id': 'f_esc11', 'label': 'Factor once', 'severity': 11,
+                                                  'affects': ['ACME'], 'razon': 'x'}, actor='ana')

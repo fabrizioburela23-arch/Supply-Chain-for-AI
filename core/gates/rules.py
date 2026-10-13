@@ -251,3 +251,93 @@ def decision_money_executed_not_blocked(g, this):
         return []
     return [(v, None) for v in g.vals(this, kh('kind')) if isinstance(v, str) and not isinstance(v, IRI)
             and v.startswith('order.')]
+
+
+# ── orden (paso 17: governance/shapes/order.ttl) ─────────────────────────────
+@rule('order.mode_live_enabled')
+def order_mode_live_enabled(g, this):
+    both = has(g, this, kh('liveEnvEnabled'), True) and has(g, this, kh('clientLiveEnabled'), True)
+    return [(v, None) for v in g.vals(this, kh('accountMode')) if cmp(v, '=', 'live') is True and not both]
+
+
+@rule('order.asset_class_allowed')
+def order_asset_class_allowed(g, this):
+    return [(v, None) for v in g.vals(this, kh('assetClass')) if not has(g, this, kh('allowedAssetClass'), v)]
+
+
+@rule('order.restricted')
+def order_restricted(g, this):
+    return [(v, None) for v in g.vals(this, kh('symbol')) if has(g, this, kh('restrictedSymbol'), v)]
+
+
+@rule('order.not_allowed')
+def order_not_allowed(g, this):
+    if not g.vals(this, kh('allowedSymbol')):
+        return []
+    return [(v, None) for v in g.vals(this, kh('symbol')) if not has(g, this, kh('allowedSymbol'), v)]
+
+
+@rule('order.buying_power')
+def order_buying_power(g, this):
+    if not has(g, this, kh('needsFunds'), True):
+        return []
+    out = []
+    for e in g.vals(this, kh('estUsd')) or [None]:
+        for a in g.vals(this, kh('availableUsd')) or [None]:
+            if OR(e is None, a is None, AND(isnum(e), isnum(a), cmp(e, '>', a))) is True:
+                out.append((e, None))
+    return out
+
+
+@rule('order.position_pct_after')
+def order_position_pct_after(g, this):
+    if not has(g, this, kh('side'), 'buy'):
+        return []
+    out = []
+    for lim in g.vals(this, kh('maxPositionPct')):
+        for v in g.vals(this, kh('positionPctAfter')) or [None]:
+            if OR(v is None, AND(isnum(v), isnum(lim), cmp(v, '>', lim))) is True:
+                out.append((v, lim))
+    return out
+
+
+def _limit_dev(g, this, passive):
+    out = []
+    for v in g.vals(this, kh('limitDeviationPct')):
+        for s in g.vals(this, kh('side')):
+            for mx in g.vals(this, kh('maxLimitDeviationPct')):
+                for mn in g.vals(this, kh('minLimitDeviationPct')):
+                    if not (isnum(v) and isnum(mx) and isnum(mn)):
+                        continue
+                    if passive:
+                        cond = OR(AND(cmp(s, '=', 'sell'), cmp(v, '>', mx)), AND(cmp(s, '=', 'buy'), cmp(v, '<', mn)))
+                    else:
+                        cond = OR(AND(cmp(s, '=', 'sell'), cmp(v, '<', mn)), AND(cmp(s, '=', 'buy'), cmp(v, '>', mx)))
+                    if cond is True:
+                        out.append((v, mx))
+    return out
+
+
+@rule('order.limit_deviation')
+def order_limit_deviation(g, this):
+    return _limit_dev(g, this, passive=False)
+
+
+@rule('order.limit_passive')
+def order_limit_passive(g, this):
+    return _limit_dev(g, this, passive=True)
+
+
+@rule('order.ai_origin_needs_human')
+def order_ai_origin_needs_human(g, this):
+    if has(g, this, kh('accountMode'), 'paper') and has(g, this, kh('paperAutoApproved'), True):
+        return []
+    return [(v, None) for v in g.vals(this, kh('origin'))
+            if OR(cmp(v, '=', 'mcp'), cmp(v, '=', 'committee'), cmp(v, '=', 'agent')) is True]
+
+
+@rule('order.voice_readback')
+def order_voice_readback(g, this):
+    if g.vals(this, kh('readbackSha')):
+        return []
+    return [(v, None) for v in g.vals(this, kh('channel')) if cmp(v, '=', 'voice') is True]

@@ -17,25 +17,25 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 190 |
-| Líneas de código | 114.802 |
+| Archivos de código (Python, JS, HTML) | 198 |
+| Líneas de código | 119.123 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 151 |
-| Documentos | 26 |
-| Rutas HTTP | 239 |
-| Grupos de API | 59 |
+| Archivos de prueba | 164 |
+| Documentos | 27 |
+| Rutas HTTP | 247 |
+| Grupos de API | 61 |
 | Herramientas MCP | 23 |
-| Variables de entorno | 160 |
-| Sesiones de trabajo | 96 |
-| Aristas `calls_endpoint` | 589 |
-| Aristas `defines_endpoint` | 262 |
-| Aristas `imports` | 1.323 |
-| Aristas `loads_script` | 79 |
-| Aristas `mentions_in_session` | 495 |
-| Aristas `reads_env` | 223 |
-| Aristas `references_file` | 44 |
-| Aristas `tested_by` | 1.005 |
-| Aristas `uses_global` | 338 |
+| Variables de entorno | 162 |
+| Sesiones de trabajo | 97 |
+| Aristas `calls_endpoint` | 609 |
+| Aristas `defines_endpoint` | 270 |
+| Aristas `imports` | 1.454 |
+| Aristas `loads_script` | 81 |
+| Aristas `mentions_in_session` | 500 |
+| Aristas `reads_env` | 225 |
+| Aristas `references_file` | 45 |
+| Aristas `tested_by` | 1.100 |
+| Aristas `uses_global` | 346 |
 
 ## Nodos "dios" (más conectados)
 
@@ -43,28 +43,28 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
-| [[app.html]] | 138 | 52 | 86 | [[Capa Interfaz (Khipus OS)]] |
-| [[server.py]] | 82 | 24 | 58 | [[Capa Infraestructura]] |
+| [[app.html]] | 142 | 54 | 88 | [[Capa Interfaz (Khipus OS)]] |
+| [[server.py]] | 85 | 24 | 61 | [[Capa Infraestructura]] |
+| [[ontology.db.py]] | 42 | 34 | 8 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 41 | 11 | 30 | [[Capa Interfaz (Khipus OS)]] |
-| [[ontology.db.py]] | 41 | 33 | 8 | [[Capa Ontología y grafo temporal]] |
+| [[core.http.py]] | 35 | 33 | 2 | [[Capa Infraestructura]] |
 | [[nodes.nodes_seed.js]] | 35 | 35 | 0 | [[Capa Datos del catálogo]] |
-| [[core.http.py]] | 34 | 32 | 2 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 29 | 5 | 24 | [[Capa MCP y API]] |
-| [[core.khipu_chat.py]] | 27 | 6 | 21 | [[Capa Chat y agentes]] |
+| [[core.__init__.py]] | 28 | 28 | 0 | [[Capa Infraestructura]] |
+| [[core.khipu_chat.py]] | 28 | 6 | 22 | [[Capa Chat y agentes]] |
 | [[engine.resolve.js]] | 26 | 17 | 9 | [[Capa Chat y agentes]] |
 | [[engine.voice.js]] | 26 | 5 | 21 | [[Capa Voz]] |
 | [[ontology.api.py]] | 26 | 7 | 19 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.models.py]] | 26 | 23 | 3 | [[Capa Ontología y grafo temporal]] |
 | [[research.committee_api.py]] | 25 | 7 | 18 | [[Capa Comité]] |
 | [[core.world.py]] | 24 | 15 | 9 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.xray.js]] | 24 | 11 | 13 | [[Capa Interfaz (Khipus OS)]] |
-| [[ontology.models.py]] | 24 | 22 | 2 | [[Capa Ontología y grafo temporal]] |
 | [[research.runner.py]] | 24 | 8 | 16 | [[Capa Investigación]] |
 | [[engine.khipu_chat.js]] | 23 | 5 | 18 | [[Capa Chat y agentes]] |
 | [[research.committee.py]] | 23 | 6 | 17 | [[Capa Comité]] |
-| [[scripts.export_graph_v0.js]] | 22 | 0 | 22 | [[Capa Datos del catálogo]] |
-| [[core.__init__.py]] | 21 | 21 | 0 | [[Capa Infraestructura]] |
+| [[brokerage.service.py]] | 22 | 8 | 14 | [[Capa Dinero (carteras, trading, corretaje)]] |
 
-## Módulos sin pruebas (24)
+## Módulos sin pruebas (27)
 
 Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
@@ -82,12 +82,15 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[ontology.ledger_models.py]] | 226 | [[Capa Ontología y grafo temporal]] |
 | [[core.country_geo.py]] | 222 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.matrixview.js]] | 207 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
+| [[engine.pricehist.js]] | 189 | [[Capa Interfaz (Khipus OS)]] |
 | [[security_audit.py]] | 182 | [[Capa Infraestructura]] |
 | [[engine.compare.js]] | 168 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] |
 | [[research.contradictions.py]] | 143 | [[Capa Investigación]] |
 | [[engine.layers.js]] | 133 | [[Capa Interfaz (Khipus OS)]] |
+| [[ontology.history_models.py]] | 125 | [[Capa Ontología y grafo temporal]] |
 | [[core.providers.coingecko.py]] | 123 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.nav4.js]] | 118 | [[Capa Interfaz (Khipus OS)]] |
+| [[scripts.build_instrument_review.py]] | 118 | [[Capa Datos del catálogo]] |
 | [[scripts.reconcile_v0_to_ontology.py]] | 101 | [[Capa Ontología y grafo temporal]] |
 | [[engine.canvas-data.js]] | 72 | [[Capa Chat y agentes]] |
 | [[scripts.build_private_valuations.py]] | 71 | [[Capa Datos del catálogo]] |
@@ -146,7 +149,7 @@ Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo"
 | `window.togglePortfolio` | [[app.html]] | **no** | no |
 | `window.xrayImpact` | [[engine.xray.js]] | **no** | sí (solo pruebas) |
 
-## Rutas definidas que nadie llama (9)
+## Rutas definidas que nadie llama (10)
 
 Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los scripts nombran la ruta.
 
@@ -154,6 +157,7 @@ Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los s
 |---|---|---|---|
 | `GET` | `/api/ontology/gates` | `gates_status` | [[ontology.api.py]] |
 | `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] |
+| `GET` | `/api/prices/eod/<path:symbol>` | `prices_eod` | [[core.prices_api.py]] |
 | `GET` | `/api/research/agents` | `agents` | [[research.api.py]] |
 | `GET` | `/api/research/budget` | `budget` | [[research.api.py]] |
 | `POST` | `/api/research/events` | `events` | [[research.api.py]] |
@@ -162,17 +166,19 @@ Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los s
 | `GET` | `/api/trade/diag` | `trade_diag` | [[server.py]] |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | [[server.py]] |
 
-**Solo las llaman las pruebas** (34): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `POST /api/governance/ratify`, `GET /api/governance/status`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/rank`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
+**Solo las llaman las pruebas** (33): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/rank`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
 
-## Llamadas a rutas que no existen (5)
+## Llamadas a rutas que no existen (7)
 
 Textos con forma de ruta (`/api/…`) en el código que no coinciden con ninguna ruta del servidor. Pueden ser restos de funciones retiradas o rutas armadas por partes.
 
 | Archivo | Ruta nombrada |
 |---|---|
+| [[engine.hotclient.js]] | `/api/hot/card/` |
 | [[engine.hotclient.js]] | `/api/hot/chokepoints` |
 | [[engine.hotclient.js]] | `/api/hot/factors` |
 | [[engine.hotclient.js]] | `/api/hot/impact/` |
+| [[engine.hotclient.js]] | `/api/hot/nrs` |
 | [[engine.hotclient.js]] | `/api/hot/scenario` |
 | [[engine.hotclient.js]] | `/api/hot/status` |
 

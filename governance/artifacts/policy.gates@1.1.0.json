@@ -1,0 +1,22 @@
+{
+  "id": "policy.gates",
+  "semver": "1.1.0",
+  "kind": "policy",
+  "change_kind": "minor",
+  "parent": "policy.gates@1.0.0",
+  "params": {
+    "mode": "shadow",
+    "severity_overrides": {},
+    "limits": {
+      "max_weight": 6.0,
+      "severity_scale": 10.0,
+      "high_conf_min": 0.5,
+      "min_trust": 2,
+      "max_member_coef": 1.0,
+      "max_quote_age_s": 60,
+      "max_account_age_s": 30
+    }
+  },
+  "changelog_es": "Paso 17 (puerta de órdenes, governance/shapes/order.ttl, en SOMBRA): agrega los límites de frescura que la puerta lee como literales del foco — el precio usado en una orden no puede tener más de 60 s y la cuenta leída de Alpaca más de 30 s (docs/INFRA_OPERATIVA.md §3.1). NO fija topes por sector, país ni cadena: esos esperan tu respuesta a BRECHAS #1 y llegarán en policy.broker_risk aprobado con PIN. Solo agrega claves (MINOR): nada de hoy cambia de número.",
+  "changelog_en": "Step 17 (order gate, governance/shapes/order.ttl, in SHADOW): adds the freshness limits the gate reads as focus literals — the price used for an order may not be older than 60 s and the Alpaca account read older than 30 s (docs/INFRA_OPERATIVA.md §3.1). It does NOT set sector, country or chain caps: those wait for your answer to BRECHAS #1 and will come in a PIN-approved policy.broker_risk. Only adds keys (MINOR): no current number changes."
+}

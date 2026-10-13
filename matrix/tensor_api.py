@@ -38,8 +38,17 @@ def tensor_status():
 @tensor_bp.route('/api/tensor/node/<path:nid>')
 @rate_limit(600, 3600)
 def tensor_node(nid):
-    try:
-        out = _T().structure(nid)
+    try:   # paso 14 (INFRA §4.6): /api/tensor/node = card.structure (memo por generación y caps), misma forma
+        out = None
+        try:
+            from core.hotviews.views import card as _card
+            cv = _card.reader_view()
+            oid = cv.resolve(nid) if cv is not None else None
+            out = cv.structure(oid) if oid is not None else None
+        except Exception:  # noqa: BLE001
+            out = None
+        if out is None:
+            out = _T().structure(nid)
     except Exception as e:  # noqa: BLE001
         log.warning('tensor node: %s', e)
         return _err('El motor de tensores no está disponible.', 'The tensor engine is unavailable.', 503)

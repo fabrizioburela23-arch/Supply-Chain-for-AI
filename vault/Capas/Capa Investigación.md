@@ -9,17 +9,17 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 > El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud.
 
-**21 archivos · 5.038 líneas.** Volver al [[00 Mapa de Khipus]].
+**21 archivos · 5.075 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[research.runner.py]] — 994 líneas · ejecución de un ResearchJob (vertical slice → general).
+- [[research.context.py]] — 611 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
 - [[engine.research.js]] — 591 líneas · PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
-- [[research.context.py]] — 578 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
 - [[research.models.py]] — 401 líneas · tablas de la capa DERIVED CLAIMS (Phase 2).
 - [[research.api.py]] — 324 líneas · blueprint /api/research/\* (Phase 2).
 - [[research.llm.py]] — 301 líneas · abstracción de proveedor de modelos (no acoplada a nadie).
-- [[research.analytics.py]] — 269 líneas · ANÁLISIS CUANTITATIVO determinista para los agentes.
+- [[research.analytics.py]] — 273 líneas · ANÁLISIS CUANTITATIVO determinista para los agentes.
 - [[research.health.py]] — 202 líneas · "¿puedo investigar ahora?" en UNA foto (R6, misión de reparación).
 - [[research.falsifiers.py]] — 184 líneas · falsadores ESTRUCTURADOS y verificables (C8, misión de reparación 2026-10-04).
 - [[core.sec.py]] — 143 líneas · SEC EDGAR como EVIDENCIA PRIMARIA (Phase 2).
@@ -39,7 +39,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 22 |
+| usa a | [[Capa Infraestructura]] | 23 |
 | la usa | [[Capa Comité]] | 15 |
 | usa a | [[Capa Ontología y grafo temporal]] | 15 |
 | la usa | [[Capa Chat y agentes]] | 9 |

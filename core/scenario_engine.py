@@ -182,6 +182,7 @@ def text_search(scenario, snap, limit=4):
     terms = list(dict.fromkeys(toks + acr))[:8]
     if not terms:
         return []
+    deg = _deg_of(snap)
     scores = []
     for nid, n in snap['by_id'].items():
         sc = 0
@@ -194,9 +195,29 @@ def text_search(scenario, snap, limit=4):
             if rx.search((n.get('supplies') or '') + ' ' + (n.get('supplies_en') or '')):
                 sc += 2
         if sc >= 3:
-            scores.append((sc, snap['deg'].get(nid, 0), nid))
+            scores.append((sc, deg.get(nid, 0), nid))
     scores.sort(reverse=True)
     return [nid for _s, _d, nid in scores[:limit]]
+
+
+def kernel_mode():
+    """kernel.params.scenario_mode: 1.0.0 'legacy' (la BFS propia de abajo: 2 saltos, ×0,7/×0,45, se CONSERVA solo
+    para que 1.0.0 dé los números de siempre y las decisiones viejas se repitan) · 2.0.0 'kernel' (PROP-09,
+    L4-03, L4-M2): este módulo solo SIEMBRA (golpeados, ganadores, signo) y propaga EL kernel único
+    (matrix/engine vía la vista Impact: relaciones de daño, factores activos, piso), con el grado de FLUJO."""
+    try:
+        from matrix import engine as E
+        return E._P('scenario_mode', 'legacy') == 'kernel'
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _deg_of(snap):
+    """Grado para ELEGIR y ORDENAR empresas: 2.0.0 = estructural (pares distintos de FLUJO, G4d, L4-M2); 1.0.0 = el
+    grado total de siempre (incluye socios/inversores/about)."""
+    if kernel_mode():
+        return snap.get('flow_deg') or snap['deg']
+    return snap['deg']
 
 
 def _w(l):
@@ -218,6 +239,8 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
     es = not str(lang).lower().startswith('en')
     det = detect(scenario)
     by_id = snap['by_id']
+    kmode = kernel_mode()
+    deg = _deg_of(snap)
     producers = []
     for th in det['themes']:
         producers += [p for p in th['producers'] if p in by_id]
@@ -227,7 +250,7 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
 
     def top_local(country, k=6):
         return sorted((i for i, n in by_id.items() if _in_actor(n, country) and n.get('mkt')),
-                      key=lambda i: -snap['deg'].get(i, 0))[:k]
+                      key=lambda i: -deg.get(i, 0))[:k]
     if target and event == 'import_ban':
         # el país que SUFRE el arancel: sus productores (del tema) o sus empresas clave
         tp = [p for p in producers if _in_actor(by_id[p], target)]
@@ -273,12 +296,18 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
         hit = list(producers)
         if actor and not det['themes']:
             local = sorted((i for i, n in by_id.items() if _in_actor(n, actor)),
-                           key=lambda i: -snap['deg'].get(i, 0))[:6]
+                           key=lambda i: -deg.get(i, 0))[:6]
             hit = list(dict.fromkeys(hit + local))[:8]
         note_es = 'Disrupción de oferta: el golpe va de los afectados a sus clientes (falta de suministro) y a sus proveedores (menos pedidos).'
         note_en = 'Supply disruption: the hit flows from those affected to their customers (shortage) and suppliers (fewer orders).'
 
-    base = {'export_ban': 1.0, 'disruption': 1.0, 'import_ban': 0.5, 'boost': 0.8}.get(event, 1.0)
+    if kmode:
+        from matrix import engine as _E
+        base = float((_E._P('scenario_event_magnitude', None) or {}).get(event, 1.0))
+        gain = float(_E._P('scenario_substitute_gain', 0.55))
+    else:
+        base = {'export_ban': 1.0, 'disruption': 1.0, 'import_ban': 0.5, 'boost': 0.8}.get(event, 1.0)
+        gain = 0.55
     imp = {}   # id → {'sev', 'channel', 'path', 'via'}
 
     def put(nid, sev, channel, path):
@@ -291,10 +320,14 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
     for h in hit:
         put(h, -base, 'direct', [h])
     for b in benefit:
-        put(b, +0.55 * base if event != 'boost' else +base, 'substitute' if event != 'boost' else 'direct', [b])
+        put(b, +gain * base if event != 'boost' else +base, 'substitute' if event != 'boost' else 'direct', [b])
 
     # propagación por la cadena (source PROVEE a target)
     sources = [(h, -base) for h in hit] + ([(b, +base) for b in benefit] if event == 'boost' else [])
+    meta_kernel = None
+    if kmode:
+        meta_kernel = _kernel_propagate(snap, hit, benefit, event, base, put)
+        sources = []                      # 2.0.0: sin BFS propia (PROP-09)
     for root, sign in sources:
         # clientes (aguas abajo): 2 saltos
         frontier = [(root, abs(sign), [root])]
@@ -341,7 +374,7 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
     # privadas diminutas copaban la lista
     def rank(x):
         n = by_id.get(x['id']) or {}
-        rel = 0.45 + min(snap['deg'].get(x['id'], 0), 30) / 30 + (0.25 if n.get('mkt') else 0)
+        rel = 0.45 + min(deg.get(x['id'], 0), 30) / 30 + (0.25 if n.get('mkt') else 0)
         return -abs(x['sev']) * rel
     impacts.sort(key=rank)
     impacts = impacts[:20]
@@ -401,4 +434,93 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
         'timeline': [{'round': 1, 'events': [t1_es if es else t1_en]},
                      {'round': 2, 'events': [t2_es if es else t2_en]},
                      {'round': 3, 'events': [t3_es if es else t3_en]}],
+        'engine': meta_kernel or {'method': 'scenario_bfs@1 (legacy, kernel.params 1.0.0)'},
     }
+
+
+def _flow_adj(snap):
+    """Aristas de FLUJO (vocabulary flow=true) out/in del grafo de lectura: los caminos que se muestran salen solo
+    de relaciones que transmiten daño (L4-03: un socio nunca se rotula 'cliente')."""
+    from ontology import vocabulary as vocab
+    flow = set(vocab.flow_relation_types())
+    out = {k: [l for l in v if (l.get('type') or 'supply') in flow] for k, v in snap['out'].items()}
+    inn = {k: [l for l in v if (l.get('type') or 'supply') in flow] for k, v in snap['in'].items()}
+    return out, inn
+
+
+def _kernel_propagate(snap, hit, benefit, event, base, put):
+    """2.0.0: las semillas (golpeados con signo −, y en un impulso los beneficiados con +) se propagan con EL kernel
+    (vista Impact de la generación vigente: damage_rels, factores activos, piso) — aguas abajo (clientes que pierden
+    suministro) y, si el release lo habilita, aguas arriba (proveedores que pierden pedidos; 'up', PROP-17). El
+    camino de cada impacto se reconstruye por aristas de FLUJO con el salto de primera llegada."""
+    import numpy as np
+
+    from core.hotviews import hot
+    from core.hotviews.views import impact as IV
+    from matrix import engine as E
+    gv = hot.graph()
+    core = gv.core if gv is not None else None
+    if core is None:
+        return {'method': 'kernel unavailable'}
+    out_f, in_f = _flow_adj(snap)
+    min_imp = float(E._P('scenario_min_impact', 0.01))
+    runs = [(hit, -1.0)] + ([(benefit, +1.0)] if event == 'boost' else [])
+    dirs = ['down'] + (['up'] if E.direction_up_enabled() else [])
+    meta = {'method': 'propagate@1 via hot Impact view (kernel.params ' + str(_semver()) + ')',
+            'generation': gv.generation, 'magnitude': base, 'directions': dirs}
+    for seeds, sign in runs:
+        seeds = [x for x in seeds if x in core.idx]
+        if not seeds:
+            continue
+        for direction in dirs:
+            x0 = np.zeros(len(core.ids))
+            for sid in seeds:
+                x0[core.idx[sid]] = base
+            sc = IV.scenario(core, x0, factors='active', direction=direction, top=500)
+            hop = {v['id']: v['hop'] for v in sc['victims']}
+            pct = {v['id']: v['pct'] for v in sc['victims']}
+            for v in sc['victims']:
+                if v['pct'] / 100.0 < min_imp or v['id'] in seeds:
+                    continue
+                path = _path_back(v['id'], hop, pct, seeds, out_f, in_f, direction)
+                if direction == 'up':
+                    ch = 'supplier'
+                else:
+                    ch = 'customer' if v['hop'] <= 1 else 'second_order'
+                put(v['id'], sign * round(v['pct'] / 100.0, 4), ch, path)
+    return meta
+
+
+def _semver():
+    try:
+        from core import governance
+        return governance.artifact_semver('kernel.params')
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _path_back(vid, hop, pct, seeds, out_f, in_f, direction, max_len=7):
+    """Camino semilla → … → vid por aristas de flujo, retrocediendo por el predecesor de salto h−1 más golpeado."""
+    seedset = set(seeds)
+    path = [vid]
+    cur = vid
+    for _ in range(max_len):
+        h = hop.get(cur, 0)
+        # predecesores: down = proveedores de cur (in); up = clientes de cur (out)
+        cands = [l.get('source') for l in in_f.get(cur, [])] if direction == 'down' else \
+            [l.get('target') for l in out_f.get(cur, [])]
+        nxt = [c for c in cands if c in seedset] if h <= 1 else \
+            [c for c in cands if hop.get(c) == h - 1 and c not in path]
+        if not nxt:
+            nxt = [c for c in cands if c in seedset]
+            if not nxt:
+                break
+        best = max(nxt, key=lambda c: (c in seedset and h <= 1, pct.get(c, 100.0), str(c)))
+        path.append(best)
+        cur = best
+        if best in seedset:
+            break
+    if direction == 'up':
+        return path            # proveedor → … → semilla: en el sentido del suministro (como el camino de 1.0.0)
+    path.reverse()             # semilla → … → cliente
+    return path

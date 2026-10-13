@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "brokerage/api.py"
 lenguaje: "python"
-lineas: 419
+lineas: 436
 aliases: ["brokerage/api.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # brokerage/api.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 419 líneas · `brokerage/api.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 436 líneas · `brokerage/api.py`
 
 ## Para qué sirve
 
@@ -19,26 +19,26 @@ blueprint /api/brokerage/\* (corretaje multi-cliente).
 ## API pública
 
 - `guarded(f)` — PIN + base de datos + manejo uniforme de errores. _(línea 105)_
-- `bk_status()` — SIN PIN: solo si está disponible y si el interruptor está encendido (la postura de seguridad —cifrado, auto-aprobación…— va en … _(línea 178)_
-- `bk_status_detail()` _(línea 191)_
-- `bk_clients()` _(línea 207)_
-- `bk_client_create()` _(línea 215)_
-- `bk_client_get(client_id)` _(línea 226)_
-- `bk_client_patch(client_id)` _(línea 238)_
-- `bk_client_creds(client_id)` _(línea 249)_
-- `bk_oauth_start(client_id)` _(línea 260)_
-- `bk_account(client_id)` _(línea 269)_
-- `bk_sync(client_id)` _(línea 279)_
-- `bk_client_audit(client_id)` _(línea 288)_
-- `bk_audit()` _(línea 297)_
-- `bk_preview()` _(línea 306)_
-- `bk_confirm(preview_id)` _(línea 318)_
-- `bk_orders()` _(línea 331)_
-- `bk_cancel(order_id)` _(línea 341)_
-- `bk_approvals()` _(línea 351)_
-- `bk_approve(preview_id)` _(línea 359)_
-- `bk_reject(preview_id)` _(línea 368)_
-- `bk_oauth_callback()` _(línea 388)_
+- `bk_status()` — SIN PIN: solo si está disponible y si el interruptor está encendido (la postura de seguridad —cifrado, auto-aprobación…— va en … _(línea 195)_
+- `bk_status_detail()` _(línea 208)_
+- `bk_clients()` _(línea 224)_
+- `bk_client_create()` _(línea 232)_
+- `bk_client_get(client_id)` _(línea 243)_
+- `bk_client_patch(client_id)` _(línea 255)_
+- `bk_client_creds(client_id)` _(línea 266)_
+- `bk_oauth_start(client_id)` _(línea 277)_
+- `bk_account(client_id)` _(línea 286)_
+- `bk_sync(client_id)` _(línea 296)_
+- `bk_client_audit(client_id)` _(línea 305)_
+- `bk_audit()` _(línea 314)_
+- `bk_preview()` _(línea 323)_
+- `bk_confirm(preview_id)` _(línea 335)_
+- `bk_orders()` _(línea 348)_
+- `bk_cancel(order_id)` _(línea 358)_
+- `bk_approvals()` _(línea 368)_
+- `bk_approve(preview_id)` _(línea 376)_
+- `bk_reject(preview_id)` _(línea 385)_
+- `bk_oauth_callback()` _(línea 405)_
 
 **Internas** (empiezan con `_`): `_db_ok`, `_unavailable`, `_audit_global_lock`, `_pin_error`, `_with_schema`, `_body`, `_principal`, `_actor`, `_svc`, `_session`, `_res`
 

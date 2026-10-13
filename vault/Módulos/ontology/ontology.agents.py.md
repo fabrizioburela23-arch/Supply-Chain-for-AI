@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/agents.py"
 lenguaje: "python"
-lineas: 976
+lineas: 1009
 aliases: ["ontology/agents.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/agents.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 976 líneas · `ontology/agents.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.009 líneas · `ontology/agents.py`
 
 ## Para qué sirve
 
@@ -19,24 +19,24 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 ## API pública
 
 - `server_flow_degree(session, object_id)` — Grado ESTRUCTURAL de un objeto (G4d): número de pares DISTINTOS (source_id, target_id) vigentes unidos por una relación de FLUJO … _(línea 61)_
-- clase `CentinelaNRS` _(línea 95)_
-- clase `LectorGDELT` _(línea 128)_
-- clase `GuardianCartera` _(línea 179)_
-- clase `Cartografo` _(línea 232)_
-- clase `RadarEmpresas` _(línea 274)_
-- clase `TejedorHiperaristas` — Teje HIPERARISTAS: cuando detecta en noticias un golpe SISTÉMICO que toca a VARIAS empresas del grafo a la vez (sanción, escasez de un … _(línea 344)_
-- clase `InvestigadorAutonomo` — Dos caminos: manual (endpoint /agents/investigar, SIEMPRE disponible) o reactivo (Annotations recientes de otros agentes — gateado por … _(línea 492)_
-- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 759)_
-- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 811)_
-- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 855)_
-- `evaluate_alert(session, rule)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). _(línea 926)_
-- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 961)_
+- clase `CentinelaNRS` _(línea 105)_
+- clase `LectorGDELT` _(línea 141)_
+- clase `GuardianCartera` _(línea 192)_
+- clase `Cartografo` _(línea 245)_
+- clase `RadarEmpresas` _(línea 287)_
+- clase `TejedorHiperaristas` — Teje HIPERARISTAS: cuando detecta en noticias un golpe SISTÉMICO que toca a VARIAS empresas del grafo a la vez (sanción, escasez de un … _(línea 357)_
+- clase `InvestigadorAutonomo` — Dos caminos: manual (endpoint /agents/investigar, SIEMPRE disponible) o reactivo (Annotations recientes de otros agentes — gateado por … _(línea 505)_
+- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 772)_
+- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 824)_
+- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 868)_
+- `evaluate_alert(session, rule, values=…)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). `values` = el lote de AlertIndex (core/hotviews/views/alerts.values): NRS … _(línea 939)_
+- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 989)_
 
-**Internas** (empiezan con `_`): `_utcnow`, `_recently_proposed`, `_ai_explain`, `_compute_server_nrs`, `_slug`, `_gate_prop`, `_get_live_price`
+**Internas** (empiezan con `_`): `_utcnow`, `_recently_proposed`, `_ai_explain`, `_compute_server_nrs`, `_hot_nrs`, `_slug`, `_gate_prop`, `_get_live_price`
 
 ## Depende de
 
-- [[core.__init__.py]] — importa `core.gates`, `focus`, `report`
+- [[core.__init__.py]] — importa `alerts`, `card`, `core.gates`, `focus`, `report`
 - [[core.ai.py]] — importa `_ai_complete`, `_extract_json`
 - [[core.config.py]] — importa `FINNHUB`, `INVESTIGADOR_AUTO`, `INVESTIGADOR_AUTO_CUTOFF_HORAS`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `UMBRAL_ESCRITURA`, `resolve`
@@ -55,7 +55,7 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - [[ontology.api.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 
-_Además lo importan 12 pruebas (lista abajo)._
+_Además lo importan 13 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -64,6 +64,7 @@ _Además lo importan 12 pruebas (lista abajo)._
 - [[tests.test_docs_facts.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance_seed_parity.py]]
+- [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_investigador.py]]
 - [[tests.test_ledger_core.py]]

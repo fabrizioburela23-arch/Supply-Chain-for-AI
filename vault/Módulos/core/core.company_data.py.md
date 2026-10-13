@@ -42,13 +42,14 @@ estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del m
 
 - [[core.live_facts.py]] — lo importa
 - [[core.live_fundamentals.py]] — lo importa
+- [[core.prices_store.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[research.committee.py]] — lo importa
 - [[research.context.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -59,6 +60,8 @@ _Además lo importan 1 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_company_data.py]]
+- [[tests.test_risk_on_history.py]]
+- [[tests.test_rsi_wilder.py]]
 
 ## Mencionado en sesiones de trabajo
 
