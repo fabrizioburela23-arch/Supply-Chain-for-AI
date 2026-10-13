@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/globe.js"
 lenguaje: "javascript"
-lineas: 1025
+lineas: 1048
 aliases: ["engine/globe.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/globe.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.025 líneas · `engine/globe.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.048 líneas · `engine/globe.js`
 
 ## Para qué sirve
 
@@ -37,6 +37,7 @@ Se carga en [[app.html]] en la posición **38 de 96** (línea 7847), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_modules_theme_i18n.py]]
+- [[tests.test_space_satellites.py]]
 
 ## Mencionado en sesiones de trabajo
 

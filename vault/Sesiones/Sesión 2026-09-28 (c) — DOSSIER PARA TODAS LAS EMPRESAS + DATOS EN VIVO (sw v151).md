@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-28"
-ruta: "docs/ESTADO.md#L1639"
+ruta: "docs/ESTADO.md#L1652"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-28 (c) — DOSSIER PARA TODAS LAS EMPRESAS + DATOS EN VIVO (sw v151)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1639 (48 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1652 (48 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

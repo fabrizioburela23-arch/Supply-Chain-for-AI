@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 217 |
-| Líneas de código | 130.347 |
+| Archivos de código (Python, JS, HTML) | 218 |
+| Líneas de código | 130.544 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 184 |
+| Archivos de prueba | 185 |
 | Documentos | 29 |
 | Rutas HTTP | 255 |
 | Grupos de API | 61 |
 | Herramientas MCP | 30 |
 | Variables de entorno | 157 |
-| Sesiones de trabajo | 102 |
-| Aristas `calls_endpoint` | 674 |
+| Sesiones de trabajo | 103 |
+| Aristas `calls_endpoint` | 675 |
 | Aristas `defines_endpoint` | 285 |
-| Aristas `imports` | 1.877 |
+| Aristas `imports` | 1.881 |
 | Aristas `loads_script` | 82 |
-| Aristas `mentions_in_session` | 522 |
+| Aristas `mentions_in_session` | 525 |
 | Aristas `reads_env` | 220 |
 | Aristas `references_file` | 60 |
-| Aristas `tested_by` | 1.349 |
+| Aristas `tested_by` | 1.355 |
 | Aristas `uses_global` | 349 |
 
 ## Nodos "dios" (más conectados)
@@ -44,7 +44,7 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
 | [[app.html]] | 144 | 55 | 89 | [[Capa Interfaz (Khipus OS)]] |
-| [[server.py]] | 89 | 24 | 65 | [[Capa Infraestructura]] |
+| [[server.py]] | 90 | 24 | 66 | [[Capa Infraestructura]] |
 | [[ontology.db.py]] | 51 | 42 | 9 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 41 | 11 | 30 | [[Capa Interfaz (Khipus OS)]] |
 | [[core.__init__.py]] | 36 | 36 | 0 | [[Capa Infraestructura]] |
@@ -64,14 +64,13 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[engine.voice.js]] | 26 | 5 | 21 | [[Capa Voz]] |
 | [[research.runner.py]] | 26 | 8 | 18 | [[Capa Investigación]] |
 
-## Módulos sin pruebas (25)
+## Módulos sin pruebas (24)
 
 Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
 | Módulo | Líneas | Capa |
 |---|---|---|
 | [[engine.worldmonitor.js]] | 1.326 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
-| [[engine.spacemonitor.js]] | 1.324 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.universe2d.js]] | 1.048 | [[Capa Interfaz (Khipus OS)]] |
 | [[engine.command_center.js]] | 433 | [[Capa Chat y agentes]] |
 | [[scripts.ingest_enrichment_md.py]] | 404 | [[Capa Datos del catálogo]] |

@@ -106,6 +106,7 @@ Se carga en [[app.html]] en la posición **88 de 96** (línea 7963), después de
 - [[tests.test_overnight_ui_dossier_clients.py]]
 - [[tests.test_overnight_ui_small_panels.py]]
 - [[tests.test_overnight_ui_xray_research.py]]
+- [[tests.test_space_satellites.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_os_server.py]]
 - [[tests.test_voice_tour.py]]

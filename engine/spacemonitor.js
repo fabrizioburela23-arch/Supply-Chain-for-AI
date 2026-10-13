@@ -226,9 +226,11 @@
     var st = document.createElement('style'); st.id = 'sm-css';
     st.textContent = [
       // escenario del globo (oscuro a propósito: halo aditivo + estrellas) · HUD = tokens --os-* (.sm lleva .kos-themed)
-      '.sm{position:relative;width:100%;height:100%;min-height:520px;overflow:hidden;color:var(--os-ink,#E8EDFB);font-family:var(--os-font,Inter,system-ui,sans-serif);background:' + STAGE.bg + ';' +
+      // #sm.sm (no '.sm' a secas): la clase corta 'sm' también la usa el chip de saldo del OS (<span class="v sm">,
+      // engine/cockpit.js) y esta regla lo convertía en una caja oscura de 520 px que tapaba el globo y sus satélites.
+      '#sm.sm{position:relative;width:100%;height:100%;min-height:520px;overflow:hidden;color:var(--os-ink,#E8EDFB);font-family:var(--os-font,Inter,system-ui,sans-serif);background:' + STAGE.bg + ';' +
         '--sm-glass:var(--os-surface,rgba(5,8,20,.86))}',
-      '@supports (color:color-mix(in srgb,red 50%,blue)){.sm{--sm-glass:color-mix(in srgb,var(--os-surface,#17181F) 90%,transparent)}}',
+      '@supports (color:color-mix(in srgb,red 50%,blue)){#sm.sm{--sm-glass:color-mix(in srgb,var(--os-surface,#17181F) 90%,transparent)}}',
       // color de DATO (estado, capa, NRS, KPI) como texto: igual en oscuro; en claro se mezcla 50 % con la tinta (AA sobre blanco).
       // !important = la precedencia del style="color:…" que reemplaza (p.ej. le gana a .sm-kv .v.mono)
       '.sm .sm-c{color:var(--sm-c)!important}',
@@ -370,6 +372,8 @@
       '.sm-img{width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--os-line,rgba(140,160,255,.15));background:var(--os-surface-2,#0a1024)}',
       '.sm-mbar{display:none}',
       // aviso SOBRE el escenario oscuro del globo (no sobre un panel): tinta del escenario
+      // aviso SOBRE el globo cuando los satélites no son en vivo (en la ventana angosta del OS los paneles van en hojas)
+      '.sm-satnote{position:absolute;z-index:5;top:48px;left:50%;transform:translateX(-50%);max-width:calc(100% - 24px);padding:4px 11px;border-radius:12px;font-size:11.5px;font-weight:600;line-height:1.35;text-align:center;width:max-content;pointer-events:none;background:var(--sm-glass);border:1px solid var(--os-line,rgba(255,197,61,.35));color:var(--os-ink,#E8EDFB)}',
       '.sm-glnote{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:' + STAGE.ink + ';font-size:13px;text-align:center;padding:24px;pointer-events:none}',
       /* modo angosto (móvil / Cabina estrecha) */
       '.sm.nr .sm-panel{left:0;right:0;top:auto;bottom:0;width:auto;max-height:66%;border-radius:16px 16px 0 0;transform:translateY(105%);transition:transform .25s ease;display:flex;z-index:7}',
@@ -403,6 +407,7 @@
       '<div class="sm-tl" id="sm-tl"></div>' +
       '<div class="sm-mbar" id="sm-mbar"></div>' +
       '<div class="sm-tip" id="sm-tip"></div>' +
+      '<div class="sm-satnote" id="sm-satnote" role="status" style="display:none"></div>' +
       '</div>';
   }
 
@@ -502,6 +507,7 @@
       (t.constellations || []).forEach(function (c) {
         var pill = fb ? '<span class="sm-st ref" title="' + esc(L('CelesTrak no responde: órbitas de referencia, NO en vivo', 'CelesTrak unreachable: reference orbits, NOT live')) + '">ref</span>'
           : c.error ? '<span class="sm-st err" title="' + esc(c.error) + '">' + esc(L('caída', 'down')) + '</span>'
+          : c.stale ? '<span class="sm-st ref" title="' + esc(L('CelesTrak no respondió: última copia real del ', 'CelesTrak did not respond: last real copy from ') + fmtIso(c.as_of)) + '">' + esc(L('copia', 'cached')) + '</span>'
             : '<span class="sm-st ok" title="CelesTrak">' + esc(L('vivo', 'live')) + '</span>';
         var on = S.satVis[c.name] !== false;
         h += '<div class="sm-lay' + (on && (c.rendered || 0) ? '' : ' off') + '" data-act="sat" data-name="' + esc(c.name) + '" role="checkbox" aria-checked="' + on + '">' +
@@ -739,7 +745,7 @@
       [L('Próx. 7 días', 'Next 7 days'), sm ? (sm.upcoming_7d_truncated ? '≥' : '') + sm.upcoming_7d : ge, SPC.kpi[0], L('lanzamientos', 'launches')],
       [L('Próx. 30 días', 'Next 30 days'), sm ? (sm.upcoming_30d_truncated ? '≥' : '') + sm.upcoming_30d : ge, SPC.kpi[1], L('lanzamientos', 'launches')],
       [L('Últimos 30 d', 'Last 30 d'), sm ? (sm.previous_30d_truncated ? '≥' : '') + sm.previous_30d : ge, SPC.kpi[2], rate != null ? rate + '% ' + L('éxito', 'success') : ''],
-      [L('Satélites', 'Satellites'), t ? (fb ? '—' : Number(t.total_real || 0).toLocaleString(en() ? 'en-US' : 'es-ES')) : (S.tleErr ? '—' : '…'), SPC.kpi[3], fb || S.tleErr ? L('fuente caída', 'source down') : 'CelesTrak'],
+      [L('Satélites', 'Satellites'), t ? (fb ? '—' : Number(t.total_real || 0).toLocaleString(en() ? 'en-US' : 'es-ES')) : (S.tleErr ? '—' : '…'), SPC.kpi[3], fb || S.tleErr ? L('fuente caída', 'source down') : (t && t.stale ? L('CelesTrak · copia', 'CelesTrak · cached') : 'CelesTrak')],
       [L('Constelac.', 'Constell.'), t ? (fb ? '—' : (t.constellations || []).filter(function (c) { return c.count > 0; }).length) : (S.tleErr ? '—' : '…'), SPC.kpi[4], L('rastreadas', 'tracked')],
       [L('Plataformas', 'Pads'), S.up ? padsAgg().filter(function (p) { return p.up.length; }).length : (S.upErr ? '—' : '…'), SPC.kpi[5], L('con próximos', 'with upcoming')],
     ];
@@ -1100,14 +1106,33 @@
         .then(function () { if (!S.sel) renderSituation(); });
     });
   }
+  // minPx: en una ventana angosta del OS el globo se aleja y los puntos (tamaño fijo con perspectiva) quedaban en
+  // ~1,5 px, indistinguibles de las estrellas → «no hay satélites». Piso de tamaño en pantalla (engine/globe.js).
+  var SAT_OPTS = { monitor: true, altScale: altScale, pick: true, minPx: 3 };
+  var TLE_RETRY_MS = [15000, 60000, 180000];
   function loadTLE() {
-    if (S.tle) { if (S.globe && !S.globe.layers.length) { S.globe.loadSatellites(S.tle, { monitor: true, altScale: altScale, pick: true }); applyVis(); } return; }
+    if (S.tle) { if (S.globe && !S.globe.layers.length) { S.globe.loadSatellites(S.tle, SAT_OPTS); applyVis(); } return; }
+    if (S._tleBusy) return;
+    S._tleBusy = true;
     getJSON('/api/space/tle').then(function (d) {
       if (!d || !Array.isArray(d.constellations)) throw new Error(L('respuesta inesperada', 'unexpected response'));
-      S.tle = d; S.tleErr = null;
-      if (S.globe) { S.globe.loadSatellites(d, { monitor: true, altScale: altScale, pick: true }); applyVis(); }
-    }).catch(function (e) { S.tleErr = e.message || 'error'; })
-      .then(function () { renderLayers(); if (!S.sel) renderSituation(); });
+      S.tle = d; S.tleErr = null; S._tleTries = 0;
+      if (S.globe) { S.globe.loadSatellites(d, SAT_OPTS); applyVis(); }
+    }).catch(function (e) {
+      // antes: un 429/503/corte dejaba el globo SIN satélites hasta recargar la página
+      var n = S._tleTries = (S._tleTries || 0) + 1;
+      S.tleErr = (e.message || 'error') + (n <= TLE_RETRY_MS.length ? ' · ' + L('reintentando…', 'retrying…') : '');
+      if (n <= TLE_RETRY_MS.length) later(loadTLE, TLE_RETRY_MS[n - 1]);
+    }).then(function () { S._tleBusy = false; renderLayers(); renderSatNote(); if (!S.sel) renderSituation(); });
+  }
+  // Honestidad sobre el globo: referencia (CelesTrak caído), copia vieja con su hora, o sin datos.
+  function renderSatNote() {
+    var el = $('sm-satnote'); if (!el) return;
+    var t = S.tle, msg = '';
+    if (t && t.source === 'fallback') msg = L('🛰 Órbitas de REFERENCIA, no en vivo: CelesTrak no responde', '🛰 REFERENCE orbits, not live: CelesTrak unreachable');
+    else if (t && t.stale) msg = L('🛰 Satélites reales, copia del ', '🛰 Real satellites, copy from ') + fmtIso(t.as_of);
+    else if (!t && S.tleErr) msg = L('🛰 Satélites no disponibles: ', '🛰 Satellites unavailable: ') + S.tleErr;
+    el.textContent = msg; el.title = msg; el.style.display = msg ? '' : 'none';
   }
   function later(fn, ms) { var t = setTimeout(fn, ms); S.timers.push(t); return t; }
 
@@ -1245,7 +1270,7 @@
     var cv = $('sm-canvas'); if (cv) cv.setAttribute('aria-label', L('Globo del Space Monitor', 'Space Monitor globe'));
     if (rl) rl.textContent = '☰ ' + L('Capas', 'Layers');
     if (rr) rr.textContent = '◉ ' + L('Situación', 'Situation');
-    renderLayers(); renderTop(); renderTimeline(); renderRight(); renderMbar();
+    renderLayers(); renderTop(); renderTimeline(); renderRight(); renderMbar(); renderSatNote();
     if (S.globe) drawShells();
     return br;
   }
@@ -1260,6 +1285,7 @@
       renderLayers(); renderTop(); renderTimeline(); renderRight(); renderMbar(); checkNarrow();
       var tp = $('sm-tip'); if (tp) tp.style.display = 'none';
       if (S.globe) { S.globe.resume(); drawCompanies(); drawShells(); drawLaunches(); }
+      if (!S.tle) { S._tleTries = 0; loadTLE(); }
       if (Date.now() - S.lastLoad > 600000) load();
       return;
     }

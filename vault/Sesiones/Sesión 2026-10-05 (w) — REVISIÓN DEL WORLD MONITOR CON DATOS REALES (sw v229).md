@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L824"
+ruta: "docs/ESTADO.md#L837"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (w) — REVISIÓN DEL WORLD MONITOR CON DATOS REALES (sw v229)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 824 (8 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 837 (8 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/spacemonitor.js"
 lenguaje: "javascript"
-lineas: 1324
+lineas: 1350
 aliases: ["engine/spacemonitor.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/spacemonitor.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.324 líneas · `engine/spacemonitor.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.350 líneas · `engine/spacemonitor.js`
 
 ## Para qué sirve
 
@@ -45,9 +45,10 @@ Se carga en [[app.html]] en la posición **55 de 96** (línea 7915), después de
 
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_space_satellites.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (j) — ESPACIO - VUELVEN LOS SATÉLITES (arreglo urgente) — sw v265]]
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]]
 - [[Sesión 2026-09-30 al 10-02 — MONITORES, RIESGO FÁCIL, ASISTENTE, CEREBRO DE KHIPU]]

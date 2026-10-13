@@ -3798,161 +3798,54 @@ def space_launches():
     } for l in launches])
 
 
-# ── CelesTrak TLE — satélites reales para el Planeta 3D ───────────────────────
-# Grupos de CelesTrak → (nombre visible, nodo Khipu vinculado, color hex)
-_SAT_GROUPS = [
-    ('starlink',      'Starlink',        'SpaceX',           '#ff7a45'),
-    ('oneweb',        'OneWeb',          'EutelsatOneWeb',   '#36cfc9'),
-    ('planet',        'Planet Labs',     'PlanetLabs',       '#73d13d'),
-    ('spire',         'Spire Global',    'Spire',            '#9254de'),
-    ('iridium-NEXT',  'Iridium NEXT',    'Iridium',          '#40a9ff'),
-    ('globalstar',    'Globalstar',      'Globalstar',       '#f759ab'),
-    ('ses',           'SES / O3b',       'SES',              '#ffc53d'),
-    ('gps-ops',       'GPS',             None,               '#bfbfbf'),
-    ('galileo',       'Galileo',         None,               '#597ef7'),
-    ('beidou',        'BeiDou',          None,               '#ff4d4f'),
-    ('stations',      'Estaciones (ISS/CSS)', None,          '#ffffff'),
-]
-# Tope de satélites RENDERIZADOS por grupo (los conteos reportados son los reales).
-_SAT_RENDER_CAP = {'starlink': 1200, 'oneweb': 400, 'planet': 250, '_default': 220}
+# ── CelesTrak TLE — satélites reales para el Space Monitor ───────────────────
+# Toda la conversación con CelesTrak vive en core/celestrak.py (copia por grupo,
+# ≤1 descarga por grupo cada 2 h, pausa ante bloqueo/límite, ronda ≤20 s): antes
+# esta ruta pedía los 11 grupos en serie con 12 s cada uno (~132 s colgada con
+# CelesTrak bloqueando → globo SIN satélites) y _space_constellations los volvía
+# a descargar por su cuenta (lo que hace que CelesTrak bloquee la IP).
+from core import celestrak as _celestrak  # noqa: E402
 
-
-def _parse_tle_text(txt):
-    """Parsea formato TLE de 3 líneas → [{name,l1,l2}]."""
-    out = []
-    lines = [ln.rstrip() for ln in txt.splitlines() if ln.strip()]
-    i = 0
-    while i + 2 < len(lines) + 1:
-        if i + 2 >= len(lines):
-            break
-        name, l1, l2 = lines[i], lines[i + 1], lines[i + 2]
-        if l1.startswith('1 ') and l2.startswith('2 '):
-            out.append({'name': name.strip(), 'l1': l1, 'l2': l2})
-            i += 3
-        else:
-            i += 1
-    return out
+_SAT_GROUPS = _celestrak.GROUPS
+_parse_tle_text = _celestrak.parse_tle_text
+_fallback_tle = _celestrak.fallback_tle
 
 
 @app.route('/api/space/tle')
-@rate_limit(limit=20, window=3600)
-@cache.cached(timeout=86400)  # CelesTrak actualiza ~1/día
+@rate_limit(limit=120, window=3600)   # ya no cuesta descargas: sale de la copia en memoria
 def space_tle():
     """Satélites reales por constelación (CelesTrak). Muestrea para rendimiento
-    pero reporta los conteos REALES. Si CelesTrak no responde, fallback sintético."""
-    constellations = []
-    sats = []
-    any_ok = False
-    for idx, (group, label, node, color) in enumerate(_SAT_GROUPS):
-        try:
-            url = f'https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=tle'
-            r = requests.get(url, timeout=12, headers={'User-Agent': 'KhipuFinance/1.0'})
-            if not r.ok or not r.text or '<' in r.text[:1]:
-                raise RuntimeError(f'HTTP {r.status_code}')
-            parsed = _parse_tle_text(r.text)
-            if not parsed:
-                raise RuntimeError('sin TLEs')
-            any_ok = True
-            real_count = len(parsed)
-            cap = _SAT_RENDER_CAP.get(group, _SAT_RENDER_CAP['_default'])
-            if real_count > cap:
-                step = real_count / cap
-                sampled = [parsed[int(k * step)] for k in range(cap)]
-            else:
-                sampled = parsed
-            for s in sampled:
-                sats.append({'n': s['name'], 'l1': s['l1'], 'l2': s['l2'], 'c': idx})
-            constellations.append({
-                'name': label, 'count': real_count, 'rendered': len(sampled),
-                'node': node, 'color': color,
-            })
-        except Exception as e:  # noqa: BLE001
-            constellations.append({
-                'name': label, 'count': 0, 'rendered': 0,
-                'node': node, 'color': color, 'error': str(e)[:60],
-            })
-
-    if not any_ok:
-        # Fallback sintético (p.ej. red sin egress a CelesTrak): órbitas plausibles.
-        # NO se cachea (antes quedaba 24 h aunque CelesTrak volviera).
-        return _degraded(jsonify(_fallback_tle()))
-
-    total = sum(c['count'] for c in constellations)
-    # comparte los conteos REALES con el Khipu de TEXTO (para que reuse estos
-    # números y no haga su propio re-fetch parcial que dejaba a Starlink en 0).
-    try:
-        cache.set('space_constellations',
-                  [(c['name'], c['count'], True) for c in constellations if c.get('count')], timeout=86400)
-    except Exception:  # noqa: BLE001
-        pass
-    resp = jsonify({'constellations': constellations, 'sats': sats,
-                    'total_real': total, 'rendered': len(sats), 'source': 'celestrak'})
-    # si alguna constelación falló, el resultado parcial no se guarda 24 h
-    return _degraded(resp) if any(c.get('error') for c in constellations) else resp
-
-
-def _fallback_tle():
-    """Datos sintéticos cuando CelesTrak no es alcanzable — la demo nunca queda vacía."""
-    import math
-    groups = [('Starlink', 'SpaceX', '#ff7a45', 7134, 550, 53.0),
-              ('OneWeb', 'EutelsatOneWeb', '#36cfc9', 648, 1200, 87.9),
-              ('Planet Labs', 'PlanetLabs', '#73d13d', 200, 475, 97.4),
-              ('Iridium NEXT', 'Iridium', '#40a9ff', 75, 780, 86.4),
-              ('GPS', None, '#bfbfbf', 31, 20180, 55.0)]
-    constellations, sats = [], []
-    for idx, (label, node, color, real, alt_km, inc) in enumerate(groups):
-        rendered = min(real, 200 if label == 'Starlink' else 80)
-        constellations.append({'name': label, 'count': real, 'rendered': rendered,
-                               'node': node, 'color': color})
-        # genera líneas TLE plausibles distribuyendo RAAN/anomalía
-        for k in range(rendered):
-            raan = (360.0 * k / rendered) % 360
-            ma = (137.5 * k) % 360
-            mm = 86400.0 / (2 * math.pi * math.sqrt(((6371 + alt_km) * 1000) ** 3 / 3.986e14))
-            l1 = f'1 {10000 + idx * 1000 + k:05d}U 24001A   24001.00000000  .00000000  00000-0  00000-0 0  9990'
-            l2 = (f'2 {10000 + idx * 1000 + k:05d} {inc:8.4f} {raan:8.4f} 0001000 '
-                  f'  0.0000 {ma:8.4f} {mm:11.8f}00000')
-            sats.append({'n': f'{label}-{k}', 'l1': l1, 'l2': l2, 'c': idx})
-    return {'constellations': constellations, 'sats': sats,
-            'total_real': sum(c['count'] for c in constellations),
-            'rendered': len(sats), 'source': 'fallback'}
+    pero reporta los conteos REALES (con `as_of`; `stale` = copia de más de 6 h).
+    Sin ninguna copia: órbitas de REFERENCIA con source='fallback' (la UI lo dice)."""
+    data = _celestrak.payload()
+    resp = jsonify(data)
+    if data.get('source') == 'fallback' or data.get('stale'):
+        return _degraded(resp)
+    resp.headers['Cache-Control'] = 'public, max-age=600'
+    return resp
 
 
 # Pisos de respaldo por constelación (aprox. 2026): si CelesTrak falla en un
 # grupo concreto (rate-limit), usamos este mínimo para que Starlink NO quede en 0
-# ni "desaparezca" del resumen de texto.
+# ni "desaparezca" del resumen de texto (marcado live=False: cifra de REFERENCIA).
 _SAT_FALLBACK = {'Starlink': 8000, 'OneWeb': 648, 'Planet Labs': 190, 'Spire Global': 70,
                  'Iridium NEXT': 80, 'Globalstar': 28, 'SES / O3b': 68, 'GPS': 31,
                  'Galileo': 30, 'BeiDou': 50, 'Estaciones (ISS/CSS)': 20}
 
 
 def _space_constellations():
-    """[(label, count), …] satélites reales por constelación (CelesTrak), cacheado
-    24h. Robusto: si un grupo falla usa su piso de respaldo (así Starlink nunca
-    queda en 0). Compartido por el Khipu de TEXTO (/api/ai/command)."""
-    ck = 'space_constellations'
-    hit = cache.get(ck)
-    if hit is not None:
-        # tolera entradas viejas (label, n) cacheadas antes del flag "en vivo"
-        return [tuple(x) if len(x) == 3 else (x[0], x[1], True) for x in hit]
+    """[(label, count, live), …] satélites por constelación para el Khipu de TEXTO.
+    Lee la MISMA copia que /api/space/tle (core/celestrak: sin descargas propias);
+    un grupo sin copia usa su piso de respaldo con live=False."""
+    real = _celestrak.counts()
     out = []
-    for group, label, node, color in _SAT_GROUPS:
-        try:
-            r = requests.get(f'https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=tle',
-                             timeout=10, headers={'User-Agent': 'KhipuFinance/1.0'})
-            n = len(_parse_tle_text(r.text)) if (r.ok and r.text and '<' not in r.text[:1]) else 0
-        except Exception:  # noqa: BLE001
-            n = 0
+    for _group, label, _node, _color in _SAT_GROUPS:
+        n = real.get(label, 0)
         live = bool(n)
         if not n:
-            n = _SAT_FALLBACK.get(label, 0)   # piso si CelesTrak falló para este grupo
+            n = _SAT_FALLBACK.get(label, 0)
         if n:
-            out.append((label, n, live))      # live=False → cifra de REFERENCIA, no en vivo
-    total = sum(n for _, n, _l in out)
-    # cachear SOLO si el paquete es plausible (Starlink presente): evita fijar 24h
-    # un resultado parcial como el que rompió el texto ("total 1163, sin Starlink").
-    if total > 5000 and any(l == 'Starlink' and lv for l, _, lv in out):
-        cache.set(ck, out, timeout=86400)
+            out.append((label, n, live))
     return out
 
 

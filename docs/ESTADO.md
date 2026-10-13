@@ -9,6 +9,19 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-13 (j) — ESPACIO: VUELVEN LOS SATÉLITES (arreglo urgente) — sw v265
+
+- Fabrizio: «¿por qué la del espacio ya no tiene los satélites?». El código que DIBUJA no cambió; fallaba traer los datos
+  y verlos: (1) el servidor pedía a CelesTrak 11 grupos en serie (12 s c/u) sin parar ante errores ni guardar respaldos
+  → hasta 132 s sin satélites y descargas repetidas que hacen que CelesTrak bloquee la IP (403 si se repite un grupo en
+  <2 h); (2) la regla global `.sm` de spacemonitor.js estiraba el chip «Crear cartera» (`span.v.sm`) a 520 px y tapaba el
+  globo en Khipus OS; (3) en la ventana angosta del OS los puntos medían ~1,5 px; (4) un 429/503 dejaba el globo vacío.
+- Arreglo: `core/celestrak.py` = ÚNICO cliente de CelesTrak (copia por grupo, no repite antes de 2 h, última buena hasta
+  7 días con `stale`/`as_of`, 403 «sin cambios» = copia vigente, cualquier otro fallo corta la ronda y pausa 30 min,
+  ronda ≤20 s; sin copia → órbitas de REFERENCIA rotuladas); `/api/space/tle` y el chat usan ese módulo (adiós doble
+  descarga; límite 120/h); `#sm.sm` acotado; tamaño mínimo de 3 px en pantalla (`_satMinSize`); reintentos 15/60/180 s
+  y recarga al reabrir; aviso bilingüe sobre el globo. tests/test_space_satellites.py (4 de 5 fallaban antes).
+
 # SESIÓN 2026-10-13 (i) — NEO4J RETIRADO (decisión #6 de Fabrizio) — sw v264
 
 - HECHO POR FABRIZIO (2026-10-13): borró NEO4J_URI/USER/PASSWORD en Railway y activó «Wait for CI» (Railway → servicio →

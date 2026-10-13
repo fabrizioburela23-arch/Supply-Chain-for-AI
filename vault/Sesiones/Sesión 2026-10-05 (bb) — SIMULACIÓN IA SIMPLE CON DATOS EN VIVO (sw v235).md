@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L761"
+ruta: "docs/ESTADO.md#L774"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (bb) — SIMULACIÓN "IA SIMPLE" CON DATOS EN VIVO (sw v235)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 761 (9 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 774 (9 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

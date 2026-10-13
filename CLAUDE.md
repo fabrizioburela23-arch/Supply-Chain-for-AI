@@ -336,6 +336,9 @@ cambian, nace `@2` (nunca editar `@1`). Toda etiqueta `impl` nueva va a STAMPS (
     inestabilidad, exposure, brief, reference) + `engine/worldmonitor.js`
     (`KhipuWorld`): la pestaña Geopolítica ES el World Monitor (un solo globo;
     el alias geosituation.js se borró en la limpieza 2026-10-11).
+  - `core/celestrak.py` (2026-10-13): ÚNICO cliente de CelesTrak para /api/space/tle y el chat (copia por grupo, nunca
+    repite un grupo antes de 2 h — CelesTrak bloquea IPs insistentes —, última copia buena hasta 7 días, sin copia →
+    órbitas de REFERENCIA rotuladas). No volver a llamar a celestrak.org desde otro sitio.
   - `core/space.py` (/api/space2/*: Launch Library 2 normalizado, caché con
     presupuesto de 12 req/h, stale honesto) + `engine/spacemonitor.js`
     (`KhipuSpace`): la pestaña Espacio ES el Space Monitor (globo + lanzamientos).

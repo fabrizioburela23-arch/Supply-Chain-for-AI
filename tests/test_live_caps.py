@@ -62,7 +62,16 @@ def test_fallo_del_indice_no_deja_el_refresco_trabado(monkeypatch):
 
 
 def test_cache_viejo_de_constelaciones_no_rompe_a_khipu(monkeypatch):
+    """(2026-10-13) Ya no hay caché propia 'space_constellations': el texto de Khipu lee la MISMA
+    copia de CelesTrak que el globo (core/celestrak) y no descarga nada por su cuenta."""
     import server
-    monkeypatch.setattr(server.cache, 'get', lambda k: [('Starlink', 8100), ('OneWeb', 650)])
-    txt = server._space_facts_str()
-    assert 'Starlink: 8100' in txt and 'NO en vivo' not in txt
+    from core import celestrak as CT
+    CT.reset()
+    monkeypatch.setattr(CT, 'refresh', lambda now=None: None)
+    CT._STORE['starlink'] = {'sats': [{'name': 'S', 'l1': '1 x', 'l2': '2 x'}] * 8100, 'fetched': time.time()}
+    try:
+        txt = server._space_facts_str()
+    finally:
+        CT.reset()
+    assert 'Starlink: 8100' in txt and 'Starlink: 8100 (cifra de referencia' not in txt
+    assert 'OneWeb: 648 (cifra de referencia, NO en vivo)' in txt     # sin copia → piso marcado

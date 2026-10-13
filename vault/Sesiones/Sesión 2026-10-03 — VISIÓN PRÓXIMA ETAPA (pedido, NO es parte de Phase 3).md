@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L2937"
+ruta: "docs/ESTADO.md#L2950"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # 🪟 VISIÓN PRÓXIMA ETAPA (pedido 2026-10-03, NO es parte de Phase 3)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2937 (34 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2950 (34 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

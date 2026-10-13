@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-184 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+185 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -99,7 +99,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_ledger_guard.py]] | 14 | 11 |
 | [[tests.test_ledger_privacy.py]] | 7 | 9 |
 | [[tests.test_ledger_review_fixes.py]] | 8 | 15 |
-| [[tests.test_live_caps.py]] | 5 | 3 |
+| [[tests.test_live_caps.py]] | 5 | 4 |
 | [[tests.test_live_facts_entities.py]] | 1 | 1 |
 | [[tests.test_live_fundamentals.py]] | 3 | 2 |
 | [[tests.test_live_labels_misc.py]] | 6 | 5 |
@@ -179,6 +179,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_server_smoke.py]] | 24 | 12 |
 | [[tests.test_sim_agents.py]] | 6 | 2 |
 | [[tests.test_space2.py]] | 16 | 1 |
+| [[tests.test_space_satellites.py]] | 5 | 5 |
 | [[tests.test_tensor.py]] | 8 | 8 |
 | [[tests.test_tensor_autolink.py]] | 2 | 6 |
 | [[tests.test_trading_agent_ledger.py]] | 8 | 8 |

@@ -694,12 +694,34 @@
           : { color: new THREE.Color(c.color || '#9bd1ff'), size: station ? 6 : 2.4,
             sizeAttenuation: true, transparent: true, opacity: 0.95 }));
         pts.userData.layerIdx = this.layers.length;
+        pts.userData.baseSize = pts.material.size;
         this.world.add(pts);
         this.layers.push({ name: c.name, color: c.color, node: c.node, count: c.count,
           points: pts, satrecs, positions, geom: g, visible: true, idx });
       });
       this._lastProp = 0;
+      this._satSizeKey = null;
       this._propagate(true);
+      this._satMinSize();
+      this._wake();
+    }
+
+    // opts.minPx: piso del tamaño EN PANTALLA (px CSS) de los satélites. Con sizeAttenuation el
+    // punto mide size·(alto/2)/distancia: en una ventana angosta el encuadre aleja la cámara y
+    // quedaban en ~1,5 px (como el polvo de estrellas). Solo sube el tamaño, nunca lo baja.
+    _satMinSize() {
+      const minPx = this._satOpts && this._satOpts.minPx;
+      if (!minPx || !this.layers.length || !this.canvas) return;
+      const h = this._h || this.canvas.clientHeight;
+      if (!h) return;
+      const key = Math.round(this._dist) + 'x' + h;
+      if (key === this._satSizeKey) return;
+      this._satSizeKey = key;
+      const floor = minPx * this._dist / (h / 2);
+      this.layers.forEach(l => {
+        const m = l.points.material, base = l.points.userData.baseSize || m.size;
+        m.size = Math.max(base, floor);
+      });
     }
 
     _propagate(force) {
@@ -966,6 +988,7 @@
       this.world.rotation.y = this._rot.y; this.world.rotation.x = this._rot.x;
       this.camera.position.set(0, 0, this._dist); this.camera.lookAt(0, 0, 0);
       if (this._sat && this.layers.length) this._propagate();
+      if (this.layers.length) this._satMinSize();
       const t = (now - this._t0) / 1000;
       Object.keys(this.gl).forEach(id => {
         const L = this.gl[id];
