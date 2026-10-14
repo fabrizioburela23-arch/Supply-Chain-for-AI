@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_genui_contract.py"
 lenguaje: "python"
-lineas: 233
+lineas: 240
 aliases: ["tests/test_genui_contract.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_genui_contract.py
 
-> Prueba · capa [[Capa Pruebas]] · 233 líneas · `tests/test_genui_contract.py`
+> Prueba · capa [[Capa Pruebas]] · 240 líneas · `tests/test_genui_contract.py`
 
 ## Qué prueba
 

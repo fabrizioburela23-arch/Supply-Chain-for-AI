@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/hotclient.js"
 lenguaje: "javascript"
-lineas: 464
+lineas: 484
 aliases: ["engine/hotclient.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/hotclient.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 464 líneas · `engine/hotclient.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 484 líneas · `engine/hotclient.js`
 
 ## Para qué sirve
 
@@ -38,6 +38,7 @@ Se carga en [[app.html]] en la posición **28 de 98** (línea 3019), después de
 - [[tests.test_genui_rivals.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_khipus_os_perf.py]]
+- [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_scenario_pnl.py]]

@@ -22,7 +22,7 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 SCRIPTS = ['toast.js', 'explain.js', 'agents_registry.js', 'mascot.js', 'hotclient.js', 'genui.js', 'genui_charts.js',
-           'genui_shapes.js', 'oswindows.js', 'khipu_chat.js', 'desktop.js', 'cockpit.js']
+           'genui_shapes.js', 'genui_progress.js', 'oswindows.js', 'khipu_chat.js', 'desktop.js', 'cockpit.js']
 
 
 def _r(*p):
@@ -433,7 +433,7 @@ def test_procedencia_legible_contraste_aa(pw, theme):
 
 
 def test_graficos_perezosos(pw):
-    lean = [f for f in SCRIPTS if f not in ('genui_charts.js', 'genui_shapes.js')]
+    lean = [f for f in SCRIPTS if f not in ('genui_charts.js', 'genui_shapes.js', 'genui_progress.js')]
     ctx, pg, errs = _open(pw, 'es', 'dark', 1440, flag=False, scripts=lean)
     try:
         pg.wait_for_timeout(300)
@@ -443,12 +443,14 @@ def test_graficos_perezosos(pw):
         _ask(pg, [q for q in QS if q['key'] == 'b'][0], 'es')
         pg.wait_for_selector('.kg-root .kg-t-chart-line svg[role=img]', timeout=5000)
         assert pg.evaluate("() => window.KhipuGenUI.extrasReady() && document.querySelectorAll('script[src*=genui_charts]').length === 1")
+        # el motor de respuestas progresivas (F3) viaja con los gráficos: perezoso también (lote J)
+        assert pg.evaluate("() => !!window.KhipuGenUIProgress && document.querySelectorAll('script[src*=genui_progress]').length === 1")
         assert not errs, errs
     finally:
         ctx.close()
     ctx, pg, errs = _open(pw, 'es', 'dark', 1440, flag=True, scripts=lean)
     try:
-        pg.wait_for_function('() => window.KhipuGenUI.extrasReady()', timeout=5000)     # con la bandera: al arrancar
+        pg.wait_for_function('() => window.KhipuGenUI.extrasReady() && !!window.KhipuGenUIProgress', timeout=5000)   # con la bandera: al arrancar
         assert not errs, errs
     finally:
         ctx.close()

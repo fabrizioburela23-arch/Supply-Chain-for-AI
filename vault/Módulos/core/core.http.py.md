@@ -67,7 +67,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 38 pruebas (lista abajo)._
+_Además lo importan 40 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -116,6 +116,7 @@ _Además lo importan 38 pruebas (lista abajo)._
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_ledger_privacy.py]]
+- [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_identity.py]]
@@ -133,6 +134,7 @@ _Además lo importan 38 pruebas (lista abajo)._
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_rutas_acceso_decision.py]]
+- [[tests.test_scale_hot_paging.py]]
 - [[tests.test_scenario_pnl.py]]
 - [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_security.py]]

@@ -769,14 +769,18 @@
     if (!textOf(env) && opts.answer) blocks.unshift({ id: 'kg-answer', type: 'text', state: 'ready', data: { md: String(opts.answer), lang: env.lang || lang() } });
     var built = [];
     groupCards(blocks).forEach(function (b) {
-      var x = b && b.cards ? cardRow(b.cards, ctx) : buildBlock(b, ctx);
+      // F3: el bloque provisional que ya está a la vista se REUSA (opts.reuse, khipu_chat.js): ni entra ni se redibuja
+      var o = opts.reuse && b && !b.cards ? opts.reuse(b) : null;
+      var x = o ? { el: o, kept: 1 } : b && b.cards ? cardRow(b.cards, ctx) : buildBlock(b, ctx), R = opts.reuse;
       if (!x) return;
+      if (b.cards && R && R.has && b.cards.every(R.has)) x.inst = 1;   // fichas ya a la vista: la fila sin entrada
       rootEl.appendChild(x.el); built.push(x);
     });
     // entrada escalonada (55–90 ms, máx. 6) y luego el dibujo de cada gráfico; reducir movimiento = todo ya
     var vis = 0;
     built.forEach(function (x) {
-      if (ctx.reduced) { if (x.go) x.go(true); return; }
+      if (x.kept) return;
+      if (ctx.reduced || x.inst) { if (x.go) x.go(true); return; }
       var i = Math.min(vis++, 5), delay = i * 70;
       x.el.classList.add('kg-in'); x.el.style.animationDelay = delay + 'ms';
       if (x.go) setTimeout(function () { try { x.go(false); } catch (e) {} }, delay + 140);
@@ -955,7 +959,7 @@
   /* ══ carga PEREZOSA de gráficos y formas (§8: ≤ 90 KB al abrir la app): genui_charts.js y genui_shapes.js solo se
      descargan y se interpretan con la bandera encendida (o al llegar el primer sobre). Mismo origen y la misma
      ?v= que genui.js (CSP: script-src 'self'); en orden (async=false) porque se registran en este archivo. ══ */
-  var EXTRAS = ['genui_charts.js', 'genui_shapes.js'], _extras = null;
+  var EXTRAS = ['genui_charts.js', 'genui_shapes.js', 'genui_progress.js'], _extras = null;
   var _selfSrc = (function () { try { var c = W.document && W.document.currentScript; return c && c.src ? String(c.src) : ''; } catch (e) { return ''; } })();
   function extrasReady() { return !!(REG['chart.line'] && REG['geo.mini']); }
   function loadExtras() {

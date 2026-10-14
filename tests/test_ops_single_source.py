@@ -63,9 +63,12 @@ def _all_versions():
 def nodb(monkeypatch):
     """Sin base aunque DATABASE_URL exista: la generación es la del snapshot."""
     import ontology.db as odb
-    from core.hotviews import hot, registry
+    from core.hotviews import builder, hot, registry
     monkeypatch.setattr(odb, 'ontology_available', lambda: False)
     registry.reset()
+    # una construcción fallida de una prueba anterior (Postgres sin tablas) deja al constructor en espera: ensure()
+    # devolvería None y hot.graph() caería a la privada (fallback) en vez de la generación del snapshot
+    builder._ST.update(consecutive_failures=0, retry_at=0.0)
     hot.reset()
     yield
     registry.reset()

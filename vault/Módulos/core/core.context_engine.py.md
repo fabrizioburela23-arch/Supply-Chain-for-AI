@@ -50,6 +50,7 @@ EL motor de contexto (ARQUITECTURA_V2 §13; BRECHAS bloque 4: L4-01, L4-05, L4-1
 - [[mcp_server.contract.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[research.context.py]] — lo importa
+- [[scripts.bench_scale.py]] — lo importa
 - herramienta MCP `get_subgraph` → [[API herramientas MCP]]
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 

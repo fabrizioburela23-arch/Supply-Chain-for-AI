@@ -584,13 +584,21 @@ def incorporar_empresa(session, inp: IncorporarEmpresaInput, actor):
     if inp.link_to:
         if not session.get(ObjectRecord, inp.link_to):
             raise ActionError(f'link_to no existe: {inp.link_to}')
-        apply_event(session, 'LinkCreated',
-                    {'rel_type': inp.rel_type or 'partner', 'weight': 1,
-                     'properties': {'rel_label': inp.link_rel or inp.razon[:120],
-                                    'proposed': True}},
-                    valid_from=_utcnow(), source=inp.fuente, actor=actor,
-                    object_id=inp.company_id, target_id=inp.link_to)
-        link = {'from': inp.company_id, 'to': inp.link_to, 'rel_type': inp.rel_type}
+        # D-1 (EXPANSION_5K E1.8): una PROPUESTA de verdad (`status: proposed`, como ProponerVinculo) — antes solo
+        # llevaba `proposed: True` y las vistas (core/hotviews/source) la leían como vínculo VIVO del grafo.
+        # Confianza 0 (como las del tensor): el kernel tampoco la cuenta hasta que una persona la confirme
+        # (ConfirmarVinculo → status confirmed → sin descuento, matrix/engine.link_confidence); antes los lectores
+        # no la veían pero /api/hot/impact sí propagaba por ella con peso 1.
+        ev = apply_event(session, 'LinkCreated',
+                         {'rel_type': inp.rel_type or 'partner', 'weight': 1,
+                          'properties': {'rel_label': inp.link_rel or inp.razon[:120],
+                                         'proposed': True, 'status': 'proposed', 'confidence': 0.0,
+                                         'proposed_by': actor, 'proposed_source': inp.fuente}},
+                         valid_from=_utcnow(), source=inp.fuente, actor=actor,
+                         object_id=inp.company_id, target_id=inp.link_to)
+        row = session.scalars(select(LinkRecord).where(LinkRecord.event_id == ev.id)).first()
+        link = {'from': inp.company_id, 'to': inp.link_to, 'rel_type': inp.rel_type or 'partner',
+                'link_id': str(row.id) if row is not None else None, 'status': 'proposed'}
     _log_action(session, 'IncorporarEmpresa', inp.company_id, inp.link_to, {
         'label': inp.label, 'cat': inp.cat, 'razon': inp.razon, 'fuente': inp.fuente,
     }, actor, source=inp.fuente)

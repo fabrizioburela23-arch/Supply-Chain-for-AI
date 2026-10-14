@@ -38,6 +38,7 @@ Se carga en [[app.html]] en la posición **29 de 98** (línea 3020), después de
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_committee_os_ui.py]]
 - [[tests.test_genui_browser.py]]
+- [[tests.test_genui_f3_client_static.py]]
 - [[tests.test_genui_render_node.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]

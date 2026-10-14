@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/actions.py"
 lenguaje: "python"
-lineas: 898
+lineas: 906
 aliases: ["ontology/actions.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/actions.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 898 líneas · `ontology/actions.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 906 líneas · `ontology/actions.py`
 
 ## Para qué sirve
 
@@ -49,13 +49,13 @@ Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usu
 - `ajustar_posicion(session, inp, actor)` _(línea 530)_
 - `corregir_dato(session, inp, actor)` _(línea 558)_
 - `incorporar_empresa(session, inp, actor)` — Alta viva de empresa (Radar/humano). Crea el objeto + link opcional al grafo. Falla si el id ya existe (usar CorregirDato para actualizar). _(línea 572)_
-- `retirar_empresa(session, inp, actor)` — Baja lógica reversible: properties.retired = true/false. La historia completa queda en events — nada se borra jamás. _(línea 634)_
-- `crear_factor(session, inp, actor)` — Crea la hiperarista: un ObjectRecord type='Factor' (con severity) + N links 'affects' bitemporales hacia las empresas afectadas. Solo … _(línea 649)_
-- `retirar_factor(session, inp, actor)` — Expira la hiperarista: cierra los 'affects' vigentes (valid_to) y marca el Factor como expirado. Reversible en el sentido bitemporal (la … _(línea 684)_
-- `activar_factor(session, inp, actor)` — Persistente: cambia `severity` en las props del Factor. El motor lo lee en active_factors() y el caché de matrices se invalida solo (la … _(línea 711)_
-- `desactivar_factor(session, inp, actor)` — Revierte ActivarFactor. Vuelve a `severity_latente`; si el factor nunca se activó por esta vía (p.ej. venía de la ingesta multicapa) cae a … _(línea 748)_
-- `execute_action(session, action_type, payload, actor, principal=…, meta=…, correlation_id=…, proposal_confidence=…)` — Punto de entrada único: valida con el esquema del catálogo y ejecuta. Lanza ActionError/ValidationError si algo no es válido — nunca … _(línea 838)_
-- `list_actions(session, actor=…, action_type=…, object_id=…, limit=…)` — Para el panel '📋 Registro': timeline de ActionExecuted, filtrable. _(línea 886)_
+- `retirar_empresa(session, inp, actor)` — Baja lógica reversible: properties.retired = true/false. La historia completa queda en events — nada se borra jamás. _(línea 642)_
+- `crear_factor(session, inp, actor)` — Crea la hiperarista: un ObjectRecord type='Factor' (con severity) + N links 'affects' bitemporales hacia las empresas afectadas. Solo … _(línea 657)_
+- `retirar_factor(session, inp, actor)` — Expira la hiperarista: cierra los 'affects' vigentes (valid_to) y marca el Factor como expirado. Reversible en el sentido bitemporal (la … _(línea 692)_
+- `activar_factor(session, inp, actor)` — Persistente: cambia `severity` en las props del Factor. El motor lo lee en active_factors() y el caché de matrices se invalida solo (la … _(línea 719)_
+- `desactivar_factor(session, inp, actor)` — Revierte ActivarFactor. Vuelve a `severity_latente`; si el factor nunca se activó por esta vía (p.ej. venía de la ingesta multicapa) cae a … _(línea 756)_
+- `execute_action(session, action_type, payload, actor, principal=…, meta=…, correlation_id=…, proposal_confidence=…)` — Punto de entrada único: valida con el esquema del catálogo y ejecuta. Lanza ActionError/ValidationError si algo no es válido — nunca … _(línea 846)_
+- `list_actions(session, actor=…, action_type=…, object_id=…, limit=…)` — Para el panel '📋 Registro': timeline de ActionExecuted, filtrable. _(línea 894)_
 
 **Internas** (empiezan con `_`): `_severity_scale`, `_check_severity`, `_log_action`, `_decision_marks`, `_cite`, `_require_object`, `_resolver_vinculo`, `_link_by_id`, `_proponer_por_tensor`, `_require_factor`, `_subject`, `_gate_g2`, `_g2_blocks`
 
@@ -76,7 +76,7 @@ Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usu
 - [[ontology.api.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 
-_Además lo importan 26 pruebas (lista abajo)._
+_Además lo importan 27 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -105,6 +105,7 @@ _Además lo importan 26 pruebas (lista abajo)._
 - [[tests.test_replay_determinism.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]
+- [[tests.test_scale_search_d1d2.py]]
 - [[tests.test_tensor_autolink.py]]
 
 ## Mencionado en sesiones de trabajo

@@ -1,0 +1,57 @@
+id,sector,label_es,label_en,empresas,agrupa
+battery_cells,energia,Celdas y paquetes de batería,Battery cells and packs,88,"battery_cells, battery_packs, battery_modules"
+utility_integrated,energia,Utility integrada,Integrated utility,72,"utility_integrated, electric_utility, gas_utility, utility, energy_conglomerate, water_services"
+industrial_automation,robotica,Automatización industrial,Industrial automation,66,"industrial_automation, motors_drives, machine_vision, robot_components, robot_software, industrial_sensors, embedded_computing, industrial_computing, machine_tools, industrial_lasers, warehouse_automation, material_handling"
+passive_components,fabricacion,Componentes pasivos y de RF,Passive and RF components,62,"passive_components, frequency_control, power_components, electromechanical_components, rf_components"
+equip_subsystems,equipos,Subsistemas y piezas para equipos de chips,Chip equipment subsystems and parts,60,"equip_subsystems, test_sockets, pcb_equipment, smt_equipment, cleanroom_systems, cleanroom, ultrapure_water, wafer_services, precision_components, test_measurement, analysis_services, thermal_components"
+specialty_metals,materiales,Metales especiales y minerales críticos,Specialty metals and critical minerals,59,"specialty_metals, high_purity_metals, titanium, minor_metals, refractory_metals, tantalum_niobium, mining_niobium, ferroalloys, mining_manganese, mining_vanadium, molybdenum, mining_antimony, electrical_steel, superconducting_materials, high_purity_alumina, boron, fluorspar, phosphate, industrial_minerals, advanced_materials, carbon_fiber, carbon_materials, nonferrous_smelting, metallurgy_engineering, natural_rubber"
+ev_components,robotica,"Autopartes, electrónica y software para autos","Auto parts, electronics and software",57,"ev_components, auto_parts, auto_electronics, auto_software, lidar, lidar_sensors, ev_charging"
+pcb,fabricacion,Circuitos impresos y laminados,"PCBs, laminates and copper foil",48,"pcb, ccl_laminates, copper_foil"
+auto_oem,robotica,Fabricante de autos,Automaker,48,auto_oem
+solar_manufacturing,energia,Fabricación solar,Solar manufacturing,41,"solar_manufacturing, solar_equipment, solar_glass, solar_inverters, inverters, solar_bos, solar_materials"
+optical_transceivers,infra,"Transceptores, láseres y componentes ópticos","Optical transceivers, lasers and components",41,"optical_transceivers, optical_components, lasers"
+development_bank,macro_credito,Banca de desarrollo y crédito a la exportación,Development and export-credit finance,40,"development_bank, export_credit_agency, multilateral_institution, infrastructure_lender"
+transformers,energia,Transformadores,Transformers,40,transformers
+connectors,fabricacion,Conectores y cableado,Connectors and cabling,40,"connectors, cable_assemblies, high_speed_cables, structured_cabling"
+power_generation_equipment,energia,Turbinas y equipos de generación,Turbines and generation equipment,38,"power_generation_equipment, gas_turbines, turbines, wind_turbines, wind_components, wind_equipment"
+insurance,macro_credito,Seguros y reaseguros,Insurance and reinsurance,38,"insurance, reinsurance, insurance_broker, credit_insurance"
+telecom_operator,infra,Operador de telecomunicaciones y torres,Telecom operator and towers,36,"telecom_operator, telecom_towers"
+cables_power,energia,Cables de energía y cobre,Power cables and copper products,34,"cables_power, copper_products, copper_alloy_strip"
+oil_gas_upstream,energia,"Petróleo y gas: exploración, refinación y servicios","Oil and gas upstream, refining and services",33,"oil_gas_upstream, gas_upstream, refining, oilfield_services, offshore_marine_contractor"
+defense_electronics,defensa,Electrónica de defensa,Defense electronics,33,"defense_electronics, defense_cyber, defense_components"
+subsea_cable,infra,Cables submarinos,Subsea cables,30,"subsea_cable, submarine_cable"
+munitions,defensa,Municiones y energéticos,Munitions and energetics,30,"munitions, energetic_materials, defense_materials"
+grid_equipment,energia,Equipos de red eléctrica,Grid and electrical equipment,30,"grid_equipment, electrical_distribution, electrical_equipment, power_equipment, smart_meters, electrification_equipment"
+power_epc,energia,Ingeniería y construcción eléctrica,Power EPC and grid construction,29,"power_epc, grid_construction, offshore_wind_services, power_plant_services"
+naval_shipbuilding,defensa,Astilleros,Shipbuilding,29,"naval_shipbuilding, shipbuilding"
+aerospace_components,defensa,Motores y componentes aeroespaciales,Aero engines and aerospace components,29,"aerospace_components, aero_engines, defense_engines, superalloys"
+contract_logistics,logistica,"Logística por contrato, almacenes y transporte terrestre","Contract logistics, warehousing and trucking",26,"contract_logistics, warehousing, cold_storage, trucking_ltl, trucking, trucking_truckload, express_parcel, digital_freight_platform, logistics_software, cargo_handling, equipment_rental"
+semi_ip,diseno,Propiedad intelectual de chips,Semiconductor IP,25,"semi_ip, silicon_ip, semiconductor_ip, wireless_ip"
+power_supplies,infra,Fuentes de poder y componentes de servidor,Power supplies and server components,21,"power_supplies, server_components"
+power_semis,fabricacion,Semiconductores de potencia,Power semiconductors,20,"power_semis, power_semiconductors"
+specialized_shipping,logistica,"Transporte marítimo especializado (tanqueros, gaseros)","Specialized shipping (tankers, gas carriers)",19,"tanker_shipping, gas_carriers, roro_shipping, inland_marine, shipbroking, maritime_services"
+battery_recycling,energia,Reciclaje de baterías y metales,Battery and metals recycling,17,"battery_recycling, metals_recycling"
+drones_uav,defensa,Drones,Drones and UAVs,15,"drones_uav, drones, defense_drones"
+container_leasing,logistica,Contenedores y equipos portuarios,Containers and port equipment,14,"container_leasing, container_manufacturing, container_equipment, port_equipment"
+silicon_wafers,equipos,Obleas de silicio,Silicon wafers,13,silicon_wafers
+compound_semi,fabricacion,"Semiconductores compuestos (SiC, GaN, InP)",Compound semiconductors,13,compound_semi
+electronics_distribution,logistica,Distribución de electrónica,Electronics distribution,12,"electronics_distribution, it_distribution"
+fab_construction,inmobiliario,Construcción de fábricas y salas limpias,Fab and cleanroom construction,11,"cleanroom_engineering, fab_construction"
+mining_tin,materiales,Minería de estaño,Tin mining,11,"mining_tin, tin"
+battery_equipment,equipos,Equipos para fabricar baterías,Battery manufacturing equipment,10,battery_equipment
+rare_earth_magnets,materiales,Imanes de tierras raras,Rare-earth magnets,10,rare_earth_magnets
+ai_data,cloud_ia,Datos y etiquetado para IA,AI data and labeling,10,"ai_data_labeling, ai_training_data, ai_data_services"
+storage_systems,infra,Almacenamiento de datos,Data storage,9,"storage, ai_storage, hdd_components, storage_components"
+trading_house,materiales,Comercializadoras de materias primas,Commodity trading houses,9,"trading_house, metals_trading"
+mining_tungsten,materiales,Minería de tungsteno,Tungsten mining,9,mining_tungsten
+it_services,cloud_ia,Servicios de TI,IT services,9,it_services
+government_agency,macro_credito,Agencia o fondo estatal estratégico,Strategic state agency or fund,8,"ai_government_agency, government_funding_agency, state_industrial_fund, strategic_stockpile"
+ems,fabricacion,Manufactura electrónica por contrato y pantallas,Electronics manufacturing services and displays,8,"ems, display_panels"
+analog_mixed_signal,diseno,Chips analógicos y de señal mixta,Analog and mixed-signal chips,7,analog_mixed_signal
+coal,energia,Carbón,Coal,6,"coal, coal_mining"
+rail_equipment,logistica,Equipos ferroviarios,Rail equipment,6,rail_equipment
+semiconductor_rnd,fabricacion,Centros de I+D de semiconductores,Semiconductor R&D centers,5,semiconductor_rnd
+airport_operator,logistica,Operador aeroportuario,Airport operator,5,airport_operator
+mining_equipment,materiales,Equipos de minería,Mining equipment,4,mining_equipment
+payments,macro_credito,Redes de pago,Payment networks,2,payment_network
+battery_components,,,,2,(sin consolidar)

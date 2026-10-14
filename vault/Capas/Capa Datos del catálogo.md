@@ -55,8 +55,8 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 | la usa | [[Capa Interfaz (Khipus OS)]] | 50 |
 | la usa | [[Capa Ontología y grafo temporal]] | 33 |
 | la usa | [[Capa Chat y agentes]] | 10 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 10 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 10 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
 | la usa | [[Capa Voz]] | 3 |
 | la usa | [[Capa MCP y API]] | 1 |

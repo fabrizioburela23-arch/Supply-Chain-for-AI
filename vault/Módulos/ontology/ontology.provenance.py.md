@@ -51,12 +51,13 @@ Phase 1 · M1: procedencia de primera clase.
 - herramienta MCP `get_claim_evidence` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_graph_api.py]]
 - [[tests.test_provenance.py]]
+- [[tests.test_scale_search_d1d2.py]]
 
 ## Mencionado en sesiones de trabajo
 

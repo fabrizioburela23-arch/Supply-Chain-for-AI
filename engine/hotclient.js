@@ -10,7 +10,7 @@
      KhipuHot.chokepoints({by, limit})           GET  /api/hot/chokepoints   (ranking por Σ impacto o por conteo)
      KhipuHot.factors()                          GET  /api/hot/factors       (factores sistémicos activos)
      KhipuHot.card(id, {structure}) / cardCached GET  /api/hot/card/<id>     (tarjeta V3: NRS, flujo, estructura)
-     KhipuHot.nrs(ids)                           GET  /api/hot/nrs?ids=      (vector NRS, LA fórmula del servidor)
+     KhipuHot.nrs(ids)                           GET  /api/hot/nrs?ids=      (vector NRS, LA fórmula del servidor; lotes de 200)
      KhipuHot.scenario(body)                     POST /api/hot/scenario      (varias fuentes; factores 'active')
      KhipuHot.simulate({targets, kind, severity}) → la forma única que usan las pantallas (ver abajo)
      KhipuHot.stamp(view) / stampHTML(view)       "g18 · base · hace 3 s" (generación y edad, discreto)
@@ -226,10 +226,30 @@
     });
     return best ? best.res.data : null;
   }
-  function nrs(ids) {
-    ids = (ids || []).filter(function (x) { return x != null && String(x).length; }).map(String).slice(0, 1000);
+  // lote de hasta 1.000 ids en trozos de NRS_CHUNK por GET (la línea del pedido tiene tope en gunicorn: 4.094
+  // caracteres; el servidor acepta 250 por pedido) y se juntan en UNA respuesta con la misma forma
+  var NRS_CHUNK = 200;
+  function nrsOne(ids) {
     var path = '/api/hot/nrs' + (ids.length ? '?ids=' + encodeURIComponent(ids.join(',')) : '');
     return request('GET', path, null, 'nrs:' + path);
+  }
+  function nrs(ids) {
+    ids = (ids || []).filter(function (x) { return x != null && String(x).length; }).map(String).slice(0, 1000);
+    if (ids.length <= NRS_CHUNK) return nrsOne(ids);
+    var parts = [];
+    for (var i = 0; i < ids.length; i += NRS_CHUNK) parts.push(nrsOne(ids.slice(i, i + NRS_CHUNK)));
+    return Promise.all(parts).then(function (rs) {
+      for (var j = 0; j < rs.length; j++) if (!rs[j] || !rs[j].ok) return rs[j];
+      var d0 = rs[0].data || {}, out = { values: {}, n: 0, unknown_ids: [], fund_version: d0.fund_version, method: d0.method };
+      rs.forEach(function (r) {
+        var d = r.data || {};
+        Object.keys(d.values || {}).forEach(function (k) { out.values[k] = d.values[k]; });
+        (d.unknown_ids || []).forEach(function (k) { out.unknown_ids.push(k); });
+        if (d.terms) { out.terms = out.terms || {}; Object.keys(d.terms).forEach(function (k) { out.terms[k] = d.terms[k]; }); }
+      });
+      out.n = Object.keys(out.values).length;
+      return { ok: true, data: out, view: rs[rs.length - 1].view || null };
+    });
   }
   function status() { return request('GET', '/api/hot/status', null, null); }
   function scenario(body) {

@@ -33,4 +33,5 @@ _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_client_static.py]]
+- [[tests.test_genui_f3_client_static.py]]
 - [[tests.test_genui_render_node.py]]

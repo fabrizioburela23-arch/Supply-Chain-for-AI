@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/CHAT_UI_GENERATIVA.md"
 lenguaje: "markdown"
-lineas: 759
+lineas: 761
 aliases: ["docs/CHAT_UI_GENERATIVA.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/CHAT_UI_GENERATIVA.md
 
-> Documento · capa [[Capa Documentación]] · 759 líneas · `docs/CHAT_UI_GENERATIVA.md`
+> Documento · capa [[Capa Documentación]] · 761 líneas · `docs/CHAT_UI_GENERATIVA.md`
 
 ## De qué trata
 
@@ -39,6 +39,7 @@ Chat con interfaz generativa: especificación v1 (kblocks/1) — - \*\*Fecha:\*\
 - [[engine.explain.js]]
 - [[engine.genui.js]]
 - [[engine.genui_charts.js]]
+- [[engine.genui_progress.js]]
 - [[engine.genui_shapes.js]]
 - [[engine.geo_coords.js]]
 - [[engine.guide.js]]

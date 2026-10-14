@@ -9,10 +9,12 @@ desde V2 (alcance ≥1 % y ≥10 %, Σ impacto, rango sistémico por Σ — PROP
 A pedido (y precalentado en segundo plano tras publicar, core/hotviews/derived.prewarm):
   · NRS = LA fórmula (core.world.nrs_terms → client_nrs) con sus 5 términos, para TODAS las empresas a la vez
     (~10 ms; antes 870 ms con una consulta por empresa). Se recalcula solo si cambian los fundamentales en vivo
-    (core.live_fundamentals.version(): el margen real entra en la fórmula; el precio NO);
+    (core.live_fundamentals.version(): el margen real entra en la fórmula; el precio NO). Si el vector todavía no
+    está, la ficha calcula SOLO el NRS de su empresa (misma función, mismo número: E1.2, la primera ficha tras una
+    generación nueva no espera a las 5.000);
   · estructura (concentración HHI, países de proveedores, capitalización aguas abajo en riesgo Ψᵀc = DownCap,
-    fuentes de riesgo, comparables) = matrix.tensor.structure sobre el modelo de ESTA generación y las caps
-    vigentes (clave caps_as_of).
+    fuentes de riesgo, comparables) = matrix.tensor.structure sobre el modelo DISPERSO de ESTA generación y las
+    caps vigentes (clave caps_as_of).
 """
 import hashlib
 import json
@@ -47,8 +49,16 @@ def _pv():
 
 
 class CardView:
-    __slots__ = ('generation', 'graph_version', 'source', 'g', 'cards', 'n', 'build_ms', 'content_sha', '_nrs',
+    __slots__ = ('generation', 'graph_version', 'source', 'g', 'cards', 'n', 'build_ms', '_sha', '_nrs',
                  '_struct', '_lock', 'by_sum_rank')
+
+    @property
+    def content_sha(self):
+        """Huella del contenido de las tarjetas: se calcula la PRIMERA vez que alguien la pide (el 🩺 / status), no al
+        construir (E1.2: ~100 ms a 5.000 empresas fuera del camino de la primera tarjeta). Mismo valor que antes."""
+        if self._sha is None:               # sin candado: dos hilos a la vez calculan el MISMO valor (no frena fichas)
+            self._sha = hashlib.sha256(json.dumps(self.cards, sort_keys=True, default=str).encode()).hexdigest()
+        return self._sha
 
     # ── NRS (vector completo, una vez por versión de los fundamentales en vivo) ──
     def nrs_all(self):
@@ -76,6 +86,25 @@ class CardView:
     def nrs(self, oid):
         t = self.nrs_all().get(oid)
         return None if t is None else t['total']
+
+    def _nrs_terms_one(self, oid):
+        """(términos del NRS de `oid`, versión de fundamentales): del vector si ya está al día; si no, SOLO esta empresa
+        con la misma función (la primera tarjeta tras una generación no espera las 5.000; el vector lo arma el
+        prewarm). Mismo número: nrs_terms de una empresa no depende de las demás."""
+        from core import live_fundamentals as lf
+        fv = lf.version()
+        cur = self._nrs
+        if cur is not None and cur[0] == fv:
+            return cur[1].get(oid), fv
+        gv = self.g.views['graph']
+        n = gv.by_id.get(oid)
+        if n is None:
+            return None, fv
+        from core import world
+        try:
+            return world.nrs_terms(n, gv.flow_degree.get(oid, 0)), fv
+        except Exception:  # noqa: BLE001
+            return None, fv
 
     def nrs_version(self):
         cur = self._nrs
@@ -138,10 +167,10 @@ class CardView:
                     'supplies': (tx['supplies_en'] if en else tx['supplies_es']) or tx['supplies_es'] or tx['supplies_en'],
                     'lang': 'en' if en else 'es'})
         if nrs:
-            t = self.nrs_all().get(oid)
+            t, fv = self._nrs_terms_one(oid)
             out['nrs'] = None if t is None else {'value': t['total'], 'terms': {k: t[k] for k in (
                 'geo', 'chain', 'market', 'fundamental', 'concentration')}, 'degree': t['degree'],
-                'fund_version': self.nrs_version()}
+                'fund_version': fv}
         if structure:
             try:
                 out['structure'] = self.structure(oid)
@@ -161,6 +190,7 @@ def build(g):
     flow = set(vocab.flow_relation_types())
     rel_t = set(RELATED_TYPES)
     sup, cus, rel = {}, {}, {}
+    rclass = {}                                    # tipo → clase (9 tipos; antes una llamada por vínculo)
 
     def put(d, a, b, e):
         cur = d.setdefault(a, {}).get(b)
@@ -180,8 +210,11 @@ def build(g):
             w = float(w) if w is not None else None
         except (TypeError, ValueError):
             w = None
+        cls = rclass.get(typ)
+        if cls is None:
+            cls = rclass[typ] = _rclass(typ)
         mk = (lambda other: {'id': other, 'label': (by_id.get(other) or {}).get('label') or other, 'w': w,
-                             'type': typ, 'class': _rclass(typ), 'conf': conf, 'verified': bool(verified)})
+                             'type': typ, 'class': cls, 'conf': conf, 'verified': bool(verified)})
         if typ in flow:
             put(sup, t, s, mk(s))
             put(cus, s, t, mk(t))
@@ -234,7 +267,7 @@ def build(g):
     v._struct = None
     v._lock = threading.Lock()
     v.by_sum_rank = rank_sum
-    v.content_sha = hashlib.sha256(json.dumps(cards, sort_keys=True, default=str).encode()).hexdigest()
+    v._sha = None                                  # content_sha: a pedido (propiedad)
     v.build_ms = round((time.perf_counter() - t0) * 1000, 1)
     return v
 

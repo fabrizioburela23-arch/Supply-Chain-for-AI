@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-212 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+226 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -66,10 +66,13 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_gates_orders_parity.py]] | 4 | 3 |
 | [[tests.test_gates_resulting_state.py]] | 17 | 14 |
 | [[tests.test_gdelt_events.py]] | 4 | 2 |
-| [[tests.test_genui_browser.py]] | 13 | 15 |
+| [[tests.test_genui_browser.py]] | 13 | 16 |
 | [[tests.test_genui_builders.py]] | 12 | 2 |
-| [[tests.test_genui_client_static.py]] | 9 | 9 |
+| [[tests.test_genui_client_static.py]] | 9 | 10 |
 | [[tests.test_genui_contract.py]] | 11 | 4 |
+| [[tests.test_genui_f3_browser.py]] | 8 | 3 |
+| [[tests.test_genui_f3_client_static.py]] | 8 | 9 |
+| [[tests.test_genui_f3_server.py]] | 12 | 4 |
 | [[tests.test_genui_guardian.py]] | 4 | 2 |
 | [[tests.test_genui_ledger.py]] | 7 | 14 |
 | [[tests.test_genui_render_node.py]] | 4 | 4 |
@@ -123,6 +126,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_live_fundamentals.py]] | 3 | 2 |
 | [[tests.test_live_labels_misc.py]] | 6 | 4 |
 | [[tests.test_localcharts_intents.py]] | 2 | 1 |
+| [[tests.test_lotej_review_fixes.py]] | 13 | 14 |
 | [[tests.test_map_search_reset.py]] | 2 | 0 |
 | [[tests.test_maptime_asof.py]] | 8 | 7 |
 | [[tests.test_market_keys_scope.py]] | 1 | 1 |
@@ -196,6 +200,16 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_risk_robust.py]] | 24 | 7 |
 | [[tests.test_rsi_wilder.py]] | 7 | 6 |
 | [[tests.test_rutas_acceso_decision.py]] | 7 | 12 |
+| [[tests.test_scale_budget.py]] | 4 | 2 |
+| [[tests.test_scale_hot_bench.py]] | 1 | 1 |
+| [[tests.test_scale_hot_paging.py]] | 7 | 7 |
+| [[tests.test_scale_hot_rebuild.py]] | 5 | 5 |
+| [[tests.test_scale_kernel.py]] | 14 | 4 |
+| [[tests.test_scale_search.py]] | 6 | 4 |
+| [[tests.test_scale_search_d1d2.py]] | 8 | 9 |
+| [[tests.test_scale_tensor.py]] | 11 | 6 |
+| [[tests.test_scale_tensor_5k.py]] | 1 | 5 |
+| [[tests.test_scale_tensor_derived.py]] | 5 | 3 |
 | [[tests.test_scenario_kernel.py]] | 5 | 7 |
 | [[tests.test_scenario_live.py]] | 1 | 1 |
 | [[tests.test_scenario_pnl.py]] | 12 | 10 |

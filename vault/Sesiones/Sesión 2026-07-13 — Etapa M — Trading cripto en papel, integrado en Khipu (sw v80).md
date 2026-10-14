@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-13"
-ruta: "docs/ESTADO.md#L2882"
+ruta: "docs/ESTADO.md#L2900"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa M — Trading cripto en papel, integrado en Khipu (2026-07-13, sw v80)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2882 (39 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2900 (39 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

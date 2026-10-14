@@ -1109,6 +1109,11 @@
         },
         "source_url": {
           "$ref": "#/$defs/url"
+        },
+        "product_id": {
+          "description": "Id estable DENTRO de la ficha (prod-001…). Un vínculo puede decir qué producto del cliente necesita el insumo (dependency.product_affected).",
+          "type": "string",
+          "pattern": "^prod-[0-9]{3}$"
         }
       }
     },
@@ -1220,6 +1225,11 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "facility_id": {
+          "description": "Id estable DENTRO de la ficha (fac-001…). Un vínculo puede apuntar a esta planta en dependency.supplier_facility / customer_facility.",
+          "type": "string",
+          "pattern": "^fac-[0-9]{3}$"
         }
       }
     },
@@ -1720,6 +1730,41 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 120
+            },
+            "supplier_facility": {
+              "$ref": "#/$defs/facility_ref"
+            },
+            "customer_facility": {
+              "$ref": "#/$defs/facility_ref"
+            },
+            "component": {
+              "description": "La pieza/material EXACTO dentro del producto («HBM3E», «sustrato ABF», «electrolito LiPF6»). Más fino que relation.product.",
+              "type": "string",
+              "maxLength": 120
+            },
+            "product_affected": {
+              "description": "Qué producto del CLIENTE necesita este insumo: product_id de su ficha o nombre («H100», «Model 3»).",
+              "type": "string",
+              "maxLength": 120
+            },
+            "bom_share_pct": {
+              "description": "% del costo (lista de materiales) del producto afectado que representa este insumo. Solo si una fuente lo dice.",
+              "$ref": "#/$defs/f_share_pct"
+            },
+            "tier": {
+              "description": "Nivel en la cadena visto desde el cliente final: 1 = le vende directo, 2 = proveedor del proveedor, 3 = más atrás.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "alternatives": {
+              "description": "Proveedores alternativos calificados HOY (nombres), si la fuente los nombra. Lista vacía = no se conocen.",
+              "type": "array",
+              "maxItems": 10,
+              "items": {
+                "type": "string",
+                "maxLength": 160
+              }
             }
           }
         },
@@ -2182,6 +2227,57 @@
         "unit"
       ],
       "unevaluatedProperties": false
+    },
+    "facility_ref": {
+      "description": "UNA planta concreta. Si es de ESTA ficha: facility_id. Si es de la contraparte: name + country (+ city). Permite «el 3 nm sale solo de Hsinchu».",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "facility_id": {
+          "type": "string",
+          "pattern": "^fac-[0-9]{3}$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "country": {
+          "$ref": "#/$defs/country"
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "share_of_flow_pct": {
+          "description": "% de ESTE flujo que sale de (o entra a) esa planta. 100 = toda la relación depende de esa planta.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "source_url": {
+          "$ref": "#/$defs/url"
+        },
+        "as_of": {
+          "$ref": "#/$defs/date_partial"
+        },
+        "quote": {
+          "type": "string",
+          "maxLength": 500
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "facility_id"
+          ]
+        },
+        {
+          "required": [
+            "name",
+            "country"
+          ]
+        }
+      ]
     }
   },
   "$comment": "Claves PROHIBIDAS en cualquier nivel (las trae el servidor en vivo o las calcula Khipus): price, market_cap, mktcap, mktcap_b, enterprise_value, ev, pe, pe_ratio, volume, fx_rate, shares_outstanding (cotizadas), valuation_in_talks, nrs, flow_degree, impact. additionalProperties:false las rechaza."

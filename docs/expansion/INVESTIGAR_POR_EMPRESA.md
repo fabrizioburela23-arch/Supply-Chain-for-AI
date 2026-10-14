@@ -122,6 +122,12 @@ Por CADA vínculo:
 - [ ] 🟡 **% de ingresos** que viene de ese cliente: 10-K "clientes principales" / nota de concentración
 - [ ] 🟢 % de las compras del cliente que cubre este proveedor
 - [ ] 🟢 Valor del contrato y meses que tardaría en reemplazarlo
+- [ ] 🟢 **De qué PLANTA sale** (nombre, país, ciudad y % del flujo que sale de ahí: «el 3 nm sale solo de Hsinchu»)
+  y a qué planta del cliente llega
+- [ ] 🟢 **Qué PIEZA exacta** dentro del producto («HBM3E», «sustrato ABF») y **qué producto del cliente** la necesita
+  («H100»); si una fuente lo dice, % del costo de ese producto
+- [ ] 🟢 **Nivel**: 1 = le vende directo al cliente final · 2 = proveedor del proveedor · 3 = más atrás
+- [ ] 🟢 **Alternativas** calificadas hoy (nombres), si la fuente las menciona
 
 **Regla del 1 al 6**: 6 = único proveedor, sin reemplazo en menos de 1 año · 5 = más de la mitad del insumo · 4 =
 proveedor principal con 1-2 alternativas · 3 = uno de pocos · 2 = uno de varios · 1 = menor.
@@ -141,7 +147,8 @@ los confirmas en 🩺 → Propuestas).
 
 Solo sitios físicos importantes:
 
-- [ ] 🟡 **Nombre, tipo, país, ciudad** 🐢
+- [ ] 🟡 **Nombre, tipo, país, ciudad** 🐢 (cada planta con su id `fac-001`, `fac-002`… para que un vínculo pueda
+  apuntarla)
 - [ ] 🟡 **Capacidad con unidad** (GWh/año, obleas/mes, MW, toneladas/año) 🐢
 - [ ] 🟡 **Estado**: operando / arrancando / en obra / planeada / cerrada, con fecha
 - [ ] 🟢 Coordenadas · % si es una empresa conjunta

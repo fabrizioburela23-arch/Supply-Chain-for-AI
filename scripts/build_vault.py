@@ -129,6 +129,7 @@ REGLAS_CAPA = [
     ('core/options.py', 'cuant'),
     ('core/scenario_engine.py', 'cuant'), ('core/sim_agents.py', 'cuant'), ('core/screener.py', 'cuant'),
     ('core/scenario_pnl.py', 'cuant'), ('scripts/calibrate_kernel.py', 'cuant'),
+    ('scripts/bench_scale.py', 'cuant'), ('scripts/gen_synth_graph.py', 'cuant'),
     ('engine/statematrix.js', 'cuant'), ('engine/hotclient.js', 'cuant'), ('engine/livesim.js', 'cuant'), ('engine/matrixview.js', 'cuant'),
     ('engine/insights.js', 'cuant'), ('engine/riskreport.js', 'cuant'), ('engine/compare.js', 'cuant'),
     ('sim/*', 'cuant'), ('engine/app_preflight.js', 'cuant'),

@@ -25,7 +25,10 @@ un fuzzy flojo; un agente escribiendo en la ontología, no).
 import json
 import re
 import threading
+import time
 import unicodedata
+from array import array
+from bisect import bisect_left
 
 # Paso 8 (INFRA_OPERATIVA §4.7): el índice sale de la vista `graph` de la generación vigente
 # (core/hotviews/hot.graph(): Postgres si existe, el snapshot si no) y se reconstruye cuando cambia la
@@ -39,6 +42,7 @@ UMBRAL_ESCRITURA = 85   # agentes que crean hechos: solo exacto/ticker/alias
 UMBRAL_BUSQUEDA = 60    # búsqueda humana: admite prefijo/fuzzy
 
 _PUNCT = re.compile(r'[^\w\s]', re.UNICODE)
+_NO_ASCII = re.compile(r'[^\x00-\x7f]')
 _WS = re.compile(r'\s+')
 # Sufijos societarios: "NVIDIA Corporation" y "NVIDIA" son la misma empresa.
 _SUFIJOS = (
@@ -48,12 +52,19 @@ _SUFIJOS = (
 )
 
 
+def _sin_marca(m):
+    c = m.group()
+    return '' if unicodedata.category(c) == 'Mn' else c
+
+
 def norm(txt):
     """minúsculas + sin acentos + sin puntuación + espacios colapsados."""
     if not txt:
         return ''
-    s = unicodedata.normalize('NFD', str(txt))
-    s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+    s = str(txt)
+    if not s.isascii():          # ASCII: NFD no cambia nada y no hay marcas (Mn) — mismo resultado, más rápido
+        # quita las marcas (categoría Mn, nunca ASCII) mirando solo los caracteres no ASCII: E1.5, 4× más rápido
+        s = _NO_ASCII.sub(_sin_marca, unicodedata.normalize('NFD', s))
     s = _PUNCT.sub(' ', s.lower())
     return _WS.sub(' ', s).strip()
 
@@ -279,22 +290,194 @@ def resolve(texto, umbral=UMBRAL_BUSQUEDA):
 
     # Prefijo/subcadena SOLO si son inequívocos: dos candidatos = ninguno.
     # Un match ambiguo que se resuelve "a lo que salga" corrompe el grafo.
+    # E1.5: los candidatos salen del índice (prefijos + trigramas) en vez de recorrer todas las etiquetas; los
+    # conjuntos son los mismos que el recorrido lineal sobre por_label + por_label_corto (y los alias de voz).
     if len(n) >= 4:
-        claves = list(idx['por_label'].items()) + list(idx['por_label_corto'].items())
-        pref = {nid for k, nid in claves if k.startswith(n)}
+        ix = _indice_resolver(idx)
+        pref = {nid for _k, nid in ix['etiquetas'].prefijo(n)}
         if len(pref) == 1:
             return hit(pref.pop(), 70, 'prefijo', n)
-        sub = {nid for k, nid in claves if n in k}
+        sub = {nid for _k, nid in ix['etiquetas'].contiene(n)}
         if len(sub) == 1:
             return hit(sub.pop(), 60, 'subcadena', n)
         # prefijo de un alias de voz ('taiwan semi' → 'taiwan semiconductor' → TSMC), solo si no hubo otro
         # candidato y es inequívoco — mismo paso 5 que engine/resolve.js
         if voz and not pref and not sub:
-            vp = {nid for k, nid in voz.items() if k.startswith(n)}
+            vp = {nid for _k, nid in ix['voz'].prefijo(n)}
             if len(vp) == 1:
                 return hit(vp.pop(), 70, 'voice_prefijo', n)
 
     return None
+
+
+# ── E1.5 (docs/expansion/EXPANSION_5K.md): búsqueda por índice ───────────────────────────────────────────
+# A 5k empresas el recorrido lineal (difuso de resolve + search_companies del MCP) pasaba de 50 a 224 ms. Por
+# generación del grafo se arma UNA vez (perezoso: en la primera búsqueda que lo necesita) un índice de PREFIJOS
+# (claves ordenadas + bisect) y de TRIGRAMAS (subcadena: se verifica con `in` solo la lista del trigrama más raro
+# de la consulta) sobre id/etiqueta/ticker/alias/alias de voz, más la descripción normalizada de cada nodo. El
+# índice solo ELIGE candidatos: el puntaje es la MISMA escalera de antes, así que el resultado es idéntico al
+# recorrido lineal (tests/test_scale_search.py lo compara en 200 consultas, a 937 y a 5k).
+_LOCK_BUSQ = threading.Lock()
+_DESC_KEYS = ('role_en', 'supplies_en', 'role', 'supplies')
+
+
+def _trigramas(s):
+    return {s[i:i + 3] for i in range(len(s) - 2)}
+
+
+class _Claves:
+    """Cadenas normalizadas → cargas (ids o posiciones). `prefijo(n)`/`contiene(n)` devuelven [(clave, carga)] de las
+    claves que empiezan por n / contienen n — exactamente las que daría recorrerlas todas."""
+    __slots__ = ('claves', 'carga', 'tri')
+
+    def __init__(self, pares, trigramas=True):
+        por = {}
+        for k, v in pares:
+            if k:
+                por.setdefault(k, []).append(v)
+        self.claves = sorted(por)
+        self.carga = [tuple(por[k]) for k in self.claves]
+        self.tri = None
+        if trigramas:
+            tri = {}
+            for i, k in enumerate(self.claves):
+                for g in _trigramas(k):
+                    lst = tri.get(g)
+                    if lst is None:
+                        tri[g] = lst = array('I')
+                    lst.append(i)
+            self.tri = tri
+
+    def _salida(self, posiciones):
+        cl, ca = self.claves, self.carga
+        return [(cl[i], v) for i in posiciones for v in ca[i]]
+
+    def prefijo(self, n):
+        cl = self.claves
+        i = j = bisect_left(cl, n)       # las claves con prefijo n son un tramo contiguo desde bisect_left(n)
+        while j < len(cl) and cl[j].startswith(n):
+            j += 1
+        return self._salida(range(i, j))
+
+    def contiene(self, n):
+        cl = self.claves
+        if self.tri is None or len(n) < 3:
+            return self._salida(i for i, k in enumerate(cl) if n in k)
+        rara = None
+        for g in _trigramas(n):          # toda clave que contiene n contiene CADA trigrama de n
+            p = self.tri.get(g)
+            if p is None:
+                return []
+            if rara is None or len(p) < len(rara):
+                rara = p
+        return self._salida(i for i in rara if n in cl[i])
+
+
+def _indice_resolver(idx):
+    """La parte del índice que usa resolve(): etiquetas (+ sin sufijo) y alias de voz. Una vez por índice."""
+    ix = idx.get('_ix_resolver')
+    if ix is not None:
+        return ix
+    with _LOCK_BUSQ:
+        ix = idx.get('_ix_resolver')
+        if ix is None:
+            ix = {'etiquetas': _Claves(list(idx['por_label'].items()) + list(idx['por_label_corto'].items())),
+                  'voz': _Claves((idx.get('por_voz') or {}).items(), trigramas=False)}
+            idx['_ix_resolver'] = ix
+        return ix
+
+
+def _indice_busqueda(idx):
+    """La parte del índice de search_scores(): campos normalizados por nodo + prefijos/trigramas + alias."""
+    ix = idx.get('_ix_busqueda')
+    if ix is not None:
+        return ix
+    with _LOCK_BUSQ:
+        ix = idx.get('_ix_busqueda')
+        if ix is not None:
+            return ix
+        t0 = time.perf_counter()
+        nodos = idx['nodos']
+        ids = tuple(nodos)
+        lab = tuple(norm(n.get('label') or '') for n in nodos.values())
+        nidn = tuple(norm(i) for i in ids)
+        sym = tuple((n.get('mkt') or '').upper() for n in nodos.values())
+        desc = tuple(norm(' '.join(str(n.get(k) or '') for k in _DESC_KEYS)) for n in nodos.values())
+        por_sym = {}
+        for i, s in enumerate(sym):
+            if s:
+                por_sym.setdefault(s, []).append(i)
+        ix = {'ids': ids, 'lab': lab, 'nidn': nidn, 'sym': sym, 'desc': desc, 'por_sym': por_sym,
+              'lab_ix': _Claves((lab[i], i) for i in range(len(ids))),
+              'nid_ix': _Claves(((nidn[i], i) for i in range(len(ids))), trigramas=False),
+              'alias_ix': _Claves(idx['por_alias'].items(), trigramas=False)}
+        ix['ms'] = round((time.perf_counter() - t0) * 1000, 1)
+        idx['_ix_busqueda'] = ix
+        return ix
+
+
+def _puntaje_nodo(n, up, rx, lab, nidn, sym, desc):
+    """LA escalera por nodo de search_companies (la de siempre): ticker 98 · etiqueta 95 · prefijo 75 · prefijo del
+    id 72 · palabra 66 · subcadena 60 · descripción 40. → (puntaje, método) o None."""
+    if sym and sym == up:
+        return 98, 'ticker'
+    if lab == n:
+        return 95, 'label'
+    if lab.startswith(n):
+        return 75, 'prefix'
+    if nidn.startswith(n):
+        return 72, 'id_prefix'
+    if len(n) >= 3 and rx.search(lab):
+        return 66, 'word'
+    if len(n) >= 3 and n in lab:
+        return 60, 'substring'
+    if len(n) >= 4 and n in desc:
+        return 40, 'description'
+    return None
+
+
+def search_scores(query):
+    """Búsqueda de empresas (MCP search_companies): {id: (puntaje, método)} con la escalera de siempre —
+    resolve() con el umbral de búsqueda → alias exacto 92 / prefijo de alias 78 → la escalera por nodo — pero con
+    candidatos del índice de la generación vigente (sin recorrer todos los nodos). Ante empate gana lo anterior."""
+    q = str(query or '').strip()
+    n = norm(q)
+    if not n:
+        return {}
+    idx = get_index()
+    nodos = idx['nodos']
+    cands = {}
+
+    def add(nid, score, method):
+        if nid in nodos and score > cands.get(nid, (0, ''))[0]:
+            cands[nid] = (score, method)
+
+    top = resolve(q[:120], umbral=UMBRAL_BUSQUEDA)
+    if top:
+        add(top['id'], top['score'], top['method'])
+    ix = _indice_busqueda(idx)
+    a = idx['por_alias'].get(n)
+    if a is not None:
+        add(a, 92, 'alias')
+    if len(n) >= 3:
+        for k, nid in ix['alias_ix'].prefijo(n):
+            if k != n:
+                add(nid, 78, 'alias_prefix')
+    up = q.upper()
+    pos = set(ix['por_sym'].get(up, ()))
+    pos.update(i for _k, i in ix['lab_ix'].prefijo(n))
+    pos.update(i for _k, i in ix['nid_ix'].prefijo(n))
+    if len(n) >= 3:
+        pos.update(i for _k, i in ix['lab_ix'].contiene(n))
+    if len(n) >= 4:
+        pos.update(i for i, d in enumerate(ix['desc']) if n in d)
+    rx = re.compile(r'(^|\s)' + re.escape(n)) if len(n) >= 3 else None
+    ids, lab, nidn, sym, desc = ix['ids'], ix['lab'], ix['nidn'], ix['sym'], ix['desc']
+    for i in pos:
+        r = _puntaje_nodo(n, up, rx, lab[i], nidn[i], sym[i], desc[i])
+        if r is not None:
+            add(ids[i], r[0], r[1])
+    return cands
 
 
 def resolve_many(textos, umbral=UMBRAL_BUSQUEDA):

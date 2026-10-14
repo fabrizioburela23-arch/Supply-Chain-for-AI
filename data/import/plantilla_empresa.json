@@ -397,7 +397,8 @@
         "confidence": "<0 a 1>"
       },
       "launched": "<AAAA>",
-      "source_url": "<enlace https:// a la fuente>"
+      "source_url": "<enlace https:// a la fuente>",
+      "product_id": "<prod-001, prod-002…>"
     }
   ],
   "facilities": [
@@ -418,7 +419,8 @@
       "owner_share_pct": "<0-100 si es joint venture>",
       "source_url": "<enlace https:// a la fuente>",
       "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
-      "confidence": "<0 a 1>"
+      "confidence": "<0 a 1>",
+      "facility_id": "<fac-001, fac-002… (id estable dentro de la ficha)>"
     }
   ],
   "financials": {
@@ -837,7 +839,34 @@
           "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
           "period": "point"
         },
-        "substitutability_months": "<meses para reemplazar al proveedor>"
+        "substitutability_months": "<meses para reemplazar al proveedor>",
+        "supplier_facility": {
+          "name": "<planta del proveedor de donde sale ESTE flujo (o facility_id si es de esta ficha)>",
+          "country": "<ISO-2>",
+          "city": "<ciudad>",
+          "share_of_flow_pct": "<% del flujo que sale de esa planta>",
+          "source_url": "<enlace>",
+          "as_of": "<AAAA-MM-DD>",
+          "quote": "<frase textual>"
+        },
+        "customer_facility": {
+          "name": "<planta del cliente que recibe el flujo>",
+          "country": "<ISO-2>"
+        },
+        "component": "<pieza o material exacto dentro del producto («HBM3E», «electrolito LiPF6»)>",
+        "product_affected": "<producto del cliente que lo necesita («H100», «Model 3»)>",
+        "bom_share_pct": {
+          "value": "<% del costo del producto afectado: 0-100>",
+          "source_url": "<enlace>",
+          "source_kind": "<primary | press | trade | corporate>",
+          "as_of": "<AAAA-MM-DD>",
+          "retrieved_at": "<AAAA-MM-DD>",
+          "confidence": "<0 a 1>"
+        },
+        "tier": "<1 = vende directo al cliente final, 2 = proveedor del proveedor, 3 = más atrás>",
+        "alternatives": [
+          "<proveedor alternativo calificado hoy, si la fuente lo nombra>"
+        ]
       },
       "evidence": [
         {

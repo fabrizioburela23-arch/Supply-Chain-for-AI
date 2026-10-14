@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/tools.py"
 lenguaje: "python"
-lineas: 1877
+lineas: 1847
 aliases: ["mcp_server/tools.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/tools.py
 
-> Módulo · capa [[Capa MCP y API]] · 1.877 líneas · `mcp_server/tools.py`
+> Módulo · capa [[Capa MCP y API]] · 1.847 líneas · `mcp_server/tools.py`
 
 ## Para qué sirve
 
@@ -30,32 +30,32 @@ catálogo de herramientas MCP de Khipus.
 - `graph_version()` — La generación del grafo que usan las herramientas MCP (tests/test_ops_single_source.py). _(línea 305)_
 - `relation_class(rel_type)` _(línea 368)_
 - `flow_types()` — Tipos de FLUJO (= proveedor/cliente), leídos del vocabulario. _(línea 372)_
-- `t_search_companies(ctx, query, limit=…)` _(línea 589)_
-- `t_get_company(ctx, id_or_ticker, include_live=…)` _(línea 609)_
-- `t_get_supply_chain(ctx, id, direction=…, depth=…, min_weight=…, limit=…, include_partners=…)` _(línea 747)_
-- `t_get_ontology_object(ctx, id, events_limit=…, as_of=…, known_at=…)` _(línea 848)_
-- `t_get_research(ctx, entity, limit=…)` _(línea 989)_
-- `t_get_claim_evidence(ctx, claim_id)` _(línea 1051)_
-- `t_get_research_job(ctx, job_id)` _(línea 1125)_
-- `t_get_risk_report(ctx, positions, horizon_days=…)` _(línea 1173)_
-- `t_get_option_greeks(ctx, options)` _(línea 1198)_
-- `t_get_world_events(ctx, layers=…, window=…, limit=…)` _(línea 1224)_
-- `t_get_committee_memo(ctx, entity=…, memo_id=…)` _(línea 1286)_
-- `t_get_conclusions_board(ctx, limit=…, side=…)` _(línea 1322)_
-- `t_get_research_health(ctx, fresh=…)` _(línea 1359)_
-- `t_get_track_record(ctx, agent_type=…)` _(línea 1370)_
-- `t_replay_decision(ctx, decision_id)` _(línea 1394)_
-- `t_run_research(ctx, entity, depth=…, only_missing=…)` _(línea 1426)_
-- `t_run_committee(ctx, entity, client_id=…)` _(línea 1529)_
-- `t_get_account(ctx)` _(línea 1666)_
-- `t_get_positions(ctx)` _(línea 1682)_
-- `t_preview_order(ctx, symbol, side, rationale, notional=…, qty=…, order_type=…, limit_price=…)` _(línea 1716)_
-- `t_submit_order(ctx, preview_id)` _(línea 1751)_
-- `t_list_orders(ctx, status=…, limit=…)` _(línea 1787)_
-- `t_cancel_order(ctx, order_id)` _(línea 1802)_
-- `t_get_order_status(ctx, order_id)` _(línea 1825)_
-- `catalog()` — Para la UI / docs: todas las herramientas con su alcance. _(línea 1845)_
-- `reset_caches()` _(línea 1850)_
+- `t_search_companies(ctx, query, limit=…)` _(línea 559)_
+- `t_get_company(ctx, id_or_ticker, include_live=…)` _(línea 579)_
+- `t_get_supply_chain(ctx, id, direction=…, depth=…, min_weight=…, limit=…, include_partners=…)` _(línea 717)_
+- `t_get_ontology_object(ctx, id, events_limit=…, as_of=…, known_at=…)` _(línea 818)_
+- `t_get_research(ctx, entity, limit=…)` _(línea 959)_
+- `t_get_claim_evidence(ctx, claim_id)` _(línea 1021)_
+- `t_get_research_job(ctx, job_id)` _(línea 1095)_
+- `t_get_risk_report(ctx, positions, horizon_days=…)` _(línea 1143)_
+- `t_get_option_greeks(ctx, options)` _(línea 1168)_
+- `t_get_world_events(ctx, layers=…, window=…, limit=…)` _(línea 1194)_
+- `t_get_committee_memo(ctx, entity=…, memo_id=…)` _(línea 1256)_
+- `t_get_conclusions_board(ctx, limit=…, side=…)` _(línea 1292)_
+- `t_get_research_health(ctx, fresh=…)` _(línea 1329)_
+- `t_get_track_record(ctx, agent_type=…)` _(línea 1340)_
+- `t_replay_decision(ctx, decision_id)` _(línea 1364)_
+- `t_run_research(ctx, entity, depth=…, only_missing=…)` _(línea 1396)_
+- `t_run_committee(ctx, entity, client_id=…)` _(línea 1499)_
+- `t_get_account(ctx)` _(línea 1636)_
+- `t_get_positions(ctx)` _(línea 1652)_
+- `t_preview_order(ctx, symbol, side, rationale, notional=…, qty=…, order_type=…, limit_price=…)` _(línea 1686)_
+- `t_submit_order(ctx, preview_id)` _(línea 1721)_
+- `t_list_orders(ctx, status=…, limit=…)` _(línea 1757)_
+- `t_cancel_order(ctx, order_id)` _(línea 1772)_
+- `t_get_order_status(ctx, order_id)` _(línea 1795)_
+- `catalog()` — Para la UI / docs: todas las herramientas con su alcance. _(línea 1815)_
+- `reset_caches()` _(línea 1820)_
 
 **Internas** (empiezan con `_`): `_now_iso`, `_coerce`, `_bounded`, `_snapshot`, `_private_valuations`, `_link_trust`, `_resolve`, `_resolve_or_fail`, `_listed`, `_brief`, `_search`, `_edges`, `_distinct_pairs`, `_neighbor`, `_nrs`, `_live_profile`, `_margin_pct`, `_need_db`, `_iso`, `_with_genesis`, `_ontology_object_at`, `_claim_brief`, `_unsupported_money`, `_deferred_next`, `_job_coverage`, `_module`, `_trim_memo`, `_run_committee_async`, `_brokerage`, `_trade_ctx`, `_session`, `_mode_badge`, `_client_public`, `_order_public`, `_own_order`, `_prefer_canonical`, `_entity_ids_for`
 
@@ -67,7 +67,7 @@ Define **24 herramientas MCP** → [[API herramientas MCP]]
 - [[core.__init__.py]] — importa `card`, `geo`, `hot`
 - [[core.ai.py]] — importa `_ai_configured`
 - [[core.company_data.py]] — importa `get_live_profile`
-- [[core.entities.py]] — importa `entity_ids_for`, `get_index`, `norm`, `resolve`
+- [[core.entities.py]] — importa `entity_ids_for`, `resolve`, `search_scores`
 - [[core.gpr.py]] — importa `(dinámico: core.gpr)`
 - [[core.identity.py]] — importa `identity`
 - [[core.numbers.py]] — importa `evidence_numbers`, `unsupported_money`
@@ -101,8 +101,9 @@ Define **24 herramientas MCP** → [[API herramientas MCP]]
 - [[mcp_server.api.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.protocol.py]] — lo importa
+- [[scripts.bench_scale.py]] — lo importa
 
-_Además lo importan 23 pruebas (lista abajo)._
+_Además lo importan 26 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -115,6 +116,8 @@ _Además lo importan 23 pruebas (lista abajo)._
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_context_engine.py]]
 - [[tests.test_genui_contract.py]]
+- [[tests.test_genui_f3_browser.py]]
+- [[tests.test_genui_f3_server.py]]
 - [[tests.test_genui_ledger.py]]
 - [[tests.test_genui_rivals.py]]
 - [[tests.test_hot_views_parity.py]]
@@ -134,4 +137,5 @@ _Además lo importan 23 pruebas (lista abajo)._
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_replay_determinism.py]]
+- [[tests.test_scale_search.py]]
 - [[tests.test_tensor.py]]

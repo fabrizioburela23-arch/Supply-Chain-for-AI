@@ -60,8 +60,10 @@ _Nada interno._
 - [[research.agent_skills.py]] — lo importa
 - [[research.context.py]] — lo importa
 - [[research.router.py]] — lo importa
+- [[scripts.bench_scale.py]] — lo importa
 - [[scripts.build_shapes.py]] — lo importa
 - [[scripts.calibrate_kernel.py]] — lo importa
+- [[scripts.gen_synth_graph.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `calculate_correlation` → [[API herramientas MCP]]
 - herramienta MCP `find_anomalies` → [[API herramientas MCP]]
@@ -75,7 +77,7 @@ _Nada interno._
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 42 pruebas (lista abajo)._
+_Además lo importan 52 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -90,6 +92,7 @@ _Además lo importan 42 pruebas (lista abajo)._
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_builders.py]]
 - [[tests.test_genui_contract.py]]
+- [[tests.test_genui_f3_server.py]]
 - [[tests.test_genui_guardian.py]]
 - [[tests.test_genui_ledger.py]]
 - [[tests.test_genui_review_fixes.py]]
@@ -108,6 +111,7 @@ _Además lo importan 42 pruebas (lista abajo)._
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_graph_version.py]]
@@ -117,6 +121,14 @@ _Además lo importan 42 pruebas (lista abajo)._
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]
+- [[tests.test_scale_hot_paging.py]]
+- [[tests.test_scale_hot_rebuild.py]]
+- [[tests.test_scale_kernel.py]]
+- [[tests.test_scale_search.py]]
+- [[tests.test_scale_search_d1d2.py]]
+- [[tests.test_scale_tensor.py]]
+- [[tests.test_scale_tensor_5k.py]]
+- [[tests.test_scale_tensor_derived.py]]
 - [[tests.test_scenario_kernel.py]]
 - [[tests.test_scenario_pnl.py]]
 - [[tests.test_scenario_pnl_browser.py]]

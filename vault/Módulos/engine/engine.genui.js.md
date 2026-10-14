@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/genui.js"
 lenguaje: "javascript"
-lineas: 1409
+lineas: 1413
 aliases: ["engine/genui.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/genui.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.409 líneas · `engine/genui.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.413 líneas · `engine/genui.js`
 
 ## Para qué sirve
 
@@ -41,6 +41,7 @@ Se carga en [[app.html]] en la posición **86 de 98** (línea 3145), después de
 - [[app.html]] — lo carga con `<script>` (posición 86)
 - [[engine.cockpit.js]] — usa `KhipuGenUI`
 - [[engine.genui_charts.js]] — usa `KhipuGenUI`
+- [[engine.genui_progress.js]] — usa `KhipuGenUI`
 - [[engine.genui_shapes.js]] — usa `KhipuGenUI`
 - [[engine.khipu_chat.js]] — usa `KhipuGenUI`
 
@@ -54,6 +55,7 @@ Se carga en [[app.html]] en la posición **86 de 98** (línea 3145), después de
 
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_client_static.py]]
+- [[tests.test_genui_f3_client_static.py]]
 - [[tests.test_genui_render_node.py]]
 - [[tests.test_genui_review_fixes.py]]
 

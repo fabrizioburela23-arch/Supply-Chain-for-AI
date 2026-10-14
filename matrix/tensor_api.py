@@ -4,7 +4,6 @@ Sin base de datos (lee el snapshot canónico): siempre disponible. Solo LECTURA 
 `/suggest` nunca escribe vínculos — devuelve candidatos para que una persona los revise.
 """
 import logging
-import os
 import threading
 
 from flask import Blueprint, jsonify, request
@@ -95,11 +94,13 @@ def tensor_suggest():
 @tensor_bp.route('/api/tensor/eval')
 @rate_limit(30, 3600)
 def tensor_eval():
-    """Calidad medida de la auto-conexión (vínculos reales ocultos). Se calcula 1 vez por snapshot."""
+    """Calidad medida de la auto-conexión (vínculos reales ocultos). Se calcula 1 vez por GENERACIÓN del grafo (antes
+    leía la fecha de T.SNAPSHOT, que ya no existe desde el paso 8: la ruta respondía 500)."""
     T = _T()
     try:
-        key = os.path.getmtime(T.SNAPSHOT)
-    except OSError:
+        from core.hotviews import hot
+        key = getattr(hot.graph(), 'generation', None)
+    except Exception:  # noqa: BLE001
         key = None
     with _EVAL_LOCK:
         if _EVAL['key'] != key or _EVAL['data'] is None:

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "matrix/tensor.py"
 lenguaje: "python"
-lineas: 528
+lineas: 846
 aliases: ["matrix/tensor.py"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # matrix/tensor.py
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 528 líneas · `matrix/tensor.py`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 846 líneas · `matrix/tensor.py`
 
 ## Para qué sirve
 
@@ -18,17 +18,19 @@ ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
 
 ## API pública
 
-- clase `Model` — Tensores del grafo ya calculados (inmutable; se reemplaza entero al cambiar la entrada). _(línea 195)_
-- `model(force=…, snap=…, view=…)` — Modelo vigente (caché). Se reconstruye si cambia la GENERACIÓN del grafo (paso 8: antes, la fecha del archivo del snapshot) o la versión de … _(línea 306)_
-- `graph_version()` — La generación del grafo del modelo vigente (tests/test_ops_single_source.py). _(línea 326)_
-- `structure(nid, m=…, top=…)` — Ficha estructural de una empresa (contrato estable; solo se agregan campos). _(línea 342)_
-- `peers(nid, m=…, n=…)` — Comparables: mismos proveedores/clientes (coseno del perfil) + rasgos (X) + misma categoría. _(línea 393)_
-- `ranking(m=…, by=…, limit=…)` _(línea 409)_
-- `suggest_links(nid=…, new=…, m=…, n=…, exclude_existing=…)` — Proveedores y clientes PROBABLES de una empresa (existente o nueva). Solo propuestas. _(línea 445)_
-- `evaluate(frac=…, seed=…, k=…, snap=…, max_cases=…)` — Calidad REAL de la auto-conexión: se ocultan vínculos de flujo reales y se mide si vuelven a aparecer entre las k primeras propuestas … _(línea 492)_
-- `status()` _(línea 522)_
+- clase `SparsePsi` — Ψ dispersa (n×n). Se indexa como la densa de antes: psi[j, s] → número, psi[:, s] / psi[j] → vector denso (copia). `col_nz(s)` / … _(línea 126)_
+- clase `SparseProfile` — Perfil estructural [A | Aᵀ] (n×2n) disperso y normalizado por fila. `prof @ prof[j]` da el coseno de j con todas (vector denso de n), igual … _(línea 184)_
+- clase `Model` — Tensores del grafo ya calculados (inmutable; se reemplaza entero al cambiar la entrada). _(línea 431)_
+- `model(force=…, snap=…, view=…)` — Modelo vigente (caché). Se reconstruye si cambia la GENERACIÓN del grafo (paso 8: antes, la fecha del archivo del snapshot) o la versión de … _(línea 583)_
+- `graph_version()` — La generación del grafo del modelo vigente (tests/test_ops_single_source.py). _(línea 618)_
+- `structure(nid, m=…, top=…)` — Ficha estructural de una empresa (contrato estable; solo se agregan campos). _(línea 634)_
+- `peers(nid, m=…, n=…)` — Comparables: mismos proveedores/clientes (coseno del perfil) + rasgos (X) + misma categoría. Empates (a 12 decimales), por id. _(línea 687)_
+- `ranking(m=…, by=…, limit=…)` _(línea 704)_
+- `suggest_links(nid=…, new=…, m=…, n=…, exclude_existing=…)` — Proveedores y clientes PROBABLES de una empresa (existente o nueva). Solo propuestas. _(línea 762)_
+- `evaluate(frac=…, seed=…, k=…, snap=…, max_cases=…)` — Calidad REAL de la auto-conexión: se ocultan vínculos de flujo reales y se mide si vuelven a aparecer entre las k primeras propuestas … _(línea 809)_
+- `status()` _(línea 839)_
 
-**Internas** (empiezan con `_`): `_load_snapshot`, `_psi_from_impact`, `_core_for`, `_impact_for`, `_FlowImpact`, `_flow_impact`, `_caps_live`, `_caps_private`, `_country`, `_norm_txt`, `_tokens`, `_conc_label`, `_peer_weights`
+**Internas** (empiezan con `_`): `_round_sig`, `_order`, `_colsum_exact`, `_load_snapshot`, `_psi_sparse`, `_core_for`, `_impact_for`, `_FlowImpact`, `_flow_impact`, `_flow_psi`, `_kernel_semver`, `_impact_is_flow_only`, `_psi_for`, `_caps_live`, `_caps_private`, `_country`, `_norm_txt`, `_tokens`, `_tokens_cached`, `_conc_label`, `_peer_weights`, `_cut_with_ties`
 
 ## Depende de
 
@@ -48,11 +50,12 @@ ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[research.agent_skills.py]] — lo importa
+- [[scripts.bench_scale.py]] — lo importa
 - herramienta MCP `find_similar_entities` → [[API herramientas MCP]]
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_exposure` → [[API herramientas MCP]]
 
-_Además lo importan 9 pruebas (lista abajo)._
+_Además lo importan 13 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -61,8 +64,12 @@ _Además lo importan 9 pruebas (lista abajo)._
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_kernel_reference_figures.py]]
+- [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_scale_search_d1d2.py]]
+- [[tests.test_scale_tensor.py]]
+- [[tests.test_scale_tensor_5k.py]]
 - [[tests.test_tensor.py]]
 - [[tests.test_tensor_autolink.py]]
 

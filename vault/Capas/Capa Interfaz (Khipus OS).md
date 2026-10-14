@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 25
+archivos: 26
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**25 archivos · 27.395 líneas.** Volver al [[00 Mapa de Khipus]].
+**26 archivos · 27.616 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -18,12 +18,12 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[app.html]] — 3.466 líneas
 - [[engine.app_coordinator.js]] — 2.698 líneas · Khipu Core Coordinator
 - [[engine.oswindows.js]] — 1.517 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
-- [[engine.genui.js]] — 1.409 líneas · RESPUESTAS VISUALES del chat (kblocks/1). Contrato, API (window.KhipuGenUI) y reglas: docs/CHAT_UI_GENERATIVA.md §7. Dibuja bloques; NUNCA calcula …
+- [[engine.genui.js]] — 1.413 líneas · RESPUESTAS VISUALES del chat (kblocks/1). Contrato, API (window.KhipuGenUI) y reglas: docs/CHAT_UI_GENERATIVA.md §7. Dibuja bloques; NUNCA calcula …
 - [[engine.graph3d.js]] — 1.216 líneas · Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos como esferas en el espacio, con tamaño por market cap, links de …
 - [[engine.desktop.js]] — 1.161 líneas · ESCRITORIO KHIPU (K1, 2026-10-04)
 - [[engine.universe2d.js]] — 1.048 líneas · Universo 2D: respaldo TOTAL del mapa 3D sin WebGL.
 - [[engine.toast.js]] — 767 líneas · NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que te avise cuando estás comprando con una notificación pop up o …
-- [[engine.genui_charts.js]] — 702 líneas · GRÁFICOS de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §7.2).
+- [[engine.genui_charts.js]] — 721 líneas · GRÁFICOS de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §7.2).
 - [[engine.xray.js]] — 669 líneas · X-RAY DE EMPRESA · "desarmar el alma" (Etapa 4, wow #1) Overlay NEXUS-styled que abre para cualquier nodo: - anatomía (sector, país, precio en vivo, …
 - [[engine.governance.js]] — 538 líneas · 🩺 Sistema → Gobernanza (INFRA_OPERATIVA paso 12; pieza mínima del paso 25). Muestra el RELEASE vigente (reglas y números versionados), «Ratificar …
 - [[engine.explain.js]] — 419 líneas · EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversionista preguntó "¿qué es el NRS y cómo se calcula?" y la app no se lo …
@@ -31,6 +31,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.app_scatter.js]] — 281 líneas · KHIPU FINANCE — Scatter 3D Semántico con Medidores Botón 📊: posiciona empresas en ejes semánticos + panel de medidores interactivo
 - [[engine.guide.js]] — 271 líneas · pestaña "❓ Guía": explica la app en lenguaje simple. Sin jerga técnica. Expone window.initGuiaTab (mismo patrón que initTKGTab). Actualizada …
 - [[engine.genui_shapes.js]] — 237 líneas · FORMAS, IMÁGENES y MINI-MAPA de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §4.6 y §7.2).
+- [[engine.genui_progress.js]] — 198 líneas · RESPUESTAS VISUALES PROGRESIVAS (F3, docs/CHAT_UI_GENERATIVA.md §6): el motor del chat que pinta los bloques provisionales y hace ATERRIZAR la …
 - [[engine.pricehist.js]] — 189 líneas · 🩺 Sistema → «Historia de precios» (BRECHAS bloque 2: la memoria de los números). Muestra cuánta historia guarda Khipus (cierres diarios ajustados, …
 - [[engine.loading.js]] — 159 líneas · Sistema de animaciones de carga por NIVEL DE ESPERA. Pedido de Fabrizio (2026-07-14): "que todo lo que tarde tenga una animación de carga adecuada; …
 - [[engine.mascot.js]] — 136 líneas · MASCOTAS BURBUJA de Khipus OS (2026-10-06)
@@ -44,9 +45,9 @@ tags: ["capa/interfaz", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Datos del catálogo]] | 50 |
-| la usa | [[Capa Chat y agentes]] | 27 |
+| la usa | [[Capa Chat y agentes]] | 28 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 25 |
-| usa a | [[Capa Chat y agentes]] | 23 |
+| usa a | [[Capa Chat y agentes]] | 24 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 20 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 20 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 18 |

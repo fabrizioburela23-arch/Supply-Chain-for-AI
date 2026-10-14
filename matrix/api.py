@@ -35,6 +35,7 @@ from contextlib import contextmanager
 from flask import Blueprint, jsonify, request
 
 from core.http import rate_limit
+from core.pin import require_operator
 
 
 def _kdef(name):
@@ -996,19 +997,43 @@ def matrix_insights_history():
     return jsonify({'available': True, 'count': len(history), 'history': history})
 
 
+METRICS_TOP_CAP = 100000
+
+
+def _metrics_top(payload, top):
+    """E1.7: `?top=N` → `metrics` solo con los N primeros por `chokepoint_rank` (+ `metrics_total` y `top`). El resto
+    del cuerpo, igual. Copia superficial: nunca toca la caché ni la última lectura. Sin `top`, el cuerpo de siempre."""
+    if top is None:
+        return payload
+    m = payload.get('metrics') or {}
+    keep = sorted(m.items(), key=lambda kv: (kv[1].get('chokepoint_rank', 1e18), kv[0]))[:top]
+    return {**payload, 'metrics': dict(keep), 'metrics_total': len(m), 'top': top}
+
+
 @matrix_bp.get('/metrics')
 @rate_limit(60, 600)
 def matrix_metrics():
     """Métricas por nodo (chokepoints, PageRank, ρ). PESADO sin caché (~50 s de
     CPU con el grafo completo): caché por época+as_of, presupuesto de cálculo
     por IP y global, y un solo cálculo a la vez. Para "ahora" (sin as_of), si no
-    hay cupo se sirve la última lectura con stale:true en vez de fallar."""
+    hay cupo se sirve la última lectura con stale:true en vez de fallar.
+    `?top=N` (E1.7, 745 KB a 5k empresas): `metrics` recortado a los N primeros cuellos de botella."""
     scope = _db()
     if scope is None:
         return jsonify({'error': 'DATABASE_URL no configurada'}), 503
     as_of, bad = _as_of_norm(request.args.get('as_of') or None)
     if bad:
         return bad
+    top_n = None
+    raw_top = request.args.get('top')
+    if raw_top not in (None, ''):
+        try:
+            top_n = int(str(raw_top).strip())
+        except (TypeError, ValueError):
+            top_n = -1
+        if not 1 <= top_n <= METRICS_TOP_CAP:
+            return jsonify({'error': f'top inválido (entero de 1 a {METRICS_TOP_CAP})',
+                            'error_en': f'invalid top (integer from 1 to {METRICS_TOP_CAP})', 'param': 'top'}), 400
     from matrix.engine import (build_matrices, compute_metrics, graph_key,
                                spectral_radius)
     slot = as_of or 'now'
@@ -1017,20 +1042,20 @@ def matrix_metrics():
         from core.hotviews.views import impact as _impact_view
         payload = _impact_view.metrics_payload(g.views['graph_core'], g.views['impact'])
         _LAST_METRICS['now'] = payload
-        return _with_view(payload, 'impact', g)
+        return _with_view(_metrics_top(payload, top_n), 'impact', g)
     with scope() as s:
         # Cacheado por VERSIÓN del grafo → un cambio económico invalida las
         # métricas (antes solo TTL 300s → chokepoints/cascada/ρ rancios).
         ck = f'metrics:{graph_key(s)}:{slot}'
     hit = _ttl_get(ck, ttl=METRICS_TTL_S)
     if hit is not None:
-        return _with_view(hit, 'impact', None)
+        return _with_view(_metrics_top(hit, top_n), 'impact', None)
     stale = _LAST_METRICS.get(slot)
 
     def _fallback(resp):
         if stale is not None:
-            return _with_view({**{k: v for k, v in stale.items() if k != 'view'}, 'stale': True}, 'impact', None,
-                              stale=True)
+            return _with_view(_metrics_top({**{k: v for k, v in stale.items() if k != 'view'}, 'stale': True}, top_n),
+                              'impact', None, stale=True)
         return resp
 
     if not _compute_allowed('matrix_metrics_compute', METRICS_COMPUTE_PER_IP, METRICS_COMPUTE_GLOBAL):
@@ -1039,7 +1064,7 @@ def matrix_metrics():
         with _heavy_slot():
             hit = _ttl_get(ck, ttl=METRICS_TTL_S)     # otro hilo pudo calcularlo mientras esperábamos
             if hit is not None:
-                return _with_view(hit, 'impact', None)
+                return _with_view(_metrics_top(hit, top_n), 'impact', None)
             with scope() as s:
                 metrics, factors = compute_metrics(s, as_of=as_of)
                 try:
@@ -1063,7 +1088,7 @@ def matrix_metrics():
     _ttl_set(ck, payload)
     if slot == 'now':
         _LAST_METRICS['now'] = payload
-    return _with_view(payload, 'impact', None)
+    return _with_view(_metrics_top(payload, top_n), 'impact', None)
 
 
 @matrix_bp.get('/factors')
@@ -1193,12 +1218,15 @@ def matrix_factor_fire():
 
 @matrix_bp.get('/parity')
 @rate_limit(10, 600)
+@require_operator
 def matrix_parity():
     """CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre
     AMBOS motores sobre los MISMOS datos y reporta la discrepancia máxima. Se
     usa para correr los dos en paralelo antes de retirar el denso — solo se
     promueve MATRIX_ENGINE=sparse tras un periodo sin discrepancias. `alert`
-    True si la diferencia supera la tolerancia. Params: ?shock=ID&shock=ID&tol=."""
+    True si la diferencia supera la tolerancia. Params: ?shock=ID&shock=ID&tol=.
+    Diagnóstico con PIN de operador; con más de E.DENSE_MAX_NODES nodos NO arma el denso (a 5.000: ~1,5 GB y
+    ~10 s en el único worker) → `dense_refused` con el motivo ES/EN."""
     scope = _db()
     if scope is None:
         return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
@@ -1215,8 +1243,15 @@ def matrix_parity():
         return _bad_param('tol')
     try:
         with _heavy_slot(), scope() as s:     # construye las matrices DENSAS: pesado
-            md, idx, ids = E.build_matrices(s, sparse=False)
-            ms, _, _ = E.build_matrices(s, sparse=True)
+            ms, idx, ids = E.build_matrices(s, sparse=True)
+            if len(idx) > E.DENSE_MAX_NODES:
+                return jsonify({
+                    'available': False, 'code': 'dense_refused', 'nodes': len(idx), 'limit': E.DENSE_MAX_NODES,
+                    'reason': (f'Con {len(idx)} nodos (tope {E.DENSE_MAX_NODES}) no se arman matrices densas: '
+                               'el motor disperso es el único (paridad fijada en tests/test_scale_kernel.py).'),
+                    'reason_en': (f'With {len(idx)} nodes (limit {E.DENSE_MAX_NODES}) dense matrices are not built: '
+                                  'the sparse engine is the only one (parity pinned in tests/test_scale_kernel.py).')})
+            md, _, _ = E.build_matrices(s, sparse=False)
             shock = [x for x in shock if x in idx] or ids[:1]
             imp_d, _ = E.propagate(md, idx, ids, shock)
             imp_s, _ = E.propagate(ms, idx, ids, shock)

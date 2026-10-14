@@ -8,9 +8,12 @@ cabecera `X-Khipu-Graph-Version`. Leer NUNCA reconstruye: si la vista va atrasad
     GET  /api/hot/status
     GET  /api/hot/impact/<id>?severity=0-100&kind=collapse|shock&top=50[&as_of=…&known_at=…]   (paso 23: G(t, κ))
     GET  /api/hot/chokepoints?by=sum|count&limit=25
-    GET  /api/hot/factors
+    GET  /api/hot/factors[?limit=&offset=&fields=id,label,…]   sin parámetros = TODOS (como siempre); con ellos,
+                              una página + total/limit/offset (E1.7: 414 KB a 5k empresas)
     GET  /api/hot/card/<id>?lang=es|en&structure=1   tarjeta V3 (NRS + 5 términos, flujo en pares distintos, estructura)
-    GET  /api/hot/nrs?ids=a,b[&terms=1]              vector NRS (todas sin ids) — LA fórmula, una vez por generación
+    GET  /api/hot/nrs?ids=a,b[&terms=1]              vector NRS (todas sin ids) — LA fórmula, una vez por generación;
+                                                      lote: ids separados por coma (o repetidos), hasta 250
+                                                      (línea de pedido de gunicorn; hotclient parte en 200)
     GET  /api/hot/geo?ids=a,b                        V6 GeoRisk: ≤3 hechos vivos por empresa (versión del mundo)
     GET  /api/hot/quote?symbols=NVDA,TSM             V4 cotización con sello {src, as_of, age_s, live, stale}
     POST /api/hot/scenario   {shocks:[{id, magnitude}]|[ids], factors:'active'|'none'|[ids], direction:'down',
@@ -224,18 +227,68 @@ def hot_chokepoints():
     return envelope('impact', impact.chokepoints_payload(g.views['graph_core'], g.views['impact'], by, int(limit)), g)
 
 
+FACTOR_FIELDS = ('id', 'label', 'severity', 'severity_crisis', 'rationale', 'since', 'updated', 'members',
+                 'members_fragility')
+FACTORS_PAGE_CAP = 1000
+
+
+def _int_arg(key, lo, hi):
+    """(valor, None) · (None, None) si no vino · (None, respuesta 400 bilingüe) si no es un entero en [lo, hi]."""
+    raw = request.args.get(key)
+    if raw in (None, ''):
+        return None, None
+    try:
+        v = int(str(raw).strip())
+    except (TypeError, ValueError):
+        return None, _bad(key, f'parámetro inválido: {key} (entero de {lo} a {hi})',
+                          f'invalid parameter: {key} (integer from {lo} to {hi})')
+    if v < lo or v > hi:
+        return None, _bad(key, f'parámetro fuera de rango: {key} (de {lo} a {hi})',
+                          f'parameter out of range: {key} (from {lo} to {hi})')
+    return v, None
+
+
 @hot_bp.get('/factors')
 @rate_limit(240, 60)
 def hot_factors():
+    """Sin parámetros: la lista COMPLETA (forma de siempre). `limit`/`offset` (E1.7): una página, en el orden de la
+    vista, con `total`/`limit`/`offset`; `fields`: solo esos campos de cada factor (`id` siempre va)."""
     from core.hotviews.views import graph_core
     g = _gen()
     if g is None:
         return _warming()
     core = g.views['graph_core']
-    data = {'factors': graph_core.factors_payload(core), 'count': len(core.factors),
+    limit, bad = _int_arg('limit', 1, FACTORS_PAGE_CAP)
+    if bad:
+        return bad
+    offset, bad = _int_arg('offset', 0, 10 ** 7)
+    if bad:
+        return bad
+    fields = None
+    if request.args.get('fields'):
+        fields = _ids_arg(request.args.get('fields'), cap=50)
+        unknown = [f for f in fields if f not in FACTOR_FIELDS]
+        if unknown or not fields:
+            return _bad('fields', f"fields inválido: {', '.join(unknown) or '—'} (usa {', '.join(FACTOR_FIELDS)})",
+                        f"invalid fields: {', '.join(unknown) or '—'} (use {', '.join(FACTOR_FIELDS)})")
+    paged = limit is not None or offset is not None
+    items = graph_core.factors_payload(core)          # la MISMA lista (y orden) de siempre; la página es un corte
+    if paged:
+        off = offset or 0
+        items = items[off:off + limit] if limit is not None else items[off:]
+    if fields is not None:
+        keep = ['id'] + [f for f in fields if f != 'id']
+        items = [{k: it.get(k) for k in keep} for it in items]
+    data = {'factors': items, 'count': len(core.factors),
             'rho': (core.rho or {}).get('rho'), 'damping_rho': (core.rho or {}).get('damping_rho'),
             'stable': (core.rho or {}).get('stable')}
-    return envelope('graph_core', data, g)
+    extra = None
+    if paged:
+        data.update(total=len(core.factors), limit=limit, offset=offset or 0)
+        extra = f'p{offset or 0}.{limit if limit is not None else "all"}'
+    if fields is not None:
+        extra = f"{extra or 'pall'}.f{'+'.join(fields)}"
+    return envelope('graph_core', data, g, etag_extra=extra)
 
 
 @hot_bp.post('/scenario')
@@ -445,7 +498,16 @@ def hot_card(node_id):
     data = cv.card(oid, lang=lang, structure=want_struct)
     data['compute_ms'] = round((time.perf_counter() - t0) * 1000, 3)
     caps = ((data.get('structure') or {}).get('caps_as_of')) if want_struct else None
-    return envelope('card', data, g, etag_extra=f'{lang}.{int(want_struct)}.f{cv.nrs_version()}.{caps}')
+    # la etiqueta lleva la versión de fundamentales que USÓ el cuerpo (la ficha puede calcular solo su NRS sin
+    # rehacer el vector: cv.nrs_version() quedaría vieja → 304 con un NRS viejo)
+    fv = (data.get('nrs') or {}).get('fund_version')
+    if fv is None:
+        from core import live_fundamentals as lf
+        fv = lf.version()
+    return envelope('card', data, g, etag_extra=f'{lang}.{int(want_struct)}.f{fv}.{caps}')
+
+
+NRS_IDS_CAP = 250          # ~3.100 caracteres de ids reales: cabe en la línea de pedido de gunicorn (4.094)
 
 
 @hot_bp.get('/nrs')
@@ -457,7 +519,9 @@ def hot_nrs():
         return _warming()
     cv = card.view(g)
     allv = cv.nrs_all()
-    ids = _ids_arg(request.args.get('ids'))
+    # lote: ids=a,b,c o ids=a&ids=b (los dos juntos también); tope NRS_IDS_CAP: con más, la línea del pedido pasa
+    # el límite de gunicorn (4.094 caracteres → 400 en HTML). engine/hotclient.js parte el lote en trozos de 200
+    ids = _ids_arg(','.join(request.args.getlist('ids')), cap=NRS_IDS_CAP)
     terms = (request.args.get('terms') or '') in ('1', 'true', 'yes')
     if ids:
         resolved = {i: cv.resolve(i) for i in ids}
@@ -471,8 +535,11 @@ def hot_nrs():
     if terms:
         data['terms'] = {i: {k: allv[r][k] for k in ('geo', 'chain', 'market', 'fundamental', 'concentration', 'degree')}
                          for i, r in pick.items() if r in allv}
-    return envelope('card', data, g, etag_extra=f'nrs.f{cv.nrs_version()}.{len(ids)}.{int(terms)}' if not ids else None,
-                    etag=not ids)
+    if ids:   # el lote también revalida (304): la etiqueta lleva la huella de los ids pedidos
+        import hashlib
+        tag = hashlib.sha1('\x1f'.join(ids).encode('utf-8')).hexdigest()[:12]
+        return envelope('card', data, g, etag_extra=f'nrs.f{cv.nrs_version()}.i{tag}.{int(terms)}')
+    return envelope('card', data, g, etag_extra=f'nrs.f{cv.nrs_version()}.0.{int(terms)}')
 
 
 @hot_bp.get('/geo')

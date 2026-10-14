@@ -36,7 +36,7 @@ FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
 - [[research.agent_skills.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -45,6 +45,9 @@ _Además lo importan 5 pruebas (lista abajo)._
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_live_fundamentals.py]]
+- [[tests.test_lotej_review_fixes.py]]
+- [[tests.test_scale_tensor_5k.py]]
+- [[tests.test_scale_tensor_derived.py]]
 
 ## Mencionado en sesiones de trabajo
 

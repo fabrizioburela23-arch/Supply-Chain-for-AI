@@ -347,7 +347,11 @@ def t_find_similar_entities(ctx, id, k=8, space='combined'):  # noqa: A002
     cat = (np.array(m.cat) == m.cat[j]).astype(float)
     comb = 0.6 * chain + 0.25 * feat + 0.15 * cat
     key = {'combined': comb, 'chain': chain, 'features': feat, 'category': cat}[space]
-    order = [i for i in np.argsort(-key, kind='stable') if i != j][:int(k)]
+    # mismo orden que tensor.peers: mayor a menor, comparando a 12 decimales (el producto disperso del perfil difiere
+    # del denso en la última cifra binaria) y, en empate, por id
+    key2 = np.array(key, dtype=float)
+    key2[j] = -np.inf
+    order = [int(i) for i in tensor._order(np.round(key2, 12), int(k) + 1) if i != j][:int(k)]
     return {'id': m.ids[j], 'label': m.label(m.ids[j]), 'space': space,
             'results': [{'id': m.ids[i], 'label': m.label(m.ids[i]), 'score': round(float(key[i]), 4),
                          'by_space': {'chain': round(float(chain[i]), 4), 'features': round(float(feat[i]), 4),

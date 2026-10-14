@@ -65,17 +65,28 @@ def history():
 
 
 def reset():
-    """Solo pruebas: olvida la generación publicada."""
+    """Solo pruebas: olvida la generación publicada (y la espera del constructor tras una falla: la prueba siguiente
+    arranca con una base nueva; si no, un ensure() devolvía None hasta 60 s según el orden de las pruebas)."""
     _GEN[0] = None
     with _LOCK:
         _HISTORY.clear()
+    try:
+        from core.hotviews import builder
+        builder.reset_backoff()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def lag(g):
     """(lag_versions, stale) contra lo que el proceso SABE (after_commit, LISTEN, sondeo) — sin ir a la base."""
+    return _lag(g)[:2]
+
+
+def _lag(g):
+    """(lag_versions, stale, estado del constructor) — el estado sirve al sobre (`rebuilding`) sin volver a pedirlo."""
     from core.hotviews import builder, signals
     if g is None:
-        return None, True
+        return None, True, None
     k = signals.known()
     if g.source == 'snapshot':
         lag_v = 0
@@ -85,16 +96,18 @@ def lag(g):
         lag_v = max(0, int(k.get('v') or 0) - g.graph_version)
     st = builder.state()
     stale = bool(lag_v > 0 or (st.get('last_error_at') or 0) > g.built_ts or not builder.release_current(g))
-    return lag_v, stale
+    return lag_v, stale, st
 
 
 def meta(name, g, source_override=None):
-    """El sobre `view` común a /api/hot/* y a las rutas /api/matrix/* que delegan."""
+    """El sobre `view` común a /api/hot/* y a las rutas /api/matrix/* que delegan. `rebuilding` (E1.4): hay una
+    generación nueva en construcción (durante un lote masivo el sobre sigue stale:true hasta publicarla)."""
     if g is None:
         return {'name': name, 'generation': None, 'graph_version': None, 'release': None, 'built_at': None,
                 'age_ms': None, 'source': source_override or 'none', 'stale': True, 'lag_versions': None}
-    lag_v, stale = lag(g)
+    lag_v, stale, st = _lag(g)
     return {'name': name, 'generation': g.id, 'graph_version': g.graph_version, 'release': g.release,
             'release_label': g.release_label, 'built_at': g.built_at,
             'age_ms': int((time.time() - g.built_ts) * 1000), 'source': source_override or g.source,
-            'stale': stale, 'lag_versions': lag_v, 'method': 'propagate@1'}
+            'stale': stale, 'lag_versions': lag_v, 'rebuilding': bool((st or {}).get('building')),
+            'method': 'propagate@1'}

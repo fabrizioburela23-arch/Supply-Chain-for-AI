@@ -90,13 +90,48 @@ def _utcnow():
 
 
 # ── configuración por entorno ──────────────────────────────────────────────
-def _use_sparse():
+# EXPANSION_5K E0.2: por encima de este tamaño MATRIX_ENGINE=dense NO se obedece (medido a 5k: 15 s y 3,6 GB por
+# reconstrucción). No es un número del kernel (denso y disperso dan lo mismo): es un tope operativo.
+DENSE_MAX_NODES = 2000
+_DENSE_REFUSED = {}
+
+
+def _engine_env():
+    return os.getenv('MATRIX_ENGINE', 'sparse').strip().lower()
+
+
+def _use_sparse(n=None):
     """¿Usar matrices dispersas? CORTE HECHO (limpieza 2026-10-11): la paridad sobre el catálogo completo
     — 937 choques de un nodo, denso vs disperso — dio diferencia máxima 0.0, mismos nodos alcanzados y el
     mismo radio espectral (0.892761), con la propagación 10× más rápida (45,7 s → 4,6 s en total). El
     disperso es el predeterminado; el denso queda como respaldo (sin scipy, o MATRIX_ENGINE=dense) y
-    /api/matrix/parity sigue para comparar ambos sobre la base de producción."""
-    return sp is not None and os.getenv('MATRIX_ENGINE', 'sparse').strip().lower() != 'dense'
+    /api/matrix/parity sigue para comparar ambos sobre la base de producción.
+    `n` (nodos del grafo): con MATRIX_ENGINE=dense y n > DENSE_MAX_NODES se usa el disperso igual y queda el
+    aviso en dense_refused() (el 🩺 lo muestra)."""
+    if sp is None:
+        return False
+    if _engine_env() != 'dense':
+        return True
+    if n is not None and int(n) > DENSE_MAX_NODES:
+        if _DENSE_REFUSED.get('n') != int(n):
+            log.warning('MATRIX_ENGINE=dense rechazado: %d nodos > %d — se usa el motor disperso.',
+                        int(n), DENSE_MAX_NODES)
+        _DENSE_REFUSED.update(n=int(n), at=_utcnow().isoformat())
+        return True
+    return False
+
+
+def dense_refused():
+    """Aviso para el 🩺 (None si no aplica): MATRIX_ENGINE=dense pedido pero el grafo pasa de DENSE_MAX_NODES y
+    el motor usó matrices dispersas (mismos números). Solo mientras la variable siga en 'dense'."""
+    if not _DENSE_REFUSED or _engine_env() != 'dense':
+        return None
+    n = _DENSE_REFUSED['n']
+    return {'requested': 'dense', 'used': 'sparse', 'n': n, 'limit': DENSE_MAX_NODES, 'at': _DENSE_REFUSED['at'],
+            'es': (f'MATRIX_ENGINE=dense no se obedece con {n} nodos (tope {DENSE_MAX_NODES}): el motor usa '
+                   'matrices dispersas, con los mismos números. Borra MATRIX_ENGINE de Railway.'),
+            'en': (f'MATRIX_ENGINE=dense is not obeyed with {n} nodes (limit {DENSE_MAX_NODES}): the engine uses '
+                   'sparse matrices, with the same numbers. Delete MATRIX_ENGINE from Railway.')}
 
 
 def bulk_weight_factor():
@@ -254,9 +289,9 @@ def build_matrices_from_triples(triples, idx, sparse=None):
     w)` sobre pares repetidos. COO→CSR SUMA los duplicados. Por eso se deduplica
     por MÁXIMO en un dict ANTES de construir la COO (una sola conversión), no se
     inserta elemento por elemento (O(n) por inserción en CSR/LIL)."""
-    if sparse is None:
-        sparse = _use_sparse()
     n = len(idx)
+    if sparse is None:
+        sparse = _use_sparse(n)
     # dedupe-por-máximo: best[rel][(i,j)] = mayor peso visto (preserva `max`)
     best = {r: {} for r in REL_TYPES}
     for s, t, rel, w in triples:
@@ -679,16 +714,127 @@ def propagate_block(DT, frag, X0, damping=None, max_hops=None, threshold=None, n
     return total, first
 
 
+# ── kernel en lote DISPERSO (EXPANSION_5K E1.1) ─────────────────────────────
+# Los bloques densos n×k crecían como N²: 46 ms (937) → 1,5 s (5k) → 26 s (20k). Aquí cada bloque es CSR n×k y
+# las operaciones son las de propagate_block, en el MISMO orden y elemento a elemento:
+#   DT@cur → ×damping → ×frag[fila] → (no lineal) → tope 1 → umbral → eliminate_zeros.
+# csr@csr (csr_matmat) acumula cada (i, c) recorriendo la fila i de DT en el mismo orden que csr@denso
+# (csr_matvecs) y que csr@vector (propagate); solo se salta los términos cero, que no cambian la suma → IGUALDAD
+# bit a bit (tests/test_scale_kernel.py: impactos Y saltos en 937 y 5k, kernel.params 1.0.0/2.0.0/2.1.0).
+# Pre-multiplicar diag(frag)·Tᵀ·damping NO es igual (±1 punto en el umbral): no "optimizar" el orden.
+SPARSE_CHUNK = 2048
+_FIRST_BASE = 1 << 30      # R guarda BASE − salto: el máximo elemento a elemento conserva el PRIMER salto
+
+
+def _propagate_block_sparse(DT, fvec, X0, damping, max_hops, threshold, nonlinear):
+    """`propagate_block` con matrices dispersas. DT: CSR n×n; X0: CSR n×k sin ceros explícitos; fvec: vector de
+    fragilidad o None (= unos). Devuelve (total CSR float, R CSR int32 con BASE − salto de primera llegada; BASE
+    = origen, salto 0). `reached` del lote denso = patrón de R; `first` = BASE − R."""
+    n = X0.shape[0]
+    persistent = persistent_source()
+    total = X0
+    R = sp.csr_matrix((np.full(X0.nnz, _FIRST_BASE, dtype=np.int32), X0.indices.copy(), X0.indptr.copy()),
+                      shape=X0.shape)
+    rows_of = np.arange(n)
+    cur = X0
+    for hop in range(1, max_hops + 1):
+        prev = cur
+        cur = DT @ cur                                # csr_matmat: sin duplicados ni ceros explícitos
+        d = cur.data
+        d *= damping                                  # (damping·y)·f, igual que el lote denso
+        if fvec is not None and d.size:
+            d *= fvec[np.repeat(rows_of, np.diff(cur.indptr))]
+        if nonlinear:
+            d = cur.data = _nonlinear(d)
+        np.minimum(d, 1.0, out=d)
+        d[d < threshold] = 0.0
+        cur.eliminate_zeros()
+        if persistent:
+            cur = cur.maximum(X0)                     # PROP-08 (2.1.0): misma regla que `propagate`
+            if (cur != prev).nnz == 0:
+                break
+        elif cur.nnz == 0:
+            break
+        d = cur.data
+        pos = d > 0
+        if pos.all():
+            mark = np.full(d.size, _FIRST_BASE - hop, dtype=np.int32)
+        else:
+            mark = np.where(pos, _FIRST_BASE - hop, 0).astype(np.int32)
+        P = sp.csr_matrix((mark, cur.indices.copy(), cur.indptr.copy()), shape=cur.shape)
+        if not pos.all():
+            P.eliminate_zeros()
+        R = R.maximum(P)                              # lo ya alcanzado conserva su salto (BASE − menor = mayor)
+        total = total.maximum(cur)
+    return total, R
+
+
+def _pct_list(x):
+    """[round(float(min(1, v))·100, 2) for v in x] de Python, vectorizado y EXACTO (es el 70 % del tiempo del lote
+    a 5k). y = min(1,v)·100 ≤ 100 (la misma multiplicación IEEE); t = y·100 se aleja de y·100 exacto menos de
+    1e-13, así que fuera de un margen de 1e-6 alrededor de ,5 rint(t) es el entero correcto, y c/100 (división IEEE,
+    correctamente redondeada) es el double más cercano al decimal c/100 = lo que devuelve round(). Los casi-empates
+    van por round() de Python. tests/test_scale_kernel.py lo compara contra round() en ~10⁶ valores."""
+    y = np.minimum(np.asarray(x, dtype=float), 1.0) * 100.0
+    t = y * 100.0
+    out = np.rint(t) / 100.0
+    near = np.abs(t - np.floor(t) - 0.5) < 1e-6
+    if near.any():
+        for i in np.nonzero(near)[0].tolist():
+            out[i] = round(float(y[i]), 2)
+    return out.tolist()
+
+
+def _propagate_many_sparse(DT, frag, ids, cols, magnitude, damping, max_hops, threshold, nonlinear, chunk):
+    n = len(ids)
+    DT = DT if DT.format == 'csr' else DT.tocsr()
+    fvec = None if frag is None else np.asarray(frag, dtype=float)
+    out = {}
+    step = max(1, int(chunk))
+    for start in range(0, len(cols), step):
+        part = cols[start:start + step]
+        k = len(part)
+        X0 = sp.csr_matrix((np.full(k, float(magnitude)), (np.asarray(part, dtype=np.int64), np.arange(k))),
+                           shape=(n, k))
+        X0.eliminate_zeros()
+        total, R = _propagate_block_sparse(DT, fvec, X0, damping, max_hops, threshold, nonlinear)
+        T = total.tocsc()                             # columna = choque; filas ascendentes (como np.nonzero)
+        bad = ~(T.data > 0)
+        if bad.any():
+            T.data[bad] = 0.0                         # el lote denso solo publica col > 0
+            T.eliminate_zeros()
+        F = R.tocsc()
+        F.data = (_FIRST_BASE - F.data).astype(np.int64)
+        F.eliminate_zeros()                           # salto 0 = origen: no va en `hops` (np.nonzero(first))
+        tnames = [ids[j] for j in T.indices.tolist()]
+        tpct = _pct_list(T.data)
+        fnames = [ids[j] for j in F.indices.tolist()]
+        fhop = F.data.tolist()
+        tp, fp = T.indptr.tolist(), F.indptr.tolist()
+        for c, i in enumerate(part):
+            a, b = tp[c], tp[c + 1]
+            e, f = fp[c], fp[c + 1]
+            out[ids[i]] = (dict(zip(tnames[a:b], tpct[a:b])), dict(zip(fnames[e:f], fhop[e:f])))
+    return out
+
+
 def propagate_many(mats, idx, ids, sources, magnitude=None, damping=None, max_hops=None, threshold=None,
-                   rel_weights=None, frag=None, nonlinear=False, dt=None, chunk=128):
+                   rel_weights=None, frag=None, nonlinear=False, dt=None, chunk=None):
     """Choques de UN nodo para cada id de `sources`, en lote (vistas rápidas, INFRA_OPERATIVA §4.4).
     Devuelve {source_id: (impacts, hops)} con `impacts` EXACTAMENTE como `propagate(...)[0]` (dict id→pct
     redondeado igual: round(float(min(1, x))·100, 2)) y `hops` = {id: salto de primera llegada} (lo mismo
-    que {o['id']: o['hop']} de la cascada de `propagate`). 46 ms en lote contra 268-357 ms del bucle (MAP 3)."""
+    que {o['id']: o['hop']} de la cascada de `propagate`). 46 ms en lote contra 268-357 ms del bucle (MAP 3).
+    Con Tᵀ dispersa (lo normal) los bloques son DISPERSOS (E1.1: 5k 1,5 s → ~0,1 s, mismos números; `chunk`
+    por defecto SPARSE_CHUNK); con Tᵀ densa (MATRIX_ENGINE=dense ≤ DENSE_MAX_NODES, o sin scipy) el lote denso de
+    siempre (`chunk` por defecto 128)."""
     magnitude, damping, max_hops, threshold = _kp(magnitude, damping, max_hops, threshold)
     n = len(ids)
     DT = dt if dt is not None else dependency_transpose(mats, rel_weights)
     cols = [idx[s] for s in sources if s in idx]
+    if _issparse(DT):
+        return _propagate_many_sparse(DT, frag, ids, cols, magnitude, damping, max_hops, threshold, nonlinear,
+                                      SPARSE_CHUNK if chunk is None else chunk)
+    chunk = 128 if chunk is None else chunk
     out = {}
     for start in range(0, len(cols), max(1, int(chunk))):
         part = cols[start:start + chunk]

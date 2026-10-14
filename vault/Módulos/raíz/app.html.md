@@ -206,6 +206,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[tests.test_csp_estricta.py]]
 - [[tests.test_docs_facts.py]]
 - [[tests.test_genui_client_static.py]]
+- [[tests.test_genui_f3_client_static.py]]
 - [[tests.test_khipus_os_fixes_shell.py]]
 - [[tests.test_khipus_os_integration.py]]
 - [[tests.test_khipus_os_shell.py]]

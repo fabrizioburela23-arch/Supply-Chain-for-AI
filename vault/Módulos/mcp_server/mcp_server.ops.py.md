@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/ops.py"
 lenguaje: "python"
-lineas: 768
+lineas: 772
 aliases: ["mcp_server/ops.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/ops.py
 
-> Módulo · capa [[Capa MCP y API]] · 768 líneas · `mcp_server/ops.py`
+> Módulo · capa [[Capa MCP y API]] · 772 líneas · `mcp_server/ops.py`
 
 ## Para qué sirve
 
@@ -22,13 +22,13 @@ las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión
 - `t_get_subgraph(ctx, seeds, question=…, depth=…, direction=…, budget_chars=…, include_partners=…, min_confidence=…)` _(línea 197)_
 - `t_get_exposure(ctx, positions=…, entity=…)` _(línea 238)_
 - `t_find_similar_entities(ctx, id, k=…, space=…)` _(línea 336)_
-- `t_get_history(ctx, id_or_ticker, range=…, frequency=…, max_points=…)` _(línea 408)_
-- `correlation(a, b, method=…)` — (r, n) de dos listas alineadas; Spearman = Pearson de los rangos. _(línea 441)_
-- `corr_matrix(series, method=…, min_obs=…)` — series {símbolo: {fecha: precio}} → (símbolos, matriz r, matriz n, matriz error estándar) con retornos diarios simples sobre las fechas … _(línea 456)_
-- `t_calculate_correlation(ctx, symbols, window=…, method=…)` _(línea 495)_
-- `ewma_zscores(x, lam=…, seed_n=…, demean=…)` — [(i, z_i)] de cada observación contra la desviación EWMA EX-ANTE (estimada solo con lo anterior; RiskMetrics). demean=True: también una … _(línea 537)_
-- `t_find_anomalies(ctx, symbols, window=…, lookback_days=…, z_threshold=…)` _(línea 571)_
-- `t_project_portfolio(ctx, positions, horizon_days=…, covariance=…, drift=…)` _(línea 684)_
+- `t_get_history(ctx, id_or_ticker, range=…, frequency=…, max_points=…)` _(línea 412)_
+- `correlation(a, b, method=…)` — (r, n) de dos listas alineadas; Spearman = Pearson de los rangos. _(línea 445)_
+- `corr_matrix(series, method=…, min_obs=…)` — series {símbolo: {fecha: precio}} → (símbolos, matriz r, matriz n, matriz error estándar) con retornos diarios simples sobre las fechas … _(línea 460)_
+- `t_calculate_correlation(ctx, symbols, window=…, method=…)` _(línea 499)_
+- `ewma_zscores(x, lam=…, seed_n=…, demean=…)` — [(i, z_i)] de cada observación contra la desviación EWMA EX-ANTE (estimada solo con lo anterior; RiskMetrics). demean=True: también una … _(línea 541)_
+- `t_find_anomalies(ctx, symbols, window=…, lookback_days=…, z_threshold=…)` _(línea 575)_
+- `t_project_portfolio(ctx, positions, horizon_days=…, covariance=…, drift=…)` _(línea 688)_
 
 **Internas** (empiezan con `_`): `_graph`, `_kernel`, `_gen_meta`, `_least_hit_rivals`, `_prices`, `_pct_map`, `_symbol_of`, `_series`, `_downsample`, `_ranks`, `_risk_pol`, `_usd_series`
 
@@ -56,9 +56,10 @@ Define **8 herramientas MCP** → [[API herramientas MCP]]
 
 - [[mcp_server.tools.py]] — lo importa
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_genui_rivals.py]]
+- [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_mcp.py]]

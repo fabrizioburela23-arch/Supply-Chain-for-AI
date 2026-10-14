@@ -207,6 +207,41 @@ descarta lo que escriba el modelo (que ni ve el argumento); sin cartera → `no_
 `context.ref_block` (validado → línea en el prompt). El blob `ui_inputs` no guarda argumentos de texto libre
 (`genui._ARGS_SAFE`). Comparación: una fila con cifras a > 6 h entre sí no sale; si sale, con la hora MÁS VIEJA. 🩺
 `genui` juzga 24 h (errores / cifras sin fuente) y p95 solo con ≥ 20 muestras.
+**LOTE J (2026-10-14) — SERVIDOR A 5.000 + CHAT PROGRESIVO** (docs/expansion/EXPANSION_5K.md E0/E1 ✅ salvo E1.6;
+docs/CHAT_UI_GENERATIVA.md F3 ✅). ESCALA: `scripts/gen_synth_graph.py` (levanta el catálogo a N empresas; nunca escribe
+en data/) + `scripts/bench_scale.py` (banco sin base, imprime JSON) + `tests/test_scale_budget.py` (solo `KH_SCALE=1`;
+metas de la tabla 1 +20 %). KERNEL: `propagate_many` disperso (`_propagate_many_sparse`, bloques CSR de 2.048; denso solo
+si DT es denso) con 0 diferencias en impactos/saltos/orden (tests/test_scale_kernel.py guarda una COPIA del bucle denso;
+nunca regenerar doradas); `DENSE_MAX_NODES = 2000`: `MATRIX_ENGINE=dense` arriba de eso usa disperso y lo avisa
+`engine.dense_refused()` en 🩺 Gobernanza; `/api/matrix/parity` pide PIN y no arma el denso arriba del tope. TENSOR:
+nada denso N×N (`SparsePsi`, `SparseProfile`), Ψ = víctimas de la vista Impact si ya es solo flujo (`psi_source`; con
+1.0.0 una pasada de flujo, `_flow_psi`), Ψ por generación, Ψᵀc con math.fsum, empates por id (12 decimales); en
+suggest_links (IncorporarEmpresa) un grupo EMPATADO en el corte de N_PEERS entra entero con peso × lugares/tamaño
+(`_cut_with_ties`: el valor esperado del sorteo de antes, sin sesgo por id); `find_similar_entities` ordena igual que
+`peers`. VISTAS: derived guarda ≤ 2 generaciones CONTANDO la que se arma y nunca suelta la de los LECTORES; prewarm =
+tensor y luego NRS (un tensor roto no deja sin NRS); la ficha calcula SOLO su NRS si el vector no está y su ETag lleva
+la `fund_version` que usó; `content_sha` de la tarjeta a pedido. Constructor: una señal de una versión ya cubierta
+no reconstruye, un lector que llega DURANTE la construcción de su versión tampoco (`_unknown_requirement`);
+`with builder.coalesced('import'):` para lotes en varias transacciones; sobre con `rebuilding`; la espera tras una
+falla es interrumpible (`reset_backoff`, que también hace `registry.reset()` en pruebas). PAGINACIÓN:
+`/api/hot/factors?limit&offset&fields`, `/api/matrix/metrics?top=`, `/api/hot/nrs?ids=` ≤ 250 por GET (línea de
+pedido de gunicorn) y `KhipuHot.nrs` parte en 200. BÚSQUEDA: índice de prefijos + trigramas por generación en
+core/entities.py (`search_scores` = el puntaje del MCP; mismos resultados que el recorrido lineal). D-1: la propuesta
+`link_to` de IncorporarEmpresa = `status: proposed` + confianza 0 (ni lectores ni kernel la cuentan hasta
+ConfirmarVinculo) y la respuesta trae `link_id`. D-2/D-3: la puerta del lote recibe el contexto de G1 y acredita SOLO la
+fuente que se escribe (`source_id` del evento = la citada con más trust; `evidenced_by` queda en el vínculo); un
+registro SIN `source` usa `source_id` como extremo, no como fuente. CHAT F3: `_PROG` con `seq` (solo si hay
+provisionales: el JSON de siempre si no) y `?since=`; los bloques provisionales salen del MISMO `genui.build_core`, se
+publican al volver cada herramienta y se ENTREGAN solo al navegador que preguntó (`X-Khipu-Owner` en el POST y en el
+sondeo); mientras falte la herramienta PRINCIPAL de la intención (impacto → run_scenario…) lo de la pre-consulta espera
+(si la ronda termina sin ella, sale); 🩺 genui cuenta los parciales (`progressive`). Cliente: el motor vive en
+`engine/genui_progress.js` (`window.KhipuGenUIProgress`, PEREZOSO en `EXTRAS` de genui.js y en el SHELL, NUNCA en
+app.html); khipu_chat.js conserva `keyOf` (= `_ui_key`), el sondeo, el CSS y `KhipuChat._f3`; sin el motor cargado todo
+va como sin bandera. Acciones de bloques ya a la vista → `el._kcAct` (enlace tardío al onAction de la Cabina); un error
+tras los bloques los deja a la vista (`keepOnError`); fichas que el final agrupa en fila no parpadean (`reuse.has`);
+height() de cascada/línea/mini-grafo medido en Chromium (±6 %) y los contadores reservan el ancho final (CLS 0).
+Medido a 5k: Impact 105-137 ms, tensor 96-141 ms, ficha p50 0,4 ms, primera ficha 213-297 ms, búsqueda p50 2,1-2,6 ms,
+pico 177 MB. Pendiente: Impact a 20k (~630 ms; el bucle de orden/huella de core/hotviews/views/impact.py), E1.6.
 
 ## Arquitectura
 
@@ -752,6 +787,7 @@ RAILWAY_GIT_COMMIT_SHA, RAILWAY_PUBLIC_DOMAIN, RAILWAY_ENVIRONMENT, RAILWAY_ENVI
 GUNICORN_MAX_REQUESTS_JITTER (0; solo Dockerfile) · OPENAI_KEY: solo un comentario de docker-compose (no se usa) · ANTHROPIC_API_KEY / TAVILY_API_KEY: solo en la lista de secretos que se tapan en los logs
 KHIPU_URL, SMOKE_RETRIES, GITHUB_OUTPUT, GITHUB_STEP_SUMMARY  ← SOLO scripts de GitHub Actions (humo del MCP, ancla del libro), no Railway
 KH_GUARD_TRACE  ← solo diagnóstico/pruebas de la guardia del libro
+KH_SCALE (vacío; 1 = corre las pruebas lentas de escala: test_scale_budget, test_scale_kernel 10k/20k, test_scale_tensor_5k)  ← solo pruebas, no Railway
 (BROKERAGE_APPROVAL_TTL_MIN, RESEARCH_CALIBRATION_K, RESEARCH_OUTCOME_BAND: ya NO cambian números — viven en policy.*; el 🩺 avisa si siguen puestas)
 ```
 

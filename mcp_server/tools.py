@@ -430,50 +430,20 @@ def _brief(n, deg=None):
 
 
 def _search(query, limit=10):
-    from core.entities import get_index, norm
-    q = str(query or '').strip()
-    n = norm(q)
-    if not n:
-        return []
-    snap = _snapshot()
-    idx = get_index()
-    cands = {}
+    """E1.5: la escalera de siempre (core/entities.search_scores) con candidatos del índice por generación; el orden
+    es el de antes: puntaje, grado (todo tipo) y id."""
+    import heapq
 
-    def add(nid, score, method):
-        if nid in snap['nodes'] and score > cands.get(nid, (0, ''))[0]:
-            cands[nid] = (score, method)
-    top = _resolve(q, umbral=60)
-    if top:
-        add(top['id'], top['score'], top['method'])
-    up = q.upper()
-    for alias, nid in idx['por_alias'].items():
-        if alias == n:
-            add(nid, 92, 'alias')
-        elif len(n) >= 3 and alias.startswith(n):
-            add(nid, 78, 'alias_prefix')
-    for nid, node in snap['nodes'].items():
-        lab = norm(node.get('label') or '')
-        sym = (node.get('mkt') or '').upper()
-        if sym and sym == up:
-            add(nid, 98, 'ticker')
-        elif lab == n:
-            add(nid, 95, 'label')
-        elif lab.startswith(n):
-            add(nid, 75, 'prefix')
-        elif norm(nid).startswith(n):
-            add(nid, 72, 'id_prefix')
-        elif len(n) >= 3 and re.search(r'(^|\s)' + re.escape(n), lab):
-            add(nid, 66, 'word')
-        elif len(n) >= 3 and n in lab:
-            add(nid, 60, 'substring')
-        elif len(n) >= 4:
-            desc = norm(' '.join(str(node.get(k) or '') for k in ('role_en', 'supplies_en', 'role', 'supplies')))
-            if n in desc:
-                add(nid, 40, 'description')
-    ranked = sorted(cands.items(), key=lambda kv: (-kv[1][0], -snap['deg'].get(kv[0], 0), kv[0]))
+    from core.entities import search_scores
+    snap = _snapshot()
+    nodes, deg = snap['nodes'], snap['deg']
+    cands = [(nid, v) for nid, v in search_scores(query).items() if nid in nodes]
+    key = lambda kv: (-kv[1][0], -deg.get(kv[0], 0), kv[0])  # noqa: E731 — clave única (lleva el id)
+    ranked = heapq.nsmallest(limit, cands, key=key) if isinstance(limit, int) and limit > 0 \
+        else sorted(cands, key=key)[:limit]
     out = []
-    for nid, (score, method) in ranked[:limit]:
-        b = _brief(snap['nodes'][nid])
+    for nid, (score, method) in ranked:
+        b = _brief(nodes[nid])
         b['match'] = {'score': score, 'method': method}
         out.append(b)
     return out

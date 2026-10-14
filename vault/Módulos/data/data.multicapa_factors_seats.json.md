@@ -29,6 +29,7 @@ _Nada interno._
 
 ## Lo usan
 
+- [[scripts.gen_synth_graph.py]] — lo nombra por su ruta
 - [[scripts.ingest_multicapa.py]] — lo nombra por su ruta
 - [[scripts.migrate_v0_to_ontology.py]] — lo nombra por su ruta
 

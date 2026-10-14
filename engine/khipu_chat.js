@@ -594,7 +594,7 @@
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timer = ctl ? setTimeout(function () { try { ctl.abort(); } catch (e) {} }, opts.timeout || 70000) : null;
     return fetch(base + '/api/khipu/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Khipu-Owner': _owner() }, body: JSON.stringify(body),
       signal: ctl ? ctl.signal : undefined,
     }).then(function (r) {
       var ct = (r.headers && r.headers.get && r.headers.get('content-type')) || '';
@@ -786,7 +786,20 @@
     // Command Center viejo: su tarjeta ya rotula la respuesta (sin avatar ni encabezado)
     '.bcc-card .kc-av{display:none}.bcc-card .kc-bot{display:block}' +
     '@media(max-width:600px){.kc-msg{font-size:14px}.kc-user{max-width:92%;padding:10px 14px}.kc-bot{gap:10px}.kc-av{flex-basis:24px;width:24px;height:24px}.kc-contrib{padding:11px 12px}}' +
-    '@media(prefers-reduced-motion:reduce){.kc-user,.kc-pending,.kc-bot .kc-main{animation:none!important}}';
+    // RESPUESTAS VISUALES progresivas (F3): bloques provisionales, esqueleto que se apaga encima, palabras por revelar,
+    // fila de pasos plegada y «Más datos de esta respuesta»; movimiento con los tokens --os-dur-*
+    '.kc-prov{display:flex;flex-direction:column;gap:12px;min-width:0}.kc-pb{position:relative;min-width:0}' +
+    '.kc-in{animation:kcBk var(--os-dur-2,220ms) var(--os-ease-out,cubic-bezier(.2,0,0,1)) both}' +
+    '@keyframes kcBk{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}' +
+    '.kc-xf{position:absolute;left:0;right:0;top:0;pointer-events:none;overflow:hidden}.kc-w{opacity:0}' +
+    // fila de pasos en la burbuja con forma de respuesta: el texto primero (su inicio nunca se mueve) y las mascotas y
+    // los segundos en cajas de ancho FIJO a la derecha → que entre una mascota o pase un segundo no mueve nada
+    '.kc-main>.kc-think .kc-tt{order:-1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.kc-main>.kc-think .kc-tm{margin-left:auto;flex:none;width:110px;justify-content:flex-end}.kc-main>.kc-think .kc-el{flex:none;width:38px;text-align:right}' +
+    '.kc-bot.kc-landed .kc-main{animation:none}.kc-think.kc-fold{color:var(--os-ink-3,#8D90A0);font-size:12.5px}' +
+    '.kc-more{margin-top:12px}.kc-more>summary{cursor:pointer;font-size:12.5px;font-weight:650;color:var(--os-ink-2,#A6A8B5);padding:2px 0}' +
+    '.kc-more[open]>summary{margin-bottom:10px}.kc-more>.kc-pb+.kc-pb{margin-top:12px}' +
+    '@media(prefers-reduced-motion:reduce){.kc-user,.kc-pending,.kc-bot .kc-main,.kc-in{animation:none!important}.kc-w{opacity:1}}';
 
   function ensureStyles() {
     if (!W.document || !W.document.head || W.document.getElementById('kc-styles')) return;
@@ -856,6 +869,10 @@
     // actualización por mascota: las que siguen igual no reinician su animación
     var have = {};
     Array.prototype.slice.call(tm.children).forEach(function (c) { have[c.getAttribute('data-ag')] = c; });
+    // respuestas visuales (F3): en la burbuja con forma de respuesta las mascotas que entran o salen se deslizan
+    // dentro de su caja fija (FLIP): cero saltos
+    var fl = el._kgShell && el._kcSig0 && tt.getBoundingClientRect ? Array.prototype.slice.call(tm.children) : [];
+    var fr = fl.map(function (c) { return c.getBoundingClientRect(); });
     shown.forEach(function (a, i) {
       var c = have[a.id];
       if (!c) { c = W.document.createElement('span'); c.className = 'kc-tmi'; c.setAttribute('data-ag', a.id); }
@@ -871,13 +888,20 @@
     });
     Object.keys(have).forEach(function (k) { if (have[k].parentNode === tm) tm.removeChild(have[k]); });
     tt.textContent = thinkingText(list);
+    if (fl.length) _flipFrom(fl, fr);
+    el._kcSig0 = 1;
   }
   var _lastPending = null;
   function appendPending(thread, opts) {
     opts = opts || {};
     ensureStyles();
     var d = W.document.createElement('div'); d.className = 'kc-msg kc-bot kc-pending';
-    d.innerHTML = '<div class="kc-think" role="status" aria-live="polite"><span class="kc-tm"></span><span class="kc-tt"></span><span class="kc-el"></span></div>';
+    var think = '<div class="kc-think" role="status" aria-live="polite"><span class="kc-tm"></span><span class="kc-tt"></span><span class="kc-el"></span></div>';
+    // respuestas visuales (F3): la burbuja nace con la forma de la respuesta (mascota + columna) para que los bloques
+    // que llegan antes que el texto no se muevan al aterrizar la respuesta (cero saltos)
+    d._kgShell = _gOn();
+    if (d._kgShell) { d.setAttribute('aria-busy', 'true'); d.innerHTML = '<div class="kc-av">' + mascot('khipu', 26) + '</div><div class="kc-main">' + think + '<div class="kc-body kc-genui"></div></div>'; }
+    else d.innerHTML = think;
     d._kcQ = opts.text != null ? String(opts.text) : ((thread && thread._kcLastQ) || '');
     try { if (thread) thread._kcLastQ = ''; } catch (e) {}
     d._kcT0 = Date.now(); d._kcBound = false;
@@ -908,6 +932,7 @@
   }
   function _stopPending(el) {
     if (!el) return;
+    if (el._kgShell && el.removeAttribute) el.removeAttribute('aria-busy');
     if (el._timer) { clearInterval(el._timer); el._timer = null; }
     if (el._kcPollStop) { try { el._kcPollStop(); } catch (e) {} }
     if (_lastPending === el) _lastPending = null;
@@ -917,7 +942,7 @@
   function _pollProgress(el, rid) {
     if (!el || typeof fetch !== 'function') return;
     if (el._kcPollStop) el._kcPollStop();
-    var stopped = false, seen = false, misses = 0, fails = 0, t0 = Date.now(), tm = null;
+    var stopped = false, seen = false, misses = 0, fails = 0, t0 = Date.now(), tm = null, since = 0;
     var stop = function () { stopped = true; if (tm) { clearTimeout(tm); tm = null; } el._kcPollStop = null; };
     el._kcPollStop = stop;
     var next = function (ms) { if (!stopped) tm = setTimeout(tick, ms); };
@@ -925,7 +950,8 @@
       tm = null;
       if (stopped) return;
       if (!el.classList.contains('kc-pending') || el.isConnected === false || Date.now() - t0 > 90000) { stop(); return; }
-      fetch(_base() + '/api/khipu/chat/progress/' + encodeURIComponent(rid), { cache: 'no-store', headers: { Accept: 'application/json' } })
+      // X-Khipu-Owner: los bloques provisionales (pueden traer cifras de TU cartera) solo se le dan al navegador que preguntó
+      fetch(_base() + '/api/khipu/chat/progress/' + encodeURIComponent(rid) + (el._kgShell ? '?since=' + since : ''), { cache: 'no-store', headers: { Accept: 'application/json', 'X-Khipu-Owner': _owner() } })
         .then(function (r) {
           if (r.status === 404) { misses++; return null; }
           if (r.status === 429) { fails += 3; return null; }
@@ -939,6 +965,9 @@
             seen = true; misses = 0;
             var list = progressAgents(p);
             if (list.length) { el._kcLive = true; _paintThinking(el, list); }
+            // bloques PROVISIONALES (kblocks/1 parcial, solo lo nuevo desde `since`): se ven antes que el texto
+            if (el._kgShell && p.ui && Array.isArray(p.ui.blocks)) { try { progressBlocks(el, p.ui); } catch (e) {} }
+            if (el._kgShell) since = (p.ui && typeof p.ui.seq === 'number') ? p.ui.seq : Math.max(since, typeof p.seq === 'number' ? p.seq : 0);
             if (p.done) { stop(); return; }
           }
           if ((!seen && misses >= 8) || fails >= 6) { stop(); return; }
@@ -946,6 +975,61 @@
         }, function () { if (stopped) return; fails++; if (fails >= 6) { stop(); return; } next(1400); });
     }
     next(350);
+  }
+
+  /* ══ RESPUESTAS VISUALES PROGRESIVAS (F3, docs/CHAT_UI_GENERATIVA.md §6) ══════════════════════════════════
+     El motor (bloques provisionales, aterrizaje de la respuesta final, «Más datos», revelado del texto) vive en
+     engine/genui_progress.js — PEREZOSO: lo carga KhipuGenUI.loadExtras solo con la bandera kh_genui (lote J: antes
+     eran ~17 KB que bajaba todo el mundo). Aquí quedan la identidad de un bloque (keyOf = core/khipu_chat._ui_key),
+     el sondeo y los ayudantes de movimiento/desplazamiento (también los usa la fila de pasos), expuestos en
+     KhipuChat._f3 para el motor. Sin el motor cargado todo funciona como sin la bandera. */
+  function _gOn() { try { var G = W.KhipuGenUI; return !!(G && G.enabled && G.enabled() && G.renderBlock && G.renderAnswer); } catch (e) { return false; } }
+  function _f3m() { var F = W.KhipuGenUIProgress; return F && F.land && F.progressBlocks ? F : null; }
+  // identidad de un bloque mientras la respuesta se arma (= core/khipu_chat._ui_key): tipo + herramienta + llamada
+  function keyOf(b) { var p = b && b.prov; return b.type + '|' + (p ? p.name + '|' + (p.call != null ? p.call : '') : b.id) + (b.data && b.data.rebased ? '|r' : ''); }
+  function _same(a, b) { a = Object.assign({}, a); delete a.seq; b = Object.assign({}, b); delete b.seq; return JSON.stringify(a) === JSON.stringify(b); }
+  function _reducedM() { try { return !!(W.matchMedia && W.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; } }
+  // duración de un token de movimiento (--os-dur-N en ms); reducir movimiento = 0
+  function _dur(el, n) {
+    if (_reducedM()) return 0;
+    var v = NaN; try { v = parseFloat(W.getComputedStyle(el).getPropertyValue('--os-dur-' + n)); } catch (e) {}
+    return isFinite(v) ? v : [0, 120, 220, 380][n];
+  }
+  function _scroller(el) {
+    for (var p = el && el.parentElement; p; p = p.parentElement) {
+      try { if (p.scrollHeight > p.clientHeight + 4 && /(auto|scroll)/.test(W.getComputedStyle(p).overflowY)) return p; } catch (e) { return null; }
+    }
+    return null;
+  }
+  // ¿el usuario sigue el final del hilo? (a menos de un 30 % de pantalla del final: más del 70 % recorrido)
+  function _stick(el) { var s = _scroller(el); return !s || s.scrollHeight - s.scrollTop - s.clientHeight <= 0.3 * s.clientHeight; }
+  // seguirlo: al final; si la respuesta mide más del 70 % de la vista, se para en su borde superior. Nunca sube.
+  function _follow(el) {
+    var s = _scroller(el); if (!s || !el.getBoundingClientRect) return;
+    var r = el.getBoundingClientRect(), top = s.scrollTop + r.top - s.getBoundingClientRect().top - 8, end = s.scrollHeight - s.clientHeight;
+    var to = r.height > 0.7 * s.clientHeight ? Math.min(end, top) : end;
+    if (to > s.scrollTop + 1) { try { s.scrollTo({ top: to, behavior: _reducedM() ? 'auto' : 'smooth' }); } catch (e) { s.scrollTop = to; } }
+  }
+  // FLIP: lo que ya estaba a la vista y cambió de lugar se desliza desde donde estaba (solo transform, --os-dur-2)
+  function _flipFrom(els, rects) {
+    var d = els.length ? _dur(els[0], 2) : 0;
+    els.forEach(function (c, i) {
+      var r0 = rects[i]; if (!d || !r0 || !c.isConnected || typeof c.animate !== 'function') return;
+      var r = c.getBoundingClientRect(), dx = r0.left - r.left, dy = r0.top - r.top;
+      if (Math.abs(dx) + Math.abs(dy) < 1) return;
+      c.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: d, easing: 'cubic-bezier(.2,0,0,1)' });
+    });
+  }
+  /* progressBlocks(el, parcial) → el motor perezoso (engine/genui_progress.js); si todavía no llegó, se pide con los
+     gráficos y se aplica el MISMO parcial al llegar. */
+  function progressBlocks(el, part) {
+    var F = _f3m(), G = W.KhipuGenUI;
+    if (F) return F.progressBlocks(el, part);
+    if (G && G.loadExtras && part && !part._kcMod) {
+      part._kcMod = 1;
+      G.loadExtras().then(function () { if (_f3m() && el && el.classList.contains('kc-pending')) progressBlocks(el, part); });
+    }
+    return 0;
   }
 
   var TOOL_LABEL = {
@@ -1122,19 +1206,25 @@
 
   function fillReply(el, d, opts) {
     opts = opts || {};
+    d = d || {};
+    // F3: la burbuja ya muestra bloques provisionales (o nació con la forma de respuesta) → la respuesta ATERRIZA encima
+    // (con el motor perezoso cargado; si no, la respuesta de siempre)
+    var G0 = W.KhipuGenUI, F3 = _f3m(), land = !!(F3 && el._kgShell && d.ui && G0 && _gOn() && d.ui.v === G0.V && Array.isArray(d.ui.blocks));
+    el._kcAct = _actMap(opts);        // las acciones de los bloques ya a la vista (provisionales, reusados, «Más datos»)
+    var stick = land ? _stick(el) : true;
     _stopPending(el);
     el.classList.remove('kc-pending');
-    d = d || {};
     var question = opts.question != null ? String(opts.question) : (el._kcQ || '');
-    el.innerHTML = replyHTML(d, opts);
+    // RESPUESTAS VISUALES (kblocks/1, docs/CHAT_UI_GENERATIVA.md §7.1): con la bandera kh_genui y un sobre `ui`,
+    // engine/genui.js pinta los bloques EN LUGAR de md(answer) + el gráfico `chart`. Contribuciones y meta siguen
+    // igual; las fuentes del pie se omiten si el sobre ya trae su bloque `sources` (no se repiten).
+    var gui = land ? F3.land(el, d, opts) : null;
+    if (!land) el.innerHTML = replyHTML(d, opts);
     _armTimes();
     var main = el.querySelector('.kc-main') || el, foot = main.querySelector('.kc-foot');
     var put = function (node) { if (foot && foot.parentNode === main) main.insertBefore(node, foot); else main.appendChild(node); };
     var acts = Array.isArray(d.actions) ? d.actions : [];
-    // RESPUESTAS VISUALES (kblocks/1, docs/CHAT_UI_GENERATIVA.md §7.1): con la bandera kh_genui y un sobre `ui`,
-    // engine/genui.js pinta los bloques EN LUGAR de md(answer) + el gráfico `chart`. Contribuciones y meta siguen
-    // igual; las fuentes del pie se omiten si el sobre ya trae su bloque `sources` (no se repiten).
-    var gui = _genui(el, d, opts);
+    if (!land) gui = _genui(el, d, opts);
     if (gui && foot && Array.isArray(d.ui.blocks) && d.ui.blocks.some(function (b) { return b && b.type === 'sources'; })) {
       var ks = foot.querySelector('.kc-src'); if (ks && ks.parentNode) ks.parentNode.removeChild(ks);
     }
@@ -1162,7 +1252,8 @@
       });
       put(box);
     }
-    _scroll(el);
+    if (!land) _scroll(el);
+    else if (stick) _follow(el);         // desplazamiento inteligente: solo si el usuario seguía el final del hilo
     // VENTANAS AUTOMÁTICAS (contrato §3.5): con la Cabina en modo flancos y una empresa en la respuesta,
     // las ventanas nativas de los agentes (en una mirada / cadena / convicción) se abren solas a los costados.
     var plan = [];
@@ -1187,20 +1278,24 @@
 
   // acciones de los bloques (solo abrir/sugerir) → las del chat de siempre, para que la Cabina las maneje igual
   var GENUI_ACT = { open_xray: 'open_xray', open_map: 'navigate', open_dossier: 'dossier', open_research: 'open_research', open_committee: 'open_committee' };
-  function _genui(el, d, opts) {
-    var G = W.KhipuGenUI;
-    if (!d || !d.ui || !G || !G.enabled || !G.enabled() || d.ui.v !== G.V || !Array.isArray(d.ui.blocks)) return null;
-    var body = el.querySelector('.kc-body'); if (!body) return null;
-    var onAction = function (a) {
-      if (!opts.onAction) return false;
-      var e = a && a.entity && a.entity.id;
+  // acción de un bloque → la del chat de quien pinta la respuesta (opts.onAction: la Cabina pone la ventana al lado)
+  function _actMap(opts) {
+    return function (a) {
+      if (!opts || !opts.onAction || !a) return false;
+      var e = a.entity && a.entity.id;
       if (GENUI_ACT[a.kind] && e) { opts.onAction({ type: GENUI_ACT[a.kind], arg: e }); return true; }
       if (a.kind === 'open_world' && typeof a.lat === 'number') { opts.onAction({ type: 'open_world', arg: { lat: a.lat, lon: a.lon } }); return true; }
       return false;
     };
+  }
+  function _genui(el, d, opts) {
+    var G = W.KhipuGenUI;
+    if (!d || !d.ui || !G || !G.enabled || !G.enabled() || d.ui.v !== G.V || !Array.isArray(d.ui.blocks)) return null;
+    var body = el.querySelector('.kc-body'); if (!body) return null;
+    var onAction = _actMap(opts);
     try {
       body.classList.add('kc-genui');
-      var r = G.renderAnswer(body, d.ui, { answer: d.answer || '', onAction: onAction, reqId: el._kcReq || '' });
+      var r = G.renderAnswer(body, d.ui, { answer: d.answer || '', onAction: onAction, reqId: el._kcReq || '', reuse: opts.reuse || null });
       if (r) return r;
     } catch (e) { try { console.warn('[KhipuChat] genui:', e); } catch (x) {} }
     body.classList.remove('kc-genui');
@@ -1232,8 +1327,11 @@
   function fillError(el, msg) {
     _stopPending(el);
     el.classList.remove('kc-pending');
-    el.innerHTML = '<div class="kc-av">' + mascot('khipu', 26) + '</div><div class="kc-main"><div class="kc-err" role="alert">⚠ ' +
-      esc(msg || L('No pude procesar eso.', 'I could not process that.')) + '</div></div>';
+    var note = '<div class="kc-err" role="alert">⚠ ' + esc(msg || L('No pude procesar eso.', 'I could not process that.')) + '</div>';
+    // F3: si ya se veían bloques listos, quedan a la vista con el aviso arriba (nunca desaparecen de golpe)
+    var F = _f3m();
+    if (F && F.keepOnError && el._kgShell && F.keepOnError(el, note)) return;
+    el.innerHTML = '<div class="kc-av">' + mascot('khipu', 26) + '</div><div class="kc-main">' + note + '</div>';
     _scroll(el);
   }
 
@@ -1307,5 +1405,11 @@
     predictAgents: predictAgents, detectCompany: detectCompany, planWindows: planWindows, progressAgents: progressAgents,
     thinkingText: thinkingText, contribRows: contribRows, replyHTML: replyHTML, relTime: relTime, newReqId: newReqId,
     toolLabel: toolLabel, mascot: mascot,
+    // respuestas visuales progresivas (F3)
+    progressBlocks: progressBlocks, keyOf: keyOf,
+    // ayudantes para el motor perezoso (engine/genui_progress.js) y las pruebas
+    _f3: { dur: _dur, stick: _stick, follow: _follow, flip: _flipFrom, reduced: _reducedM, same: _same, genui: _genui, L: L, lang: lang,
+      get typical() { return (W.KhipuGenUIProgress || {}).TYPICAL || {}; },
+      reveal: function (el) { var F = _f3m(); if (F) F.reveal(el); } },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

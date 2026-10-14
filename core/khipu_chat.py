@@ -38,7 +38,7 @@ import uuid
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as _FutTimeout
-from concurrent.futures import wait
+from concurrent.futures import FIRST_COMPLETED, wait
 from datetime import datetime, timezone
 
 from flask import Blueprint, current_app, jsonify, request
@@ -140,6 +140,9 @@ def valid_req_id(x):
     return x if isinstance(x, str) and _REQ_ID_RX.fullmatch(x) else None
 
 
+PROGRESS_UI_KEEP_S = 60.0     # los bloques provisionales de una respuesta YA entregada se sueltan al minuto (memoria)
+
+
 def _prog_purge_locked(now):
     while _PROG:
         k, v = next(iter(_PROG.items()))
@@ -147,17 +150,48 @@ def _prog_purge_locked(now):
             _PROG.popitem(last=False)
         else:
             break
+    for v in _PROG.values():
+        ui = v.get('ui')
+        if ui and ui['items'] and v.get('done_at') and now - v['done_at'] > PROGRESS_UI_KEEP_S:
+            ui['items'].clear()
 
 
-def progress_begin(req_id):
+def _owner_tag(key=None):
+    """Huella de la llave del navegador (X-Khipu-Owner, engine/sync.js) — '' sin llave o fuera de un pedido. Ata los
+    bloques provisionales (que pueden traer cifras de TU cartera) al navegador que hizo la pregunta."""
+    if key is None:
+        try:
+            from flask import has_request_context
+            key = request.headers.get('X-Khipu-Owner') if has_request_context() else None
+        except Exception:  # noqa: BLE001
+            key = None
+    key = str(key or '').strip()
+    if len(key) < 16:
+        return ''
+    import hashlib
+    return hashlib.sha256(('khipu-progress|' + key[:200]).encode('utf-8')).hexdigest()[:24]
+
+
+def progress_begin(req_id, ui=None, owner=None):
+    """`ui` = {'send': bool, 'lang'} (de _prog_ui_cfg) si esta respuesta arma bloques PROVISIONALES (F3). `owner`:
+    huella del navegador (_owner_tag; None = la del pedido en curso): solo ese navegador ve los bloques."""
     if not req_id:
         return
     now = time.time()
+    tag = _owner_tag() if owner is None else owner
     with _PROG_LOCK:
         _PROG.pop(req_id, None)
         _PROG[req_id] = {'ts': now, 't0': time.monotonic(), 'done': False, 'phase': 'start', 'agents': [],
-                         'elapsed_ms': None}
+                         'elapsed_ms': None, 'seq': 0, 'owner': tag,
+                         'ui': ({'send': bool(ui.get('send')), 'lang': 'en' if ui.get('lang') == 'en' else 'es',
+                                 'items': OrderedDict(), 'as_of': None} if isinstance(ui, dict) else None)}
         _prog_purge_locked(now)
+
+
+def _prog_bump(rec):
+    """Contador MONÓTONO de cambios del registro (GET …/progress?since=<seq> devuelve solo lo nuevo)."""
+    rec['seq'] = rec.get('seq', 0) + 1
+    return rec['seq']
 
 
 def progress_phase(req_id, phase):
@@ -165,8 +199,9 @@ def progress_phase(req_id, phase):
         return
     with _PROG_LOCK:
         rec = _PROG.get(req_id)
-        if rec is not None and not rec['done']:
+        if rec is not None and not rec['done'] and rec['phase'] != phase:
             rec['phase'] = phase
+            _prog_bump(rec)
 
 
 def progress_add(req_id, tool, args=None, state='working'):
@@ -178,6 +213,7 @@ def progress_add(req_id, tool, args=None, state='working'):
         if rec is None or rec['done']:
             return None
         rec['agents'].append({'agent': tool_agent(tool, args), 'tool': tool, 'state': state})
+        _prog_bump(rec)
         return len(rec['agents']) - 1
 
 
@@ -188,6 +224,64 @@ def progress_set(req_id, idx, state):
         rec = _PROG.get(req_id)
         if rec is not None and 0 <= idx < len(rec['agents']) and rec['agents'][idx]['state'] == 'working':
             rec['agents'][idx]['state'] = state
+            _prog_bump(rec)
+
+
+# ── bloques PROVISIONALES (interfaz generativa F3, docs/CHAT_UI_GENERATIVA.md §6.1) ──
+PROGRESS_UI_MAX_BYTES = 64 * 1024        # parcial por sondeo ≤ 64 KB (§8)
+PROGRESS_UI_MAX_BLOCKS = 14              # el tope del sobre (kblocks/1)
+
+
+def _ui_key(b):
+    """IDENTIDAD de un bloque mientras la respuesta se arma: tipo + herramienta + llamada (+ índice 100). El id
+    (b1, b2…) es el del orden automático y puede cambiar al llegar otra herramienta; la identidad no. El cliente
+    calcula la MISMA clave (engine/genui.js keyOf) para reconciliar provisional → final sin parpadeo."""
+    p = b.get('prov') if isinstance(b.get('prov'), dict) else None
+    d = b.get('data') if isinstance(b.get('data'), dict) else {}
+    base = f"{p.get('name')}|{'' if p.get('call') is None else p.get('call')}" if p else str(b.get('id'))
+    return f"{b.get('type')}|{base}" + ('|r' if d.get('rebased') else '')
+
+
+def _ui_sig(b):
+    """(huella, bytes) de un bloque: se guarda la huella, no otra copia del JSON."""
+    import hashlib
+    raw = json.dumps(b, sort_keys=True, ensure_ascii=False, default=str).encode('utf-8')
+    return hashlib.sha1(raw).hexdigest(), len(raw)
+
+
+def progress_ui(req_id, blocks, as_of=None):
+    """Publica bloques provisionales YA validados (mismos constructores, procedencia y esquema que el sobre final).
+    Solo lo que cambió recibe un `seq` nuevo; un bloque publicado nunca se retira (la respuesta final decide)."""
+    if not req_id or not blocks:
+        return 0
+    n = 0
+    pre = [(b, _ui_key(b)) + _ui_sig(b) for b in blocks]          # el JSON se serializa FUERA del candado
+    with _PROG_LOCK:
+        rec = _PROG.get(req_id)
+        ui = rec.get('ui') if rec is not None and not rec['done'] else None
+        if ui is None:
+            return 0
+        items = ui['items']
+        new_ids = {b.get('id') for b in blocks}
+        new_keys = {k for _b, k, _s, _z in pre}
+        for b, key, sig, size in pre:
+            prev = items.get(key)
+            if prev is not None and prev['sig'] == sig:
+                continue
+            seq = _prog_bump(rec)
+            items[key] = {'sig': sig, 'size': size, 'seq': seq, 'block': dict(b, seq=seq)}
+            n += 1
+        # un bloque que ya no está en el orden de ahora conserva su lugar, pero nunca comparte id con otro
+        for key, it in items.items():
+            blk = it['block']
+            if blk.get('id') in new_ids and key not in new_keys:
+                seq = _prog_bump(rec)
+                blk = dict(blk, id=f'q{seq}', seq=seq)
+                items[key] = dict(it, seq=seq, block=blk)
+                n += 1
+        if as_of:
+            ui['as_of'] = as_of
+    return n
 
 
 def _progress_from_future(req_id, idx, fut):
@@ -209,19 +303,58 @@ def progress_end(req_id):
             if a['state'] == 'working':       # no llegó a tiempo para esta respuesta
                 a['state'] = 'error'
         rec['done'] = True
+        rec['done_at'] = time.time()
         rec['phase'] = 'done'
         rec['elapsed_ms'] = int((time.monotonic() - rec['t0']) * 1000)
+        _prog_bump(rec)
 
 
-def progress_get(req_id):
+def _since(v):
+    """?since=<seq> → entero ≥ 0, o None (sin filtro)."""
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return None
+    return n if n >= 0 else None
+
+
+def progress_get(req_id, since=None, owner=None):
+    """Estado del progreso. Con bloques provisionales (GENUI=on + context.genui=1) añade `seq` y `ui`: un sobre
+    kblocks/1 `state: partial` SOLO con los bloques cuyo `seq` > since (≤ 14 bloques y ≤ 64 KB; si no entran todos,
+    `ui.seq` dice hasta dónde llegó y el resto va en la consulta siguiente). `ui` solo para el navegador que preguntó
+    (`owner` = _owner_tag del GET igual al del POST). Sin provisionales o id desconocido → lo de siempre."""
     with _PROG_LOCK:
         _prog_purge_locked(time.time())
         rec = _PROG.get(req_id)
         if rec is None:
             return {'req_id': req_id, 'done': False, 'elapsed_ms': 0, 'phase': None, 'agents': []}
         el = rec['elapsed_ms'] if rec['done'] else int((time.monotonic() - rec['t0']) * 1000)
-        return {'req_id': req_id, 'done': rec['done'], 'elapsed_ms': el, 'phase': rec['phase'],
-                'agents': [dict(a) for a in rec['agents']]}
+        out = {'req_id': req_id, 'done': rec['done'], 'elapsed_ms': el, 'phase': rec['phase'],
+               'agents': [dict(a) for a in rec['agents']]}
+        ui = rec.get('ui')
+        if ui is None:
+            return out                  # sin provisionales: el JSON de siempre (sin `seq`)
+        out['seq'] = rec.get('seq', 0)
+        if not (ui['send'] and ui['items']):
+            return out
+        if rec.get('owner') and (owner or '') != rec['owner']:
+            return out                  # otro navegador: el estado de los agentes sí, las cifras no
+        s = _since(since) or 0
+        fresh = sorted((it for it in ui['items'].values() if it['seq'] > s), key=lambda it: it['seq'])
+        if not fresh:
+            return out
+        blocks, size, top = [], 0, s
+        for it in fresh:
+            n = it['size'] + 16
+            if blocks and (len(blocks) >= PROGRESS_UI_MAX_BLOCKS or size + n > PROGRESS_UI_MAX_BYTES):
+                break
+            blocks.append(dict(it['block']))
+            size += n
+            top = it['seq']
+        out['ui'] = {'v': 'kblocks/1', 'lang': ui['lang'], 'state': 'partial', 'layout': 'auto',
+                     'as_of': ui['as_of'] or _iso_z(_now_iso()), 'seq': top if len(blocks) < len(fresh) else rec['seq'],
+                     'blocks': blocks}
+        return out
 
 
 def _now_iso():
@@ -2498,7 +2631,7 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
     Khipus OS: con `req_id` (lo manda el cliente) el progreso queda consultable en
     GET /api/khipu/chat/progress/<req_id> mientras la respuesta se arma."""
     rid = valid_req_id(req_id)
-    progress_begin(rid)
+    progress_begin(rid, ui=_prog_ui_cfg(context, lang))
     # paso 20: la ficha `chat.answer` se reserva AHORA (las llamadas de IA de esta pregunta la citan, core/ai_calls)
     # y se escribe DESPUÉS de responder, en el hilo del libro (core/decisions.submit_async): 0 ms para el usuario
     dec_id, ai_ids, principal = uuid.uuid4(), [], _chat_principal()
@@ -2566,6 +2699,195 @@ def _genui_attach(out, message, lang, context):
         out['ui'] = genui.public(env)
         genui.note_sent()
     return env, m
+
+
+# ── interfaz generativa PROGRESIVA (F3, docs/CHAT_UI_GENERATIVA.md §6.1): bloques que se ven ANTES que el texto ──
+# herramienta → (tipo de su bloque por defecto, intenciones del orden automático en las que ese bloque es el
+# PRINCIPAL, título del esqueleto ES/EN). Solo el principal lleva esqueleto: así casi siempre se llena.
+_PLAN_SKELETON = {
+    'run_scenario': ('impact.cascade', ('impact',), ('Impacto del choque', 'Shock impact')),
+    'get_history': ('chart.line', ('price',), ('Precio', 'Price')),
+    'get_supply_chain': ('graph.mini', ('chain',), ('Cadena de suministro', 'Supply chain')),
+    'get_world_events': ('timeline', ('news',), ('Hechos recientes', 'Recent events')),
+    'get_news': ('timeline', ('news',), ('Noticias', 'News')),
+    'get_risk_report': ('metric.tiles', ('risk',), ('Riesgo de la cartera', 'Portfolio risk')),
+    'get_company': ('metric.tiles', ('company',), ('Cifras clave', 'Key figures')),
+}
+# sin intención clara: la MISMA prioridad que el orden automático (core/genui/layout._DEFAULT)
+_PLAN_PRIORITY = ('run_scenario', 'get_history', 'get_supply_chain', 'get_risk_report', 'get_world_events',
+                  'get_news', 'get_company')
+
+
+def _prog_ui_cfg(context, lang):
+    """¿Esta respuesta arma bloques provisionales? Solo con GENUI=shadow|on y si el navegador lo pidió
+    (context.genui = 1). Se ENVÍAN solo con `on` (en `shadow` nada sale al cliente, igual que el sobre final)."""
+    try:
+        from core import genui
+    except Exception:  # noqa: BLE001
+        return None
+    m = genui.mode()
+    if m == 'off' or not genui.wants(context):
+        return None
+    return {'send': m == 'on', 'lang': lang}
+
+
+def _prog_has_ui(req_id):
+    with _PROG_LOCK:
+        rec = _PROG.get(req_id) if req_id else None
+        return bool(rec is not None and rec.get('ui') is not None)
+
+
+class _ProgUI:
+    """Bloques PROVISIONALES de una respuesta en curso: el MISMO cálculo puro del sobre final (core.genui.build_core:
+    constructores, procedencia, esquema y orden automático) sobre las llamadas que ya volvieron. Sin IA, sin E/S;
+    nunca un bloque que el sobre final no podría traer con esas llamadas. El sobre final sigue siendo la verdad."""
+
+    def __init__(self, req_id, message, lang, context):
+        from core import genui
+        from core.genui import layout, validate
+        self.g, self.V = genui, validate
+        self.rid, self.message = req_id, message
+        self.lang = 'en' if lang == 'en' else 'es'
+        self.context = context if isinstance(context, dict) else {}
+        self.mode = self.context.get('mode') or 'simple'
+        self.intent = layout.intent_of(message)
+        # herramientas del bloque PRINCIPAL de esta intención (impacto → run_scenario…); la ficha de la pre-consulta
+        # no se muestra antes que él: el sobre final la plegaría («Más datos») y el principal saltaría arriba
+        self.main_tools = {t for t, spec in _PLAN_SKELETON.items() if self.intent in spec[1]}
+        self.planned = {}          # clave → esqueleto publicado y todavía sin resolver
+        self.ready_types = set()   # tipos de bloque ya publicados listos
+        self.builds, self.ms, self.held = 0, 0.0, 0
+
+    @classmethod
+    def make(cls, req_id, message, lang, context):
+        if not _prog_has_ui(req_id):
+            return None
+        try:
+            return cls(req_id, message, lang, context)
+        except Exception as e:  # noqa: BLE001 — sin provisionales la respuesta llega igual que siempre
+            log.warning('khipu_chat genui (progresivo): %s', type(e).__name__)
+            return None
+
+    def plan(self, entries):
+        """entries = [(índice de llamada, herramienta)] que EMPIEZAN ahora → esqueleto `planned` (con la forma del
+        bloque y el espacio reservado en el cliente) solo para el que será el bloque PRINCIPAL."""
+        if self.planned:
+            return
+        try:
+            from core.genui.util import i18n
+            pick = None
+            for i, tool in entries:
+                spec = _PLAN_SKELETON.get(tool)
+                if not spec or spec[0] in self.ready_types:
+                    continue
+                if self.intent in spec[1]:
+                    pick = (i, tool, spec)
+                    break
+                if self.intent is None and not self.ready_types and (
+                        pick is None or _PLAN_PRIORITY.index(tool) < _PLAN_PRIORITY.index(pick[1])):
+                    pick = (i, tool, spec)
+            if pick is None:
+                return
+            i, tool, (typ, _intents, (t_es, t_en)) = pick
+            b = {'id': f'p{i}', 'type': typ, 'state': 'planned', 'title': i18n(t_es, t_en),
+                 'alt': i18n(f'Cargando: {t_es}…', f'Loading: {t_en}…'),
+                 'prov': {'kind': 'tool', 'name': tool, 'call': i}}
+            if self.V.errors(b, 'Block'):
+                return
+            self.planned[_ui_key(b)] = b
+            progress_ui(self.rid, [b], _iso_z(_now_iso()))
+        except Exception as e:  # noqa: BLE001
+            log.warning('khipu_chat genui (esqueleto): %s', type(e).__name__)
+
+    def _holding(self, calls, inflight, round_end):
+        """¿Retener los bloques que no son de la herramienta principal? Mientras esa herramienta no volvió (ni falló)
+        y la ronda no terminó. Sin intención, o si la principal es la ficha, nunca."""
+        if round_end or not self.main_tools or 'get_company' in self.main_tools:
+            return False
+        return not any(c[0] in self.main_tools and i not in inflight for i, c in enumerate(calls))
+
+    def publish(self, calls, args_of, facts, inflight=(), round_end=False):
+        """Arma los bloques visuales con las llamadas que ya volvieron (las en curso van como fallidas: ningún
+        constructor las toca) y publica lo que cambió. Un esqueleto cuya herramienta terminó sin bloque queda
+        `error` con su motivo (honesto, nunca un hueco eterno). Mientras falte la herramienta PRINCIPAL de la
+        intención (y la ronda siga), solo salen sus bloques: lo que trae la pre-consulta espera."""
+        t0 = time.perf_counter()
+        try:
+            from core.genui.util import i18n
+            ents = chat_entities(self.message, calls, self.context)
+            fact_of = [(facts.get(_cache_key(n, a)) if facts is not None else None) for (n, a, _o, _r) in calls]
+            inputs = self.g.inputs_for(self.message, calls, ents, self.lang, {
+                'mode': self.mode, 'fact_of': fact_of, 'args_of': list(args_of), 'answer': ''})
+            env, _info = self.g.build_core(inputs)
+            blocks = [b for b in (env or {}).get('blocks') or []
+                      if b.get('type') not in ('text', 'actions', 'sources') and b.get('id') != 'disc']
+            keys = {_ui_key(b) for b in blocks}
+            for key, pb in list(self.planned.items()):
+                i = pb['prov']['call']
+                if key in keys:
+                    self.planned.pop(key)
+                elif i not in inflight and i < len(calls):
+                    ok = bool(calls[i][2])
+                    blocks.append(dict(pb, state='error', error=i18n(
+                        *(('Esta consulta no trajo datos para mostrar aquí.', 'This lookup returned nothing to show here.')
+                          if ok else ('No se pudo obtener este dato ahora.', 'Could not get this data right now.')))))
+                    self.planned.pop(key)
+            if self._holding(calls, inflight, round_end):
+                blocks = [b for b in blocks if (b.get('prov') or {}).get('name') in self.main_tools]
+                self.held += 1
+            self.ready_types |= {b['type'] for b in blocks if b.get('state') == 'ready'}
+            if blocks:
+                progress_ui(self.rid, blocks, _iso_z(_now_iso()))
+        except Exception as e:  # noqa: BLE001 — nunca rompe la respuesta
+            log.warning('khipu_chat genui (provisional): %s', type(e).__name__)
+        self.builds += 1
+        self.ms += (time.perf_counter() - t0) * 1000
+
+    def report(self):
+        """Lo que costaron los parciales de esta respuesta → estadística de 🩺 genui (core/genui.note_progressive)."""
+        try:
+            from core import genui
+            genui.note_progressive(self.builds, self.ms, self.held)
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _round_snapshot(calls, tools_used, pending):
+    """Las llamadas de ESTA ronda en el lugar que tendrán en `calls` (el mismo índice que citará el sobre final):
+    las que ya volvieron con su resultado, las que siguen en curso como fallidas. → (llamadas, args, en curso)."""
+    snap, args, inflight = list(calls), [t.get('args_summary') or '' for t in tools_used], set()
+    for c, fut, ok, res, _st, _h in pending:
+        if fut is not None:
+            ok, res = False, None
+            if fut.done():
+                try:
+                    ok, res = fut.result()
+                except Exception:  # noqa: BLE001
+                    ok, res = False, None
+            else:
+                inflight.add(len(snap))
+        snap.append((c['tool'], c['args'], bool(ok), res))
+        args.append(_args_summary(c['args']))
+    return snap, args, inflight
+
+
+def _pui_round(pui, calls, tools_used, pending, facts):
+    snap, args, inflight = _round_snapshot(calls, tools_used, pending)
+    pui.publish(snap, args, facts, inflight)
+
+
+def _wait_publishing(futs, timeout, on_done):
+    """Igual que wait(futs, timeout) (mismo tope total) pero avisando a `on_done` cada vez que termina alguna:
+    así su bloque se publica en cuanto la herramienta vuelve, no cuando vuelve la última."""
+    end = time.monotonic() + timeout
+    left = set(futs)
+    while left:
+        rem = end - time.monotonic()
+        if rem <= 0:
+            break
+        done_, left = wait(left, timeout=rem, return_when=FIRST_COMPLETED)
+        if done_:
+            on_done()
 
 
 def _iso_z(v):
@@ -2829,6 +3151,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
     deep_failed = False
 
     def done(answer, actions, answer_source='ai'):
+        if pui is not None:
+            pui.report()                    # cuánto costaron los parciales (🩺 genui → «progresivos»)
         out = {'answer': str(answer or '').strip()[:MAX_ANSWER], 'actions': validate_actions(actions),
                'tools_used': tools_used, 'sources': sources, 'model': model if answer_source == 'ai' else None,
                'answer_source': answer_source, 'ai': answer_source == 'ai', 'lang': lang,
@@ -2844,6 +3168,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         return out
 
     router = {'by': 'default'}
+    pui = _ProgUI.make(req_id, message, lang, context)      # bloques provisionales (F3): None si no corresponde
 
     def fallback(why):
         progress_phase(req_id, 'fallback')
@@ -2916,6 +3241,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
             scratch.append(_fact_prefix(facts, 'get_company', nid, ok, res, key)
                            + f'get_company({json.dumps({"id_or_ticker": nid}, ensure_ascii=False)}) → '
                            + ('' if ok else 'ERROR: ') + _fmt_result(res, message))
+    if pui is not None and calls:
+        pui.publish(calls, [t.get('args_summary') or '' for t in tools_used], facts)
     # JEV AL MANDO (DECIDE_CONTROL=chat_gate): ya pensó en paralelo con la pre-consulta → elige el camino más
     # barato que alcanza. Sin Jev / sin confianza → camino de siempre.
     plan = None
@@ -3021,8 +3348,14 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                                                 app, lang), None, None,
                                 time.monotonic(), h))
         futs = [p[1] for p in pending if p[1] is not None]
+        if pui is not None:
+            pui.plan([(len(calls) + j, p[0]['tool']) for j, p in enumerate(pending) if p[1] is not None])
         if futs:
-            wait(futs, timeout=max(1.0, min(TOOL_TIMEOUT_S, deadline - time.monotonic() - 2)))
+            tmo = max(1.0, min(TOOL_TIMEOUT_S, deadline - time.monotonic() - 2))
+            if pui is None:
+                wait(futs, timeout=tmo)
+            else:
+                _wait_publishing(futs, tmo, lambda: _pui_round(pui, calls, tools_used, pending, facts))
         for c, fut, ok, res, started, h in pending:
             ms = 0
             if fut is not None:
@@ -3049,6 +3382,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
             scratch.append(_fact_prefix(facts, c['tool'], _result_entity(c['tool'], c['args'], res), ok, res, ckey)
                            + f'{c["tool"]}({json.dumps(c["args"], ensure_ascii=False, default=str)}) → '
                            + ('' if ok else 'ERROR: ') + _fmt_result(res, message))
+        if pui is not None:          # la ronda completa con sus [F#]: lo mismo que citará el sobre final
+            pui.publish(calls, [t.get('args_summary') or '' for t in tools_used], facts, round_end=True)
     # El AGENTE intercede SIEMPRE que haya IA: si el protocolo falló o se acabó el
     # tiempo de rondas, redacta la respuesta en prosa con lo ya consultado. La
     # plantilla sin IA queda solo para cuando la IA no responde de verdad.
@@ -3114,13 +3449,14 @@ def chat_endpoint():
 @khipu_chat_bp.route('/chat/progress/<req_id>', methods=['GET'])
 @rate_limit(600, 300)                # su PROPIO límite (no gasta el de /chat): el cliente consulta cada ~0,7 s
 def chat_progress_endpoint(req_id):
-    """Qué agentes están trabajando en la pregunta `req_id` → {req_id, done, elapsed_ms, phase,
-    agents:[{agent, tool, state: working|done|error}]}. Id desconocido o vencido → done:false, agents:[]."""
+    """Qué agentes están trabajando en la pregunta `req_id` → {req_id, done, elapsed_ms, phase, seq,
+    agents:[{agent, tool, state: working|done|error}], ui?}. `?since=<seq>`: `ui` (bloques provisionales, F3) trae
+    solo lo nuevo. Id desconocido o vencido → done:false, agents:[]."""
     rid = valid_req_id(req_id)
     if rid is None:
         return jsonify({'error': 'identificador inválido', 'error_en': 'invalid request id', 'code': 'bad_request'}), 400
     try:
-        out = progress_get(rid)
+        out = progress_get(rid, since=request.args.get('since'), owner=_owner_tag())
     except Exception:  # noqa: BLE001 — nunca un 500 en una consulta de progreso
         out = {'req_id': rid, 'done': False, 'elapsed_ms': 0, 'phase': None, 'agents': []}
     resp = jsonify(out)

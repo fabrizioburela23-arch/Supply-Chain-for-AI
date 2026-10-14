@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 884
+lineas: 920
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 884 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 920 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -113,6 +113,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[engine.explain.js]]
 - [[engine.genui.js]]
 - [[engine.genui_charts.js]]
+- [[engine.genui_progress.js]]
 - [[engine.genui_shapes.js]]
 - [[engine.geo_coords.js]]
 - [[engine.globe.js]]
@@ -193,6 +194,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[research.router.py]]
 - [[research.runner.py]]
 - [[scripts.audit_graph.py]]
+- [[scripts.bench_scale.py]]
 - [[scripts.build_governance.py]]
 - [[scripts.build_graph_review.py]]
 - [[scripts.build_impl_goldens.py]]
@@ -200,6 +202,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[scripts.build_shapes.py]]
 - [[scripts.build_vault.py]]
 - [[scripts.export_graph_v0.js]]
+- [[scripts.gen_synth_graph.py]]
 - [[scripts.migrate_v0_to_ontology.py]]
 - [[scripts.reconcile_v0_to_ontology.py]]
 - [[scripts.smoke_mcp.py]]
@@ -219,6 +222,8 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[tests.test_neo4j_retirado.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_order_single_path.py]]
+- [[tests.test_scale_budget.py]]
+- [[tests.test_scale_kernel.py]]
 - [[tests.test_vault.py]]
 
 ## Mencionado en sesiones de trabajo

@@ -13,12 +13,15 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## La leen
 
 - [[core.scheduler.py]]
+- [[scripts.bench_scale.py]]
 
 ## Pruebas que la fijan o nombran
 
 - [[tests.conftest.py]]
 - [[tests.test_block0_ci.py]]
 - [[tests.test_hot_review_fixes.py]]
+- [[tests.test_scale_budget.py]]
+- [[tests.test_scale_hot_bench.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

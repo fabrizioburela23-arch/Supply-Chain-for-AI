@@ -58,7 +58,7 @@ lógica de negocio de la ontología.
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 39 pruebas (lista abajo)._
+_Además lo importan 43 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -79,6 +79,7 @@ _Además lo importan 39 pruebas (lista abajo)._
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
+- [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_ontology.py]]
@@ -99,5 +100,8 @@ _Además lo importan 39 pruebas (lista abajo)._
 - [[tests.test_repair_review2.py]]
 - [[tests.test_replay_determinism.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_scale_hot_paging.py]]
+- [[tests.test_scale_hot_rebuild.py]]
+- [[tests.test_scale_search_d1d2.py]]
 - [[tests.test_tensor_autolink.py]]
 - [[tests.test_vocabulary.py]]

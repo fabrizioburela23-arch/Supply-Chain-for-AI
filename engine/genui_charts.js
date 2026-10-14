@@ -278,7 +278,8 @@
       var unit = (b.data || {}).rebased ? 'index' : ((series[0] && series[0].values || {}).unit);
       return { columns: [c('date')].concat(series.map(function (s) { return T(s.name); })), rows: order.map(function (k) { return [k].concat(series.map(function (s, si) { return rows[k][si] == null ? '—' : fmt(rows[k][si], unit); })); }) };
     },
-    height: function (b, w) { return (b.data && b.data.variant === 'spark') ? 110 : (w < 520 ? 300 : 330); }
+    // alto real medido en Chromium (lote J): cabecera ~135 px + el SVG, que escala con el ancho (360×180 angosto, 600×200)
+    height: function (b, w) { return (b.data && b.data.variant === 'spark') ? 110 : Math.round(w < 520 ? 133 + w / 2 : 141 + w / 3); }
   });
 
   /* ── chart.bar (h: filas como _cvBar; v: columnas; divergente con línea de cero) ── */
@@ -579,7 +580,11 @@
       (d.nodes || []).forEach(function (n) { if (n.entity) lab[n.entity.id] = n.entity.label; });
       return { columns: [c('from'), c('to'), c('rel'), c('w')], rows: (d.edges || []).map(function (e) { return [lab[e.s] || e.s, lab[e.t] || e.t, e.rel_type, e.weight == null ? '' : fmt(e.weight, 'none', { precision: 1 })]; }) };
     },
-    height: function (b, w) { var n = ((b.data || {}).nodes || []).length; return 110 + Math.max(4, Math.ceil(n / 2)) * (w < 520 ? 46 : 52); }
+    // el SVG escala con el ancho (360 angosto / 600 ancho, como el renderizador) + ~44 px de cabecera y pie (medido, lote J)
+    height: function (b, w) {
+      var n = ((b.data || {}).nodes || []).length, nar = w < 520, rows = Math.max(4, Math.ceil(n / 2));
+      return Math.round(44 + Math.max(nar ? 220 : 240, 70 + rows * (nar ? 46 : 52)) * w / (nar ? 360 : 600));
+    }
   });
 
   /* ── impact.cascade: el golpe salto a salto (kernel del servidor), total ≥ umbral, rivales menos golpeados y cartera ── */
@@ -614,12 +619,16 @@
       var rowsEl = h('div', 'kg-hops'), counters = [];
       hops.forEach(function (hp) {
         var r = h('div', 'kg-hp'), l = h('div', 'kg-hpl', c('hop') + (hp.hop));
-        if (hp.label) l.appendChild(h('small', null, T(hp.label)));
+        // la etiqueta del constructor suele ser «Salto 1» otra vez: solo se agrega si dice algo más
+        if (hp.label && String(T(hp.label)).trim() !== String(l.textContent).trim()) l.appendChild(h('small', null, T(hp.label)));
         r.appendChild(l);
         var bb = h('div', 'kg-hpb'), tr = h('div', 'kg-hpt');
         tr.appendChild(paint(h('i', 'kg-hpf'), 'width', ((hp.count || 0) / max * 100).toFixed(1) + '%'));
         bb.appendChild(tr);
+        // el conteo sube «…» → número: el ancho del número FINAL queda reservado (si no, la barra se encoge mientras
+        // cuenta y la cifra se corre: salto de diseño en angosto)
         var v = h('div', 'kg-hpv kg-n'), num = h('span', null, '…');
+        paint(paint(paint(num, 'display', 'inline-block'), 'text-align', 'right'), 'min-width', String(fmt(hp.count || 0, 'count')).length + 'ch');
         v.appendChild(num); v.appendChild(W.document.createTextNode(c('companies'))); bb.appendChild(v);
         counters.push([num, hp.count || 0]);
         r.appendChild(bb);
@@ -636,6 +645,7 @@
       });
       box.appendChild(rowsEl);
       var tot = h('div', 'kg-cast'), tb = h('b', 'kg-n', '…');
+      paint(paint(paint(tb, 'display', 'inline-block'), 'text-align', 'right'), 'min-width', String(fmt(d.total || 0, 'count')).length + 'ch');
       tot.appendChild(tb); tot.appendChild(h('span', null, c('total').replace('{t}', fmt(d.threshold_pct != null ? d.threshold_pct : 1, 'none', { precision: d.threshold_pct % 1 ? 1 : 0 }))));
       var q = U.qBtn('genui_hops'); if (q) tot.appendChild(q);
       box.appendChild(tot);
@@ -697,6 +707,15 @@
       rows.push(['Σ', fmt(d.total || 0, 'count'), '', '']);
       return { columns: [c('hopCol'), c('cos'), c('maxp'), c('ex')], rows: rows };
     },
-    height: function (b) { return 230 + Math.min(6, ((b.data || {}).hops || []).length) * 70 + ((b.data || {}).portfolio ? 70 : 0); }
+    // alto real medido en Chromium (lote J, error ≤ 6 % de 316 a 700 px): cabecera + SVG que escala con el ancho, una fila
+    // por salto (+ líneas de chips, ~85 px cada uno), la línea de rivales (se parte en angosto) y la cartera
+    height: function (b, w) {
+      var d = b.data || {}, nar = w < 520, cpl = Math.max(1, Math.floor((w - 40) / 85)), hg = 172 + 92 * w / (nar ? 360 : 600);
+      (d.hops || []).slice(0, 6).forEach(function (hp) { var n = Math.min(8, (hp.entities || []).length); hg += (nar ? 55 : 35) + (n ? 21 * Math.ceil(n / cpl) : 0); });
+      var r = Math.min(6, (d.least_hit_rivals || []).length);
+      if (r) hg += 6 + 18 * Math.ceil((22 + r * 13) * 6.6 / Math.max(120, w - 40));
+      if (d.portfolio) hg += w < 360 ? 72 : 61;
+      return Math.round(hg);
+    }
   });
 })(typeof window !== 'undefined' ? window : globalThis);

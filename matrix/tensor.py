@@ -4,7 +4,8 @@ Pedido de Fabrizio (2026-10): "el siguiente nivel de la ontología, totalmente m
 sistematizado con tensores, listo para que todos los nodos nuevos se conecten de la misma forma de
 inmediato; lo más eficiente posible y que genere datos de verdad, que den valor real como inversionista".
 
-Objetos matemáticos (todo sparse/numpy). Paso 8 (INFRA_OPERATIVA §4.7): el grafo es la vista `graph` de la
+Objetos matemáticos (TODO disperso: E1.2 de docs/expansion/EXPANSION_5K.md — antes Ψ y el perfil eran N×N
+densos: +634 MB y ~7 s a 5.000 empresas). Paso 8 (INFRA_OPERATIVA §4.7): el grafo es la vista `graph` de la
 generación vigente (core/hotviews/hot.graph(): Postgres si existe, el snapshot data/grafo_v0.json si no) y el
 modelo se recalcula cuando cambia la generación:
 
@@ -13,25 +14,32 @@ modelo se recalcula cuando cambia la generación:
                   (i PROVEE a j). Socios e inversores NO transmiten daño de suministro (regla G4).
   D  = Σ_r α_r · colnorm(A_r)   matriz de transmisión (matrix.engine._dependency_matrix, la MISMA
                   del kernel de shocks: un proveedor único transmite casi todo).
-  Ψ  ∈ [0,1]^{N×N}  INFLUENCIA: Ψ[j,s] = impacto sobre j del colapso unitario de s con EL kernel del
-                  servidor (matrix.engine.propagate_many, damping 0.6, máx. 6 saltos, umbral 1 %, máximo por
-                  ruta, fragilidad de los factores activos) sobre la GraphCore de la generación vigente, con
-                  las relaciones de FLUJO solamente: BRECHAS #4 (valor por defecto vigente) = socios e
-                  inversores NO transmiten daño. Paso 8 (M-code-01): antes el tensor propagaba por su cuenta
-                  y sin factores. Cuando el paso 12 lleve BRECHAS #4 al kernel, Ψ = la vista V2 Impact.
+  Ψ  ∈ [0,1]^{N×N}  INFLUENCIA (dispersa, csc + csr): Ψ[j,s] = impacto sobre j del colapso unitario de s con EL
+                  kernel del servidor (matrix.engine.propagate_many, damping 0.6, máx. 6 saltos, umbral 1 %, máximo
+                  por ruta, fragilidad de los factores activos) sobre la GraphCore de la generación vigente, con las
+                  relaciones de FLUJO solamente (BRECHAS #4: socios e inversores NO transmiten daño). Si el kernel
+                  vigente ya es "solo flujo" (kernel.params 2.x: damage_rels = flujo) Ψ = las víctimas de la vista
+                  Impact tal cual, sin una segunda pasada del kernel; si no (1.0.0), una pasada solo de flujo.
   c  ∈ ℝ^N        capitalización (USD B): en vivo (core.live_caps) → valuación VERIFICADA de privadas
                   (nodes/private_valuations.js) → sin dato (0, y se dice).
-  X  ∈ ℝ^{N×F}    tensor de rasgos (FEATURES), z-normalizado, + perfil estructural (filas y columnas
-                  de A) para medir parecido.
+  X  ∈ ℝ^{N×F}    tensor de rasgos (FEATURES), z-normalizado, + perfil estructural disperso (filas y columnas
+                  de A, normalizado por fila) para medir parecido.
 
 Métricas por empresa (lo que un inversionista no ve en una planilla):
   · concentración de proveedores (HHI de la columna de A sobre proveedores directos): "depende en
     un 62 % de TSMC";
   · países de sus proveedores (participación por país de origen);
-  · capitalización AGUAS ABAJO en riesgo: Σ_j Ψ[j,s]·c_j — cuánto valor de mercado de clientes y
+  · capitalización AGUAS ABAJO en riesgo: Σ_j Ψ[j,s]·c_j = Ψᵀc — cuánto valor de mercado de clientes y
     clientes-de-clientes queda expuesto si esta empresa falla (importancia sistémica en dólares);
   · fuentes de riesgo AGUAS ARRIBA: las s con mayor Ψ[j,s] (no solo proveedores directos);
   · comparables: vecinos más cercanos en X (mismos proveedores/clientes + rasgos), no solo "mismo sector".
+
+ORDEN DE LAS LISTAS (E1.2): de mayor a menor y, en EMPATE, por id (los ids están ordenados: posición = id). Antes
+el orden de los empates lo decidía np.argsort (no estable; depende de la CPU). Las sumas (parecido, Ψᵀc) se
+comparan redondeadas (12 decimales / 12 cifras): una diferencia de redondeo de la máquina no cambia el orden.
+Ψᵀc se suma con math.fsum (exacta: no depende del orden de la suma). EXCEPCIÓN — los pares de suggest_links: si el
+corte de N_PEERS cae dentro de un grupo de empatados, entra el grupo ENTERO con peso × lugares/tamaño (el valor
+esperado del sorteo de antes, sin sesgo por id: `_cut_with_ties`); sin empate en el borde, lo de siempre.
 
 AUTO-CONEXIÓN de nodos nuevos (`suggest_links`): para una empresa nueva (o una existente con
 vínculos faltantes) propone proveedores/clientes con un puntaje explicable:
@@ -51,6 +59,7 @@ import unicodedata
 from collections import Counter, defaultdict
 
 import numpy as np
+import scipy.sparse as sp
 
 from matrix import engine as E
 from ontology import vocabulary as vocab
@@ -71,6 +80,132 @@ FEATURES = ('log_cap', 'n_suppliers', 'n_customers', 'supplier_hhi', 'log_down_c
 
 _LOCK = threading.Lock()
 _MODEL = {'m': None, 'key': None}
+_BUILDING = {}        # clave del modelo → Event: UNA construcción a la vez por clave (el prewarm y un lector esperan la misma)
+_PSI = {'key': None, 'val': None}   # Ψ de la última generación: un cambio de caps no repite el kernel
+_TOK = {}             # id → ((etiqueta, rol, provee), tokens): no se re-tokeniza lo que no cambió entre generaciones
+_TOK_MAX = 50000
+
+
+# ─────────────────────────── orden estable ───────────────────────────
+def _round_sig(v, digits=12):
+    """v redondeado a `digits` cifras significativas (para COMPARAR sumas: Ψᵀc). 0 queda 0."""
+    v = np.asarray(v, dtype=float)
+    out = np.zeros_like(v)
+    nz = np.flatnonzero(v)
+    if nz.size:
+        x = v[nz]
+        scale = 10.0 ** (digits - 1 - np.floor(np.log10(np.abs(x))))
+        out[nz] = np.round(x * scale) / scale
+    return out
+
+
+def _order(v, k=None):
+    """Posiciones de `v` de MAYOR a menor; los empates, por posición (= por id). Solo las k primeras si k."""
+    key = -np.asarray(v, dtype=float)
+    n = key.shape[0]
+    if k is None or k >= n:
+        return np.argsort(key, kind='stable')
+    if k <= 0:
+        return np.zeros(0, dtype=np.intp)
+    part = np.argpartition(key, k - 1)[:k]
+    cand = np.flatnonzero(key <= key[part].max())          # incluye todos los empatados en el borde
+    return cand[np.argsort(key[cand], kind='stable')][:k]
+
+
+def _colsum_exact(csc, w):
+    """Σ_j M[j,s]·w_j por columna con math.fsum: la suma CORRECTAMENTE redondeada de los productos, sin depender
+    del orden (BLAS denso y la suma dispersa diferían en la última cifra binaria: un 9,85 exacto salía 9,850…01 →
+    «9,9» en la ficha). ~5 ms a 5.000 empresas."""
+    prod = csc.data * np.asarray(w, dtype=float)[csc.indices]
+    ip = csc.indptr
+    fs = math.fsum
+    return np.array([fs(prod[ip[s]:ip[s + 1]]) for s in range(csc.shape[1])], dtype=float)
+
+
+# ─────────────────────────── matrices dispersas ───────────────────────────
+class SparsePsi:
+    """Ψ dispersa (n×n). Se indexa como la densa de antes: psi[j, s] → número, psi[:, s] / psi[j] → vector denso
+    (copia). `col_nz(s)` / `row_nz(j)` dan (posiciones, valores) sin densificar (lo que usa la ficha)."""
+    __slots__ = ('csc', 'csr', 'shape', 'nnz')
+
+    def __init__(self, csc):
+        self.csc = csc                       # canónica (_psi_sparse): sin duplicados, índices ordenados; no se modifica
+        self.csr = csc.tocsr()
+        self.csr.sort_indices()
+        self.shape = csc.shape
+        self.nnz = int(csc.nnz)
+
+    def col_nz(self, s):
+        a, b = self.csc.indptr[s], self.csc.indptr[s + 1]
+        return self.csc.indices[a:b], self.csc.data[a:b]
+
+    def row_nz(self, j):
+        a, b = self.csr.indptr[j], self.csr.indptr[j + 1]
+        return self.csr.indices[a:b], self.csr.data[a:b]
+
+    def col(self, s):
+        out = np.zeros(self.shape[0])
+        i, v = self.col_nz(s)
+        out[i] = v
+        return out
+
+    def row(self, j):
+        out = np.zeros(self.shape[1])
+        i, v = self.row_nz(j)
+        out[i] = v
+        return out
+
+    def get(self, j, s):
+        i, v = self.col_nz(s)
+        p = int(np.searchsorted(i, j))
+        return float(v[p]) if p < len(i) and i[p] == j else 0.0
+
+    def __getitem__(self, key):
+        if isinstance(key, tuple) and len(key) == 2:
+            a, b = key
+            if isinstance(a, slice) and a == slice(None) and not isinstance(b, slice):
+                return self.col(int(b))
+            if isinstance(b, slice) and b == slice(None) and not isinstance(a, slice):
+                return self.row(int(a))
+            if not isinstance(a, slice) and not isinstance(b, slice):
+                return self.get(int(a), int(b))
+            raise TypeError('SparsePsi: índice no soportado / unsupported index')
+        if isinstance(key, slice):
+            raise TypeError('SparsePsi: índice no soportado / unsupported index')
+        return self.row(int(key))
+
+    def toarray(self):
+        return self.csc.toarray()
+
+    def nbytes(self):
+        return int(sum(x.nbytes for m in (self.csc, self.csr) for x in (m.data, m.indices, m.indptr)))
+
+
+class SparseProfile:
+    """Perfil estructural [A | Aᵀ] (n×2n) disperso y normalizado por fila. `prof @ prof[j]` da el coseno de j con
+    todas (vector denso de n), igual que con la matriz densa de antes."""
+    __slots__ = ('csr', 'shape')
+
+    def __init__(self, csr):
+        self.csr = csr
+        self.shape = csr.shape
+
+    def __getitem__(self, j):
+        a, b = self.csr.indptr[j], self.csr.indptr[j + 1]
+        out = np.zeros(self.shape[1])
+        out[self.csr.indices[a:b]] = self.csr.data[a:b]
+        return out
+
+    def __matmul__(self, v):
+        return np.asarray(self.csr @ np.asarray(v, dtype=float)).ravel()
+
+    def sim(self, j):
+        """Coseno de j con todas: suma SOLO sobre los vínculos compartidos (sin densificar el perfil)."""
+        return self @ self[j]
+
+    def nbytes(self):
+        m = self.csr
+        return int(m.data.nbytes + m.indices.nbytes + m.indptr.nbytes)
 
 
 # ─────────────────────────── carga ───────────────────────────
@@ -80,22 +215,29 @@ def _load_snapshot():
     return hot.graph().snapshot
 
 
-def _psi_from_impact(imp, ids, idx):
-    """Ψ[j,s] (0-1) desde la vista Impact: víctimas del colapso unitario de cada fuente s (pct/100)."""
+def _psi_sparse(victims, ids, idx):
+    """Ψ[j,s] (0-1) dispersa desde víctimas {fuente: (ids, pct, salto)} (pct/100; sin la diagonal ni ceros)."""
     n = len(ids)
-    psi = np.zeros((n, n))
-    if imp is None:
-        return psi
+    rows, cols, vals = [], [], []
+    get = idx.get
     for s, si in idx.items():
-        hit = imp.victims.get(s)
+        hit = victims.get(s)
         if not hit:
             continue
         vids, pct, _hop = hit
-        for k, p in zip(vids, pct):
-            j = idx.get(k)
-            if j is not None and j != si and p > 0:
-                psi[j, si] = p / 100.0
-    return psi
+        rows.extend([get(k, -1) for k in vids])
+        cols.extend([si] * len(vids))
+        vals.extend(pct)
+    if not rows:
+        return sp.csc_matrix((n, n))
+    r = np.asarray(rows, dtype=np.int64)
+    c = np.asarray(cols, dtype=np.int64)
+    v = np.asarray(vals, dtype=float) / 100.0
+    keep = (r >= 0) & (r != c) & (v > 0)
+    out = sp.csc_matrix((v[keep], (r[keep], c[keep])), shape=(n, n))
+    out.sum_duplicates()                     # forma canónica (no hay duplicados: víctimas = claves de un dict)
+    out.sort_indices()
+    return out
 
 
 def _core_for(snap):
@@ -118,8 +260,8 @@ class _FlowImpact:
 def _flow_impact(core):
     """La vista Impact con el MISMO kernel (propagate_many: damping, saltos, umbral, máximo por ruta, fragilidad
     de los factores activos) pero SOLO sobre las relaciones de FLUJO: socios e inversores no transmiten daño
-    (BRECHAS #4, valor por defecto vigente mientras Fabrizio no responda). Cuando el paso 12 lleve esa regla
-    al kernel, esta máscara queda igual a la vista Impact y el tensor vuelve a leerla tal cual."""
+    (BRECHAS #4). Con kernel.params 2.x la vista Impact ya es así y el modelo la lee tal cual (_impact_is_flow_only);
+    esta pasada queda para 1.0.0 y para grafos armados a mano (evaluate, pruebas)."""
     out = _FlowImpact()
     out.victims = {}
     if core is None or not core.mats:
@@ -139,6 +281,87 @@ def _flow_impact(core):
         out.victims[oid] = (tuple(k for k, _ in order), tuple(p for _, p in order),
                             tuple(hops.get(k, 0) for k, _ in order))
     return out
+
+
+def _flow_psi(core, ids, idx):
+    """Ψ de la pasada de FLUJO (la misma de _flow_impact) armada directo desde los impactos, sin ordenar víctimas por
+    fuente (el orden no cambia una matriz dispersa canónica: mismos valores, mismas posiciones). ~25 ms menos a 5k."""
+    n = len(ids)
+    if core is None or not core.mats:
+        return sp.csc_matrix((n, n))
+    flow = set(vocab.flow_relation_types())
+    mats = {r: m for r, m in core.mats.items() if r in flow}
+    if not mats:
+        return sp.csc_matrix((n, n))
+    res = E.propagate_many(mats, core.idx, core.ids, list(core.ids), damping=DAMPING, max_hops=MAX_HOPS,
+                           threshold=THRESHOLD, frag=core.frag, dt=E.dependency_transpose(mats))
+    rows, cols, vals = [], [], []
+    get = idx.get
+    for s, si in idx.items():
+        impacts = (res.get(s) or ({}, {}))[0]
+        if not impacts:
+            continue
+        rows.extend([get(k, -1) for k in impacts])
+        cols.extend([si] * len(impacts))
+        vals.extend(impacts.values())
+    if not rows:
+        return sp.csc_matrix((n, n))
+    r = np.asarray(rows, dtype=np.int64)
+    c = np.asarray(cols, dtype=np.int64)
+    v = np.asarray(vals, dtype=float) / 100.0
+    keep = (r >= 0) & (r != c) & (v > 0)
+    out = sp.csc_matrix((v[keep], (r[keep], c[keep])), shape=(n, n))
+    out.sum_duplicates()
+    out.sort_indices()
+    return out
+
+
+def _kernel_semver():
+    try:
+        return _gov.artifact_semver('kernel.params')
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _impact_is_flow_only(core, imp):
+    """¿La vista Impact de la generación ya es "solo flujo" con los MISMOS números que usaría _flow_impact? Lo es con
+    kernel.params 2.x (damage_rels = relaciones de flujo, BRECHAS #4), sin leer ninguna versión fija: lo dice el
+    parámetro con que se construyó la vista. Entonces Ψ = sus víctimas y no hace falta una segunda pasada."""
+    k = getattr(imp, 'kernel', None) if imp is not None else None
+    if core is None or not k or not core.mats:
+        return False
+    dr = k.get('damage_rels')
+    if dr is None or k.get('method') != 'propagate@1':
+        return False
+    if k.get('semver') is None or k.get('semver') != _kernel_semver():
+        return False                       # la generación se armó con otro release (o un contrafactual)
+    flow, damage = set(vocab.flow_relation_types()), set(dr)
+    present = set(core.mats)
+    if {r for r in present if r in damage} != {r for r in present if r in flow}:
+        return False
+    try:
+        return (k.get('damping'), k.get('max_hops'), k.get('threshold'), k.get('magnitude')) == (
+            DAMPING, MAX_HOPS, THRESHOLD, E._P('magnitude'))
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _psi_for(core, imp, ids, idx, gen=None):
+    """(Ψ dispersa csc, de dónde salió). Con la generación conocida se guarda: un cambio de caps no repite el kernel."""
+    key = None
+    if gen is not None:
+        key = (gen, _kernel_semver(), DAMPING, MAX_HOPS, THRESHOLD, len(ids))
+        with _LOCK:
+            if _PSI['key'] == key:
+                return _PSI['val']
+    if _impact_is_flow_only(core, imp):
+        val = (_psi_sparse(imp.victims, ids, idx), 'impact_view')
+    else:
+        val = (_flow_psi(core, ids, idx), 'flow_pass')
+    if key is not None:
+        with _LOCK:
+            _PSI.update(key=key, val=val)
+    return val
 
 
 def _caps_live():
@@ -191,12 +414,25 @@ def _tokens(*parts):
     return {w for p in parts for w in _norm_txt(p).split() if len(w) > 2 and w not in _STOP}
 
 
+def _tokens_cached(k, node):
+    """Tokens de texto de una empresa, guardados por id (los de una empresa que no cambió no se recalculan)."""
+    txt = (node.get('label'), node.get('role'), node.get('supplies'))
+    hit = _TOK.get(k)
+    if hit is not None and hit[0] == txt:
+        return hit[1]
+    tk = frozenset(_tokens(*txt))
+    if len(_TOK) >= _TOK_MAX:
+        _TOK.clear()
+    _TOK[k] = (txt, tk)
+    return tk
+
+
 # ─────────────────────────── modelo ───────────────────────────
 class Model:
     """Tensores del grafo ya calculados (inmutable; se reemplaza entero al cambiar la entrada)."""
 
     def __init__(self, snap, caps_live=None, caps_private=None, caps_as_of=None, view=None):
-        t0 = time.time()
+        t0 = time.perf_counter()
         self.generation = view.generation if view is not None else None
         self.graph_version = view.graph_version if view is not None else None
         nodes = [n for n in snap['nodes'] if n.get('id')]
@@ -225,32 +461,41 @@ class Model:
             elif k in caps_private:
                 self.cap[i], self.cap_src[i] = caps_private[k], 'verified_valuation'
         self.caps_as_of = caps_as_of
-        # ── Ψ = la vista Impact (EL kernel del servidor, factores activos incluidos): la de la generación
-        #    vigente, o —para un grafo armado a mano (evaluate, pruebas)— la misma vista calculada sobre él
-        core = view.core if view is not None else _core_for(snap)
-        imp = _flow_impact(core)
+        # ── Ψ = EL kernel del servidor (factores activos incluidos) solo por FLUJO, dispersa: la vista Impact de la
+        #    generación si ya es solo flujo; si no, una pasada de flujo (guardada por generación)
+        t1 = time.perf_counter()
+        core = view.core if view is not None else None
+        if core is None:
+            core = _core_for(snap)
+        imp = view.impact if view is not None else None
+        psi_csc, self.psi_source = _psi_for(core, imp, self.ids, self.idx,
+                                            gen=self.generation if view is not None else None)
         self.psi_method = 'impact_kernel_flow_only:propagate@1'
-        psi = _psi_from_impact(imp, self.ids, self.idx)
-        self.psi = psi                                                        # psi[j, s]
+        self.psi = SparsePsi(psi_csc)                                         # psi[j, s]
+        self.psi_ms = round((time.perf_counter() - t1) * 1000, 1)
         # ── proveedores directos (columna de A sobre SUPPLIER_RELS)
         S = None
         for r in SUPPLIER_RELS:
             if r in self.A:
                 S = self.A[r] if S is None else S + self.A[r]
+        if S is None:
+            S = sp.csr_matrix((n, n))
         self.S = S.tocsc()
         Sr = S.tocsr()
         self.n_sup = np.diff(self.S.indptr)
         self.n_cus = np.diff(Sr.indptr)
         self.hhi = np.zeros(n)
-        for j in range(n):
-            a, b = self.S.indptr[j], self.S.indptr[j + 1]
-            if b > a:
-                w = self.S.data[a:b]
-                sh = w / w.sum()
-                self.hhi[j] = float((sh ** 2).sum())
-        self.down_cap = psi.T @ self.cap                                      # Σ_j psi[j,s]·c_j
-        self.up_exposure = psi.max(axis=1)                                    # peor fuente para j
-        # ── X: rasgos z-normalizados + perfil estructural para parecido (coseno)
+        nzc = np.flatnonzero(self.n_sup)
+        cnt = self.n_sup[nzc]
+        for c in np.unique(cnt).tolist():                                     # Σ (w/Σw)² por columna, en bloques
+            cols = nzc[cnt == c]                                              # de igual nº de proveedores: la suma
+            W = self.S.data[self.S.indptr[cols][:, None] + np.arange(c)]      # por fila es bit a bit la de w.sum()
+            sh = W / W.sum(axis=1)[:, None]
+            self.hhi[cols] = (sh ** 2).sum(axis=1)
+        self.down_cap = _colsum_exact(self.psi.csc, self.cap)                # Σ_j psi[j,s]·c_j = Ψᵀc (exacta)
+        self.up_exposure = np.asarray(self.psi.csr.max(axis=1).todense()).ravel() if n else np.zeros(0)
+        self._down_key = _round_sig(self.down_cap)                            # para ordenar / rango sistémico
+        # ── X: rasgos z-normalizados + perfil estructural disperso para parecido (coseno)
         X = np.column_stack([
             np.log10(1 + self.cap), np.log1p(self.n_sup), np.log1p(self.n_cus),
             self.hhi, np.log10(1 + self.down_cap), self.up_exposure])
@@ -261,26 +506,52 @@ class Model:
         for r in self.rels:
             m = (self.A[r] > 0).astype(float)
             Abin = m if Abin is None else Abin + m
+        if Abin is None:
+            Abin = sp.csr_matrix((n, n))
         self.Abin = Abin.tocsr()
-        prof = np.hstack([Abin.toarray(), Abin.T.toarray()])                  # [clientes | proveedores]
-        nrm = np.linalg.norm(prof, axis=1)
+        P = sp.hstack([self.Abin, self.Abin.T.tocsr()], format='csr')        # [clientes | proveedores]
+        P.sum_duplicates()
+        P.sort_indices()
+        cnt = np.diff(P.indptr)
+        nrm = np.sqrt(np.bincount(np.repeat(np.arange(n), cnt), weights=P.data ** 2, minlength=n))
         nrm[nrm == 0] = 1.0
-        self.prof = prof / nrm[:, None]
+        P.data = P.data / np.repeat(nrm, cnt)
+        self.prof = SparseProfile(P)
         # ── bloques por categoría del tensor (prior de auto-conexión)
         self.cat = [self.node[k].get('cat') or '?' for k in self.ids]
         self.sector = [self.node[k].get('sector') or '?' for k in self.ids]
-        self.country = [_country(self.node[k].get('country')) for k in self.ids]
+        cmemo = {}
+        self.country = []
+        for k in self.ids:
+            raw = self.node[k].get('country')
+            c = cmemo.get(raw)
+            if c is None:
+                c = cmemo[raw] = _country(raw)
+            self.country.append(c)
+        cats = sorted(set(self.cat))
+        ccode = {c: i for i, c in enumerate(cats)}
+        self.cat_code = np.fromiter((ccode[c] for c in self.cat), dtype=np.int64, count=n)
         self.n_cat = Counter(self.cat)
         self.block = defaultdict(float)                                       # (cat_s, cat_t, r) → nº
+        nc = len(cats)
         for r in self.rels:
             co = self.A[r].tocoo()
-            for i, j in zip(co.row, co.col):
-                self.block[(self.cat[i], self.cat[j], r)] += 1.0
-        self.tok = [_tokens(self.node[k].get('label'), self.node[k].get('role'), self.node[k].get('supplies'))
-                    for k in self.ids]
-        self.ms = round((time.time() - t0) * 1000)
+            if not co.nnz:
+                continue
+            u, c = np.unique(self.cat_code[co.row] * nc + self.cat_code[co.col], return_counts=True)
+            for kk, cc in zip(u.tolist(), c.tolist()):
+                self.block[(cats[kk // nc], cats[kk % nc], r)] += float(cc)
+        self._tok = None
+        self.ms = round((time.perf_counter() - t0) * 1000)
 
     # ── utilidades
+    @property
+    def tok(self):
+        """Tokens de texto por empresa (solo los usa suggest_links de una empresa NUEVA): a pedido y con caché por id."""
+        if self._tok is None:
+            self._tok = [_tokens_cached(k, self.node[k]) for k in self.ids]
+        return self._tok
+
     def label(self, k):
         return (self.node.get(k) or {}).get('label') or k
 
@@ -302,11 +573,18 @@ class Model:
             return 0.0
         return self.block.get((cs, ct, r), 0.0) / float(a * b)
 
+    def nbytes(self):
+        """Memoria aproximada de lo disperso + vectores (🩺 / pruebas de escala)."""
+        mats = list(self.A.values()) + [self.D, self.S, self.Abin]
+        b = sum(int(m.data.nbytes + m.indices.nbytes + m.indptr.nbytes) for m in mats if hasattr(m, 'indptr'))
+        return b + self.psi.nbytes() + self.prof.nbytes() + int(self.X.nbytes + 5 * self.n * 8)
+
 
 def model(force=False, snap=None, view=None):
     """Modelo vigente (caché). Se reconstruye si cambia la GENERACIÓN del grafo (paso 8: antes, la fecha del
     archivo del snapshot) o la versión de las caps en vivo. `view` (GraphView): el de UNA generación concreta (la
-    tarjeta V3 de esa generación, paso 14) — sin pasar por hot.graph() (que puede esperar al constructor)."""
+    tarjeta V3 de esa generación, paso 14) — sin pasar por hot.graph() (que puede esperar al constructor).
+    Una sola construcción por clave: quien llega mientras otro hilo la arma (el prewarm) la espera."""
     caps_live, caps_as_of = _caps_live()
     if snap is not None:
         return Model(snap, caps_live, _caps_private(), caps_as_of)
@@ -314,13 +592,27 @@ def model(force=False, snap=None, view=None):
         from core.hotviews import hot
         view = hot.graph()
     key = (view.generation, caps_as_of, len(caps_live))
-    with _LOCK:
-        if not force and _MODEL['m'] is not None and _MODEL['key'] == key:
-            return _MODEL['m']
-    m = Model(view.snapshot, caps_live, _caps_private(), caps_as_of, view=view)
-    with _LOCK:
-        _MODEL.update(m=m, key=key)
-    return m
+    waited = False
+    while True:
+        with _LOCK:
+            m = _MODEL['m']
+            if m is not None and _MODEL['key'] == key and (not force or waited):
+                return m
+            ev = _BUILDING.get(key)
+            if ev is None:
+                ev = _BUILDING[key] = threading.Event()
+                break
+        ev.wait(120.0)
+        waited = True
+    try:
+        m = Model(view.snapshot, caps_live, _caps_private(), caps_as_of, view=view)
+        with _LOCK:
+            _MODEL.update(m=m, key=key)
+        return m
+    finally:
+        with _LOCK:
+            _BUILDING.pop(key, None)
+        ev.set()
 
 
 def graph_version():
@@ -357,15 +649,17 @@ def structure(nid, m=None, top=5):
         ctry[m.country[i]] += float(x) / tot
     countries = sorted(({'country': c, 'share_pct': round(v * 100, 1)} for c, v in ctry.items()),
                        key=lambda d: -d['share_pct'])
-    # aguas arriba: de dónde le llega el riesgo (Ψ fila j)
-    row = m.psi[j]
-    src = [int(i) for i in np.argsort(-row)[:top] if row[i] > 0]
+    # aguas arriba: de dónde le llega el riesgo (Ψ fila j, solo lo no nulo)
+    ri, rv = m.psi.row_nz(j)
+    so = _order(rv, top)
     # aguas abajo: a quién arrastra (Ψ columna j) y cuánta capitalización
-    col = m.psi[:, j]
-    dn = [int(i) for i in np.argsort(-(col * np.maximum(m.cap, 1e-9)))[:top] if col[i] > 0]
-    n_down = int((col > 0).sum())
-    rank = int((m.down_cap > m.down_cap[j]).sum()) + 1
-    covered = float((m.cap[col > 0] > 0).sum()) / max(1, n_down) if n_down else None
+    ci, cv = m.psi.col_nz(j)
+    capc = m.cap[ci]
+    do = _order(cv * np.maximum(capc, 1e-9), top)
+    n_down = int(len(ci))
+    rank = int((m._down_key > m._down_key[j]).sum()) + 1
+    covered = float((capc > 0).sum()) / max(1, n_down) if n_down else None
+    direct = set(rows.tolist())
     return {
         'id': k, 'label': m.label(k),
         'supplier_concentration': {
@@ -376,11 +670,11 @@ def structure(nid, m=None, top=5):
             'cap_at_risk_usd_b': round(float(m.down_cap[j]), 1), 'n_companies': n_down,
             'systemic_rank': rank, 'of': m.n,
             'cap_coverage_pct': round(covered * 100) if covered is not None else None,
-            'top': [{'id': m.ids[i], 'label': m.label(m.ids[i]), 'impact_pct': round(float(col[i]) * 100, 1),
-                     'cap_usd_b': round(float(m.cap[i]), 1) if m.cap[i] > 0 else None} for i in dn]},
-        'upstream_risk_sources': [{'id': m.ids[i], 'label': m.label(m.ids[i]),
-                                   'exposure_pct': round(float(row[i]) * 100, 1),
-                                   'direct': bool(i in set(rows.tolist()))} for i in src],
+            'top': [{'id': m.ids[ci[p]], 'label': m.label(m.ids[ci[p]]), 'impact_pct': round(float(cv[p]) * 100, 1),
+                     'cap_usd_b': round(float(capc[p]), 1) if capc[p] > 0 else None} for p in do]},
+        'upstream_risk_sources': [{'id': m.ids[ri[p]], 'label': m.label(m.ids[ri[p]]),
+                                   'exposure_pct': round(float(rv[p]) * 100, 1),
+                                   'direct': bool(int(ri[p]) in direct)} for p in so],
         'peers': peers(k, m=m, n=5),
         'cap_usd_b': round(float(m.cap[j]), 1) if m.cap[j] > 0 else None,
         'cap_source': m.cap_src[j],
@@ -391,33 +685,36 @@ def structure(nid, m=None, top=5):
 
 
 def peers(nid, m=None, n=5):
-    """Comparables: mismos proveedores/clientes (coseno del perfil) + rasgos (X) + misma categoría."""
+    """Comparables: mismos proveedores/clientes (coseno del perfil) + rasgos (X) + misma categoría.
+    Empates (a 12 decimales), por id."""
     m = m or model()
     j = m.i_of(nid)
     if j is None:
         return []
     sim = m.prof @ m.prof[j]
     dx = np.linalg.norm(m.X - m.X[j], axis=1)
-    sim = 0.6 * sim + 0.25 * np.exp(-dx / 2.0) + 0.15 * (np.array(m.cat) == m.cat[j])
+    sim = 0.6 * sim + 0.25 * np.exp(-dx / 2.0) + 0.15 * (m.cat_code == m.cat_code[j])
     sim[j] = -1
     out = []
-    for i in np.argsort(-sim)[:n]:
+    for i in _order(np.round(sim, 12), n):
         out.append({'id': m.ids[i], 'label': m.label(m.ids[i]), 'similarity': round(float(sim[i]), 3)})
     return out
 
 
 def ranking(m=None, by='cap_at_risk', limit=20):
     m = m or model()
+    k = max(1, min(100, limit))
     if by == 'concentration':
-        order = [i for i in np.argsort(-m.hhi) if m.n_sup[i] >= 1]
+        cand = np.flatnonzero(m.n_sup >= 1)
+        order = cand[_order(np.round(m.hhi[cand], 12), k)]
         val = lambda i: round(float(m.hhi[i]), 3)  # noqa: E731
     elif by == 'exposure':
-        order = list(np.argsort(-m.up_exposure))
+        order = _order(m.up_exposure, k)
         val = lambda i: round(float(m.up_exposure[i]) * 100, 1)  # noqa: E731
     else:
-        order = list(np.argsort(-m.down_cap))
+        order = _order(m._down_key, k)
         val = lambda i: round(float(m.down_cap[i]), 1)  # noqa: E731
-    return [{'id': m.ids[i], 'label': m.label(m.ids[i]), 'value': val(i)} for i in order[:max(1, min(100, limit))]]
+    return [{'id': m.ids[i], 'label': m.label(m.ids[i]), 'value': val(i)} for i in order[:k]]
 
 
 # ─────────────────────────── auto-conexión ───────────────────────────
@@ -425,20 +722,40 @@ def _peer_weights(m, j=None, new=None, k=None):
     """Pesos de parecido con el resto: existente (perfil+rasgos) o NUEVA (cat/sector/país/texto)."""
     if j is not None:
         sim = m.prof @ m.prof[j]
-        sim = 0.7 * sim + 0.3 * (np.array(m.cat) == m.cat[j])
+        sim = 0.7 * sim + 0.3 * (m.cat_code == m.cat_code[j])
         sim[j] = 0
     else:
         cat, sec, ctry = new.get('cat'), new.get('sector'), _country(new.get('country'))
         tk = _tokens(new.get('label'), new.get('role'), new.get('supplies'))
         sim = np.zeros(m.n)
+        tok = m.tok
         for i in range(m.n):
             s = 1.0 if (cat and m.cat[i] == cat) else (0.35 if (sec and m.sector[i] == sec) else 0.0)
-            if tk and m.tok[i]:
-                s += 0.8 * len(tk & m.tok[i]) / len(tk | m.tok[i])
+            if tk and tok[i]:
+                s += 0.8 * len(tk & tok[i]) / len(tk | tok[i])
             if ctry and m.country[i] == ctry:
                 s += 0.1
             sim[i] = s
-    top = np.argsort(-sim)[:(k or N_PEERS)]
+    return _cut_with_ties(sim, k or N_PEERS)
+
+
+def _cut_with_ties(sim, k):
+    """Las k más parecidas. Si el corte cae DENTRO de un grupo de empatados (a 12 decimales), entra TODO el grupo con
+    su peso escalado por (lugares que quedan / tamaño del grupo): el valor esperado del sorteo de antes (np.argsort no
+    estable elegía k al azar entre los empatados, según la CPU) y sin sesgo por id — antes de esta regla una empresa
+    nueva tomaba como «pares» las primeras de su categoría por orden alfabético. Sin empate en el borde: lo de siempre."""
+    key = np.round(sim, 12)
+    top = _order(key, k)
+    if len(top) and len(top) == k and k < key.shape[0]:
+        edge = key[top[-1]]
+        if edge > 0:
+            group = np.flatnonzero(key == edge)                   # en posición (= id): mismo orden que _order
+            inside = [int(i) for i in top if key[i] != edge]
+            slots = k - len(inside)
+            if len(group) > slots:
+                frac = slots / len(group)
+                return ([(i, float(sim[i])) for i in inside if sim[i] > 0]
+                        + [(int(i), float(sim[i]) * frac) for i in group if sim[i] > 0])
     return [(int(i), float(sim[i])) for i in top if sim[i] > 0]
 
 
@@ -525,4 +842,5 @@ def status():
             'nnz': {r: int(m.A[r].nnz) for r in m.rels}, 'caps_live': int(sum(1 for s in m.cap_src if s == 'live')),
             'caps_verified': int(sum(1 for s in m.cap_src if s == 'verified_valuation')),
             'build_ms': m.ms, 'caps_as_of': m.caps_as_of, 'generation': m.generation,
-            'graph_version': m.graph_version, 'psi': m.psi_method}
+            'graph_version': m.graph_version, 'psi': m.psi_method, 'psi_source': m.psi_source,
+            'psi_nnz': m.psi.nnz, 'psi_ms': m.psi_ms, 'memory_kb': round(m.nbytes() / 1024)}

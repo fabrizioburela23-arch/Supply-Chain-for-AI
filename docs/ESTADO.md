@@ -9,6 +9,24 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-14 (b) — LOTE J: SERVIDOR A 5.000 + CHAT PROGRESIVO (F3) + revisión — sw v270
+
+- Escala (EXPANSION_5K E0/E1, menos E1.6): kernel disperso (0 diferencias a 937/5k/10k/20k), tensor sin matrices
+  densas, vistas con ≤ 2 generaciones, una reconstrucción por versión, búsqueda por índice, paginación, D-1/D-2 (+ parte
+  de D-3). Banco: `python scripts/bench_scale.py --n 5000 --repeat 3`; prueba lenta con `KH_SCALE=1`.
+- Medido a 5k (sintético, 5.032 ids): Impact 105-137 ms · tensor 96-141 ms · ficha p50 0,4 ms · primera ficha tras una
+  escritura 213-297 ms · búsqueda p50 2,1-2,6 ms · pico 177 MB (antes 1,5 s / 0,9-6,7 s / 17 ms / 1,3-7 s / 216 ms /
+  1.213-1.771 MB). A 937: Impact 25 ms, tensor 41 ms, ficha 0,18 ms, búsqueda 0,8 ms, pico 121 MB.
+- Chat F3: bloques provisionales antes que el texto (CLS 0 en Chromium), motor perezoso engine/genui_progress.js.
+- Revisión (23 hallazgos): ETag de la ficha con su fund_version; la generación de los lectores no se suelta; lector a
+  mitad de construcción no repite; parity sin denso a 5k y con PIN; /api/hot/nrs ≤ 250 ids por GET; la fuente que la
+  puerta acredita es la que se escribe; la propuesta de IncorporarEmpresa con confianza 0 y `link_id`; empates del corte
+  de pares con peso fraccionario (sin sesgo por id); Ψᵀc exacta; bloques solo para el navegador que preguntó; la ficha
+  pre-consultada espera a la cascada; acciones de bloques reusados a la Cabina; un error no borra los bloques; alturas
+  reservadas medidas; «Salto 1 / Salto 1» una sola vez; pruebas de tiempo con la mejor de 3 pasadas.
+- Pendiente: Impact a 20k (~630 ms, meta 500: bucle de impact.py); E1.6 (identificadores, con E2); que el kernel ignore
+  TODA propuesta (`link_confidence` de `status: proposed` → 0) es un cambio de kernel gobernado: decide Fabrizio.
+
 # SESIÓN 2026-10-14 — RESPUESTAS VISUALES F2: revisión (19 hallazgos) — sw v269
 
 - Cliente (engine/genui*.js): «Ver como tabla» → «Ver como gráfico» ya no deja la cascada en «…» ni la línea vacía;

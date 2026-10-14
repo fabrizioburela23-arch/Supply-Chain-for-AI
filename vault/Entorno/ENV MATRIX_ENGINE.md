@@ -13,10 +13,13 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## La leen
 
 - [[matrix.engine.py]]
+- [[scripts.bench_scale.py]]
 
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_lotej_review_fixes.py]]
+- [[tests.test_scale_kernel.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

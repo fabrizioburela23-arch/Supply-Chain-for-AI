@@ -1361,6 +1361,15 @@ def _diag_gobernanza():
         g3 = _diag_g3_bullets()            # pasos 11, 22, 24 y 26: Puertas 7 días · guardia · repetición · retención
         es += g3['es']
         en += g3['en']
+        try:   # E0.2 (lote J): MATRIX_ENGINE=dense con más de DENSE_MAX_NODES nodos no se obedece (mismos números)
+            from matrix import engine as _ME
+            _dr = _ME.dense_refused()
+            if _dr:
+                ok = False
+                es += ' ' + _dr['es']
+                en += ' ' + _dr['en']
+        except Exception:  # noqa: BLE001
+            _dr = None
         if (g3.get('replay') or {}).get('differs'):          # paso 24: una decisión ya no se repite igual → rojo
             ok = False
             fix = fix or ('abre 🩺 → 📋 Registro → ⚖ Auditoría: arriba, en «Distintas en la última muestra», pulsa «Repetir» '
@@ -1849,11 +1858,17 @@ def diagnostics():
         _drop = sum((_gs.get('dropped') or {}).values())
         _ms = '—' if _p95 is None else f'{_p95:.1f}'
         _kb = '—' if _gs.get('kb_p95') is None else f"{_gs['kb_p95']:.1f}"
+        _pg = _gs.get('progressive') or {}
+        _pges = _pgen = ''
+        if _pg.get('answers'):   # F3: lo que costaron los bloques provisionales (todos los parciales de una respuesta)
+            _pms = '—' if _pg.get('ms_p95') is None else f"{_pg['ms_p95']:.1f}"
+            _pges = f" · progresivos: {_pg['answers']} respuestas, {_pg['builds']} armados, p95 {_pms} ms por respuesta"
+            _pgen = f" · progressive: {_pg['answers']} answers, {_pg['builds']} builds, p95 {_pms} ms per answer"
         services['genui'] = _diag_card(
             f"Respuestas visuales: {_mes} · {_gs['built']} sobres ({_gs['sent']} enviados) · p95 {_ms} ms · "
-            f"{_kb} KB · {_drop} bloques descartados · {_gs['unprovenanced_24h']} con cifras sin fuente (24 h)",
+            f"{_kb} KB · {_drop} bloques descartados · {_gs['unprovenanced_24h']} con cifras sin fuente (24 h)" + _pges,
             f"Visual answers: {_men} · {_gs['built']} envelopes ({_gs['sent']} sent) · p95 {_ms} ms · {_kb} KB · "
-            f"{_drop} blocks dropped · {_gs['unprovenanced_24h']} with unsourced figures (24 h)",
+            f"{_drop} blocks dropped · {_gs['unprovenanced_24h']} with unsourced figures (24 h)" + _pgen,
             None if _gok else ('Revisa el registro del servidor (líneas «genui:»): un bloque con una cifra sin fuente '
                                'se descarta solo, pero no debería pasar.',
                                'Check the server log («genui:» lines): a block with an unsourced figure is dropped '

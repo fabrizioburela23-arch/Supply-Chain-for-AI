@@ -17,25 +17,25 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 233 |
-| Líneas de código | 135.685 |
+| Archivos de código (Python, JS, HTML) | 236 |
+| Líneas de código | 137.640 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 212 |
+| Archivos de prueba | 226 |
 | Documentos | 30 |
 | Rutas HTTP | 255 |
 | Grupos de API | 61 |
 | Herramientas MCP | 32 |
-| Variables de entorno | 157 |
-| Sesiones de trabajo | 107 |
-| Aristas `calls_endpoint` | 712 |
+| Variables de entorno | 158 |
+| Sesiones de trabajo | 108 |
+| Aristas `calls_endpoint` | 720 |
 | Aristas `defines_endpoint` | 287 |
-| Aristas `imports` | 2.048 |
+| Aristas `imports` | 2.118 |
 | Aristas `loads_script` | 90 |
-| Aristas `mentions_in_session` | 564 |
-| Aristas `reads_env` | 220 |
-| Aristas `references_file` | 60 |
-| Aristas `tested_by` | 1.516 |
-| Aristas `uses_global` | 440 |
+| Aristas `mentions_in_session` | 566 |
+| Aristas `reads_env` | 224 |
+| Aristas `references_file` | 61 |
+| Aristas `tested_by` | 1.594 |
+| Aristas `uses_global` | 443 |
 
 ## Nodos "dios" (más conectados)
 
@@ -49,20 +49,20 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[ontology.db.py]] | 54 | 45 | 9 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 50 | 14 | 36 | [[Capa Interfaz (Khipus OS)]] |
 | [[nodes.nodes_seed.js]] | 41 | 41 | 0 | [[Capa Datos del catálogo]] |
+| [[core.__init__.py]] | 39 | 39 | 0 | [[Capa Infraestructura]] |
 | [[core.governance.py]] | 38 | 33 | 5 | [[Capa Infraestructura]] |
-| [[core.__init__.py]] | 37 | 37 | 0 | [[Capa Infraestructura]] |
 | [[core.http.py]] | 37 | 35 | 2 | [[Capa Infraestructura]] |
 | [[core.decisions.py]] | 36 | 29 | 7 | [[Capa Infraestructura]] |
-| [[mcp_server.tools.py]] | 35 | 6 | 29 | [[Capa MCP y API]] |
+| [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |
 | [[engine.app_coordinator.js]] | 34 | 16 | 18 | [[Capa Interfaz (Khipus OS)]] |
 | [[core.khipu_chat.py]] | 33 | 6 | 27 | [[Capa Chat y agentes]] |
 | [[engine.resolve.js]] | 32 | 20 | 12 | [[Capa Chat y agentes]] |
 | [[core.identity.py]] | 31 | 29 | 2 | [[Capa Infraestructura]] |
 | [[engine.voice.js]] | 30 | 4 | 26 | [[Capa Voz]] |
 | [[ontology.api.py]] | 30 | 8 | 22 | [[Capa Ontología y grafo temporal]] |
+| [[engine.khipu_chat.js]] | 29 | 7 | 22 | [[Capa Chat y agentes]] |
 | [[research.committee.py]] | 29 | 9 | 20 | [[Capa Comité]] |
 | [[engine.toast.js]] | 28 | 25 | 3 | [[Capa Interfaz (Khipus OS)]] |
-| [[ontology.models.py]] | 28 | 25 | 3 | [[Capa Ontología y grafo temporal]] |
 
 ## Módulos sin pruebas (23)
 
@@ -131,7 +131,7 @@ Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo"
 | `window.settleGraph` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
 | `window.xrayImpact` | [[engine.xray.js]] | **no** | sí (solo pruebas) |
 
-## Rutas definidas que nadie llama (9)
+## Rutas definidas que nadie llama (7)
 
 Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los scripts nombran la ruta.
 
@@ -142,12 +142,10 @@ Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los s
 | `GET` | `/api/research/agents` | `agents` | [[research.api.py]] |
 | `GET` | `/api/research/budget` | `budget` | [[research.api.py]] |
 | `POST` | `/api/research/events` | `events` | [[research.api.py]] |
-| `GET` | `/api/tensor/eval` | `tensor_eval` | [[matrix.tensor_api.py]] |
-| `GET` | `/api/tensor/status` | `tensor_status` | [[matrix.tensor_api.py]] |
 | `GET` | `/api/trade/diag` | `trade_diag` | [[server.py]] |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | [[server.py]] |
 
-**Solo las llaman las pruebas** (34): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/governance/attribution`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/rank`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
+**Solo las llaman las pruebas** (36): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/governance/attribution`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/eval`, `GET /api/tensor/rank`, `GET /api/tensor/status`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
 
 ## Llamadas a rutas que no existen (11)
 
@@ -175,7 +173,7 @@ _Ninguna._
 
 ## Variables de la lista de CLAUDE.md que nadie lee (7)
 
-`BROKERAGE_APPROVAL_TTL_MIN`, `HOTVIEWS_COALESCE_S`, `HOTVIEWS_LISTEN`, `KERNEL_PARAMS`, `KHIPU_GATES`, `RESEARCH_CALIBRATION_K`, `RESEARCH_OUTCOME_BAND`
+`BROKERAGE_APPROVAL_TTL_MIN`, `HOTVIEWS_COALESCE_S`, `KERNEL_PARAMS`, `KHIPU_GATES`, `KH_SCALE`, `RESEARCH_CALIBRATION_K`, `RESEARCH_OUTCOME_BAND`
 
 ## Scripts que app.html carga pero sw.js no guarda en caché (0)
 

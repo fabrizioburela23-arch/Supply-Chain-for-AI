@@ -6,7 +6,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 
 # Índice de variables de entorno
 
-157 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
+158 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
 
 | Variable | La leen | En CLAUDE.md |
 |---|---|---|
@@ -53,7 +53,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV COMMITTEE_MAX_SEATS]] | 1 | sí |
 | [[ENV CSP_ENABLED]] | 1 | sí |
 | [[ENV CSP_REPORT_ONLY]] | 1 | sí |
-| [[ENV DATABASE_URL]] | 6 | sí |
+| [[ENV DATABASE_URL]] | 7 | sí |
 | [[ENV DB_CONNECT_TIMEOUT_S]] | 1 | sí |
 | [[ENV DB_MAX_OVERFLOW]] | 1 | sí |
 | [[ENV DB_POOL_SIZE]] | 1 | sí |
@@ -83,20 +83,21 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV GUNICORN_MAX_REQUESTS_JITTER]] | 1 | sí |
 | [[ENV GUNICORN_THREADS]] | 1 | sí |
 | [[ENV HOTVIEWS]] | 1 | sí |
+| [[ENV HOTVIEWS_LISTEN]] | 1 | sí |
 | [[ENV HOT_WAIT_S]] | 1 | sí |
 | [[ENV INSIGHTS_INFLIGHT_WAIT_S]] | 1 | sí |
 | [[ENV INVESTIGADOR_AUTO]] | 1 | sí |
 | [[ENV INVESTIGADOR_AUTO_CUTOFF_HORAS]] | 1 | sí |
 | [[ENV KHIPU_ADMIN_SECRET]] | 2 | sí |
 | [[ENV KHIPU_MCP_TOKEN]] | 2 | sí |
-| [[ENV KHIPU_SCHEDULER]] | 1 | sí |
+| [[ENV KHIPU_SCHEDULER]] | 2 | sí |
 | [[ENV KHIPU_URL]] | 3 | sí |
 | [[ENV KH_GUARD_TRACE]] | 1 | sí |
 | [[ENV LIVE_DEADLINE_S]] | 1 | sí |
 | [[ENV LOG_JSON]] | 1 | sí |
 | [[ENV MARKETSTACK_KEY]] | 3 | sí |
 | [[ENV MATRIX_BUSY_WAIT_S]] | 1 | sí |
-| [[ENV MATRIX_ENGINE]] | 1 | sí |
+| [[ENV MATRIX_ENGINE]] | 2 | sí |
 | [[ENV MATRIX_HEAVY_CONCURRENCY]] | 1 | sí |
 | [[ENV MCP_ALLOWED_HOSTS]] | 1 | sí |
 | [[ENV MCP_ALLOWED_ORIGINS]] | 1 | sí |

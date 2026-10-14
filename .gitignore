@@ -29,3 +29,6 @@ reconcile_out/
 vault/.obsidian/*
 !vault/.obsidian/app.json
 !vault/.obsidian/graph.json
+
+# archivos temporales de mediciones (nunca al repo)
+/*.pkl

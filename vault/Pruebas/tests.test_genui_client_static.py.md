@@ -25,6 +25,7 @@ RESPUESTAS VISUALES del chat (kblocks/1), fase F2: reglas estáticas del cliente
 - [[engine.explain.js]]
 - [[engine.genui.js]]
 - [[engine.genui_charts.js]]
+- [[engine.genui_progress.js]]
 - [[engine.genui_shapes.js]]
 - [[engine.khipu_chat.js]]
 - [[engine.oswindows.js]]

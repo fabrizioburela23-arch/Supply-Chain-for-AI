@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-14"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L30"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-14 — RESPUESTAS VISUALES F2: revisión (19 hallazgos) — sw v269
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (16 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 30 (16 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -21,4 +21,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[tests.test_genui_ledger.py]]
 - [[tests.test_genui_review_fixes.py]]
 
-← más antigua: [[Sesión 2026-10-13 (m) — app.html PARTIDO + 2 arreglos visibles — sw v268]]
+← más antigua: [[Sesión 2026-10-13 (m) — app.html PARTIDO + 2 arreglos visibles — sw v268]] · más nueva: [[Sesión 2026-10-14 (b) — LOTE J - SERVIDOR A 5.000 + CHAT PROGRESIVO (F3) + revisión — sw]] →

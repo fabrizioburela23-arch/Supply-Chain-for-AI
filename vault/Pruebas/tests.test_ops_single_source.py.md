@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_ops_single_source.py"
 lenguaje: "python"
-lineas: 474
+lineas: 477
 aliases: ["tests/test_ops_single_source.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_ops_single_source.py
 
-> Prueba · capa [[Capa Pruebas]] · 474 líneas · `tests/test_ops_single_source.py`
+> Prueba · capa [[Capa Pruebas]] · 477 líneas · `tests/test_ops_single_source.py`
 
 ## Qué prueba
 

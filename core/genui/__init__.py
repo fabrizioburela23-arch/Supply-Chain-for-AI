@@ -61,7 +61,9 @@ def enabled(context):
 _LOCK = threading.Lock()
 _STATS = {'built': 0, 'sent': 0, 'errors': 0, 'figures_checked': 0, 'unprovenanced_blocks': 0,
           'ms': deque(maxlen=500), 'bytes': deque(maxlen=500), 'dropped': Counter(), 'types': Counter(),
-          'last_at': None, 'last_error': None, 'recent': deque(maxlen=500)}
+          'last_at': None, 'last_error': None, 'recent': deque(maxlen=500),
+          # F3: parciales por respuesta (core/khipu_chat._ProgUI.report) — armados, ms en total, retenciones
+          'prog_answers': 0, 'prog_builds': 0, 'prog_held': 0, 'prog_ms': deque(maxlen=500)}
 # el 🩺 juzga una VENTANA (no todo lo acumulado desde el arranque): un error de hace dos días ya no lo pone en rojo,
 # y el p95 solo cuenta con suficientes muestras (un único armado lento en frío no lo dispara)
 WINDOW_S = 24 * 3600
@@ -91,7 +93,10 @@ def stats():
                 'dropped': dict(_STATS['dropped']), 'types': dict(_STATS['types']),
                 'last_at': _STATS['last_at'], 'last_error': _STATS['last_error'],
                 'errors_24h': _recent('error'), 'unprovenanced_24h': _recent('unprov'), 'samples': len(ms),
-                'window_h': WINDOW_S // 3600, 'p95_min_samples': P95_MIN_SAMPLES}
+                'window_h': WINDOW_S // 3600, 'p95_min_samples': P95_MIN_SAMPLES,
+                'progressive': {'answers': _STATS['prog_answers'], 'builds': _STATS['prog_builds'],
+                                'held': _STATS['prog_held'], 'ms_p50': _pct(list(_STATS['prog_ms']), 0.5),
+                                'ms_p95': _pct(list(_STATS['prog_ms']), 0.95)}}
 
 
 def healthy(st=None):
@@ -105,6 +110,17 @@ def healthy(st=None):
 def note_sent():
     with _LOCK:
         _STATS['sent'] += 1
+
+
+def note_progressive(builds, ms, held=0):
+    """F3: lo que costaron los parciales de UNA respuesta (armados, ms sumados, publicaciones retenidas)."""
+    if not builds:
+        return
+    with _LOCK:
+        _STATS['prog_answers'] += 1
+        _STATS['prog_builds'] += int(builds)
+        _STATS['prog_held'] += int(held or 0)
+        _STATS['prog_ms'].append(round(float(ms), 2))
 
 
 def _record(ms, size, env, dropped, checked, unprov, error=None):
@@ -131,7 +147,8 @@ def _record(ms, size, env, dropped, checked, unprov, error=None):
 def reset_stats():
     with _LOCK:
         _STATS.update(built=0, sent=0, errors=0, figures_checked=0, unprovenanced_blocks=0, last_at=None,
-                      last_error=None)
+                      last_error=None, prog_answers=0, prog_builds=0, prog_held=0)
+        _STATS['prog_ms'].clear()
         _STATS['ms'].clear()
         _STATS['recent'].clear()
         _STATS['bytes'].clear()

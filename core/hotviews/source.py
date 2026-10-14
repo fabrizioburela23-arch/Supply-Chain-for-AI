@@ -251,9 +251,11 @@ def load_snapshot():
     return from_snapshot(g, sha, t0=t0)
 
 
-def from_snapshot(g, sha=None, t0=None):
+def from_snapshot(g, sha=None, t0=None, factors_data=None):
     """GraphData desde un dict con la forma del snapshot (el archivo, o uno armado a mano: matrix/tensor.evaluate
-    y las pruebas). Mismo código que la base usaría: mismas triples, mismos factores latentes."""
+    y las pruebas). Mismo código que la base usaría: mismas triples, mismos factores latentes.
+    `factors_data`: dict con la forma de data/multicapa_factors_seats.json que reemplaza al archivo (grafos
+    sintéticos de escala, scripts/gen_synth_graph.py); None = leer FACTORS_PATH, como siempre."""
     from matrix import engine as E
     from ontology import vocabulary as vocab
     t0 = time.perf_counter() if t0 is None else t0
@@ -299,11 +301,14 @@ def from_snapshot(g, sha=None, t0=None):
              'predicate': f.get('predicate')})
 
     factors = []
-    try:
-        with open(FACTORS_PATH, 'r', encoding='utf-8') as fh:
-            fdata = json.load(fh)
-    except (OSError, ValueError):
-        fdata = {}
+    if factors_data is not None:
+        fdata = factors_data
+    else:
+        try:
+            with open(FACTORS_PATH, 'r', encoding='utf-8') as fh:
+                fdata = json.load(fh)
+        except (OSError, ValueError):
+            fdata = {}
     for f in fdata.get('factors') or []:
         fid = (f.get('id') or '').strip()
         members = {m: E.factor_coef(c) for m, c in (f.get('members') or {}).items() if m in known}

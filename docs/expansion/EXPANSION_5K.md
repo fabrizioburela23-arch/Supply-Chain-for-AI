@@ -1,6 +1,6 @@
 # EXPANSIÓN A ~5.000 EMPRESAS — plan técnico
 
-Fecha: 2026-10-13 · Estado: PLAN (nada aplicado) · Base: 4 informes de trabajo medidos sobre el código real
+Fecha: 2026-10-13 · Estado: E0 y E1 (salvo E1.6) HECHOS el 2026-10-14 (lote J, ver §3); E2-E5 en plan · Base: 4 informes de trabajo medidos sobre el código real
 (A = inventario de campos, B = prueba de escala con grafos sintéticos de 5k/10k/20k, C = "en vivo al segundo",
 D = tubería de importación). Archivos que acompañan este plan: `company.schema.json`, `plantilla_empresa.json`,
 `ejemplo_CATL.json`, `INVESTIGAR_POR_EMPRESA.md`, `PROMPT_INVESTIGACION.md`, `empresas_existentes.csv`.
@@ -117,6 +117,12 @@ Límites honestos de la prueba:
     de cotizadas, valuación "en negociación" y NRS.
   - La dirección de los vínculos la deriva el importador desde `this_role`, que se fuerza con `if/then`.
   - La criticidad es de 1 a 6 (la escala de hoy, `max_weight = 6`).
+  - **Dependencia por PLANTA y por PIEZA (2026-10-14, pedido de Fabrizio: «no simplificar»)**: cada planta lleva
+    `facility_id` (fac-001…) y cada producto `product_id`; `dependency` admite `supplier_facility` /
+    `customer_facility` (`facility_ref`: planta concreta con `share_of_flow_pct` — «el 3 nm sale solo de Hsinchu»),
+    `component` (la pieza exacta), `product_affected`, `bom_share_pct`, `tier` (1 = directo, 2 = proveedor del
+    proveedor…) y `alternatives`. El importador (E2) los guarda como propiedades del vínculo; el kernel sigue usando
+    la criticidad como peso (una propagación por planta sería un kernel nuevo: decisión aparte).
   - Secciones: identidad, cotizaciones, clasificación, perfil, estructura, posición de mercado, productos,
     instalaciones, financieros (solo lo que las APIs no dan), rondas, exposición, regulación, riesgos, innovación,
     ESG, línea de tiempo, vínculos y `live_hooks`.
@@ -211,7 +217,9 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
 
 ### Bloque E0 — Medir y blindar (sin cambiar números)
 
-**E0.1 Banco de escala dentro del repo**
+**E0.1 Banco de escala dentro del repo** — ✅ 2026-10-14. `scripts/bench_scale.py` + `scripts/gen_synth_graph.py`
+(levanta el catálogo a 5.000: 5.032 ids, 13.487 vínculos, 368 factores; nunca escribe en data/) +
+`tests/test_scale_budget.py` (`KH_SCALE=1`) + humo de 2 s a 937 en la suite (`tests/test_scale_hot_bench.py`).
 
 - **Archivos**:
   - `scripts/gen_synth_graph.py` (port de `gen5k.py`: levantamiento + variante de hubs);
@@ -221,7 +229,9 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
 - **Meta**: reproducir los números de B ±20 %.
 - **Riesgo**: tests lentos en CI. Mitigación: correrlo solo con `KH_SCALE=1` o en un job nocturno.
 
-**E0.2 `MATRIX_ENGINE=dense` prohibido por encima de 2.000 nodos**
+**E0.2 `MATRIX_ENGINE=dense` prohibido por encima de 2.000 nodos** — ✅ 2026-10-14. `DENSE_MAX_NODES`,
+`engine.dense_refused()` → aviso en 🩺 Gobernanza; `/api/matrix/parity` (ahora con PIN) tampoco arma el denso arriba
+del tope (`dense_refused`).
 
 - **Archivos**: `matrix/engine.py` y el aviso en el 🩺 (`/api/diagnostics`).
 - **Prueba**: con 2.001 nodos y `dense`, usa `sparse` y avisa.
@@ -230,7 +240,11 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
 
 ### Bloque E1 — Servidor a 5k
 
-**E1.1 Kernel `propagate_block` disperso**
+**E1.1 Kernel `propagate_block` disperso** — ✅ 2026-10-14. `_propagate_many_sparse` (bloques CSR n×k de 2.048,
+mismo orden de operaciones, modos persistente y no lineal): 0 diferencias en impactos, saltos y orden de inserción
+a 937/5k/10k/20k × kernel 1.0.0/2.0.0/2.1.0 (`tests/test_scale_kernel.py`). Medido: kernel 937 46 → 8,5 ms; 5k
+1.347 → 42 ms; Impact 5k 1.542 → 105-137 ms ✓. A 20k la vista Impact tarda ~630 ms (meta 500): lo que queda es el
+bucle de orden/huella por fuente de `core/hotviews/views/impact.py` (pendiente).
 
 - **Archivos**: `matrix/engine.py` (portar también los modos `persistent`/PROP-08 y `nonlinear`, que el prototipo no
   cubre).
@@ -242,7 +256,11 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
 - **Riesgo**: cambiar el orden de operaciones da diferencias de ±1 punto en el umbral. Por eso la prueba compara
   impactos Y saltos.
 
-**E1.2 Tensor disperso**
+**E1.2 Tensor disperso** — ✅ 2026-10-14. Ψ `SparsePsi`, perfil disperso, HHI por bloques, Ψ de la vista Impact si
+ya es solo flujo (`psi_source`), Ψᵀc exacta (math.fsum), empates por id; en suggest_links un grupo empatado en el
+corte de N_PEERS entra entero con peso fraccionario (el valor esperado del sorteo de antes, sin sesgo por id).
+Medido a 5k: construir 0,9-5,1 s → 96-141 ms ✓; ficha p50 17,4 → 0,40-0,48 ms ✓; primera ficha tras una
+escritura 1,3-3,7 s → 213-297 ms ✓; pico del proceso tras 4 generaciones 1.771 → 262-278 MB ✓.
 
 - **Archivos**: `matrix/tensor.py`:
   - Ψ `csc` desde las víctimas;
@@ -259,28 +277,33 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
   - RSS +≤ 10 MB.
 - **Riesgo**: diferencias por redondeo en los empates de peers. Mitigación: desempate estable por id.
 
-**E1.3 Memoria entre generaciones**
+**E1.3 Memoria entre generaciones** — ✅ 2026-10-14. `_KEEP = 2` contando la que se arma; la generación de los
+LECTORES (la privada del snapshot si la publicada no sirve) nunca se suelta. Pico del banco a 5k: 177 MB ✓.
 
 - **Archivos**: `core/hotviews/derived.py` (`_KEEP = 2`).
 - **Prueba**: dos generaciones seguidas a 5k con pico ≤ 350 MB.
 - **Meta**: pico ≤ 350 MB.
 - **Riesgo**: ninguno tras E1.2.
 
-**E1.4 Reconstrucción agrupada en escrituras masivas**
+**E1.4 Reconstrucción agrupada en escrituras masivas** — ✅ 2026-10-14. Una señal de una versión ya cubierta no
+reconstruye; un lector que llega DURANTE la construcción de su versión tampoco; `builder.coalesced()` para lotes en
+varias transacciones; sobre con `rebuilding`. 250 vínculos en una transacción = 1 versión, 1 NOTIFY, 1 construcción.
 
 - **Archivos**: `core/hotviews/signals.py`, `builder.py` (un solo NOTIFY por transacción de lote).
 - **Prueba**: un lote de 250 fichas = 1 generación.
 - **Meta**: ≤ 1 rebuild por lote.
 - **Riesgo**: vistas viejas durante el lote. Ya está cubierto por `stale` en el sobre.
 
-**E1.5 Búsqueda por índice**
+**E1.5 Búsqueda por índice** — ✅ 2026-10-14. Índice de prefijos + trigramas por generación en core/entities.py
+(`search_scores`); mismos resultados que el recorrido lineal en 213 consultas a 937 y a 5k. `search_companies` p50:
+937 39,8 → 0,8 ms; 5k 216 → 2,1-2,6 ms ✓ (p95 3,3-3,6 ms).
 
 - **Archivos**: `core/entities.py` (trigramas + prefijos por generación) y `mcp_server` `search_companies`.
 - **Prueba**: en 200 consultas, el top-5 es igual al del recorrido lineal.
 - **Meta**: p50 ≤ 20 ms a 5k.
 - **Riesgo**: memoria del índice (~5 MB, aceptable).
 
-**E1.6 Resolver por identificadores** (defectos D-5 y D-6)
+**E1.6 Resolver por identificadores** (defectos D-5 y D-6) — pendiente (va con E2: necesita los campos lei/isin/…).
 
 - **Archivos**: `core/entities.py`. Índices `lei/isin/cik/qid/yahoo_symbol` + `aliases` leídos de Postgres; el ticker
   solo resuelve con su bolsa.
@@ -290,7 +313,9 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
 - **Meta**: 0 coincidencias entre bolsas.
 - **Riesgo**: algún alias de voz deja de resolver. Mitigación: `VOICE_ALIASES` sigue igual.
 
-**E1.7 Paginación y campos a pedido**
+**E1.7 Paginación y campos a pedido** — ✅ 2026-10-14. `/api/hot/factors?limit&offset&fields` (429 → 51 KB),
+`/api/matrix/metrics?top=` (745 → 51 KB), `/api/hot/nrs?ids=` con ETag y tope de 250 ids por GET (línea de pedido
+de gunicorn); `KhipuHot.nrs` parte el lote en trozos de 200.
 
 - **Archivos**:
   - `/api/hot/factors?limit&offset` (414 KB a 5k);
@@ -300,7 +325,10 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
 - **Meta**: ninguna respuesta del arranque supera 150 KB.
 - **Riesgo**: llamadores viejos. Mitigación: sin parámetros, la respuesta es la de hoy.
 
-**E1.8 Arreglar D-1 y D-2**
+**E1.8 Arreglar D-1 y D-2** — ✅ 2026-10-14 (+ parte de D-3). D-1: la propuesta de IncorporarEmpresa lleva
+`status: proposed` y confianza 0 (ni lectores ni kernel la cuentan hasta confirmarla) y la respuesta trae su
+`link_id`. D-2: la puerta del lote recibe el mismo contexto que G1. D-3 (parcial): la fuente PRINCIPAL citada (la
+de más trust) va al evento (`source_id`) con la confianza; la lista queda en el vínculo (`evidenced_by`).
 
 - **Archivos**:
   - `ontology/actions.py` `incorporar_empresa`: `status: 'proposed'`;
@@ -463,6 +491,11 @@ Leyenda: **Archivos** · **Prueba** (fija el comportamiento) · **Meta** (medida
 
 - **Archivos**: `engine/app_main.js` (o un módulo de mapa nuevo); base WebGL en `graph3d.js`. Vista lejana = 13
   burbujas + hubs; al acercar se abre el sector visible; vínculos solo del vecindario.
+- **Regla del tamaño (Fabrizio, 2026-10-14: «el tamaño de los nodos debe representar su market cap, no ser
+  aleatorio»)**: el radio sigue siendo el de `computeNodeRadius` — capitalización EN VIVO (cotizadas), valuación
+  VERIFICADA con fecha (privadas) o, si no hay dato, un radio mínimo fijo y marcado «sin capitalización». Nunca por
+  grado, nunca aleatorio. Las 5.000 nuevas entran con sus acciones en circulación / capitalización de la fuente (E2)
+  para que el mapa las dimensione desde el primer día; las burbujas de sector suman las capitalizaciones conocidas.
 - **Prueba**: Playwright — clic en una empresa abre su ficha, y "jumpTo", "activateStress" y livesim siguen
   funcionando.
 - **Meta**:

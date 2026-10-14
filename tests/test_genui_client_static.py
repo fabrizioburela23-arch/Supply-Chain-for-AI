@@ -133,7 +133,7 @@ def test_carga_shell_y_version():
     # gráficos y formas: PEREZOSOS (genui.js los pide con la bandera o con el primer sobre), nunca en app.html (§8)
     assert 'engine/genui_charts.js' not in app and 'engine/genui_shapes.js' not in app
     g = _r('engine', 'genui.js')
-    assert "EXTRAS = ['genui_charts.js', 'genui_shapes.js']" in g and 'sc.async = false' in g
+    assert "EXTRAS = ['genui_charts.js', 'genui_shapes.js', 'genui_progress.js']" in g and 'sc.async = false' in g
     sw = _r('sw.js')
     shell = sw[sw.index('const SHELL'):sw.index('];', sw.index('const SHELL'))]
     for f in FILES:

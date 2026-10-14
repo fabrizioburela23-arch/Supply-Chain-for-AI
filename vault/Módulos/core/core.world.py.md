@@ -90,6 +90,7 @@ WORLD MONITOR geopolítico: /api/world/\*.
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[research.committee_api.py]] — lo importa
+- [[scripts.bench_scale.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_world_events` → [[API herramientas MCP]]

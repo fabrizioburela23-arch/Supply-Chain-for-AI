@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "core/entities.py"
 lenguaje: "python"
-lineas: 309
+lineas: 492
 aliases: ["core/entities.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # core/entities.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 309 líneas · `core/entities.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 492 líneas · `core/entities.py`
 
 ## Para qué sirve
 
@@ -18,17 +18,18 @@ Phase 1 · M2: identidad de entidad en el servidor.
 
 ## API pública
 
-- `norm(txt)` — minúsculas + sin acentos + sin puntuación + espacios colapsados. _(línea 51)_
-- `strip_suffix(txt)` — Quita sufijos societarios finales ('nvidia corporation' → 'nvidia'). _(línea 61)_
-- `parse_ticker(raw)` — El campo `ticker` del catálogo mezcla símbolo y bolsa: 'RGTI · Nasdaq', 'IBM · NYSE (división)'. Devuelve (simbolo, bolsa) — solo la parte … _(línea 69)_
-- `external_ids(node)` — Identificadores externos estructurados de un nodo del catálogo. `mkt` es el símbolo limpio; `ticker` trae símbolo + bolsa mezclados. _(línea 85)_
-- `get_index(force=…, snapshot_path=…)` — Índice de la generación VIGENTE (se reconstruye solo si cambió). `snapshot_path` = un archivo aparte (no toca el índice compartido). _(línea 188)_
-- `graph_version()` — La generación del grafo que usa este módulo (tests/test_ops_single_source.py). _(línea 205)_
-- `entity_ids_for(eid)` — [eid] + los ids VIEJOS (alias del catálogo y fusiones) que hoy apuntan a eid. Revisión G1b/G1d: lo guardado con un id que luego se fusionó … _(línea 210)_
-- `resolve(texto, umbral=…)` — Resuelve un texto libre a una entidad del grafo. _(línea 223)_
-- `resolve_many(textos, umbral=…)` — Resuelve una lista; devuelve (resueltos {texto: info}, no_resueltos[]). _(línea 300)_
+- `norm(txt)` — minúsculas + sin acentos + sin puntuación + espacios colapsados. _(línea 60)_
+- `strip_suffix(txt)` — Quita sufijos societarios finales ('nvidia corporation' → 'nvidia'). _(línea 72)_
+- `parse_ticker(raw)` — El campo `ticker` del catálogo mezcla símbolo y bolsa: 'RGTI · Nasdaq', 'IBM · NYSE (división)'. Devuelve (simbolo, bolsa) — solo la parte … _(línea 80)_
+- `external_ids(node)` — Identificadores externos estructurados de un nodo del catálogo. `mkt` es el símbolo limpio; `ticker` trae símbolo + bolsa mezclados. _(línea 96)_
+- `get_index(force=…, snapshot_path=…)` — Índice de la generación VIGENTE (se reconstruye solo si cambió). `snapshot_path` = un archivo aparte (no toca el índice compartido). _(línea 199)_
+- `graph_version()` — La generación del grafo que usa este módulo (tests/test_ops_single_source.py). _(línea 216)_
+- `entity_ids_for(eid)` — [eid] + los ids VIEJOS (alias del catálogo y fusiones) que hoy apuntan a eid. Revisión G1b/G1d: lo guardado con un id que luego se fusionó … _(línea 221)_
+- `resolve(texto, umbral=…)` — Resuelve un texto libre a una entidad del grafo. _(línea 234)_
+- `search_scores(query)` — Búsqueda de empresas (MCP search_companies): {id: (puntaje, método)} con la escalera de siempre — resolve() con el umbral de búsqueda → … _(línea 439)_
+- `resolve_many(textos, umbral=…)` — Resuelve una lista; devuelve (resueltos {texto: info}, no_resueltos[]). _(línea 483)_
 
-**Internas** (empiezan con `_`): `_build_index`
+**Internas** (empiezan con `_`): `_sin_marca`, `_build_index`, `_trigramas`, `_Claves`, `_indice_resolver`, `_indice_busqueda`, `_puntaje_nodo`
 
 ## Depende de
 
@@ -57,6 +58,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - [[research.outcomes.py]] — lo importa
 - [[research.router.py]] — lo importa
 - [[research.runner.py]] — lo importa
+- [[scripts.bench_scale.py]] — lo importa
 - herramienta MCP `calculate_correlation` → [[API herramientas MCP]]
 - herramienta MCP `find_anomalies` → [[API herramientas MCP]]
 - herramienta MCP `get_committee_memo` → [[API herramientas MCP]]
@@ -70,7 +72,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 7 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -80,6 +82,7 @@ _Además lo importan 6 pruebas (lista abajo)._
 - [[tests.test_entities.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_scale_search.py]]
 
 ## Mencionado en sesiones de trabajo
 

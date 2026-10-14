@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/khipu_chat.js"
 lenguaje: "javascript"
-lineas: 1311
+lineas: 1415
 aliases: ["engine/khipu_chat.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/khipu_chat.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 1.311 líneas · `engine/khipu_chat.js`
+> Módulo · capa [[Capa Chat y agentes]] · 1.415 líneas · `engine/khipu_chat.js`
 
 ## Para qué sirve
 
@@ -30,6 +30,7 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.desktop.js]] — usa `KhipuDesk`
 - [[engine.fincard.js]] — usa `openFinCard`
 - [[engine.genui.js]] — usa `KhipuGenUI`
+- [[engine.genui_progress.js]] — usa `KhipuGenUIProgress`
 - [[engine.mascot.js]] — usa `KhipuAgentPrefs`, `KhipuMascot`
 - [[engine.oswindows.js]] — usa `KhipuOSWin`
 - [[engine.pfcommittee.js]] — usa `KhipuPortfolioCommittee`, `KhipuProfile`
@@ -50,6 +51,7 @@ Se carga en [[app.html]] en la posición **88 de 98** (línea 3147), después de
 - [[engine.cockpit.js]] — usa `KhipuChat`
 - [[engine.command_center.js]] — usa `KhipuChat`
 - [[engine.genui.js]] — usa `KhipuChat`
+- [[engine.genui_progress.js]] — usa `KhipuChat`
 - [[engine.pickers.js]] — usa `KhipuChat`
 - [[engine.voice.js]] — usa `KhipuChat`
 
@@ -69,8 +71,10 @@ Se carga en [[app.html]] en la posición **88 de 98** (línea 3147), después de
 - [[tests.test_committee_os_ui.py]]
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_client_static.py]]
+- [[tests.test_genui_f3_client_static.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
+- [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour_client.py]]

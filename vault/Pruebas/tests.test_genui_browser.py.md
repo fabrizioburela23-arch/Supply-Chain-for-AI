@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_genui_browser.py"
 lenguaje: "python"
-lineas: 454
+lineas: 456
 aliases: ["tests/test_genui_browser.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_genui_browser.py
 
-> Prueba · capa [[Capa Pruebas]] · 454 líneas · `tests/test_genui_browser.py`
+> Prueba · capa [[Capa Pruebas]] · 456 líneas · `tests/test_genui_browser.py`
 
 ## Qué prueba
 
@@ -28,6 +28,7 @@ RESPUESTAS VISUALES (kblocks/1), fase F2, en Chromium REAL (docs/CHAT_UI_GENERAT
 - [[engine.explain.js]]
 - [[engine.genui.js]]
 - [[engine.genui_charts.js]]
+- [[engine.genui_progress.js]]
 - [[engine.genui_shapes.js]]
 - [[engine.hotclient.js]]
 - [[engine.khipu_chat.js]]

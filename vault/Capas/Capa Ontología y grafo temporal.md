@@ -9,23 +9,24 @@ tags: ["capa/ontologia", "tipo/capa"]
 
 > La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa.
 
-**32 archivos · 13.479 líneas.** Volver al [[00 Mapa de Khipus]].
+**32 archivos · 13.792 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[engine.temporal-graph.js]] — 1.463 líneas · Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline …
 - [[ontology.api.py]] — 1.386 líneas · API REST de la ontología: /api/ontology/\*
 - [[ontology.agents.py]] — 1.039 líneas · Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta sin aprobación humana (salvo lo que el usuario marque como …
-- [[ontology.actions.py]] — 898 líneas · Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usuario deja de solo mirar: registra tesis, anotaciones, correcciones y …
+- [[ontology.actions.py]] — 906 líneas · Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usuario deja de solo mirar: registra tesis, anotaciones, correcciones y …
 - [[ontology.reconcile.py]] — 843 líneas · G3 (misión de reparación 2026-10-04): RECONCILIACIÓN append-only entre el catálogo (data/grafo_v0.json, la verdad del MAPA/MCP) y Postgres (la verdad …
 - [[scripts.build_graph_review.py]] — 799 líneas · LISTAS DE REVISIÓN DEL GRAFO para Fabrizio (BRECHAS_V2 bloque 5; decisiones #6 #7 #8 #10).
 - [[ontology.service.py]] — 762 líneas · lógica de negocio de la ontología.
 - [[scripts.audit_graph.py]] — 706 líneas · Auditoría automática del grafo (misión de reparación, G1).
 - [[engine.maptime.js]] — 525 líneas · EL TIEMPO DENTRO DEL MAPA PRINCIPAL (2026-09-25) Fabrizio: "el grafo temporal y el normal deberían ser uno; el temporal no da mucho por sí solo". …
 - [[scripts.migrate_v0_to_ontology.py]] — 503 líneas · Fase 1: migra data/grafo_v0.json (el snapshot congelado en Fase 0) a la ontología (Postgres, tabla events + vistas materializadas objects/links).
+- [[core.entities.py]] — 492 líneas · Phase 1 · M2: identidad de entidad en el servidor.
 - [[ontology.bitemporal.py]] — 356 líneas · G(t, κ): el grafo vigente en la fecha t TAL COMO SE CONOCÍA en κ (INFRA_OPERATIVA §5.5).
+- [[ontology.bulk_import.py]] — 340 líneas · ingesta masiva idempotente y validada (Wikidata/GLEIF).
 - [[ontology.timeline.py]] — 334 líneas · Phase 1 · M5: la línea de tiempo de una entidad.
-- [[core.entities.py]] — 309 líneas · Phase 1 · M2: identidad de entidad en el servidor.
 - [[ontology.provenance.py]] — 285 líneas · Phase 1 · M1: procedencia de primera clase.
 - [[ontology.db.py]] — 275 líneas · conexión a Postgres (fuente única de verdad de la ontología).
 - [[engine.hypergraph.js]] — 273 líneas · Hipergrafos temporales agénticos para Khipu Finance Una hiper-arista conecta MÚLTIPLES nodos a la vez (un evento que afecta a N empresas) y tiene …
@@ -35,7 +36,6 @@ tags: ["capa/ontologia", "tipo/capa"]
 - [[ontology.vocabulary.py]] — 253 líneas · REGISTRO ÚNICO del vocabulario del grafo.
 - [[ontology.ledger_models.py]] — 248 líneas · el LIBRO DE DECISIONES (docs/INFRA_OPERATIVA.md §2.1; paso 6 del plan).
 - [[engine.secondbrain.js]] — 241 líneas · Second Brain de 5 capas para Khipu Finance Al seleccionar una empresa, abre un panel con 5 capas de conocimiento: 1. Mercado (precio + sparkline + …
-- [[ontology.bulk_import.py]] — 218 líneas · ingesta masiva idempotente y validada (Wikidata/GLEIF).
 - [[ontology.checkpoints.py]] — 212 líneas · PUNTOS DE CONTROL del grafo (docs/INFRA_OPERATIVA.md §5.5; paso 26).
 - [[ontology.ingest_news.py]] — 205 líneas · Phase 1 · M4: las noticias entran al grafo.
 - [[ontology.models.py]] — 199 líneas · esquema SQLAlchemy de la ontología.
@@ -57,7 +57,7 @@ tags: ["capa/ontologia", "tipo/capa"]
 | la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
 | la usa | [[Capa MCP y API]] | 13 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 13 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 11 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | la usa | [[Capa Chat y agentes]] | 10 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |

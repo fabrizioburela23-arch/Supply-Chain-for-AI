@@ -1,0 +1,20 @@
+khipus_id,nombre,simbolo,nombre_en_base,diagnostico
+qinetiq,QinetiQ,QQ.,NO EN BASE,"Símbolo mal escrito (""QQ.""); en Yahoo es QQ.L"
+enflame,Enflame Technology,688801.SS,NO EN BASE,688801.SS no está en la base (salida a bolsa reciente): confirmar
+moorethreads,Moore Threads,688795.SS,NO EN BASE,688795.SS no está en la base (salida a bolsa reciente): confirmar
+SiTime,SiTime Corporation,SITT,NO EN BASE,"""SITT"" no existe; el ticker de SiTime es SITM"
+Uniper,Uniper,UN01.DE,Uniper SE,La base marca UN01.DE como dado de baja: verificar
+Kazatomprom,Kazatomprom,KAP.L,NO EN BASE,KAP.L (GDR en Londres) no está en la base; confirmar símbolo vigente
+Ajinomoto,Ajinomoto,AJINY,"Ajinomoto Co., Inc.",AJINY figura dado de baja; la principal es 2802.T
+TEL,Tokyo Electron,TOELY,Tokyo Electron Limited,TOELY es un ADR OTC dado de baja en la base; la principal es 8035.T
+astroscale,Astroscale,5034.T,"unerry,Inc.",5034.T corresponde a otra empresa (unerry); confirmar el código de Astroscale en Tokio
+TSMC,TSMC,TSM,Taiwan Semiconductor Manufacturing Company Limited,TSM es el ADR; la cotización principal es 2330.TW (conviene registrar ambas)
+SKHynix,SK Hynix,HXSCL,NO EN BASE,"Símbolo incorrecto (""HXSCL""); la cotización principal es 000660.KS"
+northern-data,Northern Data Group,NB2.DE,Northern Data AG,La base marca NB2.DE como dado de baja: verificar
+Qorvo,Qorvo,QRVO,"Qorvo, Inc.",La base marca QRVO como dado de baja: verificar estado (fusión con Skyworks anunciada en 2025)
+SiemensEnergy,Siemens Energy,SMNEY,Siemens Energy AG,SMNEY figura dado de baja; la principal es ENR.DE
+Meeza,Meeza,MEZA.QA,NO EN BASE,MEZA.QA no está en la base: confirmar
+Asetek,Asetek,ASTK.CO,Asetek,La base marca ASTK.CO como dado de baja: verificar
+Mindspace Business Parks REIT,Mindspace Business Parks REIT,MINDSPACE.NS,NO EN BASE,MINDSPACE.NS no está en la base: confirmar
+VulcanEnergy,Vulcan Energy,VUL.DE,NO EN BASE,VUL.DE no está en la base; la principal es VUL.AX
+AustralianStrategicMaterials,Australian Strategic Materials,ASM.AX,Australian Strategic Materials Ltd,La base marca ASM.AX como dado de baja: verificar
