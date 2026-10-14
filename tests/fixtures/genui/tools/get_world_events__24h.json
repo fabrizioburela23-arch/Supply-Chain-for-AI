@@ -1,0 +1,59 @@
+{
+ "args": {
+  "window": "24h"
+ },
+ "result": {
+  "as_of": "2026-10-13T19:30:00+00:00",
+  "count_total": 4,
+  "gpr_index": null,
+  "items": [
+   {
+    "id": "q1",
+    "lat": 23.97,
+    "layer": "quakes",
+    "lon": 121.6,
+    "severity": 3,
+    "source": "USGS",
+    "time": "2026-10-13T08:12:00Z",
+    "title": "M 5.8 - 12 km SE of Hualien City, Taiwan",
+    "url": "https://earthquake.usgs.gov/x"
+   },
+   {
+    "id": "g1",
+    "lat": 50.45,
+    "layer": "conflict",
+    "lon": 30.52,
+    "severity": 2,
+    "source": "GDELT",
+    "time": "20261013T060000Z",
+    "title": "Strikes reported near Kyiv",
+    "url": "https://example.org/a"
+   },
+   {
+    "id": "c1",
+    "lat": 26.57,
+    "layer": "chokepoints",
+    "lon": 56.25,
+    "severity": 2,
+    "source": "IMF PortWatch",
+    "time": "2026-10-12",
+    "title": "Strait of Hormuz transits below average"
+   },
+   {
+    "id": "n1",
+    "lat": null,
+    "layer": "natural",
+    "lon": null,
+    "severity": 1,
+    "source": "NASA EONET",
+    "time": null,
+    "title": "Wildfire"
+   }
+  ],
+  "source": "Khipus World Monitor (core.world)",
+  "sources": {},
+  "window": "24h"
+ },
+ "sample": true,
+ "tool": "get_world_events"
+}

@@ -1,0 +1,1098 @@
+{
+ "en": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia",
+      "symbol": "NVDA"
+     },
+     "kind": "open_window",
+     "label": {
+      "en": "Open the chain",
+      "es": "Abrir la cadena"
+     },
+     "window": "supplychain"
+    }
+   ],
+   "alt": {
+    "en": "Nvidia. Suppliers: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Customers: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)",
+    "es": "Nvidia. Proveedores: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Clientes: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)"
+   },
+   "data": {
+    "as_of": "2026-10-13T18:20:44.583Z",
+    "center": {
+     "id": "Nvidia",
+     "label": "Nvidia",
+     "symbol": "NVDA"
+    },
+    "edges": [
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "SKHynix",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "CoreWeave",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "fab",
+      "s": "TSMC",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "Dell",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Astera",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "Meta",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Boyd Thermal",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Microsoft",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Ibiden",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Oracle",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Khazna",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "xAI",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "license",
+      "s": "ARM",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Amazon",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Expeditors",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "HPE",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "OpenAI",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Nebius",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Quanta",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Alphabet",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "ASE",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "Anthropic",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Apptronik",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "ByteDance",
+      "verified": true,
+      "weight": 3
+     }
+    ],
+    "nodes": [
+     {
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "role": "center"
+     },
+     {
+      "entity": {
+       "id": "SKHynix",
+       "label": "SK Hynix",
+       "symbol": "HXSCL"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "CoreWeave",
+       "label": "CoreWeave",
+       "symbol": "CRWV"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "TSMC",
+       "label": "TSMC",
+       "symbol": "TSM"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "foundry",
+       "es": "fabrica"
+      }
+     },
+     {
+      "entity": {
+       "id": "Dell",
+       "label": "Dell Technologies",
+       "symbol": "DELL"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Astera",
+       "label": "Astera Labs",
+       "symbol": "ALAB"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Meta",
+       "label": "Meta",
+       "symbol": "META"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Boyd Thermal",
+       "label": "Boyd Thermal"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)",
+       "symbol": "MSFT"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Ibiden",
+       "label": "Ibiden",
+       "symbol": "IBIDF"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Oracle",
+       "label": "Oracle (OCI)",
+       "symbol": "ORCL"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Khazna",
+       "label": "Khazna"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "xAI",
+       "label": "xAI (+SpaceX)"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "ARM",
+       "label": "ARM",
+       "symbol": "ARM"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "license",
+       "es": "licencia"
+      }
+     },
+     {
+      "entity": {
+       "id": "Amazon",
+       "label": "Amazon (AWS)",
+       "symbol": "AMZN"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Expeditors",
+       "label": "Expeditors",
+       "symbol": "EXPD"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "HPE",
+       "label": "Hewlett Packard Ent.",
+       "symbol": "HPE"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "OpenAI",
+       "label": "OpenAI"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Nebius",
+       "label": "Nebius",
+       "symbol": "NBIS"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Quanta",
+       "label": "Quanta Computer",
+       "symbol": "2382.TW"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Alphabet",
+       "label": "Alphabet (Google Cloud)",
+       "symbol": "GOOGL"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "ASE",
+       "label": "ASE Technology",
+       "symbol": "ASX"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Anthropic",
+       "label": "Anthropic"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Apptronik",
+       "label": "Apptronik"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "ByteDance",
+       "label": "ByteDance"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     }
+    ],
+    "src": "khipus_graph"
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_supply_chain"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "flow only: suppliers → company → customers",
+    "es": "solo flujo: proveedores → empresa → clientes"
+   },
+   "title": {
+    "en": "Nvidia supply chain",
+    "es": "Cadena de suministro de Nvidia"
+   },
+   "type": "graph.mini"
+  }
+ ],
+ "es": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia",
+      "symbol": "NVDA"
+     },
+     "kind": "open_window",
+     "label": {
+      "en": "Open the chain",
+      "es": "Abrir la cadena"
+     },
+     "window": "supplychain"
+    }
+   ],
+   "alt": {
+    "en": "Nvidia. Suppliers: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Customers: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)",
+    "es": "Nvidia. Proveedores: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Clientes: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)"
+   },
+   "data": {
+    "as_of": "2026-10-13T18:20:44.583Z",
+    "center": {
+     "id": "Nvidia",
+     "label": "Nvidia",
+     "symbol": "NVDA"
+    },
+    "edges": [
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "SKHynix",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "CoreWeave",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "fab",
+      "s": "TSMC",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "Dell",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Astera",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "Meta",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Boyd Thermal",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Microsoft",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Ibiden",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Oracle",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Khazna",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "xAI",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "license",
+      "s": "ARM",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Amazon",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Expeditors",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "HPE",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "OpenAI",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Nebius",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Quanta",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "cloud",
+      "s": "Nvidia",
+      "t": "Alphabet",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "ASE",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "Anthropic",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Apptronik",
+      "t": "Nvidia",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "rel_type": "supply",
+      "s": "Nvidia",
+      "t": "ByteDance",
+      "verified": true,
+      "weight": 3
+     }
+    ],
+    "nodes": [
+     {
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "role": "center"
+     },
+     {
+      "entity": {
+       "id": "SKHynix",
+       "label": "SK Hynix",
+       "symbol": "HXSCL"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "CoreWeave",
+       "label": "CoreWeave",
+       "symbol": "CRWV"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "TSMC",
+       "label": "TSMC",
+       "symbol": "TSM"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "foundry",
+       "es": "fabrica"
+      }
+     },
+     {
+      "entity": {
+       "id": "Dell",
+       "label": "Dell Technologies",
+       "symbol": "DELL"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Astera",
+       "label": "Astera Labs",
+       "symbol": "ALAB"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Meta",
+       "label": "Meta",
+       "symbol": "META"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Boyd Thermal",
+       "label": "Boyd Thermal"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)",
+       "symbol": "MSFT"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Ibiden",
+       "label": "Ibiden",
+       "symbol": "IBIDF"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Oracle",
+       "label": "Oracle (OCI)",
+       "symbol": "ORCL"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Khazna",
+       "label": "Khazna"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "xAI",
+       "label": "xAI (+SpaceX)"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "ARM",
+       "label": "ARM",
+       "symbol": "ARM"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "license",
+       "es": "licencia"
+      }
+     },
+     {
+      "entity": {
+       "id": "Amazon",
+       "label": "Amazon (AWS)",
+       "symbol": "AMZN"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Expeditors",
+       "label": "Expeditors",
+       "symbol": "EXPD"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "HPE",
+       "label": "Hewlett Packard Ent.",
+       "symbol": "HPE"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "OpenAI",
+       "label": "OpenAI"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Nebius",
+       "label": "Nebius",
+       "symbol": "NBIS"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "Quanta",
+       "label": "Quanta Computer",
+       "symbol": "2382.TW"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Alphabet",
+       "label": "Alphabet (Google Cloud)",
+       "symbol": "GOOGL"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "cloud",
+       "es": "nube"
+      }
+     },
+     {
+      "entity": {
+       "id": "ASE",
+       "label": "ASE Technology",
+       "symbol": "ASX"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Anthropic",
+       "label": "Anthropic"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "Apptronik",
+       "label": "Apptronik"
+      },
+      "role": "supplier",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     },
+     {
+      "entity": {
+       "id": "ByteDance",
+       "label": "ByteDance"
+      },
+      "role": "customer",
+      "sub": {
+       "en": "supply",
+       "es": "suministro"
+      }
+     }
+    ],
+    "src": "khipus_graph"
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_supply_chain"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "flow only: suppliers → company → customers",
+    "es": "solo flujo: proveedores → empresa → clientes"
+   },
+   "title": {
+    "en": "Nvidia supply chain",
+    "es": "Cadena de suministro de Nvidia"
+   },
+   "type": "graph.mini"
+  }
+ ]
+}

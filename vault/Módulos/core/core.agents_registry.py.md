@@ -38,13 +38,14 @@ _Nada interno._
 - [[research.deliberation.py]] — lo importa
 - [[research.runner.py]] — lo importa
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_agents_registry.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
+- [[tests.test_genui_review_fixes.py]]
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_voice_os_server.py]]

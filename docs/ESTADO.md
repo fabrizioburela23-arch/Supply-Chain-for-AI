@@ -9,6 +9,22 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-14 — RESPUESTAS VISUALES F2: revisión (19 hallazgos) — sw v269
+
+- Cliente (engine/genui*.js): «Ver como tabla» → «Ver como gráfico» ya no deja la cascada en «…» ni la línea vacía;
+  marcas del texto en UTF-16 (los emojis corrían los chips y perdían el «⚠ cifra no verificada»); Enter/Espacio en
+  todo enlace (`U.linkify`); el conteo nunca muestra «0»; menú ⋯ con menuitem/flechas y foco de vuelta; la ventana 📌
+  conserva su fuente al cambiar ES/EN; procedencia con contraste AA; gráficos y formas se cargan PEREZOSOS.
+- Servidor: la cartera de la cascada sale del NAVEGADOR (usd validado, `_server_args`), nunca del modelo; sin cartera
+  → `no_positions`; comparación sin horas mezcladas; cascada con magnitud 1/3 ya no se descarta; ui_inputs sin texto
+  libre (web_search); gather_meta sin esperar; 🩺 genui visible y por ventana de 24 h; ref_block llega al prompt;
+  get_history → técnico, run_scenario → cadena (mascotas).
+- Pruebas: tests/test_genui_review_fixes.py + 8 nuevas en tests/test_genui_browser.py + 1 en test_genui_ledger.py.
+- Pendiente (F3+): la bandera sigue apagada por defecto; Fabrizio decide cuándo `GENUI=on` en Railway.
+- EXPANSIÓN A ~5.000 (solo diseño, nada importado): docs/expansion/ (EXPANSION_5K.md = bloques E0-E5 y decisiones
+  F-1..F-11; INVESTIGAR_POR_EMPRESA.md + PROMPT_INVESTIGACION.md = la ficha que investiga Fabrizio) + data/import/
+  (company.schema.json, plantilla, ejemplo CATL, empresas_existentes.csv). Siguiente: E0 (Ψ disperso) → importador.
+
 # SESIÓN 2026-10-13 (m) — app.html PARTIDO + 2 arreglos visibles — sw v268
 
 - app.html 12.682 → 3.463 líneas: 6 de 10 bloques <script> movidos BYTE A BYTE a engine/app_main.js, app_coordinator.js,

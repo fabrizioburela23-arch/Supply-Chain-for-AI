@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **29 de 97** (línea 3020), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
+Se carga en [[app.html]] en la posición **29 de 98** (línea 3020), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
 
 ## Lo usan
 
@@ -37,6 +37,8 @@ Se carga en [[app.html]] en la posición **29 de 97** (línea 3020), después de
 - [[tests.test_chat_portfolio_agent.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_committee_os_ui.py]]
+- [[tests.test_genui_browser.py]]
+- [[tests.test_genui_render_node.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
 - [[tests.test_khipus_os_server.py]]

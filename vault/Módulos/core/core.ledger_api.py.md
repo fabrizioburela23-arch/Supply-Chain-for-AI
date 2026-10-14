@@ -61,7 +61,7 @@ _Además lo importan 3 pruebas (lista abajo)._
 | `GET,POST` | `/api/ledger/replay/<decision_id>` | `ledger_replay` | [[engine.audit.js]], 2 pruebas |
 | `GET` | `/api/ledger/status` | `ledger_status` | 2 pruebas |
 | `GET` | `/api/ledger/verify` | `ledger_verify` | 1 prueba |
-| `GET` | `/api/ledger/why/<decision_id>` | `ledger_why` | [[engine.audit.js]], 2 pruebas |
+| `GET` | `/api/ledger/why/<decision_id>` | `ledger_why` | [[engine.audit.js]], [[engine.genui.js]], 2 pruebas |
 
 Grupos: [[API ledger]]
 

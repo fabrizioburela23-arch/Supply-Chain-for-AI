@@ -1,0 +1,41 @@
+{
+ "args": {
+  "entity": "Nvidia"
+ },
+ "result": {
+  "as_of": "2026-10-13T19:00:00+00:00",
+  "claims_by_agent": {
+   "fundamental": [
+    {
+     "claim_id": "c1",
+     "confidence": 0.71,
+     "stance": "positive",
+     "statement": "Data-center revenue keeps compounding",
+     "statement_es": "Los ingresos de centros de datos siguen creciendo"
+    }
+   ],
+   "supply_chain": [
+    {
+     "claim_id": "c2",
+     "confidence": 0.64,
+     "stance": "negative",
+     "statement": "Single foundry dependency (TSMC)",
+     "statement_es": "Depende de una sola fundición (TSMC)"
+    },
+    {
+     "claim_id": "c3",
+     "confidence": 0.5,
+     "stance": "neutral",
+     "statement": "Neutral",
+     "statement_es": "Neutral"
+    }
+   ]
+  },
+  "entity_id": "Nvidia",
+  "label": "Nvidia",
+  "n_claims": 3,
+  "source": "Khipus research swarm (research_claims, Postgres)"
+ },
+ "sample": true,
+ "tool": "get_research"
+}

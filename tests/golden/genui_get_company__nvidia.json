@@ -1,0 +1,606 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Price: 182.4 USD; Change: −1.19 %; Market cap: 4,447.3 billion USD; Network risk (NRS): 37",
+    "es": "Precio: 182,4 USD; Cambio: −1,19 %; Capitalización: 4.447,3 mil millones USD; Riesgo de red (NRS): 37"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Price",
+       "es": "Precio"
+      },
+      "value": {
+       "as_of": "2026-10-13T19:58:00Z",
+       "fact": "F1",
+       "live": true,
+       "src": "yahoo",
+       "unit": "USD",
+       "v": 182.4
+      }
+     },
+     {
+      "label": {
+       "en": "Change",
+       "es": "Cambio"
+      },
+      "value": {
+       "as_of": "2026-10-13T19:58:00Z",
+       "fact": "F1",
+       "live": true,
+       "src": "yahoo",
+       "unit": "pct",
+       "v": -1.19
+      }
+     },
+     {
+      "label": {
+       "en": "Market cap",
+       "es": "Capitalización"
+      },
+      "value": {
+       "as_of": "2026-10-13T19:58:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "USD_B",
+       "v": 4447.3
+      }
+     },
+     {
+      "label": {
+       "en": "Network risk (NRS)",
+       "es": "Riesgo de red (NRS)"
+      },
+      "value": {
+       "as_of": "2026-10-13T23:16:25.395339+00:00",
+       "explain": "nrs",
+       "fact": "F1",
+       "src": "khipus_nrs",
+       "unit": "nrs",
+       "v": 37
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia: key figures",
+    "es": "Nvidia: cifras clave"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia",
+      "symbol": "NVDA"
+     },
+     "kind": "open_dossier",
+     "label": {
+      "en": "Dossier",
+      "es": "Dossier"
+     }
+    },
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia",
+      "symbol": "NVDA"
+     },
+     "kind": "open_xray",
+     "label": {
+      "en": "X-Ray",
+      "es": "Radiografía"
+     }
+    }
+   ],
+   "alt": {
+    "en": "Nvidia: price 182.4 USD, change −1.19 %, market cap 4,447.3 billion USD, NRS 37. Suppliers: SK Hynix, TSMC, Astera Labs. Customers: CoreWeave, Dell Technologies, Meta",
+    "es": "Nvidia: precio 182,4 USD, cambio −1,19 %, capitalización 4.447,3 mil millones USD, NRS 37. Proveedores: SK Hynix, TSMC, Astera Labs. Clientes: CoreWeave, Dell Technologies, Meta"
+   },
+   "data": {
+    "change": {
+     "as_of": "2026-10-13T19:58:00Z",
+     "fact": "F1",
+     "live": true,
+     "src": "yahoo",
+     "unit": "pct",
+     "v": -1.19
+    },
+    "company": {
+     "id": "Nvidia",
+     "label": "Nvidia",
+     "symbol": "NVDA"
+    },
+    "graph_as_of": "2026-10-13T18:20:44.583Z",
+    "listed": true,
+    "market_cap": {
+     "as_of": "2026-10-13T19:58:00Z",
+     "fact": "F1",
+     "src": "yahoo",
+     "unit": "USD_B",
+     "v": 4447.3
+    },
+    "market_state": "REGULAR",
+    "nrs": {
+     "as_of": "2026-10-13T23:16:25.395339+00:00",
+     "explain": "nrs",
+     "fact": "F1",
+     "src": "khipus_nrs",
+     "unit": "nrs",
+     "v": 37
+    },
+    "price": {
+     "as_of": "2026-10-13T19:58:00Z",
+     "fact": "F1",
+     "live": true,
+     "src": "yahoo",
+     "unit": "USD",
+     "v": 182.4
+    },
+    "structure": {
+     "en": "Structure: supplier concentration low; main supplier country: EEUU",
+     "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+    },
+    "top_customers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "CoreWeave",
+       "label": "CoreWeave"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Dell",
+       "label": "Dell Technologies"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Meta",
+       "label": "Meta"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Oracle",
+       "label": "Oracle (OCI)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 5
+     }
+    ],
+    "top_suppliers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "SKHynix",
+       "label": "SK Hynix"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "TSMC",
+       "label": "TSMC"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Astera",
+       "label": "Astera Labs"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Boyd Thermal",
+       "label": "Boyd Thermal"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Ibiden",
+       "label": "Ibiden"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia card",
+    "es": "Ficha de Nvidia"
+   },
+   "type": "company.card"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Price: 182.4 USD; Change: −1.19 %; Market cap: 4,447.3 billion USD; Network risk (NRS): 37",
+    "es": "Precio: 182,4 USD; Cambio: −1,19 %; Capitalización: 4.447,3 mil millones USD; Riesgo de red (NRS): 37"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Price",
+       "es": "Precio"
+      },
+      "value": {
+       "as_of": "2026-10-13T19:58:00Z",
+       "fact": "F1",
+       "live": true,
+       "src": "yahoo",
+       "unit": "USD",
+       "v": 182.4
+      }
+     },
+     {
+      "label": {
+       "en": "Change",
+       "es": "Cambio"
+      },
+      "value": {
+       "as_of": "2026-10-13T19:58:00Z",
+       "fact": "F1",
+       "live": true,
+       "src": "yahoo",
+       "unit": "pct",
+       "v": -1.19
+      }
+     },
+     {
+      "label": {
+       "en": "Market cap",
+       "es": "Capitalización"
+      },
+      "value": {
+       "as_of": "2026-10-13T19:58:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "USD_B",
+       "v": 4447.3
+      }
+     },
+     {
+      "label": {
+       "en": "Network risk (NRS)",
+       "es": "Riesgo de red (NRS)"
+      },
+      "value": {
+       "as_of": "2026-10-13T23:16:25.395339+00:00",
+       "explain": "nrs",
+       "fact": "F1",
+       "src": "khipus_nrs",
+       "unit": "nrs",
+       "v": 37
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia: key figures",
+    "es": "Nvidia: cifras clave"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia",
+      "symbol": "NVDA"
+     },
+     "kind": "open_dossier",
+     "label": {
+      "en": "Dossier",
+      "es": "Dossier"
+     }
+    },
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia",
+      "symbol": "NVDA"
+     },
+     "kind": "open_xray",
+     "label": {
+      "en": "X-Ray",
+      "es": "Radiografía"
+     }
+    }
+   ],
+   "alt": {
+    "en": "Nvidia: price 182.4 USD, change −1.19 %, market cap 4,447.3 billion USD, NRS 37. Suppliers: SK Hynix, TSMC, Astera Labs. Customers: CoreWeave, Dell Technologies, Meta",
+    "es": "Nvidia: precio 182,4 USD, cambio −1,19 %, capitalización 4.447,3 mil millones USD, NRS 37. Proveedores: SK Hynix, TSMC, Astera Labs. Clientes: CoreWeave, Dell Technologies, Meta"
+   },
+   "data": {
+    "change": {
+     "as_of": "2026-10-13T19:58:00Z",
+     "fact": "F1",
+     "live": true,
+     "src": "yahoo",
+     "unit": "pct",
+     "v": -1.19
+    },
+    "company": {
+     "id": "Nvidia",
+     "label": "Nvidia",
+     "symbol": "NVDA"
+    },
+    "graph_as_of": "2026-10-13T18:20:44.583Z",
+    "listed": true,
+    "market_cap": {
+     "as_of": "2026-10-13T19:58:00Z",
+     "fact": "F1",
+     "src": "yahoo",
+     "unit": "USD_B",
+     "v": 4447.3
+    },
+    "market_state": "REGULAR",
+    "nrs": {
+     "as_of": "2026-10-13T23:16:25.395339+00:00",
+     "explain": "nrs",
+     "fact": "F1",
+     "src": "khipus_nrs",
+     "unit": "nrs",
+     "v": 37
+    },
+    "price": {
+     "as_of": "2026-10-13T19:58:00Z",
+     "fact": "F1",
+     "live": true,
+     "src": "yahoo",
+     "unit": "USD",
+     "v": 182.4
+    },
+    "structure": {
+     "en": "Structure: supplier concentration low; main supplier country: EEUU",
+     "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+    },
+    "top_customers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "CoreWeave",
+       "label": "CoreWeave"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Dell",
+       "label": "Dell Technologies"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Meta",
+       "label": "Meta"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Oracle",
+       "label": "Oracle (OCI)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 5
+     }
+    ],
+    "top_suppliers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "SKHynix",
+       "label": "SK Hynix"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "TSMC",
+       "label": "TSMC"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Astera",
+       "label": "Astera Labs"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Boyd Thermal",
+       "label": "Boyd Thermal"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Ibiden",
+       "label": "Ibiden"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia card",
+    "es": "Ficha de Nvidia"
+   },
+   "type": "company.card"
+  }
+ ]
+}

@@ -1837,6 +1837,31 @@ def diagnostics():
         services['investigacion'] = _diag_card(f'sin salud de investigación: {type(_e).__name__}',
                                                f'no research health: {type(_e).__name__}',
                                                configured=True, ok=False)
+    # Interfaz generativa del chat (core/genui, docs/CHAT_UI_GENERATIVA.md §11 F1): modo GENUI, ms p95 por sobre (meta
+    # ≤ 25), peso p95, descartes y CIFRAS SIN PROCEDENCIA (meta 0). Solo memoria del proceso: no llama a nada.
+    try:
+        from core import genui as _gu
+        _gs = _gu.stats()
+        _p95 = _gs.get('ms_p95')
+        _gok = _gu.healthy(_gs)        # ventana de 24 h + p95 con ≥ 20 muestras (no contadores de toda la vida)
+        _mes = {'off': 'apagada', 'shadow': 'en sombra (se arma y se mide, no se envía)', 'on': 'encendida'}[_gs['mode']]
+        _men = {'off': 'off', 'shadow': 'shadow (built and measured, not sent)', 'on': 'on'}[_gs['mode']]
+        _drop = sum((_gs.get('dropped') or {}).values())
+        _ms = '—' if _p95 is None else f'{_p95:.1f}'
+        _kb = '—' if _gs.get('kb_p95') is None else f"{_gs['kb_p95']:.1f}"
+        services['genui'] = _diag_card(
+            f"Respuestas visuales: {_mes} · {_gs['built']} sobres ({_gs['sent']} enviados) · p95 {_ms} ms · "
+            f"{_kb} KB · {_drop} bloques descartados · {_gs['unprovenanced_24h']} con cifras sin fuente (24 h)",
+            f"Visual answers: {_men} · {_gs['built']} envelopes ({_gs['sent']} sent) · p95 {_ms} ms · {_kb} KB · "
+            f"{_drop} blocks dropped · {_gs['unprovenanced_24h']} with unsourced figures (24 h)",
+            None if _gok else ('Revisa el registro del servidor (líneas «genui:»): un bloque con una cifra sin fuente '
+                               'se descarta solo, pero no debería pasar.',
+                               'Check the server log («genui:» lines): a block with an unsourced figure is dropped '
+                               'automatically, but it should not happen.'),
+            configured=True, ok=bool(_gok), genui=_gs)
+    except Exception as _e:  # noqa: BLE001
+        services['genui'] = _diag_card(f'sin métricas de respuestas visuales: {type(_e).__name__}',
+                                       f'no visual-answer metrics: {type(_e).__name__}', configured=True, ok=True)
     # Regla bilingüe: TODA tarjeta lleva detail_en (si alguna se olvida, al menos no queda vacía en inglés)
     for _s in services.values():
         if isinstance(_s, dict) and _s.get('detail') and not _s.get('detail_en'):

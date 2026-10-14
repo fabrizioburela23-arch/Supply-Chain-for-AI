@@ -10,6 +10,7 @@ registro de ese código, por (tipo de cálculo, versión de la implementación):
     IMPLS['broker.run_checks'][1]  brokerage.risk.run_checks                   (policy.broker_risk)
     IMPLS['numbers.guard'][1]      core.numbers.unsupported_in                 (policy.numbers_guard)
     IMPLS['gates.eval'][1]         core.gates.engine.run + report.build        (ontology.shapes: IR por hash)
+    IMPLS['genui.build'][1]        core.genui.rebuild                          (sobre kblocks/1 del chat; sin artefacto)
 
 Cada decisión anota en su manifiesto `impl` (p. ej. {'risk': 'run_checks@1', 'sizing': 'compute_sizing@1'}); STAMPS
 traduce esa etiqueta a la entrada del registro. Así el replay NO depende de git.
@@ -90,6 +91,11 @@ _R = (
          es='Regresión contrafactual de gobernanza (choques de una empresa con y sin el cambio).',
          en='Governance counterfactual regression (single-company shocks with and without the change).',
          stamps=('gov-regression@1',)),
+    Impl('genui.build', 1, 'core.genui', 'rebuild', None, 'bind',
+         es='Interfaz generativa del chat: bloques (cifras, gráficos, cadena, cascada) armados SIN IA con los resultados '
+            'de herramientas que la respuesta usó; cada cifra con su fuente.',
+         en='Chat generative UI: blocks (figures, charts, chain, cascade) built WITHOUT AI from the tool results the '
+            'answer used; every figure with its source.', stamps=('genui.build@1',)),
     Impl('portfolio.advice', 1, 'core.portfolio_advisor', 'analyze', None, 'bind', deterministic=False,
          es='Consejo de cartera: usa precios en vivo que no se guardan enteros (no repetible).',
          en='Portfolio advice: uses live prices that are not fully stored (not replayable).',
@@ -239,7 +245,7 @@ def _short(v):
 
 # ── corridas doradas (tests/test_impl_registry.py) ──────────────────────────────────────────────────────────────
 GOLDEN_CASES = ('kernel.propagate', 'nrs.formula', 'committee.conviction', 'committee.quorum', 'committee.decide',
-                'committee.sizing', 'broker.run_checks', 'numbers.guard', 'gates.eval')
+                'committee.sizing', 'broker.run_checks', 'numbers.guard', 'gates.eval', 'genui.build')
 
 
 def golden_run(key, version, arts):
@@ -320,6 +326,15 @@ def golden_run(key, version, arts):
         return clean({k: rep[k] for k in ('outcome', 'conforms', 'by_rule', 'n_results')} |
                      {'results': [{k: r[k] for k in ('rule', 'severity', 'effective', 'value', 'limit')}
                                   for r in rep['results']]})
+    if key == 'genui.build':
+        # entradas FIJAS (resultados de herramientas grabados + respuesta + hechos): el sobre kblocks/1 que sale
+        import os
+        from core import genui
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tests', 'fixtures', 'genui',
+                            'golden_inputs.json')
+        with open(path, encoding='utf-8') as fh:
+            cases = json.load(fh)['cases']
+        return clean([genui.public(genui.rebuild(c)) for c in cases])
     raise LookupError(f'sin caso dorado para {key}')
 
 

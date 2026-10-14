@@ -1,0 +1,282 @@
+{
+ "en": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "AMD",
+      "label": "AMD"
+     },
+     "kind": "open_committee",
+     "label": {
+      "en": "Open the committee",
+      "es": "Abrir el comité"
+     }
+    }
+   ],
+   "alt": {
+    "en": "For: Gaining data-center share. Against: Relies on TSMC to manufacture",
+    "es": "A favor: Gaining data-center share. En contra: Relies on TSMC to manufacture"
+   },
+   "data": {
+    "cons": [
+     {
+      "facts": [
+       "F1"
+      ],
+      "lang": "en",
+      "text": "Relies on TSMC to manufacture"
+     }
+    ],
+    "origin": "tool",
+    "pros": [
+     {
+      "facts": [
+       "F1"
+      ],
+      "lang": "en",
+      "text": "Gaining data-center share"
+     }
+    ],
+    "variant": "pros_cons"
+   },
+   "entity": {
+    "id": "AMD",
+    "label": "AMD"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_committee_memo"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Committee on AMD: Hold",
+    "es": "Comité sobre AMD: Mantener"
+   },
+   "type": "callout"
+  },
+  {
+   "alt": {
+    "en": "Short term −8; Medium term 15; Long term 31",
+    "es": "Corto plazo −8; Mediano plazo 15; Largo plazo 31"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "label": {
+       "en": "Short term",
+       "es": "Corto plazo"
+      },
+      "v": -8.0
+     },
+     {
+      "label": {
+       "en": "Medium term",
+       "es": "Mediano plazo"
+      },
+      "v": 15.0
+     },
+     {
+      "label": {
+       "en": "Long term",
+       "es": "Largo plazo"
+      },
+      "v": 31.0
+     }
+    ],
+    "orientation": "h",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-10-12T10:00:00+00:00",
+     "fact": "F1",
+     "label": {
+      "en": "Committee conviction",
+      "es": "Convicción del comité"
+     },
+     "src": "committee",
+     "unit": "score"
+    }
+   },
+   "entity": {
+    "id": "AMD",
+    "label": "AMD"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_committee_memo"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Conviction by horizon: AMD",
+    "es": "Convicción por horizonte: AMD"
+   },
+   "type": "chart.bar"
+  }
+ ],
+ "es": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "AMD",
+      "label": "AMD"
+     },
+     "kind": "open_committee",
+     "label": {
+      "en": "Open the committee",
+      "es": "Abrir el comité"
+     }
+    }
+   ],
+   "alt": {
+    "en": "For: Gana cuota en centros de datos. Against: Depende de TSMC para fabricar",
+    "es": "A favor: Gana cuota en centros de datos. En contra: Depende de TSMC para fabricar"
+   },
+   "data": {
+    "cons": [
+     {
+      "facts": [
+       "F1"
+      ],
+      "lang": "es",
+      "text": "Depende de TSMC para fabricar"
+     }
+    ],
+    "origin": "tool",
+    "pros": [
+     {
+      "facts": [
+       "F1"
+      ],
+      "lang": "es",
+      "text": "Gana cuota en centros de datos"
+     }
+    ],
+    "variant": "pros_cons"
+   },
+   "entity": {
+    "id": "AMD",
+    "label": "AMD"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_committee_memo"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Committee on AMD: Hold",
+    "es": "Comité sobre AMD: Mantener"
+   },
+   "type": "callout"
+  },
+  {
+   "alt": {
+    "en": "Short term −8; Medium term 15; Long term 31",
+    "es": "Corto plazo −8; Mediano plazo 15; Largo plazo 31"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "label": {
+       "en": "Short term",
+       "es": "Corto plazo"
+      },
+      "v": -8.0
+     },
+     {
+      "label": {
+       "en": "Medium term",
+       "es": "Mediano plazo"
+      },
+      "v": 15.0
+     },
+     {
+      "label": {
+       "en": "Long term",
+       "es": "Largo plazo"
+      },
+      "v": 31.0
+     }
+    ],
+    "orientation": "h",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-10-12T10:00:00+00:00",
+     "fact": "F1",
+     "label": {
+      "en": "Committee conviction",
+      "es": "Convicción del comité"
+     },
+     "src": "committee",
+     "unit": "score"
+    }
+   },
+   "entity": {
+    "id": "AMD",
+    "label": "AMD"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_committee_memo"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Conviction by horizon: AMD",
+    "es": "Convicción por horizonte: AMD"
+   },
+   "type": "chart.bar"
+  }
+ ]
+}

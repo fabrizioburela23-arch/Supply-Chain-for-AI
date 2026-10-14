@@ -24,7 +24,7 @@ EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversi
 
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **77 de 97** (línea 3134), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
+Se carga en [[app.html]] en la posición **77 de 98** (línea 3134), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
 
 ## Lo usan
 
@@ -37,6 +37,7 @@ Se carga en [[app.html]] en la posición **77 de 97** (línea 3134), después de
 - [[engine.cockpit.js]] — usa `explainMetric`
 - [[engine.committee.js]] — usa `explainChip`, `explainRegister`
 - [[engine.fincard.js]] — usa `explainChip`
+- [[engine.genui.js]] — usa `explainMetric`, `explainRegister`
 - [[engine.governance.js]] — usa `explainChip`
 - [[engine.insights.js]] — usa `explainMetric`
 - [[engine.mcpconnect.js]] — usa `explainChip`, `explainRegister`
@@ -55,6 +56,8 @@ Se carga en [[app.html]] en la posición **77 de 97** (línea 3134), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cierre_defectos.py]]
+- [[tests.test_genui_browser.py]]
+- [[tests.test_genui_client_static.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_options_greeks_totals.py]]
 - [[tests.test_repair_graph.py]]

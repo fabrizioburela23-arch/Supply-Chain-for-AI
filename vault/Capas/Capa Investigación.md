@@ -44,7 +44,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 | usa a | [[Capa Ontología y grafo temporal]] | 15 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | la usa | [[Capa Infraestructura]] | 7 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 5 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 6 |
 | la usa | [[Capa Ontología y grafo temporal]] | 4 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 4 |
 | la usa | [[Capa MCP y API]] | 3 |

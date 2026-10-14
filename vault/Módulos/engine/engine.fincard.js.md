@@ -32,7 +32,7 @@ DOSSIER FINANCIERO de una empresa (Etapa G, 2026-07-11) Estilo investingvisuals 
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 
-Se carga en [[app.html]] en la posición **75 de 97** (línea 3132), después de [[engine.localcharts.js]] y antes de [[engine.termdata.js]].
+Se carga en [[app.html]] en la posición **75 de 98** (línea 3132), después de [[engine.localcharts.js]] y antes de [[engine.termdata.js]].
 
 ## Lo usan
 

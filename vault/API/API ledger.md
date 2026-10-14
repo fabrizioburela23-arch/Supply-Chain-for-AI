@@ -22,4 +22,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET,POST` | `/api/ledger/replay/<decision_id>` | `ledger_replay` | [[core.ledger_api.py]] | [[engine.audit.js]], 2 pruebas |
 | `GET` | `/api/ledger/status` | `ledger_status` | [[core.ledger_api.py]] | 2 pruebas |
 | `GET` | `/api/ledger/verify` | `ledger_verify` | [[core.ledger_api.py]] | 1 prueba |
-| `GET` | `/api/ledger/why/<decision_id>` | `ledger_why` | [[core.ledger_api.py]] | [[engine.audit.js]], 2 pruebas |
+| `GET` | `/api/ledger/why/<decision_id>` | `ledger_why` | [[core.ledger_api.py]] | [[engine.audit.js]], [[engine.genui.js]], 2 pruebas |

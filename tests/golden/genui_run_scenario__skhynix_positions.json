@@ -1,0 +1,458 @@
+{
+ "en": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "SKHynix",
+      "label": "SK Hynix"
+     },
+     "kind": "open_window",
+     "label": {
+      "en": "Simulate",
+      "es": "Simular"
+     },
+     "window": "sim"
+    }
+   ],
+   "alt": {
+    "en": "Shock at SK Hynix: 19 companies hit ≥ 1 % (hop 1: 6, hop 2: 13). Least-hit rivals (damage): CXMT (ChangXin Memory) 0 %, GigaDevice 0 %, Kioxia 0 %, Micron 0 %",
+    "es": "Choque en SK Hynix: 19 empresas golpeadas ≥ 1 % (salto 1: 6, salto 2: 13). Rivales poco golpeados (daño): CXMT (ChangXin Memory) 0 %, GigaDevice 0 %, Kioxia 0 %, Micron 0 %"
+   },
+   "data": {
+    "as_of": "2026-10-13T23:16:25.432945+00:00",
+    "direction": "down",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "hops": [
+     {
+      "count": 6,
+      "entities": [
+       {
+        "entity": {
+         "id": "Naver",
+         "label": "Naver (HyperCLOVA X)"
+        },
+        "impact_pct": 7.5
+       },
+       {
+        "entity": {
+         "id": "SuperMicro",
+         "label": "Super Micro"
+        },
+        "impact_pct": 5.7
+       },
+       {
+        "entity": {
+         "id": "AMD",
+         "label": "AMD"
+        },
+        "impact_pct": 4.88
+       },
+       {
+        "entity": {
+         "id": "BOK",
+         "label": "BOK"
+        },
+        "impact_pct": 4.5
+       },
+       {
+        "entity": {
+         "id": "Nvidia",
+         "label": "Nvidia"
+        },
+        "impact_pct": 3.39
+       },
+       {
+        "entity": {
+         "id": "Dell",
+         "label": "Dell Technologies"
+        },
+        "impact_pct": 2.1
+       }
+      ],
+      "hop": 1,
+      "label": {
+       "en": "Hop 1",
+       "es": "Salto 1"
+      },
+      "max_pct": 7.5
+     },
+     {
+      "count": 13,
+      "entities": [
+       {
+        "entity": {
+         "id": "CoreWeave",
+         "label": "CoreWeave"
+        },
+        "impact_pct": 2.97
+       },
+       {
+        "entity": {
+         "id": "Oracle",
+         "label": "Oracle (OCI)"
+        },
+        "impact_pct": 2.59
+       },
+       {
+        "entity": {
+         "id": "Samsung",
+         "label": "Samsung Electronics"
+        },
+        "impact_pct": 2.11
+       },
+       {
+        "entity": {
+         "id": "Nebius",
+         "label": "Nebius"
+        },
+        "impact_pct": 1.92
+       },
+       {
+        "entity": {
+         "id": "HPE",
+         "label": "Hewlett Packard Ent."
+        },
+        "impact_pct": 1.84
+       },
+       {
+        "entity": {
+         "id": "xAI",
+         "label": "xAI (+SpaceX)"
+        },
+        "impact_pct": 1.42
+       },
+       {
+        "entity": {
+         "id": "Quanta",
+         "label": "Quanta Computer"
+        },
+        "impact_pct": 1.41
+       },
+       {
+        "entity": {
+         "id": "Penguin_Solutions",
+         "label": "Penguin Solutions"
+        },
+        "impact_pct": 1.05
+       }
+      ],
+      "hop": 2,
+      "label": {
+       "en": "Hop 2",
+       "es": "Salto 2"
+      },
+      "max_pct": 2.97
+     }
+    ],
+    "kernel": "1.0.0",
+    "least_hit_rivals": [
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "CXMT",
+       "label": "CXMT (ChangXin Memory)"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "GigaDevice",
+       "label": "GigaDevice"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Kioxia",
+       "label": "Kioxia"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Micron",
+       "label": "Micron"
+      }
+     }
+    ],
+    "origin": {
+     "id": "SKHynix",
+     "label": "SK Hynix"
+    },
+    "portfolio": {
+     "reason": {
+      "en": "the calibration is weak: we give no figure",
+      "es": "la calibración es débil: no damos cifra"
+     },
+     "state": "no_figure"
+    },
+    "severity": 50.0,
+    "src": "hot_kernel",
+    "threshold_pct": 1,
+    "total": 19
+   },
+   "entity": {
+    "id": "SKHynix",
+    "label": "SK Hynix"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "kind": "tool",
+    "name": "run_scenario"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "single server kernel · not a price forecast",
+    "es": "motor único del servidor · no es un pronóstico de precios"
+   },
+   "title": {
+    "en": "Shock at SK Hynix",
+    "es": "Choque en SK Hynix"
+   },
+   "type": "impact.cascade"
+  }
+ ],
+ "es": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "SKHynix",
+      "label": "SK Hynix"
+     },
+     "kind": "open_window",
+     "label": {
+      "en": "Simulate",
+      "es": "Simular"
+     },
+     "window": "sim"
+    }
+   ],
+   "alt": {
+    "en": "Shock at SK Hynix: 19 companies hit ≥ 1 % (hop 1: 6, hop 2: 13). Least-hit rivals (damage): CXMT (ChangXin Memory) 0 %, GigaDevice 0 %, Kioxia 0 %, Micron 0 %",
+    "es": "Choque en SK Hynix: 19 empresas golpeadas ≥ 1 % (salto 1: 6, salto 2: 13). Rivales poco golpeados (daño): CXMT (ChangXin Memory) 0 %, GigaDevice 0 %, Kioxia 0 %, Micron 0 %"
+   },
+   "data": {
+    "as_of": "2026-10-13T23:16:25.432945+00:00",
+    "direction": "down",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "hops": [
+     {
+      "count": 6,
+      "entities": [
+       {
+        "entity": {
+         "id": "Naver",
+         "label": "Naver (HyperCLOVA X)"
+        },
+        "impact_pct": 7.5
+       },
+       {
+        "entity": {
+         "id": "SuperMicro",
+         "label": "Super Micro"
+        },
+        "impact_pct": 5.7
+       },
+       {
+        "entity": {
+         "id": "AMD",
+         "label": "AMD"
+        },
+        "impact_pct": 4.88
+       },
+       {
+        "entity": {
+         "id": "BOK",
+         "label": "BOK"
+        },
+        "impact_pct": 4.5
+       },
+       {
+        "entity": {
+         "id": "Nvidia",
+         "label": "Nvidia"
+        },
+        "impact_pct": 3.39
+       },
+       {
+        "entity": {
+         "id": "Dell",
+         "label": "Dell Technologies"
+        },
+        "impact_pct": 2.1
+       }
+      ],
+      "hop": 1,
+      "label": {
+       "en": "Hop 1",
+       "es": "Salto 1"
+      },
+      "max_pct": 7.5
+     },
+     {
+      "count": 13,
+      "entities": [
+       {
+        "entity": {
+         "id": "CoreWeave",
+         "label": "CoreWeave"
+        },
+        "impact_pct": 2.97
+       },
+       {
+        "entity": {
+         "id": "Oracle",
+         "label": "Oracle (OCI)"
+        },
+        "impact_pct": 2.59
+       },
+       {
+        "entity": {
+         "id": "Samsung",
+         "label": "Samsung Electronics"
+        },
+        "impact_pct": 2.11
+       },
+       {
+        "entity": {
+         "id": "Nebius",
+         "label": "Nebius"
+        },
+        "impact_pct": 1.92
+       },
+       {
+        "entity": {
+         "id": "HPE",
+         "label": "Hewlett Packard Ent."
+        },
+        "impact_pct": 1.84
+       },
+       {
+        "entity": {
+         "id": "xAI",
+         "label": "xAI (+SpaceX)"
+        },
+        "impact_pct": 1.42
+       },
+       {
+        "entity": {
+         "id": "Quanta",
+         "label": "Quanta Computer"
+        },
+        "impact_pct": 1.41
+       },
+       {
+        "entity": {
+         "id": "Penguin_Solutions",
+         "label": "Penguin Solutions"
+        },
+        "impact_pct": 1.05
+       }
+      ],
+      "hop": 2,
+      "label": {
+       "en": "Hop 2",
+       "es": "Salto 2"
+      },
+      "max_pct": 2.97
+     }
+    ],
+    "kernel": "1.0.0",
+    "least_hit_rivals": [
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "CXMT",
+       "label": "CXMT (ChangXin Memory)"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "GigaDevice",
+       "label": "GigaDevice"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Kioxia",
+       "label": "Kioxia"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Micron",
+       "label": "Micron"
+      }
+     }
+    ],
+    "origin": {
+     "id": "SKHynix",
+     "label": "SK Hynix"
+    },
+    "portfolio": {
+     "reason": {
+      "en": "the calibration is weak: we give no figure",
+      "es": "la calibración es débil: no damos cifra"
+     },
+     "state": "no_figure"
+    },
+    "severity": 50.0,
+    "src": "hot_kernel",
+    "threshold_pct": 1,
+    "total": 19
+   },
+   "entity": {
+    "id": "SKHynix",
+    "label": "SK Hynix"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "kind": "tool",
+    "name": "run_scenario"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "single server kernel · not a price forecast",
+    "es": "motor único del servidor · no es un pronóstico de precios"
+   },
+   "title": {
+    "en": "Shock at SK Hynix",
+    "es": "Choque en SK Hynix"
+   },
+   "type": "impact.cascade"
+  }
+ ]
+}

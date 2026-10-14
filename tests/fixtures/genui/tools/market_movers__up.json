@@ -1,0 +1,53 @@
+{
+ "args": {
+  "direction": "up",
+  "limit": 5
+ },
+ "result": {
+  "as_of": "2026-10-13T19:45:00Z",
+  "direction": "up",
+  "items": [
+   {
+    "change_pct": 4.21,
+    "currency": "USD",
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "market_cap_usd_b": 4447.3,
+    "market_state": "REGULAR",
+    "market_time": "2026-10-13T19:44:00Z",
+    "price": 182.4,
+    "sector": "diseno",
+    "symbol": "NVDA"
+   },
+   {
+    "change_pct": 3.02,
+    "currency": "USD",
+    "id": "AMD",
+    "label": "AMD",
+    "market_cap_usd_b": 261.1,
+    "market_state": "REGULAR",
+    "market_time": "2026-10-13T19:44:00Z",
+    "price": 161.2,
+    "sector": "diseno",
+    "symbol": "AMD"
+   },
+   {
+    "change_pct": -0.8,
+    "currency": "USD",
+    "id": "Micron",
+    "label": "Micron",
+    "market_cap_usd_b": 113.0,
+    "market_state": "REGULAR",
+    "market_time": "2026-10-13T19:44:00Z",
+    "price": 101.5,
+    "sector": "memoria",
+    "symbol": "MU"
+   }
+  ],
+  "sector_filter": null,
+  "source": "Yahoo Finance (live quotes, Khipus cache)",
+  "universe": 569
+ },
+ "sample": true,
+ "tool": "market_movers"
+}

@@ -28,6 +28,7 @@ Ahora: POST /api/khipu/chat → un bucle de agente con HERRAMIENTAS REALES.
     empresa se validan con core.entities (nunca un id inventado).
 """
 import json
+import math
 import logging
 import re
 import sys
@@ -243,9 +244,13 @@ class ToolFailure(Exception):
 # Herramientas de SOLO LECTURA del servidor MCP que el cerebro reutiliza.
 # (2026-10-04) fuera del catálogo del chat: get_ontology_object y get_option_greeks (ruido para el modelo;
 # siguen en el MCP). Menos herramientas = decisiones mejores y más rápidas.
+# (2026-10-13, interfaz generativa F1 — docs/CHAT_UI_GENERATIVA.md §5.2) se abren get_history (serie de precios con
+# fuente y as_of → gráfico de línea) y run_scenario (choque con EL kernel → cascada salto a salto). El resto de
+# mcp_server/ops.py (get_subgraph, get_exposure, calculate_correlation, find_similar_entities) espera a la F5, una por
+# una y solo si el conjunto de evaluación no empeora la elección de herramientas.
 MCP_READ_TOOLS = ('search_companies', 'get_company', 'get_supply_chain', 'get_research', 'get_research_health', 'get_claim_evidence',
                   'get_committee_memo', 'get_conclusions_board', 'get_track_record', 'get_risk_report',
-                  'get_world_events')
+                  'get_world_events', 'get_history', 'run_scenario')
 
 _EXTRA = {}     # nombre → {'sig', 'desc', 'fn', 'available'}
 
@@ -272,11 +277,52 @@ def _principal():
     return _PRINCIPAL['p']
 
 
+# argumentos que en el chat NO elige el modelo: los rellena el servidor desde el contexto validado de la petición
+# (run_scenario.positions = la cartera del navegador con su valor en USD, la misma valoración que KhipuHot.pnlLine;
+# un valor que el modelo escribiera sería una cifra inventada que luego saldría como P&L "con fuente")
+_SERVER_ARGS = ('positions',)
+
+
+def _server_args(name, args, context):
+    """Copia de `args` sin lo que el modelo no puede elegir, más lo que pone el servidor. Nunca lanza."""
+    if name != 'run_scenario' or not isinstance(args, dict):
+        return args
+    out = {k: v for k, v in args.items() if k not in _SERVER_ARGS}
+    pf = (context or {}).get('portfolio') if isinstance(context, dict) else None
+    pos = [{'symbol': p['symbol'], 'usd': p['usd']} for p in (pf or [])
+           if isinstance(p, dict) and isinstance(p.get('usd'), float)]
+    if pos:
+        out['positions'] = pos[:60]
+    return out
+
+
+def _ref_block(rb):
+    """«Preguntar sobre esto» (menú ⋯ de un bloque visual): de qué herramienta y con qué argumentos salieron los
+    datos del bloque, VALIDADO (lista blanca de herramientas, texto corto y limpio). None si no sirve."""
+    if not isinstance(rb, dict):
+        return None
+    bid = str(rb.get('id') or '')
+    pv = rb.get('prov') if isinstance(rb.get('prov'), dict) else {}
+    name = str(pv.get('name') or '')
+    if not re.fullmatch(r'[A-Za-z0-9_.:-]{1,40}', bid) or name not in MCP_READ_TOOLS + tuple(_EXTRA):
+        return None
+    out = {'id': bid, 'tool': name}
+    args = re.sub(r'[^\w .,:%/+&()\-]', '', str(pv.get('args') or ''))[:120].strip()
+    if args:
+        out['args'] = args
+    fact = str(pv.get('fact') or '')
+    if re.fullmatch(r'F\d{1,3}', fact):
+        out['fact'] = fact
+    return out
+
+
 def _schema_sig(schema):
     parts = []
     req = set(schema.get('required') or [])
     for k, v in (schema.get('properties') or {}).items():
         if k in ('detail', 'max_chars'):        # contrato común del MCP (mcp_server/contract.py): no aplica al chat
+            continue
+        if k in _SERVER_ARGS:                   # los pone el SERVIDOR (nunca el modelo): ver _server_args
             continue
         t = v.get('type') or 'any'
         if v.get('enum'):
@@ -848,7 +894,16 @@ def validate_request(body):
             except (TypeError, ValueError):
                 continue
             if sym and sh > 0:
-                pos.append({'symbol': sym, 'shares': sh})
+                row = {'symbol': sym, 'shares': sh}
+                # valor en USD de la posición que calcula el navegador (acciones × precio mostrado en USD, igual que
+                # KhipuHot.pnlLine): solo lo usa el servidor para run_scenario.positions, nunca el modelo
+                try:
+                    usd = float(p.get('usd'))
+                except (TypeError, ValueError):
+                    usd = None
+                if usd is not None and math.isfinite(usd) and 0 <= usd <= 1e12:
+                    row['usd'] = round(usd, 2)
+                pos.append(row)
         if pos:
             ctx['portfolio'] = pos
     # Khipus OS: preferencias de PRESENTACIÓN del usuario (kh_agent_prefs). Solo cambian el prompt
@@ -861,6 +916,16 @@ def validate_request(body):
         ctx['agents_enabled'] = [a for a in AGENT_IDS if a == 'khipu' or a in want]
     else:
         ctx['agents_enabled'] = list(AGENT_IDS)
+    # interfaz generativa (docs/CHAT_UI_GENERATIVA.md §11): la bandera kh_genui del navegador → el cliente sabe pintar
+    # bloques kblocks/1. Solo se GUARDA si viene: sin ella el contexto (y la respuesta) quedan exactamente como antes
+    if ctx_raw.get('genui') in (1, True, '1', 'true', 'on'):
+        ctx['genui'] = 1
+        gt = ctx_raw.get('genui_types')
+        if isinstance(gt, list):
+            ctx['genui_types'] = [str(x)[:24] for x in gt[:20] if isinstance(x, str) and re.fullmatch(r'[a-z.]{2,24}', x)]
+        rb = _ref_block(ctx_raw.get('ref_block'))
+        if rb:
+            ctx['ref_block'] = rb
     return {'message': msg, 'history': history, 'lang': lang, 'context': ctx,
             'req_id': valid_req_id(body.get('req_id')),
             'deadline_s': client_deadline(body.get('deadline_s', ctx_raw.get('deadline_s')))}
@@ -934,7 +999,10 @@ también get_committee_memo). "@analista / pregúntale \
 al analista" → ask_agent. "¿puedo investigar ahora? / ¿por qué falló o quedó a medias la investigación?" → \
 get_research_health (proveedores en pausa, cola, presupuesto); en get_research, last_job.status 'partial' = síntesis \
 incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda mañana. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
-peores" → rank_companies o market_movers. Preguntas conceptuales (qué es el VaR, cómo funciona HBM) → sin \
+peores" → rank_companies o market_movers. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
+get_history(id_or_ticker, range). "¿qué pasa si cae / falla X?" con una empresa CONCRETA → run_scenario(shocks=[{{"id":"X"}}]) \
+(las cifras de impacto salen de ese motor; si la pregunta es un escenario descrito en palabras, scenario_exposure). \
+Preguntas conceptuales (qué es el VaR, cómo funciona HBM) → sin \
 herramientas. get_company ya entiende nombres y tickers: NO gastes una ronda en search_companies salvo \
 ambigüedad real.
 
@@ -1007,6 +1075,15 @@ def _compact_for_chat(v, level=0, depth=0, root=None):
 
 
 def _fmt_result(res, question=None):
+    if isinstance(res, dict) and isinstance(res.get('points'), list) and res.get('symbol') \
+            and len(json.dumps(res, default=str, separators=(',', ':'))) > MAX_TOOL_RESULT_CHARS:
+        # get_history (F1 de la interfaz generativa): la IA ve la serie recortada por el contrato del MCP, que conserva
+        # lo MÁS NUEVO y lo dice (`truncation`); el resultado completo queda en la caché de la petición para el gráfico
+        try:
+            from mcp_server import contract as _contract
+            res = _contract.apply('get_history', res, 'standard', MAX_TOOL_RESULT_CHARS - 400)
+        except Exception:  # noqa: BLE001
+            pass
     if isinstance(res, dict) and res.get('root') and isinstance(res.get('edges'), list) and len(json.dumps(
             res, ensure_ascii=False, default=str, separators=(',', ':'))) > MAX_TOOL_RESULT_CHARS:
         # L4-10: la cadena se recorta por RELEVANCIA R(e|Q) (motor de contexto), con los 2 saltos y la cola resumida —
@@ -1160,6 +1237,11 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
     if context.get('recent_entities'):
         ctx.append('empresas vistas hace poco (de más reciente a más antigua): ' +
                    ', '.join(f'{_node_label(i)} (id {i})' for i in context['recent_entities']))
+    if context.get('ref_block'):
+        rb = context['ref_block']
+        ctx.append('LA PREGUNTA ES SOBRE UN BLOQUE VISUAL de tu respuesta anterior: sus datos salieron de '
+                   f'{rb["tool"]}({rb.get("args") or ""}) — si necesitas sus cifras, vuelve a llamar ESA herramienta con '
+                   'esos argumentos (son los mismos datos que el usuario está mirando)')
     if context.get('portfolio'):
         ctx.append('cartera del usuario (posiciones locales, acciones): ' +
                    ', '.join(f'{p["symbol"]} {p["shares"]:g}' for p in context['portfolio']))
@@ -1832,6 +1914,38 @@ def _note_scenario(res, args, ctx):
     return build('es'), build('en'), res.get('source'), res.get('as_of')
 
 
+def _note_history(res, args, ctx):
+    """get_history: «NVDA, 1 año: +12,3 % (Yahoo)» — el cambio que TRAE el resultado (change_pct), nunca calculado."""
+    sym, chg = res.get('symbol'), res.get('change_pct')
+    if not sym or chg is None:
+        return None
+    rng = {'1mo': ('1 mes', '1 month'), '3mo': ('3 meses', '3 months'), '6mo': ('6 meses', '6 months'),
+           '1y': ('1 año', '1 year'), '2y': ('2 años', '2 years'), '5y': ('5 años', '5 years')}.get(res.get('range'))
+
+    def build(lang):
+        es = lang == 'es'
+        when = (rng[0] if es else rng[1]) if rng else ''
+        return f'{sym}{", " + when if when else ""}: {_pct(chg, lang, 1, True)} ({_src_name(res.get("source"))})'
+    return build('es'), build('en'), res.get('source'), res.get('as_of')
+
+
+def _note_run_scenario(res, args, ctx):
+    """run_scenario: «Choque en TSMC: 318 empresas golpeadas ≥ 1 % (motor 1.0.0)» — conteo del kernel."""
+    sh = [x for x in res.get('shocks') or [] if isinstance(x, dict)]
+    n = res.get('reach_1pct')
+    if not sh or n is None:
+        return None
+    lbl = sh[0].get('label') or sh[0].get('id')
+    k = (res.get('kernel') or {}).get('semver') if isinstance(res.get('kernel'), dict) else None
+
+    def build(lang):
+        es = lang == 'es'
+        num_ = _fmt_num(n, 0, lang)
+        return ((f'Choque en {lbl}: {num_} empresas golpeadas ≥ 1 %' + (f' (motor {k})' if k else '')) if es else
+                (f'Shock at {lbl}: {num_} companies hit ≥ 1%' + (f' (kernel {k})' if k else '')))
+    return build('es'), build('en'), res.get('source'), res.get('as_of')
+
+
 def _note_movers(res, args, ctx):
     items = [x for x in res.get('items') or [] if isinstance(x, dict) and x.get('change_pct') is not None][:3]
     if not items:
@@ -2100,7 +2214,8 @@ _NOTE_FN = {'get_company': _note_company, 'get_supply_chain': _note_supply_chain
             'scenario_exposure': _note_scenario, 'market_movers': _note_movers, 'get_risk_report': _note_risk_report,
             'get_option_greeks': _note_greeks, 'get_committee_memo': _note_memo, 'get_conclusions_board': _note_board,
             'get_track_record': _note_track, 'get_research': _note_research, 'ask_agent': _note_ask,
-            'search_companies': _note_search, 'get_research_health': _note_health}
+            'search_companies': _note_search, 'get_research_health': _note_health, 'get_history': _note_history,
+            'run_scenario': _note_run_scenario}
 _GENERIC_NOTE = {
     'get_claim_evidence': ('Revisó la evidencia de una conclusión', 'Checked the evidence behind a conclusion'),
     'get_space_summary': ('Revisó lanzamientos y satélites (Launch Library 2, CelesTrak)',
@@ -2122,6 +2237,11 @@ def _result_entity(name, args, res):
         return (res.get('company') or {}).get('id') if isinstance(res.get('company'), dict) else None
     if name == 'ask_agent':
         return res.get('entity')
+    if name == 'get_history':
+        return res.get('id')
+    if name == 'run_scenario':
+        sh = [x for x in res.get('shocks') or [] if isinstance(x, dict)]
+        return sh[0].get('id') if sh else None
     return None
 
 
@@ -2413,8 +2533,50 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
     out.setdefault('entities', [])
     out.setdefault('agents_used', [])
     out.setdefault('cards', {})
-    ledger_answer(dec_id, principal, message, lang, out, ai_ids)
+    ui = _genui_attach(out, message, lang, context)
+    ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=ui)
     return out
+
+
+def _genui_attach(out, message, lang, context):
+    """Interfaz generativa (core/genui, docs/CHAT_UI_GENERATIVA.md): con GENUI=shadow|on arma el sobre `ui` con los
+    resultados de herramientas que esta respuesta YA usó (sin IA, sin E/S). En `on` lo AÑADE a la respuesta solo si
+    el cliente lo pidió (context.genui = 1); en `shadow` solo se mide y va al libro. → (sobre, modo) o None.
+    Nunca rompe la respuesta: ante cualquier problema, la respuesta queda igual que siempre."""
+    g = out.pop('_genui', None)
+    try:
+        from core import genui
+    except Exception:  # noqa: BLE001
+        return None
+    m = genui.mode()
+    if m == 'off' or not isinstance(g, dict):
+        return None
+    try:
+        ctx = context if isinstance(context, dict) else {}
+        env, _text = genui.build_ui(message, g.get('calls') or [], out.get('entities') or [], None, lang, {
+            'answer': out.get('answer') or '', 'actions': out.get('actions') or [], 'sources': out.get('sources') or [],
+            'facts': out.get('facts') or [], 'fact_of': g.get('fact_of') or [], 'args_of': g.get('args_of') or [],
+            'mode': ctx.get('mode') or 'simple', 'now': _iso_z(out.get('as_of'))})
+    except Exception as e:  # noqa: BLE001
+        log.warning('khipu_chat genui: %s', type(e).__name__)
+        return None
+    if env is None:
+        return None
+    if m == 'on' and genui.wants(ctx):
+        out['ui'] = genui.public(env)
+        genui.note_sent()
+    return env, m
+
+
+def _iso_z(v):
+    """'2026-10-13T15:02:11.123456+00:00' → '2026-10-13T15:02:11Z' (la hora del sobre: RFC 3339 con zona)."""
+    try:
+        d = datetime.fromisoformat(str(v).replace('Z', '+00:00'))
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=timezone.utc)
+        return d.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    except (TypeError, ValueError):
+        return None
 
 
 def _chat_principal():
@@ -2432,7 +2594,7 @@ def _chat_principal():
 _F_RX = re.compile(r'\[F(\d{1,3})\]')
 
 
-def ledger_answer(dec_id, principal, message, lang, out, ai_ids):
+def ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=None):
     """Ficha `chat.answer` (async, §2.5): hechos [F#] con fuente y as_of, fuentes con su as_of, agentes, herramientas
     (nombre, ok, ms y la HUELLA de sus argumentos), modelo, ruta y las llamadas de IA. NUNCA el texto del usuario:
     el mensaje va como HMAC (core/decisions.pii_hmac); la respuesta (texto de la IA) como blob de 90 días (D3).
@@ -2449,6 +2611,8 @@ def ledger_answer(dec_id, principal, message, lang, out, ai_ids):
     snap['tools'] = [dict(t) for t in (out.get('tools_used') or []) if isinstance(t, dict)]
     snap['agents'] = [dict(a) for a in (out.get('agents_used') or []) if isinstance(a, dict)]
     snap['entities'] = list(out.get('entities') or [])
+    env, ui_mode = ui if isinstance(ui, tuple) and len(ui) == 2 else (None, None)
+    ui_sent = 'ui' in out
 
     def build():
         ctx = decisions.DecisionCtx('chat.answer', principal, subject={
@@ -2487,9 +2651,40 @@ def ledger_answer(dec_id, principal, message, lang, out, ai_ids):
                       'answer_sha': decisions.sha256_hex(ans.encode('utf-8')), 'steps': snap.get('steps'),
                       'degraded': snap.get('degraded'), 'elapsed_ms': snap.get('elapsed_ms'),
                       'router': snap.get('router'), 'n_ai_calls': len(ai_ids), 'lang': lang}
+        if isinstance(env, dict):
+            try:
+                _ledger_ui(ctx, env, ui_mode, ui_sent)
+            except Exception as e:  # noqa: BLE001 — la ficha de la respuesta se escribe igual
+                log.warning('khipu_chat: sobre ui no registrado (%s)', type(e).__name__)
         ctx.status = 'answered'          # una respuesta de respaldo también es una respuesta (output.degraded lo dice)
         return ctx
     return decisions.submit_async(build)
+
+
+def _ledger_ui(ctx, env, ui_mode, sent):
+    """Interfaz generativa en chat.answer (§5.7): el sobre construido como blob `ui_blocks` (90 días, como el texto) y su
+    huella `ui_sha`, y las ENTRADAS del cálculo determinista (resultados de herramientas, la intención derivada; NUNCA el
+    mensaje del usuario) como blob `ui_inputs` para repetirlo (core/replay.py → paso `ui_blocks`)."""
+    from core import decisions
+    from core import genui as _g
+    pub = _g.public(env)
+    ctx.extra['ui_blocks'] = ctx.blob('ui_blocks', pub, retention='standard_90d')
+    ctx.extra['ui_sha'] = ctx.extra['ui_blocks']
+    info = {'mode': ui_mode, 'sent': bool(sent), 'n_blocks': len(pub.get('blocks') or []),
+            'dropped': [d.get('reason') for d in pub.get('dropped') or []][:20]}
+    inputs = env.get('_inputs')
+    if isinstance(inputs, dict):
+        try:
+            raw = decisions.canonical(inputs)
+        except ValueError:                       # un NaN/Infinity en un resultado crudo → null
+            inputs = _g.finite(inputs)
+            raw = decisions.canonical(inputs)
+        if len(raw) <= _g.REPLAY_MAX_BYTES:
+            info['replay_blob'] = ctx.blob('ui_inputs', inputs, retention='standard_90d')
+        else:
+            info['replay_note'] = 'inputs_too_large'
+    ctx.extra['ui'] = info
+    ctx.extra.setdefault('impl', {})['ui'] = _g.IMPL
 
 
 def _mention_route(message, history, lang, context, req_id=None, gate=None):
@@ -2537,6 +2732,7 @@ def _mention_route(message, history, lang, context, req_id=None, gate=None):
             ex['agents_used'] = [{'agent': mascot, 'tools': ['ask_agent'], 'ok': False, 'note_es': es, 'note_en': en,
                                   'source': None, 'as_of': None}]
         base.update(ex)
+        base['_genui'] = {'calls': calls if ok else [], 'args_of': [seat] if ok else [], 'fact_of': [None] if ok else []}
         return base
 
     if not ents:
@@ -2641,6 +2837,10 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         out['router'] = router
         if facts is not None:
             out['facts'] = facts.public()
+        # entradas de la interfaz generativa (core/genui): run_chat las saca SIEMPRE antes de responder
+        out['_genui'] = {'calls': list(calls), 'args_of': [t.get('args_summary') or '' for t in tools_used],
+                         'fact_of': [(facts.get(_cache_key(n, a)) if facts is not None else None)
+                                     for (n, a, _ok, _r) in calls]}
         return out
 
     router = {'by': 'default'}
@@ -2817,7 +3017,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                 pending.append((c, None, ok, res, 0, None))
             else:
                 h = progress_add(req_id, c['tool'], c['args'])
-                pending.append((c, _POOL.submit(execute_tool, c['tool'], c['args'], app, lang), None, None,
+                pending.append((c, _POOL.submit(execute_tool, c['tool'], _server_args(c['tool'], c['args'], context),
+                                                app, lang), None, None,
                                 time.monotonic(), h))
         futs = [p[1] for p in pending if p[1] is not None]
         if futs:

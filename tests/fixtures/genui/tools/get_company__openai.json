@@ -1,0 +1,502 @@
+{
+ "args": {
+  "id_or_ticker": "OpenAI",
+  "include_live": false
+ },
+ "result": {
+  "as_of": "2026-10-13T23:16:25.401593+00:00",
+  "catalog": {
+   "as_of": "2026-10-13T18:20:44.583Z",
+   "as_of_note": "date the catalog snapshot was exported — NOT the date of the figures",
+   "backlog_note": "Compute commitments >$1T signed",
+   "capex_2026_note": "via partners (Stargate/Oracle)",
+   "figures_as_of": null,
+   "figures_note": "undated curated figures (catalog); prefer live_market when available",
+   "figures_note_es": "cifras curadas sin fecha propia (catálogo); preferir live_market cuando exista",
+   "growth_note": "⭐ PRE-IPO: confidential S-1 (Jun-2026); CFO targets a 2027 listing",
+   "location": "EE.UU.",
+   "moat_and_risks": "Leader in generative AI by adoption, though losing share to Gemini (from 86.7% to 64.5%). Its compute commitments exceed one trillion dollars: the moat is scale, the risk is financing it. Pre-IPO: indirect exposure via Microsoft.",
+   "operating_margin": -1.2,
+   "operating_margin_pct": -120.0,
+   "role": "Frontier AI lab — creator of ChatGPT/GPT; preparing to go public (date unconfirmed).",
+   "source": "Khipus supply-chain graph snapshot (data/grafo_v0.json, curated catalog) — descriptive text curated by Khipus; figures inside may be approximate",
+   "supplies": "The GPT models powering ChatGPT and thousands of applications. Building Stargate with Oracle/Microsoft and diversifying its silicon: 6 GW with AMD (with warrants), 10 GW of custom ASICs with Broadcom and a $20B contract with Cerebras.",
+   "ticker_text": "Pre-IPO ~$852B"
+  },
+  "category": "ailab",
+  "country": "EEUU",
+  "counts": {
+   "customers": 11,
+   "related": 20,
+   "suppliers": 11
+  },
+  "degree": 42,
+  "edge_semantics": {
+   "flow_types": [
+    "supply",
+    "cloud",
+    "fab",
+    "license",
+    "deploy",
+    "owns",
+    "ppa"
+   ],
+   "note": "top_suppliers/top_customers list only FLOW relations (goods, fab, cloud, license, power, ownership, deployment). partner/invest are in `related`. verified=false / confidence=0.3 when the curated text says the link is unverified or only possible.",
+   "related_types": [
+    "partner",
+    "invest"
+   ],
+   "relation_class": "supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other"
+  },
+  "id": "OpenAI",
+  "label": "OpenAI",
+  "listed": false,
+  "live_market": {
+   "available": false,
+   "reason": "not a listed company (no exchange price exists)"
+  },
+  "network_risk_score": {
+   "explain": "Network Risk Score 0-100 (higher = more fragile position in the AI supply chain): country/geo risk + graph centrality + margin + fundamentals + concentration. A heuristic, not a forecast.",
+   "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+   "method": "catalog formula via hot view V3 card (same formula as the app computeNRS; structural degree = flow relations, distinct pairs, of the current graph generation)",
+   "terms": {
+    "chain": 25,
+    "concentration": 4,
+    "fundamental": 10,
+    "geo": 8,
+    "market": 20
+   },
+   "value": 67
+  },
+  "preipo": true,
+  "preipo_catalog": {
+   "investors": [
+    "Microsoft",
+    "SoftBank",
+    "Thrive",
+    "Nvidia"
+   ],
+   "ipo_timeline": "sin fecha; reestructuración PBC",
+   "milestones": [
+    {
+     "date": "2025",
+     "event": "Stargate: data centers con Oracle y SoftBank"
+    },
+    {
+     "date": "2025",
+     "event": "ChatGPT supera 800M de usuarios semanales"
+    }
+   ],
+   "rounds": [
+    {
+     "amount": "$40B",
+     "date": "2025",
+     "lead": "SoftBank",
+     "round": "Tender"
+    },
+    {
+     "amount": "$6.6B",
+     "date": "2024",
+     "lead": "Thrive",
+     "round": "Primary"
+    }
+   ],
+   "source": "Khipus catalog (nodes/preipo_intel.js) — curated, not live",
+   "total_raised": "~$60B+"
+  },
+  "private_valuation": {
+   "as_of": "2026-03-31",
+   "confidence": "high",
+   "in_talks_usd_b": 1200,
+   "kind": "last CLOSED funding round, verified with source — NOT a live price",
+   "layer_as_of": "2026-09-29",
+   "lead": "SoftBank (co-líder) con Amazon, Nvidia, Microsoft",
+   "note": "Last closed round: $122B at an $852B post-money valuation (Mar 31, 2026).",
+   "raised": "$122B",
+   "round": "Primary (ronda récord)",
+   "source_url": "https://openai.com/index/accelerating-the-next-phase-ai/",
+   "talks_note": "Reported talks (not closed) for a pre-IPO round at ~$1.2T.",
+   "talks_source_url": "https://www.pymnts.com/news/artificial-intelligence/2026/openai-eyes-1-2-trillion-valuation-in-pre-ipo-funding-round/",
+   "valuation_usd_b": 852
+  },
+  "related": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "CapitalGroup",
+    "label": "Capital Group",
+    "relation": "Growth Fund of America (AGTHX, ~USD 916,8M) y New Economy Fund (ANEFX, ~USD 303,2M) sumaban ~USD 1.290M en OpenAI en 3 fondos, según N-CSR filings reportados a inicios de 2026.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Fidelity",
+    "label": "Fidelity",
+    "relation": "Fondos Fidelity (liderados por Contrafund, ~USD 407,9M) sumaban ~USD 1.090M en OpenAI repartidos en 33 fondos, según N-CSR filings reportados a inicios de 2026.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "MGX",
+    "label": "MGX",
+    "relation": "Participó en ronda de USD 6.600M (3-oct-2024, valoración USD 157.000M, monto MGX no revelado) y co-lideró ronda de USD 122.000M (31-mar-2026, valoración USD 852.000M).",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Microsoft",
+    "label": "Microsoft (Azure)",
+    "relation": "Inversión acumulada $13B — Azure es el único cloud de OpenAI",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "SequoiaCapital",
+    "label": "Sequoia Capital",
+    "relation": "Accionista desde etapa temprana; posición descrita como uno de los mayores drivers de ganancias en el papel de la cartera.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "SoftBank",
+    "label": "SoftBank Group",
+    "relation": "SoftBank lidera la ronda de $40B en OpenAI (2025) y el proyecto Stargate",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "TRowePrice",
+    "label": "T. Rowe Price",
+    "relation": "Blue Chip Growth Fund (TRBCX) reportaba ~USD 453,1M en OpenAI; participó en ronda de USD 8.300M (2025) y en tender de empleados a valuación ~USD 500.000M.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "ThriveCapital",
+    "label": "Thrive Capital",
+    "relation": "Invirtió USD 130M en 2022 (valuación USD 29.000M, único term sheet recibido); ~USD 1.000M adicionales a valuación USD 285.000M, según CNBC (25-feb-2026).",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "FoundersFund",
+    "label": "Founders Fund",
+    "relation": "Participó en la ronda de financiamiento de OpenAI de USD 8.300M en 2025.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Newmark Group",
+    "label": "Newmark Group",
+    "relation": "Arregló el préstamo de USD 7.100M (22-may-2025, liderado por J.P. Morgan) para el primer proyecto Stargate en Abilene, TX",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 3
+   }
+  ],
+  "resolved_from": {
+   "method": "id",
+   "score": 100,
+   "text": "OpenAI"
+  },
+  "sector": "cloud_ia",
+  "sector_label": "Cloud & AI",
+  "sources": [
+   "Khipus graph snapshot",
+   "nodes/private_valuations.js (verified)",
+   "live profile: n/a"
+  ],
+  "structure": {
+   "cap_coverage_pct": 26,
+   "downstream_cap_at_risk_usd_b": 48.0,
+   "n_suppliers": 11,
+   "note": "supplier shares = weight of supplier links, not spend; cap at risk counts only companies with a known (live or verified) market cap",
+   "peers": [
+    "Anthropic",
+    "Reflection AI",
+    "Mistral AI"
+   ],
+   "risk_sources": [
+    "TSMC 24.5% (indirect)",
+    "Microsoft (Azure) 23.6%",
+    "Nvidia 19.3% (indirect)"
+   ],
+   "supplier_concentration": "baja",
+   "supplier_hhi": 0.124,
+   "systemic_rank": 42,
+   "top_supplier": {
+    "id": "Microsoft",
+    "label": "Microsoft (Azure)",
+    "share_pct": 17.2
+   },
+   "top_supplier_country": {
+    "country": "EEUU",
+    "share_pct": 100.0
+   }
+  },
+  "symbol": null,
+  "top_customers": [
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "relation": "ChatGPT usa clusters de H100/H200 para inferencia a 100M+ usuarios",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Microsoft",
+    "label": "Microsoft (Azure)",
+    "relation": "ChatGPT Enterprise desplegado en stack IT de Fortune 500 vía Microsoft",
+    "relation_class": "customer",
+    "type": "deploy",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Figure",
+    "label": "Figure AI",
+    "relation": "Figure integra modelos multimodales de OpenAI en Figure 02",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "OneX",
+    "label": "1X Technologies",
+    "relation": "Inversor y socio de modelos",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "CrowdStrike",
+    "label": "CrowdStrike",
+    "relation": "LLMs detrás de Charlotte AI",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 1
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Palantir",
+    "label": "Palantir",
+    "relation": "Modelos GPT en aplicaciones enterprise",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 1
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Snowflake",
+    "label": "Snowflake",
+    "relation": "GPT integrado en Cortex AI",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 1
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "AlphaSense",
+    "label": "AlphaSense (Finance AI)",
+    "relation": "AlphaSense Generative Search usa modelos GPT de OpenAI para resúmenes y respuestas basadas en documentos financieros",
+    "relation_class": "supply",
+    "type": "license",
+    "verified": true,
+    "weight": 0.8
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "FactSet",
+    "label": "FactSet Research Systems",
+    "relation": "FactSet Mercury (asistente de IA generativa) usa modelos GPT de OpenAI",
+    "relation_class": "supply",
+    "type": "license",
+    "verified": true,
+    "weight": 0.8
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Verint",
+    "label": "Verint Systems",
+    "relation": "Verint incorpora modelos de lenguaje de OpenAI en sus bots de IA generativa para centros de contacto",
+    "relation_class": "supply",
+    "type": "license",
+    "verified": true,
+    "weight": 0.8
+   }
+  ],
+  "top_suppliers": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Microsoft",
+    "label": "Microsoft (Azure)",
+    "relation": "GPT-4/o1 corre exclusivamente en Azure (Microsoft es el único proveedor cloud)",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Oracle",
+    "label": "Oracle (OCI)",
+    "relation": "OpenAI acuerdo multi-cloud OCI para capacidad adicional de inferencia",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "CoreWeave",
+    "label": "CoreWeave",
+    "relation": "Contratos de cómputo por $22B+",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "AMD",
+    "label": "AMD",
+    "relation": "Acuerdo de 6 GW de GPUs Instinct + warrants",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Broadcom",
+    "label": "Broadcom",
+    "relation": "ASIC custom de 10 GW en desarrollo",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Figure",
+    "label": "Figure AI",
+    "relation": "Integración de GPT-4o para razonamiento del robot Figure 02",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "ScaleAI",
+    "label": "Scale AI",
+    "relation": "Datos de entrenamiento etiquetados",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "BostonDynamics",
+    "label": "Boston Dynamics",
+    "relation": "Boston Dynamics usa GPT-4V para comprensión semántica de entornos",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 1
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Cerebras",
+    "label": "Cerebras Systems",
+    "relation": "Cerebras firmó un acuerdo de cómputo de inferencia con OpenAI valorado hasta US$10.000M",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 1
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Tesla",
+    "label": "Tesla",
+    "relation": "Elon Musk co-fundó OpenAI; ahora competidores directos",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 1
+   }
+  ]
+ },
+ "sample": false,
+ "tool": "get_company"
+}

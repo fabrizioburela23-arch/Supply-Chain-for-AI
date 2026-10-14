@@ -1,0 +1,938 @@
+khipus_id,nombre,simbolo_yahoo,pais,categoria,sector
+Adept,Adept AI,,EEUU,ai_agents,cloud_ia
+Cognition,Cognition AI (Devin),,EEUU,ai_agents,cloud_ia
+ElevenLabs,ElevenLabs,,EEUU,ai_agents,cloud_ia
+Imbue,Imbue (ex-Generally Intelligent),,EEUU,ai_agents,cloud_ia
+Inflection,Inflection AI,,EEUU,ai_agents,cloud_ia
+LangChain,LangChain,,EEUU,ai_agents,cloud_ia
+ScaleAI,Scale AI,,EEUU,ai_agents,cloud_ia
+Voiceflow,Voiceflow,,EEUU,ai_agents,cloud_ia
+AuroraInnovation,Aurora Innovation,AUR,EEUU,ai_auto,cloud_ia
+Cepton,Cepton (Koito Mfg),,EEUU,ai_auto,cloud_ia
+Hesai,Hesai Technology,HSAI,China,ai_auto,cloud_ia
+HorizonRobotics,Horizon Robotics,9660.HK,China,ai_auto,cloud_ia
+Innoviz,Innoviz Technologies,INVZ,Israel,ai_auto,cloud_ia
+Joby_Aviation,Joby Aviation,JOBY,EEUU,ai_auto,cloud_ia
+Luminar,Luminar Technologies,,EEUU,ai_auto,cloud_ia
+Mobileye,Mobileye Global,MBLY,Israel,ai_auto,cloud_ia
+Nuro,Nuro,,EEUU,ai_auto,cloud_ia
+Stellantis,Stellantis,STLA,PaisesBajos,ai_auto,cloud_ia
+Waymo,Waymo (Alphabet),,EEUU,ai_auto,cloud_ia
+Wayve,Wayve,,Europa,ai_auto,cloud_ia
+Zoox,Zoox (Amazon),,EEUU,ai_auto,cloud_ia
+Addepar,Addepar,,EEUU,ai_finance,cloud_ia
+AlphaSense,AlphaSense (Finance AI),,EEUU,ai_finance,cloud_ia
+CBOE,CBOE Global Markets,CBOE,EEUU,ai_finance,cloud_ia
+Crane_NXT,Crane NXT,CXT,EEUU,ai_finance,cloud_ia
+FactSet,FactSet Research Systems,FDS,EEUU,ai_finance,cloud_ia
+Kavout,Kavout,,EEUU,ai_finance,cloud_ia
+Kensho,Kensho Technologies (S&P),,EEUU,ai_finance,cloud_ia
+MSCI,MSCI,MSCI,EEUU,ai_finance,cloud_ia
+Morningstar,Morningstar,MORN,EEUU,ai_finance,cloud_ia
+NASDAQ,Nasdaq Exchange,NDAQ,EEUU,ai_finance,cloud_ia
+VirtuFinancial,Virtu Financial,VIRT,EEUU,ai_finance,cloud_ia
+BenevolentAI,BenevolentAI,,Europa,ai_health,cloud_ia
+Butterfly,Butterfly Network,BFLY,EEUU,ai_health,cloud_ia
+Exscientia,Exscientia,,Europa,ai_health,cloud_ia
+Insilico,Insilico Medicine,3696.HK,China,ai_health,cloud_ia
+PathAI,PathAI,,EEUU,ai_health,cloud_ia
+Recursion,Recursion Pharmaceuticals,RXRX,EEUU,ai_health,cloud_ia
+Tempus,Tempus AI,TEM,EEUU,ai_health,cloud_ia
+Veracyte,Veracyte,VCYT,EEUU,ai_health,cloud_ia
+01AI,01.AI (Yi Models),,China,ailab,cloud_ia
+AlephAlpha,Aleph Alpha,,Europa,ailab,cloud_ia
+Qwen,Alibaba (Qwen),,China,ailab,cloud_ia
+Anthropic,Anthropic,,EEUU,ailab,cloud_ia
+ByteDance,ByteDance,,China,ailab,cloud_ia
+CharacterAI,Character.AI,,EEUU,ailab,cloud_ia
+DeepSeek,DeepSeek,,China,ailab,cloud_ia
+Groq,Groq,,EEUU,ailab,cloud_ia
+Meta,Meta,META,EEUU,ailab,cloud_ia
+Mistral,Mistral AI,,Francia,ailab,cloud_ia
+OpenAI,OpenAI,,EEUU,ailab,cloud_ia
+poolside-ai,Poolside AI,,Estados Unidos / Francia,ailab,cloud_ia
+reflection-ai,Reflection AI,,Estados Unidos,ailab,cloud_ia
+sakana-ai,Sakana AI,,Japón,ailab,cloud_ia
+SambaNova,SambaNova,,EEUU,ailab,cloud_ia
+StabilityAI,Stability AI,,EEUU,ailab,cloud_ia
+world-labs,World Labs,,Estados Unidos,ailab,cloud_ia
+ZhipuAI,Zhipu AI (GLM),2513.HK,China,ailab,cloud_ia
+xAI,xAI (+SpaceX),,EEUU,ailab,cloud_ia
+Cohere,Cohere,,EEUU,aisoft,cloud_ia
+CrowdStrike,CrowdStrike,CRWD,EEUU,aisoft,cloud_ia
+Datadog,Datadog,DDOG,EEUU,aisoft,cloud_ia
+Elastic,Elastic N.V.,ESTC,EEUU,aisoft,cloud_ia
+GenDigital,Gen Digital (Norton/Avast),GEN,EEUU,aisoft,cloud_ia
+Glean,Glean,,EEUU,aisoft,cloud_ia
+HuggingFace,Hugging Face,,EEUU,aisoft,cloud_ia
+Palantir,Palantir,PLTR,EEUU,aisoft,cloud_ia
+Perplexity,Perplexity AI,,EEUU,aisoft,cloud_ia
+Runway,Runway ML,,EEUU,aisoft,cloud_ia
+Salesforce,Salesforce,CRM,EEUU,aisoft,cloud_ia
+Samsara,Samsara,IOT,EEUU,aisoft,cloud_ia
+Snowflake,Snowflake,SNOW,EEUU,aisoft,cloud_ia
+Suno,Suno AI,,EEUU,aisoft,cloud_ia
+Trimble_Inc,Trimble,TRMB,EEUU,aisoft,cloud_ia
+Veeva,Veeva Systems,VEEV,EEUU,aisoft,cloud_ia
+Verint,Verint Systems,,EEUU,aisoft,cloud_ia
+AlibabaCloud,Alibaba Cloud,,China,cloud,cloud_ia
+Alphabet,Alphabet (Google Cloud),GOOGL,EEUU,cloud,cloud_ia
+Amazon,Amazon (AWS),AMZN,EEUU,cloud,cloud_ia
+Baidu,Baidu,BIDU,China,cloud,cloud_ia
+Confluent,Confluent,,EEUU,cloud,cloud_ia
+CoreWeave,CoreWeave,CRWV,EEUU,cloud,cloud_ia
+Databricks,Databricks,,EEUU,cloud,cloud_ia
+DigitalRealty,Digital Realty,DLR,EEUU,cloud,cloud_ia
+Equinix,Equinix,EQIX,EEUU,cloud,cloud_ia
+HashiCorp,HashiCorp,,EEUU,cloud,cloud_ia
+Microsoft,Microsoft (Azure),MSFT,EEUU,cloud,cloud_ia
+MongoDB,MongoDB,MDB,EEUU,cloud,cloud_ia
+Naver,Naver (HyperCLOVA X),035420.KS,Corea,cloud,cloud_ia
+Nebius,Nebius,NBIS,PaisesBajos,cloud,cloud_ia
+Oracle,Oracle (OCI),ORCL,EEUU,cloud,cloud_ia
+SoftBank,SoftBank Group,9984.T,Japon,cloud,cloud_ia
+Tencent,Tencent,TCEHY,China,cloud,cloud_ia
+AeroVironment,AeroVironment,AVAV,EEUU,ai_defense,defensa
+Airbus,Airbus,EADSY,Francia,ai_defense,defensa
+Anduril,Anduril Industries,,EEUU,ai_defense,defensa
+AxonEnterprise,Axon Enterprise,AXON,EEUU,ai_defense,defensa
+BAESystems,BAE Systems,BA.L,Europa,ai_defense,defensa
+Boeing,Boeing,BA,EEUU,ai_defense,defensa
+Booz_Allen,Booz Allen Hamilton,BAH,EEUU,ai_defense,defensa
+C3AI,C3.ai,AI,EEUU,ai_defense,defensa
+CACI,CACI International,CACI,EEUU,ai_defense,defensa
+helsing,Helsing,,Alemania,ai_defense,defensa
+Kratos_Defense,Kratos Defense,KTOS,EEUU,ai_defense,defensa
+L3Harris,L3Harris Technologies,LHX,EEUU,ai_defense,defensa
+Leidos,Leidos Holdings,LDOS,EEUU,ai_defense,defensa
+Leonardo_DRS,Leonardo DRS,DRS,EEUU,ai_defense,defensa
+Mercury_Systems,Mercury Systems,MRCY,EEUU,ai_defense,defensa
+Moog,Moog Inc.,MOG-A,EEUU,ai_defense,defensa
+Northrop,Northrop Grumman,NOC,EEUU,ai_defense,defensa
+PaloAltoNetworks,Palo Alto Networks,PANW,EEUU,ai_defense,defensa
+Parsons,Parsons Corporation,PSN,EEUU,ai_defense,defensa
+Raytheon,RTX / Raytheon,RTX,EEUU,ai_defense,defensa
+Rheinmetall,Rheinmetall,RHM.DE,Europa,ai_defense,defensa
+Saab_AB,Saab AB,SAAB-B.ST,Europa,ai_defense,defensa
+SentinelOne,SentinelOne,S,EEUU,ai_defense,defensa
+ShieldAI,Shield AI,,EEUU,ai_defense,defensa
+Teledyne_Flir,Teledyne FLIR,TDY,EEUU,ai_defense,defensa
+Thales,Thales,HO.PA,Europa,ai_defense,defensa
+babcock-international,Babcock International,BAB.L,Reino Unido,defense_prime,defensa
+dassault-aviation,Dassault Aviation,AM.PA,Francia,defense_prime,defensa
+elbit-systems,Elbit Systems,ESLT,Israel,defense_prime,defensa
+general-dynamics,General Dynamics,GD,Estados Unidos,defense_prime,defensa
+hanwha-aerospace,Hanwha Aerospace,012450.KS,Corea del Sur,defense_prime,defensa
+iai-israel-aerospace,Israel Aerospace Industries,,Israel,defense_prime,defensa
+lockheed-martin,Lockheed Martin,LMT,Estados Unidos,defense_prime,defensa
+naval-group,Naval Group,,Francia,defense_prime,defensa
+qinetiq,QinetiQ,QQ.,Reino Unido,defense_prime,defensa
+rafael-advanced-defense,Rafael Advanced Defense Systems,,Israel,defense_prime,defensa
+textron-systems,Textron Systems,,Estados Unidos,defense_prime,defensa
+AmpereComputing,Ampere Computing,,EEUU,asic_custom,diseno
+Esperanto,Esperanto Technologies,,EEUU,asic_custom,diseno
+Etched,Etched AI,,EEUU,asic_custom,diseno
+Graphcore,Graphcore,,Europa,asic_custom,diseno
+Hailo,Hailo Technologies,,Israel,asic_custom,diseno
+Hygon,Hygon Information,688041.SS,China,asic_custom,diseno
+Tenstorrent,Tenstorrent,,EEUU,asic_custom,diseno
+Untether_AI,Untether AI,,EEUU,asic_custom,diseno
+dMatrix,d-Matrix,,EEUU,asic_custom,diseno
+ARM,ARM,ARM,ReinoUnido,eda,diseno
+Altium,Altium,,Australia,eda,diseno
+AnsysEDA,Ansys (EDA/Simulation),,EEUU,eda,diseno
+Cadence,Cadence,CDNS,EEUU,eda,diseno
+Empyrean,Empyrean Technology,301269.SZ,China,eda,diseno
+PDF_Solutions,PDF Solutions,PDFS,EEUU,eda,diseno
+Photronics,Photronics,PLAB,EEUU,eda,diseno
+SiemensEDA,Siemens EDA,,Alemania,eda,diseno
+Synopsys,Synopsys,SNPS,EEUU,eda,diseno
+EdgeImpulse,Edge Impulse,,EEUU,edge_ai,diseno
+GreenWaves,GreenWaves Technologies,,Europa,edge_ai,diseno
+Kneron,Kneron,,Taiwan,edge_ai,diseno
+Mythic,Mythic AI,,EEUU,edge_ai,diseno
+SiMa,SiMa.ai,,EEUU,edge_ai,diseno
+Syntiant,Syntiant Corp,,EEUU,edge_ai,diseno
+AMD,AMD,AMD,EEUU,fabless,diseno
+Achronix,Achronix Semiconductor,,EEUU,fabless,diseno
+Allegro,Allegro MicroSystems,ALGM,EEUU,fabless,diseno
+Apple,Apple,AAPL,EEUU,fabless,diseno
+biren,Biren Technology,6082.HK,China,fabless,diseno
+Ceva,CEVA,CEVA,Israel,fabless,diseno
+Cambricon,Cambricon,688256.SS,China,fabless,diseno
+Cirrus_Logic,Cirrus Logic,CRUS,EEUU,fabless,diseno
+Diodes,Diodes Incorporated,DIOD,EEUU,fabless,diseno
+enflame,Enflame Technology,688801.SS,China,fabless,diseno
+FlexLogix,Flex Logix Technologies,,EEUU,fabless,diseno
+HiSilicon,HiSilicon (Huawei),,China,fabless,diseno
+Himax_Tech,Himax Technologies,HIMX,Taiwan,fabless,diseno
+Huawei,Huawei,,China,fabless,diseno
+Indie,Indie Semiconductor,INDI,EEUU,fabless,diseno
+Lattice,Lattice Semiconductor,LSCC,EEUU,fabless,diseno
+loongson,Loongson Technology,688047.SS,China,fabless,diseno
+MACOM,MACOM Technology,MTSI,EEUU,fabless,diseno
+MaxLinear,MaxLinear,MXL,EEUU,fabless,diseno
+MediaTek,MediaTek,2454.TW,Taiwan,fabless,diseno
+Microchip_Tech,Microchip Technology,MCHP,EEUU,fabless,diseno
+Montage,Montage Technology,688008.SS,China,fabless,diseno
+moorethreads,Moore Threads,688795.SS,China,fabless,diseno
+NXP,NXP Semiconductors,NXPI,Europa,fabless,diseno
+Nvidia,Nvidia,NVDA,EEUU,fabless,diseno
+PixelWorks,Pixelworks,PXLW,EEUU,fabless,diseno
+PowerIntegrations,Power Integrations,POWI,EEUU,fabless,diseno
+Qualcomm,Qualcomm,QCOM,EEUU,fabless,diseno
+Rambus,Rambus,RMBS,EEUU,fabless,diseno
+Renesas,Renesas Electronics,6723.T,Japon,fabless,diseno
+STMicroelectronics,STMicroelectronics,STM,Europa,fabless,diseno
+Semtech,Semtech,SMTC,EEUU,fabless,diseno
+Sensata,Sensata Technologies,ST,EEUU,fabless,diseno
+SiTime,SiTime Corporation,SITT,EEUU,fabless,diseno
+SiliconLabs,Silicon Laboratories,SLAB,EEUU,fabless,diseno
+SiliconMotion,Silicon Motion,SIMO,Taiwan,fabless,diseno
+starfive,StarFive Technology,,China,fabless,diseno
+unisoc,UNISOC,,China,fabless,diseno
+WillSemi,Will Semiconductor (OmniVision),603501.SS,China,fabless,diseno
+Xiaomi,Xiaomi,1810.HK,China,fabless,diseno
+BrainChip,BrainChip Holdings,BRN.AX,Australia,neuromorphic,diseno
+GrAI_Matter,GrAI Matter Labs,,Europa,neuromorphic,diseno
+Innatera,Innatera Nanosystems,,Europa,neuromorphic,diseno
+Prophesee,Prophesee,,Europa,neuromorphic,diseno
+Rain_Neuromorphics,Rain Neuromorphics,,EEUU,neuromorphic,diseno
+SpiNNcloud,SpiNNcloud Systems,,Europa,neuromorphic,diseno
+AyarLabs,Ayar Labs,,EEUU,photonics_si,diseno
+InfiniteraNet,Infinera,,EEUU,photonics_si,diseno
+Lightelligence,Lightelligence,1879.HK,EEUU,photonics_si,diseno
+Coherus_Bio,POET Technologies,POET,EEUU,photonics_si,diseno
+RockleyPhotonics,Rockley Photonics,,EEUU,photonics_si,diseno
+Viavi,Viavi Solutions,VIAV,EEUU,photonics_si,diseno
+alice-bob-quantum,Alice & Bob,,Francia,quantum_hw,diseno
+atom-computing,Atom Computing,,Estados Unidos,quantum_hw,diseno
+DWave,D-Wave Quantum,QBTS,RestoMundo,quantum_hw,diseno
+IBMQuantum,IBM Quantum,,EEUU,quantum_hw,diseno
+iqm-quantum,IQM Quantum Computers,IQMX,Finlandia,quantum_hw,diseno
+infleqtion,Infleqtion,INFQ,Estados Unidos,quantum_hw,diseno
+IonQ,IonQ,IONQ,EEUU,quantum_hw,diseno
+Pasqal,Pasqal,PSQL,Francia,quantum_hw,diseno
+PsiQuantum,PsiQuantum,,EEUU,quantum_hw,diseno
+QuEra,QuEra Computing,,EEUU,quantum_hw,diseno
+Quantinuum,Quantinuum,QNT,EEUU,quantum_hw,diseno
+Rigetti,Rigetti Computing,RGTI,EEUU,quantum_hw,diseno
+seeqc-quantum,SEEQC,,Estados Unidos,quantum_hw,diseno
+xanadu-quantum,Xanadu,XNDU,Canadá,quantum_hw,diseno
+Albemarle,Albemarle Corporation,ALB,EEUU,battery_mat,energia
+ArcadiumLithium,Arcadium Lithium (ex-Livent),,EEUU,battery_mat,energia
+Livent,Livent (Arcadium Lithium),,EEUU,battery_mat,energia
+PiedmontLithium,Piedmont Lithium,,EEUU,battery_mat,energia
+SQM,SQM,SQM,RestoMundo,battery_mat,energia
+SigmaLithium,Sigma Lithium,SGML,EEUU,battery_mat,energia
+Umicore,Umicore,UMI.BR,Europa,battery_mat,energia
+Glencore,Glencore,GLEN.L,Europa,energy_trading,energia
+Gunvor,Gunvor,,Europa,energy_trading,energia
+Mercuria,Mercuria,,Europa,energy_trading,energia
+Trafigura,Trafigura,,RestoMundo,energy_trading,energia
+Vitol,Vitol,,Europa,energy_trading,energia
+EON,EON,EOAN.DE,Alemania,grid_transmission,energia
+ERCOT,ERCOT,,EEUU,grid_transmission,energia
+Exelon,Exelon,EXC,EEUU,grid_transmission,energia
+FirstEnergy,FirstEnergy,FE,EEUU,grid_transmission,energia
+ITCHoldings,ITCHoldings,,EEUU,grid_transmission,energia
+NationalGrid,National Grid,NG.L,ReinoUnido,grid_transmission,energia
+PGECorp,PG&E,PCG,EEUU,grid_transmission,energia
+PJM,PJM,,EEUU,grid_transmission,energia
+Sempra,Sempra,SRE,EEUU,grid_transmission,energia
+StateGridChina,State Grid (China),,China,grid_transmission,energia
+Terna,Terna,TRN.MI,Europa,grid_transmission,energia
+BallardPower,Ballard Power,BLDP,Canadá,hydrogen,energia
+BloomEnergy,Bloom Energy,BE,EEUU,hydrogen,energia
+NelASA,Nel ASA,NEL.OL,Europa,hydrogen,energia
+PlugPower,Plug Power,PLUG,EEUU,hydrogen,energia
+CheniereEnergy,Cheniere Energy,LNG,EEUU,lng,energia
+QatarEnergy,QatarEnergy,,RestoMundo,lng,energia
+VentureGlobalLNG,Venture Global LNG,VG,EEUU,lng,energia
+EnergyTransfer,Energy Transfer,ET,EEUU,midstream_pipeline,energia
+EnterpriseProductsPartners,Enterprise Products Partners,EPD,EEUU,midstream_pipeline,energia
+KinderMorgan,Kinder Morgan,KMI,EEUU,midstream_pipeline,energia
+WilliamsCompanies,Williams Companies,WMB,EEUU,midstream_pipeline,energia
+Westinghouse,Westinghouse,,EEUU,nuclear_equipment,energia
+CommonwealthFusion,Commonwealth Fusion Systems,,EEUU,nuclear_fusion,energia
+GeneralFusion,General Fusion,GFUZ,Canadá,nuclear_fusion,energia
+Helion,Helion Energy,,EEUU,nuclear_fusion,energia
+pacific-fusion,Pacific Fusion,,Estados Unidos,nuclear_fusion,energia
+TAETechnologies,TAE Technologies,,EEUU,nuclear_fusion,energia
+tokamak-energy,Tokamak Energy,,Reino Unido,nuclear_fusion,energia
+type-one-energy,Type One Energy,,Estados Unidos,nuclear_fusion,energia
+ZapEnergy,Zap Energy,,EEUU,nuclear_fusion,energia
+CGNPower,CGN Power,1816.HK,China,nuclear_operator,energia
+EDF,EDF,,Francia,nuclear_operator,energia
+KEPCO,KEPCO,KEP,Corea,nuclear_operator,energia
+KansaiElectric,Kansai Electric,9503.T,Japon,nuclear_operator,energia
+TEPCO,TEPCO,9501.T,Japon,nuclear_operator,energia
+GEHitachiNuclear,GE Hitachi Nuclear Energy,,EEUU,nuclear_smr,energia
+KairosPower,Kairos Power,,EEUU,nuclear_smr,energia
+NuScale,NuScale Power,SMR,EEUU,nuclear_smr,energia
+Oklo,Oklo Inc.,OKLO,EEUU,nuclear_smr,energia
+RollsRoyceSMR,Rolls-Royce SMR,,Reino Unido,nuclear_smr,energia
+TerraPower,TerraPower,,EEUU,nuclear_smr,energia
+WestinghouseElectric,Westinghouse Electric Company,,EEUU,nuclear_smr,energia
+Xenergy,X-energy,XE,EEUU,nuclear_smr,energia
+ADNOC,ADNOC,,United Arab Emirates,oil_gas_major,energia
+BP,BP,BP,ReinoUnido,oil_gas_major,energia
+CNOOC,CNOOC,0883.HK,China,oil_gas_major,energia
+Chevron,Chevron,CVX,EEUU,oil_gas_major,energia
+ConocoPhillips,ConocoPhillips,COP,EEUU,oil_gas_major,energia
+Eni,Eni,ENI.MI,Europa,oil_gas_major,energia
+Equinor,Equinor,EQNR,Europa,oil_gas_major,energia
+ExxonMobil,ExxonMobil,XOM,EEUU,oil_gas_major,energia
+Gazprom,Gazprom,GAZP.ME,Russia,oil_gas_major,energia
+Lukoil,Lukoil,LKOH.ME,Russia,oil_gas_major,energia
+Occidental,Occidental,OXY,EEUU,oil_gas_major,energia
+PetroChina,PetroChina,0857.HK,China,oil_gas_major,energia
+Petrobras,Petrobras,PBR,RestoMundo,oil_gas_major,energia
+Petronas,Petronas,,Malaysia,oil_gas_major,energia
+Repsol,Repsol,REP.MC,Europa,oil_gas_major,energia
+Rosneft,Rosneft,ROSN.ME,Russia,oil_gas_major,energia
+SaudiAramco,Saudi Aramco,2222.SR,RestoMundo,oil_gas_major,energia
+Shell,Shell,SHEL,ReinoUnido,oil_gas_major,energia
+Sinopec,Sinopec,0386.HK,China,oil_gas_major,energia
+Sonatrach,Sonatrach,,Algeria,oil_gas_major,energia
+TotalEnergies,TotalEnergies,TTE,Francia,oil_gas_major,energia
+Woodside,Woodside,WDS,Australia,oil_gas_major,energia
+AESCorp,AES,AES,EEUU,power_ipp,energia
+AEP,American Electric Power (AEP),AEP,EEUU,power_ipp,energia
+BerkshireHathawayEnergy,Berkshire Hathaway Energy,,EEUU,power_ipp,energia
+CLPGroup,CLP Group,0002.HK,China,power_ipp,energia
+Calpine,Calpine (Constellation Energy),,EEUU,power_ipp,energia
+DominionEnergy,Dominion Energy,D,EEUU,power_ipp,energia
+DukeEnergy,Duke Energy,DUK,EEUU,power_ipp,energia
+Enel,Enel,ENEL.MI,Europa,power_ipp,energia
+Engie,Engie,ENGI.PA,Francia,power_ipp,energia
+Entergy,Entergy,ETR,EEUU,power_ipp,energia
+NRGEnergy,NRG Energy,NRG,EEUU,power_ipp,energia
+PPLCorp,PPL Corporation,PPL,EEUU,power_ipp,energia
+PSEG,Public Service Enterprise Group (PSEG),PEG,EEUU,power_ipp,energia
+RWE,RWE,RWE.DE,Alemania,power_ipp,energia
+SouthernCo,Southern Company,SO,EEUU,power_ipp,energia
+TalenEnergy,Talen Energy,TLN,EEUU,power_ipp,energia
+Uniper,Uniper,UN01.DE,Alemania,power_ipp,energia
+Vattenfall,Vattenfall,,Europa,power_ipp,energia
+Vistra,Vistra,VST,EEUU,power_ipp,energia
+arafura-resources,Arafura Resources,ARU.AX,Australia,rare_earth,energia
+ChinaNorthernRareEarth,China Northern Rare Earth Group,600111.SS,China,rare_earth,energia
+EnergyFuels,Energy Fuels,UUUU,EEUU,rare_earth,energia
+IlukaResources,Iluka Resources,ILU.AX,Australia,rare_earth,energia
+Lynas,Lynas Rare Earths,LYC.AX,Australia,rare_earth,energia
+MP_Materials,MP Materials,MP,EEUU,rare_earth,energia
+NioCorp,NioCorp Developments,NB,EEUU,rare_earth,energia
+UcoreRareMetals,Ucore Rare Metals,UCU.V,Canadá,rare_earth,energia
+vital-metals,Vital Metals,VML.AX,Australia,rare_earth,energia
+Iberdrola,Iberdrola,IBE.MC,Europa,renewables_utility,energia
+NextEraEnergy,NextEra Energy,NEE,EEUU,renewables_utility,energia
+Orsted,Orsted,ORSTED.CO,Europa,renewables_utility,energia
+SSE,SSE,SSE.L,ReinoUnido,renewables_utility,energia
+XcelEnergy,Xcel Energy,XEL,EEUU,renewables_utility,energia
+FluenceEnergy,Fluence Energy,FLNC,EEUU,storage_grid,energia
+FormEnergy,Form Energy,,EEUU,storage_grid,energia
+BossEnergy,Boss Energy,BOE.AX,Australia,uranium,energia
+Cameco,Cameco Corporation,CCJ,Canada,uranium,energia
+CentrusEnergy,Centrus Energy,LEU,EEUU,uranium,energia
+DenisonMines,Denison Mines,DNN,Canadá,uranium,energia
+GlobalAtomic,Global Atomic Corporation,GLO.TO,Canadá,uranium,energia
+Kazatomprom,Kazatomprom,KAP.L,Kazajistán,uranium,energia
+NexGenEnergy,NexGen Energy,NXE,Canadá,uranium,energia
+Orano,Orano,,Francia,uranium,energia
+PaladinEnergy,Paladin Energy,PDN.AX,Australia,uranium,energia
+UrEnergy,Ur-Energy,URG,EEUU,uranium,energia
+UraniumEnergy,Uranium Energy Corp,UEC,EEUU,uranium,energia
+Rosatom,Rosatom,,Russia,uranium_enrichment,energia
+Urenco,Urenco,,ReinoUnido,uranium_enrichment,energia
+UraniumOne,Uranium One,,Russia,uranium_mining,energia
+adeka-corporation,Adeka Corporation,4401.T,Japón,chemicals,equipos
+AirLiquide,Air Liquide,AIQUY,Francia,chemicals,equipos
+AirProducts,Air Products and Chemicals,APD,Estados Unidos,chemicals,equipos
+Ajinomoto,Ajinomoto,AJINY,Japon,chemicals,equipos
+brewer-science,Brewer Science,,Estados Unidos,chemicals,equipos
+CMC_Materials,CMC Materials (now CMIIT),,EEUU,chemicals,equipos
+chang-chun-group,Chang Chun Group,,Taiwán,chemicals,equipos
+Entegris,Entegris,ENTG,EEUU,chemicals,equipos
+JSR,JSR,,Japon,chemicals,equipos
+kanto-denka-kogyo,Kanto Denka Kogyo,4047.T,Japón,chemicals,equipos
+Linde,Linde,LIN,EEUU,chemicals,equipos
+MerckKGaA,Merck KGaA,MKKGY,Alemania,chemicals,equipos
+mitsubishi-gas-chemical,Mitsubishi Gas Chemical,4182.T,Japón,chemicals,equipos
+nissan-chemical,Nissan Chemical Corporation,4021.T,Japón,chemicals,equipos
+stella-chemifa,Stella Chemifa,4109.T,Japón,chemicals,equipos
+sumitomo-chemical,Sumitomo Chemical,4005.T,Japón,chemicals,equipos
+TokyoOhka,Tokyo Ohka Kogyo,4186.T,Japon,chemicals,equipos
+ACM_Research,ACM Research,ACMR,EEUU,equip,equipos
+AMEC,AMEC,688012.SS,China,equip,equipos
+ASMInt,ASM International,ASMIY,PaisesBajos,equip,equipos
+ASML,ASML,ASML,PaisesBajos,equip,equipos
+AdvancedEnergy,Advanced Energy Industries,AEIS,EEUU,equip,equipos
+Aehr_Test,Aehr Test Systems,AEHR,EEUU,equip,equipos
+AMAT,Applied Materials,AMAT,EEUU,equip,equipos
+Axcelis,Axcelis Technologies,ACLS,EEUU,equip,equipos
+Azenta,Azenta (Brooks Automation),AZTA,EEUU,equip,equipos
+Canon,Canon,CAJPY,Japon,equip,equipos
+Cohu,Cohu,COHU,EEUU,equip,equipos
+Danaher,Danaher Corporation,DHR,EEUU,equip,equipos
+Disco,Disco,DSCSY,Japon,equip,equipos
+Ichor,Ichor Holdings,ICHR,EEUU,equip,equipos
+KLA,KLA,KLAC,EEUU,equip,equipos
+Keysight,Keysight Technologies,KEYS,EEUU,equip,equipos
+Lam,Lam Research,LRCX,EEUU,equip,equipos
+Naura,Naura Technology,002371.SZ,China,equip,equipos
+Nikon,Nikon,NINOY,Japon,equip,equipos
+OntoInnovation,Onto Innovation,ONTO,EEUU,equip,equipos
+SMEE,SMEE (Shanghai Micro Electronics),,China,equip,equipos
+Screen,Screen Holdings,DINRF,Japon,equip,equipos
+TEL,Tokyo Electron,TOELY,Japon,equip,equipos
+Ultra_Clean,Ultra Clean Holdings,UCTT,EEUU,equip,equipos
+Veeco,Veeco Instruments,VECO,EEUU,equip,equipos
+AlleghenyTech,Allegheny Technologies,ATI,EEUU,materials,equipos
+CarpenterTech,Carpenter Technology,CRS,EEUU,materials,equipos
+DuPont_Electronics,DuPont Electronics,Q,EEUU,materials,equipos
+fujimi-incorporated,Fujimi Incorporated,5384.T,Japón,materials,equipos
+GlobalWafers,GlobalWafers,6488.TWO,Taiwan,materials,equipos
+Hexcel,Hexcel Corporation,HXL,EEUU,materials,equipos
+kyocera-corporation,Kyocera Corporation,6971.T,Japón,materials,equipos
+nexperia,Nexperia,,Países Bajos,materials,equipos
+nitto-denko,Nitto Denko,6988.T,Japón,materials,equipos
+resonac-holdings,Resonac Holdings,4004.T,Japón,materials,equipos
+SUMCO,SUMCO,SUOPY,Japon,materials,equipos
+ShinEtsu,Shin-Etsu Chemical,SHECY,Japon,materials,equipos
+Siltronic,Siltronic,SSLLF,Alemania,materials,equipos
+TorayIndustries,Toray Industries,3402.T,Japon,materials,equipos
+tosoh-corporation,Tosoh Corporation,4042.T,Japón,materials,equipos
+vishay,Vishay Intertechnology,VSH,Estados Unidos,materials,equipos
+Wolfspeed,Wolfspeed,WOLF,EEUU,materials,equipos
+fabrinet,Fabrinet,FN,Tailandia (incorporada en Islas Caimán),optics,equipos
+Hoya,Hoya,HOCPY,Japon,optics,equipos
+MitsuiChemicals,Mitsui Chemicals,MITUY,Japon,optics,equipos
+Toto,Toto,TOTDY,Japon,optics,equipos
+Trumpf,Trumpf,,Alemania,optics,equipos
+Zeiss,Zeiss SMT,,Alemania,optics,equipos
+Bluefors,Bluefors,,RestoEuropa,quantum_infra,equipos
+FormFactor,FormFactor,FORM,EEUU,quantum_infra,equipos
+OxfordInstruments,Oxford Instruments,OXINF,ReinoUnido,quantum_infra,equipos
+QuantumMachines,Quantum Machines,,RestoMundo,quantum_infra,equipos
+BlackSky,BlackSky Technology,BKSY,EEUU,earth_obs,espacio
+CapellaSpace,Capella Space,,EEUU,earth_obs,espacio
+HawkEye360,HawkEye 360,HAWK,EEUU,earth_obs,espacio
+ICEYE,ICEYE,,RestoEuropa,earth_obs,espacio
+Maxar,Maxar Technologies,,EEUU,earth_obs,espacio
+PlanetLabs,Planet Labs,PL,EEUU,earth_obs,espacio
+Satellogic,Satellogic,SATL,EEUU,earth_obs,espacio
+SpireGlobal,Spire Global,SPIR,EEUU,earth_obs,espacio
+Umbra,Umbra Space,,EEUU,earth_obs,espacio
+AST_SpaceMobile,AST SpaceMobile,ASTS,EEUU,satellite,espacio
+Eutelsat,Eutelsat / OneWeb,ETL.PA,Europa,satellite,espacio
+Globalstar,Globalstar,GSAT,EEUU,satellite,espacio
+HughesNetwork,Hughes Network Systems,,EEUU,satellite,espacio
+nanoavionics,NanoAvionics,,Lituania,satellite,espacio
+Orbcomm,Orbcomm,,EEUU,satellite,espacio
+SES,SES S.A.,SESG.PA,Europa,satellite,espacio
+sidus-space,Sidus Space,SIDU,Estados Unidos,satellite,espacio
+terran-orbital,Terran Orbital,,Estados Unidos,satellite,espacio
+abl-space-systems,ABL Space Systems,,Estados Unidos,space_infra,espacio
+astroscale,Astroscale,5034.T,Japón,space_infra,espacio
+AxiomSpace,Axiom Space,,EEUU,space_infra,espacio
+d-orbit,D-Orbit,,Italia,space_infra,espacio
+impulse-space,Impulse Space,,Estados Unidos,space_infra,espacio
+IntuitiveMachines,Intuitive Machines,LUNR,EEUU,space_infra,espacio
+karman-space-defense,Karman Space & Defense,KRMN,Estados Unidos,space_infra,espacio
+loft-orbital,Loft Orbital,,Estados Unidos,space_infra,espacio
+momentus,Momentus,MNTS,Estados Unidos,space_infra,espacio
+orbit-fab,Orbit Fab,,Estados Unidos,space_infra,espacio
+Redwire,Redwire Space,RDW,EEUU,space_infra,espacio
+sierra-nevada-corporation,Sierra Nevada Corporation,,Estados Unidos,space_infra,espacio
+SierraSpace,Sierra Space,,EEUU,space_infra,espacio
+space-forge,Space Forge,,Reino Unido,space_infra,espacio
+starfish-space,Starfish Space,,Estados Unidos,space_infra,espacio
+true-anomaly,True Anomaly,,Estados Unidos,space_infra,espacio
+varda-space-industries,Varda Space Industries,,Estados Unidos,space_infra,espacio
+vast-space,Vast Space,,Estados Unidos,space_infra,espacio
+voyager-technologies,Voyager Technologies,VOYG,Estados Unidos,space_infra,espacio
+ispace,ispace,9348.T,Japón,space_infra,espacio
+Aerojet,Aerojet Rocketdyne,,EEUU,space_launch,espacio
+BlueOrigin,Blue Origin,,EEUU,space_launch,espacio
+exolaunch,Exolaunch,,Alemania,space_launch,espacio
+Firefly,Firefly Aerospace,FLY,EEUU,space_launch,espacio
+RelativitySpace,Relativity Space,,EEUU,space_launch,espacio
+RocketLab,Rocket Lab,RKLB,EEUU,space_launch,espacio
+SpaceX,SpaceX,SPCX,EEUU,space_launch,espacio
+StokSpace,Stoke Space,,EEUU,space_launch,espacio
+ULA,ULA (United Launch Alliance),,EEUU,space_launch,espacio
+GF,GlobalFoundries,GFS,EEUU,foundry,fabricacion
+HuaHong,Hua Hong Semiconductor,1347.HK,China,foundry,fabricacion
+Infineon,Infineon,IFNNY,Alemania,foundry,fabricacion
+Intel,Intel,INTC,EEUU,foundry,fabricacion
+PowerchipSemi,Powerchip Semiconductor,6770.TW,Taiwan,foundry,fabricacion
+Rapidus,Rapidus,,Japon,foundry,fabricacion
+SMIC,SMIC,0981.HK,China,foundry,fabricacion
+Samsung,Samsung Electronics,SSNLF,Corea,foundry,fabricacion
+TSMC,TSMC,TSM,Taiwan,foundry,fabricacion
+TataSemiconductor,Tata Electronics Semi,,India,foundry,fabricacion
+TexasInstruments,Texas Instruments,TXN,EEUU,foundry,fabricacion
+TowerSemiconductor,Tower Semiconductor,TSEM,Israel,foundry,fabricacion
+Vedanta_Semi,Vedanta-Foxconn Semi,,India,foundry,fabricacion
+X_Fab,X-FAB Silicon Foundries,XFAB.PA,Europa,foundry,fabricacion
+onsemi,onsemi,ON,EEUU,foundry,fabricacion
+CXMT,CXMT (ChangXin Memory),688825.SS,China,memory,fabricacion
+GigaDevice,GigaDevice,603986.SS,China,memory,fabricacion
+Kioxia,Kioxia,285A.T,Japon,memory,fabricacion
+Micron,Micron,MU,EEUU,memory,fabricacion
+Nanya,Nanya Technology,2408.TW,Taiwan,memory,fabricacion
+SKHynix,SK Hynix,HXSCL,Corea,memory,fabricacion
+SanDisk,SanDisk,SNDK,EEUU,memory,fabricacion
+Seagate,Seagate Technology,STX,EEUU,memory,fabricacion
+WesternDigital,Western Digital,WDC,EEUU,memory,fabricacion
+Winbond,Winbond Electronics,2344.TW,Taiwan,memory,fabricacion
+YMTC,YMTC,,China,memory,fabricacion
+chipbond,Chipbond Technology,6147.TWO,Taiwán,osat,fabricacion
+jcet,JCET Group,600584.SS,China,osat,fabricacion
+kyec,King Yuan Electronics (KYEC),2449.TW,Taiwán,osat,fabricacion
+pti,Powertech Technology (PTI),6239.TW,Taiwán,osat,fabricacion
+ASE,ASE Technology,ASX,Taiwan,substrates,fabricacion
+Advantest,Advantest,ATEYY,Japon,substrates,fabricacion
+Amkor,Amkor,AMKR,EEUU,substrates,fabricacion
+Besi,BE Semiconductor,BESIY,PaisesBajos,substrates,fabricacion
+Ibiden,Ibiden,IBIDF,Japon,substrates,fabricacion
+Shinko_Electric,Shinko Electric Industries,,Japon,substrates,fabricacion
+Teradyne,Teradyne,TER,EEUU,substrates,fabricacion
+Unimicron,Unimicron,3037.TW,Taiwan,substrates,fabricacion
+Akamai,Akamai Technologies,AKAM,EEUU,cdn_edge,infra
+Cloudflare,Cloudflare,NET,EEUU,cdn_edge,infra
+Edgio,Edgio (ex-Limelight),,EEUU,cdn_edge,infra
+Fastly,Fastly,FSLY,EEUU,cdn_edge,infra
+Imperva,Imperva (Thales),,EEUU,cdn_edge,infra
+Zscaler,Zscaler,ZS,EEUU,cdn_edge,infra
+ASN,Alcatel Submarine Networks,,Francia,connectivity_infra,infra
+americantower,American Tower,AMT,Estados Unidos,connectivity_infra,infra
+colt,Colt Technology Services,,Reino Unido,connectivity_infra,infra
+CommScopeHolding,CommScope Holding,,EEUU,connectivity_infra,infra
+Corning,Corning,GLW,EEUU,connectivity_infra,infra
+crowncastle,Crown Castle,CCI,Estados Unidos,connectivity_infra,infra
+Ericsson,Ericsson,ERIC,Europa,connectivity_infra,infra
+Iridium,Iridium Communications,IRDM,EEUU,connectivity_infra,infra
+Lumen,Lumen Technologies,LUMN,EEUU,connectivity_infra,infra
+NEC,NEC,NIPNF,Japon,connectivity_infra,infra
+Nokia,Nokia,NOK,Europa,connectivity_infra,infra
+sba,SBA Communications,SBAC,Estados Unidos,connectivity_infra,infra
+SubCom,SubCom,,EEUU,connectivity_infra,infra
+T_Mobile,T-Mobile USA,TMUS,EEUU,connectivity_infra,infra
+Viasat,ViaSat,VSAT,EEUU,connectivity_infra,infra
+zayo-group,Zayo Group,,"Estados Unidos (HQ Boulder, CO)",connectivity_infra,infra
+chindata,Chindata Group,,"China / Singapur (holding, operaciones pan-asiáticas)",dc_reit,infra
+cologix,Cologix,,"Estados Unidos (HQ Denver, CO)",dc_reit,infra
+CyrusOne,CyrusOne,,EEUU,dc_reit,infra
+DataBank,DataBank,,EEUU,dc_reit,infra
+edgeconnex,EdgeConneX,,"Estados Unidos (HQ Herndon, VA)",dc_reit,infra
+gds,GDS Holdings,GDS,China,dc_reit,infra
+IronMountain,Iron Mountain,IRM,EEUU,dc_reit,infra
+ntt-gdc,NTT Global Data Centers,,Japón,dc_reit,infra
+princeton-digital-group,Princeton Digital Group,,Singapur (operaciones pan-asiáticas),dc_reit,infra
+QTS,QTS Realty Trust,,EEUU,dc_reit,infra
+stack-infra,STACK Infrastructure,,Estados Unidos (HQ Denver/Kansas City) — propiedad de Blue Owl Capital,dc_reit,infra
+Switch,Switch (Endeavor DC),,EEUU,dc_reit,infra
+vantage-dc,Vantage Data Centers,,"Estados Unidos (HQ Denver, CO)",dc_reit,infra
+Cerebras,Cerebras Systems,CBRS,EEUU,hpc_super,infra
+crusoe-energy,Crusoe Energy,,"Estados Unidos (HQ Denver, CO)",hpc_super,infra
+fluidstack,FluidStack,,Reino Unido / Estados Unidos,hpc_super,infra
+FujitsuHPC,Fugaku / Fujitsu,6702.T,Japon,hpc_super,infra
+LambdaLabs,Lambda Labs,,EEUU,hpc_super,infra
+lightning-ai,Lightning AI,,"Estados Unidos (HQ San Francisco, CA)",hpc_super,infra
+northern-data,Northern Data Group,NB2.DE,Alemania,hpc_super,infra
+nscale,Nscale,,Reino Unido / Noruega,hpc_super,infra
+Penguin_Solutions,Penguin Solutions,PENG,EEUU,hpc_super,infra
+tensorwave,TensorWave,,"Estados Unidos (HQ Las Vegas, NV)",hpc_super,infra
+Together_AI,Together AI,,EEUU,hpc_super,infra
+voltage-park,Voltage Park,,"Estados Unidos (HQ San Francisco, CA)",hpc_super,infra
+yotta-data-services,Yotta Data Services,,India,hpc_super,infra
+adva,ADVA Optical Networking (Adtran Networks),ADV.DE,Alemania,networking,infra
+Amphenol,Amphenol,APH,EEUU,networking,infra
+Arista,Arista Networks,ANET,EEUU,networking,infra
+Astera,Astera Labs,ALAB,EEUU,networking,infra
+Broadcom,Broadcom,AVGO,EEUU,networking,infra
+Calix,Calix,CALX,EEUU,networking,infra
+Ciena,Ciena,CIEN,EEUU,networking,infra
+Cisco,Cisco,CSCO,EEUU,networking,infra
+Coherent,Coherent,COHR,EEUU,networking,infra
+Credo,Credo Technology,CRDO,EEUU,networking,infra
+ExtremeNetworks,Extreme Networks,EXTR,EEUU,networking,infra
+f5,F5 Inc,FFIV,Estados Unidos,networking,infra
+Innolight,Innolight,300308.SZ,China,networking,infra
+juniper,Juniper Networks,,Estados Unidos,networking,infra
+Lumentum,Lumentum,LITE,EEUU,networking,infra
+Marvell,Marvell,MRVL,EEUU,networking,infra
+Calix_Net,NetScout Systems,NTCT,EEUU,networking,infra
+Silicom,Silicom Ltd,SILC,Israel,networking,infra
+Sycamore,Sycamore Networks,,EEUU,networking,infra
+Array_Technologies,Array Technologies,ARRY,EEUU,power,infra
+Constellation,Constellation Energy,CEG,EEUU,power,infra
+DeltaElectronics,Delta Electronics,2308.TW,Taiwan,power,infra
+Eaton,Eaton,ETN,EEUU,power,infra
+First_Solar,First Solar,FSLR,EEUU,power,infra
+GE_Aerospace,GE Aerospace,GE,EEUU,power,infra
+GEVernova,GE Vernova,GEV,EEUU,power,infra
+Lightsource_BP,Lightsource bp,,Europa,power,infra
+MPWR,Monolithic Power,MPWR,EEUU,power,infra
+Navitas,Navitas Semiconductor,NVTS,EEUU,power,infra
+NexTracker,NexTracker,NXT,EEUU,power,infra
+Qorvo,Qorvo,QRVO,EEUU,power,infra
+Richtek,Richtek Technology,,Taiwan,power,infra
+Rohm,Rohm Semiconductor,6963.T,Japon,power,infra
+SMA_Solar,SMA Solar Technology,S92.DE,Europa,power,infra
+Schneider,Schneider Electric,SBGSY,Francia,power,infra
+SiemensEnergy,Siemens Energy,SMNEY,Alemania,power,infra
+Skyworks,Skyworks Solutions,SWKS,EEUU,power,infra
+Vertiv,Vertiv,VRT,EEUU,power,infra
+WiTricity,WiTricity,,EEUU,power,infra
+Celestica,Celestica,CLS,RestoMundo,servers,infra
+Dell,Dell Technologies,DELL,EEUU,servers,infra
+HPE,Hewlett Packard Ent.,HPE,EEUU,servers,infra
+Foxconn,Hon Hai (Foxconn),HNHPF,Taiwan,servers,infra
+Inspur,Inspur Group,000977.SZ,China,servers,infra
+Jabil,Jabil,JBL,EEUU,servers,infra
+Lenovo,Lenovo,LNVGY,China,servers,infra
+Modine,Modine Manufacturing,MOD,EEUU,servers,infra
+Pegatron,Pegatron Corporation,4938.TW,Taiwan,servers,infra
+Quanta,Quanta Computer,2382.TW,Taiwan,servers,infra
+SuperMicro,Super Micro,SMCI,EEUU,servers,infra
+wingtech,Wingtech Technology,600745.SS,China,servers,infra
+Wistron,Wistron Corporation,3231.TW,Taiwan,servers,infra
+Cirion,Cirion,,"Panamá/multi-país LatAm — operaciones en Argentina, Brasil, Chile, Colombia, México y Perú",colocation,inmobiliario
+CoreSite,CoreSite,,Estados Unidos,colocation,inmobiliario
+CtrlS,CtrlS,,India,colocation,inmobiliario
+GlobalSwitch,Global Switch,,Reino Unido (sede Londres) — operaciones en Europa y Asia-Pacífico,colocation,inmobiliario
+KIONetworks,KIONetworks,,"México — operaciones en México, Centroamérica, Caribe, Colombia y España",colocation,inmobiliario
+Meeza,Meeza,MEZA.QA,Catar,colocation,inmobiliario
+Nabiax,Nabiax,,España,colocation,inmobiliario
+ODATA,ODATA,,"Brasil — operaciones en Brasil, Chile, Colombia y México",colocation,inmobiliario
+Sify,Sify,SIFY,India,colocation,inmobiliario
+Telehouse,Telehouse,,"Japón (sede operativa global, matriz KDDI)",colocation,inmobiliario
+Teraco,Teraco,,Sudáfrica,colocation,inmobiliario
+Asetek,Asetek,ASTK.CO,"Dinamarca (HQ, como Asetek A/S)",cooling_thermal,inmobiliario
+Boyd Thermal,Boyd Thermal,,"Estados Unidos (manufactura global: México/Norteamérica, Asia, Europa)",cooling_thermal,inmobiliario
+Carrier Global,Carrier Global,CARR,"Estados Unidos (Palm Beach Gardens, Florida)",cooling_thermal,inmobiliario
+CoolIT Systems,CoolIT Systems,,"Canadá (Calgary, Alberta); manufactura también en China y Vietnam",cooling_thermal,inmobiliario
+Envicool,Envicool,002837.SZ,China (Shenzhen),cooling_thermal,inmobiliario
+Johnson Controls,Johnson Controls,JCI,"Irlanda (Cork) / operaciones principales en EE.UU. (Milwaukee, WI)",cooling_thermal,inmobiliario
+LiquidStack,LiquidStack,,"Estados Unidos (HQ y manufactura en Carrollton, Texas, desde 2024) — origen corporativo en Hong Kong (Allied Control Limited, 2012)",cooling_thermal,inmobiliario
+Munters Group,Munters Group,MTRS.ST,Suecia (Kista/Estocolmo),cooling_thermal,inmobiliario
+STULZ,STULZ,,Alemania (Hamburgo),cooling_thermal,inmobiliario
+Trane Technologies,Trane Technologies,TT,"Irlanda (Swords) / operaciones principales en EE.UU. (Davidson, NC)",cooling_thermal,inmobiliario
+nVent Electric,nVent Electric,NVT,"Reino Unido (sede corporativa en Londres) / operaciones principales en EE.UU. (Minneapolis, Minnesota)",cooling_thermal,inmobiliario
+AdaniConneX,AdaniConneX,,India,datacenter_operator,inmobiliario
+AfricaDataCentres,Africa Data Centres,,"Sudáfrica (sede operativa) — operaciones en Sudáfrica, Nigeria y Kenia",datacenter_operator,inmobiliario
+AirTrunk,AirTrunk,,"Australia (sede Sídney) — operaciones en Australia, Japón, Hong Kong, Singapur y Malasia (Johor)",datacenter_operator,inmobiliario
+AlignedDataCenters,Aligned Data Centers,,"Estados Unidos — huella pan-americana (incl. Brasil, Chile, Colombia, México vía ODATA)",datacenter_operator,inmobiliario
+Ascenty,Ascenty,,"Brasil — operaciones en Brasil, México y Chile",datacenter_operator,inmobiliario
+CDC_DataCentres,CDC Data Centres,,"Australia (sede Canberra) — operaciones en Canberra, Sídney, Melbourne (Australia) y Auckland (Nueva Zelanda)",datacenter_operator,inmobiliario
+CompassDatacenters,Compass Datacenters,,"Estados Unidos (sede Dallas, TX) — operaciones también en Canadá e Israel",datacenter_operator,inmobiliario
+Data4,Data4,,Francia,datacenter_operator,inmobiliario
+DayOne,DayOne,,"Hong Kong (sede) — operaciones en Hong Kong, Singapur, Malasia (Johor), Indonesia (Batam) y Japón (Tokio)",datacenter_operator,inmobiliario
+DigitalEdge,Digital Edge,,"Singapur (sede) — operaciones en Japón, Corea, India, Malasia, Indonesia, Filipinas",datacenter_operator,inmobiliario
+EDGNEX,EDGNEX,,"Emiratos Árabes Unidos (sede Dubái) — expansión a 13 países incl. EE.UU., España, Italia, Grecia, Turquía, Arabia Saudita",datacenter_operator,inmobiliario
+ESR_Group,ESR Group,,Hong Kong / Singapur (sede dual),datacenter_operator,inmobiliario
+JioDataCenters,Jio Data Centers,,India,datacenter_operator,inmobiliario
+Khazna,Khazna,,Emiratos Árabes Unidos,datacenter_operator,inmobiliario
+MoroHub,MoroHub,,Emiratos Árabes Unidos,datacenter_operator,inmobiliario
+NEXTDC,NEXTDC,NXT.AX,Australia,datacenter_operator,inmobiliario
+NxtraData,Nxtra Data,,India,datacenter_operator,inmobiliario
+PureDataCentres,Pure Data Centres,,"Reino Unido (sede Londres) — operaciones en Europa, Medio Oriente y Asia",datacenter_operator,inmobiliario
+RaxioGroup,Raxio Group,,"Uganda (sede) — operaciones en Angola, Costa de Marfil, RD Congo, Etiopía, Mozambique, Tanzania y Uganda (7 países)",datacenter_operator,inmobiliario
+STT_GDC,STT_GDC,,Singapur,datacenter_operator,inmobiliario
+ScalaDataCenters,Scala Data Centers,,Brasil,datacenter_operator,inmobiliario
+VNET,VNET,VNET,China,datacenter_operator,inmobiliario
+YondrGroup,Yondr Group,,"Reino Unido (sede Londres) — operaciones en EE.UU., Canadá y Europa (Londres, Fráncfort, Ámsterdam)",datacenter_operator,inmobiliario
+DigiCo_REIT,DigiCo REIT,DGT.AX,Australia,datacenter_reit,inmobiliario
+KeppelDCREIT,Keppel DC REIT,AJBU.SI,Singapur,datacenter_reit,inmobiliario
+MapletreeIndustrialTrust,Mapletree Industrial Trust,ME8U.SI,Singapur,datacenter_reit,inmobiliario
+AECOM,AECOM,ACM,"Estados Unidos (Dallas, Texas)",dc_construction,inmobiliario
+Bechtel,Bechtel,,"Estados Unidos (Reston, Virginia)",dc_construction,inmobiliario
+Comfort Systems USA,Comfort Systems USA,FIX,Estados Unidos,dc_construction,inmobiliario
+Corgan,Corgan,,"Estados Unidos (Dallas, Texas)",dc_construction,inmobiliario
+DPR Construction,DPR Construction,,"Estados Unidos (Redwood City, California)",dc_construction,inmobiliario
+EMCOR Group,EMCOR Group,EME,Estados Unidos,dc_construction,inmobiliario
+Fortis Construction,Fortis Construction,,"Estados Unidos (Portland, Oregon)",dc_construction,inmobiliario
+HDR Inc,HDR Inc,,"Estados Unidos (Omaha, Nebraska)",dc_construction,inmobiliario
+Hensel Phelps,Hensel Phelps,,"Estados Unidos (Greeley, Colorado)",dc_construction,inmobiliario
+Holder Construction,Holder Construction,,"Estados Unidos (Atlanta, Georgia)",dc_construction,inmobiliario
+Jacobs Engineering,Jacobs Engineering,J,"Estados Unidos (Dallas, Texas)",dc_construction,inmobiliario
+Mortenson,Mortenson,,"Estados Unidos (Minneapolis, Minnesota)",dc_construction,inmobiliario
+Quanta Services,Quanta Services,PWR,Estados Unidos,dc_construction,inmobiliario
+Sterling Infrastructure,Sterling Infrastructure,STRL,Estados Unidos,dc_construction,inmobiliario
+Turner Construction,Turner Construction,,"Estados Unidos (Nueva York, NY)",dc_construction,inmobiliario
+Americold Realty Trust,Americold Realty Trust,COLD,Estados Unidos,industrial_reit,inmobiliario
+GLP,GLP,,Singapur (origen) / EE.UU. (Ares) / China (GLP China),industrial_reit,inmobiliario
+Goodman Group,Goodman Group,GMG.AX,Australia,industrial_reit,inmobiliario
+LondonMetric Property,LondonMetric Property,LMP.L,Reino Unido,industrial_reit,inmobiliario
+Mindspace Business Parks REIT,Mindspace Business Parks REIT,MINDSPACE.NS,India,industrial_reit,inmobiliario
+Prologis,Prologis,PLD,"Estados Unidos (San Francisco, CA)",industrial_reit,inmobiliario
+Rexford Industrial Realty,Rexford Industrial Realty,REXR,Estados Unidos,industrial_reit,inmobiliario
+Segro,Segro,SGRO.L,Reino Unido,industrial_reit,inmobiliario
+WPT Industrial,WPT Industrial,,Canadá (sede original Toronto) / activos en EE.UU.,industrial_reit,inmobiliario
+CBRE Group,CBRE Group,CBRE,"Estados Unidos (Dallas, TX; sede financiera global en Nueva York desde ene-2025)",real_estate_services,inmobiliario
+Colliers,Colliers,CIGI,"Canadá (Toronto, Ontario)",real_estate_services,inmobiliario
+Cushman & Wakefield,Cushman & Wakefield,CWK,"Estados Unidos (Chicago, IL; herencia UK vía DTZ)",real_estate_services,inmobiliario
+JLL,JLL,JLL,"Estados Unidos (Chicago, IL; origen histórico Jones Lang Wootton, Londres, S.XVIII)",real_estate_services,inmobiliario
+Newmark Group,Newmark Group,NMRK,"Estados Unidos (Nueva York, NY)",real_estate_services,inmobiliario
+Air_Charter_Service,Air_Charter_Service,,Reino Unido (Kingston upon Thames),air_cargo,logistica
+Antonov_Airlines,Antonov_Airlines,,"Ucrania (operativamente reubicada a Leipzig/Halle, Alemania, desde 2022)",air_cargo,logistica
+Atlas_Air,Atlas_Air,,Estados Unidos,air_cargo,logistica
+Cargolux,Cargolux,,Luxemburgo,air_cargo,logistica
+Cathay_Cargo,Cathay Cargo,,Hong Kong (China),air_cargo,logistica
+Chapman_Freeborn,Chapman_Freeborn,,Reino Unido,air_cargo,logistica
+DHL_Group,DHL Group,DHL.DE,Alemania,air_cargo,logistica
+Emirates_SkyCargo,Emirates SkyCargo,,Emiratos Árabes Unidos,air_cargo,logistica
+FedEx,FedEx,FDX,Estados Unidos,air_cargo,logistica
+Kalitta_Air,Kalitta_Air,,"Estados Unidos (Ypsilanti, Michigan; base en Willow Run Airport)",air_cargo,logistica
+Maximus_Air,Maximus_Air,,Emiratos Árabes Unidos (Abu Dhabi),air_cargo,logistica
+Qatar_Airways_Cargo,Qatar_Airways_Cargo,,RestoMundo,air_cargo,logistica
+Silk_Way_West,Silk_Way_West,,Azerbaiyán (Bakú),air_cargo,logistica
+UPS,UPS,UPS,Estados Unidos,air_cargo,logistica
+Volga_Dnepr,Volga_Dnepr,,Rusia (Ulyanovsk / Moscú),air_cargo,logistica
+PanamaCanalAuthority,Panama Canal Authority,,Panamá,canal_authority,logistica
+SuezCanalAuthority,Suez Canal Authority,,Egipto,canal_authority,logistica
+CHRobinson,C.H. Robinson,CHRW,Estados Unidos,freight_forwarder,logistica
+DSV,DSV,DSV.CO,Dinamarca,freight_forwarder,logistica
+Expeditors,Expeditors,EXPD,Estados Unidos,freight_forwarder,logistica
+JBHunt,J.B. Hunt,JBHT,Estados Unidos,freight_forwarder,logistica
+KuehneNagel,Kuehne+Nagel,KNIN.SW,Suiza,freight_forwarder,logistica
+XPO,XPO,XPO,Estados Unidos,freight_forwarder,logistica
+Fagioli,Fagioli,,Italia (Reggio Emilia),heavy_lift_logistics,logistica
+Mammoet,Mammoet,,Países Bajos,heavy_lift_logistics,logistica
+Sarens,Sarens,,Bélgica,heavy_lift_logistics,logistica
+TransGlobalProjects,TransGlobal Projects,,Reino Unido (Kent),heavy_lift_logistics,logistica
+deugro,deugro,,Alemania (Frankfurt am Main),heavy_lift_logistics,logistica
+APMTerminals,APMTerminals,,Países Bajos (sede en La Haya),port_operator,logistica
+AdaniPorts,Adani Ports,ADANIPORTS.NS,India,port_operator,logistica
+COSCOShippingPorts,COSCO Shipping Ports,1199.HK,China (matriz COSCO Shipping Group en Shanghái),port_operator,logistica
+ChinaMerchantsPort,China Merchants Port,0144.HK,China (Hong Kong/Shenzhen),port_operator,logistica
+DPWorld,DPWorld,,Emiratos Árabes Unidos,port_operator,logistica
+HutchisonPorts,Hutchison Ports,,Hong Kong (China),port_operator,logistica
+PSAInternational,PSAInternational,,Singapur,port_operator,logistica
+BNSFRailway,BNSFRailway,,"Estados Unidos (Fort Worth, Texas)",rail_freight,logistica
+CONCOR,CONCOR,CONCOR.NS,India,rail_freight,logistica
+CPKC,CPKC,CP,"Canadá (Calgary, Alberta)",rail_freight,logistica
+CSXCorp,CSX,CSX,"Estados Unidos (Jacksonville, Florida)",rail_freight,logistica
+CanadianNational,Canadian National,CNI,"Canadá (Montreal, Quebec)",rail_freight,logistica
+ChinaStateRailway,China State Railway,,China,rail_freight,logistica
+DBCargo,DBCargo,,Alemania,rail_freight,logistica
+NorfolkSouthern,Norfolk Southern,NSC,"Estados Unidos (Atlanta, Georgia)",rail_freight,logistica
+Rumo,Rumo,RAIL3.SA,Brasil,rail_freight,logistica
+RussianRailways,Russian Railways,,Rusia,rail_freight,logistica
+UnionPacific,Union Pacific,UNP,"Estados Unidos (Omaha, Nebraska)",rail_freight,logistica
+CMA_CGM,CMA_CGM,,Francia,shipping_line,logistica
+COSCOShipping,COSCO Shipping,1919.HK,China,shipping_line,logistica
+EvergreenMarine,Evergreen Marine,2603.TW,Taiwan,shipping_line,logistica
+HMM,HMM,011200.KS,Corea del Sur,shipping_line,logistica
+HapagLloyd,Hapag-Lloyd,HLAG.DE,Alemania,shipping_line,logistica
+MOL,MOL,9104.T,Japon,shipping_line,logistica
+MSC,MSC,,Suiza,shipping_line,logistica
+Maersk,Maersk,MAERSK-B.CO,Dinamarca,shipping_line,logistica
+NYKLine,NYK Line,9101.T,Japon,shipping_line,logistica
+Nakilat,Nakilat,QGTS.QA,Catar,shipping_line,logistica
+ONE_Line,ONE_Line,,Singapur (sede operativa) / Japón (sede legal),shipping_line,logistica
+WanHai,Wan Hai,2615.TW,Taiwan,shipping_line,logistica
+YangMing,Yang Ming,2609.TW,Taiwan,shipping_line,logistica
+ZIM,ZIM,ZIM,Israel,shipping_line,logistica
+Blackstone,Blackstone,BX,EEUU,alternative_asset_manager,macro_credito
+Fortress,Fortress,,"United States (mayoritariamente propiedad de Mubadala Capital, Emiratos Árabes Unidos, desde may-2024)",alternative_asset_manager,macro_credito
+BlackRock,BlackRock,BLK,EEUU,asset_manager,macro_credito
+CapitalGroup,Capital Group,,EEUU,asset_manager,macro_credito
+Fidelity,Fidelity,,EEUU,asset_manager,macro_credito
+PIMCO,PIMCO,,EEUU,asset_manager,macro_credito
+StateStreet,State Street,STT,EEUU,asset_manager,macro_credito
+TRowePrice,T. Rowe Price,TROW,EEUU,asset_manager,macro_credito
+Vanguard,Vanguard,,EEUU,asset_manager,macro_credito
+Wellington,Wellington,,EEUU,asset_manager,macro_credito
+BIS,BIS,,Switzerland (Basel),bis,macro_credito
+IHSMarkit,IHSMarkit,,United States / United Kingdom,cds_index_provider,macro_credito
+BOE,BOE,,ReinoUnido,central_bank,macro_credito
+BOJ,BOJ,,Japon,central_bank,macro_credito
+BOK,BOK,,Corea,central_bank,macro_credito
+BoC,BoC,,Canadá,central_bank,macro_credito
+CBCTaiwan,CBCTaiwan,,Taiwan,central_bank,macro_credito
+ECB,ECB,,"Eurozone (HQ Frankfurt, Germany)",central_bank,macro_credito
+FederalReserve,Federal Reserve,,EEUU,central_bank,macro_credito
+PBOC,PBOC,,China,central_bank,macro_credito
+RBA,RBA,,Australia,central_bank,macro_credito
+RBI,RBI,,India,central_bank,macro_credito
+SNB,SNB,,Europa,central_bank,macro_credito
+ISDA,ISDA,,"United States (membresía global, 75 países)",derivatives_standards,macro_credito
+CMEGroup,CME Group,CME,EEUU,exchange_derivatives,macro_credito
+ICE,ICE,ICE,EEUU,exchange_index_provider,macro_credito
+LSEG,LSEG,LSEG.L,ReinoUnido,exchange_index_provider,macro_credito
+ThriveCapital,Thrive Capital,,EEUU,growth_equity,macro_credito
+BloombergIndices,Bloomberg Indices,,EEUU,index_provider,macro_credito
+CSIIndex,CSIIndex,,China,index_provider,macro_credito
+FTSERussell,FTSERussell,,ReinoUnido,index_provider,macro_credito
+NikkeiInc,Nikkei Inc.,,Japon,index_provider,macro_credito
+SPDJI,SPDJI,,EEUU,index_provider,macro_credito
+STOXX,STOXX,,Germany / Switzerland,index_provider,macro_credito
+Solactive,Solactive,,Alemania,index_provider,macro_credito
+Brookfield,Brookfield,BAM,Canada (sede corporativa trasladada a Nueva York en dic-2024),infrastructure_investor,macro_credito
+GIP,GIP,,EEUU,infrastructure_investor,macro_credito
+Macquarie,Macquarie,MQG.AX,Australia,infrastructure_investor,macro_credito
+GoldmanSachs,Goldman Sachs,GS,EEUU,investment_bank,macro_credito
+JPMorgan,JPMorgan,JPM,EEUU,investment_bank,macro_credito
+MorganStanley,Morgan Stanley,MS,EEUU,investment_bank,macro_credito
+CDPQ,CDPQ,,Canadá,pension_fund,macro_credito
+CPPInvestments,CPPInvestments,,Canadá,pension_fund,macro_credito
+ApolloGlobal,Apollo Global,APO,EEUU,private_credit,macro_credito
+AresManagement,Ares Management,ARES,EEUU,private_credit,macro_credito
+BlueOwl,Blue Owl,OWL,EEUU,private_credit,macro_credito
+HPSInvestment,HPSInvestment,,EEUU,private_credit,macro_credito
+SixthStreet,Sixth Street,,EEUU,private_credit,macro_credito
+Carlyle,Carlyle,CG,EEUU,private_equity,macro_credito
+KKR,KKR,KKR,EEUU,private_equity,macro_credito
+FitchRatings,Fitch Ratings,,United States / United Kingdom (doble sede Nueva York–Londres),rating_agency,macro_credito
+KBRA,KBRA,,EEUU,rating_agency,macro_credito
+MoodysRatings,Moody's Ratings,,EEUU,rating_agency,macro_credito
+MorningstarDBRS,Morningstar DBRS,,"Canada / United States (fundada en Toronto, hoy con oficinas en Nueva York, Chicago, Londres, Fráncfort, Madrid)",rating_agency,macro_credito
+SPGlobalRatings,S&P Global Ratings,,EEUU,rating_agency,macro_credito
+ADIA,ADIA,,United Arab Emirates,sovereign_fund,macro_credito
+CIC,CIC,,China,sovereign_fund,macro_credito
+GIC_Singapore,GIC_Singapore,,RestoMundo,sovereign_fund,macro_credito
+KIA,KIA,,Kuwait,sovereign_fund,macro_credito
+MGX,MGX,,United Arab Emirates,sovereign_fund,macro_credito
+Mubadala,Mubadala,,United Arab Emirates,sovereign_fund,macro_credito
+NBIM,NBIM,,Europa,sovereign_fund,macro_credito
+PIF_SaudiArabia,PIF (Saudi Arabia),,RestoMundo,sovereign_fund,macro_credito
+QIA,QIA,,RestoMundo,sovereign_fund,macro_credito
+Temasek,Temasek,,RestoMundo,sovereign_fund,macro_credito
+USTreasury,USTreasury,,EEUU,treasury,macro_credito
+BankOfAmerica,Bank of America,BAC,EEUU,universal_bank,macro_credito
+Barclays,Barclays,BARC.L,ReinoUnido,universal_bank,macro_credito
+Citigroup,Citigroup,C,EEUU,universal_bank,macro_credito
+MUFG,MUFG,8306.T,Japon,universal_bank,macro_credito
+Mizuho,Mizuho,8411.T,Japon,universal_bank,macro_credito
+SMBC,SMBC,8316.T,Japon,universal_bank,macro_credito
+WellsFargo,Wells Fargo,WFC,EEUU,universal_bank,macro_credito
+FoundersFund,Founders Fund,,EEUU,venture_capital,macro_credito
+SequoiaCapital,Sequoia Capital,,EEUU,venture_capital,macro_credito
+Alcoa,Alcoa,AA,EEUU,aluminum,materiales
+CenturyAluminum,Century Aluminum,CENX,EEUU,aluminum,materiales
+Chalco,Chalco,2600.HK,China,aluminum,materiales
+EGA,EGA,,United Arab Emirates,aluminum,materiales
+NorskHydro,Norsk Hydro,NHY.OL,Europa,aluminum,materiales
+RioTintoAluminium,Rio Tinto Aluminium,,United Kingdom/Australia,aluminum,materiales
+Rusal,Rusal,0486.HK,Russia,aluminum,materiales
+AnhuiConch,Anhui Conch,0914.HK,China,cement,materiales
+CRH,CRH,CRH,Europa,cement,materiales
+Cemex,Cemex,CX,RestoMundo,cement,materiales
+HeidelbergMaterials,Heidelberg Materials,HEI.DE,Alemania,cement,materiales
+Holcim,Holcim,HOLN.SW,Europa,cement,materiales
+MartinMarietta,Martin Marietta,MLM,EEUU,cement,materiales
+VulcanMaterials,Vulcan Materials,VMC,EEUU,cement,materiales
+Fujikura,Fujikura,5803.T,Japon,fiber_optic_cable,materiales
+FurukawaElectric,Furukawa Electric,5801.T,Japon,fiber_optic_cable,materiales
+Nexans,Nexans,NEX.PA,Francia,fiber_optic_cable,materiales
+Prysmian,Prysmian,PRY.MI,Europa,fiber_optic_cable,materiales
+SumitomoElectric,Sumitomo Electric,5802.T,Japon,fiber_optic_cable,materiales
+YOFC,YOFC,6869.HK,China,fiber_optic_cable,materiales
+AGC,AGC,5201.T,Japon,glass_fiber,materiales
+NipponElectricGlass,Nippon Electric Glass,5214.T,Japon,glass_fiber,materiales
+SchottAG,Schott AG,,Alemania,glass_fiber,materiales
+GraphiteOne,Graphite One,GPH.V,Canadá,graphite,materiales
+NextSourceMaterials,NextSource Materials,NEXT.TO,Canadá,graphite,materiales
+Novonix,Novonix,NVX.AX,Australia,graphite,materiales
+SyrahResources,Syrah Resources,SYR.AX,Australia,graphite,materiales
+Sibelco,Sibelco,,Europa,high_purity_quartz,materiales
+TheQuartzCorp,The Quartz Corp,,Europa,high_purity_quartz,materiales
+AirWater,Air Water,4088.T,Japon,industrial_gas,materiales
+MesserGroup,Messer Group,,Alemania,industrial_gas,materiales
+NipponSanso,Nippon Sanso,4091.T,Japon,industrial_gas,materiales
+SKMaterials,SKMaterials,,Corea,industrial_gas,materiales
+CMOC,CMOC,3993.HK,China,mining_cobalt,materiales
+EurasianResourcesGroup,Eurasian Resources Group,,Europa,mining_cobalt,materiales
+Antofagasta,Antofagasta,ANTO.L,ReinoUnido,mining_copper,materiales
+Codelco,Codelco,,Chile,mining_copper,materiales
+FirstQuantumMinerals,First Quantum Minerals,FM.TO,Canadá,mining_copper,materiales
+FreeportMcMoRan,Freeport-McMoRan,FCX,EEUU,mining_copper,materiales
+IvanhoeMines,Ivanhoe Mines,IVN.TO,Canadá,mining_copper,materiales
+KGHM,KGHM,KGH.WA,Poland,mining_copper,materiales
+SouthernCopper,Southern Copper,SCCO,EEUU,mining_copper,materiales
+TeckResources,Teck Resources,TECK,Canadá,mining_copper,materiales
+AngloAmerican,Anglo American,AAL.L,ReinoUnido,mining_diversified,materiales
+BHP,BHP,BHP,Australia,mining_diversified,materiales
+Boliden,Boliden,BOL.ST,Europa,mining_diversified,materiales
+GrupoMexico,Grupo México,GMEXICOB.MX,RestoMundo,mining_diversified,materiales
+RioTinto,Rio Tinto,RIO,United Kingdom / Australia,mining_diversified,materiales
+Vale,Vale,VALE,RestoMundo,mining_diversified,materiales
+ZijinMining,Zijin Mining,2899.HK,China,mining_diversified,materiales
+ElevraLithium,Elevra Lithium,ELV.AX,Australia,mining_lithium,materiales
+GanfengLithium,Ganfeng Lithium,1772.HK,China,mining_lithium,materiales
+LiontownResources,Liontown Resources,LTR.AX,Australia,mining_lithium,materiales
+LithiumAmericas,Lithium Americas,LAC,Canadá,mining_lithium,materiales
+MineralResources,Mineral Resources,MIN.AX,Australia,mining_lithium,materiales
+PilbaraMinerals,Pilbara Minerals,PLS.AX,Australia,mining_lithium,materiales
+StandardLithium,Standard Lithium,SLI,Canadá,mining_lithium,materiales
+TianqiLithium,Tianqi Lithium,9696.HK,China,mining_lithium,materiales
+VulcanEnergy,Vulcan Energy,VUL.DE,Australia / Germany,mining_lithium,materiales
+Eramet,Eramet,ERA.PA,Francia,mining_nickel,materiales
+IGO,IGO,IGO.AX,Australia,mining_nickel,materiales
+JinchuanGroup,Jinchuan Group,,China,mining_nickel,materiales
+NickelIndustries,Nickel Industries,NIC.AX,Australia,mining_nickel,materiales
+Nornickel,Nornickel,GMKN.ME,Russia,mining_nickel,materiales
+PTValeIndonesia,PT Vale Indonesia,INCO.JK,Indonesia,mining_nickel,materiales
+TalonMetals,Talon Metals,TLO.TO,Canadá,mining_nickel,materiales
+SibanyeStillwater,Sibanye-Stillwater,SBSW,South Africa,mining_pgm,materiales
+HindustanZinc,Hindustan Zinc,HINDZINC.NS,India,mining_zinc,materiales
+HemlockSemiconductor,Hemlock Semiconductor,,EEUU,polysilicon,materiales
+OCIHoldings,OCI Holdings,010060.KS,Corea,polysilicon,materiales
+Tokuyama,Tokuyama,4043.T,Japon,polysilicon,materiales
+WackerChemie,Wacker Chemie,WCH.DE,Alemania,polysilicon,materiales
+AustralianStrategicMaterials,Australian Strategic Materials,ASM.AX,Australia,rare_earths,materiales
+ChinaRareEarthGroup,China Rare Earth Group,,China,rare_earths,materiales
+Elkem,Elkem,ELK.OL,Europa,silicon_metal,materiales
+BASF,BASF,BAS.DE,Alemania,specialty_chemical,materiales
+ArcelorMittal,ArcelorMittal,MT,Europa,steel,materiales
+ChinaBaowu,China Baowu,,China,steel,materiales
+NipponSteel,Nippon Steel,5401.T,Japon,steel,materiales
+Nucor,Nucor,NUE,EEUU,steel,materiales
+POSCO,POSCO,PKX,Corea,steel,materiales
+SSAB,SSAB,SSAB-B.ST,Europa,steel,materiales
+SteelDynamics,Steel Dynamics,STLD,EEUU,steel,materiales
+TataSteel,Tata Steel,TATASTEEL.NS,India,steel,materiales
+OneX,1X Technologies,,RestoEuropa,robotics_physical,robotica
+ABB_Robotics,ABB Robotics,,Europa,robotics_physical,robotica
+agibot-zhiyuan,AgiBot (Zhiyuan Robotics),,China,robotics_physical,robotica
+Agility,Agility Robotics (Digit),,EEUU,robotics_physical,robotica
+ambi-robotics,Ambi Robotics,,Estados Unidos,robotics_physical,robotica
+Apptronik,Apptronik,,EEUU,robotics_physical,robotica
+BMW,BMW Group,BMW.DE,Alemania,robotics_physical,robotica
+berkshire-grey,Berkshire Grey,,Estados Unidos,robotics_physical,robotica
+BostonDynamics,Boston Dynamics,,EEUU,robotics_physical,robotica
+chef-robotics,Chef Robotics,,Estados Unidos,robotics_physical,robotica
+Cognex,Cognex Corporation,CGNX,EEUU,robotics_physical,robotica
+covariant,Covariant,,Estados Unidos,robotics_physical,robotica
+dexterity,Dexterity Inc,,Estados Unidos,robotics_physical,robotica
+diligent-robotics,Diligent Robotics,,Estados Unidos,robotics_physical,robotica
+Fanuc,Fanuc,6954.T,Japon,robotics_physical,robotica
+Figure,Figure AI,,EEUU,robotics_physical,robotica
+formic,Formic,,Estados Unidos,robotics_physical,robotica
+fourier-intelligence,Fourier Intelligence,,China,robotics_physical,robotica
+Hyundai,Hyundai Motor,005380.KS,Corea,robotics_physical,robotica
+locus-robotics,Locus Robotics,,Estados Unidos,robotics_physical,robotica
+neura-robotics,Neura Robotics,,Alemania,robotics_physical,robotica
+ParkerHannifin,Parker Hannifin,PH,EEUU,robotics_physical,robotica
+PhysicalIntelligence,Physical Intelligence (π),,EEUU,robotics_physical,robotica
+realtime-robotics,Realtime Robotics,,Estados Unidos,robotics_physical,robotica
+righthand-robotics,RightHand Robotics,,Estados Unidos,robotics_physical,robotica
+Rockwell_Automation,Rockwell Automation,ROK,EEUU,robotics_physical,robotica
+SAIC,SAIC Motor,600104.SS,China,robotics_physical,robotica
+sanctuary-ai,Sanctuary AI,,Canadá,robotics_physical,robotica
+skild-ai,Skild AI,,Estados Unidos,robotics_physical,robotica
+skydio,Skydio,,Estados Unidos,robotics_physical,robotica
+symbotic,Symbotic,SYM,Estados Unidos,robotics_physical,robotica
+Tesla,Tesla,TSLA,EEUU,robotics_physical,robotica
+ubtech-robotics,UBTech Robotics,9880.HK,China,robotics_physical,robotica
+Unitree,Unitree Robotics,688836.SS,China,robotics_physical,robotica
+vicarious-surgical,Vicarious Surgical,RBOT,Estados Unidos,robotics_physical,robotica
+waabi,Waabi,,Canadá,robotics_physical,robotica
+wing-alphabet,Wing (Alphabet),,Estados Unidos,robotics_physical,robotica
+Yaskawa,Yaskawa Electric,6506.T,Japon,robotics_physical,robotica
+Zebra_Technologies,Zebra Technologies,ZBRA,EEUU,robotics_physical,robotica
+zipline,Zipline,,Estados Unidos,robotics_physical,robotica

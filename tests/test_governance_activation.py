@@ -72,6 +72,12 @@ def db():
     Base.metadata.drop_all(engine)
     governance._reset_for_tests()
     assert init_schema(retries=1)
+    # aislamiento: una prueba anterior pudo dejar al constructor de vistas en ESPERA tras fallar contra tablas
+    # borradas (consecutive_failures + retry_at); entonces ensure() devuelve None al instante y esta prueba fallaba
+    # según el orden y el reloj. Con el esquema recién creado, el constructor arranca limpio.
+    from core.hotviews import builder as _bld
+    with _bld._COND:
+        _bld._ST.update(consecutive_failures=0, retry_at=0.0)
     yield engine
     import time
     from core.hotviews import builder

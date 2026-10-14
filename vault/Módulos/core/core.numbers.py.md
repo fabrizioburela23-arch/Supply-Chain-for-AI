@@ -51,7 +51,7 @@ guardián de CIFRAS (anti-alucinación numérica).
 - herramienta MCP `get_claim_evidence` → [[API herramientas MCP]]
 - herramienta MCP `get_research` → [[API herramientas MCP]]
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -59,6 +59,7 @@ _Además lo importan 7 pruebas (lista abajo)._
 - [[tests.test_block0_guardian_corpus.py]]
 - [[tests.test_block0_numbers.py]]
 - [[tests.test_block0_review.py]]
+- [[tests.test_genui_guardian.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_research.py]]
 - [[tests.test_rsi_wilder.py]]

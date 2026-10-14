@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L959"
+ruta: "docs/ESTADO.md#L975"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (q) — COMITÉ DE CARTERA × GEOPOLÍTICA EN VIVO (sw v223)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 959 (11 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 975 (11 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

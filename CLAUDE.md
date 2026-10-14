@@ -178,6 +178,36 @@ Escenario → dinero: `core/scenario_pnl.py` + `kernel.calibration@*` (κ por ve
 Módulos nuevos: `core/voice_api.py` (todo /api/voice/* y el prompt de voz), `core/trading_agent.py` (/api/trade/agent/*),
 `engine/trade.js` (`window._executeTradeOrder`, se carga ANTES de voice.js). Variables de modelo con `.strip()`.
 
+**CHAT CON INTERFAZ GENERATIVA — F1 (2026-10-13)**: `core/genui/` (solo stdlib) arma el sobre `ui` kblocks/1 con los
+resultados de herramientas que la respuesta YA usó — SIN IA ni E/S: `builders.py` (get_company → cifras + ficha;
+get_supply_chain → mini-grafo de FLUJO; rank_companies/market_movers → ranking/barras; get_world_events/get_news →
+línea de tiempo + mini-mapa; comité/pizarra/investigación → pros y contras + barras + aviso «información, no consejo»;
+get_risk_report → VaR/CVaR…; get_history → línea con LTTB (y varias = índice 100); run_scenario → cascada del kernel),
+`provenance.assert_from` (toda cifra EXISTE en el resultado citado o el bloque se descarta), `validate.py` (validador
+COMPILADO del esquema; jsonschema solo oráculo en CI, 0 diferencias en ≥1.000 mutaciones), `alt.py` (alt/spoken por
+plantilla, spoken sin cifras), `layout.py` (orden automático por intención; simple = 1 bloque principal, pro ≤ 4
+visuales), `rivals.py` (porte EXACTO de KhipuHot.rivals; run_scenario devuelve `least_hit_rivals` sobre TODOS los
+impactos). get_history y run_scenario entraron a MCP_READ_TOOLS. `GENUI` off|shadow|on; en shadow/on la decisión
+chat.answer lleva blob `ui_blocks` + `ui_sha` + `ui_inputs` (sin el mensaje) e impl `genui.build@1` (core/impls, dorada
+tests/golden/impl_genui.build@1.json; cambiar el armado = nace @2); el replay rehace el sobre (paso `ui_blocks`).
+🩺: tarjeta `genui` en /api/diagnostics (ms p95, KB, descartes, cifras sin fuente). Esquema corregido sin romper:
+Entity.id = id CANÓNICO (mayúsculas/espacios/&), `generation` = texto de la vista rápida. F2 (engine/genui*.js) pinta.
+**F2 CLIENTE + REVISIÓN (2026-10-14)**: `engine/genui.js` (`window.KhipuGenUI`: renderAnswer/update/renderBlock/pin/
+toTable/catalog; texto, cifras, ficha, aviso, acciones, fuentes, tabla, línea de tiempo) se carga ANTES de khipu_chat.js;
+`genui_charts.js` (línea, barras, velas, ranking, comparación, mini-grafo, cascada) y `genui_shapes.js` (formas, imagen,
+mini-mapa) NO van en app.html: genui.js los pide (`loadExtras`, mismo ?v=) con la bandera o al llegar el primer sobre
+(≤ 90 KB al abrir; los tres en el SHELL). Bandera del NAVEGADOR `kh_genui` (avatar → «Respuestas visuales (beta)») →
+`context.genui=1`; el servidor solo manda `ui` con `GENUI=on` Y esa bandera. Reglas: DOM seguro (innerHTML solo con
+KhipuChat.md), cifras SOLO del servidor con src+as_of (sin dato «—»), marcas `s/e` en UNIDADES UTF-16 en los dos lados,
+movimiento con tokens `--os-dur-*` (conteos nunca muestran «0» provisional; precios/P&L no cuentan), procedencia en
+`--os-ink-2` (AA ≥ 4,5), todo enlace por `U.linkify` (Enter/Espacio), menú ⋯ con menuitem + flechas y el foco vuelve
+al ⋯; 📌 = ventana `genui` (o la nativa: glance/supplychain/sim/compare). CARTERA DE LA CASCADA: el navegador manda
+`usd` por posición (valoración de KhipuHot.pnlLine); `khipu_chat._server_args` la PONE en run_scenario.positions y
+descarta lo que escriba el modelo (que ni ve el argumento); sin cartera → `no_positions`. «Preguntar sobre esto» manda
+`context.ref_block` (validado → línea en el prompt). El blob `ui_inputs` no guarda argumentos de texto libre
+(`genui._ARGS_SAFE`). Comparación: una fila con cifras a > 6 h entre sí no sale; si sale, con la hora MÁS VIEJA. 🩺
+`genui` juzga 24 h (errores / cifras sin fuente) y p95 solo con ≥ 20 muestras.
+
 ## Arquitectura
 
 - **BÓVEDA OBSIDIAN + GRAFO DEL CÓDIGO (2026-10-11)**: `vault/` es el repo visto como bóveda de Obsidian
@@ -706,6 +736,7 @@ HOTVIEWS (on), HOT_WAIT_S (2), HOTVIEWS_COALESCE_S (1), HOTVIEWS_LISTEN (on)  �
 PRICES_EOD (on), PRICES_REQ_INTERVAL_S (0.6)  ← historia de precios (core/prices_store: carga diaria tras las 22:00 UTC; el relleno de 5 años SOLO con PIN)
 GOV_RELEASE (vacío = el vigente de la base), <ARTEFACTO>=<semver> p. ej. KERNEL_PARAMS  ← SOLO eligen un release aprobado (D2)
 KHIPU_GATES (on; 'off' = emergencia: apaga las puertas SHACL en sombra)
+GENUI (off; shadow = arma, mide y guarda en el libro SIN enviar; on = envía `ui` solo a quien manda context.genui=1)  ← chat con interfaz generativa (core/genui, docs/CHAT_UI_GENERATIVA.md)
 ── G5-14 (lote I4, 2026-10-13): TODA variable que el código lee está aquí (la bóveda: 0 sin documentar) ──
 CLAUDE_KEY / ALPHA_VANTAGE_KEY / GOOGLE_API_KEY / NVIDIA_API_KEY / TYPESAFE_KEY  ← nombres ALTERNATIVOS de ANTHROPIC_KEY / AV_KEY / GEMINI_KEY / NVIDIA_KEY / TYPESAFE_API_KEY
 ANTHROPIC_ADMIN_KEY (gasto real de Claude en 💰), AI_PRICES_JSON (precios extra por modelo), AI_DAILY_LIMIT_USD (10), AI_MONTHLY_LIMIT_USD (150), AI_PER_USER_DAILY_USD (0 = sin tope)  ← 💰 Gasto IA (los límites con PIN mandan)

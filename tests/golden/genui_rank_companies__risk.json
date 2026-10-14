@@ -1,0 +1,268 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Alibaba Cloud 81; HiSilicon (Huawei) 81; Hon Hai (Foxconn) 79; Lenovo 79; DeepSeek 79 (+5 more)",
+    "es": "Alibaba Cloud 81; HiSilicon (Huawei) 81; Hon Hai (Foxconn) 79; Lenovo 79; DeepSeek 79 (+5 más)"
+   },
+   "data": {
+    "direction": "lower_better",
+    "items": [
+     {
+      "entity": {
+       "id": "AlibabaCloud",
+       "label": "Alibaba Cloud"
+      },
+      "rank": 1,
+      "v": 81
+     },
+     {
+      "entity": {
+       "id": "HiSilicon",
+       "label": "HiSilicon (Huawei)"
+      },
+      "rank": 2,
+      "v": 81
+     },
+     {
+      "entity": {
+       "id": "Foxconn",
+       "label": "Hon Hai (Foxconn)",
+       "symbol": "HNHPF"
+      },
+      "rank": 3,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "Lenovo",
+       "label": "Lenovo",
+       "symbol": "LNVGY"
+      },
+      "rank": 4,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "DeepSeek",
+       "label": "DeepSeek"
+      },
+      "rank": 5,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "YMTC",
+       "label": "YMTC"
+      },
+      "rank": 6,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "SMIC",
+       "label": "SMIC",
+       "symbol": "0981.HK"
+      },
+      "rank": 7,
+      "v": 77
+     },
+     {
+      "entity": {
+       "id": "Huawei",
+       "label": "Huawei"
+      },
+      "rank": 8,
+      "v": 76
+     },
+     {
+      "entity": {
+       "id": "Quanta",
+       "label": "Quanta Computer",
+       "symbol": "2382.TW"
+      },
+      "rank": 9,
+      "v": 71
+     },
+     {
+      "entity": {
+       "id": "Xiaomi",
+       "label": "Xiaomi",
+       "symbol": "1810.HK"
+      },
+      "rank": 10,
+      "v": 68
+     }
+    ],
+    "metric": {
+     "as_of": "2026-10-13T18:20:44.583Z",
+     "explain": "nrs",
+     "fact": "F1",
+     "label": {
+      "en": "Network risk (NRS)",
+      "es": "Riesgo de red (NRS)"
+     },
+     "src": "khipus_nrs",
+     "unit": "nrs"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "rank_companies"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Highest network risk",
+    "es": "Mayor riesgo de red"
+   },
+   "type": "ranking"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Alibaba Cloud 81; HiSilicon (Huawei) 81; Hon Hai (Foxconn) 79; Lenovo 79; DeepSeek 79 (+5 more)",
+    "es": "Alibaba Cloud 81; HiSilicon (Huawei) 81; Hon Hai (Foxconn) 79; Lenovo 79; DeepSeek 79 (+5 más)"
+   },
+   "data": {
+    "direction": "lower_better",
+    "items": [
+     {
+      "entity": {
+       "id": "AlibabaCloud",
+       "label": "Alibaba Cloud"
+      },
+      "rank": 1,
+      "v": 81
+     },
+     {
+      "entity": {
+       "id": "HiSilicon",
+       "label": "HiSilicon (Huawei)"
+      },
+      "rank": 2,
+      "v": 81
+     },
+     {
+      "entity": {
+       "id": "Foxconn",
+       "label": "Hon Hai (Foxconn)",
+       "symbol": "HNHPF"
+      },
+      "rank": 3,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "Lenovo",
+       "label": "Lenovo",
+       "symbol": "LNVGY"
+      },
+      "rank": 4,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "DeepSeek",
+       "label": "DeepSeek"
+      },
+      "rank": 5,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "YMTC",
+       "label": "YMTC"
+      },
+      "rank": 6,
+      "v": 79
+     },
+     {
+      "entity": {
+       "id": "SMIC",
+       "label": "SMIC",
+       "symbol": "0981.HK"
+      },
+      "rank": 7,
+      "v": 77
+     },
+     {
+      "entity": {
+       "id": "Huawei",
+       "label": "Huawei"
+      },
+      "rank": 8,
+      "v": 76
+     },
+     {
+      "entity": {
+       "id": "Quanta",
+       "label": "Quanta Computer",
+       "symbol": "2382.TW"
+      },
+      "rank": 9,
+      "v": 71
+     },
+     {
+      "entity": {
+       "id": "Xiaomi",
+       "label": "Xiaomi",
+       "symbol": "1810.HK"
+      },
+      "rank": 10,
+      "v": 68
+     }
+    ],
+    "metric": {
+     "as_of": "2026-10-13T18:20:44.583Z",
+     "explain": "nrs",
+     "fact": "F1",
+     "label": {
+      "en": "Network risk (NRS)",
+      "es": "Riesgo de red (NRS)"
+     },
+     "src": "khipus_nrs",
+     "unit": "nrs"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "rank_companies"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Highest network risk",
+    "es": "Mayor riesgo de red"
+   },
+   "type": "ranking"
+  }
+ ]
+}

@@ -47,16 +47,16 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 |---|---|---|
 | usa a | [[Capa Interfaz (Khipus OS)]] | 25 |
 | usa a | [[Capa Infraestructura]] | 21 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 19 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 20 |
 | la usa | [[Capa Infraestructura]] | 17 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 8 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
+| la usa | [[Capa MCP y API]] | 5 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |
-| la usa | [[Capa MCP y API]] | 4 |
 | la usa | [[Capa Investigación]] | 3 |
 | la usa | [[Capa Ontología y grafo temporal]] | 3 |
 | usa a | [[Capa Comité]] | 3 |

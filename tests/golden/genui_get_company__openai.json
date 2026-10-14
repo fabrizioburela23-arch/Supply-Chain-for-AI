@@ -1,0 +1,514 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Last valuation (closed round): 852 billion USD; Network risk (NRS): 67",
+    "es": "Última valuación (ronda cerrada): 852 mil millones USD; Riesgo de red (NRS): 67"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Last valuation (closed round)",
+       "es": "Última valuación (ronda cerrada)"
+      },
+      "value": {
+       "as_of": "2026-03-31",
+       "fact": "F1",
+       "src": "verified_round",
+       "unit": "USD_B",
+       "v": 852
+      }
+     },
+     {
+      "label": {
+       "en": "Network risk (NRS)",
+       "es": "Riesgo de red (NRS)"
+      },
+      "value": {
+       "as_of": "2026-10-13T23:16:25.401593+00:00",
+       "explain": "nrs",
+       "fact": "F1",
+       "src": "khipus_nrs",
+       "unit": "nrs",
+       "v": 67
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "OpenAI",
+    "label": "OpenAI"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "OpenAI: key figures",
+    "es": "OpenAI: cifras clave"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "OpenAI",
+      "label": "OpenAI"
+     },
+     "kind": "open_dossier",
+     "label": {
+      "en": "Dossier",
+      "es": "Dossier"
+     }
+    },
+    {
+     "entity": {
+      "id": "OpenAI",
+      "label": "OpenAI"
+     },
+     "kind": "open_xray",
+     "label": {
+      "en": "X-Ray",
+      "es": "Radiografía"
+     }
+    }
+   ],
+   "alt": {
+    "en": "OpenAI: NRS 67, last valuation 852 billion USD. Suppliers: Microsoft (Azure), Oracle (OCI), CoreWeave. Customers: Nvidia, Microsoft (Azure), Figure AI",
+    "es": "OpenAI: NRS 67, última valuación 852 mil millones USD. Proveedores: Microsoft (Azure), Oracle (OCI), CoreWeave. Clientes: Nvidia, Microsoft (Azure), Figure AI"
+   },
+   "data": {
+    "company": {
+     "id": "OpenAI",
+     "label": "OpenAI"
+    },
+    "graph_as_of": "2026-10-13T18:20:44.583Z",
+    "listed": false,
+    "nrs": {
+     "as_of": "2026-10-13T23:16:25.401593+00:00",
+     "explain": "nrs",
+     "fact": "F1",
+     "src": "khipus_nrs",
+     "unit": "nrs",
+     "v": 67
+    },
+    "private_valuation": {
+     "round": "Primary (ronda récord)",
+     "source_url": "https://openai.com/index/accelerating-the-next-phase-ai/",
+     "value": {
+      "as_of": "2026-03-31",
+      "fact": "F1",
+      "src": "verified_round",
+      "unit": "USD_B",
+      "v": 852
+     }
+    },
+    "structure": {
+     "en": "Structure: supplier concentration low; main supplier country: EEUU",
+     "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+    },
+    "top_customers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)"
+      },
+      "rel_type": "deploy",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Figure",
+       "label": "Figure AI"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 2
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "OneX",
+       "label": "1X Technologies"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 2
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "CrowdStrike",
+       "label": "CrowdStrike"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 1
+     }
+    ],
+    "top_suppliers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Oracle",
+       "label": "Oracle (OCI)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "CoreWeave",
+       "label": "CoreWeave"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "AMD",
+       "label": "AMD"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Broadcom",
+       "label": "Broadcom"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     }
+    ]
+   },
+   "entity": {
+    "id": "OpenAI",
+    "label": "OpenAI"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "OpenAI card",
+    "es": "Ficha de OpenAI"
+   },
+   "type": "company.card"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Last valuation (closed round): 852 billion USD; Network risk (NRS): 67",
+    "es": "Última valuación (ronda cerrada): 852 mil millones USD; Riesgo de red (NRS): 67"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Last valuation (closed round)",
+       "es": "Última valuación (ronda cerrada)"
+      },
+      "value": {
+       "as_of": "2026-03-31",
+       "fact": "F1",
+       "src": "verified_round",
+       "unit": "USD_B",
+       "v": 852
+      }
+     },
+     {
+      "label": {
+       "en": "Network risk (NRS)",
+       "es": "Riesgo de red (NRS)"
+      },
+      "value": {
+       "as_of": "2026-10-13T23:16:25.401593+00:00",
+       "explain": "nrs",
+       "fact": "F1",
+       "src": "khipus_nrs",
+       "unit": "nrs",
+       "v": 67
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "OpenAI",
+    "label": "OpenAI"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "OpenAI: key figures",
+    "es": "OpenAI: cifras clave"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "OpenAI",
+      "label": "OpenAI"
+     },
+     "kind": "open_dossier",
+     "label": {
+      "en": "Dossier",
+      "es": "Dossier"
+     }
+    },
+    {
+     "entity": {
+      "id": "OpenAI",
+      "label": "OpenAI"
+     },
+     "kind": "open_xray",
+     "label": {
+      "en": "X-Ray",
+      "es": "Radiografía"
+     }
+    }
+   ],
+   "alt": {
+    "en": "OpenAI: NRS 67, last valuation 852 billion USD. Suppliers: Microsoft (Azure), Oracle (OCI), CoreWeave. Customers: Nvidia, Microsoft (Azure), Figure AI",
+    "es": "OpenAI: NRS 67, última valuación 852 mil millones USD. Proveedores: Microsoft (Azure), Oracle (OCI), CoreWeave. Clientes: Nvidia, Microsoft (Azure), Figure AI"
+   },
+   "data": {
+    "company": {
+     "id": "OpenAI",
+     "label": "OpenAI"
+    },
+    "graph_as_of": "2026-10-13T18:20:44.583Z",
+    "listed": false,
+    "nrs": {
+     "as_of": "2026-10-13T23:16:25.401593+00:00",
+     "explain": "nrs",
+     "fact": "F1",
+     "src": "khipus_nrs",
+     "unit": "nrs",
+     "v": 67
+    },
+    "private_valuation": {
+     "round": "Primary (ronda récord)",
+     "source_url": "https://openai.com/index/accelerating-the-next-phase-ai/",
+     "value": {
+      "as_of": "2026-03-31",
+      "fact": "F1",
+      "src": "verified_round",
+      "unit": "USD_B",
+      "v": 852
+     }
+    },
+    "structure": {
+     "en": "Structure: supplier concentration low; main supplier country: EEUU",
+     "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+    },
+    "top_customers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)"
+      },
+      "rel_type": "deploy",
+      "verified": true,
+      "weight": 3
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Figure",
+       "label": "Figure AI"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 2
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "OneX",
+       "label": "1X Technologies"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 2
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "CrowdStrike",
+       "label": "CrowdStrike"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 1
+     }
+    ],
+    "top_suppliers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Microsoft",
+       "label": "Microsoft (Azure)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Oracle",
+       "label": "Oracle (OCI)"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "CoreWeave",
+       "label": "CoreWeave"
+      },
+      "rel_type": "cloud",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "AMD",
+       "label": "AMD"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Broadcom",
+       "label": "Broadcom"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     }
+    ]
+   },
+   "entity": {
+    "id": "OpenAI",
+    "label": "OpenAI"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "OpenAI card",
+    "es": "Ficha de OpenAI"
+   },
+   "type": "company.card"
+  }
+ ]
+}

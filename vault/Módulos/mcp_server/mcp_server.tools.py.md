@@ -102,7 +102,7 @@ Define **24 herramientas MCP** → [[API herramientas MCP]]
 - [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.protocol.py]] — lo importa
 
-_Además lo importan 20 pruebas (lista abajo)._
+_Además lo importan 23 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -114,6 +114,9 @@ _Además lo importan 20 pruebas (lista abajo)._
 - [[tests.test_bitemporal.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_context_engine.py]]
+- [[tests.test_genui_contract.py]]
+- [[tests.test_genui_ledger.py]]
+- [[tests.test_genui_rivals.py]]
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipu_chat.py]]

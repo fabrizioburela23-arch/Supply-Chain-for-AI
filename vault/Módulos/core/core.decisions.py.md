@@ -90,7 +90,7 @@ EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan)
 - [[scripts.build_shapes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 25 pruebas (lista abajo)._
+_Además lo importan 26 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -106,6 +106,7 @@ _Además lo importan 25 pruebas (lista abajo)._
 - [[tests.test_cierre_infra.py]]
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_gates_resulting_state.py]]
+- [[tests.test_genui_ledger.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_flow.py]]
 - [[tests.test_impl_registry.py]]

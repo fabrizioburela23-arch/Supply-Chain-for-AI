@@ -1,0 +1,259 @@
+{
+ "args": {
+  "positions": "…",
+  "shocks": [
+   {
+    "id": "SKHynix",
+    "magnitude": 0.5
+   }
+  ]
+ },
+ "result": {
+  "affected": 19,
+  "as_of": "2026-10-13T23:16:25.432945+00:00",
+  "by_hop": {
+   "1": 6,
+   "2": 13
+  },
+  "factors": "active",
+  "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+  "graph_source": "snapshot",
+  "graph_version": 0,
+  "kernel": {
+   "damage_rels": null,
+   "damping": 0.6,
+   "max_hops": 6,
+   "method": "propagate@1",
+   "semver": "1.0.0",
+   "threshold": 0.01
+  },
+  "least_hit_rivals": [
+   {
+    "cat_damaged": 1,
+    "id": "CXMT",
+    "impact_pct": 0.0,
+    "label": "CXMT (ChangXin Memory)"
+   },
+   {
+    "cat_damaged": 1,
+    "id": "GigaDevice",
+    "impact_pct": 0.0,
+    "label": "GigaDevice"
+   },
+   {
+    "cat_damaged": 1,
+    "id": "Kioxia",
+    "impact_pct": 0.0,
+    "label": "Kioxia"
+   },
+   {
+    "cat_damaged": 1,
+    "id": "Micron",
+    "impact_pct": 0.0,
+    "label": "Micron"
+   }
+  ],
+  "least_hit_rivals_rule": "least-hit rivals: same category as companies hit >= 40%, own damage < 15% (they could capture the orphaned demand); impact_pct is their DAMAGE, never a gain",
+  "method": "matrix.engine.propagate_block on the hot Impact view",
+  "portfolio": {
+   "calibrated": {
+    "band_usd": null,
+    "calibration": {
+     "artifact": "kernel.calibration@1.0.0",
+     "episodes": [
+      {
+       "id": "chip_shortage_2021",
+       "label_en": "2021 chip shortage",
+       "label_es": "Escasez de chips 2021",
+       "proposed": true
+      },
+      {
+       "id": "export_controls_2022",
+       "label_en": "US export controls, Oct 2022",
+       "label_es": "Controles de exportación EE. UU., oct-2022",
+       "proposed": true
+      },
+      {
+       "id": "taiwan_quake_2024",
+       "label_en": "Taiwan earthquake, Apr 2024",
+       "label_es": "Terremoto de Taiwán, abr-2024",
+       "proposed": true
+      }
+     ],
+     "hash": "0fa0c53db56dddf0e95d94fa4d81d3f61a0e08335aed5452c1e0a9c7a88db189",
+     "kappa": -0.070631,
+     "kappa_se": 0.306161,
+     "kernel_params": "1.0.0",
+     "n": 33,
+     "n_episodes": 2,
+     "partial_r2": 0.001771,
+     "proposed": true,
+     "r2": 0.010014,
+     "reasons": [
+      "kappa <= 0 (more impact did not mean a bigger fall)",
+      "t -0.2307 < 2.0",
+      "partial_r2 0.001771 < 0.1"
+     ],
+     "status": "weak"
+    },
+    "note_en": "The calibration on real episodes is weak: we give no money figure.",
+    "pnl_usd": null,
+    "status": "weak"
+   },
+   "est_structural_loss_pct": 2.26,
+   "est_structural_loss_usd": 339.0,
+   "note": "loss = value × structural hit of that company; an UPPER-BOUND style structural estimate, not a P&L forecast",
+   "positions": [
+    {
+     "est_loss_usd": 339.0,
+     "id": "Nvidia",
+     "structural_hit_pct": 3.39,
+     "symbol": "NVDA",
+     "usd": 10000.0
+    },
+    {
+     "est_loss_usd": 0.0,
+     "id": "Micron",
+     "structural_hit_pct": 0.0,
+     "symbol": "MU",
+     "usd": 5000.0
+    }
+   ],
+   "total_usd": 15000.0,
+   "unmapped": []
+  },
+  "reach_10pct": 0,
+  "reach_1pct": 19,
+  "scenario": null,
+  "seeded_by": "shocks",
+  "shocks": [
+   {
+    "id": "SKHynix",
+    "label": "SK Hynix",
+    "magnitude": 0.5
+   }
+  ],
+  "source": "Khipus supply-chain graph + kernel.params (governance release)",
+  "sum_impact_companies": 0.4848,
+  "uncertainty": "structural estimate from the Khipus supply-chain graph (one kernel: propagate@1 with the active kernel.params) — NOT a price forecast; real moves depend on substitutes, inventories and markets",
+  "unknown_ids": [],
+  "victims": [
+   {
+    "hop": 1,
+    "id": "Naver",
+    "impact_pct": 7.5,
+    "label": "Naver (HyperCLOVA X)"
+   },
+   {
+    "hop": 1,
+    "id": "SuperMicro",
+    "impact_pct": 5.7,
+    "label": "Super Micro"
+   },
+   {
+    "hop": 1,
+    "id": "AMD",
+    "impact_pct": 4.88,
+    "label": "AMD"
+   },
+   {
+    "hop": 1,
+    "id": "BOK",
+    "impact_pct": 4.5,
+    "label": "BOK"
+   },
+   {
+    "hop": 1,
+    "id": "Nvidia",
+    "impact_pct": 3.39,
+    "label": "Nvidia"
+   },
+   {
+    "hop": 2,
+    "id": "CoreWeave",
+    "impact_pct": 2.97,
+    "label": "CoreWeave"
+   },
+   {
+    "hop": 2,
+    "id": "Oracle",
+    "impact_pct": 2.59,
+    "label": "Oracle (OCI)"
+   },
+   {
+    "hop": 2,
+    "id": "Samsung",
+    "impact_pct": 2.11,
+    "label": "Samsung Electronics"
+   },
+   {
+    "hop": 1,
+    "id": "Dell",
+    "impact_pct": 2.1,
+    "label": "Dell Technologies"
+   },
+   {
+    "hop": 2,
+    "id": "Nebius",
+    "impact_pct": 1.92,
+    "label": "Nebius"
+   },
+   {
+    "hop": 2,
+    "id": "HPE",
+    "impact_pct": 1.84,
+    "label": "Hewlett Packard Ent."
+   },
+   {
+    "hop": 2,
+    "id": "xAI",
+    "impact_pct": 1.42,
+    "label": "xAI (+SpaceX)"
+   },
+   {
+    "hop": 2,
+    "id": "Quanta",
+    "impact_pct": 1.41,
+    "label": "Quanta Computer"
+   },
+   {
+    "hop": 2,
+    "id": "Penguin_Solutions",
+    "impact_pct": 1.05,
+    "label": "Penguin Solutions"
+   },
+   {
+    "hop": 2,
+    "id": "Cohere",
+    "impact_pct": 1.02,
+    "label": "Cohere"
+   },
+   {
+    "hop": 2,
+    "id": "HuggingFace",
+    "impact_pct": 1.02,
+    "label": "Hugging Face"
+   },
+   {
+    "hop": 2,
+    "id": "Mistral",
+    "impact_pct": 1.02,
+    "label": "Mistral AI"
+   },
+   {
+    "hop": 2,
+    "id": "Together_AI",
+    "impact_pct": 1.02,
+    "label": "Together AI"
+   },
+   {
+    "hop": 2,
+    "id": "Wayve",
+    "impact_pct": 1.02,
+    "label": "Wayve"
+   }
+  ]
+ },
+ "sample": false,
+ "tool": "run_scenario"
+}

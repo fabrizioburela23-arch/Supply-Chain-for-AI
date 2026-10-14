@@ -1,0 +1,1000 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:khipus:kblocks:1",
+  "title": "Khipus chat — bloques de UI generativa (kblocks/1)",
+  "description": "Sobre 'ui' que el servidor añade a POST /api/khipu/chat (y a GET /api/khipu/chat/progress/<req_id> como parcial). Los bloques son DATOS, nunca código: el cliente los dibuja con su propio catálogo (engine/genui.js). Toda cifra lleva fuente (src) y hora (as_of). La IA nunca escribe cifras en un bloque: solo elige y ordena bloques mediante un Plan ($defs/Plan) que el servidor valida y resuelve contra los resultados de herramientas.",
+  "$ref": "#/$defs/Envelope",
+
+  "$defs": {
+
+    "Envelope": {
+      "type": "object",
+      "properties": {
+        "v": { "const": "kblocks/1" },
+        "lang": { "enum": ["es", "en"] },
+        "state": { "enum": ["partial", "final"], "description": "partial = sobre de progreso (pueden faltar bloques); final = respuesta completa." },
+        "layout": { "enum": ["auto", "plan"], "description": "auto = orden determinista del servidor; plan = orden elegido por la IA y validado." },
+        "as_of": { "$ref": "#/$defs/DateTime" },
+        "seq": { "type": "integer", "minimum": 0, "description": "Contador monótono para el sondeo de progreso (?since=seq)." },
+        "blocks": { "type": "array", "maxItems": 14, "items": { "$ref": "#/$defs/Block" } },
+        "spoken": { "$ref": "#/$defs/I18n", "description": "Lo que la voz puede añadir a 'answer': solo QUÉ quedó en pantalla, sin cifras nuevas." },
+        "dropped": {
+          "type": "array", "maxItems": 20,
+          "description": "Diagnóstico: piezas del plan que el servidor descartó y por qué (no se muestra al usuario).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": { "type": "integer", "minimum": 0 },
+              "type": { "type": "string", "maxLength": 40 },
+              "reason": { "enum": ["unknown_type", "bad_ref", "no_data", "invalid", "literal_number", "over_budget", "forbidden_action", "bad_image_src", "duplicate"] }
+            },
+            "required": ["reason"],
+            "additionalProperties": false
+          }
+        },
+        "impl": { "type": "string", "pattern": "^genui\\.build@[0-9]+$", "description": "Implementación retenida (core/impls.py STAMPS) para repetir la decisión (replay)." }
+      },
+      "required": ["v", "lang", "state", "layout", "as_of", "blocks"],
+      "additionalProperties": false
+    },
+
+    "I18n": {
+      "type": "object",
+      "properties": {
+        "es": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "en": { "type": "string", "minLength": 1, "maxLength": 400 }
+      },
+      "required": ["es", "en"],
+      "additionalProperties": false
+    },
+
+    "Label": {
+      "description": "Nombre propio (empresa, ticker) como texto plano, o rótulo de interfaz bilingüe.",
+      "oneOf": [
+        { "type": "string", "minLength": 1, "maxLength": 80 },
+        { "$ref": "#/$defs/I18n" }
+      ]
+    },
+
+    "DateTime": { "type": "string", "format": "date-time", "maxLength": 40 },
+    "DateOrDateTime": {
+      "type": "string", "maxLength": 40,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}([T ][0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]+)?)?(Z|[+-][0-9]{2}:?[0-9]{2})?)?$"
+    },
+
+    "FactId": { "type": "string", "pattern": "^F[0-9]{1,3}$" },
+    "ExplainKey": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{0,40}$", "description": "Clave de engine/explain.js (window.explainMetric)." },
+    "SourceId": { "type": "string", "pattern": "^[a-z][a-z0-9_.:-]{1,40}$", "description": "finnhub, yahoo, fmp, marketstack, prices_eod, khipus_graph, hot_kernel, khipus_nrs, research, committee, gdelt, usgs, sec…" },
+
+    "Unit": {
+      "enum": ["USD", "USD_B", "USD_T", "CCY", "pct", "pp", "pts", "x", "nrs", "count", "index", "score", "ratio", "days", "years", "none"]
+    },
+
+    "Generation": {
+      "description": "Generación de la vista rápida del servidor: el id de core/hotviews (p. ej. \"g4812.r1d6ee563.c03225529.pg\") o un contador.",
+      "type": ["integer", "string"], "minimum": 0, "maxLength": 100, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$"
+    },
+
+    "Currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+
+    "Figure": {
+      "description": "UNA cifra con su procedencia. v = null → estado vacío honesto ('sin dato en vivo') con su motivo.",
+      "type": "object",
+      "properties": {
+        "v": { "type": ["number", "null"] },
+        "unit": { "$ref": "#/$defs/Unit" },
+        "currency": { "$ref": "#/$defs/Currency" },
+        "src": { "$ref": "#/$defs/SourceId" },
+        "as_of": { "type": ["string", "null"], "maxLength": 40 },
+        "fact": { "$ref": "#/$defs/FactId" },
+        "stale": { "type": "boolean" },
+        "live": { "type": "boolean" },
+        "precision": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "explain": { "$ref": "#/$defs/ExplainKey" },
+        "missing_reason": { "$ref": "#/$defs/I18n" }
+      },
+      "required": ["v", "unit", "src"],
+      "additionalProperties": false,
+      "allOf": [
+        { "if": { "properties": { "v": { "type": "number" } } },
+          "then": { "required": ["as_of"], "properties": { "as_of": { "$ref": "#/$defs/DateOrDateTime" } } } },
+        { "if": { "properties": { "v": { "type": "null" } } },
+          "then": { "required": ["missing_reason"] } },
+        { "if": { "properties": { "unit": { "const": "CCY" } } },
+          "then": { "required": ["currency"] } }
+      ]
+    },
+
+    "ValueSet": {
+      "description": "Procedencia compartida por un grupo de números (barras, ranking, columna de tabla, serie).",
+      "type": "object",
+      "properties": {
+        "label": { "$ref": "#/$defs/I18n" },
+        "unit": { "$ref": "#/$defs/Unit" },
+        "currency": { "$ref": "#/$defs/Currency" },
+        "src": { "$ref": "#/$defs/SourceId" },
+        "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+        "fact": { "$ref": "#/$defs/FactId" },
+        "stale": { "type": "boolean" },
+        "explain": { "$ref": "#/$defs/ExplainKey" }
+      },
+      "required": ["unit", "src", "as_of"],
+      "additionalProperties": false
+    },
+
+    "Entity": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.&'+-]{0,63}$", "description": "Id CANÓNICO del grafo (core/entities): mayúsculas, espacios y & incluidos (p. ej. \"Nvidia\", \"Boyd Thermal\"); nunca un alias." },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "symbol": { "type": "string", "maxLength": 20 }
+      },
+      "required": ["id", "label"],
+      "additionalProperties": false
+    },
+
+    "Prov": {
+      "description": "De dónde salen los datos del bloque: la llamada a herramienta (índice en tools_used) o la vista rápida del servidor. El servidor rechaza el bloque si no resuelve.",
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["tool", "view"] },
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_.]{1,40}$" },
+        "call": { "type": "integer", "minimum": 0, "maximum": 63, "description": "Índice (desde 0) en tools_used de la respuesta (incluye la ficha pre-consultada)." },
+        "fact": { "$ref": "#/$defs/FactId", "description": "El [F#] con el que ese resultado se le mostró a la IA (core/context_engine.FactBook); el Plan lo usa como referencia." },
+        "args": { "type": "string", "maxLength": 200, "description": "Resumen legible de los argumentos (args_summary)." },
+        "generation": { "$ref": "#/$defs/Generation" },
+        "graph_version": { "type": "integer", "minimum": 0 },
+        "decision_id": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["kind", "name"],
+      "additionalProperties": false,
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "tool" } } }, "then": { "required": ["call"] } }
+      ]
+    },
+
+    "Series": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/$defs/Label" },
+        "entity": { "$ref": "#/$defs/Entity" },
+        "values": { "$ref": "#/$defs/ValueSet" },
+        "adjusted": { "type": "boolean" },
+        "points": {
+          "type": "array", "minItems": 1, "maxItems": 1000,
+          "items": {
+            "type": "array", "prefixItems": [ { "$ref": "#/$defs/DateOrDateTime" }, { "type": ["number", "null"] } ],
+            "minItems": 2, "maxItems": 2
+          }
+        }
+      },
+      "required": ["name", "values", "points"],
+      "additionalProperties": false
+    },
+
+    "CandleSeries": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/$defs/Label" },
+        "entity": { "$ref": "#/$defs/Entity" },
+        "values": { "$ref": "#/$defs/ValueSet" },
+        "points": {
+          "type": "array", "minItems": 1, "maxItems": 400,
+          "items": {
+            "type": "array",
+            "prefixItems": [ { "$ref": "#/$defs/DateOrDateTime" }, { "type": "number" }, { "type": "number" }, { "type": "number" }, { "type": "number" }, { "type": ["number", "null"] } ],
+            "minItems": 5, "maxItems": 6,
+            "description": "[fecha, apertura, máximo, mínimo, cierre, volumen?]"
+          }
+        }
+      },
+      "required": ["name", "values", "points"],
+      "additionalProperties": false
+    },
+
+    "Range": {
+      "enum": ["1M", "3M", "6M", "1Y", "2Y", "5Y"],
+      "description": "Exactamente los rangos de get_history (mcp_server/ops.RANGES = 1mo|3mo|6mo|1y|2y|5y). 1D/5D/YTD/MAX necesitan otra fuente (intradía) y quedan para kblocks/2."
+    },
+
+    "WindowKind": {
+      "enum": ["glance", "supplychain", "conviction", "agents", "xray", "compare", "canvas", "sim", "geo", "genui"],
+      "description": "Solo ventanas de LECTURA de Khipus OS, con el nombre REAL de cockpit.js KIND_META / registerKind ('canvas' = Gráfico, 'geo' = World Monitor). 'broker'/'trade'/'scalp'/'crypto' no existen aquí a propósito; la investigación y el comité son paneles, no ventanas: ver Action open_research/open_committee."
+    },
+
+    "Action": {
+      "description": "Un botón de bloque: SOLO abre algo o rellena el chat. Nunca ejecuta dinero ni escrituras.",
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["open_window", "open_dossier", "open_xray", "open_map", "open_world", "open_research", "open_committee", "prefill_chat", "set_range", "set_view", "pin"], "description": "open_research/open_committee solo ABREN el panel (KhipuResearch.open / KhipuCommittee.open no corren nada solos); correr investigación o comité sigue pidiendo un clic dentro del panel." },
+        "label": { "$ref": "#/$defs/I18n" },
+        "window": { "$ref": "#/$defs/WindowKind" },
+        "entity": { "$ref": "#/$defs/Entity" },
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+        "range": { "$ref": "#/$defs/Range" },
+        "view": { "enum": ["table", "bars", "radar", "line", "candles", "graph"] },
+        "text": { "type": "string", "minLength": 1, "maxLength": 300, "description": "prefill_chat: texto que queda en la caja SIN enviarse." }
+      },
+      "required": ["kind", "label"],
+      "additionalProperties": false,
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "open_window" } } }, "then": { "required": ["window"] } },
+        { "if": { "properties": { "kind": { "enum": ["open_dossier", "open_xray", "open_map", "open_research", "open_committee"] } } }, "then": { "required": ["entity"] } },
+        { "if": { "properties": { "kind": { "const": "open_world" } } }, "then": { "required": ["lat", "lon"] } },
+        { "if": { "properties": { "kind": { "const": "prefill_chat" } } }, "then": { "required": ["text"] } },
+        { "if": { "properties": { "kind": { "const": "set_range" } } }, "then": { "required": ["range"] } },
+        { "if": { "properties": { "kind": { "const": "set_view" } } }, "then": { "required": ["view"] } }
+      ]
+    },
+
+    "BlockBase": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,23}$" },
+        "type": { "type": "string" },
+        "state": { "enum": ["planned", "ready", "error", "stale"] },
+        "seq": { "type": "integer", "minimum": 0 },
+        "title": { "$ref": "#/$defs/I18n" },
+        "subtitle": { "$ref": "#/$defs/I18n" },
+        "alt": { "$ref": "#/$defs/I18n", "description": "Equivalente en texto (lector de pantalla, voz, vista 'tabla'); sus cifras salen de los mismos datos." },
+        "prov": { "$ref": "#/$defs/Prov" },
+        "sources": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/FactId" } },
+        "entity": { "$ref": "#/$defs/Entity" },
+        "pinnable": { "type": "boolean" },
+        "menu": { "type": "array", "maxItems": 5, "uniqueItems": true, "items": { "enum": ["table", "where_from", "ask", "csv", "refresh"] } },
+        "actions": { "type": "array", "maxItems": 2, "items": { "$ref": "#/$defs/Action" } },
+        "error": { "$ref": "#/$defs/I18n" },
+        "data": { "type": "object" }
+      },
+      "required": ["id", "type", "state"],
+      "allOf": [
+        { "if": { "properties": { "state": { "enum": ["ready", "stale"] } } }, "then": { "required": ["data"] } },
+        { "if": { "properties": { "state": { "const": "error" } } }, "then": { "required": ["error"] } }
+      ]
+    },
+
+    "Block": {
+      "oneOf": [
+        { "$ref": "#/$defs/TextBlock" },
+        { "$ref": "#/$defs/MetricTilesBlock" },
+        { "$ref": "#/$defs/LineChartBlock" },
+        { "$ref": "#/$defs/BarChartBlock" },
+        { "$ref": "#/$defs/CandlesBlock" },
+        { "$ref": "#/$defs/RankingBlock" },
+        { "$ref": "#/$defs/TableBlock" },
+        { "$ref": "#/$defs/CompanyCardBlock" },
+        { "$ref": "#/$defs/GraphMiniBlock" },
+        { "$ref": "#/$defs/ImpactCascadeBlock" },
+        { "$ref": "#/$defs/TimelineBlock" },
+        { "$ref": "#/$defs/GeoMiniBlock" },
+        { "$ref": "#/$defs/CalloutBlock" },
+        { "$ref": "#/$defs/ImageBlock" },
+        { "$ref": "#/$defs/ComparisonBlock" },
+        { "$ref": "#/$defs/ActionsBlock" },
+        { "$ref": "#/$defs/SourcesBlock" }
+      ]
+    },
+
+    "TextBlock": {
+      "description": "Prosa de la IA en markdown-lite (negrita, cursiva, listas, encabezados, enlaces http(s) desnudos). Sin HTML. Sus cifras pasan por el guardián (core/numbers.py) junto con el resto del texto.",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "text" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "md": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "lang": { "enum": ["es", "en"] },
+            "marks": {
+              "type": "array", "maxItems": 60,
+              "description": "Marcas deterministas del servidor: nombres de empresa → chip que abre el Dossier; [F#] → chip de fuente.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "s": { "type": "integer", "minimum": 0 },
+                  "e": { "type": "integer", "minimum": 1 },
+                  "kind": { "enum": ["entity", "fact", "unverified"] },
+                  "ref": { "type": "string", "maxLength": 64 }
+                },
+                "required": ["s", "e", "kind"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["md", "lang"],
+          "additionalProperties": false
+        }
+      },
+      "unevaluatedProperties": false
+    },
+
+    "MetricTilesBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "metric.tiles" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array", "minItems": 1, "maxItems": 6,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "$ref": "#/$defs/I18n" },
+                  "value": { "$ref": "#/$defs/Figure" },
+                  "delta": { "$ref": "#/$defs/Figure" },
+                  "sub": { "$ref": "#/$defs/I18n" },
+                  "entity": { "$ref": "#/$defs/Entity" },
+                  "spark": { "$ref": "#/$defs/Series" },
+                  "tone": { "enum": ["neutral", "good", "bad"] }
+                },
+                "required": ["label", "value"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["items"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "LineChartBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "chart.line" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "variant": { "enum": ["full", "spark"] },
+            "series": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "$ref": "#/$defs/Series" } },
+            "range": { "$ref": "#/$defs/Range" },
+            "ranges": { "type": "array", "maxItems": 6, "uniqueItems": true, "items": { "$ref": "#/$defs/Range" } },
+            "rebased": { "type": "boolean", "description": "true = series llevadas a índice 100 en el servidor (comparar empresas)." },
+            "annotations": {
+              "type": "array", "maxItems": 6,
+              "items": {
+                "type": "object",
+                "properties": { "x": { "$ref": "#/$defs/DateOrDateTime" }, "label": { "$ref": "#/$defs/I18n" }, "fact": { "$ref": "#/$defs/FactId" } },
+                "required": ["x", "label"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["variant", "series"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "BarChartBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "chart.bar" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "orientation": { "enum": ["h", "v"] },
+            "values": { "$ref": "#/$defs/ValueSet" },
+            "diverging": { "type": "boolean" },
+            "sort": { "enum": ["desc", "asc", "none"] },
+            "items": {
+              "type": "array", "minItems": 1, "maxItems": 30,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "$ref": "#/$defs/Label" },
+                  "entity": { "$ref": "#/$defs/Entity" },
+                  "v": { "type": ["number", "null"] },
+                  "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+                  "highlight": { "type": "boolean" }
+                },
+                "required": ["label", "v"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["orientation", "values", "items"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "CandlesBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "chart.candles" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "series": { "$ref": "#/$defs/CandleSeries" },
+            "range": { "$ref": "#/$defs/Range" },
+            "ranges": { "type": "array", "maxItems": 6, "uniqueItems": true, "items": { "$ref": "#/$defs/Range" } },
+            "volume": { "type": "boolean" }
+          },
+          "required": ["series"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "RankingBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "ranking" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "metric": { "$ref": "#/$defs/ValueSet" },
+            "direction": { "enum": ["higher_better", "lower_better", "neutral"] },
+            "items": {
+              "type": "array", "minItems": 1, "maxItems": 20,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rank": { "type": "integer", "minimum": 1, "maximum": 1000 },
+                  "entity": { "$ref": "#/$defs/Entity" },
+                  "v": { "type": ["number", "null"] },
+                  "delta": { "$ref": "#/$defs/Figure" },
+                  "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+                  "note": { "$ref": "#/$defs/I18n" }
+                },
+                "required": ["rank", "entity", "v"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["metric", "direction", "items"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "TableColumn": {
+      "type": "object",
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,23}$" },
+        "label": { "$ref": "#/$defs/I18n" },
+        "kind": { "enum": ["text", "entity", "number", "date", "badge"] },
+        "values": { "$ref": "#/$defs/ValueSet" },
+        "align": { "enum": ["start", "end"] }
+      },
+      "required": ["key", "label", "kind"],
+      "additionalProperties": false,
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "number" } } }, "then": { "required": ["values"] } }
+      ]
+    },
+
+    "TableBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "table" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "columns": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "$ref": "#/$defs/TableColumn" } },
+            "rows": {
+              "type": "array", "maxItems": 50,
+              "items": {
+                "type": "object",
+                "description": "Claves = TableColumn.key. Valores: texto (≤200), número o null, Entity (kind entity).",
+                "additionalProperties": {
+                  "oneOf": [
+                    { "type": "string", "maxLength": 200 },
+                    { "type": "number" },
+                    { "type": "null" },
+                    { "$ref": "#/$defs/Entity" },
+                    { "$ref": "#/$defs/I18n" }
+                  ]
+                },
+                "maxProperties": 8
+              }
+            },
+            "inline_rows": { "type": "integer", "minimum": 1, "maximum": 8 }
+          },
+          "required": ["columns", "rows"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "ChainLink": {
+      "type": "object",
+      "properties": {
+        "entity": { "$ref": "#/$defs/Entity" },
+        "weight": { "type": "number", "minimum": 0, "maximum": 10 },
+        "rel_type": { "enum": ["supply", "fab", "cloud", "license", "ppa", "owns", "deploy"] },
+        "verified": { "type": "boolean" },
+        "conf": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["entity"],
+      "additionalProperties": false
+    },
+
+    "CompanyCardBlock": {
+      "description": "Generaliza cards.company (core/khipu_chat._company_card).",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "company.card" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "company": { "$ref": "#/$defs/Entity" },
+            "listed": { "type": "boolean" },
+            "market_state": { "type": "string", "maxLength": 20 },
+            "price": { "$ref": "#/$defs/Figure" },
+            "change": { "$ref": "#/$defs/Figure" },
+            "market_cap": { "$ref": "#/$defs/Figure" },
+            "nrs": { "$ref": "#/$defs/Figure" },
+            "private_valuation": {
+              "type": "object",
+              "properties": { "value": { "$ref": "#/$defs/Figure" }, "round": { "type": "string", "maxLength": 60 }, "source_url": { "type": "string", "pattern": "^https://", "maxLength": 300 } },
+              "required": ["value"],
+              "additionalProperties": false
+            },
+            "spark": { "$ref": "#/$defs/Series" },
+            "top_suppliers": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/ChainLink" } },
+            "top_customers": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/ChainLink" } },
+            "structure": { "$ref": "#/$defs/I18n" },
+            "graph_as_of": { "$ref": "#/$defs/DateOrDateTime" }
+          },
+          "required": ["company", "listed"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "GraphMiniBlock": {
+      "description": "Mini grafo de cadena (proveedores → centro → clientes). Solo relaciones de FLUJO; socios/inversores no son proveedores.",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "graph.mini" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "center": { "$ref": "#/$defs/Entity" },
+            "src": { "$ref": "#/$defs/SourceId" },
+            "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+            "graph_version": { "type": "integer", "minimum": 0 },
+            "nodes": {
+              "type": "array", "minItems": 1, "maxItems": 25,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "entity": { "$ref": "#/$defs/Entity" },
+                  "role": { "enum": ["center", "supplier", "customer", "peer"] },
+                  "sub": { "$ref": "#/$defs/I18n" },
+                  "risk": { "type": "boolean" }
+                },
+                "required": ["entity", "role"],
+                "additionalProperties": false
+              }
+            },
+            "edges": {
+              "type": "array", "maxItems": 40,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "s": { "type": "string", "maxLength": 64 },
+                  "t": { "type": "string", "maxLength": 64 },
+                  "weight": { "type": "number", "minimum": 0, "maximum": 10 },
+                  "rel_type": { "enum": ["supply", "fab", "cloud", "license", "ppa", "owns", "deploy"] },
+                  "verified": { "type": "boolean" },
+                  "conf": { "type": "number", "minimum": 0, "maximum": 1 }
+                },
+                "required": ["s", "t", "rel_type"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["center", "src", "as_of", "nodes", "edges"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "ImpactCascadeBlock": {
+      "description": "Cascada de un choque salto a salto. Números SOLO del kernel del servidor (/api/hot/impact | run_scenario). 'Ganadores' = rivales poco golpeados con su % de DAÑO.",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "impact.cascade" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "origin": { "$ref": "#/$defs/Entity" },
+            "severity": { "type": "number", "minimum": 0, "maximum": 100, "description": "% del choque, la misma escala que /api/hot/impact?severity (0-100); de run_scenario = magnitude × 100. NO es la severidad 0-10 de los factores del kernel 2.0.0." },
+            "direction": { "enum": ["down", "up"] },
+            "src": { "const": "hot_kernel" },
+            "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+            "generation": { "$ref": "#/$defs/Generation" },
+            "graph_version": { "type": "integer", "minimum": 0 },
+            "kernel": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "threshold_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+            "hops": {
+              "type": "array", "maxItems": 6,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "hop": { "type": "integer", "minimum": 1, "maximum": 6 },
+                  "label": { "$ref": "#/$defs/I18n" },
+                  "count": { "type": "integer", "minimum": 0 },
+                  "max_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+                  "entities": {
+                    "type": "array", "maxItems": 8,
+                    "items": {
+                      "type": "object",
+                      "properties": { "entity": { "$ref": "#/$defs/Entity" }, "impact_pct": { "type": "number", "minimum": 0, "maximum": 100 } },
+                      "required": ["entity", "impact_pct"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": ["hop", "count"],
+                "additionalProperties": false
+              }
+            },
+            "total": { "type": "integer", "minimum": 0 },
+            "least_hit_rivals": {
+              "type": "array", "maxItems": 6,
+              "items": {
+                "type": "object",
+                "properties": { "entity": { "$ref": "#/$defs/Entity" }, "damage_pct": { "type": "number", "minimum": 0, "maximum": 100 } },
+                "required": ["entity", "damage_pct"],
+                "additionalProperties": false
+              }
+            },
+            "portfolio": {
+              "description": "Línea 'Tu cartera' de POST /api/hot/scenario_pnl: con calibración débil NO hay cifra (state no_figure).",
+              "type": "object",
+              "properties": {
+                "state": { "enum": ["figure", "no_figure", "no_positions"] },
+                "value": { "$ref": "#/$defs/Figure" },
+                "band": { "$ref": "#/$defs/Figure" },
+                "reason": { "$ref": "#/$defs/I18n" }
+              },
+              "required": ["state"],
+              "additionalProperties": false,
+              "allOf": [
+                { "if": { "properties": { "state": { "const": "figure" } } }, "then": { "required": ["value", "band"] } },
+                { "if": { "properties": { "state": { "const": "no_figure" } } }, "then": { "required": ["reason"] } }
+              ]
+            }
+          },
+          "required": ["origin", "severity", "src", "as_of", "generation", "hops", "total"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "TimelineBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "timeline" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+            "items": {
+              "type": "array", "minItems": 1, "maxItems": 20,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": { "$ref": "#/$defs/DateOrDateTime" },
+                  "date_known": { "type": "boolean", "description": "false para la fecha centinela GENESIS (desde que se rastrea)." },
+                  "title": { "$ref": "#/$defs/Label" },
+                  "kind": { "enum": ["news", "event", "filing", "earnings", "link", "launch", "decision"] },
+                  "entity": { "$ref": "#/$defs/Entity" },
+                  "src": { "$ref": "#/$defs/SourceId" },
+                  "url": { "type": "string", "pattern": "^https?://", "maxLength": 500 },
+                  "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+                  "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+                  "fact": { "$ref": "#/$defs/FactId" }
+                },
+                "required": ["date", "title", "kind", "src"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["as_of", "items"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "GeoMiniBlock": {
+      "description": "Mapa SVG estático dibujado por el cliente (sin teselas, sin WebGL). Botón → World Monitor.",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "geo.mini" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "region": { "enum": ["world", "asia", "east_asia", "americas", "europe", "middle_east", "africa", "oceania"] },
+            "src": { "$ref": "#/$defs/SourceId" },
+            "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+            "points": {
+              "type": "array", "maxItems": 60,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+                  "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+                  "label": { "$ref": "#/$defs/Label" },
+                  "kind": { "enum": ["company", "fab", "port", "strait", "event", "mine", "datacenter"] },
+                  "entity": { "$ref": "#/$defs/Entity" },
+                  "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+                  "risk": { "type": "boolean" },
+                  "precision": { "enum": ["hq", "city", "country"], "description": "De core/world.geo_coord: con 'country' el punto es el centro del país y el cliente lo dibuja difuso (no es la sede exacta)." }
+                },
+                "required": ["lat", "lon", "label", "kind"],
+                "additionalProperties": false
+              }
+            },
+            "arcs": {
+              "type": "array", "maxItems": 30,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": { "type": "array", "prefixItems": [ { "type": "number", "minimum": -90, "maximum": 90 }, { "type": "number", "minimum": -180, "maximum": 180 } ], "minItems": 2, "maxItems": 2 },
+                  "to": { "type": "array", "prefixItems": [ { "type": "number", "minimum": -90, "maximum": 90 }, { "type": "number", "minimum": -180, "maximum": 180 } ], "minItems": 2, "maxItems": 2 },
+                  "weight": { "type": "number", "minimum": 0, "maximum": 1 }
+                },
+                "required": ["from", "to"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["region", "src", "as_of", "points"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "CalloutItem": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "lang": { "enum": ["es", "en"] },
+        "facts": { "type": "array", "maxItems": 4, "items": { "$ref": "#/$defs/FactId" } },
+        "claim_id": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["text", "lang"],
+      "additionalProperties": false
+    },
+
+    "CalloutBlock": {
+      "description": "pros_cons | warning | info | unavailable | disclaimer. origin=model → su texto entra al guardián de cifras igual que la prosa.",
+      "allOf": [
+        { "$ref": "#/$defs/BlockBase" },
+        { "if": { "properties": { "data": { "properties": { "origin": { "const": "tool" } }, "required": ["origin"] } } }, "then": { "required": ["prov"] } }
+      ],
+      "properties": {
+        "type": { "const": "callout" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "variant": { "enum": ["pros_cons", "warning", "info", "unavailable", "disclaimer"] },
+            "origin": { "enum": ["tool", "model", "system"] },
+            "pros": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/CalloutItem" } },
+            "cons": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/CalloutItem" } },
+            "items": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/CalloutItem" } },
+            "text": { "$ref": "#/$defs/I18n" }
+          },
+          "required": ["variant", "origin"],
+          "additionalProperties": false,
+          "allOf": [
+            { "if": { "properties": { "variant": { "const": "pros_cons" } } }, "then": { "required": ["pros", "cons"] } },
+            { "if": { "properties": { "variant": { "enum": ["unavailable", "disclaimer"] } } }, "then": { "required": ["text"], "properties": { "origin": { "const": "system" } } } }
+          ]
+        }
+      },
+      "required": ["alt"],
+      "unevaluatedProperties": false
+    },
+
+    "ImageBlock": {
+      "description": "Imagen SOLO del mismo origen (lista blanca de rutas) o forma SVG del vocabulario cerrado que dibuja el cliente. Nunca una URL elegida por la IA.",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "image" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "kind": { "enum": ["asset", "shape"] },
+            "asset": {
+              "type": "object",
+              "properties": {
+                "path": { "type": "string", "pattern": "^/(static/genui/[a-z0-9_-]{1,60}\\.(svg|png|webp)|api/genui/img/[a-f0-9]{16,64})$" },
+                "w": { "type": "integer", "minimum": 16, "maximum": 1600 },
+                "h": { "type": "integer", "minimum": 16, "maximum": 1600 },
+                "credit": { "type": "string", "maxLength": 120 }
+              },
+              "required": ["path", "w", "h"],
+              "additionalProperties": false
+            },
+            "shape": {
+              "type": "object",
+              "properties": {
+                "name": { "enum": ["chip", "wafer", "fab", "datacenter", "gpu", "memory", "battery", "mine", "ship", "strait", "satellite", "rocket", "power", "cable", "bank", "globe", "flow_arrow"] },
+                "tone": { "enum": ["accent", "neutral", "positive", "negative", "warning"] },
+                "steps": {
+                  "type": "array", "maxItems": 6,
+                  "description": "Diagrama de flujo simple: forma → forma (cada paso es una forma con rótulo).",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "shape": { "enum": ["chip", "wafer", "fab", "datacenter", "gpu", "memory", "battery", "mine", "ship", "strait", "satellite", "rocket", "power", "cable", "bank", "globe"] },
+                      "label": { "$ref": "#/$defs/Label" },
+                      "entity": { "$ref": "#/$defs/Entity" }
+                    },
+                    "required": ["shape", "label"],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": ["name"],
+              "additionalProperties": false
+            },
+            "caption": { "$ref": "#/$defs/I18n" }
+          },
+          "required": ["kind"],
+          "additionalProperties": false,
+          "allOf": [
+            { "if": { "properties": { "kind": { "const": "asset" } } }, "then": { "required": ["asset"] } },
+            { "if": { "properties": { "kind": { "const": "shape" } } }, "then": { "required": ["shape"] } }
+          ]
+        }
+      },
+      "required": ["alt"],
+      "unevaluatedProperties": false
+    },
+
+    "ComparisonBlock": {
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "comparison" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "entities": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "$ref": "#/$defs/Entity" } },
+            "views": { "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true, "items": { "enum": ["table", "bars", "radar"] } },
+            "default_view": { "enum": ["table", "bars", "radar"] },
+            "metrics": {
+              "type": "array", "minItems": 1, "maxItems": 10,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,23}$" },
+                  "values": { "$ref": "#/$defs/ValueSet" },
+                  "better": { "enum": ["higher", "lower", "none"] },
+                  "cells": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "type": ["number", "null"] } }
+                },
+                "required": ["key", "values", "better", "cells"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["entities", "views", "metrics"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["title", "alt", "prov"],
+      "unevaluatedProperties": false
+    },
+
+    "ActionsBlock": {
+      "description": "Fila de botones al final: solo abrir ventanas/fichas o dejar una pregunta escrita en la caja (sin enviarla). Nunca órdenes.",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "actions" },
+        "data": {
+          "type": "object",
+          "properties": { "items": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "$ref": "#/$defs/Action" } } },
+          "required": ["items"],
+          "additionalProperties": false
+        }
+      },
+      "unevaluatedProperties": false
+    },
+
+    "SourcesBlock": {
+      "description": "Siempre el último bloque. Reúne sources[] y facts[] de la respuesta.",
+      "allOf": [ { "$ref": "#/$defs/BlockBase" } ],
+      "properties": {
+        "type": { "const": "sources" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array", "minItems": 1, "maxItems": 12,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "$ref": "#/$defs/FactId" },
+                  "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "tool": { "type": "string", "maxLength": 40 },
+                  "url": { "type": "string", "pattern": "^https?://", "maxLength": 500 },
+                  "as_of": { "$ref": "#/$defs/DateOrDateTime" },
+                  "published": { "$ref": "#/$defs/DateOrDateTime" }
+                },
+                "required": ["label", "as_of"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["items"],
+          "additionalProperties": false
+        }
+      },
+      "unevaluatedProperties": false
+    },
+
+    "Plan": {
+      "description": "Lo ÚNICO que la IA puede escribir sobre la interfaz: dentro de su paso final {\"final\":{\"answer\":…,\"actions\":…,\"layout\":Plan}}. Cero cifras literales: los bloques se llenan desde la llamada referida (from). El servidor valida, resuelve y descarta lo que no cumpla (Envelope.dropped).",
+      "type": "array", "maxItems": 12,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": { "text": { "type": "string", "minLength": 1, "maxLength": 2000 } },
+            "required": ["text"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "block": { "enum": ["metric.tiles", "chart.line", "chart.bar", "chart.candles", "ranking", "table", "company.card", "graph.mini", "impact.cascade", "timeline", "geo.mini", "callout", "image", "comparison"] },
+              "from": {
+                "type": "string",
+                "pattern": "^(F[0-9]{1,3}(,F[0-9]{1,3}){0,3}|view:(impact|card|geo|quote):[A-Za-z0-9][A-Za-z0-9 _.&'+-]{0,63})$",
+                "description": "F3 = el resultado de herramienta que la IA vio etiquetado [F3] en el prompt (core/khipu_chat._fact_prefix); F1,F2 = varios (comparación); view:impact:<id> = vista rápida del servidor (en memoria, sin E/S). La IA nunca ve índices de llamada, solo [F#]."
+              },
+              "opts": {
+                "type": "object",
+                "properties": {
+                  "range": { "$ref": "#/$defs/Range" },
+                  "metric": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+                  "metrics": { "type": "array", "maxItems": 6, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,31}$" } },
+                  "top": { "type": "integer", "minimum": 1, "maximum": 20 },
+                  "view": { "enum": ["table", "bars", "radar", "line", "candles", "graph"] },
+                  "highlight": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.&'+-]{0,63}$" },
+                  "variant": { "enum": ["pros_cons", "warning", "info", "full", "spark"] },
+                  "shape": { "enum": ["chip", "wafer", "fab", "datacenter", "gpu", "memory", "battery", "mine", "ship", "strait", "satellite", "rocket", "power", "cable", "bank", "globe", "flow_arrow"] }
+                },
+                "additionalProperties": false
+              },
+              "pros": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1, "maxLength": 200 } },
+              "cons": { "type": "array", "maxItems": 4, "items": { "type": "string", "minLength": 1, "maxLength": 200 } }
+            },
+            "required": ["block"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  }
+}

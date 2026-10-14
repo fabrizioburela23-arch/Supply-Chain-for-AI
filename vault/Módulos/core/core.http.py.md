@@ -67,7 +67,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 37 pruebas (lista abajo)._
+_Además lo importan 38 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -105,6 +105,7 @@ _Además lo importan 37 pruebas (lista abajo)._
 - [[tests.test_cierre_infra.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_gates_resulting_state.py]]
+- [[tests.test_genui_ledger.py]]
 - [[tests.test_governance_activation.py]]
 - [[tests.test_governance_flow.py]]
 - [[tests.test_hot_contract.py]]

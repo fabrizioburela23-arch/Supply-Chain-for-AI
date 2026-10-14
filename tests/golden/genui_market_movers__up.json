@@ -1,0 +1,160 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "NVDA 4.21 %; AMD 3.02 %; MU −0.8 %",
+    "es": "NVDA 4,21 %; AMD 3,02 %; MU −0,8 %"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "as_of": "2026-10-13T19:44:00Z",
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "label": "NVDA",
+      "v": 4.21
+     },
+     {
+      "as_of": "2026-10-13T19:44:00Z",
+      "entity": {
+       "id": "AMD",
+       "label": "AMD",
+       "symbol": "AMD"
+      },
+      "label": "AMD",
+      "v": 3.02
+     },
+     {
+      "as_of": "2026-10-13T19:44:00Z",
+      "entity": {
+       "id": "Micron",
+       "label": "Micron",
+       "symbol": "MU"
+      },
+      "label": "MU",
+      "v": -0.8
+     }
+    ],
+    "orientation": "h",
+    "sort": "desc",
+    "values": {
+     "as_of": "2026-10-13T19:45:00Z",
+     "fact": "F1",
+     "label": {
+      "en": "Change today",
+      "es": "Cambio de hoy"
+     },
+     "src": "yahoo",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "market_movers"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Biggest gainers today",
+    "es": "Las que más suben hoy"
+   },
+   "type": "chart.bar"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "NVDA 4.21 %; AMD 3.02 %; MU −0.8 %",
+    "es": "NVDA 4,21 %; AMD 3,02 %; MU −0,8 %"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "as_of": "2026-10-13T19:44:00Z",
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "label": "NVDA",
+      "v": 4.21
+     },
+     {
+      "as_of": "2026-10-13T19:44:00Z",
+      "entity": {
+       "id": "AMD",
+       "label": "AMD",
+       "symbol": "AMD"
+      },
+      "label": "AMD",
+      "v": 3.02
+     },
+     {
+      "as_of": "2026-10-13T19:44:00Z",
+      "entity": {
+       "id": "Micron",
+       "label": "Micron",
+       "symbol": "MU"
+      },
+      "label": "MU",
+      "v": -0.8
+     }
+    ],
+    "orientation": "h",
+    "sort": "desc",
+    "values": {
+     "as_of": "2026-10-13T19:45:00Z",
+     "fact": "F1",
+     "label": {
+      "en": "Change today",
+      "es": "Cambio de hoy"
+     },
+     "src": "yahoo",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "market_movers"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Biggest gainers today",
+    "es": "Las que más suben hoy"
+   },
+   "type": "chart.bar"
+  }
+ ]
+}

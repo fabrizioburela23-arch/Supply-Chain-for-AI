@@ -1,0 +1,25 @@
+{
+ "args": {},
+ "result": {
+  "as_of": "2026-10-13T19:00:00+00:00",
+  "items": [
+   {
+    "conviction": 42.0,
+    "entity_id": "Nvidia",
+    "label": "Nvidia",
+    "n_claims": 9
+   },
+   {
+    "conviction": -18.5,
+    "entity_id": "Intel",
+    "label": "Intel",
+    "n_claims": 6
+   }
+  ],
+  "n": 2,
+  "note": null,
+  "source": "Khipus research claims + committee memos"
+ },
+ "sample": true,
+ "tool": "get_conclusions_board"
+}

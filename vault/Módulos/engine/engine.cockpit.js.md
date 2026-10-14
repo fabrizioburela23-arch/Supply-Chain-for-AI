@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 5012
+lineas: 5033
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.012 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.033 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -34,6 +34,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.desktop.js]] — usa `KhipuDesk`
 - [[engine.explain.js]] — usa `explainMetric`
 - [[engine.fincard.js]] — usa `openFinCard`
+- [[engine.genui.js]] — usa `KhipuGenUI`
 - [[engine.guide.js]] — usa `initGuiaTab`
 - [[engine.khipu_chat.js]] — usa `KhipuChat`
 - [[engine.khipu_lang.js]] — usa `KHIPU`
@@ -55,17 +56,18 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **89 de 97** (línea 3146), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **90 de 98** (línea 3149), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 89)
+- [[app.html]] — lo carga con `<script>` (posición 90)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.app_main.js]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
 - [[engine.command_center.js]] — usa `BixbyCockpit`, `_openBrokerConfirm`, `_parseTradeCommand`
 - [[engine.crypto.js]] — usa `BixbyCockpit`
 - [[engine.fincard.js]] — usa `BixbyCockpit`
+- [[engine.genui.js]] — usa `BixbyCockpit`
 - [[engine.khipu_chat.js]] — usa `BixbyCockpit`
 - [[engine.localcharts.js]] — usa `BixbyCockpit`
 - [[engine.oswindows.js]] — usa `BixbyCockpit`
@@ -99,6 +101,8 @@ Se carga en [[app.html]] en la posición **89 de 97** (línea 3146), después de
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_cleanup_modules_theme_i18n.py]]
 - [[tests.test_committee_os_ui.py]]
+- [[tests.test_genui_browser.py]]
+- [[tests.test_genui_client_static.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_fixes_shell.py]]
 - [[tests.test_khipus_os_integration.py]]

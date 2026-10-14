@@ -32,12 +32,13 @@ VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **86 de 97** (línea 3143), después de [[engine.portfolios.js]] y antes de [[engine.khipu_chat.js]].
+Se carga en [[app.html]] en la posición **87 de 98** (línea 3146), después de [[engine.genui.js]] y antes de [[engine.khipu_chat.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 86)
+- [[app.html]] — lo carga con `<script>` (posición 87)
 - [[engine.cockpit.js]] — usa `KhipuOSWin`
+- [[engine.genui.js]] — usa `KhipuOSWin`
 - [[engine.khipu_chat.js]] — usa `KhipuOSWin`
 - [[engine.voice.js]] — usa `KhipuOSWin`
 
@@ -54,6 +55,8 @@ Se carga en [[app.html]] en la posición **86 de 97** (línea 3143), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_ask_agent.py]]
+- [[tests.test_genui_browser.py]]
+- [[tests.test_genui_client_static.py]]
 - [[tests.test_khipus_os_fixes_windows.py]]
 - [[tests.test_khipus_os_integration.py]]
 - [[tests.test_khipus_os_shell.py]]

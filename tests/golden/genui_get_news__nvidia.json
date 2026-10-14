@@ -1,0 +1,134 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "2 items: 2026-10-13 Nvidia unveils next-gen networking; 2026-10-12 Chip stocks rally",
+    "es": "2 hechos: 2026-10-13 Nvidia unveils next-gen networking; 2026-10-12 Chip stocks rally"
+   },
+   "data": {
+    "as_of": "2026-10-13T19:00:00+00:00",
+    "items": [
+     {
+      "date": "2026-10-13T14:00:00+00:00",
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "fact": "F1",
+      "kind": "news",
+      "src": "finnhub",
+      "title": "Nvidia unveils next-gen networking",
+      "url": "https://example.org/n1"
+     },
+     {
+      "date": "2026-10-12T21:00:00+00:00",
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "fact": "F1",
+      "kind": "news",
+      "src": "finnhub",
+      "title": "Chip stocks rally",
+      "url": "https://example.org/n2"
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_news"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia news",
+    "es": "Noticias de Nvidia"
+   },
+   "type": "timeline"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "2 items: 2026-10-13 Nvidia unveils next-gen networking; 2026-10-12 Chip stocks rally",
+    "es": "2 hechos: 2026-10-13 Nvidia unveils next-gen networking; 2026-10-12 Chip stocks rally"
+   },
+   "data": {
+    "as_of": "2026-10-13T19:00:00+00:00",
+    "items": [
+     {
+      "date": "2026-10-13T14:00:00+00:00",
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "fact": "F1",
+      "kind": "news",
+      "src": "finnhub",
+      "title": "Nvidia unveils next-gen networking",
+      "url": "https://example.org/n1"
+     },
+     {
+      "date": "2026-10-12T21:00:00+00:00",
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "fact": "F1",
+      "kind": "news",
+      "src": "finnhub",
+      "title": "Chip stocks rally",
+      "url": "https://example.org/n2"
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_news"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia news",
+    "es": "Noticias de Nvidia"
+   },
+   "type": "timeline"
+  }
+ ]
+}

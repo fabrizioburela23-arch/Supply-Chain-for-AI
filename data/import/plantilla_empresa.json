@@ -1,0 +1,892 @@
+{
+  "schema": "khipus.company/1",
+  "record_id": "<tu-id-estable, ej. fb-2026-0001>",
+  "khipus_id_hint": "<IdEnCamelCase>",
+  "research_meta": {
+    "researcher": "<tu nombre o el de la herramienta de IA>",
+    "researched_at": "<AAAA-MM-DDTHH:MM:SSZ>",
+    "method": "<manual | ai_assisted | mixed>",
+    "tools": [
+      "<herramienta usada>"
+    ],
+    "tier": "<A | B | C>",
+    "priority": "<P1 | P2 | P3>",
+    "batch": "<nombre del lote>",
+    "revision": 1,
+    "not_found": [
+      "<ruta del campo que BUSCASTE y no existe, ej. identity.ids.lei>"
+    ],
+    "sources_consulted": [
+      "<enlace https:// a la fuente>"
+    ],
+    "notes": "PLANTILLA VACÍA: reemplaza cada <...>. Borra los bloques que no apliquen (p. ej. funding en cotizadas). Lo que buscaste y no existe va en not_found."
+  },
+  "identity": {
+    "legal_name": {
+      "value": "<nombre legal exacto>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "short_name": "<nombre corto que verá el usuario>",
+    "other_names": [
+      {
+        "name": "<nombre en escritura local, si existe>",
+        "kind": "local_script",
+        "lang": "<código de idioma, ej. zh, ja, ko>"
+      },
+      {
+        "name": "<sigla o marca>",
+        "kind": "acronym"
+      },
+      {
+        "name": "<nombre anterior, si lo hubo>",
+        "kind": "former",
+        "until": "<AAAA-MM>"
+      }
+    ],
+    "ids": {
+      "lei": "<LEI de 20 caracteres (search.gleif.org)>",
+      "isin": [
+        "<ISIN de 12 caracteres, uno por clase/bolsa>"
+      ],
+      "cik": "<CIK de 10 dígitos (solo si reporta a la SEC de EE.UU.)>",
+      "wikidata_qid": "<Q + número (wikidata.org)>",
+      "figi": [
+        "<BBG… (openfigi.com)>"
+      ],
+      "yahoo_symbol": "<símbolo Yahoo con sufijo de bolsa>",
+      "ticker": "<ticker sin sufijo>",
+      "exchange_mic": "<MIC de la bolsa principal: 4 caracteres, ej. XNAS>",
+      "domain": "<dominio de la web oficial sin www>",
+      "national_registry": [
+        {
+          "country": "<ISO-2>",
+          "registry": "<nombre del registro>",
+          "number": "<número>"
+        }
+      ]
+    },
+    "ids_source": {
+      "source_url": "<enlace al registro GLEIF / EDGAR / bolsa>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "source_kind": "primary"
+    },
+    "status": {
+      "value": "<public | private | subsidiary | state_owned | cooperative | delisted | bankrupt | acquired | merged | defunct>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "founded": {
+      "value": "<AAAA o AAAA-MM-DD de fundación>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "hq_country": {
+      "value": "<ISO-2 del país de la SEDE>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "incorporation_country": {
+      "value": "<ISO-2 del país donde está CONSTITUIDA>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "hq_city": {
+      "value": "<ciudad de la sede>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "hq_coords": {
+      "lat": "<latitud>",
+      "lon": "<longitud>",
+      "precision": "<exact | city | region | country>",
+      "source_url": "<enlace https:// a la fuente>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>"
+    },
+    "website": "<https://web oficial>"
+  },
+  "listings": [
+    {
+      "ticker": "<ticker>",
+      "exchange_mic": "<MIC>",
+      "yahoo_symbol": "<símbolo Yahoo con sufijo de bolsa>",
+      "finnhub_symbol": "<símbolo en Finnhub, si difiere>",
+      "isin": "<ISIN de esta línea>",
+      "figi": "<FIGI de esta línea>",
+      "currency": "<moneda ISO>",
+      "kind": "<equity | a_share | h_share | adr | gdr | otc | preferred | dual_class>",
+      "is_primary": "<true si es la cotización PRINCIPAL>",
+      "share_class": "<clase, si aplica>",
+      "listed_since": "<AAAA-MM-DD>",
+      "source_url": "<enlace https:// a la fuente>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "confidence": "<0 a 1>"
+    },
+    {
+      "ticker": "<segunda cotización, si existe>",
+      "exchange_mic": "<MIC>",
+      "yahoo_symbol": "<símbolo Yahoo de la 2.ª cotización>",
+      "currency": "<moneda ISO>",
+      "kind": "<h_share | adr | …>",
+      "is_primary": "<false>",
+      "ordinary_per_depositary": "<solo ADR/GDR: acciones ordinarias por 1 ADR>",
+      "listed_since": "<AAAA-MM-DD>",
+      "source_url": "<enlace https:// a la fuente>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>"
+    }
+  ],
+  "classification": {
+    "cat": "<categoría EXISTENTE del catálogo (ver lista en PROMPT_INVESTIGACION.md)>",
+    "cats_secondary": [
+      "<otra categoría existente>"
+    ],
+    "cat_proposed": {
+      "id": "<solo si ninguna sirve: id_nuevo>",
+      "label_es": "<nombre>",
+      "label_en": "<name>",
+      "sector": "<uno de los 13 sectores>"
+    },
+    "chain_layers": [
+      "<capas: raw_materials | refining | components | equipment | fabrication | packaging | systems | networking | power | datacenter | cloud | models | software | applications | distribution | logistics | finance | real_estate | government | space | defense | robotics>"
+    ],
+    "naics": "<código NAICS 2-6 dígitos>",
+    "gics_industry": "<industria GICS, si la sabes>",
+    "source_url": "<enlace https:// a la fuente>"
+  },
+  "profile": {
+    "summary": {
+      "value": "<qué es <nombre corto que verá el usuario> en 1-2 frases simples>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    },
+    "description": {
+      "value": "<descripción de 3-6 frases>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    },
+    "what_it_supplies": {
+      "value": "<qué vende y a qué tipo de clientes>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    },
+    "moat": {
+      "value": "<ventaja difícil de copiar + su riesgo principal>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    },
+    "growth": {
+      "value": "<tendencia reciente CON fecha, sin precio ni capitalización>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    },
+    "strategy": {
+      "value": "<estrategia declarada por la empresa>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    },
+    "geo_risk": {
+      "value": "<riesgo geográfico/político principal>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    },
+    "employees": {
+      "value": "<número de empleados en PERSONAS (no miles)>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>"
+    },
+    "technologies": [
+      "<tecnología clave>"
+    ],
+    "key_people": [
+      {
+        "name": "<nombre>",
+        "role": "<CEO | CFO | CTO | fundador | presidente del directorio>",
+        "since": "<AAAA-MM>",
+        "source_url": "<enlace https:// a la fuente>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>"
+      }
+    ]
+  },
+  "corporate": {
+    "parent": {
+      "entity": {
+        "name": "<matriz directa, si la hay>",
+        "ids": {
+          "lei": "<LEI>"
+        }
+      },
+      "pct": {
+        "value": "<% que posee la matriz: número de 0 a 100>",
+        "source_url": "<enlace https:// a la fuente>",
+        "source_name": "<nombre del documento>",
+        "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+        "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+        "confidence": "<0 a 1>"
+      },
+      "since": "<AAAA-MM>"
+    },
+    "ultimate_parent": {
+      "entity": {
+        "name": "<matriz última, si la hay>"
+      },
+      "pct": {
+        "value": "<% efectivo: número de 0 a 100>",
+        "source_url": "<enlace https:// a la fuente>",
+        "source_name": "<nombre del documento>",
+        "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+        "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+        "confidence": "<0 a 1>"
+      }
+    },
+    "major_shareholders": [
+      {
+        "entity": {
+          "name": "<accionista ≥5 %, fundador o Estado>",
+          "country": "<ISO-2>",
+          "object_type": "<Company | Org | Country>"
+        },
+        "pct": {
+          "value": "<% de participación: número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        },
+        "voting_pct": {
+          "value": "<% de votos (si difiere): número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        },
+        "since": "<AAAA-MM>"
+      }
+    ],
+    "subsidiaries": [
+      {
+        "entity": {
+          "name": "<filial relevante>",
+          "country": "<ISO-2>"
+        },
+        "pct": {
+          "value": "<% que posee: número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        }
+      }
+    ],
+    "state_ownership_pct": {
+      "value": "<% en manos del Estado (directo + indirecto): número de 0 a 100>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>"
+    }
+  },
+  "market_position": [
+    {
+      "market": "<mercado concreto donde compite>",
+      "market_en": "<lo mismo en inglés>",
+      "metric": "<revenue | units | capacity | installed_gwh | shipments | volume | other>",
+      "region": "<GLOBAL o ISO-2>",
+      "rank": "<puesto 1, 2, 3…>",
+      "share_pct": "<cuota 0-100>",
+      "period": "<año o trimestre medido, ej. 2025>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<firma que mide el mercado>",
+      "source_kind": "<trade | press | primary>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual>"
+    }
+  ],
+  "products": [
+    {
+      "name": "<producto o línea>",
+      "category": "<tipo>",
+      "description_es": "<qué es>",
+      "description_en": "<in English>",
+      "share_of_revenue": {
+        "value": "<% de los ingresos: número de 0 a 100>",
+        "source_url": "<enlace https:// a la fuente>",
+        "source_name": "<nombre del documento>",
+        "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+        "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+        "confidence": "<0 a 1>"
+      },
+      "launched": "<AAAA>",
+      "source_url": "<enlace https:// a la fuente>"
+    }
+  ],
+  "facilities": [
+    {
+      "name": "<nombre de la planta/mina/fábrica/centro de datos>",
+      "kind": "<fab | assembly | cell_plant | mine | refinery | smelter | chemical_plant | datacenter | power_plant | substation | r_and_d | hq | warehouse | port | launch_site | office | other>",
+      "country": "<ISO-2>",
+      "region": "<provincia/estado>",
+      "city": "<ciudad>",
+      "lat": "<latitud>",
+      "lon": "<longitud>",
+      "capacity": {
+        "value": "<número>",
+        "unit": "<unidad: GWh/año, obleas/mes, MW, t/año…>"
+      },
+      "status": "<operating | ramping | construction | planned | paused | closed>",
+      "start": "<AAAA-MM>",
+      "owner_share_pct": "<0-100 si es joint venture>",
+      "source_url": "<enlace https:// a la fuente>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "confidence": "<0 a 1>"
+    }
+  ],
+  "financials": {
+    "fiscal_year_end": "<MM-DD de cierre del año fiscal>",
+    "reporting_currency": "<moneda ISO en que reporta>",
+    "annual": [
+      {
+        "fiscal_year": "<AAAA>",
+        "revenue": {
+          "value": "<ingresos del año: número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "<FY2025>"
+        },
+        "gross_margin_pct": {
+          "value": "<margen bruto: número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        },
+        "operating_margin_pct": {
+          "value": "<margen operativo: número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        },
+        "net_income": {
+          "value": "<utilidad neta: número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "<FY2025>"
+        },
+        "capex": {
+          "value": "<inversión en capital (capex): número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "<FY2025>"
+        },
+        "r_and_d": {
+          "value": "<gasto en I+D: número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "<FY2025>"
+        },
+        "backlog": {
+          "value": "<cartera de pedidos al cierre: número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "point"
+        },
+        "segments": [
+          {
+            "name": "<segmento>",
+            "revenue": {
+              "value": "<ingresos del segmento: número en UNIDADES de la moneda original, sin millones>",
+              "source_url": "<enlace https:// a la fuente>",
+              "source_name": "<nombre del documento>",
+              "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+              "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+              "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+              "confidence": "<0 a 1>",
+              "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+              "period": "<FY2025>"
+            }
+          }
+        ]
+      }
+    ],
+    "quarterly": [
+      {
+        "period": "<AAAA-Q1..Q4 (solo privadas o datos que las APIs no dan)>",
+        "revenue": {
+          "value": "<ingresos del trimestre: número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "<2026-Q2>"
+        }
+      }
+    ],
+    "capex_guidance": {
+      "value": "<capex guiado para el próximo año: número en UNIDADES de la moneda original, sin millones>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+      "period": "<FY2026>"
+    },
+    "capacity_total": [
+      {
+        "value": "<capacidad total: número>",
+        "source_url": "<enlace https:// a la fuente>",
+        "source_name": "<nombre del documento>",
+        "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+        "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+        "confidence": "<0 a 1>",
+        "unit": "<unidad: GWh/año, obleas/mes, MW, t/año…>"
+      }
+    ]
+  },
+  "funding": [
+    {
+      "date": "<AAAA-MM-DD (solo privadas: rondas CERRADAS)>",
+      "round": "<Seed | Serie A… | estratégica>",
+      "amount": "<monto en unidades de la moneda>",
+      "post_money_valuation": "<valuación post-money>",
+      "currency": "<moneda ISO>",
+      "lead_investors": [
+        {
+          "name": "<líder>"
+        }
+      ],
+      "other_investors": [
+        {
+          "name": "<otro inversor>"
+        }
+      ],
+      "status": "<closed | announced>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual>"
+    }
+  ],
+  "exposure": {
+    "revenue_by_region": [
+      {
+        "region": "<ISO-2 | EU | ASIA | NA | EMEA | APAC | OTHER>",
+        "pct": {
+          "value": "<% de ingresos en esa región: número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        }
+      }
+    ],
+    "customer_concentration_top1_pct": {
+      "value": "<% de ingresos del cliente más grande: número de 0 a 100>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>"
+    },
+    "customer_concentration_top5_pct": {
+      "value": "<% de ingresos de los 5 mayores clientes: número de 0 a 100>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>"
+    },
+    "export_controls": {
+      "value": "<controles de exportación que la afectan>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "sanctions": {
+      "value": "<sanciones vigentes o pasadas>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "quote": "<frase textual de la fuente que respalda el dato (máx. 500 caracteres)>"
+    },
+    "subsidies": [
+      {
+        "program": "<programa>",
+        "country": "<ISO-2>",
+        "amount": {
+          "value": "<monto: número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "point"
+        },
+        "date": "<AAAA-MM>",
+        "status": "<awarded | announced | disbursed | cancelled>",
+        "source_url": "<enlace https:// a la fuente>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>"
+      }
+    ]
+  },
+  "regulatory": {
+    "restricted_lists": [
+      {
+        "list": "<BIS_entity_list | BIS_MEU | OFAC_SDN | OFAC_NS_CMIC | DoD_1260H | FCC_covered | UFLPA | EU_sanctions | UK_sanctions | CN_unreliable_entity | CN_export_control | other>",
+        "since": "<AAAA-MM-DD>",
+        "entity_named": "<nombre como aparece en la lista>",
+        "source_url": "<enlace a la lista o al Federal Register>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+        "confidence": "<0 a 1>"
+      }
+    ],
+    "litigation": [
+      {
+        "kind": "<antitrust | patent | trade | regulatory | securities | other>",
+        "text_es": "<qué pasa>",
+        "text_en": "<in English>",
+        "status": "<open | settled | won | lost | appeal>",
+        "since": "<AAAA-MM>",
+        "source_url": "<enlace https:// a la fuente>",
+        "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>"
+      }
+    ]
+  },
+  "risks": [
+    {
+      "kind": "<geopolitical | regulatory | concentration | technology | financial | legal | supply | esg | governance>",
+      "text_es": "<riesgo en palabras simples>",
+      "text_en": "<in English>",
+      "factor_hint": "<id de un Factor sistémico de Khipus, si aplica>",
+      "source_url": "<enlace https:// a la fuente>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>"
+    }
+  ],
+  "innovation": {
+    "patent_families": {
+      "value": "<número de familias de patentes>",
+      "source_url": "<enlace (Google Patents / informe)>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>"
+    },
+    "r_and_d_staff": {
+      "value": "<personas en I+D>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>"
+    },
+    "notable_ip": {
+      "value": "<patentes o tecnología propia destacada>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "value_en": "<lo mismo en inglés>"
+    }
+  },
+  "esg": {
+    "emissions_scope1_tco2e": {
+      "value": "<emisiones alcance 1: número>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "unit": "tCO2e"
+    },
+    "emissions_scope2_tco2e": {
+      "value": "<emisiones alcance 2: número>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "unit": "tCO2e"
+    },
+    "energy_use_mwh": {
+      "value": "<energía consumida: número>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "unit": "MWh"
+    },
+    "water_use_m3": {
+      "value": "<agua consumida: número>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>",
+      "unit": "m3"
+    },
+    "renewable_share_pct": {
+      "value": "<% de energía renovable: número de 0 a 100>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_name": "<nombre del documento>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+      "confidence": "<0 a 1>"
+    }
+  },
+  "timeline": [
+    {
+      "date": "<AAAA-MM-DD>",
+      "kind": "<founded | ipo | acquisition | merger | funding | plant_announced | plant_opened | major_contract | product_launch | sanction | leadership_change | other>",
+      "text_es": "<qué pasó>",
+      "text_en": "<in English>",
+      "source_url": "<enlace https:// a la fuente>",
+      "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+      "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+      "confidence": "<0 a 1>"
+    }
+  ],
+  "relations": [
+    {
+      "relation_id": "rel-001",
+      "counterparty": {
+        "name": "<cliente: nombre>",
+        "khipus_id": "<id en Khipus si ya existe>",
+        "ids": {
+          "lei": "<LEI>",
+          "yahoo_symbol": "<símbolo>"
+        },
+        "country": "<ISO-2>",
+        "object_type": "Company"
+      },
+      "rel_type": "supply",
+      "this_role": "supplier",
+      "label_es": "<qué le PROVEE (forma proveedor→cliente)>",
+      "label_en": "<in English>",
+      "product": "<producto>",
+      "status": "<active | ended | announced | planned | rumored | disputed>",
+      "start": "<AAAA-MM>",
+      "end": "<AAAA-MM solo si terminó>",
+      "dependency": {
+        "criticality": "<1-6 (ver regla)>",
+        "sole_source": "<true/false>",
+        "share_of_supplier_revenue": {
+          "value": "<% de los ingresos de ESTA empresa que viene de ese cliente: número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        },
+        "share_of_customer_purchases": {
+          "value": "<% de las compras del cliente que cubre esta empresa: número de 0 a 100>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>"
+        },
+        "contract_value": {
+          "value": "<valor del contrato: número en UNIDADES de la moneda original, sin millones>",
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<nombre del documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "retrieved_at": "<AAAA-MM-DD en que lo leíste>",
+          "confidence": "<0 a 1>",
+          "currency": "<moneda ISO de 3 letras, ej. USD, CNY, EUR>",
+          "period": "point"
+        },
+        "substitutability_months": "<meses para reemplazar al proveedor>"
+      },
+      "evidence": [
+        {
+          "source_url": "<enlace https:// a la fuente>",
+          "source_name": "<documento>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "published_at": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "quote": "<frase textual>"
+        }
+      ],
+      "confidence": "<0 a 1>"
+    },
+    {
+      "relation_id": "rel-002",
+      "counterparty": {
+        "name": "<proveedor: nombre>",
+        "object_type": "Company"
+      },
+      "rel_type": "supply",
+      "this_role": "customer",
+      "label_es": "<qué le COMPRA esta empresa (forma proveedor→cliente)>",
+      "label_en": "<in English>",
+      "status": "<active>",
+      "start": "<AAAA-MM>",
+      "dependency": {
+        "criticality": "<1-6>"
+      },
+      "evidence": [
+        {
+          "source_url": "<enlace https:// a la fuente>",
+          "source_kind": "<primary | press | trade | corporate | rumor | aggregator | state>",
+          "as_of": "<AAAA-MM-DD (o AAAA-MM / AAAA si no se sabe el día)>",
+          "quote": "<frase textual>"
+        }
+      ],
+      "confidence": "<0 a 1>"
+    }
+  ],
+  "live_hooks": {
+    "news_keywords": [
+      "<nombre corto que verá el usuario>",
+      "<nombre en escritura local, si existe>"
+    ],
+    "ir_url": "<enlace a la página de inversores>",
+    "filings_feed": "<dónde publica: EDGAR, HKEXnews, CNINFO, DART, EDINET/TDnet, MOPS…>",
+    "rss_urls": [
+      "<RSS de noticias de la empresa, si existe>"
+    ],
+    "valuation_watch": "<true solo si es PRIVADA>"
+  }
+}

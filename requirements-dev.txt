@@ -7,3 +7,8 @@
 # scripts/build_shapes.py recompila governance/shapes/*.ttl con rdflib. Versiones exactas en constraints.txt.
 pyshacl>=0.40.1
 rdflib>=7.6.0
+#
+# CHAT_UI_GENERATIVA F0 (docs/CHAT_UI_GENERATIVA.md §10.1): jsonschema es el ORÁCULO del contrato kblocks/1
+# (governance/schemas/kblocks-1.schema.json). En producción el sobre lo validará un validador compilado en
+# biblioteca estándar (core/genui/validate.py, fase F1); tests/test_genui_schema.py usa jsonschema (en CI es obligatorio).
+jsonschema>=4.26.0

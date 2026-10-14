@@ -1,0 +1,461 @@
+{
+ "args": {
+  "id_or_ticker": "Nvidia",
+  "include_live": true
+ },
+ "result": {
+  "as_of": "2026-10-13T23:16:25.395339+00:00",
+  "catalog": {
+   "as_of": "2026-10-13T18:20:44.583Z",
+   "as_of_note": "date the catalog snapshot was exported — NOT the date of the figures",
+   "backlog_note": "Backlog ~$500B through 2027",
+   "capex_2026_note": "~$4–5B — asset-light fabless",
+   "figures_as_of": null,
+   "figures_note": "undated curated figures (catalog); prefer live_market when available",
+   "figures_note_es": "cifras curadas sin fecha propia (catálogo); preferir live_market cuando exista",
+   "growth_note": "⚡ +50–70% revenue FY2026",
+   "location": "EE.UU.",
+   "moat_and_risks": "De facto monopoly: CUDA, a 20-year software moat, is impossible to replace in the short term. Backlog of ~$500B through 2027; tactical investments ($5B in Intel, a stake in CoreWeave) shore up both its supply chain and its demand.",
+   "operating_margin": 0.62,
+   "operating_margin_pct": 62.0,
+   "role": "Undisputed leader in GPUs and AI accelerators; the most valuable node in the entire chain.",
+   "source": "Khipus supply-chain graph snapshot (data/grafo_v0.json, curated catalog) — descriptive text curated by Khipus; figures inside may be approximate",
+   "supplies": "Blackwell GPUs and the ramping Vera Rubin platform, plus NVLink/Spectrum-X networking, for hyperscalers, CoreWeave, AI labs and governments. Its CUDA software platform locks in the entire ecosystem.",
+   "ticker_text": "NVDA · Nasdaq"
+  },
+  "category": "fabless",
+  "country": "EEUU",
+  "counts": {
+   "customers": 94,
+   "related": 54,
+   "suppliers": 44
+  },
+  "degree": 196,
+  "edge_semantics": {
+   "flow_types": [
+    "supply",
+    "cloud",
+    "fab",
+    "license",
+    "deploy",
+    "owns",
+    "ppa"
+   ],
+   "note": "top_suppliers/top_customers list only FLOW relations (goods, fab, cloud, license, power, ownership, deployment). partner/invest are in `related`. verified=false / confidence=0.3 when the curated text says the link is unverified or only possible.",
+   "related_types": [
+    "partner",
+    "invest"
+   ],
+   "relation_class": "supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other"
+  },
+  "id": "Nvidia",
+  "label": "Nvidia",
+  "listed": true,
+  "live_market": {
+   "as_of": "2026-10-13T20:00:02Z",
+   "available": true,
+   "change_pct": -1.19,
+   "currency": "USD",
+   "market_cap_usd_b": 4447.3,
+   "market_state": "REGULAR",
+   "market_time": "2026-10-13T19:58:00Z",
+   "prev_close": 184.6,
+   "price": 182.4,
+   "source": "yahoo",
+   "symbol": "NVDA"
+  },
+  "network_risk_score": {
+   "explain": "Network Risk Score 0-100 (higher = more fragile position in the AI supply chain): country/geo risk + graph centrality + margin + fundamentals + concentration. A heuristic, not a forecast.",
+   "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+   "method": "catalog formula via hot view V3 card (same formula as the app computeNRS; structural degree = flow relations, distinct pairs, of the current graph generation)",
+   "terms": {
+    "chain": 25,
+    "concentration": 4,
+    "fundamental": 0,
+    "geo": 8,
+    "market": 0
+   },
+   "value": 37
+  },
+  "preipo": false,
+  "related": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Nebius",
+    "label": "Nebius",
+    "relation": "Nebius como cloud partner exclusivo de Nvidia en Europa — GPU clusters H100/H200",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "AlignedDataCenters",
+    "label": "Aligned Data Centers",
+    "relation": "Nvidia participa en el consorcio AIP (AI Infrastructure Partnership) que adquiere Aligned en el deal de $40bn anunciado 16-oct-2025, cierre esperado 1H2026",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Bechtel",
+    "label": "Bechtel",
+    "relation": "Partnership de modularización del blueprint Omniverse DSX (1GW), anunciado 28-oct-2025",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "BlackRock",
+    "label": "BlackRock",
+    "relation": "Segundo mayor accionista institucional de Nvidia con 7,86% de las acciones, según agregador de 13F Eqvista (dato al 30-jun-2025).",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "CoolIT Systems",
+    "label": "CoolIT Systems",
+    "relation": "Diseños de cold plate custom colaborativos, confirmado en press release oficial de adquisición de Ecolab (mar-2026)",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "JioDataCenters",
+    "label": "Jio Data Centers",
+    "relation": "Nvidia provee GH200 Grace Hopper Superchips y DGX Cloud para la infraestructura de cómputo de IA de Reliance Jio, con objetivo de 2.000MW de datacenters",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "SPDJI",
+    "label": "SPDJI",
+    "relation": "Una de las mayores ponderaciones del S&P 500; cualquier cambio de metodología o rebalanceo del índice mueve mecánicamente miles de millones en flujos pasivos sobre esta posición.",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Vanguard",
+    "label": "Vanguard",
+    "relation": "Mayor accionista institucional individual de Nvidia con 9,19% de las acciones, según agregador de 13F Eqvista (dato al 30-jun-2025).",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "AfricaDataCentres",
+    "label": "Africa Data Centres",
+    "relation": "Nvidia realizó una inversión en Cassava Technologies (matriz de Africa Data Centres), reportada junto con Stanlib",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "CPPInvestments",
+    "label": "CPPInvestments",
+    "relation": "48,8M de acciones (~CAD 11.900M, 5,5% del libro de acciones de EE.UU.) a marzo de 2026, su mayor tenencia individual de una sola acción, tras vender la mayoría 2019-2024 y reconstruir 62% en 2025.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 4
+   }
+  ],
+  "resolved_from": {
+   "method": "id",
+   "score": 100,
+   "text": "Nvidia"
+  },
+  "sector": "diseno",
+  "sector_label": "Design & IP",
+  "sources": [
+   "Khipus graph snapshot",
+   "nodes/private_valuations.js (verified)",
+   "live profile: n/a"
+  ],
+  "structure": {
+   "cap_coverage_pct": 28,
+   "downstream_cap_at_risk_usd_b": 508.1,
+   "n_suppliers": 44,
+   "note": "supplier shares = weight of supplier links, not spend; cap at risk counts only companies with a known (live or verified) market cap",
+   "peers": [
+    "AMD",
+    "Lattice Semiconductor",
+    "Apple"
+   ],
+   "risk_sources": [
+    "TSMC 100.0%",
+    "ARM 25.2%",
+    "PDF Solutions 21.2% (indirect)"
+   ],
+   "supplier_concentration": "baja",
+   "supplier_hhi": 0.029,
+   "systemic_rank": 2,
+   "top_supplier": {
+    "id": "TSMC",
+    "label": "TSMC",
+    "share_pct": 6.4
+   },
+   "top_supplier_country": {
+    "country": "EEUU",
+    "share_pct": 53.0
+   }
+  },
+  "symbol": "NVDA",
+  "top_customers": [
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "CoreWeave",
+    "label": "CoreWeave",
+    "relation": "GPUs que forman el neocloud — y es inversor",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Dell",
+    "label": "Dell Technologies",
+    "relation": "GPUs para servidores PowerEdge XE",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Meta",
+    "label": "Meta",
+    "relation": "Mayor comprador individual de H100/H200: >600K GPUs en 2024–25",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Microsoft",
+    "label": "Microsoft (Azure)",
+    "relation": "GPUs para Azure",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Oracle",
+    "label": "Oracle (OCI)",
+    "relation": "GPUs para OCI / Stargate",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "xAI",
+    "label": "xAI (+SpaceX)",
+    "relation": "Colossus Memphis: 200K GPUs H100/H200 — mayor clúster IA privado",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Amazon",
+    "label": "Amazon (AWS)",
+    "relation": "GPUs para AWS",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "HPE",
+    "label": "Hewlett Packard Ent.",
+    "relation": "GPUs para ProLiant y Cray",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Nebius",
+    "label": "Nebius",
+    "relation": "GPUs para la nube de IA",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Alphabet",
+    "label": "Alphabet (Google Cloud)",
+    "relation": "GPUs para Google Cloud",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 3
+   }
+  ],
+  "top_suppliers": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "SKHynix",
+    "label": "SK Hynix",
+    "relation": "Proveedor exclusivo HBM3e para H100/H200/B200 — monopolio de facto",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "TSMC",
+    "label": "TSMC",
+    "relation": "Fabrica TODOS los chips Blackwell/Hopper en N4P/N3E — relación exclusiva",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Astera",
+    "label": "Astera Labs",
+    "relation": "Retimers PCIe 6.0 críticos para los NVL72 racks Blackwell",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Boyd Thermal",
+    "label": "Boyd Thermal",
+    "relation": "Validado en NVIDIA Recommended Vendor List (RVL) para GB200 NVL72 — cold plates, CDUs y quick disconnects 'production-ready', 8-oct-2025",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Ibiden",
+    "label": "Ibiden",
+    "relation": "Sustratos ABF del B200/Vera Rubin",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Khazna",
+    "label": "Khazna",
+    "relation": "Nvidia provee sistemas Grace Blackwell GB300 para el cluster de IA Stargate UAE, construido por G42 (matriz de Khazna) con OpenAI y Oracle como operadores",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "ARM",
+    "label": "ARM",
+    "relation": "Arquitectura de las CPUs Grace/Vera",
+    "relation_class": "supply",
+    "type": "license",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Expeditors",
+    "label": "Expeditors",
+    "relation": "Construcción de infraestructura de hyperscalers de IA es 'una parte sustancial' de su negocio de airfreight",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "OpenAI",
+    "label": "OpenAI",
+    "relation": "ChatGPT usa clusters de H100/H200 para inferencia a 100M+ usuarios",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Quanta",
+    "label": "Quanta Computer",
+    "relation": "ODM de servidores DGX/HGX",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   }
+  ]
+ },
+ "sample": true,
+ "tool": "get_company"
+}

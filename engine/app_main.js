@@ -3170,6 +3170,7 @@ const DIAG_META = {
   gobernanza: { icon:'⚖', name:'Gobernanza', name_en:'Governance', why:'Reglas y motor versionados · se activan con tu PIN', why_en:'Versioned rules and engine · activated with your PIN',
     explain:[['gov_gates_7d','Puertas','Gates'],['gov_guard','Guardia','Guard'],['gov_retention','Retención','Retention']] },
   market_extra:{icon:'🗂', name:'Fuentes de respaldo', name_en:'Backup sources', why:'FMP · MarketStack · AlphaVantage', why_en:'FMP · MarketStack · AlphaVantage' },
+  genui:      { icon:'✦', name:'Respuestas visuales', name_en:'Visual answers', why:'Gráficos y cifras dentro del chat · cada cifra con su fuente (sin IA, sin red)', why_en:'Charts and figures inside the chat · every figure with its source (no AI, no network)' },
   investigacion:{icon:'🔬', name:'Investigación IA', name_en:'AI research', why:'Proveedores en pausa · cola · presupuesto diario · reloj del servidor (R6)', why_en:'Paused providers · queue · daily budget · server clock (R6)' },
 };
 const DIAG_LEVEL_TXT = {
@@ -3288,7 +3289,7 @@ window.openDiagnostics = async function(fresh){
     const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
-    const order = ['claude','gemini','nvidia','investigacion','elevenlabs','finnhub','yahoo','fmp','grafo','ontologia','gobernanza','market_extra'];
+    const order = ['claude','gemini','nvidia','investigacion','elevenlabs','finnhub','yahoo','fmp','grafo','ontologia','gobernanza','genui','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k], d.routing)).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const lv = ok===tot ? 'ok' : (ok===0 ? 'bad' : 'warn');

@@ -1,0 +1,274 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "3 items: 2026-10-13 M 5.8 - 12 km SE of Hualien City, Taiwan; 2026-10-13 Strikes reported near Kyiv; 2026-10-12 Strait of Hormuz transits below average",
+    "es": "3 hechos: 2026-10-13 M 5.8 - 12 km SE of Hualien City, Taiwan; 2026-10-13 Strikes reported near Kyiv; 2026-10-12 Strait of Hormuz transits below average"
+   },
+   "data": {
+    "as_of": "2026-10-13T19:30:00+00:00",
+    "items": [
+     {
+      "date": "2026-10-13T08:12:00Z",
+      "fact": "F1",
+      "kind": "event",
+      "lat": 23.97,
+      "lon": 121.6,
+      "src": "usgs",
+      "title": "M 5.8 - 12 km SE of Hualien City, Taiwan",
+      "url": "https://earthquake.usgs.gov/x"
+     },
+     {
+      "date": "2026-10-13T06:00:00Z",
+      "fact": "F1",
+      "kind": "event",
+      "lat": 50.45,
+      "lon": 30.52,
+      "src": "gdelt",
+      "title": "Strikes reported near Kyiv",
+      "url": "https://example.org/a"
+     },
+     {
+      "date": "2026-10-12",
+      "fact": "F1",
+      "kind": "event",
+      "lat": 26.57,
+      "lon": 56.25,
+      "src": "portwatch",
+      "title": "Strait of Hormuz transits below average"
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_world_events"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "last 24 hours",
+    "es": "últimas 24 horas"
+   },
+   "title": {
+    "en": "World events",
+    "es": "Eventos en el mundo"
+   },
+   "type": "timeline"
+  },
+  {
+   "actions": [
+    {
+     "kind": "open_world",
+     "label": {
+      "en": "Open the World Monitor",
+      "es": "Abrir el World Monitor"
+     },
+     "lat": 23.97,
+     "lon": 121.6
+    }
+   ],
+   "alt": {
+    "en": "Map with 3 points: M 5.8 - 12 km SE of Hualien City, Taiwan, Strikes reported near Kyiv, Strait of Hormuz transits below average",
+    "es": "Mapa con 3 puntos: M 5.8 - 12 km SE of Hualien City, Taiwan, Strikes reported near Kyiv, Strait of Hormuz transits below average"
+   },
+   "data": {
+    "as_of": "2026-10-13T19:30:00+00:00",
+    "points": [
+     {
+      "kind": "event",
+      "label": "M 5.8 - 12 km SE of Hualien City, Taiwan",
+      "lat": 23.97,
+      "lon": 121.6
+     },
+     {
+      "kind": "event",
+      "label": "Strikes reported near Kyiv",
+      "lat": 50.45,
+      "lon": 30.52
+     },
+     {
+      "kind": "event",
+      "label": "Strait of Hormuz transits below average",
+      "lat": 26.57,
+      "lon": 56.25
+     }
+    ],
+    "region": "world",
+    "src": "world_monitor"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_world_events"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "last 24 hours",
+    "es": "últimas 24 horas"
+   },
+   "title": {
+    "en": "Where it happens",
+    "es": "Dónde pasa"
+   },
+   "type": "geo.mini"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "3 items: 2026-10-13 M 5.8 - 12 km SE of Hualien City, Taiwan; 2026-10-13 Strikes reported near Kyiv; 2026-10-12 Strait of Hormuz transits below average",
+    "es": "3 hechos: 2026-10-13 M 5.8 - 12 km SE of Hualien City, Taiwan; 2026-10-13 Strikes reported near Kyiv; 2026-10-12 Strait of Hormuz transits below average"
+   },
+   "data": {
+    "as_of": "2026-10-13T19:30:00+00:00",
+    "items": [
+     {
+      "date": "2026-10-13T08:12:00Z",
+      "fact": "F1",
+      "kind": "event",
+      "lat": 23.97,
+      "lon": 121.6,
+      "src": "usgs",
+      "title": "M 5.8 - 12 km SE of Hualien City, Taiwan",
+      "url": "https://earthquake.usgs.gov/x"
+     },
+     {
+      "date": "2026-10-13T06:00:00Z",
+      "fact": "F1",
+      "kind": "event",
+      "lat": 50.45,
+      "lon": 30.52,
+      "src": "gdelt",
+      "title": "Strikes reported near Kyiv",
+      "url": "https://example.org/a"
+     },
+     {
+      "date": "2026-10-12",
+      "fact": "F1",
+      "kind": "event",
+      "lat": 26.57,
+      "lon": 56.25,
+      "src": "portwatch",
+      "title": "Strait of Hormuz transits below average"
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_world_events"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "last 24 hours",
+    "es": "últimas 24 horas"
+   },
+   "title": {
+    "en": "World events",
+    "es": "Eventos en el mundo"
+   },
+   "type": "timeline"
+  },
+  {
+   "actions": [
+    {
+     "kind": "open_world",
+     "label": {
+      "en": "Open the World Monitor",
+      "es": "Abrir el World Monitor"
+     },
+     "lat": 23.97,
+     "lon": 121.6
+    }
+   ],
+   "alt": {
+    "en": "Map with 3 points: M 5.8 - 12 km SE of Hualien City, Taiwan, Strikes reported near Kyiv, Strait of Hormuz transits below average",
+    "es": "Mapa con 3 puntos: M 5.8 - 12 km SE of Hualien City, Taiwan, Strikes reported near Kyiv, Strait of Hormuz transits below average"
+   },
+   "data": {
+    "as_of": "2026-10-13T19:30:00+00:00",
+    "points": [
+     {
+      "kind": "event",
+      "label": "M 5.8 - 12 km SE of Hualien City, Taiwan",
+      "lat": 23.97,
+      "lon": 121.6
+     },
+     {
+      "kind": "event",
+      "label": "Strikes reported near Kyiv",
+      "lat": 50.45,
+      "lon": 30.52
+     },
+     {
+      "kind": "event",
+      "label": "Strait of Hormuz transits below average",
+      "lat": 26.57,
+      "lon": 56.25
+     }
+    ],
+    "region": "world",
+    "src": "world_monitor"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_world_events"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "last 24 hours",
+    "es": "últimas 24 horas"
+   },
+   "title": {
+    "en": "Where it happens",
+    "es": "Dónde pasa"
+   },
+   "type": "geo.mini"
+  }
+ ]
+}

@@ -30,6 +30,7 @@ EL contrato común de las respuestas MCP (ARQUITECTURA_V2 §15; BRECHAS L4-08).
 
 ## Lo usan
 
+- [[core.khipu_chat.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - herramienta MCP `cancel_order` → [[API herramientas MCP]]
 - herramienta MCP `get_account` → [[API herramientas MCP]]

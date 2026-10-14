@@ -1,0 +1,42 @@
+{
+ "args": {
+  "positions": [
+   {
+    "shares": 10,
+    "symbol": "NVDA"
+   },
+   {
+    "shares": 20,
+    "symbol": "AMD"
+   }
+  ]
+ },
+ "result": {
+  "as_of": "2026-10-10",
+  "beta_spy": 1.83,
+  "days": 250,
+  "max_drawdown_pct": -27.4,
+  "ok": true,
+  "portfolio_value_usd": 5048.0,
+  "positions": [
+   {
+    "risk_contrib_pct": 58.3,
+    "symbol": "NVDA"
+   },
+   {
+    "risk_contrib_pct": 41.7,
+    "symbol": "AMD"
+   }
+  ],
+  "var95": {
+   "conf": 0.95,
+   "cvar_1d_pct": 5.471,
+   "cvar_1d_usd": 276.18,
+   "hist_1d_pct": 3.912,
+   "hist_1d_usd": 197.48
+  },
+  "vol_ann_pct": 41.2
+ },
+ "sample": true,
+ "tool": "get_risk_report"
+}

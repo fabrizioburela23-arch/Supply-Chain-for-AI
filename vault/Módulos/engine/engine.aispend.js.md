@@ -26,7 +26,7 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 - [[engine.app_main.js]] — usa `BASE`, `LANG`
 - [[engine.toast.js]] — usa `khipuActor`
 
-Se carga en [[app.html]] en la posición **59 de 97** (línea 3101), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
+Se carga en [[app.html]] en la posición **59 de 98** (línea 3101), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
 
 ## Lo usan
 

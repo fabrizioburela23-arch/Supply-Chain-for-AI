@@ -49,12 +49,13 @@ registro append-only de CADA pedido a la IA (docs/INFRA_OPERATIVA.md §2.6, paso
 - [[core.replay.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.conftest.py]]
 - [[tests.test_ai_calls.py]]
+- [[tests.test_genui_ledger.py]]
 - [[tests.test_khipus_os_perf.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_ledger_review_fixes.py]]

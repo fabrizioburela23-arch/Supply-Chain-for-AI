@@ -46,6 +46,7 @@ _Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_genui_schema.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_flow.py]]
 - [[tests.test_review_infra_c.py]]

@@ -1,0 +1,5177 @@
+{
+ "_note": "Las 4 preguntas del prototipo (docs/CHAT_UI_GENERATIVA.md §14) como sobres kblocks/1 en ES y EN, para el arnés de node y las capturas de Chromium (tests/test_genui_render_node.py, tests/test_genui_browser.py). TODAS las cifras son de MUESTRA (src demo): no son datos reales. Las genera scratchpad make_fixtures.py; validan contra governance/schemas/kblocks-1.schema.json.",
+ "questions": [
+  {
+   "key": "a",
+   "question": {
+    "es": "¿Cuál es la empresa de baterías más grande?",
+    "en": "What is the biggest battery company?"
+   },
+   "agents": [
+    "analista",
+    "radar"
+   ],
+   "tools": [
+    "search_companies",
+    "get_company",
+    "rank_companies"
+   ],
+   "envelope": {
+    "es": {
+     "v": "kblocks/1",
+     "lang": "es",
+     "state": "final",
+     "layout": "plan",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 9,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Por **tamaño de mercado**, la más grande del grupo es **Empresa A**. Así se ordenan las 5 mayores del catálogo:",
+        "lang": "es"
+       }
+      },
+      {
+       "id": "b1",
+       "type": "ranking",
+       "state": "ready",
+       "pinnable": true,
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "title": {
+        "es": "Ranking de baterías",
+        "en": "Battery ranking"
+       },
+       "subtitle": {
+        "es": "índice, A = 100",
+        "en": "index, A = 100"
+       },
+       "alt": {
+        "es": "Ranking por tamaño (índice de muestra): A 100, B 80, C 60, D 40, E 20.",
+        "en": "Ranking by size (sample index): A 100, B 80, C 60, D 40, E 20."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "rank_companies",
+        "call": 1,
+        "fact": "F1"
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "data": {
+        "metric": {
+         "label": {
+          "es": "índice",
+          "en": "index"
+         },
+         "unit": "index",
+         "src": "demo",
+         "as_of": "2026-10-13T15:00:00Z",
+         "fact": "F1"
+        },
+        "direction": "higher_better",
+        "items": [
+         {
+          "rank": 1,
+          "entity": {
+           "id": "empresa_a",
+           "label": "Empresa A"
+          },
+          "v": 100
+         },
+         {
+          "rank": 2,
+          "entity": {
+           "id": "empresa_b",
+           "label": "Empresa B"
+          },
+          "v": 80
+         },
+         {
+          "rank": 3,
+          "entity": {
+           "id": "empresa_c",
+           "label": "Empresa C"
+          },
+          "v": 60
+         },
+         {
+          "rank": 4,
+          "entity": {
+           "id": "empresa_d",
+           "label": "Empresa D"
+          },
+          "v": 40
+         },
+         {
+          "rank": 5,
+          "entity": {
+           "id": "empresa_e",
+           "label": "Empresa E"
+          },
+          "v": 20
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "En una mirada:",
+        "lang": "es"
+       }
+      },
+      {
+       "id": "b2",
+       "type": "metric.tiles",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "En una mirada",
+        "en": "At a glance"
+       },
+       "alt": {
+        "es": "5 empresas comparadas; el líder saca 20 puntos al segundo; NRS 60; cambio a 30 días sin dato en vivo (muestra).",
+        "en": "5 companies compared; the leader is 20 points ahead of #2; NRS 60; 30-day change has no live data (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 2,
+        "fact": "F2"
+       },
+       "sources": [
+        "F1",
+        "F2",
+        "F3"
+       ],
+       "data": {
+        "items": [
+         {
+          "label": {
+           "es": "Comparadas",
+           "en": "Compared"
+          },
+          "value": {
+           "v": 5,
+           "unit": "count",
+           "src": "demo",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F1"
+          },
+          "sub": {
+           "es": "empresas de baterías",
+           "en": "battery companies"
+          }
+         },
+         {
+          "label": {
+           "es": "Ventaja del líder",
+           "en": "Leader's lead"
+          },
+          "value": {
+           "v": 20,
+           "unit": "pts",
+           "src": "demo",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F2",
+           "explain": "genui_index"
+          },
+          "sub": {
+           "es": "vs. el 2.º (índice)",
+           "en": "vs. #2 (index)"
+          }
+         },
+         {
+          "label": {
+           "es": "NRS",
+           "en": "NRS"
+          },
+          "value": {
+           "v": 60,
+           "unit": "nrs",
+           "src": "khipus_nrs",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F3",
+           "explain": "nrs"
+          },
+          "sub": {
+           "es": "del líder",
+           "en": "of the leader"
+          }
+         },
+         {
+          "label": {
+           "es": "Cambio 30 días",
+           "en": "30-day change"
+          },
+          "value": {
+           "v": null,
+           "unit": "pct",
+           "src": "finnhub",
+           "as_of": null,
+           "missing_reason": {
+            "es": "sin dato en vivo",
+            "en": "no live data"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "c1",
+       "type": "company.card",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Empresa A",
+        "en": "Empresa A"
+       },
+       "alt": {
+        "es": "Ficha de Empresa A (muestra).",
+        "en": "Empresa A card (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 2,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2"
+       ],
+       "data": {
+        "company": {
+         "id": "empresa_a",
+         "label": "Empresa A"
+        },
+        "listed": true,
+        "structure": {
+         "es": "celdas para autos",
+         "en": "EV cells"
+        },
+        "spark": {
+         "name": "Empresa A",
+         "values": {
+          "unit": "index",
+          "src": "demo",
+          "as_of": "2026-08-25"
+         },
+         "points": [
+          [
+           "2026-07-01",
+           100.0
+          ],
+          [
+           "2026-07-02",
+           101.4
+          ],
+          [
+           "2026-07-03",
+           100.9
+          ],
+          [
+           "2026-07-06",
+           99.7
+          ],
+          [
+           "2026-07-07",
+           99.0
+          ],
+          [
+           "2026-07-08",
+           99.9
+          ],
+          [
+           "2026-07-09",
+           99.1
+          ],
+          [
+           "2026-07-10",
+           98.7
+          ],
+          [
+           "2026-07-13",
+           99.7
+          ],
+          [
+           "2026-07-14",
+           99.3
+          ],
+          [
+           "2026-07-15",
+           99.8
+          ],
+          [
+           "2026-07-16",
+           101.1
+          ],
+          [
+           "2026-07-17",
+           102.6
+          ],
+          [
+           "2026-07-20",
+           102.8
+          ],
+          [
+           "2026-07-21",
+           102.3
+          ],
+          [
+           "2026-07-22",
+           102.2
+          ],
+          [
+           "2026-07-23",
+           102.2
+          ],
+          [
+           "2026-07-24",
+           102.6
+          ],
+          [
+           "2026-07-27",
+           101.9
+          ],
+          [
+           "2026-07-28",
+           103.0
+          ],
+          [
+           "2026-07-29",
+           101.9
+          ],
+          [
+           "2026-07-30",
+           102.9
+          ],
+          [
+           "2026-07-31",
+           101.6
+          ],
+          [
+           "2026-08-03",
+           101.1
+          ],
+          [
+           "2026-08-04",
+           101.1
+          ],
+          [
+           "2026-08-05",
+           101.3
+          ],
+          [
+           "2026-08-06",
+           101.7
+          ],
+          [
+           "2026-08-07",
+           102.3
+          ],
+          [
+           "2026-08-10",
+           103.2
+          ],
+          [
+           "2026-08-11",
+           102.9
+          ],
+          [
+           "2026-08-12",
+           104.1
+          ],
+          [
+           "2026-08-13",
+           102.8
+          ],
+          [
+           "2026-08-14",
+           101.5
+          ],
+          [
+           "2026-08-17",
+           101.3
+          ],
+          [
+           "2026-08-18",
+           102.6
+          ],
+          [
+           "2026-08-19",
+           101.4
+          ],
+          [
+           "2026-08-20",
+           102.4
+          ],
+          [
+           "2026-08-21",
+           103.0
+          ],
+          [
+           "2026-08-24",
+           104.2
+          ],
+          [
+           "2026-08-25",
+           103.9
+          ]
+         ]
+        }
+       }
+      },
+      {
+       "id": "c2",
+       "type": "company.card",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Empresa B",
+        "en": "Empresa B"
+       },
+       "alt": {
+        "es": "Ficha de Empresa B (muestra).",
+        "en": "Empresa B card (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 3,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2"
+       ],
+       "data": {
+        "company": {
+         "id": "empresa_b",
+         "label": "Empresa B"
+        },
+        "listed": true,
+        "structure": {
+         "es": "baterías y autos",
+         "en": "batteries & cars"
+        },
+        "spark": {
+         "name": "Empresa B",
+         "values": {
+          "unit": "index",
+          "src": "demo",
+          "as_of": "2026-08-25"
+         },
+         "points": [
+          [
+           "2026-07-01",
+           100.0
+          ],
+          [
+           "2026-07-02",
+           101.5
+          ],
+          [
+           "2026-07-03",
+           101.9
+          ],
+          [
+           "2026-07-06",
+           103.5
+          ],
+          [
+           "2026-07-07",
+           102.8
+          ],
+          [
+           "2026-07-08",
+           104.1
+          ],
+          [
+           "2026-07-09",
+           104.9
+          ],
+          [
+           "2026-07-10",
+           106.0
+          ],
+          [
+           "2026-07-13",
+           105.3
+          ],
+          [
+           "2026-07-14",
+           103.8
+          ],
+          [
+           "2026-07-15",
+           102.6
+          ],
+          [
+           "2026-07-16",
+           101.5
+          ],
+          [
+           "2026-07-17",
+           100.8
+          ],
+          [
+           "2026-07-20",
+           100.9
+          ],
+          [
+           "2026-07-21",
+           102.2
+          ],
+          [
+           "2026-07-22",
+           103.7
+          ],
+          [
+           "2026-07-23",
+           103.5
+          ],
+          [
+           "2026-07-24",
+           101.9
+          ],
+          [
+           "2026-07-27",
+           101.6
+          ],
+          [
+           "2026-07-28",
+           100.9
+          ],
+          [
+           "2026-07-29",
+           102.1
+          ],
+          [
+           "2026-07-30",
+           100.8
+          ],
+          [
+           "2026-07-31",
+           100.8
+          ],
+          [
+           "2026-08-03",
+           102.0
+          ],
+          [
+           "2026-08-04",
+           101.7
+          ],
+          [
+           "2026-08-05",
+           101.7
+          ],
+          [
+           "2026-08-06",
+           101.6
+          ],
+          [
+           "2026-08-07",
+           102.5
+          ],
+          [
+           "2026-08-10",
+           103.0
+          ],
+          [
+           "2026-08-11",
+           101.7
+          ],
+          [
+           "2026-08-12",
+           102.0
+          ],
+          [
+           "2026-08-13",
+           101.9
+          ],
+          [
+           "2026-08-14",
+           100.6
+          ],
+          [
+           "2026-08-17",
+           100.0
+          ],
+          [
+           "2026-08-18",
+           99.3
+          ],
+          [
+           "2026-08-19",
+           100.7
+          ],
+          [
+           "2026-08-20",
+           100.2
+          ],
+          [
+           "2026-08-21",
+           100.3
+          ],
+          [
+           "2026-08-24",
+           98.7
+          ],
+          [
+           "2026-08-25",
+           97.4
+          ]
+         ]
+        }
+       }
+      },
+      {
+       "id": "c3",
+       "type": "company.card",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Empresa C",
+        "en": "Empresa C"
+       },
+       "alt": {
+        "es": "Ficha de Empresa C (muestra).",
+        "en": "Empresa C card (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 4,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2"
+       ],
+       "data": {
+        "company": {
+         "id": "empresa_c",
+         "label": "Empresa C"
+        },
+        "listed": true,
+        "structure": {
+         "es": "celdas y almacenamiento",
+         "en": "cells & storage"
+        },
+        "spark": {
+         "name": "Empresa C",
+         "values": {
+          "unit": "index",
+          "src": "demo",
+          "as_of": "2026-08-25"
+         },
+         "points": [
+          [
+           "2026-07-01",
+           100.0
+          ],
+          [
+           "2026-07-02",
+           101.6
+          ],
+          [
+           "2026-07-03",
+           102.9
+          ],
+          [
+           "2026-07-06",
+           104.0
+          ],
+          [
+           "2026-07-07",
+           103.3
+          ],
+          [
+           "2026-07-08",
+           101.8
+          ],
+          [
+           "2026-07-09",
+           100.9
+          ],
+          [
+           "2026-07-10",
+           100.4
+          ],
+          [
+           "2026-07-13",
+           101.1
+          ],
+          [
+           "2026-07-14",
+           101.7
+          ],
+          [
+           "2026-07-15",
+           102.0
+          ],
+          [
+           "2026-07-16",
+           101.7
+          ],
+          [
+           "2026-07-17",
+           102.0
+          ],
+          [
+           "2026-07-20",
+           101.9
+          ],
+          [
+           "2026-07-21",
+           101.9
+          ],
+          [
+           "2026-07-22",
+           101.6
+          ],
+          [
+           "2026-07-23",
+           101.2
+          ],
+          [
+           "2026-07-24",
+           100.9
+          ],
+          [
+           "2026-07-27",
+           100.9
+          ],
+          [
+           "2026-07-28",
+           101.7
+          ],
+          [
+           "2026-07-29",
+           101.9
+          ],
+          [
+           "2026-07-30",
+           101.4
+          ],
+          [
+           "2026-07-31",
+           102.8
+          ],
+          [
+           "2026-08-03",
+           102.5
+          ],
+          [
+           "2026-08-04",
+           101.9
+          ],
+          [
+           "2026-08-05",
+           101.6
+          ],
+          [
+           "2026-08-06",
+           101.0
+          ],
+          [
+           "2026-08-07",
+           102.1
+          ],
+          [
+           "2026-08-10",
+           102.3
+          ],
+          [
+           "2026-08-11",
+           103.1
+          ],
+          [
+           "2026-08-12",
+           102.5
+          ],
+          [
+           "2026-08-13",
+           103.6
+          ],
+          [
+           "2026-08-14",
+           102.2
+          ],
+          [
+           "2026-08-17",
+           101.2
+          ],
+          [
+           "2026-08-18",
+           101.7
+          ],
+          [
+           "2026-08-19",
+           102.5
+          ],
+          [
+           "2026-08-20",
+           103.7
+          ],
+          [
+           "2026-08-21",
+           103.3
+          ],
+          [
+           "2026-08-24",
+           102.1
+          ],
+          [
+           "2026-08-25",
+           103.0
+          ]
+         ]
+        }
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "prefill_chat",
+          "text": "¿Quién le provee a Empresa A?",
+          "label": {
+           "es": "¿Quién le provee a Empresa A?",
+           "en": "Who supplies Company A?"
+          }
+         },
+         {
+          "kind": "prefill_chat",
+          "text": "Compara A y B",
+          "label": {
+           "es": "Compara A y B",
+           "en": "Compare A and B"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "Catálogo Khipus (muestra)",
+          "tool": "rank_companies",
+          "as_of": "2026-10-13T15:00:00Z"
+         },
+         {
+          "id": "F2",
+          "label": "finnhub (muestra)",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         },
+         {
+          "id": "F3",
+          "label": "Khipus NRS",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "en": {
+     "v": "kblocks/1",
+     "lang": "en",
+     "state": "final",
+     "layout": "plan",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 9,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "By **market size**, the biggest in the group is **Company A**. Here are the top 5 in the catalog:",
+        "lang": "en"
+       }
+      },
+      {
+       "id": "b1",
+       "type": "ranking",
+       "state": "ready",
+       "pinnable": true,
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "title": {
+        "es": "Ranking de baterías",
+        "en": "Battery ranking"
+       },
+       "subtitle": {
+        "es": "índice, A = 100",
+        "en": "index, A = 100"
+       },
+       "alt": {
+        "es": "Ranking por tamaño (índice de muestra): A 100, B 80, C 60, D 40, E 20.",
+        "en": "Ranking by size (sample index): A 100, B 80, C 60, D 40, E 20."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "rank_companies",
+        "call": 1,
+        "fact": "F1"
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "data": {
+        "metric": {
+         "label": {
+          "es": "índice",
+          "en": "index"
+         },
+         "unit": "index",
+         "src": "demo",
+         "as_of": "2026-10-13T15:00:00Z",
+         "fact": "F1"
+        },
+        "direction": "higher_better",
+        "items": [
+         {
+          "rank": 1,
+          "entity": {
+           "id": "empresa_a",
+           "label": "Company A"
+          },
+          "v": 100
+         },
+         {
+          "rank": 2,
+          "entity": {
+           "id": "empresa_b",
+           "label": "Company B"
+          },
+          "v": 80
+         },
+         {
+          "rank": 3,
+          "entity": {
+           "id": "empresa_c",
+           "label": "Company C"
+          },
+          "v": 60
+         },
+         {
+          "rank": 4,
+          "entity": {
+           "id": "empresa_d",
+           "label": "Company D"
+          },
+          "v": 40
+         },
+         {
+          "rank": 5,
+          "entity": {
+           "id": "empresa_e",
+           "label": "Company E"
+          },
+          "v": 20
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "At a glance:",
+        "lang": "en"
+       }
+      },
+      {
+       "id": "b2",
+       "type": "metric.tiles",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "En una mirada",
+        "en": "At a glance"
+       },
+       "alt": {
+        "es": "5 empresas comparadas; el líder saca 20 puntos al segundo; NRS 60; cambio a 30 días sin dato en vivo (muestra).",
+        "en": "5 companies compared; the leader is 20 points ahead of #2; NRS 60; 30-day change has no live data (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 2,
+        "fact": "F2"
+       },
+       "sources": [
+        "F1",
+        "F2",
+        "F3"
+       ],
+       "data": {
+        "items": [
+         {
+          "label": {
+           "es": "Comparadas",
+           "en": "Compared"
+          },
+          "value": {
+           "v": 5,
+           "unit": "count",
+           "src": "demo",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F1"
+          },
+          "sub": {
+           "es": "empresas de baterías",
+           "en": "battery companies"
+          }
+         },
+         {
+          "label": {
+           "es": "Ventaja del líder",
+           "en": "Leader's lead"
+          },
+          "value": {
+           "v": 20,
+           "unit": "pts",
+           "src": "demo",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F2",
+           "explain": "genui_index"
+          },
+          "sub": {
+           "es": "vs. el 2.º (índice)",
+           "en": "vs. #2 (index)"
+          }
+         },
+         {
+          "label": {
+           "es": "NRS",
+           "en": "NRS"
+          },
+          "value": {
+           "v": 60,
+           "unit": "nrs",
+           "src": "khipus_nrs",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F3",
+           "explain": "nrs"
+          },
+          "sub": {
+           "es": "del líder",
+           "en": "of the leader"
+          }
+         },
+         {
+          "label": {
+           "es": "Cambio 30 días",
+           "en": "30-day change"
+          },
+          "value": {
+           "v": null,
+           "unit": "pct",
+           "src": "finnhub",
+           "as_of": null,
+           "missing_reason": {
+            "es": "sin dato en vivo",
+            "en": "no live data"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "c1",
+       "type": "company.card",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Company A",
+        "en": "Company A"
+       },
+       "alt": {
+        "es": "Ficha de Company A (muestra).",
+        "en": "Company A card (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 2,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2"
+       ],
+       "data": {
+        "company": {
+         "id": "empresa_a",
+         "label": "Company A"
+        },
+        "listed": true,
+        "structure": {
+         "es": "celdas para autos",
+         "en": "EV cells"
+        },
+        "spark": {
+         "name": "Company A",
+         "values": {
+          "unit": "index",
+          "src": "demo",
+          "as_of": "2026-08-25"
+         },
+         "points": [
+          [
+           "2026-07-01",
+           100.0
+          ],
+          [
+           "2026-07-02",
+           101.4
+          ],
+          [
+           "2026-07-03",
+           100.9
+          ],
+          [
+           "2026-07-06",
+           99.7
+          ],
+          [
+           "2026-07-07",
+           99.0
+          ],
+          [
+           "2026-07-08",
+           99.9
+          ],
+          [
+           "2026-07-09",
+           99.1
+          ],
+          [
+           "2026-07-10",
+           98.7
+          ],
+          [
+           "2026-07-13",
+           99.7
+          ],
+          [
+           "2026-07-14",
+           99.3
+          ],
+          [
+           "2026-07-15",
+           99.8
+          ],
+          [
+           "2026-07-16",
+           101.1
+          ],
+          [
+           "2026-07-17",
+           102.6
+          ],
+          [
+           "2026-07-20",
+           102.8
+          ],
+          [
+           "2026-07-21",
+           102.3
+          ],
+          [
+           "2026-07-22",
+           102.2
+          ],
+          [
+           "2026-07-23",
+           102.2
+          ],
+          [
+           "2026-07-24",
+           102.6
+          ],
+          [
+           "2026-07-27",
+           101.9
+          ],
+          [
+           "2026-07-28",
+           103.0
+          ],
+          [
+           "2026-07-29",
+           101.9
+          ],
+          [
+           "2026-07-30",
+           102.9
+          ],
+          [
+           "2026-07-31",
+           101.6
+          ],
+          [
+           "2026-08-03",
+           101.1
+          ],
+          [
+           "2026-08-04",
+           101.1
+          ],
+          [
+           "2026-08-05",
+           101.3
+          ],
+          [
+           "2026-08-06",
+           101.7
+          ],
+          [
+           "2026-08-07",
+           102.3
+          ],
+          [
+           "2026-08-10",
+           103.2
+          ],
+          [
+           "2026-08-11",
+           102.9
+          ],
+          [
+           "2026-08-12",
+           104.1
+          ],
+          [
+           "2026-08-13",
+           102.8
+          ],
+          [
+           "2026-08-14",
+           101.5
+          ],
+          [
+           "2026-08-17",
+           101.3
+          ],
+          [
+           "2026-08-18",
+           102.6
+          ],
+          [
+           "2026-08-19",
+           101.4
+          ],
+          [
+           "2026-08-20",
+           102.4
+          ],
+          [
+           "2026-08-21",
+           103.0
+          ],
+          [
+           "2026-08-24",
+           104.2
+          ],
+          [
+           "2026-08-25",
+           103.9
+          ]
+         ]
+        }
+       }
+      },
+      {
+       "id": "c2",
+       "type": "company.card",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Company B",
+        "en": "Company B"
+       },
+       "alt": {
+        "es": "Ficha de Company B (muestra).",
+        "en": "Company B card (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 3,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2"
+       ],
+       "data": {
+        "company": {
+         "id": "empresa_b",
+         "label": "Company B"
+        },
+        "listed": true,
+        "structure": {
+         "es": "baterías y autos",
+         "en": "batteries & cars"
+        },
+        "spark": {
+         "name": "Company B",
+         "values": {
+          "unit": "index",
+          "src": "demo",
+          "as_of": "2026-08-25"
+         },
+         "points": [
+          [
+           "2026-07-01",
+           100.0
+          ],
+          [
+           "2026-07-02",
+           101.5
+          ],
+          [
+           "2026-07-03",
+           101.9
+          ],
+          [
+           "2026-07-06",
+           103.5
+          ],
+          [
+           "2026-07-07",
+           102.8
+          ],
+          [
+           "2026-07-08",
+           104.1
+          ],
+          [
+           "2026-07-09",
+           104.9
+          ],
+          [
+           "2026-07-10",
+           106.0
+          ],
+          [
+           "2026-07-13",
+           105.3
+          ],
+          [
+           "2026-07-14",
+           103.8
+          ],
+          [
+           "2026-07-15",
+           102.6
+          ],
+          [
+           "2026-07-16",
+           101.5
+          ],
+          [
+           "2026-07-17",
+           100.8
+          ],
+          [
+           "2026-07-20",
+           100.9
+          ],
+          [
+           "2026-07-21",
+           102.2
+          ],
+          [
+           "2026-07-22",
+           103.7
+          ],
+          [
+           "2026-07-23",
+           103.5
+          ],
+          [
+           "2026-07-24",
+           101.9
+          ],
+          [
+           "2026-07-27",
+           101.6
+          ],
+          [
+           "2026-07-28",
+           100.9
+          ],
+          [
+           "2026-07-29",
+           102.1
+          ],
+          [
+           "2026-07-30",
+           100.8
+          ],
+          [
+           "2026-07-31",
+           100.8
+          ],
+          [
+           "2026-08-03",
+           102.0
+          ],
+          [
+           "2026-08-04",
+           101.7
+          ],
+          [
+           "2026-08-05",
+           101.7
+          ],
+          [
+           "2026-08-06",
+           101.6
+          ],
+          [
+           "2026-08-07",
+           102.5
+          ],
+          [
+           "2026-08-10",
+           103.0
+          ],
+          [
+           "2026-08-11",
+           101.7
+          ],
+          [
+           "2026-08-12",
+           102.0
+          ],
+          [
+           "2026-08-13",
+           101.9
+          ],
+          [
+           "2026-08-14",
+           100.6
+          ],
+          [
+           "2026-08-17",
+           100.0
+          ],
+          [
+           "2026-08-18",
+           99.3
+          ],
+          [
+           "2026-08-19",
+           100.7
+          ],
+          [
+           "2026-08-20",
+           100.2
+          ],
+          [
+           "2026-08-21",
+           100.3
+          ],
+          [
+           "2026-08-24",
+           98.7
+          ],
+          [
+           "2026-08-25",
+           97.4
+          ]
+         ]
+        }
+       }
+      },
+      {
+       "id": "c3",
+       "type": "company.card",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Company C",
+        "en": "Company C"
+       },
+       "alt": {
+        "es": "Ficha de Company C (muestra).",
+        "en": "Company C card (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 4,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2"
+       ],
+       "data": {
+        "company": {
+         "id": "empresa_c",
+         "label": "Company C"
+        },
+        "listed": true,
+        "structure": {
+         "es": "celdas y almacenamiento",
+         "en": "cells & storage"
+        },
+        "spark": {
+         "name": "Company C",
+         "values": {
+          "unit": "index",
+          "src": "demo",
+          "as_of": "2026-08-25"
+         },
+         "points": [
+          [
+           "2026-07-01",
+           100.0
+          ],
+          [
+           "2026-07-02",
+           101.6
+          ],
+          [
+           "2026-07-03",
+           102.9
+          ],
+          [
+           "2026-07-06",
+           104.0
+          ],
+          [
+           "2026-07-07",
+           103.3
+          ],
+          [
+           "2026-07-08",
+           101.8
+          ],
+          [
+           "2026-07-09",
+           100.9
+          ],
+          [
+           "2026-07-10",
+           100.4
+          ],
+          [
+           "2026-07-13",
+           101.1
+          ],
+          [
+           "2026-07-14",
+           101.7
+          ],
+          [
+           "2026-07-15",
+           102.0
+          ],
+          [
+           "2026-07-16",
+           101.7
+          ],
+          [
+           "2026-07-17",
+           102.0
+          ],
+          [
+           "2026-07-20",
+           101.9
+          ],
+          [
+           "2026-07-21",
+           101.9
+          ],
+          [
+           "2026-07-22",
+           101.6
+          ],
+          [
+           "2026-07-23",
+           101.2
+          ],
+          [
+           "2026-07-24",
+           100.9
+          ],
+          [
+           "2026-07-27",
+           100.9
+          ],
+          [
+           "2026-07-28",
+           101.7
+          ],
+          [
+           "2026-07-29",
+           101.9
+          ],
+          [
+           "2026-07-30",
+           101.4
+          ],
+          [
+           "2026-07-31",
+           102.8
+          ],
+          [
+           "2026-08-03",
+           102.5
+          ],
+          [
+           "2026-08-04",
+           101.9
+          ],
+          [
+           "2026-08-05",
+           101.6
+          ],
+          [
+           "2026-08-06",
+           101.0
+          ],
+          [
+           "2026-08-07",
+           102.1
+          ],
+          [
+           "2026-08-10",
+           102.3
+          ],
+          [
+           "2026-08-11",
+           103.1
+          ],
+          [
+           "2026-08-12",
+           102.5
+          ],
+          [
+           "2026-08-13",
+           103.6
+          ],
+          [
+           "2026-08-14",
+           102.2
+          ],
+          [
+           "2026-08-17",
+           101.2
+          ],
+          [
+           "2026-08-18",
+           101.7
+          ],
+          [
+           "2026-08-19",
+           102.5
+          ],
+          [
+           "2026-08-20",
+           103.7
+          ],
+          [
+           "2026-08-21",
+           103.3
+          ],
+          [
+           "2026-08-24",
+           102.1
+          ],
+          [
+           "2026-08-25",
+           103.0
+          ]
+         ]
+        }
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "prefill_chat",
+          "text": "Who supplies Company A?",
+          "label": {
+           "es": "¿Quién le provee a Empresa A?",
+           "en": "Who supplies Company A?"
+          }
+         },
+         {
+          "kind": "prefill_chat",
+          "text": "Compare A and B",
+          "label": {
+           "es": "Compara A y B",
+           "en": "Compare A and B"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "Khipus catalog (sample)",
+          "tool": "rank_companies",
+          "as_of": "2026-10-13T15:00:00Z"
+         },
+         {
+          "id": "F2",
+          "label": "finnhub (sample)",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         },
+         {
+          "id": "F3",
+          "label": "Khipus NRS",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "b",
+   "question": {
+    "es": "Desármame Nvidia",
+    "en": "Break down Nvidia for me"
+   },
+   "agents": [
+    "analista",
+    "cadena"
+   ],
+   "tools": [
+    "get_company",
+    "get_history",
+    "get_supply_chain",
+    "get_research"
+   ],
+   "envelope": {
+    "es": {
+     "v": "kblocks/1",
+     "lang": "es",
+     "state": "final",
+     "layout": "plan",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 8,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "**Nvidia** diseña los chips, pero **no los fabrica**: depende de pocos proveedores clave. Lo esencial:",
+        "lang": "es",
+        "marks": [
+         {
+          "s": 2,
+          "e": 8,
+          "kind": "entity",
+          "ref": "nvidia"
+         }
+        ]
+       }
+      },
+      {
+       "id": "b1",
+       "type": "chart.line",
+       "state": "ready",
+       "pinnable": true,
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "title": {
+        "es": "Precio",
+        "en": "Price"
+       },
+       "subtitle": {
+        "es": "NVDA · índice",
+        "en": "NVDA · index"
+       },
+       "alt": {
+        "es": "Precio de NVDA en 6 meses como índice (inicio = 100): termina en 109,5 (muestra).",
+        "en": "NVDA price over 6 months as an index (start = 100): ends at 109.5 (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_history",
+        "call": 1,
+        "fact": "F1",
+        "args": "nvidia, 6mo"
+       },
+       "sources": [
+        "F1"
+       ],
+       "data": {
+        "variant": "full",
+        "range": "6M",
+        "ranges": [
+         "1M",
+         "6M",
+         "1Y"
+        ],
+        "rebased": true,
+        "series": [
+         {
+          "name": "NVDA",
+          "entity": {
+           "id": "nvidia",
+           "label": "Nvidia",
+           "symbol": "NVDA"
+          },
+          "adjusted": true,
+          "values": {
+           "unit": "index",
+           "src": "demo",
+           "as_of": "2026-10-05",
+           "fact": "F1"
+          },
+          "points": [
+           [
+            "2026-04-13",
+            100.0
+           ],
+           [
+            "2026-04-14",
+            101.3
+           ],
+           [
+            "2026-04-15",
+            100.9
+           ],
+           [
+            "2026-04-16",
+            100.4
+           ],
+           [
+            "2026-04-17",
+            101.0
+           ],
+           [
+            "2026-04-20",
+            101.0
+           ],
+           [
+            "2026-04-21",
+            101.8
+           ],
+           [
+            "2026-04-22",
+            101.9
+           ],
+           [
+            "2026-04-23",
+            102.9
+           ],
+           [
+            "2026-04-24",
+            101.8
+           ],
+           [
+            "2026-04-27",
+            102.8
+           ],
+           [
+            "2026-04-28",
+            103.6
+           ],
+           [
+            "2026-04-29",
+            105.1
+           ],
+           [
+            "2026-04-30",
+            103.6
+           ],
+           [
+            "2026-05-01",
+            104.2
+           ],
+           [
+            "2026-05-04",
+            104.6
+           ],
+           [
+            "2026-05-05",
+            104.7
+           ],
+           [
+            "2026-05-06",
+            103.4
+           ],
+           [
+            "2026-05-07",
+            103.5
+           ],
+           [
+            "2026-05-08",
+            104.2
+           ],
+           [
+            "2026-05-11",
+            103.8
+           ],
+           [
+            "2026-05-12",
+            102.4
+           ],
+           [
+            "2026-05-13",
+            101.1
+           ],
+           [
+            "2026-05-14",
+            102.3
+           ],
+           [
+            "2026-05-15",
+            103.0
+           ],
+           [
+            "2026-05-18",
+            104.6
+           ],
+           [
+            "2026-05-19",
+            103.3
+           ],
+           [
+            "2026-05-20",
+            104.5
+           ],
+           [
+            "2026-05-21",
+            105.7
+           ],
+           [
+            "2026-05-22",
+            105.5
+           ],
+           [
+            "2026-05-25",
+            106.8
+           ],
+           [
+            "2026-05-26",
+            105.6
+           ],
+           [
+            "2026-05-27",
+            104.9
+           ],
+           [
+            "2026-05-28",
+            104.3
+           ],
+           [
+            "2026-05-29",
+            103.4
+           ],
+           [
+            "2026-06-01",
+            102.0
+           ],
+           [
+            "2026-06-02",
+            101.8
+           ],
+           [
+            "2026-06-03",
+            101.8
+           ],
+           [
+            "2026-06-04",
+            100.9
+           ],
+           [
+            "2026-06-05",
+            101.6
+           ],
+           [
+            "2026-06-08",
+            101.4
+           ],
+           [
+            "2026-06-09",
+            100.4
+           ],
+           [
+            "2026-06-10",
+            100.6
+           ],
+           [
+            "2026-06-11",
+            100.3
+           ],
+           [
+            "2026-06-12",
+            99.7
+           ],
+           [
+            "2026-06-15",
+            99.6
+           ],
+           [
+            "2026-06-16",
+            100.7
+           ],
+           [
+            "2026-06-17",
+            99.2
+           ],
+           [
+            "2026-06-18",
+            100.0
+           ],
+           [
+            "2026-06-19",
+            99.0
+           ],
+           [
+            "2026-06-22",
+            99.9
+           ],
+           [
+            "2026-06-23",
+            101.1
+           ],
+           [
+            "2026-06-24",
+            102.2
+           ],
+           [
+            "2026-06-25",
+            103.7
+           ],
+           [
+            "2026-06-26",
+            102.9
+           ],
+           [
+            "2026-06-29",
+            101.9
+           ],
+           [
+            "2026-06-30",
+            100.4
+           ],
+           [
+            "2026-07-01",
+            99.7
+           ],
+           [
+            "2026-07-02",
+            100.3
+           ],
+           [
+            "2026-07-03",
+            99.9
+           ],
+           [
+            "2026-07-06",
+            99.5
+           ],
+           [
+            "2026-07-07",
+            100.2
+           ],
+           [
+            "2026-07-08",
+            99.9
+           ],
+           [
+            "2026-07-09",
+            101.5
+           ],
+           [
+            "2026-07-10",
+            102.3
+           ],
+           [
+            "2026-07-13",
+            102.4
+           ],
+           [
+            "2026-07-14",
+            102.5
+           ],
+           [
+            "2026-07-15",
+            101.3
+           ],
+           [
+            "2026-07-16",
+            100.4
+           ],
+           [
+            "2026-07-17",
+            100.0
+           ],
+           [
+            "2026-07-20",
+            99.5
+           ],
+           [
+            "2026-07-21",
+            100.5
+           ],
+           [
+            "2026-07-22",
+            102.1
+           ],
+           [
+            "2026-07-23",
+            102.9
+           ],
+           [
+            "2026-07-24",
+            103.8
+           ],
+           [
+            "2026-07-27",
+            104.6
+           ],
+           [
+            "2026-07-28",
+            105.7
+           ],
+           [
+            "2026-07-29",
+            105.7
+           ],
+           [
+            "2026-07-30",
+            104.4
+           ],
+           [
+            "2026-07-31",
+            105.9
+           ],
+           [
+            "2026-08-03",
+            105.7
+           ],
+           [
+            "2026-08-04",
+            105.5
+           ],
+           [
+            "2026-08-05",
+            105.6
+           ],
+           [
+            "2026-08-06",
+            107.2
+           ],
+           [
+            "2026-08-07",
+            106.2
+           ],
+           [
+            "2026-08-10",
+            107.8
+           ],
+           [
+            "2026-08-11",
+            108.0
+           ],
+           [
+            "2026-08-12",
+            108.9
+           ],
+           [
+            "2026-08-13",
+            109.8
+           ],
+           [
+            "2026-08-14",
+            110.0
+           ],
+           [
+            "2026-08-17",
+            110.4
+           ],
+           [
+            "2026-08-18",
+            109.7
+           ],
+           [
+            "2026-08-19",
+            109.5
+           ],
+           [
+            "2026-08-20",
+            108.3
+           ],
+           [
+            "2026-08-21",
+            109.7
+           ],
+           [
+            "2026-08-24",
+            109.9
+           ],
+           [
+            "2026-08-25",
+            110.6
+           ],
+           [
+            "2026-08-26",
+            109.3
+           ],
+           [
+            "2026-08-27",
+            108.9
+           ],
+           [
+            "2026-08-28",
+            109.9
+           ],
+           [
+            "2026-08-31",
+            109.1
+           ],
+           [
+            "2026-09-01",
+            108.6
+           ],
+           [
+            "2026-09-02",
+            109.6
+           ],
+           [
+            "2026-09-03",
+            110.5
+           ],
+           [
+            "2026-09-04",
+            111.5
+           ],
+           [
+            "2026-09-07",
+            110.3
+           ],
+           [
+            "2026-09-08",
+            109.1
+           ],
+           [
+            "2026-09-09",
+            108.2
+           ],
+           [
+            "2026-09-10",
+            107.3
+           ],
+           [
+            "2026-09-11",
+            107.9
+           ],
+           [
+            "2026-09-14",
+            109.5
+           ],
+           [
+            "2026-09-15",
+            109.3
+           ],
+           [
+            "2026-09-16",
+            110.6
+           ],
+           [
+            "2026-09-17",
+            110.7
+           ],
+           [
+            "2026-09-18",
+            109.9
+           ],
+           [
+            "2026-09-21",
+            108.9
+           ],
+           [
+            "2026-09-22",
+            108.1
+           ],
+           [
+            "2026-09-23",
+            106.7
+           ],
+           [
+            "2026-09-24",
+            108.0
+           ],
+           [
+            "2026-09-25",
+            108.3
+           ],
+           [
+            "2026-09-28",
+            107.7
+           ],
+           [
+            "2026-09-29",
+            107.7
+           ],
+           [
+            "2026-09-30",
+            109.3
+           ],
+           [
+            "2026-10-01",
+            108.9
+           ],
+           [
+            "2026-10-02",
+            108.6
+           ],
+           [
+            "2026-10-05",
+            109.5
+           ]
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "id": "b2",
+       "type": "metric.tiles",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Métricas",
+        "en": "Metrics"
+       },
+       "alt": {
+        "es": "Margen bruto 50 %, P/E 40, NRS 70; capitalización sin dato en vivo (muestra).",
+        "en": "Gross margin 50%, P/E 40, NRS 70; market cap has no live data (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 0,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2",
+        "F3"
+       ],
+       "data": {
+        "items": [
+         {
+          "label": {
+           "es": "Margen bruto",
+           "en": "Gross margin"
+          },
+          "value": {
+           "v": 50,
+           "unit": "pct",
+           "src": "fmp",
+           "as_of": "2026-09-30",
+           "fact": "F2",
+           "precision": 0
+          },
+          "sub": {
+           "es": "número de muestra",
+           "en": "sample number"
+          }
+         },
+         {
+          "label": {
+           "es": "P/E",
+           "en": "P/E"
+          },
+          "value": {
+           "v": 40,
+           "unit": "x",
+           "src": "fmp",
+           "as_of": "2026-10-12",
+           "fact": "F2",
+           "precision": 0
+          },
+          "sub": {
+           "es": "número de muestra",
+           "en": "sample number"
+          }
+         },
+         {
+          "label": {
+           "es": "NRS",
+           "en": "NRS"
+          },
+          "value": {
+           "v": 70,
+           "unit": "nrs",
+           "src": "khipus_nrs",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F3",
+           "explain": "nrs"
+          },
+          "sub": {
+           "es": "resistencia de la cadena",
+           "en": "chain resilience"
+          }
+         },
+         {
+          "label": {
+           "es": "Capitalización",
+           "en": "Market cap"
+          },
+          "value": {
+           "v": null,
+           "unit": "USD_B",
+           "src": "finnhub",
+           "as_of": null,
+           "missing_reason": {
+            "es": "sin dato en vivo",
+            "en": "no live data"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Quién le provee y a quién le vende (pasa el mouse por un nodo):",
+        "lang": "es"
+       }
+      },
+      {
+       "id": "b3",
+       "type": "graph.mini",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Cadena de suministro",
+        "en": "Supply chain"
+       },
+       "subtitle": {
+        "es": "solo flujo",
+        "en": "flow only"
+       },
+       "alt": {
+        "es": "Proveedores: TSMC, SK hynix, Micron. Clientes: Microsoft, Meta, Amazon.",
+        "en": "Suppliers: TSMC, SK hynix, Micron. Customers: Microsoft, Meta, Amazon."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_supply_chain",
+        "call": 2,
+        "fact": "F4",
+        "graph_version": 4812
+       },
+       "sources": [
+        "F4"
+       ],
+       "data": {
+        "center": {
+         "id": "nvidia",
+         "label": "Nvidia"
+        },
+        "src": "khipus_graph",
+        "as_of": "2026-10-13T14:58:00Z",
+        "graph_version": 4812,
+        "nodes": [
+         {
+          "entity": {
+           "id": "nvidia",
+           "label": "Nvidia"
+          },
+          "role": "center"
+         },
+         {
+          "entity": {
+           "id": "tsmc",
+           "label": "TSMC"
+          },
+          "role": "supplier",
+          "sub": {
+           "es": "fabrica",
+           "en": "foundry"
+          },
+          "risk": true
+         },
+         {
+          "entity": {
+           "id": "sk_hynix",
+           "label": "SK hynix"
+          },
+          "role": "supplier",
+          "sub": {
+           "es": "memoria",
+           "en": "memory"
+          }
+         },
+         {
+          "entity": {
+           "id": "micron",
+           "label": "Micron"
+          },
+          "role": "supplier",
+          "sub": {
+           "es": "memoria",
+           "en": "memory"
+          }
+         },
+         {
+          "entity": {
+           "id": "microsoft",
+           "label": "Microsoft"
+          },
+          "role": "customer",
+          "sub": {
+           "es": "nube",
+           "en": "cloud"
+          }
+         },
+         {
+          "entity": {
+           "id": "meta",
+           "label": "Meta"
+          },
+          "role": "customer",
+          "sub": {
+           "es": "nube",
+           "en": "cloud"
+          }
+         },
+         {
+          "entity": {
+           "id": "amazon",
+           "label": "Amazon"
+          },
+          "role": "customer",
+          "sub": {
+           "es": "nube",
+           "en": "cloud"
+          }
+         }
+        ],
+        "edges": [
+         {
+          "s": "tsmc",
+          "t": "nvidia",
+          "weight": 9,
+          "rel_type": "fab",
+          "verified": true,
+          "conf": 1
+         },
+         {
+          "s": "sk_hynix",
+          "t": "nvidia",
+          "weight": 6,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 1
+         },
+         {
+          "s": "micron",
+          "t": "nvidia",
+          "weight": 4,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 1
+         },
+         {
+          "s": "nvidia",
+          "t": "microsoft",
+          "weight": 7,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 0.9
+         },
+         {
+          "s": "nvidia",
+          "t": "meta",
+          "weight": 6,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 0.9
+         },
+         {
+          "s": "nvidia",
+          "t": "amazon",
+          "weight": 5,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 0.9
+         }
+        ]
+       }
+      },
+      {
+       "id": "b4",
+       "type": "callout",
+       "state": "ready",
+       "title": {
+        "es": "Fortalezas y riesgos",
+        "en": "Strengths and risks"
+       },
+       "alt": {
+        "es": "Fortalezas: líder en chips para centros de datos; su software retiene a los clientes. Riesgos: un solo fabricante principal; pocos clientes grandes.",
+        "en": "Strengths: data-center chip leader; its software keeps customers. Risks: one main manufacturer; a few big customers."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_research",
+        "call": 3,
+        "fact": "F5"
+       },
+       "sources": [
+        "F5"
+       ],
+       "data": {
+        "variant": "pros_cons",
+        "origin": "tool",
+        "pros": [
+         {
+          "text": "Líder en chips para centros de datos",
+          "lang": "es",
+          "facts": [
+           "F5"
+          ],
+          "claim_id": "c_812"
+         },
+         {
+          "text": "Su software (CUDA) retiene a los clientes",
+          "lang": "es",
+          "facts": [
+           "F5"
+          ]
+         }
+        ],
+        "cons": [
+         {
+          "text": "Un solo fabricante principal (TSMC)",
+          "lang": "es",
+          "facts": [
+           "F4"
+          ]
+         },
+         {
+          "text": "Pocos clientes grandes concentran las ventas",
+          "lang": "es",
+          "facts": [
+           "F5"
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "prefill_chat",
+          "text": "¿Qué pasa si cae TSMC?",
+          "label": {
+           "es": "¿Qué pasa si cae TSMC?",
+           "en": "What if TSMC fails?"
+          }
+         },
+         {
+          "kind": "prefill_chat",
+          "text": "Compara AMD y Nvidia",
+          "label": {
+           "es": "Compara AMD y Nvidia",
+           "en": "Compare AMD and Nvidia"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "Precios EOD (muestra)",
+          "tool": "get_history",
+          "as_of": "2026-10-05"
+         },
+         {
+          "id": "F2",
+          "label": "fmp (muestra)",
+          "tool": "get_company",
+          "as_of": "2026-10-12"
+         },
+         {
+          "id": "F3",
+          "label": "Khipus NRS",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         },
+         {
+          "id": "F4",
+          "label": "Grafo Khipus",
+          "tool": "get_supply_chain",
+          "as_of": "2026-10-13T14:58:00Z"
+         },
+         {
+          "id": "F5",
+          "label": "Investigación con evidencia",
+          "tool": "get_research",
+          "as_of": "2026-10-12T18:00:00Z"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "en": {
+     "v": "kblocks/1",
+     "lang": "en",
+     "state": "final",
+     "layout": "plan",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 8,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "**Nvidia** designs the chips but **doesn't make them**: it relies on a few key suppliers. The essentials:",
+        "lang": "en",
+        "marks": [
+         {
+          "s": 2,
+          "e": 8,
+          "kind": "entity",
+          "ref": "nvidia"
+         }
+        ]
+       }
+      },
+      {
+       "id": "b1",
+       "type": "chart.line",
+       "state": "ready",
+       "pinnable": true,
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "title": {
+        "es": "Precio",
+        "en": "Price"
+       },
+       "subtitle": {
+        "es": "NVDA · índice",
+        "en": "NVDA · index"
+       },
+       "alt": {
+        "es": "Precio de NVDA en 6 meses como índice (inicio = 100): termina en 109,5 (muestra).",
+        "en": "NVDA price over 6 months as an index (start = 100): ends at 109.5 (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_history",
+        "call": 1,
+        "fact": "F1",
+        "args": "nvidia, 6mo"
+       },
+       "sources": [
+        "F1"
+       ],
+       "data": {
+        "variant": "full",
+        "range": "6M",
+        "ranges": [
+         "1M",
+         "6M",
+         "1Y"
+        ],
+        "rebased": true,
+        "series": [
+         {
+          "name": "NVDA",
+          "entity": {
+           "id": "nvidia",
+           "label": "Nvidia",
+           "symbol": "NVDA"
+          },
+          "adjusted": true,
+          "values": {
+           "unit": "index",
+           "src": "demo",
+           "as_of": "2026-10-05",
+           "fact": "F1"
+          },
+          "points": [
+           [
+            "2026-04-13",
+            100.0
+           ],
+           [
+            "2026-04-14",
+            101.3
+           ],
+           [
+            "2026-04-15",
+            100.9
+           ],
+           [
+            "2026-04-16",
+            100.4
+           ],
+           [
+            "2026-04-17",
+            101.0
+           ],
+           [
+            "2026-04-20",
+            101.0
+           ],
+           [
+            "2026-04-21",
+            101.8
+           ],
+           [
+            "2026-04-22",
+            101.9
+           ],
+           [
+            "2026-04-23",
+            102.9
+           ],
+           [
+            "2026-04-24",
+            101.8
+           ],
+           [
+            "2026-04-27",
+            102.8
+           ],
+           [
+            "2026-04-28",
+            103.6
+           ],
+           [
+            "2026-04-29",
+            105.1
+           ],
+           [
+            "2026-04-30",
+            103.6
+           ],
+           [
+            "2026-05-01",
+            104.2
+           ],
+           [
+            "2026-05-04",
+            104.6
+           ],
+           [
+            "2026-05-05",
+            104.7
+           ],
+           [
+            "2026-05-06",
+            103.4
+           ],
+           [
+            "2026-05-07",
+            103.5
+           ],
+           [
+            "2026-05-08",
+            104.2
+           ],
+           [
+            "2026-05-11",
+            103.8
+           ],
+           [
+            "2026-05-12",
+            102.4
+           ],
+           [
+            "2026-05-13",
+            101.1
+           ],
+           [
+            "2026-05-14",
+            102.3
+           ],
+           [
+            "2026-05-15",
+            103.0
+           ],
+           [
+            "2026-05-18",
+            104.6
+           ],
+           [
+            "2026-05-19",
+            103.3
+           ],
+           [
+            "2026-05-20",
+            104.5
+           ],
+           [
+            "2026-05-21",
+            105.7
+           ],
+           [
+            "2026-05-22",
+            105.5
+           ],
+           [
+            "2026-05-25",
+            106.8
+           ],
+           [
+            "2026-05-26",
+            105.6
+           ],
+           [
+            "2026-05-27",
+            104.9
+           ],
+           [
+            "2026-05-28",
+            104.3
+           ],
+           [
+            "2026-05-29",
+            103.4
+           ],
+           [
+            "2026-06-01",
+            102.0
+           ],
+           [
+            "2026-06-02",
+            101.8
+           ],
+           [
+            "2026-06-03",
+            101.8
+           ],
+           [
+            "2026-06-04",
+            100.9
+           ],
+           [
+            "2026-06-05",
+            101.6
+           ],
+           [
+            "2026-06-08",
+            101.4
+           ],
+           [
+            "2026-06-09",
+            100.4
+           ],
+           [
+            "2026-06-10",
+            100.6
+           ],
+           [
+            "2026-06-11",
+            100.3
+           ],
+           [
+            "2026-06-12",
+            99.7
+           ],
+           [
+            "2026-06-15",
+            99.6
+           ],
+           [
+            "2026-06-16",
+            100.7
+           ],
+           [
+            "2026-06-17",
+            99.2
+           ],
+           [
+            "2026-06-18",
+            100.0
+           ],
+           [
+            "2026-06-19",
+            99.0
+           ],
+           [
+            "2026-06-22",
+            99.9
+           ],
+           [
+            "2026-06-23",
+            101.1
+           ],
+           [
+            "2026-06-24",
+            102.2
+           ],
+           [
+            "2026-06-25",
+            103.7
+           ],
+           [
+            "2026-06-26",
+            102.9
+           ],
+           [
+            "2026-06-29",
+            101.9
+           ],
+           [
+            "2026-06-30",
+            100.4
+           ],
+           [
+            "2026-07-01",
+            99.7
+           ],
+           [
+            "2026-07-02",
+            100.3
+           ],
+           [
+            "2026-07-03",
+            99.9
+           ],
+           [
+            "2026-07-06",
+            99.5
+           ],
+           [
+            "2026-07-07",
+            100.2
+           ],
+           [
+            "2026-07-08",
+            99.9
+           ],
+           [
+            "2026-07-09",
+            101.5
+           ],
+           [
+            "2026-07-10",
+            102.3
+           ],
+           [
+            "2026-07-13",
+            102.4
+           ],
+           [
+            "2026-07-14",
+            102.5
+           ],
+           [
+            "2026-07-15",
+            101.3
+           ],
+           [
+            "2026-07-16",
+            100.4
+           ],
+           [
+            "2026-07-17",
+            100.0
+           ],
+           [
+            "2026-07-20",
+            99.5
+           ],
+           [
+            "2026-07-21",
+            100.5
+           ],
+           [
+            "2026-07-22",
+            102.1
+           ],
+           [
+            "2026-07-23",
+            102.9
+           ],
+           [
+            "2026-07-24",
+            103.8
+           ],
+           [
+            "2026-07-27",
+            104.6
+           ],
+           [
+            "2026-07-28",
+            105.7
+           ],
+           [
+            "2026-07-29",
+            105.7
+           ],
+           [
+            "2026-07-30",
+            104.4
+           ],
+           [
+            "2026-07-31",
+            105.9
+           ],
+           [
+            "2026-08-03",
+            105.7
+           ],
+           [
+            "2026-08-04",
+            105.5
+           ],
+           [
+            "2026-08-05",
+            105.6
+           ],
+           [
+            "2026-08-06",
+            107.2
+           ],
+           [
+            "2026-08-07",
+            106.2
+           ],
+           [
+            "2026-08-10",
+            107.8
+           ],
+           [
+            "2026-08-11",
+            108.0
+           ],
+           [
+            "2026-08-12",
+            108.9
+           ],
+           [
+            "2026-08-13",
+            109.8
+           ],
+           [
+            "2026-08-14",
+            110.0
+           ],
+           [
+            "2026-08-17",
+            110.4
+           ],
+           [
+            "2026-08-18",
+            109.7
+           ],
+           [
+            "2026-08-19",
+            109.5
+           ],
+           [
+            "2026-08-20",
+            108.3
+           ],
+           [
+            "2026-08-21",
+            109.7
+           ],
+           [
+            "2026-08-24",
+            109.9
+           ],
+           [
+            "2026-08-25",
+            110.6
+           ],
+           [
+            "2026-08-26",
+            109.3
+           ],
+           [
+            "2026-08-27",
+            108.9
+           ],
+           [
+            "2026-08-28",
+            109.9
+           ],
+           [
+            "2026-08-31",
+            109.1
+           ],
+           [
+            "2026-09-01",
+            108.6
+           ],
+           [
+            "2026-09-02",
+            109.6
+           ],
+           [
+            "2026-09-03",
+            110.5
+           ],
+           [
+            "2026-09-04",
+            111.5
+           ],
+           [
+            "2026-09-07",
+            110.3
+           ],
+           [
+            "2026-09-08",
+            109.1
+           ],
+           [
+            "2026-09-09",
+            108.2
+           ],
+           [
+            "2026-09-10",
+            107.3
+           ],
+           [
+            "2026-09-11",
+            107.9
+           ],
+           [
+            "2026-09-14",
+            109.5
+           ],
+           [
+            "2026-09-15",
+            109.3
+           ],
+           [
+            "2026-09-16",
+            110.6
+           ],
+           [
+            "2026-09-17",
+            110.7
+           ],
+           [
+            "2026-09-18",
+            109.9
+           ],
+           [
+            "2026-09-21",
+            108.9
+           ],
+           [
+            "2026-09-22",
+            108.1
+           ],
+           [
+            "2026-09-23",
+            106.7
+           ],
+           [
+            "2026-09-24",
+            108.0
+           ],
+           [
+            "2026-09-25",
+            108.3
+           ],
+           [
+            "2026-09-28",
+            107.7
+           ],
+           [
+            "2026-09-29",
+            107.7
+           ],
+           [
+            "2026-09-30",
+            109.3
+           ],
+           [
+            "2026-10-01",
+            108.9
+           ],
+           [
+            "2026-10-02",
+            108.6
+           ],
+           [
+            "2026-10-05",
+            109.5
+           ]
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "id": "b2",
+       "type": "metric.tiles",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Métricas",
+        "en": "Metrics"
+       },
+       "alt": {
+        "es": "Margen bruto 50 %, P/E 40, NRS 70; capitalización sin dato en vivo (muestra).",
+        "en": "Gross margin 50%, P/E 40, NRS 70; market cap has no live data (sample)."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 0,
+        "fact": "F2"
+       },
+       "sources": [
+        "F2",
+        "F3"
+       ],
+       "data": {
+        "items": [
+         {
+          "label": {
+           "es": "Margen bruto",
+           "en": "Gross margin"
+          },
+          "value": {
+           "v": 50,
+           "unit": "pct",
+           "src": "fmp",
+           "as_of": "2026-09-30",
+           "fact": "F2",
+           "precision": 0
+          },
+          "sub": {
+           "es": "número de muestra",
+           "en": "sample number"
+          }
+         },
+         {
+          "label": {
+           "es": "P/E",
+           "en": "P/E"
+          },
+          "value": {
+           "v": 40,
+           "unit": "x",
+           "src": "fmp",
+           "as_of": "2026-10-12",
+           "fact": "F2",
+           "precision": 0
+          },
+          "sub": {
+           "es": "número de muestra",
+           "en": "sample number"
+          }
+         },
+         {
+          "label": {
+           "es": "NRS",
+           "en": "NRS"
+          },
+          "value": {
+           "v": 70,
+           "unit": "nrs",
+           "src": "khipus_nrs",
+           "as_of": "2026-10-13T15:00:00Z",
+           "fact": "F3",
+           "explain": "nrs"
+          },
+          "sub": {
+           "es": "resistencia de la cadena",
+           "en": "chain resilience"
+          }
+         },
+         {
+          "label": {
+           "es": "Capitalización",
+           "en": "Market cap"
+          },
+          "value": {
+           "v": null,
+           "unit": "USD_B",
+           "src": "finnhub",
+           "as_of": null,
+           "missing_reason": {
+            "es": "sin dato en vivo",
+            "en": "no live data"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Who supplies it and who it sells to (hover a node):",
+        "lang": "en"
+       }
+      },
+      {
+       "id": "b3",
+       "type": "graph.mini",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "Cadena de suministro",
+        "en": "Supply chain"
+       },
+       "subtitle": {
+        "es": "solo flujo",
+        "en": "flow only"
+       },
+       "alt": {
+        "es": "Proveedores: TSMC, SK hynix, Micron. Clientes: Microsoft, Meta, Amazon.",
+        "en": "Suppliers: TSMC, SK hynix, Micron. Customers: Microsoft, Meta, Amazon."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_supply_chain",
+        "call": 2,
+        "fact": "F4",
+        "graph_version": 4812
+       },
+       "sources": [
+        "F4"
+       ],
+       "data": {
+        "center": {
+         "id": "nvidia",
+         "label": "Nvidia"
+        },
+        "src": "khipus_graph",
+        "as_of": "2026-10-13T14:58:00Z",
+        "graph_version": 4812,
+        "nodes": [
+         {
+          "entity": {
+           "id": "nvidia",
+           "label": "Nvidia"
+          },
+          "role": "center"
+         },
+         {
+          "entity": {
+           "id": "tsmc",
+           "label": "TSMC"
+          },
+          "role": "supplier",
+          "sub": {
+           "es": "fabrica",
+           "en": "foundry"
+          },
+          "risk": true
+         },
+         {
+          "entity": {
+           "id": "sk_hynix",
+           "label": "SK hynix"
+          },
+          "role": "supplier",
+          "sub": {
+           "es": "memoria",
+           "en": "memory"
+          }
+         },
+         {
+          "entity": {
+           "id": "micron",
+           "label": "Micron"
+          },
+          "role": "supplier",
+          "sub": {
+           "es": "memoria",
+           "en": "memory"
+          }
+         },
+         {
+          "entity": {
+           "id": "microsoft",
+           "label": "Microsoft"
+          },
+          "role": "customer",
+          "sub": {
+           "es": "nube",
+           "en": "cloud"
+          }
+         },
+         {
+          "entity": {
+           "id": "meta",
+           "label": "Meta"
+          },
+          "role": "customer",
+          "sub": {
+           "es": "nube",
+           "en": "cloud"
+          }
+         },
+         {
+          "entity": {
+           "id": "amazon",
+           "label": "Amazon"
+          },
+          "role": "customer",
+          "sub": {
+           "es": "nube",
+           "en": "cloud"
+          }
+         }
+        ],
+        "edges": [
+         {
+          "s": "tsmc",
+          "t": "nvidia",
+          "weight": 9,
+          "rel_type": "fab",
+          "verified": true,
+          "conf": 1
+         },
+         {
+          "s": "sk_hynix",
+          "t": "nvidia",
+          "weight": 6,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 1
+         },
+         {
+          "s": "micron",
+          "t": "nvidia",
+          "weight": 4,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 1
+         },
+         {
+          "s": "nvidia",
+          "t": "microsoft",
+          "weight": 7,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 0.9
+         },
+         {
+          "s": "nvidia",
+          "t": "meta",
+          "weight": 6,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 0.9
+         },
+         {
+          "s": "nvidia",
+          "t": "amazon",
+          "weight": 5,
+          "rel_type": "supply",
+          "verified": true,
+          "conf": 0.9
+         }
+        ]
+       }
+      },
+      {
+       "id": "b4",
+       "type": "callout",
+       "state": "ready",
+       "title": {
+        "es": "Fortalezas y riesgos",
+        "en": "Strengths and risks"
+       },
+       "alt": {
+        "es": "Fortalezas: líder en chips para centros de datos; su software retiene a los clientes. Riesgos: un solo fabricante principal; pocos clientes grandes.",
+        "en": "Strengths: data-center chip leader; its software keeps customers. Risks: one main manufacturer; a few big customers."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_research",
+        "call": 3,
+        "fact": "F5"
+       },
+       "sources": [
+        "F5"
+       ],
+       "data": {
+        "variant": "pros_cons",
+        "origin": "tool",
+        "pros": [
+         {
+          "text": "Leader in data-center chips",
+          "lang": "en",
+          "facts": [
+           "F5"
+          ],
+          "claim_id": "c_812"
+         },
+         {
+          "text": "Its software (CUDA) keeps customers",
+          "lang": "en",
+          "facts": [
+           "F5"
+          ]
+         }
+        ],
+        "cons": [
+         {
+          "text": "One main manufacturer (TSMC)",
+          "lang": "en",
+          "facts": [
+           "F4"
+          ]
+         },
+         {
+          "text": "A few big customers concentrate sales",
+          "lang": "en",
+          "facts": [
+           "F5"
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "prefill_chat",
+          "text": "What if TSMC fails?",
+          "label": {
+           "es": "¿Qué pasa si cae TSMC?",
+           "en": "What if TSMC fails?"
+          }
+         },
+         {
+          "kind": "prefill_chat",
+          "text": "Compare AMD and Nvidia",
+          "label": {
+           "es": "Compara AMD y Nvidia",
+           "en": "Compare AMD and Nvidia"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "EOD prices (sample)",
+          "tool": "get_history",
+          "as_of": "2026-10-05"
+         },
+         {
+          "id": "F2",
+          "label": "fmp (sample)",
+          "tool": "get_company",
+          "as_of": "2026-10-12"
+         },
+         {
+          "id": "F3",
+          "label": "Khipus NRS",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         },
+         {
+          "id": "F4",
+          "label": "Khipus graph",
+          "tool": "get_supply_chain",
+          "as_of": "2026-10-13T14:58:00Z"
+         },
+         {
+          "id": "F5",
+          "label": "Evidence-backed research",
+          "tool": "get_research",
+          "as_of": "2026-10-12T18:00:00Z"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "c",
+   "question": {
+    "es": "¿Qué pasa si cae TSMC?",
+    "en": "What if TSMC fails?"
+   },
+   "agents": [
+    "cadena",
+    "radar"
+   ],
+   "tools": [
+    "run_scenario"
+   ],
+   "envelope": {
+    "es": {
+     "v": "kblocks/1",
+     "lang": "es",
+     "state": "final",
+     "layout": "auto",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 7,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Si **TSMC** se detiene, el golpe viaja por la cadena **en saltos**. Cada barra es cuántas empresas toca cada salto:",
+        "lang": "es"
+       }
+      },
+      {
+       "id": "b1",
+       "type": "impact.cascade",
+       "state": "ready",
+       "pinnable": true,
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "title": {
+        "es": "Cascada del choque",
+        "en": "Shock cascade"
+       },
+       "subtitle": {
+        "es": "TSMC",
+        "en": "TSMC"
+       },
+       "alt": {
+        "es": "Si TSMC se detiene, 60 empresas pierden 1 % o más en 3 saltos (muestra).",
+        "en": "If TSMC stops, 60 companies lose 1% or more in 3 hops (sample)."
+       },
+       "prov": {
+        "kind": "view",
+        "name": "hot.impact",
+        "generation": 51,
+        "graph_version": 4812
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "actions": [
+        {
+         "kind": "open_window",
+         "window": "sim",
+         "entity": {
+          "id": "tsmc",
+          "label": "TSMC"
+         },
+         "label": {
+          "es": "📌 Simular",
+          "en": "📌 Simulate"
+         }
+        }
+       ],
+       "data": {
+        "origin": {
+         "id": "tsmc",
+         "label": "TSMC",
+         "symbol": "TSMC"
+        },
+        "severity": 100,
+        "direction": "down",
+        "src": "hot_kernel",
+        "as_of": "2026-10-13T15:04:58Z",
+        "generation": 51,
+        "graph_version": 4812,
+        "kernel": "1.0.0",
+        "threshold_pct": 1,
+        "hops": [
+         {
+          "hop": 1,
+          "label": {
+           "es": "clientes directos",
+           "en": "direct customers"
+          },
+          "count": 10,
+          "max_pct": 42.0,
+          "entities": [
+           {
+            "entity": {
+             "id": "nvidia",
+             "label": "Nvidia"
+            },
+            "impact_pct": 42.0
+           },
+           {
+            "entity": {
+             "id": "amd",
+             "label": "AMD"
+            },
+            "impact_pct": 35.0
+           },
+           {
+            "entity": {
+             "id": "apple",
+             "label": "Apple"
+            },
+            "impact_pct": 22.0
+           },
+           {
+            "entity": {
+             "id": "qualcomm",
+             "label": "Qualcomm"
+            },
+            "impact_pct": 18.0
+           }
+          ]
+         },
+         {
+          "hop": 2,
+          "label": {
+           "es": "clientes de clientes",
+           "en": "customers' customers"
+          },
+          "count": 20,
+          "max_pct": 16.0,
+          "entities": [
+           {
+            "entity": {
+             "id": "microsoft",
+             "label": "Microsoft"
+            },
+            "impact_pct": 16.0
+           },
+           {
+            "entity": {
+             "id": "meta",
+             "label": "Meta"
+            },
+            "impact_pct": 14.0
+           },
+           {
+            "entity": {
+             "id": "dell",
+             "label": "Dell"
+            },
+            "impact_pct": 9.0
+           },
+           {
+            "entity": {
+             "id": "hp",
+             "label": "HP"
+            },
+            "impact_pct": 7.0
+           }
+          ]
+         },
+         {
+          "hop": 3,
+          "label": {
+           "es": "más lejos",
+           "en": "further out"
+          },
+          "count": 30,
+          "max_pct": 6.0,
+          "entities": [
+           {
+            "entity": {
+             "id": "oracle",
+             "label": "Oracle"
+            },
+            "impact_pct": 6.0
+           },
+           {
+            "entity": {
+             "id": "lenovo",
+             "label": "Lenovo"
+            },
+            "impact_pct": 4.0
+           }
+          ]
+         }
+        ],
+        "total": 60,
+        "least_hit_rivals": [
+         {
+          "entity": {
+           "id": "samsung",
+           "label": "Samsung"
+          },
+          "damage_pct": 3.1
+         },
+         {
+          "entity": {
+           "id": "intel",
+           "label": "Intel"
+          },
+          "damage_pct": 4.5
+         }
+        ],
+        "portfolio": {
+         "state": "figure",
+         "value": {
+          "v": -1530,
+          "unit": "USD",
+          "src": "hot_kernel",
+          "as_of": "2026-10-13T15:04:58Z",
+          "fact": "F2"
+         },
+         "band": {
+          "v": 610,
+          "unit": "USD",
+          "src": "hot_kernel",
+          "as_of": "2026-10-13T15:04:58Z",
+          "fact": "F2"
+         },
+         "reason": {
+          "es": "2 de tus 5 posiciones están en el camino · estimación, no predicción",
+          "en": "2 of your 5 positions are in the path · estimate, not a forecast"
+         }
+        }
+       }
+      },
+      {
+       "id": "i1",
+       "type": "image",
+       "state": "ready",
+       "alt": {
+        "es": "Diagrama: oblea → TSMC → Nvidia → nube.",
+        "en": "Diagram: wafer → TSMC → Nvidia → cloud."
+       },
+       "data": {
+        "kind": "shape",
+        "shape": {
+         "name": "flow_arrow",
+         "tone": "accent",
+         "steps": [
+          {
+           "shape": "wafer",
+           "label": {
+            "es": "Oblea",
+            "en": "Wafer"
+           }
+          },
+          {
+           "shape": "fab",
+           "label": "TSMC",
+           "entity": {
+            "id": "tsmc",
+            "label": "TSMC"
+           }
+          },
+          {
+           "shape": "gpu",
+           "label": "Nvidia",
+           "entity": {
+            "id": "nvidia",
+            "label": "Nvidia"
+           }
+          },
+          {
+           "shape": "datacenter",
+           "label": {
+            "es": "Nube",
+            "en": "Cloud"
+           }
+          }
+         ]
+        }
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Los **rivales menos golpeados** salen con su % de **daño** (nunca como “ganancia”).",
+        "lang": "es"
+       }
+      },
+      {
+       "id": "c1",
+       "type": "callout",
+       "state": "ready",
+       "alt": {
+        "es": "Esto es información, no consejo de inversión.",
+        "en": "This is information, not investment advice."
+       },
+       "data": {
+        "variant": "disclaimer",
+        "origin": "system",
+        "text": {
+         "es": "Información, no consejo de inversión.",
+         "en": "Information, not investment advice."
+        }
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "open_map",
+          "entity": {
+           "id": "tsmc",
+           "label": "TSMC"
+          },
+          "label": {
+           "es": "Ver en el mapa",
+           "en": "Show on the map"
+          }
+         },
+         {
+          "kind": "prefill_chat",
+          "text": "¿Y si cae Samsung?",
+          "label": {
+           "es": "¿Y si cae Samsung?",
+           "en": "What if Samsung fails?"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "/api/hot/impact (muestra)",
+          "tool": "run_scenario",
+          "as_of": "2026-10-13T15:04:58Z"
+         },
+         {
+          "id": "F2",
+          "label": "Tus posiciones (muestra)",
+          "tool": "run_scenario",
+          "as_of": "2026-10-13T15:04:58Z"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "en": {
+     "v": "kblocks/1",
+     "lang": "en",
+     "state": "final",
+     "layout": "auto",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 7,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "If **TSMC** stops, the hit travels down the chain **in hops**. Each bar is how many companies each hop touches:",
+        "lang": "en"
+       }
+      },
+      {
+       "id": "b1",
+       "type": "impact.cascade",
+       "state": "ready",
+       "pinnable": true,
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "title": {
+        "es": "Cascada del choque",
+        "en": "Shock cascade"
+       },
+       "subtitle": {
+        "es": "TSMC",
+        "en": "TSMC"
+       },
+       "alt": {
+        "es": "Si TSMC se detiene, 60 empresas pierden 1 % o más en 3 saltos (muestra).",
+        "en": "If TSMC stops, 60 companies lose 1% or more in 3 hops (sample)."
+       },
+       "prov": {
+        "kind": "view",
+        "name": "hot.impact",
+        "generation": 51,
+        "graph_version": 4812
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "actions": [
+        {
+         "kind": "open_window",
+         "window": "sim",
+         "entity": {
+          "id": "tsmc",
+          "label": "TSMC"
+         },
+         "label": {
+          "es": "📌 Simular",
+          "en": "📌 Simulate"
+         }
+        }
+       ],
+       "data": {
+        "origin": {
+         "id": "tsmc",
+         "label": "TSMC",
+         "symbol": "TSMC"
+        },
+        "severity": 100,
+        "direction": "down",
+        "src": "hot_kernel",
+        "as_of": "2026-10-13T15:04:58Z",
+        "generation": 51,
+        "graph_version": 4812,
+        "kernel": "1.0.0",
+        "threshold_pct": 1,
+        "hops": [
+         {
+          "hop": 1,
+          "label": {
+           "es": "clientes directos",
+           "en": "direct customers"
+          },
+          "count": 10,
+          "max_pct": 42.0,
+          "entities": [
+           {
+            "entity": {
+             "id": "nvidia",
+             "label": "Nvidia"
+            },
+            "impact_pct": 42.0
+           },
+           {
+            "entity": {
+             "id": "amd",
+             "label": "AMD"
+            },
+            "impact_pct": 35.0
+           },
+           {
+            "entity": {
+             "id": "apple",
+             "label": "Apple"
+            },
+            "impact_pct": 22.0
+           },
+           {
+            "entity": {
+             "id": "qualcomm",
+             "label": "Qualcomm"
+            },
+            "impact_pct": 18.0
+           }
+          ]
+         },
+         {
+          "hop": 2,
+          "label": {
+           "es": "clientes de clientes",
+           "en": "customers' customers"
+          },
+          "count": 20,
+          "max_pct": 16.0,
+          "entities": [
+           {
+            "entity": {
+             "id": "microsoft",
+             "label": "Microsoft"
+            },
+            "impact_pct": 16.0
+           },
+           {
+            "entity": {
+             "id": "meta",
+             "label": "Meta"
+            },
+            "impact_pct": 14.0
+           },
+           {
+            "entity": {
+             "id": "dell",
+             "label": "Dell"
+            },
+            "impact_pct": 9.0
+           },
+           {
+            "entity": {
+             "id": "hp",
+             "label": "HP"
+            },
+            "impact_pct": 7.0
+           }
+          ]
+         },
+         {
+          "hop": 3,
+          "label": {
+           "es": "más lejos",
+           "en": "further out"
+          },
+          "count": 30,
+          "max_pct": 6.0,
+          "entities": [
+           {
+            "entity": {
+             "id": "oracle",
+             "label": "Oracle"
+            },
+            "impact_pct": 6.0
+           },
+           {
+            "entity": {
+             "id": "lenovo",
+             "label": "Lenovo"
+            },
+            "impact_pct": 4.0
+           }
+          ]
+         }
+        ],
+        "total": 60,
+        "least_hit_rivals": [
+         {
+          "entity": {
+           "id": "samsung",
+           "label": "Samsung"
+          },
+          "damage_pct": 3.1
+         },
+         {
+          "entity": {
+           "id": "intel",
+           "label": "Intel"
+          },
+          "damage_pct": 4.5
+         }
+        ],
+        "portfolio": {
+         "state": "figure",
+         "value": {
+          "v": -1530,
+          "unit": "USD",
+          "src": "hot_kernel",
+          "as_of": "2026-10-13T15:04:58Z",
+          "fact": "F2"
+         },
+         "band": {
+          "v": 610,
+          "unit": "USD",
+          "src": "hot_kernel",
+          "as_of": "2026-10-13T15:04:58Z",
+          "fact": "F2"
+         },
+         "reason": {
+          "es": "2 de tus 5 posiciones están en el camino · estimación, no predicción",
+          "en": "2 of your 5 positions are in the path · estimate, not a forecast"
+         }
+        }
+       }
+      },
+      {
+       "id": "i1",
+       "type": "image",
+       "state": "ready",
+       "alt": {
+        "es": "Diagrama: oblea → TSMC → Nvidia → nube.",
+        "en": "Diagram: wafer → TSMC → Nvidia → cloud."
+       },
+       "data": {
+        "kind": "shape",
+        "shape": {
+         "name": "flow_arrow",
+         "tone": "accent",
+         "steps": [
+          {
+           "shape": "wafer",
+           "label": {
+            "es": "Oblea",
+            "en": "Wafer"
+           }
+          },
+          {
+           "shape": "fab",
+           "label": "TSMC",
+           "entity": {
+            "id": "tsmc",
+            "label": "TSMC"
+           }
+          },
+          {
+           "shape": "gpu",
+           "label": "Nvidia",
+           "entity": {
+            "id": "nvidia",
+            "label": "Nvidia"
+           }
+          },
+          {
+           "shape": "datacenter",
+           "label": {
+            "es": "Nube",
+            "en": "Cloud"
+           }
+          }
+         ]
+        }
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "The **least-hit rivals** show their **damage** % (never as a “gain”).",
+        "lang": "en"
+       }
+      },
+      {
+       "id": "c1",
+       "type": "callout",
+       "state": "ready",
+       "alt": {
+        "es": "Esto es información, no consejo de inversión.",
+        "en": "This is information, not investment advice."
+       },
+       "data": {
+        "variant": "disclaimer",
+        "origin": "system",
+        "text": {
+         "es": "Información, no consejo de inversión.",
+         "en": "Information, not investment advice."
+        }
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "open_map",
+          "entity": {
+           "id": "tsmc",
+           "label": "TSMC"
+          },
+          "label": {
+           "es": "Ver en el mapa",
+           "en": "Show on the map"
+          }
+         },
+         {
+          "kind": "prefill_chat",
+          "text": "What if Samsung fails?",
+          "label": {
+           "es": "¿Y si cae Samsung?",
+           "en": "What if Samsung fails?"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "/api/hot/impact (sample)",
+          "tool": "run_scenario",
+          "as_of": "2026-10-13T15:04:58Z"
+         },
+         {
+          "id": "F2",
+          "label": "Your positions (sample)",
+          "tool": "run_scenario",
+          "as_of": "2026-10-13T15:04:58Z"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "key": "d",
+   "question": {
+    "es": "Compara AMD y Nvidia",
+    "en": "Compare AMD and Nvidia"
+   },
+   "agents": [
+    "analista"
+   ],
+   "tools": [
+    "get_company"
+   ],
+   "envelope": {
+    "es": {
+     "v": "kblocks/1",
+     "lang": "es",
+     "state": "final",
+     "layout": "auto",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 6,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Lado a lado, en puntajes de **0 a 100** (más alto = mejor en ese tema):",
+        "lang": "es"
+       }
+      },
+      {
+       "id": "b1",
+       "type": "comparison",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "AMD vs Nvidia",
+        "en": "AMD vs Nvidia"
+       },
+       "alt": {
+        "es": "Puntajes de muestra 0–100: Nvidia gana en crecimiento, rentabilidad y cadena; AMD en precio y proveedores.",
+        "en": "Sample 0–100 scores: Nvidia wins growth, profitability and chain; AMD wins price and suppliers."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 0,
+        "args": "amd + nvidia"
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "data": {
+        "entities": [
+         {
+          "id": "amd",
+          "label": "AMD"
+         },
+         {
+          "id": "nvidia",
+          "label": "Nvidia"
+         }
+        ],
+        "views": [
+         "table"
+        ],
+        "default_view": "table",
+        "metrics": [
+         {
+          "key": "growth",
+          "better": "higher",
+          "cells": [
+           60,
+           90
+          ],
+          "values": {
+           "label": {
+            "es": "Crecimiento",
+            "en": "Growth"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "profit",
+          "better": "higher",
+          "cells": [
+           50,
+           80
+          ],
+          "values": {
+           "label": {
+            "es": "Rentabilidad",
+            "en": "Profitability"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "value",
+          "better": "higher",
+          "cells": [
+           60,
+           40
+          ],
+          "values": {
+           "label": {
+            "es": "Precio razonable",
+            "en": "Fair price"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "nrs",
+          "better": "higher",
+          "cells": [
+           60,
+           70
+          ],
+          "values": {
+           "label": {
+            "es": "Cadena (NRS)",
+            "en": "Chain (NRS)"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12",
+           "explain": "nrs"
+          }
+         },
+         {
+          "key": "suppliers",
+          "better": "higher",
+          "cells": [
+           30,
+           20
+          ],
+          "values": {
+           "label": {
+            "es": "Proveedores variados",
+            "en": "Diverse suppliers"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "b2",
+       "type": "comparison",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "La forma de cada una",
+        "en": "The shape of each"
+       },
+       "alt": {
+        "es": "Puntajes de muestra 0–100: Nvidia gana en crecimiento, rentabilidad y cadena; AMD en precio y proveedores.",
+        "en": "Sample 0–100 scores: Nvidia wins growth, profitability and chain; AMD wins price and suppliers."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 1,
+        "args": "amd + nvidia"
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "data": {
+        "entities": [
+         {
+          "id": "amd",
+          "label": "AMD"
+         },
+         {
+          "id": "nvidia",
+          "label": "Nvidia"
+         }
+        ],
+        "views": [
+         "radar",
+         "bars"
+        ],
+        "default_view": "radar",
+        "metrics": [
+         {
+          "key": "growth",
+          "better": "higher",
+          "cells": [
+           60,
+           90
+          ],
+          "values": {
+           "label": {
+            "es": "Crecimiento",
+            "en": "Growth"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "profit",
+          "better": "higher",
+          "cells": [
+           50,
+           80
+          ],
+          "values": {
+           "label": {
+            "es": "Rentabilidad",
+            "en": "Profitability"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "value",
+          "better": "higher",
+          "cells": [
+           60,
+           40
+          ],
+          "values": {
+           "label": {
+            "es": "Precio razonable",
+            "en": "Fair price"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "nrs",
+          "better": "higher",
+          "cells": [
+           60,
+           70
+          ],
+          "values": {
+           "label": {
+            "es": "Cadena (NRS)",
+            "en": "Chain (NRS)"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12",
+           "explain": "nrs"
+          }
+         },
+         {
+          "key": "suppliers",
+          "better": "higher",
+          "cells": [
+           30,
+           20
+          ],
+          "values": {
+           "label": {
+            "es": "Proveedores variados",
+            "en": "Diverse suppliers"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Nvidia gana en **crecimiento** y **rentabilidad**; AMD sale mejor en **precio**. Las dos dependen mucho de TSMC.",
+        "lang": "es"
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "prefill_chat",
+          "text": "¿Qué pasa si cae TSMC?",
+          "label": {
+           "es": "¿Qué pasa si cae TSMC?",
+           "en": "What if TSMC fails?"
+          }
+         },
+         {
+          "kind": "open_committee",
+          "entity": {
+           "id": "amd",
+           "label": "AMD"
+          },
+          "label": {
+           "es": "Abrir comité para AMD",
+           "en": "Open the committee for AMD"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "fmp (muestra)",
+          "tool": "get_company",
+          "as_of": "2026-10-12"
+         },
+         {
+          "id": "F2",
+          "label": "Khipus NRS",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "en": {
+     "v": "kblocks/1",
+     "lang": "en",
+     "state": "final",
+     "layout": "auto",
+     "as_of": "2026-10-13T15:02:11Z",
+     "seq": 6,
+     "impl": "genui.build@1",
+     "blocks": [
+      {
+       "id": "t1",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Side by side, in **0 to 100** scores (higher = better on that topic):",
+        "lang": "en"
+       }
+      },
+      {
+       "id": "b1",
+       "type": "comparison",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "AMD vs Nvidia",
+        "en": "AMD vs Nvidia"
+       },
+       "alt": {
+        "es": "Puntajes de muestra 0–100: Nvidia gana en crecimiento, rentabilidad y cadena; AMD en precio y proveedores.",
+        "en": "Sample 0–100 scores: Nvidia wins growth, profitability and chain; AMD wins price and suppliers."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 0,
+        "args": "amd + nvidia"
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "data": {
+        "entities": [
+         {
+          "id": "amd",
+          "label": "AMD"
+         },
+         {
+          "id": "nvidia",
+          "label": "Nvidia"
+         }
+        ],
+        "views": [
+         "table"
+        ],
+        "default_view": "table",
+        "metrics": [
+         {
+          "key": "growth",
+          "better": "higher",
+          "cells": [
+           60,
+           90
+          ],
+          "values": {
+           "label": {
+            "es": "Crecimiento",
+            "en": "Growth"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "profit",
+          "better": "higher",
+          "cells": [
+           50,
+           80
+          ],
+          "values": {
+           "label": {
+            "es": "Rentabilidad",
+            "en": "Profitability"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "value",
+          "better": "higher",
+          "cells": [
+           60,
+           40
+          ],
+          "values": {
+           "label": {
+            "es": "Precio razonable",
+            "en": "Fair price"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "nrs",
+          "better": "higher",
+          "cells": [
+           60,
+           70
+          ],
+          "values": {
+           "label": {
+            "es": "Cadena (NRS)",
+            "en": "Chain (NRS)"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12",
+           "explain": "nrs"
+          }
+         },
+         {
+          "key": "suppliers",
+          "better": "higher",
+          "cells": [
+           30,
+           20
+          ],
+          "values": {
+           "label": {
+            "es": "Proveedores variados",
+            "en": "Diverse suppliers"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "b2",
+       "type": "comparison",
+       "state": "ready",
+       "pinnable": true,
+       "title": {
+        "es": "La forma de cada una",
+        "en": "The shape of each"
+       },
+       "alt": {
+        "es": "Puntajes de muestra 0–100: Nvidia gana en crecimiento, rentabilidad y cadena; AMD en precio y proveedores.",
+        "en": "Sample 0–100 scores: Nvidia wins growth, profitability and chain; AMD wins price and suppliers."
+       },
+       "prov": {
+        "kind": "tool",
+        "name": "get_company",
+        "call": 1,
+        "args": "amd + nvidia"
+       },
+       "sources": [
+        "F1",
+        "F2"
+       ],
+       "data": {
+        "entities": [
+         {
+          "id": "amd",
+          "label": "AMD"
+         },
+         {
+          "id": "nvidia",
+          "label": "Nvidia"
+         }
+        ],
+        "views": [
+         "radar",
+         "bars"
+        ],
+        "default_view": "radar",
+        "metrics": [
+         {
+          "key": "growth",
+          "better": "higher",
+          "cells": [
+           60,
+           90
+          ],
+          "values": {
+           "label": {
+            "es": "Crecimiento",
+            "en": "Growth"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "profit",
+          "better": "higher",
+          "cells": [
+           50,
+           80
+          ],
+          "values": {
+           "label": {
+            "es": "Rentabilidad",
+            "en": "Profitability"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "value",
+          "better": "higher",
+          "cells": [
+           60,
+           40
+          ],
+          "values": {
+           "label": {
+            "es": "Precio razonable",
+            "en": "Fair price"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         },
+         {
+          "key": "nrs",
+          "better": "higher",
+          "cells": [
+           60,
+           70
+          ],
+          "values": {
+           "label": {
+            "es": "Cadena (NRS)",
+            "en": "Chain (NRS)"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12",
+           "explain": "nrs"
+          }
+         },
+         {
+          "key": "suppliers",
+          "better": "higher",
+          "cells": [
+           30,
+           20
+          ],
+          "values": {
+           "label": {
+            "es": "Proveedores variados",
+            "en": "Diverse suppliers"
+           },
+           "unit": "score",
+           "src": "demo",
+           "as_of": "2026-10-12"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "type": "text",
+       "state": "ready",
+       "data": {
+        "md": "Nvidia wins on **growth** and **profitability**; AMD does better on **price**. Both depend heavily on TSMC.",
+        "lang": "en"
+       }
+      },
+      {
+       "id": "a1",
+       "type": "actions",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "kind": "prefill_chat",
+          "text": "What if TSMC fails?",
+          "label": {
+           "es": "¿Qué pasa si cae TSMC?",
+           "en": "What if TSMC fails?"
+          }
+         },
+         {
+          "kind": "open_committee",
+          "entity": {
+           "id": "amd",
+           "label": "AMD"
+          },
+          "label": {
+           "es": "Abrir comité para AMD",
+           "en": "Open the committee for AMD"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "s1",
+       "type": "sources",
+       "state": "ready",
+       "data": {
+        "items": [
+         {
+          "id": "F1",
+          "label": "fmp (sample)",
+          "tool": "get_company",
+          "as_of": "2026-10-12"
+         },
+         {
+          "id": "F2",
+          "label": "Khipus NRS",
+          "tool": "get_company",
+          "as_of": "2026-10-13T15:00:00Z"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

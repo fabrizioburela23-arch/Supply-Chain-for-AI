@@ -38,8 +38,10 @@ capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
+- [[mcp_server.ops.py]] — lo importa
 - [[research.health.py]] — lo importa
 - [[server.py]] — lo importa
+- herramienta MCP `run_scenario` → [[API herramientas MCP]]
 
 _Además lo importan 5 pruebas (lista abajo)._
 

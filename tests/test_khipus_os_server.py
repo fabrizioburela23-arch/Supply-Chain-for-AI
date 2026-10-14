@@ -87,7 +87,8 @@ def test_mapa_herramienta_agente_es_el_del_contrato():
         'get_claim_evidence': 'analista', 'get_supply_chain': 'cadena', 'rank_companies': 'cadena',
         'get_news': 'radar', 'get_world_events': 'radar', 'web_search': 'radar', 'scenario_exposure': 'radar',
         'market_movers': 'tecnico', 'get_option_greeks': 'tecnico', 'get_risk_report': 'tecnico',
-        'get_committee_memo': 'comite', 'get_conclusions_board': 'comite', 'get_track_record': 'comite'}
+        'get_committee_memo': 'comite', 'get_conclusions_board': 'comite', 'get_track_record': 'comite',
+        'get_history': 'tecnico', 'run_scenario': 'cadena'}           # respuestas visuales (2026-10-14)
     assert kc.tool_agent('get_space_summary') == 'khipu' and kc.tool_agent('get_research_health') == 'khipu'
     for seat, ag in (('fundamental', 'analista'), ('macro', 'analista'), ('news', 'radar'), ('geopolitical', 'radar'),
                      ('crypto', 'radar'), ('supply_chain', 'cadena'), ('technical', 'tecnico'),

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/impls.py"
 lenguaje: "python"
-lineas: 334
+lineas: 349
 aliases: ["core/impls.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/impls.py
 
-> Módulo · capa [[Capa Infraestructura]] · 334 líneas · `core/impls.py`
+> Módulo · capa [[Capa Infraestructura]] · 349 líneas · `core/impls.py`
 
 ## Para qué sirve
 
@@ -18,25 +18,25 @@ IMPLEMENTACIONES RETENIDAS (docs/INFRA_OPERATIVA.md §5.2 «Implementaciones ret
 
 ## API pública
 
-- clase `Impl` _(línea 41)_
-- `get(key, version=…)` — El Impl registrado o LookupError (una decisión que cita una implementación que este código ya no tiene). _(línea 108)_
-- `resolve_stamp(stamp)` — 'run_checks@1' → Impl. Las acciones de la ontología ('CrearTesis@1') son escrituras, no cálculos: None. _(línea 116)_
-- `missing_for(manifest)` — Etiquetas `impl` de un manifiesto que este código NO retiene (las de acciones de la ontología, 'CrearTesis@1', son escrituras y no cuentan; … _(línea 124)_
-- `catalog(lang=…)` — Lista pública (para el 🩺 y las pruebas): qué implementaciones retiene este despliegue. _(línea 138)_
-- `module_view(mod_name, arts, notes=…)` — SimpleNamespace con las funciones del módulo `mod_name` atadas a una COPIA de sus globales en la que las constantes de `governance.bind` … _(línea 153)_
-- `view_with(view, **overrides)` — La misma vista con nombres reemplazados (p. ej. `trading_enabled` → el valor que regía): las funciones de la vista leen sus globales en … _(línea 182)_
-- `under(arts)` — Este hilo lee `governance.param` desde `arts` (kernel.params, ontology.shapes, policy.gates…). _(línea 193)_
-- `sha(obj)` _(línea 201)_
-- `diff(a, b, path=…, out=…, limit=…)` — Diferencias campo a campo entre lo REGISTRADO (a) y lo REPETIDO (b): [{path, recorded, replayed}]. _(línea 207)_
-- `golden_run(key, version, arts)` — Salida de `key@version` sobre entradas FIJAS (sin base, sin red) con los cuerpos `arts`. La prueba dorada compara su huella con … _(línea 245)_
-- `repo_arts(selection=…)` — Cuerpos del repositorio (verificados por hash) del release propuesto (manifest.json, sin selección por entorno), con `selection` {aid: … _(línea 326)_
+- clase `Impl` _(línea 42)_
+- `get(key, version=…)` — El Impl registrado o LookupError (una decisión que cita una implementación que este código ya no tiene). _(línea 114)_
+- `resolve_stamp(stamp)` — 'run_checks@1' → Impl. Las acciones de la ontología ('CrearTesis@1') son escrituras, no cálculos: None. _(línea 122)_
+- `missing_for(manifest)` — Etiquetas `impl` de un manifiesto que este código NO retiene (las de acciones de la ontología, 'CrearTesis@1', son escrituras y no cuentan; … _(línea 130)_
+- `catalog(lang=…)` — Lista pública (para el 🩺 y las pruebas): qué implementaciones retiene este despliegue. _(línea 144)_
+- `module_view(mod_name, arts, notes=…)` — SimpleNamespace con las funciones del módulo `mod_name` atadas a una COPIA de sus globales en la que las constantes de `governance.bind` … _(línea 159)_
+- `view_with(view, **overrides)` — La misma vista con nombres reemplazados (p. ej. `trading_enabled` → el valor que regía): las funciones de la vista leen sus globales en … _(línea 188)_
+- `under(arts)` — Este hilo lee `governance.param` desde `arts` (kernel.params, ontology.shapes, policy.gates…). _(línea 199)_
+- `sha(obj)` _(línea 207)_
+- `diff(a, b, path=…, out=…, limit=…)` — Diferencias campo a campo entre lo REGISTRADO (a) y lo REPETIDO (b): [{path, recorded, replayed}]. _(línea 213)_
+- `golden_run(key, version, arts)` — Salida de `key@version` sobre entradas FIJAS (sin base, sin red) con los cuerpos `arts`. La prueba dorada compara su huella con … _(línea 251)_
+- `repo_arts(selection=…)` — Cuerpos del repositorio (verificados por hash) del release propuesto (manifest.json, sin selección por entorno), con `selection` {aid: … _(línea 341)_
 
 **Internas** (empiezan con `_`): `_bindings_for`, `_norm`, `_short`
 
 ## Depende de
 
 - [[brokerage.risk.py]] — importa `(dinámico: brokerage.risk)`
-- [[core.__init__.py]] — importa `engine`, `focus`, `report`
+- [[core.__init__.py]] — importa `engine`, `focus`, `genui`, `report`
 - [[core.decision_sites.py]] — importa `clean`
 - [[core.decisions.py]] — importa `(dinámico: core.decisions)`, `canonical`
 - [[core.governance.py]] — importa `governance`
@@ -52,10 +52,12 @@ IMPLEMENTACIONES RETENIDAS (docs/INFRA_OPERATIVA.md §5.2 «Implementaciones ret
 - [[core.replay.py]] — lo importa
 - [[scripts.build_impl_goldens.py]] — lo importa
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_genui_builders.py]]
+- [[tests.test_genui_ledger.py]]
 - [[tests.test_impl_registry.py]]
 - [[tests.test_replay_determinism.py]]
 

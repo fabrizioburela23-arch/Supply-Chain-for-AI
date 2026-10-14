@@ -1,0 +1,228 @@
+{
+ "args": {
+  "shocks": [
+   {
+    "id": "TSMC"
+   }
+  ]
+ },
+ "result": {
+  "affected": 318,
+  "as_of": "2026-10-13T23:16:25.431240+00:00",
+  "by_hop": {
+   "1": 83,
+   "2": 143,
+   "3": 90,
+   "4": 2
+  },
+  "factors": "active",
+  "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+  "graph_source": "snapshot",
+  "graph_version": 0,
+  "kernel": {
+   "damage_rels": null,
+   "damping": 0.6,
+   "max_hops": 6,
+   "method": "propagate@1",
+   "semver": "1.0.0",
+   "threshold": 0.01
+  },
+  "least_hit_rivals": [
+   {
+    "cat_damaged": 9,
+    "id": "Cambricon",
+    "impact_pct": 0.0,
+    "label": "Cambricon"
+   },
+   {
+    "cat_damaged": 9,
+    "id": "Ceva",
+    "impact_pct": 0.0,
+    "label": "CEVA"
+   },
+   {
+    "cat_damaged": 9,
+    "id": "Cirrus_Logic",
+    "impact_pct": 10.0,
+    "label": "Cirrus Logic"
+   },
+   {
+    "cat_damaged": 9,
+    "id": "HiSilicon",
+    "impact_pct": 0.0,
+    "label": "HiSilicon (Huawei)"
+   }
+  ],
+  "least_hit_rivals_rule": "least-hit rivals: same category as companies hit >= 40%, own damage < 15% (they could capture the orphaned demand); impact_pct is their DAMAGE, never a gain",
+  "method": "matrix.engine.propagate_block on the hot Impact view",
+  "reach_10pct": 179,
+  "reach_1pct": 318,
+  "scenario": null,
+  "seeded_by": "shocks",
+  "shocks": [
+   {
+    "id": "TSMC",
+    "label": "TSMC",
+    "magnitude": 1.0
+   }
+  ],
+  "source": "Khipus supply-chain graph + kernel.params (governance release)",
+  "sum_impact_companies": 48.9324,
+  "uncertainty": "structural estimate from the Khipus supply-chain graph (one kernel: propagate@1 with the active kernel.params) — NOT a price forecast; real moves depend on substitutes, inventories and markets",
+  "unknown_ids": [],
+  "victims": [
+   {
+    "hop": 1,
+    "id": "Nvidia",
+    "impact_pct": 100.0,
+    "label": "Nvidia"
+   },
+   {
+    "hop": 1,
+    "id": "Tesla",
+    "impact_pct": 90.2,
+    "label": "Tesla"
+   },
+   {
+    "hop": 1,
+    "id": "Apple",
+    "impact_pct": 75.6,
+    "label": "Apple"
+   },
+   {
+    "hop": 2,
+    "id": "Oracle",
+    "impact_pct": 61.98,
+    "label": "Oracle (OCI)"
+   },
+   {
+    "hop": 1,
+    "id": "AMD",
+    "impact_pct": 61.0,
+    "label": "AMD"
+   },
+   {
+    "hop": 1,
+    "id": "Groq",
+    "impact_pct": 60.0,
+    "label": "Groq"
+   },
+   {
+    "hop": 1,
+    "id": "Meta",
+    "impact_pct": 60.0,
+    "label": "Meta"
+   },
+   {
+    "hop": 2,
+    "id": "Nebius",
+    "impact_pct": 56.67,
+    "label": "Nebius"
+   },
+   {
+    "hop": 1,
+    "id": "MediaTek",
+    "impact_pct": 55.0,
+    "label": "MediaTek"
+   },
+   {
+    "hop": 1,
+    "id": "STMicroelectronics",
+    "impact_pct": 54.4,
+    "label": "STMicroelectronics"
+   },
+   {
+    "hop": 2,
+    "id": "SuperMicro",
+    "impact_pct": 51.3,
+    "label": "Super Micro"
+   },
+   {
+    "hop": 1,
+    "id": "MPWR",
+    "impact_pct": 50.0,
+    "label": "Monolithic Power"
+   },
+   {
+    "hop": 1,
+    "id": "SambaNova",
+    "impact_pct": 50.0,
+    "label": "SambaNova"
+   },
+   {
+    "hop": 1,
+    "id": "Broadcom",
+    "impact_pct": 48.86,
+    "label": "Broadcom"
+   },
+   {
+    "hop": 2,
+    "id": "CoreWeave",
+    "impact_pct": 45.36,
+    "label": "CoreWeave"
+   },
+   {
+    "hop": 1,
+    "id": "Qualcomm",
+    "impact_pct": 42.4,
+    "label": "Qualcomm"
+   },
+   {
+    "hop": 2,
+    "id": "Quanta",
+    "impact_pct": 41.7,
+    "label": "Quanta Computer"
+   },
+   {
+    "hop": 2,
+    "id": "HPE",
+    "impact_pct": 40.91,
+    "label": "Hewlett Packard Ent."
+   },
+   {
+    "hop": 2,
+    "id": "Foxconn",
+    "impact_pct": 40.39,
+    "label": "Hon Hai (Foxconn)"
+   },
+   {
+    "hop": 1,
+    "id": "Allegro",
+    "impact_pct": 40.0,
+    "label": "Allegro MicroSystems"
+   },
+   {
+    "hop": 1,
+    "id": "Esperanto",
+    "impact_pct": 40.0,
+    "label": "Esperanto Technologies"
+   },
+   {
+    "hop": 1,
+    "id": "Lattice",
+    "impact_pct": 40.0,
+    "label": "Lattice Semiconductor"
+   },
+   {
+    "hop": 1,
+    "id": "SiliconLabs",
+    "impact_pct": 40.0,
+    "label": "Silicon Laboratories"
+   },
+   {
+    "hop": 1,
+    "id": "NXP",
+    "impact_pct": 39.09,
+    "label": "NXP Semiconductors"
+   },
+   {
+    "hop": 1,
+    "id": "Renesas",
+    "impact_pct": 35.4,
+    "label": "Renesas Electronics"
+   }
+  ]
+ },
+ "sample": false,
+ "tool": "run_scenario"
+}

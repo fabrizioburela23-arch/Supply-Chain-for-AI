@@ -35,7 +35,7 @@ RESOLUTOR DE EMPRESAS + SUPERFICIE DE RESULTADOS (2026-07) Feedback real de Fabr
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`, `RESOLVE_STOPWORDS`, `VOICE_ALIASES`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_ID_ALIAS`
 
-Se carga en [[app.html]] en la posición **33 de 97** (línea 3024), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
+Se carga en [[app.html]] en la posición **33 de 98** (línea 3024), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
 
 ## Lo usan
 
@@ -46,6 +46,7 @@ Se carga en [[app.html]] en la posición **33 de 97** (línea 3024), después de
 - [[engine.command_center.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.crypto.js]] — usa `_surface`
 - [[engine.fincard.js]] — usa `KhipuResolve`
+- [[engine.genui.js]] — usa `_surface`
 - [[engine.khipu_chat.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.khipu_lang.js]] — usa `KhipuResolve`
 - [[engine.localcharts.js]] — usa `KhipuResolve`

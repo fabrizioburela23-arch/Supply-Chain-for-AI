@@ -25,7 +25,7 @@ NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que 
 - [[app.html]] — usa `_tradeFetch`, `_tradeStatusInfo`
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **27 de 97** (línea 3018), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
+Se carga en [[app.html]] en la posición **27 de 98** (línea 3018), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
 
 ## Lo usan
 
@@ -40,6 +40,7 @@ Se carga en [[app.html]] en la posición **27 de 97** (línea 3018), después de
 - [[engine.committee.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.crypto.js]] — usa `KhipuToast`
 - [[engine.desktop.js]] — usa `KhipuToast`
+- [[engine.genui.js]] — usa `KhipuToast`
 - [[engine.governance.js]] — usa `KhipuToast`
 - [[engine.khipu_chat.js]] — usa `khipuActor`
 - [[engine.khipu_lang.js]] — usa `khipuActor`
@@ -62,6 +63,7 @@ Se carga en [[app.html]] en la posición **27 de 97** (línea 3018), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_genui_browser.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]
 - [[tests.test_overnight3_toast_tokens.py]]

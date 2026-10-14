@@ -119,6 +119,7 @@ STEP_LABELS = {
     'deterministic_core': ('Cálculo repetido', 'Repeated computation'),
     'gates': ('Puertas de validación', 'Validation gates'),
     'ai_steps': ('Pasos de IA (solo verificación)', 'AI steps (verification only)'),
+    'ui_blocks': ('Bloques de la interfaz (rehechos sin IA)', 'Interface blocks (rebuilt without AI)'),
     'error': ('Error al repetir', 'Replay error'),
 }
 KIND_LABELS = {
@@ -976,6 +977,40 @@ def _replay_ai(run, session, arts):
              impl='numbers.guard@1')
 
 
+# ── interfaz generativa del chat (core/genui, genui.build@1) ─────────────────────────────────────────────────────
+def _replay_genui(run, session):
+    """chat.answer con sobre `ui`: se vuelve a armar con las entradas guardadas (`ui_inputs`: resultados de
+    herramientas, sin el mensaje del usuario) y se compara su huella con `ui_blocks`. No convierte la respuesta en
+    'identical' (el texto es de IA): solo puede delatar una diferencia (código que cambió sin nacer @2)."""
+    import hashlib
+
+    from core import decisions, impls
+    ui = _mf(run, session, 'ui')
+    rec = _mf(run, session, 'ui_blocks')
+    if not isinstance(ui, dict) or not rec:
+        return
+    sha = ui.get('replay_blob')
+    if not sha:
+        run.step('ui_blocks', None, note=ui.get('replay_note') or 'no_inputs')
+        return
+    inputs, st = _blob(session, sha)
+    if st != 'ok':
+        if st == 'purged':
+            run.reason('blob_purged')
+        run.step('ui_blocks', None, note=st)
+        return
+    from core import genui
+    env = genui.public(genui.rebuild(inputs))
+    got = hashlib.sha256(decisions.canonical(env)).hexdigest() if env is not None else None
+    run.compared += 1
+    if got == rec:
+        run.step('ui_blocks', True, impl=genui.IMPL, n=len((env or {}).get('blocks') or []))
+        return
+    run.differs += 1
+    old, _st = _blob(session, rec)
+    run.step('ui_blocks', False, impl=genui.IMPL, diffs=impls.diff(old or {}, env or {}, limit=20))
+
+
 # ── el replay ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _explain(run, verdict, d):
     when = str(d.get('recorded_at') or '')[:16].replace('T', ' ')
@@ -1044,6 +1079,8 @@ def _run(session, d):
                 fn(run, session, arts)
             _replay_gates(run, session, arts)
             _replay_ai(run, session, arts)
+            if kind == 'chat.answer':
+                _replay_genui(run, session)
         except TimeoutError:
             raise
         except Exception as e:  # noqa: BLE001

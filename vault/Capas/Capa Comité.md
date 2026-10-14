@@ -31,8 +31,8 @@ tags: ["capa/comite", "tipo/capa"]
 | usa a | [[Capa Interfaz (Khipus OS)]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 7 |
 | la usa | [[Capa Infraestructura]] | 6 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 6 |
 | usa a | [[Capa Ontología y grafo temporal]] | 6 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |

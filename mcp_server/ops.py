@@ -115,6 +115,10 @@ def t_run_scenario(ctx, shocks=None, scenario=None, factors='active', top=25, po
            'victims': [{'id': x['id'], 'label': x['label'], 'impact_pct': x['pct'], 'hop': x['hop']}
                        for x in sc['victims']],
            'kernel': _kernel(v), **_gen_meta(v),
+           # «ganadores» = rivales del mismo rubro POCO golpeados, con su % de DAÑO (nunca un % de ganancia): la
+           # regla de KhipuHot.rivals sobre TODOS los impactos del kernel (core/genui/rivals.py, paridad con el JS)
+           'least_hit_rivals': _least_hit_rivals(v, [u['id'] for u in used], impacts),
+           'least_hit_rivals_rule': RIVALS_RULE,
            'uncertainty': STRUCTURAL_NOTE, 'method': 'matrix.engine.propagate_block on the hot Impact view',
            'source': 'Khipus supply-chain graph + kernel.params (governance release)', 'as_of': _now_iso()}
     if positions:
@@ -145,6 +149,31 @@ def t_run_scenario(ctx, shocks=None, scenario=None, factors='active', top=25, po
             'status', 'pnl_usd', 'band_usd', 'lo_usd', 'hi_usd', 'pnl_pct', 'extrapolated', 'note_en', 'calibration')
             if k in cal}
     return out
+
+
+RIVALS_RULE = ('least-hit rivals: same category as companies hit >= 40%, own damage < 15% (they could capture the '
+               'orphaned demand); impact_pct is their DAMAGE, never a gain')
+
+
+def _least_hit_rivals(v, seed_ids, impacts):
+    """[{id, label, impact_pct, cat_damaged}] ≤ 4 — nunca rompe el choque (sin datos → [])."""
+    try:
+        from core.genui.rivals import rivals
+        nodes = [{'id': nid, 'cat': n.get('cat')} for nid, n in (v.by_id or {}).items()
+                 if isinstance(n, dict) and n.get('id', nid) == nid]
+        caps = {}
+        try:
+            from core.live_caps import get_caps
+            for nid, c in ((get_caps() or {}).get('caps') or {}).items():
+                if isinstance(c, dict) and isinstance(c.get('mcap_b'), (int, float)):
+                    caps[nid] = c['mcap_b']
+        except Exception:  # noqa: BLE001
+            caps = {}
+        return [{'id': r['id'], 'label': v.core.label(r['id']) if v.core is not None else r['id'],
+                 'impact_pct': r['hit'], 'cat_damaged': r['cat_damaged']}
+                for r in rivals(seed_ids, impacts, nodes, caps, 4)]
+    except Exception:  # noqa: BLE001
+        return []
 
 
 # ════════════════════════════════════════════════════════════════════════════

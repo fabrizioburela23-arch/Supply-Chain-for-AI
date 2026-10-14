@@ -24,7 +24,7 @@ MASCOTAS BURBUJA de Khipus OS (2026-10-06)
 
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **31 de 97** (línea 3022), después de [[engine.tour_script.js]] y antes de [[engine.universe2d.js]].
+Se carga en [[app.html]] en la posición **31 de 98** (línea 3022), después de [[engine.tour_script.js]] y antes de [[engine.universe2d.js]].
 
 ## Lo usan
 
@@ -50,6 +50,7 @@ Se carga en [[app.html]] en la posición **31 de 97** (línea 3022), después de
 - [[tests.test_agents_registry.py]]
 - [[tests.test_cleanup_modules_theme_i18n.py]]
 - [[tests.test_committee_os_ui.py]]
+- [[tests.test_genui_browser.py]]
 - [[tests.test_khipus_os_chat.py]]
 - [[tests.test_khipus_os_integration.py]]
 - [[tests.test_khipus_os_server.py]]

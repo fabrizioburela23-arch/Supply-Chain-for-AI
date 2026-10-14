@@ -30,7 +30,7 @@ De nivel superior (globales del script): `NODES_SPACEX`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **5 de 97** (línea 1440), después de [[nodes.nodes_expand2.js]] y antes de [[nodes.nodes_expand3.js]].
+Se carga en [[app.html]] en la posición **5 de 98** (línea 1440), después de [[nodes.nodes_expand2.js]] y antes de [[nodes.nodes_expand3.js]].
 
 ## Lo usan
 

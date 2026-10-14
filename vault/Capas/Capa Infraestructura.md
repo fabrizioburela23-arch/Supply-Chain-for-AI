@@ -9,15 +9,15 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**45 archivos · 25.413 líneas.** Volver al [[00 Mapa de Khipus]].
+**45 archivos · 25.491 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 4.878 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[server.py]] — 4.903 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 - [[scripts.build_vault.py]] — 3.489 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
-- [[core.replay.py]] — 1.436 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
+- [[core.replay.py]] — 1.473 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
 - [[core.ai.py]] — 1.196 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.governance.py]] — 1.109 líneas · EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan).
 - [[core.governance_flow.py]] — 1.016 líneas · FLUJO DE GOBERNANZA COMPLETO (docs/INFRA_OPERATIVA.md §5.3; paso 25 del plan).
@@ -32,7 +32,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.governance_api.py]] — 381 líneas · /api/governance/\* (docs/INFRA_OPERATIVA.md §5.1; paso 9). Nunca bajo /v1/\*.
 - [[core.ledger_ddl.py]] — 372 líneas · DDL idempotente de los registros que SOLO crecen (docs/INFRA_OPERATIVA.md §2.1, §4.3).
 - [[core.ledger_api.py]] — 359 líneas · lectura del libro de decisiones: /api/ledger/\* (docs/INFRA_OPERATIVA.md §2.9; paso 6).
-- [[core.impls.py]] — 334 líneas · IMPLEMENTACIONES RETENIDAS (docs/INFRA_OPERATIVA.md §5.2 «Implementaciones retenidas»; paso 24).
+- [[core.impls.py]] — 349 líneas · IMPLEMENTACIONES RETENIDAS (docs/INFRA_OPERATIVA.md §5.2 «Implementaciones retenidas»; paso 24).
 - [[core.ai_calls.py]] — 317 líneas · registro append-only de CADA pedido a la IA (docs/INFRA_OPERATIVA.md §2.6, paso 21; GV-11).
 - [[core.retention.py]] — 312 líneas · PURGA POR RETENCIÓN del libro (docs/INFRA_OPERATIVA.md §2.7; paso 26; decisión D3).
 - [[sw.js]] — 296 líneas · Khipu Finance — Service Worker Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / CACHE va en la línea 6 (regla de despliegue #1: …
@@ -55,7 +55,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[scripts.fetch_ledger_anchor.py]] — 98 líneas · baja el ANCLA DIARIA pública del libro de decisiones y la guarda fuera de la base (docs/INFRA_OPERATIVA.md §2.8, paso 7, decisión D7). La corre el …
 - [[core.config.py]] — 82 líneas · variables de entorno compartidas entre server y ontology.
 - [[core.logjson.py]] — 81 líneas · O2 (misión de reparación 2026-10-04): logs estructurados.
-- [[scripts.build_impl_goldens.py]] — 74 líneas · salidas DORADAS de las implementaciones retenidas (core/impls.py; INFRA §5.2, paso 24).
+- [[scripts.build_impl_goldens.py]] — 75 líneas · salidas DORADAS de las implementaciones retenidas (core/impls.py; INFRA §5.2, paso 24).
 - [[core.agents_registry.py]] — 56 líneas · el registro de agentes del lado Python (limpieza 2026-10-11).
 - [[core.tour.py]] — 39 líneas · el guion del recorrido de un minuto, lado Python (voz para Khipus OS, 2026-10-11).
 - [[core.__init__.py]] — 13 líneas · helpers compartidos entre server.py (Flask) y ontology/ (agentes).
@@ -76,7 +76,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 21 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 17 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 12 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 11 |
 | la usa | [[Capa Voz]] | 7 |
 | usa a | [[Capa Chat y agentes]] | 7 |

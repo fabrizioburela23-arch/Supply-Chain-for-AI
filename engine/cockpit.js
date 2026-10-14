@@ -153,6 +153,10 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{
 body:not(.dark) #bcp-ov,body:not(.dark) .kos-themed{--os-good-ink:#066B06;--os-bad-ink:#A82424;--os-warn:#B7791F;--os-warn-ink:#7F5200;--os-ai:#6236C9}
 body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2fbf5b;--os-bad-ink:#F47C7C;--os-warn:#F2C46D;--os-warn-ink:#F2C46D;--os-ai:#B48CFF}
 /* .kos-themed: cualquier overlay FUERA de #bcp-ov (Dossier, Investigación, Clientes…) toma los mismos tokens */
+/* MOVIMIENTO (docs/CHAT_UI_GENERATIVA.md §7.4): duraciones, curvas y escalonado de Khipus OS. Solo se animan
+   transform/opacity, nada en bucle; con «reducir movimiento» las duraciones valen 0 (todo aparece de golpe). */
+#bcp-ov,.kos-themed{--os-dur-1:120ms;--os-dur-2:220ms;--os-dur-3:380ms;--os-ease-out:cubic-bezier(.2,0,0,1);--os-ease-inout:cubic-bezier(.4,0,.2,1);--os-stagger:70ms}
+@media(prefers-reduced-motion:reduce){#bcp-ov,.kos-themed{--os-dur-1:0ms;--os-dur-2:0ms;--os-dur-3:0ms;--os-stagger:0ms}}
 .kos-themed{--os-r:18px;--os-r-sm:12px;--os-font:'Nunito', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;--km-ring:var(--os-surface)}
 #bcp-ov{--os-r:18px;--os-r-sm:12px;--os-font:'Nunito', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   position:fixed;inset:0;z-index:7000;display:none;flex-direction:column;
@@ -917,6 +921,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     relabelShell();
     _paintHome(true);
     _tourRelang();   // el recorrido sigue en el idioma nuevo (barra, frase actual y clips)
+    try { if (window.KhipuGenUI && window.KhipuGenUI.relang) window.KhipuGenUI.relang(); } catch (e) {}   // bloques visibles, repintados desde su JSON
     if (_popFor) _popClose();
     if (palIsOpen()) palRender();
   }
@@ -980,6 +985,10 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     html += '<div class="kos-sep"></div>' +
       (_custom.agents ? '<button type="button" class="kos-mi" data-k="agents"><span class="ic">◍</span><span class="tx">' + esc(L('Tus agentes', 'Your agents')) + '</span></button>' : '') +
       (typeof window.openSistema === 'function' ? '<button type="button" class="kos-mi" data-k="sistema"><span class="ic">🩺</span><span class="tx">' + esc(L('Sistema', 'System')) + '</span></button>' : '') +
+      // «Respuestas visuales (beta)»: el chat dibuja gráficos, cifras y fichas (engine/genui.js; bandera kh_genui)
+      (window.KhipuGenUI ? '<button type="button" class="kos-mi" data-k="genui" role="menuitemcheckbox" aria-checked="' + (window.KhipuGenUI.enabled() ? 'true' : 'false') + '">' +
+        '<span class="ic">✦</span><span class="tx">' + esc(L('Respuestas visuales (beta)', 'Visual answers (beta)')) + '</span><span class="hint">' +
+        esc(window.KhipuGenUI.enabled() ? L('activas', 'on') : L('apagadas', 'off')) + '</span></button>' : '') +
       '<div class="kos-sep"></div>' +
       '<button type="button" class="kos-mi" data-k="classic"><span class="ic">▭</span><span class="tx">' + esc(L('Vista clásica', 'Classic view')) + '</span><span class="hint">' + esc(L('pestañas', 'tabs')) + '</span></button>';
     var el = _popOpen(btn, 'kos-me', html, 'right');
@@ -993,11 +1002,23 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       _popClose();
       if (k === 'agents') stage('agents');
       else if (k === 'sistema') _openSistemaOS();
+      else if (k === 'genui') _toggleGenUI();
       else if (k === 'classic') toClassicView();
       else if (k === 'lang') _toggleLang();
       else if (k === 'theme') _toggleTheme();
       else if (k === 'bal') _balGo();
     });
+  }
+  // la bandera vive en el navegador (localStorage kh_genui); el servidor solo manda `ui` a quien la tenga
+  function _toggleGenUI() {
+    var G = window.KhipuGenUI; if (!G) return;
+    var on = G.setEnabled(!G.enabled());
+    try {
+      if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'info',
+        title: on ? L('Respuestas visuales activadas (beta)', 'Visual answers on (beta)') : L('Respuestas visuales apagadas', 'Visual answers off'),
+        body: on ? L('Las próximas respuestas traerán gráficos, cifras con su fuente y fichas.', 'Next answers will include charts, sourced figures and cards.')
+                 : L('El chat vuelve a responder solo con texto.', 'The chat goes back to text-only answers.') });
+    } catch (e) {}
   }
   function _editName(el) {
     var sb = el.querySelector('.kos-mehd .sb'); if (!sb) return;

@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **13 de 97** (línea 1448), después de [[nodes.nodes_multicapa.js]] y antes de [[nodes.listing_status.js]].
+Se carga en [[app.html]] en la posición **13 de 98** (línea 1448), después de [[nodes.nodes_multicapa.js]] y antes de [[nodes.listing_status.js]].
 
 ## Lo usan
 

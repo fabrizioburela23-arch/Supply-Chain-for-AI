@@ -9,7 +9,7 @@ tags: ["capa/mcp-api", "tipo/capa"]
 
 > El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas.
 
-**11 archivos · 5.933 líneas.** Volver al [[00 Mapa de Khipus]].
+**11 archivos · 5.962 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 
@@ -17,7 +17,7 @@ Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 
 - [[mcp_server.tools.py]] — 1.877 líneas · catálogo de herramientas MCP de Khipus.
 - [[mcp_server.oauth.py]] — 781 líneas · OAuth 2.1 mínimo (y correcto) para conectores remotos.
-- [[mcp_server.ops.py]] — 739 líneas · las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión #15).
+- [[mcp_server.ops.py]] — 768 líneas · las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión #15).
 - [[mcp_server.api.py]] — 702 líneas · blueprint mcp_bp (transporte + administración).
 - [[mcp_server.auth.py]] — 534 líneas · tokens kmcp_…, alcances, límites por token y auditoría.
 - [[engine.mcpconnect.js]] — 500 líneas · 🤖 CONECTAR IAs (MCP): que Claude, ChatGPT, Cursor o un agente propio usen Khipus desde SU propia interfaz.
@@ -35,10 +35,10 @@ Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 | usa a | [[Capa Ontología y grafo temporal]] | 13 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 8 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 5 |
+| la usa | [[Capa Chat y agentes]] | 4 |
 | la usa | [[Capa Infraestructura]] | 4 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 4 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |
-| la usa | [[Capa Chat y agentes]] | 3 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
 | usa a | [[Capa Investigación]] | 3 |

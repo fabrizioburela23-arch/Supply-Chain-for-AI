@@ -32,7 +32,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **58 de 97** (línea 3100), después de [[engine.pickers.js]] y antes de [[engine.aispend.js]].
+Se carga en [[app.html]] en la posición **58 de 98** (línea 3100), después de [[engine.pickers.js]] y antes de [[engine.aispend.js]].
 
 ## Lo usan
 
@@ -40,6 +40,7 @@ Se carga en [[app.html]] en la posición **58 de 97** (línea 3100), después de
 - [[app.html]] — usa `KhipuCommittee`
 - [[engine.brief.js]] — usa `KhipuCommittee`
 - [[engine.cockpit.js]] — usa `KhipuCommittee`
+- [[engine.genui.js]] — usa `KhipuCommittee`
 - [[engine.khipu_chat.js]] — usa `KhipuCommittee`
 - [[engine.khipu_lang.js]] — usa `KhipuCommittee`
 - [[engine.oswindows.js]] — usa `KhipuCommittee`

@@ -1,0 +1,420 @@
+{
+ "args": {
+  "id_or_ticker": "TSMC",
+  "include_live": false
+ },
+ "result": {
+  "as_of": "2026-10-13T23:16:25.416634+00:00",
+  "catalog": {
+   "as_of": "2026-10-13T18:20:44.583Z",
+   "as_of_note": "date the catalog snapshot was exported — NOT the date of the figures",
+   "backlog_note": "CoWoS sold out through 2027",
+   "capex_2026_note": "$52–56B",
+   "figures_as_of": null,
+   "figures_note": "undated curated figures (catalog); prefer live_market when available",
+   "figures_note_es": "cifras curadas sin fecha propia (catálogo); preferir live_market cuando exista",
+   "growth_note": "🔵 +35% 2026, +26% 2027",
+   "location": "Taiwán (+ Arizona, Japón, Alemania)",
+   "moat_and_risks": "Structural technical monopoly: without TSMC there is no iPhone, no Vera Rubin, no AMD chip. The most critical single point of failure in the entire chain, irreplaceable for 10+ years; its risk is geopolitical concentration in Taiwan.",
+   "operating_margin": 0.49,
+   "operating_margin_pct": 49.0,
+   "role": "The foundry that manufactures 90%+ of the world's leading-edge chips.",
+   "source": "Khipus supply-chain graph snapshot (data/grafo_v0.json, curated catalog) — descriptive text curated by Khipus; figures inside may be approximate",
+   "supplies": "3nm and 2nm logic chip manufacturing plus advanced CoWoS packaging for Nvidia, Apple, AMD and Qualcomm. The N2 node enters volume ramp in 2026, with fabs expanding in Arizona, Japan and Germany.",
+   "ticker_text": "TSM · NYSE"
+  },
+  "category": "foundry",
+  "country": "Taiwan",
+  "counts": {
+   "customers": 78,
+   "related": 7,
+   "suppliers": 73
+  },
+  "degree": 175,
+  "edge_semantics": {
+   "flow_types": [
+    "supply",
+    "cloud",
+    "fab",
+    "license",
+    "deploy",
+    "owns",
+    "ppa"
+   ],
+   "note": "top_suppliers/top_customers list only FLOW relations (goods, fab, cloud, license, power, ownership, deployment). partner/invest are in `related`. verified=false / confidence=0.3 when the curated text says the link is unverified or only possible.",
+   "related_types": [
+    "partner",
+    "invest"
+   ],
+   "relation_class": "supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other"
+  },
+  "id": "TSMC",
+  "label": "TSMC",
+  "listed": true,
+  "live_market": {
+   "available": false,
+   "reason": "not requested (include_live=false)",
+   "symbol": "TSM"
+  },
+  "network_risk_score": {
+   "explain": "Network Risk Score 0-100 (higher = more fragile position in the AI supply chain): country/geo risk + graph centrality + margin + fundamentals + concentration. A heuristic, not a forecast.",
+   "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+   "method": "catalog formula via hot view V3 card (same formula as the app computeNRS; structural degree = flow relations, distinct pairs, of the current graph generation)",
+   "terms": {
+    "chain": 25,
+    "concentration": 10,
+    "fundamental": 0,
+    "geo": 25,
+    "market": 0
+   },
+   "value": 60
+  },
+  "preipo": false,
+  "related": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "CBCTaiwan",
+    "label": "CBCTaiwan",
+    "relation": "El nivel del TWD, gestionado por el banco central, determina directamente el margen bruto en dólares de TSMC sin que cambie una sola orden de compra; el banco interviene explícitamente para 'suavizar' esa volatilidad.",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "ARM",
+    "label": "ARM",
+    "relation": "PDK optimizado para cada nodo TSMC (N3, N2) — ARM como IP preferente de TSMC",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Synopsys",
+    "label": "Synopsys",
+    "relation": "Reference flow N3/N2: Synopsys entrega el flujo EDA certificado para TSMC",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Kioxia",
+    "label": "Kioxia",
+    "relation": "",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "PowerchipSemi",
+    "label": "Powerchip Semiconductor",
+    "relation": "",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Vanguard",
+    "label": "Vanguard",
+    "relation": "Entre los mayores tenedores institucionales de los ADRs de TSMC en EE.UU. según 13F; % exacto no verificado.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "kyec",
+    "label": "King Yuan Electronics (KYEC)",
+    "relation": "test dedicado para clientes fabless del ecosistema de fundición TSMC",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 0.3
+   }
+  ],
+  "resolved_from": {
+   "method": "id",
+   "score": 100,
+   "text": "TSMC"
+  },
+  "sector": "fabricacion",
+  "sector_label": "Manufacturing",
+  "sources": [
+   "Khipus graph snapshot",
+   "nodes/private_valuations.js (verified)",
+   "live profile: n/a"
+  ],
+  "structure": {
+   "cap_coverage_pct": 21,
+   "downstream_cap_at_risk_usd_b": 624.2,
+   "n_suppliers": 73,
+   "note": "supplier shares = weight of supplier links, not spend; cap at risk counts only companies with a known (live or verified) market cap",
+   "peers": [
+    "Samsung Electronics",
+    "Intel",
+    "GlobalFoundries"
+   ],
+   "risk_sources": [
+    "PDF Solutions 16.4%",
+    "ASML 4.0%",
+    "Wan Hai 3.3%"
+   ],
+   "supplier_concentration": "baja",
+   "supplier_hhi": 0.018,
+   "systemic_rank": 1,
+   "top_supplier": {
+    "id": "ASML",
+    "label": "ASML",
+    "share_pct": 4.0
+   },
+   "top_supplier_country": {
+    "country": "EEUU",
+    "share_pct": 45.5
+   }
+  },
+  "symbol": "TSM",
+  "top_customers": [
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Apple",
+    "label": "Apple",
+    "relation": "Fabrica A18/M4 Pro en N3E — Apple es el 1º cliente por ingresos",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "relation": "Fabrica TODOS los chips Blackwell/Hopper en N4P/N3E — relación exclusiva",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "AMD",
+    "label": "AMD",
+    "relation": "Fabrica Instinct MI300X, EPYC Turin en N3/N4 — cliente 2º por volumen",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Broadcom",
+    "label": "Broadcom",
+    "relation": "ASIC de IA fabricados en TSMC",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "MediaTek",
+    "label": "MediaTek",
+    "relation": "TSMC fabrica chips Dimensity en N4/N3 para MediaTek",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Groq",
+    "label": "Groq",
+    "relation": "TSMC fabrica el LPU GroqChip en proceso 14nm",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Meta",
+    "label": "Meta",
+    "relation": "Fabrica sus ASICs MTIA (Meta Training & Inference Accelerator)",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "NXP",
+    "label": "NXP Semiconductors",
+    "relation": "Procesadores automotrices en TSMC",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Qualcomm",
+    "label": "Qualcomm",
+    "relation": "Chips de infraestructura 5G en TSMC",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Tesla",
+    "label": "Tesla",
+    "relation": "Fabrica los chips Dojo D1, HW4 y FSD en TSMC 7nm/5nm",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 4
+   }
+  ],
+  "top_suppliers": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "ASML",
+    "label": "ASML",
+    "relation": "Máquinas EUV y High-NA (€350M c/u)",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 6
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "EvergreenMarine",
+    "label": "Evergreen Marine",
+    "relation": "Ruta Kaohsiung-EEUU/Europa relevante para carga de equipos y componentes de semiconductores taiwaneses",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "WanHai",
+    "label": "Wan Hai",
+    "relation": "Fletó un buque completo con equipos de manufactura de TSMC rumbo a Phoenix, Arizona (2021)",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "YangMing",
+    "label": "Yang Ming",
+    "relation": "Transporta carga de electrónica/semiconductores taiwaneses vía Keelung/Kaohsiung",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Expeditors",
+    "label": "Expeditors",
+    "relation": "Lista 'Semiconductors/GPUs' entre los verticales que atiende con logística aérea de alta prioridad",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "AMAT",
+    "label": "Applied Materials",
+    "relation": "Deposición, implantación y CMP",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Besi",
+    "label": "BE Semiconductor",
+    "relation": "Hybrid bonding para chiplets/SoIC",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "CMC_Materials",
+    "label": "CMC Materials (now CMIIT)",
+    "relation": "Slurry de CMP para pulido",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "JSR",
+    "label": "JSR",
+    "relation": "Fotorresistencias EUV de alta resolución",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "KLA",
+    "label": "KLA",
+    "relation": "Inspección y metrología de obleas",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   }
+  ]
+ },
+ "sample": false,
+ "tool": "get_company"
+}

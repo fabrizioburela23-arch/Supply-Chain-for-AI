@@ -27,6 +27,7 @@ CASES = {
     'broker.run_checks': [{'policy.broker_risk': '1.0.0'}],
     'numbers.guard': [{'policy.numbers_guard': '1.0.0'}],
     'gates.eval': [{'ontology.shapes': '5.0.0'}],
+    'genui.build': [{}],                    # no lee números de gobernanza: el sobre sale de los resultados grabados
 }
 
 

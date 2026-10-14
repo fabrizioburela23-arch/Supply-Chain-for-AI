@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **8 de 97** (línea 1443), después de [[nodes.nodes_nuclear.js]] y antes de [[nodes.nodes_expand5.js]].
+Se carga en [[app.html]] en la posición **8 de 98** (línea 1443), después de [[nodes.nodes_nuclear.js]] y antes de [[nodes.nodes_expand5.js]].
 
 ## Lo usan
 

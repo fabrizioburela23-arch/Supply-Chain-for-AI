@@ -97,6 +97,8 @@ SPEC_TOOL_AGENT = {
     'get_news': 'radar', 'get_world_events': 'radar', 'web_search': 'radar', 'scenario_exposure': 'radar',
     'market_movers': 'tecnico', 'get_option_greeks': 'tecnico', 'get_risk_report': 'tecnico',
     'get_committee_memo': 'comite', 'get_conclusions_board': 'comite', 'get_track_record': 'comite',
+    # respuestas visuales (2026-10-14): las dos herramientas que entraron al chat en la F1 tienen mascota
+    'get_history': 'tecnico', 'run_scenario': 'cadena',
 }
 
 

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_governance_activation.py"
 lenguaje: "python"
-lineas: 155
+lineas: 161
 aliases: ["tests/test_governance_activation.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_governance_activation.py
 
-> Prueba · capa [[Capa Pruebas]] · 155 líneas · `tests/test_governance_activation.py`
+> Prueba · capa [[Capa Pruebas]] · 161 líneas · `tests/test_governance_activation.py`
 
 ## Qué prueba
 

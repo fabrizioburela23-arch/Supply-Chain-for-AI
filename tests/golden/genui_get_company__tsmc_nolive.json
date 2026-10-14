@@ -1,0 +1,632 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Price: no data; Change: no data; Market cap: no data; Network risk (NRS): 60",
+    "es": "Precio: sin dato; Cambio: sin dato; Capitalización: sin dato; Riesgo de red (NRS): 60"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Price",
+       "es": "Precio"
+      },
+      "value": {
+       "as_of": null,
+       "missing_reason": {
+        "en": "live data was not requested",
+        "es": "no se pidió el dato en vivo"
+       },
+       "src": "yahoo",
+       "unit": "USD",
+       "v": null
+      }
+     },
+     {
+      "label": {
+       "en": "Change",
+       "es": "Cambio"
+      },
+      "value": {
+       "as_of": null,
+       "missing_reason": {
+        "en": "live data was not requested",
+        "es": "no se pidió el dato en vivo"
+       },
+       "src": "yahoo",
+       "unit": "pct",
+       "v": null
+      }
+     },
+     {
+      "label": {
+       "en": "Market cap",
+       "es": "Capitalización"
+      },
+      "value": {
+       "as_of": null,
+       "missing_reason": {
+        "en": "live data was not requested",
+        "es": "no se pidió el dato en vivo"
+       },
+       "src": "yahoo",
+       "unit": "USD_B",
+       "v": null
+      }
+     },
+     {
+      "label": {
+       "en": "Network risk (NRS)",
+       "es": "Riesgo de red (NRS)"
+      },
+      "value": {
+       "as_of": "2026-10-13T23:16:25.416634+00:00",
+       "explain": "nrs",
+       "fact": "F1",
+       "src": "khipus_nrs",
+       "unit": "nrs",
+       "v": 60
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "TSMC",
+    "label": "TSMC",
+    "symbol": "TSM"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "TSMC: key figures",
+    "es": "TSMC: cifras clave"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "TSMC",
+      "label": "TSMC",
+      "symbol": "TSM"
+     },
+     "kind": "open_dossier",
+     "label": {
+      "en": "Dossier",
+      "es": "Dossier"
+     }
+    },
+    {
+     "entity": {
+      "id": "TSMC",
+      "label": "TSMC",
+      "symbol": "TSM"
+     },
+     "kind": "open_xray",
+     "label": {
+      "en": "X-Ray",
+      "es": "Radiografía"
+     }
+    }
+   ],
+   "alt": {
+    "en": "TSMC: price no data, change no data, market cap no data, NRS 60. Suppliers: ASML, Evergreen Marine, Wan Hai. Customers: Apple, Nvidia, AMD",
+    "es": "TSMC: precio sin dato, cambio sin dato, capitalización sin dato, NRS 60. Proveedores: ASML, Evergreen Marine, Wan Hai. Clientes: Apple, Nvidia, AMD"
+   },
+   "data": {
+    "change": {
+     "as_of": null,
+     "missing_reason": {
+      "en": "live data was not requested",
+      "es": "no se pidió el dato en vivo"
+     },
+     "src": "yahoo",
+     "unit": "pct",
+     "v": null
+    },
+    "company": {
+     "id": "TSMC",
+     "label": "TSMC",
+     "symbol": "TSM"
+    },
+    "graph_as_of": "2026-10-13T18:20:44.583Z",
+    "listed": true,
+    "market_cap": {
+     "as_of": null,
+     "missing_reason": {
+      "en": "live data was not requested",
+      "es": "no se pidió el dato en vivo"
+     },
+     "src": "yahoo",
+     "unit": "USD_B",
+     "v": null
+    },
+    "nrs": {
+     "as_of": "2026-10-13T23:16:25.416634+00:00",
+     "explain": "nrs",
+     "fact": "F1",
+     "src": "khipus_nrs",
+     "unit": "nrs",
+     "v": 60
+    },
+    "price": {
+     "as_of": null,
+     "missing_reason": {
+      "en": "live data was not requested",
+      "es": "no se pidió el dato en vivo"
+     },
+     "src": "yahoo",
+     "unit": "USD",
+     "v": null
+    },
+    "structure": {
+     "en": "Structure: supplier concentration low; main supplier country: EEUU",
+     "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+    },
+    "top_customers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Apple",
+       "label": "Apple"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "AMD",
+       "label": "AMD"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Broadcom",
+       "label": "Broadcom"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "MediaTek",
+       "label": "MediaTek"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 5
+     }
+    ],
+    "top_suppliers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "ASML",
+       "label": "ASML"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "EvergreenMarine",
+       "label": "Evergreen Marine"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "WanHai",
+       "label": "Wan Hai"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "YangMing",
+       "label": "Yang Ming"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Expeditors",
+       "label": "Expeditors"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     }
+    ]
+   },
+   "entity": {
+    "id": "TSMC",
+    "label": "TSMC",
+    "symbol": "TSM"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "TSMC card",
+    "es": "Ficha de TSMC"
+   },
+   "type": "company.card"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Price: no data; Change: no data; Market cap: no data; Network risk (NRS): 60",
+    "es": "Precio: sin dato; Cambio: sin dato; Capitalización: sin dato; Riesgo de red (NRS): 60"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Price",
+       "es": "Precio"
+      },
+      "value": {
+       "as_of": null,
+       "missing_reason": {
+        "en": "live data was not requested",
+        "es": "no se pidió el dato en vivo"
+       },
+       "src": "yahoo",
+       "unit": "USD",
+       "v": null
+      }
+     },
+     {
+      "label": {
+       "en": "Change",
+       "es": "Cambio"
+      },
+      "value": {
+       "as_of": null,
+       "missing_reason": {
+        "en": "live data was not requested",
+        "es": "no se pidió el dato en vivo"
+       },
+       "src": "yahoo",
+       "unit": "pct",
+       "v": null
+      }
+     },
+     {
+      "label": {
+       "en": "Market cap",
+       "es": "Capitalización"
+      },
+      "value": {
+       "as_of": null,
+       "missing_reason": {
+        "en": "live data was not requested",
+        "es": "no se pidió el dato en vivo"
+       },
+       "src": "yahoo",
+       "unit": "USD_B",
+       "v": null
+      }
+     },
+     {
+      "label": {
+       "en": "Network risk (NRS)",
+       "es": "Riesgo de red (NRS)"
+      },
+      "value": {
+       "as_of": "2026-10-13T23:16:25.416634+00:00",
+       "explain": "nrs",
+       "fact": "F1",
+       "src": "khipus_nrs",
+       "unit": "nrs",
+       "v": 60
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "TSMC",
+    "label": "TSMC",
+    "symbol": "TSM"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "TSMC: key figures",
+    "es": "TSMC: cifras clave"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "TSMC",
+      "label": "TSMC",
+      "symbol": "TSM"
+     },
+     "kind": "open_dossier",
+     "label": {
+      "en": "Dossier",
+      "es": "Dossier"
+     }
+    },
+    {
+     "entity": {
+      "id": "TSMC",
+      "label": "TSMC",
+      "symbol": "TSM"
+     },
+     "kind": "open_xray",
+     "label": {
+      "en": "X-Ray",
+      "es": "Radiografía"
+     }
+    }
+   ],
+   "alt": {
+    "en": "TSMC: price no data, change no data, market cap no data, NRS 60. Suppliers: ASML, Evergreen Marine, Wan Hai. Customers: Apple, Nvidia, AMD",
+    "es": "TSMC: precio sin dato, cambio sin dato, capitalización sin dato, NRS 60. Proveedores: ASML, Evergreen Marine, Wan Hai. Clientes: Apple, Nvidia, AMD"
+   },
+   "data": {
+    "change": {
+     "as_of": null,
+     "missing_reason": {
+      "en": "live data was not requested",
+      "es": "no se pidió el dato en vivo"
+     },
+     "src": "yahoo",
+     "unit": "pct",
+     "v": null
+    },
+    "company": {
+     "id": "TSMC",
+     "label": "TSMC",
+     "symbol": "TSM"
+    },
+    "graph_as_of": "2026-10-13T18:20:44.583Z",
+    "listed": true,
+    "market_cap": {
+     "as_of": null,
+     "missing_reason": {
+      "en": "live data was not requested",
+      "es": "no se pidió el dato en vivo"
+     },
+     "src": "yahoo",
+     "unit": "USD_B",
+     "v": null
+    },
+    "nrs": {
+     "as_of": "2026-10-13T23:16:25.416634+00:00",
+     "explain": "nrs",
+     "fact": "F1",
+     "src": "khipus_nrs",
+     "unit": "nrs",
+     "v": 60
+    },
+    "price": {
+     "as_of": null,
+     "missing_reason": {
+      "en": "live data was not requested",
+      "es": "no se pidió el dato en vivo"
+     },
+     "src": "yahoo",
+     "unit": "USD",
+     "v": null
+    },
+    "structure": {
+     "en": "Structure: supplier concentration low; main supplier country: EEUU",
+     "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+    },
+    "top_customers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Apple",
+       "label": "Apple"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "AMD",
+       "label": "AMD"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Broadcom",
+       "label": "Broadcom"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "MediaTek",
+       "label": "MediaTek"
+      },
+      "rel_type": "fab",
+      "verified": true,
+      "weight": 5
+     }
+    ],
+    "top_suppliers": [
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "ASML",
+       "label": "ASML"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 6
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "EvergreenMarine",
+       "label": "Evergreen Marine"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "WanHai",
+       "label": "Wan Hai"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "YangMing",
+       "label": "Yang Ming"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 5
+     },
+     {
+      "conf": 1.0,
+      "entity": {
+       "id": "Expeditors",
+       "label": "Expeditors"
+      },
+      "rel_type": "supply",
+      "verified": true,
+      "weight": 4
+     }
+    ]
+   },
+   "entity": {
+    "id": "TSMC",
+    "label": "TSMC",
+    "symbol": "TSM"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_company"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "TSMC card",
+    "es": "Ficha de TSMC"
+   },
+   "type": "company.card"
+  }
+ ]
+}

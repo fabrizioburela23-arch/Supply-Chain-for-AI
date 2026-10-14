@@ -66,7 +66,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[server.py]] — lo importa
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 
-_Además lo importan 28 pruebas (lista abajo)._
+_Además lo importan 30 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -98,6 +98,8 @@ _Además lo importan 28 pruebas (lista abajo)._
 - [[tests.test_block0_review.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_context_engine.py]]
+- [[tests.test_genui_contract.py]]
+- [[tests.test_genui_ledger.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipu_chat.py]]

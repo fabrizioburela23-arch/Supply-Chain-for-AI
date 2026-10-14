@@ -25,7 +25,7 @@ pestaña "❓ Guía": explica la app en lenguaje simple. Sin jerga técnica. Exp
 - [[engine.app_main.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **50 de 97** (línea 3041), después de [[engine.khipu_lang.js]] y antes de [[engine.xray.js]].
+Se carga en [[app.html]] en la posición **50 de 98** (línea 3041), después de [[engine.khipu_lang.js]] y antes de [[engine.xray.js]].
 
 ## Lo usan
 

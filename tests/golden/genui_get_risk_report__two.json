@@ -1,0 +1,354 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Portfolio value: 5,048 USD; VaR 95% (1 day): 3.91 %; CVaR 95% (1 day): 5.47 %; Annual volatility: 41.2 %; Max drawdown: −27.4 %; Beta vs S&P 500: 1.83",
+    "es": "Valor de la cartera: 5.048 USD; VaR 95 % (1 día): 3,91 %; CVaR 95 % (1 día): 5,47 %; Volatilidad anual: 41,2 %; Caída máxima: −27,4 %; Beta vs S&P 500: 1,83"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Portfolio value",
+       "es": "Valor de la cartera"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "USD",
+       "v": 5048.0
+      }
+     },
+     {
+      "label": {
+       "en": "VaR 95% (1 day)",
+       "es": "VaR 95 % (1 día)"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "var",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": 3.912
+      }
+     },
+     {
+      "label": {
+       "en": "CVaR 95% (1 day)",
+       "es": "CVaR 95 % (1 día)"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "cvar",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": 5.471
+      }
+     },
+     {
+      "label": {
+       "en": "Annual volatility",
+       "es": "Volatilidad anual"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "vol_ann",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": 41.2
+      }
+     },
+     {
+      "label": {
+       "en": "Max drawdown",
+       "es": "Caída máxima"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "drawdown",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": -27.4
+      }
+     },
+     {
+      "label": {
+       "en": "Beta vs S&P 500",
+       "es": "Beta vs S&P 500"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "beta",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "ratio",
+       "v": 1.83
+      }
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_risk_report"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "estimate from the last year's real prices; not a forecast",
+    "es": "estimación con precios reales del último año; no es un pronóstico"
+   },
+   "title": {
+    "en": "Your portfolio risk",
+    "es": "Riesgo de tu cartera"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "alt": {
+    "en": "NVDA 58.3 %; AMD 41.7 %",
+    "es": "NVDA 58,3 %; AMD 41,7 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": "NVDA",
+      "v": 58.3
+     },
+     {
+      "label": "AMD",
+      "v": 41.7
+     }
+    ],
+    "orientation": "h",
+    "sort": "desc",
+    "values": {
+     "as_of": "2026-10-10",
+     "explain": "risk_contrib",
+     "fact": "F1",
+     "label": {
+      "en": "Risk contribution",
+      "es": "Aporte al riesgo"
+     },
+     "src": "khipus_risk",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_risk_report"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Who adds the most risk",
+    "es": "Quién aporta más riesgo"
+   },
+   "type": "chart.bar"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Portfolio value: 5,048 USD; VaR 95% (1 day): 3.91 %; CVaR 95% (1 day): 5.47 %; Annual volatility: 41.2 %; Max drawdown: −27.4 %; Beta vs S&P 500: 1.83",
+    "es": "Valor de la cartera: 5.048 USD; VaR 95 % (1 día): 3,91 %; CVaR 95 % (1 día): 5,47 %; Volatilidad anual: 41,2 %; Caída máxima: −27,4 %; Beta vs S&P 500: 1,83"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Portfolio value",
+       "es": "Valor de la cartera"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "USD",
+       "v": 5048.0
+      }
+     },
+     {
+      "label": {
+       "en": "VaR 95% (1 day)",
+       "es": "VaR 95 % (1 día)"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "var",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": 3.912
+      }
+     },
+     {
+      "label": {
+       "en": "CVaR 95% (1 day)",
+       "es": "CVaR 95 % (1 día)"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "cvar",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": 5.471
+      }
+     },
+     {
+      "label": {
+       "en": "Annual volatility",
+       "es": "Volatilidad anual"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "vol_ann",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": 41.2
+      }
+     },
+     {
+      "label": {
+       "en": "Max drawdown",
+       "es": "Caída máxima"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "drawdown",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "pct",
+       "v": -27.4
+      }
+     },
+     {
+      "label": {
+       "en": "Beta vs S&P 500",
+       "es": "Beta vs S&P 500"
+      },
+      "value": {
+       "as_of": "2026-10-10",
+       "explain": "beta",
+       "fact": "F1",
+       "src": "khipus_risk",
+       "unit": "ratio",
+       "v": 1.83
+      }
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_risk_report"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "estimate from the last year's real prices; not a forecast",
+    "es": "estimación con precios reales del último año; no es un pronóstico"
+   },
+   "title": {
+    "en": "Your portfolio risk",
+    "es": "Riesgo de tu cartera"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "alt": {
+    "en": "NVDA 58.3 %; AMD 41.7 %",
+    "es": "NVDA 58,3 %; AMD 41,7 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": "NVDA",
+      "v": 58.3
+     },
+     {
+      "label": "AMD",
+      "v": 41.7
+     }
+    ],
+    "orientation": "h",
+    "sort": "desc",
+    "values": {
+     "as_of": "2026-10-10",
+     "explain": "risk_contrib",
+     "fact": "F1",
+     "label": {
+      "en": "Risk contribution",
+      "es": "Aporte al riesgo"
+     },
+     "src": "khipus_risk",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_risk_report"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Who adds the most risk",
+    "es": "Quién aporta más riesgo"
+   },
+   "type": "chart.bar"
+  }
+ ]
+}

@@ -1,0 +1,37 @@
+{
+ "args": {
+  "company": "Nvidia"
+ },
+ "result": {
+  "as_of": "2026-10-13T19:00:00+00:00",
+  "company": {
+   "id": "Nvidia",
+   "label": "Nvidia",
+   "symbol": "NVDA"
+  },
+  "count": 2,
+  "items": [
+   {
+    "date": "2026-10-13T14:00:00+00:00",
+    "outlet": "Reuters",
+    "title": "Nvidia unveils next-gen networking",
+    "url": "https://example.org/n1"
+   },
+   {
+    "date": "2026-10-12T21:00:00+00:00",
+    "outlet": "CNBC",
+    "title": "Chip stocks rally",
+    "url": "https://example.org/n2"
+   },
+   {
+    "date": null,
+    "outlet": "X",
+    "title": "Undated item",
+    "url": "https://example.org/n3"
+   }
+  ],
+  "source": "Finnhub company news"
+ },
+ "sample": true,
+ "tool": "get_news"
+}

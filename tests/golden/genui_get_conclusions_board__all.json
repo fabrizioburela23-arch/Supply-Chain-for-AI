@@ -1,0 +1,140 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Nvidia 42; Intel −18.5",
+    "es": "Nvidia 42; Intel −18,5"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia"
+      },
+      "label": "Nvidia",
+      "v": 42.0
+     },
+     {
+      "entity": {
+       "id": "Intel",
+       "label": "Intel"
+      },
+      "label": "Intel",
+      "v": -18.5
+     }
+    ],
+    "orientation": "h",
+    "sort": "desc",
+    "values": {
+     "as_of": "2026-10-13T19:00:00+00:00",
+     "fact": "F1",
+     "label": {
+      "en": "Analysts' conviction",
+      "es": "Convicción de los analistas"
+     },
+     "src": "research",
+     "unit": "score"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_conclusions_board"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "from most to least favorable",
+    "es": "de más favorable a menos"
+   },
+   "title": {
+    "en": "Conclusions board",
+    "es": "Pizarra de conclusiones"
+   },
+   "type": "chart.bar"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Nvidia 42; Intel −18.5",
+    "es": "Nvidia 42; Intel −18,5"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "entity": {
+       "id": "Nvidia",
+       "label": "Nvidia"
+      },
+      "label": "Nvidia",
+      "v": 42.0
+     },
+     {
+      "entity": {
+       "id": "Intel",
+       "label": "Intel"
+      },
+      "label": "Intel",
+      "v": -18.5
+     }
+    ],
+    "orientation": "h",
+    "sort": "desc",
+    "values": {
+     "as_of": "2026-10-13T19:00:00+00:00",
+     "fact": "F1",
+     "label": {
+      "en": "Analysts' conviction",
+      "es": "Convicción de los analistas"
+     },
+     "src": "research",
+     "unit": "score"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_conclusions_board"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "from most to least favorable",
+    "es": "de más favorable a menos"
+   },
+   "title": {
+    "en": "Conclusions board",
+    "es": "Pizarra de conclusiones"
+   },
+   "type": "chart.bar"
+  }
+ ]
+}

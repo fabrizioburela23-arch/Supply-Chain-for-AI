@@ -1,0 +1,142 @@
+{
+ "en": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia"
+     },
+     "kind": "open_research",
+     "label": {
+      "en": "See the evidence",
+      "es": "Ver la evidencia"
+     }
+    }
+   ],
+   "alt": {
+    "en": "For: Data-center revenue keeps compounding. Against: Single foundry dependency (TSMC)",
+    "es": "A favor: Data-center revenue keeps compounding. En contra: Single foundry dependency (TSMC)"
+   },
+   "data": {
+    "cons": [
+     {
+      "claim_id": "c2",
+      "facts": [
+       "F1"
+      ],
+      "lang": "en",
+      "text": "Single foundry dependency (TSMC)"
+     }
+    ],
+    "origin": "tool",
+    "pros": [
+     {
+      "claim_id": "c1",
+      "facts": [
+       "F1"
+      ],
+      "lang": "en",
+      "text": "Data-center revenue keeps compounding"
+     }
+    ],
+    "variant": "pros_cons"
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_research"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "What research concluded: Nvidia",
+    "es": "Lo que concluyó la investigación: Nvidia"
+   },
+   "type": "callout"
+  }
+ ],
+ "es": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "Nvidia",
+      "label": "Nvidia"
+     },
+     "kind": "open_research",
+     "label": {
+      "en": "See the evidence",
+      "es": "Ver la evidencia"
+     }
+    }
+   ],
+   "alt": {
+    "en": "For: Los ingresos de centros de datos siguen creciendo. Against: Depende de una sola fundición (TSMC)",
+    "es": "A favor: Los ingresos de centros de datos siguen creciendo. En contra: Depende de una sola fundición (TSMC)"
+   },
+   "data": {
+    "cons": [
+     {
+      "claim_id": "c2",
+      "facts": [
+       "F1"
+      ],
+      "lang": "es",
+      "text": "Depende de una sola fundición (TSMC)"
+     }
+    ],
+    "origin": "tool",
+    "pros": [
+     {
+      "claim_id": "c1",
+      "facts": [
+       "F1"
+      ],
+      "lang": "es",
+      "text": "Los ingresos de centros de datos siguen creciendo"
+     }
+    ],
+    "variant": "pros_cons"
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_research"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "What research concluded: Nvidia",
+    "es": "Lo que concluyó la investigación: Nvidia"
+   },
+   "type": "callout"
+  }
+ ]
+}

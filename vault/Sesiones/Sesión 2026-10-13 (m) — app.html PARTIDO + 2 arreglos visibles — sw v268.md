@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L28"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (m) — app.html PARTIDO + 2 arreglos visibles — sw v268
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (14 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 28 (14 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -28,4 +28,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[tests.test_jev_status_label.py]]
 - [[tests.test_market_keys_scope.py]]
 
-← más antigua: [[Sesión 2026-10-13 (l) — APP.HTML PARTIDO SIN CAMBIAR NADA (G5-06) — sw v267]]
+← más antigua: [[Sesión 2026-10-13 (l) — APP.HTML PARTIDO SIN CAMBIAR NADA (G5-06) — sw v267]] · más nueva: [[Sesión 2026-10-14 — RESPUESTAS VISUALES F2 - revisión (19 hallazgos) — sw v269]] →

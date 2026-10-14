@@ -1,0 +1,496 @@
+{
+ "en": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "TSMC",
+      "label": "TSMC"
+     },
+     "kind": "open_window",
+     "label": {
+      "en": "Simulate",
+      "es": "Simular"
+     },
+     "window": "sim"
+    }
+   ],
+   "alt": {
+    "en": "Shock at TSMC: 318 companies hit ≥ 1 % (hop 1: 83, hop 2: 143, hop 3: 90, hop 4: 2). Least-hit rivals (damage): Cambricon 0 %, CEVA 0 %, Cirrus Logic 10 %, HiSilicon (Huawei) 0 %",
+    "es": "Choque en TSMC: 318 empresas golpeadas ≥ 1 % (salto 1: 83, salto 2: 143, salto 3: 90, salto 4: 2). Rivales poco golpeados (daño): Cambricon 0 %, CEVA 0 %, Cirrus Logic 10 %, HiSilicon (Huawei) 0 %"
+   },
+   "data": {
+    "as_of": "2026-10-13T23:16:25.431240+00:00",
+    "direction": "down",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "hops": [
+     {
+      "count": 83,
+      "entities": [
+       {
+        "entity": {
+         "id": "Nvidia",
+         "label": "Nvidia"
+        },
+        "impact_pct": 100.0
+       },
+       {
+        "entity": {
+         "id": "Tesla",
+         "label": "Tesla"
+        },
+        "impact_pct": 90.2
+       },
+       {
+        "entity": {
+         "id": "Apple",
+         "label": "Apple"
+        },
+        "impact_pct": 75.6
+       },
+       {
+        "entity": {
+         "id": "AMD",
+         "label": "AMD"
+        },
+        "impact_pct": 61.0
+       },
+       {
+        "entity": {
+         "id": "Groq",
+         "label": "Groq"
+        },
+        "impact_pct": 60.0
+       },
+       {
+        "entity": {
+         "id": "Meta",
+         "label": "Meta"
+        },
+        "impact_pct": 60.0
+       },
+       {
+        "entity": {
+         "id": "MediaTek",
+         "label": "MediaTek"
+        },
+        "impact_pct": 55.0
+       },
+       {
+        "entity": {
+         "id": "STMicroelectronics",
+         "label": "STMicroelectronics"
+        },
+        "impact_pct": 54.4
+       }
+      ],
+      "hop": 1,
+      "label": {
+       "en": "Hop 1",
+       "es": "Salto 1"
+      },
+      "max_pct": 100.0
+     },
+     {
+      "count": 143,
+      "entities": [
+       {
+        "entity": {
+         "id": "Oracle",
+         "label": "Oracle (OCI)"
+        },
+        "impact_pct": 61.98
+       },
+       {
+        "entity": {
+         "id": "Nebius",
+         "label": "Nebius"
+        },
+        "impact_pct": 56.67
+       },
+       {
+        "entity": {
+         "id": "SuperMicro",
+         "label": "Super Micro"
+        },
+        "impact_pct": 51.3
+       },
+       {
+        "entity": {
+         "id": "CoreWeave",
+         "label": "CoreWeave"
+        },
+        "impact_pct": 45.36
+       },
+       {
+        "entity": {
+         "id": "Quanta",
+         "label": "Quanta Computer"
+        },
+        "impact_pct": 41.7
+       },
+       {
+        "entity": {
+         "id": "HPE",
+         "label": "Hewlett Packard Ent."
+        },
+        "impact_pct": 40.91
+       },
+       {
+        "entity": {
+         "id": "Foxconn",
+         "label": "Hon Hai (Foxconn)"
+        },
+        "impact_pct": 40.39
+       }
+      ],
+      "hop": 2,
+      "label": {
+       "en": "Hop 2",
+       "es": "Salto 2"
+      },
+      "max_pct": 61.98
+     },
+     {
+      "count": 90,
+      "hop": 3,
+      "label": {
+       "en": "Hop 3",
+       "es": "Salto 3"
+      }
+     },
+     {
+      "count": 2,
+      "hop": 4,
+      "label": {
+       "en": "Hop 4",
+       "es": "Salto 4"
+      }
+     }
+    ],
+    "kernel": "1.0.0",
+    "least_hit_rivals": [
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Cambricon",
+       "label": "Cambricon"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Ceva",
+       "label": "CEVA"
+      }
+     },
+     {
+      "damage_pct": 10.0,
+      "entity": {
+       "id": "Cirrus_Logic",
+       "label": "Cirrus Logic"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "HiSilicon",
+       "label": "HiSilicon (Huawei)"
+      }
+     }
+    ],
+    "origin": {
+     "id": "TSMC",
+     "label": "TSMC"
+    },
+    "portfolio": {
+     "state": "no_positions"
+    },
+    "severity": 100.0,
+    "src": "hot_kernel",
+    "threshold_pct": 1,
+    "total": 318
+   },
+   "entity": {
+    "id": "TSMC",
+    "label": "TSMC"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "kind": "tool",
+    "name": "run_scenario"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "single server kernel · not a price forecast",
+    "es": "motor único del servidor · no es un pronóstico de precios"
+   },
+   "title": {
+    "en": "Shock at TSMC",
+    "es": "Choque en TSMC"
+   },
+   "type": "impact.cascade"
+  }
+ ],
+ "es": [
+  {
+   "actions": [
+    {
+     "entity": {
+      "id": "TSMC",
+      "label": "TSMC"
+     },
+     "kind": "open_window",
+     "label": {
+      "en": "Simulate",
+      "es": "Simular"
+     },
+     "window": "sim"
+    }
+   ],
+   "alt": {
+    "en": "Shock at TSMC: 318 companies hit ≥ 1 % (hop 1: 83, hop 2: 143, hop 3: 90, hop 4: 2). Least-hit rivals (damage): Cambricon 0 %, CEVA 0 %, Cirrus Logic 10 %, HiSilicon (Huawei) 0 %",
+    "es": "Choque en TSMC: 318 empresas golpeadas ≥ 1 % (salto 1: 83, salto 2: 143, salto 3: 90, salto 4: 2). Rivales poco golpeados (daño): Cambricon 0 %, CEVA 0 %, Cirrus Logic 10 %, HiSilicon (Huawei) 0 %"
+   },
+   "data": {
+    "as_of": "2026-10-13T23:16:25.431240+00:00",
+    "direction": "down",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "hops": [
+     {
+      "count": 83,
+      "entities": [
+       {
+        "entity": {
+         "id": "Nvidia",
+         "label": "Nvidia"
+        },
+        "impact_pct": 100.0
+       },
+       {
+        "entity": {
+         "id": "Tesla",
+         "label": "Tesla"
+        },
+        "impact_pct": 90.2
+       },
+       {
+        "entity": {
+         "id": "Apple",
+         "label": "Apple"
+        },
+        "impact_pct": 75.6
+       },
+       {
+        "entity": {
+         "id": "AMD",
+         "label": "AMD"
+        },
+        "impact_pct": 61.0
+       },
+       {
+        "entity": {
+         "id": "Groq",
+         "label": "Groq"
+        },
+        "impact_pct": 60.0
+       },
+       {
+        "entity": {
+         "id": "Meta",
+         "label": "Meta"
+        },
+        "impact_pct": 60.0
+       },
+       {
+        "entity": {
+         "id": "MediaTek",
+         "label": "MediaTek"
+        },
+        "impact_pct": 55.0
+       },
+       {
+        "entity": {
+         "id": "STMicroelectronics",
+         "label": "STMicroelectronics"
+        },
+        "impact_pct": 54.4
+       }
+      ],
+      "hop": 1,
+      "label": {
+       "en": "Hop 1",
+       "es": "Salto 1"
+      },
+      "max_pct": 100.0
+     },
+     {
+      "count": 143,
+      "entities": [
+       {
+        "entity": {
+         "id": "Oracle",
+         "label": "Oracle (OCI)"
+        },
+        "impact_pct": 61.98
+       },
+       {
+        "entity": {
+         "id": "Nebius",
+         "label": "Nebius"
+        },
+        "impact_pct": 56.67
+       },
+       {
+        "entity": {
+         "id": "SuperMicro",
+         "label": "Super Micro"
+        },
+        "impact_pct": 51.3
+       },
+       {
+        "entity": {
+         "id": "CoreWeave",
+         "label": "CoreWeave"
+        },
+        "impact_pct": 45.36
+       },
+       {
+        "entity": {
+         "id": "Quanta",
+         "label": "Quanta Computer"
+        },
+        "impact_pct": 41.7
+       },
+       {
+        "entity": {
+         "id": "HPE",
+         "label": "Hewlett Packard Ent."
+        },
+        "impact_pct": 40.91
+       },
+       {
+        "entity": {
+         "id": "Foxconn",
+         "label": "Hon Hai (Foxconn)"
+        },
+        "impact_pct": 40.39
+       }
+      ],
+      "hop": 2,
+      "label": {
+       "en": "Hop 2",
+       "es": "Salto 2"
+      },
+      "max_pct": 61.98
+     },
+     {
+      "count": 90,
+      "hop": 3,
+      "label": {
+       "en": "Hop 3",
+       "es": "Salto 3"
+      }
+     },
+     {
+      "count": 2,
+      "hop": 4,
+      "label": {
+       "en": "Hop 4",
+       "es": "Salto 4"
+      }
+     }
+    ],
+    "kernel": "1.0.0",
+    "least_hit_rivals": [
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Cambricon",
+       "label": "Cambricon"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "Ceva",
+       "label": "CEVA"
+      }
+     },
+     {
+      "damage_pct": 10.0,
+      "entity": {
+       "id": "Cirrus_Logic",
+       "label": "Cirrus Logic"
+      }
+     },
+     {
+      "damage_pct": 0.0,
+      "entity": {
+       "id": "HiSilicon",
+       "label": "HiSilicon (Huawei)"
+      }
+     }
+    ],
+    "origin": {
+     "id": "TSMC",
+     "label": "TSMC"
+    },
+    "portfolio": {
+     "state": "no_positions"
+    },
+    "severity": 100.0,
+    "src": "hot_kernel",
+    "threshold_pct": 1,
+    "total": 318
+   },
+   "entity": {
+    "id": "TSMC",
+    "label": "TSMC"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+    "graph_version": 0,
+    "kind": "tool",
+    "name": "run_scenario"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "single server kernel · not a price forecast",
+    "es": "motor único del servidor · no es un pronóstico de precios"
+   },
+   "title": {
+    "en": "Shock at TSMC",
+    "es": "Choque en TSMC"
+   },
+   "type": "impact.cascade"
+  }
+ ]
+}

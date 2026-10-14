@@ -75,7 +75,7 @@ _Nada interno._
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 34 pruebas (lista abajo)._
+_Además lo importan 42 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -87,6 +87,14 @@ _Además lo importan 34 pruebas (lista abajo)._
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_gates_orders_parity.py]]
 - [[tests.test_gates_resulting_state.py]]
+- [[tests.test_genui_browser.py]]
+- [[tests.test_genui_builders.py]]
+- [[tests.test_genui_contract.py]]
+- [[tests.test_genui_guardian.py]]
+- [[tests.test_genui_ledger.py]]
+- [[tests.test_genui_review_fixes.py]]
+- [[tests.test_genui_rivals.py]]
+- [[tests.test_genui_validate.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
 - [[tests.test_governance_flow.py]]

@@ -1,0 +1,46 @@
+{
+ "args": {
+  "entity": "AMD"
+ },
+ "result": {
+  "as_of": "2026-10-13T19:00:00+00:00",
+  "conviction": {
+   "LONG_TERM": {
+    "score": 31.0
+   },
+   "MEDIUM_TERM": {
+    "score": 15.0
+   },
+   "SHORT_TERM": {
+    "score": -8.0
+   }
+  },
+  "created_at": "2026-10-12T10:00:00+00:00",
+  "decision": "HOLD",
+  "entity_id": "AMD",
+  "expired": false,
+  "label": "AMD",
+  "memo": {
+   "decision_label_en": "Hold",
+   "decision_label_es": "Mantener",
+   "key_risks": [
+    {
+     "risk_en": "Relies on TSMC to manufacture",
+     "risk_es": "Depende de TSMC para fabricar"
+    }
+   ],
+   "thesis": [
+    {
+     "thesis_en": "Gaining data-center share",
+     "thesis_es": "Gana cuota en centros de datos"
+    }
+   ]
+  },
+  "memo_id": "m_1",
+  "overall_conviction": 12.5,
+  "source": "Khipus investment committee (research.committee)",
+  "status": "proposed"
+ },
+ "sample": true,
+ "tool": "get_committee_memo"
+}

@@ -1,0 +1,351 @@
+{
+ "args": {
+  "id_or_ticker": "AMD",
+  "include_live": true
+ },
+ "result": {
+  "as_of": "2026-10-13T23:16:25.408647+00:00",
+  "catalog": {
+   "as_of": "2026-10-13T18:20:44.583Z",
+   "as_of_note": "date the catalog snapshot was exported — NOT the date of the figures",
+   "backlog_note": "6 GW OpenAI (1st GW in H2 2026); multi-year MI400",
+   "capex_2026_note": "n/a — asset-light fabless (~$1B)",
+   "figures_as_of": null,
+   "figures_note": "undated curated figures (catalog); prefer live_market when available",
+   "figures_note_es": "cifras curadas sin fecha propia (catálogo); preferir live_market cuando exista",
+   "growth_note": "🔵 +25–35% 2026",
+   "location": "EE.UU.",
+   "moat_and_risks": "Number two in AI GPUs with the only full-rack alternative to Nvidia (Helios), though its ROCm stack still trails CUDA. The OpenAI deal validates the MI400 roadmap and secures multi-year demand.",
+   "operating_margin": 0.22,
+   "operating_margin_pct": 22.0,
+   "role": "Nvidia's only serious rival in AI GPUs, and Intel's in x86.",
+   "source": "Khipus supply-chain graph snapshot (data/grafo_v0.json, curated catalog) — descriptive text curated by Khipus; figures inside may be approximate",
+   "supplies": "EPYC/Ryzen CPUs, Instinct GPUs and FPGAs (Xilinx). Signed a 6 GW Instinct GPU deal with OpenAI including warrants over ~10% of its equity — the first gigawatt (MI450) deploys in H2 2026; also supplies CoreWeave and Oracle.",
+   "ticker_text": "AMD · Nasdaq"
+  },
+  "category": "fabless",
+  "country": "EEUU",
+  "counts": {
+   "customers": 9,
+   "related": 2,
+   "suppliers": 9
+  },
+  "degree": 20,
+  "edge_semantics": {
+   "flow_types": [
+    "supply",
+    "cloud",
+    "fab",
+    "license",
+    "deploy",
+    "owns",
+    "ppa"
+   ],
+   "note": "top_suppliers/top_customers list only FLOW relations (goods, fab, cloud, license, power, ownership, deployment). partner/invest are in `related`. verified=false / confidence=0.3 when the curated text says the link is unverified or only possible.",
+   "related_types": [
+    "partner",
+    "invest"
+   ],
+   "relation_class": "supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other"
+  },
+  "id": "AMD",
+  "label": "AMD",
+  "listed": true,
+  "live_market": {
+   "as_of": "2026-10-13T20:00:02Z",
+   "available": true,
+   "change_pct": 1.45,
+   "currency": "USD",
+   "market_cap_usd_b": 261.1,
+   "market_state": "REGULAR",
+   "market_time": "2026-10-13T19:58:00Z",
+   "prev_close": 158.9,
+   "price": 161.2,
+   "source": "yahoo",
+   "symbol": "AMD"
+  },
+  "network_risk_score": {
+   "explain": "Network Risk Score 0-100 (higher = more fragile position in the AI supply chain): country/geo risk + graph centrality + margin + fundamentals + concentration. A heuristic, not a forecast.",
+   "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+   "method": "catalog formula via hot view V3 card (same formula as the app computeNRS; structural degree = flow relations, distinct pairs, of the current graph generation)",
+   "terms": {
+    "chain": 25,
+    "concentration": 4,
+    "fundamental": 0,
+    "geo": 8,
+    "market": 9
+   },
+   "value": 46
+  },
+  "preipo": false,
+  "related": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "CoolIT Systems",
+    "label": "CoolIT Systems",
+    "relation": "Diseños de cold plate custom colaborativos, confirmado en el mismo comunicado",
+    "relation_class": "partner",
+    "type": "partner",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 0.3,
+    "direction": "up",
+    "id": "Mubadala",
+    "label": "Mubadala",
+    "relation": "Posición accionaria histórica desde el spin-off de GlobalFoundries (2007-2009), reducida en ventas de 2016 y 2019; tamaño actual no confirmado públicamente.",
+    "relation_class": "invest",
+    "type": "invest",
+    "verified": false,
+    "weight": 1
+   }
+  ],
+  "resolved_from": {
+   "method": "id",
+   "score": 100,
+   "text": "AMD"
+  },
+  "sector": "diseno",
+  "sector_label": "Design & IP",
+  "sources": [
+   "Khipus graph snapshot",
+   "nodes/private_valuations.js (verified)",
+   "live profile: n/a"
+  ],
+  "structure": {
+   "cap_coverage_pct": 17,
+   "downstream_cap_at_risk_usd_b": 100.4,
+   "n_suppliers": 9,
+   "note": "supplier shares = weight of supplier links, not spend; cap at risk counts only companies with a known (live or verified) market cap",
+   "peers": [
+    "Achronix Semiconductor",
+    "Broadcom",
+    "Lattice Semiconductor"
+   ],
+   "risk_sources": [
+    "TSMC 61.0%",
+    "Ibiden 14.6%",
+    "Ajinomoto 13.0% (indirect)"
+   ],
+   "supplier_concentration": "baja",
+   "supplier_hhi": 0.128,
+   "systemic_rank": 16,
+   "top_supplier": {
+    "id": "TSMC",
+    "label": "TSMC",
+    "share_pct": 22.7
+   },
+   "top_supplier_country": {
+    "country": "Taiwan",
+    "share_pct": 40.9
+   }
+  },
+  "symbol": "AMD",
+  "top_customers": [
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "OpenAI",
+    "label": "OpenAI",
+    "relation": "Acuerdo de 6 GW de GPUs Instinct + warrants",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 4
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Dell",
+    "label": "Dell Technologies",
+    "relation": "CPUs EPYC y GPUs Instinct",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "HPE",
+    "label": "Hewlett Packard Ent.",
+    "relation": "EPYC e Instinct para servidores",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Microsoft",
+    "label": "Microsoft (Azure)",
+    "relation": "GPUs MI350 para Azure",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Oracle",
+    "label": "Oracle (OCI)",
+    "relation": "GPUs Instinct para OCI",
+    "relation_class": "supply",
+    "type": "cloud",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Cloudflare",
+    "label": "Cloudflare",
+    "relation": "",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Leonardo_DRS",
+    "label": "Leonardo DRS",
+    "relation": "",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "Meta",
+    "label": "Meta",
+    "relation": "EPYC e Instinct en sus data centers",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "down",
+    "id": "tensorwave",
+    "label": "TensorWave",
+    "relation": "opera flotas de GPU AMD Instinct MI300/MI325 e recibe inversión directa de AMD",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 1
+   }
+  ],
+  "top_suppliers": [
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "TSMC",
+    "label": "TSMC",
+    "relation": "Fabrica Instinct MI300X, EPYC Turin en N3/N4 — cliente 2º por volumen",
+    "relation_class": "fab",
+    "type": "fab",
+    "verified": true,
+    "weight": 5
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Ibiden",
+    "label": "Ibiden",
+    "relation": "Sustratos de alto rendimiento",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 3
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "ASE",
+    "label": "ASE Technology",
+    "relation": "Empaquetado 2.5D/3D",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "GF",
+    "label": "GlobalFoundries",
+    "relation": "",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "HPE",
+    "label": "Hewlett Packard Ent.",
+    "relation": "",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Micron",
+    "label": "Micron",
+    "relation": "DRAM y HBM",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "SKHynix",
+    "label": "SK Hynix",
+    "relation": "HBM para GPUs Instinct",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Synopsys",
+    "label": "Synopsys",
+    "relation": "Herramientas de síntesis y verificación",
+    "relation_class": "supply",
+    "type": "license",
+    "verified": true,
+    "weight": 2
+   },
+   {
+    "confidence": 1.0,
+    "direction": "up",
+    "id": "Unimicron",
+    "label": "Unimicron",
+    "relation": "Sustratos de alta densidad",
+    "relation_class": "supply",
+    "type": "supply",
+    "verified": true,
+    "weight": 2
+   }
+  ]
+ },
+ "sample": true,
+ "tool": "get_company"
+}

@@ -1,0 +1,3212 @@
+{
+ "cases": [
+  {
+   "artifacts": {},
+   "output": [
+    {
+     "as_of": "2026-10-13T20:01:00Z",
+     "blocks": [
+      {
+       "data": {
+        "lang": "es",
+        "marks": [
+         {
+          "e": 8,
+          "kind": "entity",
+          "ref": "Nvidia",
+          "s": 2
+         },
+         {
+          "e": 50,
+          "kind": "entity",
+          "ref": "TSMC",
+          "s": 46
+         },
+         {
+          "e": 74,
+          "kind": "fact",
+          "ref": "F2",
+          "s": 70
+         }
+        ],
+        "md": "**Nvidia** diseña los chips pero depende de **TSMC** para fabricarlos [F2]."
+       },
+       "id": "t1",
+       "state": "ready",
+       "type": "text"
+      },
+      {
+       "actions": [
+        {
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "kind": "open_window",
+         "label": {
+          "en": "Open the chain",
+          "es": "Abrir la cadena"
+         },
+         "window": "supplychain"
+        }
+       ],
+       "alt": {
+        "en": "Nvidia. Suppliers: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Customers: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)",
+        "es": "Nvidia. Proveedores: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Clientes: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)"
+       },
+       "data": {
+        "as_of": "2026-10-13T18:20:44.583Z",
+        "center": {
+         "id": "Nvidia",
+         "label": "Nvidia",
+         "symbol": "NVDA"
+        },
+        "edges": [
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "SKHynix",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "CoreWeave",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "fab",
+          "s": "TSMC",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "Dell",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Astera",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "Meta",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Boyd Thermal",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Microsoft",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Ibiden",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Oracle",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Khazna",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "xAI",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "license",
+          "s": "ARM",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Amazon",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Expeditors",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "HPE",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "OpenAI",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Nebius",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Quanta",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Alphabet",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "ASE",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "Anthropic",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Apptronik",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "ByteDance",
+          "verified": true,
+          "weight": 3
+         }
+        ],
+        "nodes": [
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia",
+           "symbol": "NVDA"
+          },
+          "role": "center"
+         },
+         {
+          "entity": {
+           "id": "SKHynix",
+           "label": "SK Hynix",
+           "symbol": "HXSCL"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "CoreWeave",
+           "label": "CoreWeave",
+           "symbol": "CRWV"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "TSMC",
+           "label": "TSMC",
+           "symbol": "TSM"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "foundry",
+           "es": "fabrica"
+          }
+         },
+         {
+          "entity": {
+           "id": "Dell",
+           "label": "Dell Technologies",
+           "symbol": "DELL"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Astera",
+           "label": "Astera Labs",
+           "symbol": "ALAB"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Meta",
+           "label": "Meta",
+           "symbol": "META"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Boyd Thermal",
+           "label": "Boyd Thermal"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Microsoft",
+           "label": "Microsoft (Azure)",
+           "symbol": "MSFT"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Ibiden",
+           "label": "Ibiden",
+           "symbol": "IBIDF"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Oracle",
+           "label": "Oracle (OCI)",
+           "symbol": "ORCL"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Khazna",
+           "label": "Khazna"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "xAI",
+           "label": "xAI (+SpaceX)"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "ARM",
+           "label": "ARM",
+           "symbol": "ARM"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "license",
+           "es": "licencia"
+          }
+         },
+         {
+          "entity": {
+           "id": "Amazon",
+           "label": "Amazon (AWS)",
+           "symbol": "AMZN"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Expeditors",
+           "label": "Expeditors",
+           "symbol": "EXPD"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "HPE",
+           "label": "Hewlett Packard Ent.",
+           "symbol": "HPE"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "OpenAI",
+           "label": "OpenAI"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Nebius",
+           "label": "Nebius",
+           "symbol": "NBIS"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Quanta",
+           "label": "Quanta Computer",
+           "symbol": "2382.TW"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Alphabet",
+           "label": "Alphabet (Google Cloud)",
+           "symbol": "GOOGL"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "ASE",
+           "label": "ASE Technology",
+           "symbol": "ASX"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Anthropic",
+           "label": "Anthropic"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Apptronik",
+           "label": "Apptronik"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "ByteDance",
+           "label": "ByteDance"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         }
+        ],
+        "src": "khipus_graph"
+       },
+       "entity": {
+        "id": "Nvidia",
+        "label": "Nvidia",
+        "symbol": "NVDA"
+       },
+       "id": "b1",
+       "menu": [
+        "where_from",
+        "ask"
+       ],
+       "pinnable": true,
+       "prov": {
+        "args": "Nvidia",
+        "call": 1,
+        "fact": "F2",
+        "kind": "tool",
+        "name": "get_supply_chain"
+       },
+       "sources": [
+        "F2"
+       ],
+       "state": "ready",
+       "subtitle": {
+        "en": "flow only: suppliers → company → customers",
+        "es": "solo flujo: proveedores → empresa → clientes"
+       },
+       "title": {
+        "en": "Nvidia supply chain",
+        "es": "Cadena de suministro de Nvidia"
+       },
+       "type": "graph.mini"
+      },
+      {
+       "data": {
+        "lang": "es",
+        "marks": [
+         {
+          "e": 7,
+          "kind": "entity",
+          "ref": "TSMC",
+          "s": 3
+         },
+         {
+          "e": 54,
+          "kind": "fact",
+          "ref": "F4",
+          "s": 50
+         }
+        ],
+        "md": "Si TSMC cae, el golpe llega a cientos de empresas [F4]."
+       },
+       "id": "t2",
+       "state": "ready",
+       "type": "text"
+      },
+      {
+       "alt": {
+        "en": "NVDA: from 120 USD (2025-10-13) to 147.48 USD (2026-10-12)",
+        "es": "NVDA: de 120 USD (2025-10-13) a 147,48 USD (2026-10-12)"
+       },
+       "data": {
+        "range": "1Y",
+        "ranges": [
+         "1M",
+         "3M",
+         "6M",
+         "1Y",
+         "2Y",
+         "5Y"
+        ],
+        "series": [
+         {
+          "adjusted": true,
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia",
+           "symbol": "NVDA"
+          },
+          "name": "NVDA",
+          "points": [
+           [
+            "2025-10-13",
+            120.0
+           ],
+           [
+            "2025-10-20",
+            121.9644
+           ],
+           [
+            "2025-10-27",
+            123.8366
+           ],
+           [
+            "2025-11-03",
+            125.5298
+           ],
+           [
+            "2025-11-10",
+            126.9688
+           ],
+           [
+            "2025-11-17",
+            128.0939
+           ],
+           [
+            "2025-11-24",
+            128.865
+           ],
+           [
+            "2025-12-01",
+            129.2639
+           ],
+           [
+            "2025-12-08",
+            129.2958
+           ],
+           [
+            "2025-12-15",
+            128.9884
+           ],
+           [
+            "2025-12-22",
+            128.3908
+           ],
+           [
+            "2025-12-29",
+            127.57
+           ],
+           [
+            "2026-01-05",
+            126.6067
+           ],
+           [
+            "2026-01-12",
+            125.5908
+           ],
+           [
+            "2026-01-19",
+            124.6153
+           ],
+           [
+            "2026-01-26",
+            123.7706
+           ],
+           [
+            "2026-02-02",
+            123.1392
+           ],
+           [
+            "2026-02-09",
+            122.7901
+           ],
+           [
+            "2026-02-16",
+            122.7748
+           ],
+           [
+            "2026-02-23",
+            123.1242
+           ],
+           [
+            "2026-03-02",
+            123.8465
+           ],
+           [
+            "2026-03-09",
+            124.9264
+           ],
+           [
+            "2026-03-16",
+            126.3268
+           ],
+           [
+            "2026-03-23",
+            127.9903
+           ],
+           [
+            "2026-03-30",
+            129.8435
+           ],
+           [
+            "2026-04-06",
+            131.8009
+           ],
+           [
+            "2026-04-13",
+            133.7707
+           ],
+           [
+            "2026-04-20",
+            135.6603
+           ],
+           [
+            "2026-04-27",
+            137.3819
+           ],
+           [
+            "2026-05-04",
+            138.8585
+           ],
+           [
+            "2026-05-11",
+            140.028
+           ],
+           [
+            "2026-05-18",
+            140.8476
+           ],
+           [
+            "2026-05-25",
+            141.2961
+           ],
+           [
+            "2026-06-01",
+            141.3756
+           ],
+           [
+            "2026-06-08",
+            141.1109
+           ],
+           [
+            "2026-06-15",
+            140.5483
+           ],
+           [
+            "2026-06-22",
+            139.7527
+           ],
+           [
+            "2026-06-29",
+            138.8033
+           ],
+           [
+            "2026-07-06",
+            137.7891
+           ],
+           [
+            "2026-07-13",
+            136.8029
+           ],
+           [
+            "2026-07-20",
+            135.9359
+           ],
+           [
+            "2026-07-27",
+            135.2718
+           ],
+           [
+            "2026-08-03",
+            134.8818
+           ],
+           [
+            "2026-08-10",
+            134.82
+           ],
+           [
+            "2026-08-17",
+            135.1201
+           ],
+           [
+            "2026-08-24",
+            135.7932
+           ],
+           [
+            "2026-08-31",
+            136.8273
+           ],
+           [
+            "2026-09-07",
+            138.188
+           ],
+           [
+            "2026-09-14",
+            139.8206
+           ],
+           [
+            "2026-09-21",
+            141.6533
+           ],
+           [
+            "2026-09-28",
+            143.6021
+           ],
+           [
+            "2026-10-05",
+            145.5756
+           ],
+           [
+            "2026-10-12",
+            147.481
+           ]
+          ],
+          "values": {
+           "as_of": "2026-10-12",
+           "fact": "F3",
+           "src": "prices_eod",
+           "unit": "USD"
+          }
+         }
+        ],
+        "variant": "full"
+       },
+       "entity": {
+        "id": "Nvidia",
+        "label": "Nvidia",
+        "symbol": "NVDA"
+       },
+       "id": "b2",
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "pinnable": true,
+       "prov": {
+        "args": "Nvidia, 1y",
+        "call": 2,
+        "fact": "F3",
+        "kind": "tool",
+        "name": "get_history"
+       },
+       "sources": [
+        "F3"
+       ],
+       "state": "ready",
+       "subtitle": {
+        "en": "adjusted closes",
+        "es": "cierres ajustados"
+       },
+       "title": {
+        "en": "NVDA price",
+        "es": "Precio de NVDA"
+       },
+       "type": "chart.line"
+      },
+      {
+       "actions": [
+        {
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "kind": "open_dossier",
+         "label": {
+          "en": "Dossier",
+          "es": "Dossier"
+         }
+        },
+        {
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "kind": "open_xray",
+         "label": {
+          "en": "X-Ray",
+          "es": "Radiografía"
+         }
+        }
+       ],
+       "alt": {
+        "en": "Nvidia: price 182.4 USD, change −1.19 %, market cap 4,447.3 billion USD, NRS 37. Suppliers: SK Hynix, TSMC, Astera Labs. Customers: CoreWeave, Dell Technologies, Meta",
+        "es": "Nvidia: precio 182,4 USD, cambio −1,19 %, capitalización 4.447,3 mil millones USD, NRS 37. Proveedores: SK Hynix, TSMC, Astera Labs. Clientes: CoreWeave, Dell Technologies, Meta"
+       },
+       "data": {
+        "change": {
+         "as_of": "2026-10-13T19:58:00Z",
+         "fact": "F1",
+         "live": true,
+         "src": "yahoo",
+         "unit": "pct",
+         "v": -1.19
+        },
+        "company": {
+         "id": "Nvidia",
+         "label": "Nvidia",
+         "symbol": "NVDA"
+        },
+        "graph_as_of": "2026-10-13T18:20:44.583Z",
+        "listed": true,
+        "market_cap": {
+         "as_of": "2026-10-13T19:58:00Z",
+         "fact": "F1",
+         "src": "yahoo",
+         "unit": "USD_B",
+         "v": 4447.3
+        },
+        "market_state": "REGULAR",
+        "nrs": {
+         "as_of": "2026-10-13T23:16:25.395339+00:00",
+         "explain": "nrs",
+         "fact": "F1",
+         "src": "khipus_nrs",
+         "unit": "nrs",
+         "v": 37
+        },
+        "price": {
+         "as_of": "2026-10-13T19:58:00Z",
+         "fact": "F1",
+         "live": true,
+         "src": "yahoo",
+         "unit": "USD",
+         "v": 182.4
+        },
+        "spark": {
+         "adjusted": true,
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "name": "NVDA",
+         "points": [
+          [
+           "2025-10-13",
+           120.0
+          ],
+          [
+           "2025-10-20",
+           121.9644
+          ],
+          [
+           "2025-10-27",
+           123.8366
+          ],
+          [
+           "2025-11-03",
+           125.5298
+          ],
+          [
+           "2025-11-10",
+           126.9688
+          ],
+          [
+           "2025-11-17",
+           128.0939
+          ],
+          [
+           "2025-11-24",
+           128.865
+          ],
+          [
+           "2025-12-01",
+           129.2639
+          ],
+          [
+           "2025-12-08",
+           129.2958
+          ],
+          [
+           "2025-12-15",
+           128.9884
+          ],
+          [
+           "2025-12-22",
+           128.3908
+          ],
+          [
+           "2025-12-29",
+           127.57
+          ],
+          [
+           "2026-01-05",
+           126.6067
+          ],
+          [
+           "2026-01-12",
+           125.5908
+          ],
+          [
+           "2026-01-19",
+           124.6153
+          ],
+          [
+           "2026-01-26",
+           123.7706
+          ],
+          [
+           "2026-02-02",
+           123.1392
+          ],
+          [
+           "2026-02-09",
+           122.7901
+          ],
+          [
+           "2026-02-16",
+           122.7748
+          ],
+          [
+           "2026-02-23",
+           123.1242
+          ],
+          [
+           "2026-03-02",
+           123.8465
+          ],
+          [
+           "2026-03-09",
+           124.9264
+          ],
+          [
+           "2026-03-16",
+           126.3268
+          ],
+          [
+           "2026-03-23",
+           127.9903
+          ],
+          [
+           "2026-03-30",
+           129.8435
+          ],
+          [
+           "2026-04-06",
+           131.8009
+          ],
+          [
+           "2026-04-13",
+           133.7707
+          ],
+          [
+           "2026-04-20",
+           135.6603
+          ],
+          [
+           "2026-04-27",
+           137.3819
+          ],
+          [
+           "2026-05-04",
+           138.8585
+          ],
+          [
+           "2026-05-11",
+           140.028
+          ],
+          [
+           "2026-05-18",
+           140.8476
+          ],
+          [
+           "2026-05-25",
+           141.2961
+          ],
+          [
+           "2026-06-01",
+           141.3756
+          ],
+          [
+           "2026-06-08",
+           141.1109
+          ],
+          [
+           "2026-06-15",
+           140.5483
+          ],
+          [
+           "2026-06-22",
+           139.7527
+          ],
+          [
+           "2026-06-29",
+           138.8033
+          ],
+          [
+           "2026-07-06",
+           137.7891
+          ],
+          [
+           "2026-07-13",
+           136.8029
+          ],
+          [
+           "2026-07-20",
+           135.9359
+          ],
+          [
+           "2026-07-27",
+           135.2718
+          ],
+          [
+           "2026-08-03",
+           134.8818
+          ],
+          [
+           "2026-08-10",
+           134.82
+          ],
+          [
+           "2026-08-17",
+           135.1201
+          ],
+          [
+           "2026-08-24",
+           135.7932
+          ],
+          [
+           "2026-08-31",
+           136.8273
+          ],
+          [
+           "2026-09-07",
+           138.188
+          ],
+          [
+           "2026-09-14",
+           139.8206
+          ],
+          [
+           "2026-09-21",
+           141.6533
+          ],
+          [
+           "2026-09-28",
+           143.6021
+          ],
+          [
+           "2026-10-05",
+           145.5756
+          ],
+          [
+           "2026-10-12",
+           147.481
+          ]
+         ],
+         "values": {
+          "as_of": "2026-10-12",
+          "fact": "F3",
+          "src": "prices_eod",
+          "unit": "USD"
+         }
+        },
+        "structure": {
+         "en": "Structure: supplier concentration low; main supplier country: EEUU",
+         "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+        },
+        "top_customers": [
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "CoreWeave",
+           "label": "CoreWeave"
+          },
+          "rel_type": "cloud",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Dell",
+           "label": "Dell Technologies"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Meta",
+           "label": "Meta"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Microsoft",
+           "label": "Microsoft (Azure)"
+          },
+          "rel_type": "cloud",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Oracle",
+           "label": "Oracle (OCI)"
+          },
+          "rel_type": "cloud",
+          "verified": true,
+          "weight": 5
+         }
+        ],
+        "top_suppliers": [
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "SKHynix",
+           "label": "SK Hynix"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "TSMC",
+           "label": "TSMC"
+          },
+          "rel_type": "fab",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Astera",
+           "label": "Astera Labs"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Boyd Thermal",
+           "label": "Boyd Thermal"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Ibiden",
+           "label": "Ibiden"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         }
+        ]
+       },
+       "entity": {
+        "id": "Nvidia",
+        "label": "Nvidia",
+        "symbol": "NVDA"
+       },
+       "id": "b3",
+       "menu": [
+        "where_from",
+        "ask"
+       ],
+       "pinnable": true,
+       "prov": {
+        "args": "Nvidia",
+        "call": 0,
+        "fact": "F1",
+        "kind": "tool",
+        "name": "get_company"
+       },
+       "sources": [
+        "F1"
+       ],
+       "state": "ready",
+       "title": {
+        "en": "Nvidia card",
+        "es": "Ficha de Nvidia"
+       },
+       "type": "company.card"
+      },
+      {
+       "data": {
+        "items": [
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia"
+          },
+          "kind": "open_xray",
+          "label": {
+           "en": "X-Ray: Nvidia",
+           "es": "Radiografía: Nvidia"
+          }
+         },
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia"
+          },
+          "kind": "open_dossier",
+          "label": {
+           "en": "Dossier: Nvidia",
+           "es": "Dossier: Nvidia"
+          }
+         }
+        ]
+       },
+       "id": "act",
+       "state": "ready",
+       "type": "actions"
+      },
+      {
+       "data": {
+        "items": [
+         {
+          "as_of": "2026-10-13T20:00:02Z",
+          "id": "F1",
+          "label": "Yahoo Finance",
+          "tool": "get_company"
+         },
+         {
+          "as_of": "2026-10-13T18:20:44.583Z",
+          "id": "F2",
+          "label": "Khipus supply-chain graph snapshot",
+          "tool": "get_supply_chain"
+         },
+         {
+          "as_of": "2026-10-12",
+          "id": "F3",
+          "label": "prices_eod",
+          "tool": "get_history"
+         },
+         {
+          "as_of": "2026-10-13T23:16:25Z",
+          "id": "F4",
+          "label": "Khipus supply-chain graph + kernel.params (governance release)",
+          "tool": "run_scenario"
+         },
+         {
+          "as_of": "2026-10-13T19:00:00Z",
+          "label": "Reuters",
+          "published": "2026-10-13T14:00:00Z",
+          "tool": "get_news",
+          "url": "https://example.org/n1"
+         }
+        ]
+       },
+       "id": "src",
+       "state": "ready",
+       "type": "sources"
+      }
+     ],
+     "dropped": [
+      {
+       "index": 4,
+       "reason": "over_budget",
+       "type": "impact.cascade"
+      }
+     ],
+     "impl": "genui.build@1",
+     "lang": "es",
+     "layout": "auto",
+     "spoken": {
+      "en": "I left the supply chain, the price chart and the company card on screen.",
+      "es": "Te dejé en pantalla la cadena de suministro, el gráfico de precio y la ficha."
+     },
+     "state": "final",
+     "v": "kblocks/1"
+    },
+    {
+     "as_of": "2026-10-13T20:01:00Z",
+     "blocks": [
+      {
+       "data": {
+        "lang": "en",
+        "marks": [
+         {
+          "e": 8,
+          "kind": "entity",
+          "ref": "Nvidia",
+          "s": 2
+         },
+         {
+          "e": 50,
+          "kind": "entity",
+          "ref": "TSMC",
+          "s": 46
+         },
+         {
+          "e": 74,
+          "kind": "fact",
+          "ref": "F2",
+          "s": 70
+         }
+        ],
+        "md": "**Nvidia** diseña los chips pero depende de **TSMC** para fabricarlos [F2]."
+       },
+       "id": "t1",
+       "state": "ready",
+       "type": "text"
+      },
+      {
+       "actions": [
+        {
+         "entity": {
+          "id": "TSMC",
+          "label": "TSMC"
+         },
+         "kind": "open_window",
+         "label": {
+          "en": "Simulate",
+          "es": "Simular"
+         },
+         "window": "sim"
+        }
+       ],
+       "alt": {
+        "en": "Shock at TSMC: 318 companies hit ≥ 1 % (hop 1: 83, hop 2: 143, hop 3: 90, hop 4: 2). Least-hit rivals (damage): Cambricon 0 %, CEVA 0 %, Cirrus Logic 10 %, HiSilicon (Huawei) 0 %",
+        "es": "Choque en TSMC: 318 empresas golpeadas ≥ 1 % (salto 1: 83, salto 2: 143, salto 3: 90, salto 4: 2). Rivales poco golpeados (daño): Cambricon 0 %, CEVA 0 %, Cirrus Logic 10 %, HiSilicon (Huawei) 0 %"
+       },
+       "data": {
+        "as_of": "2026-10-13T23:16:25.431240+00:00",
+        "direction": "down",
+        "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+        "graph_version": 0,
+        "hops": [
+         {
+          "count": 83,
+          "entities": [
+           {
+            "entity": {
+             "id": "Nvidia",
+             "label": "Nvidia"
+            },
+            "impact_pct": 100.0
+           },
+           {
+            "entity": {
+             "id": "Tesla",
+             "label": "Tesla"
+            },
+            "impact_pct": 90.2
+           },
+           {
+            "entity": {
+             "id": "Apple",
+             "label": "Apple"
+            },
+            "impact_pct": 75.6
+           },
+           {
+            "entity": {
+             "id": "AMD",
+             "label": "AMD"
+            },
+            "impact_pct": 61.0
+           },
+           {
+            "entity": {
+             "id": "Groq",
+             "label": "Groq"
+            },
+            "impact_pct": 60.0
+           },
+           {
+            "entity": {
+             "id": "Meta",
+             "label": "Meta"
+            },
+            "impact_pct": 60.0
+           },
+           {
+            "entity": {
+             "id": "MediaTek",
+             "label": "MediaTek"
+            },
+            "impact_pct": 55.0
+           },
+           {
+            "entity": {
+             "id": "STMicroelectronics",
+             "label": "STMicroelectronics"
+            },
+            "impact_pct": 54.4
+           }
+          ],
+          "hop": 1,
+          "label": {
+           "en": "Hop 1",
+           "es": "Salto 1"
+          },
+          "max_pct": 100.0
+         },
+         {
+          "count": 143,
+          "entities": [
+           {
+            "entity": {
+             "id": "Oracle",
+             "label": "Oracle (OCI)"
+            },
+            "impact_pct": 61.98
+           },
+           {
+            "entity": {
+             "id": "Nebius",
+             "label": "Nebius"
+            },
+            "impact_pct": 56.67
+           },
+           {
+            "entity": {
+             "id": "SuperMicro",
+             "label": "Super Micro"
+            },
+            "impact_pct": 51.3
+           },
+           {
+            "entity": {
+             "id": "CoreWeave",
+             "label": "CoreWeave"
+            },
+            "impact_pct": 45.36
+           },
+           {
+            "entity": {
+             "id": "Quanta",
+             "label": "Quanta Computer"
+            },
+            "impact_pct": 41.7
+           },
+           {
+            "entity": {
+             "id": "HPE",
+             "label": "Hewlett Packard Ent."
+            },
+            "impact_pct": 40.91
+           },
+           {
+            "entity": {
+             "id": "Foxconn",
+             "label": "Hon Hai (Foxconn)"
+            },
+            "impact_pct": 40.39
+           }
+          ],
+          "hop": 2,
+          "label": {
+           "en": "Hop 2",
+           "es": "Salto 2"
+          },
+          "max_pct": 61.98
+         },
+         {
+          "count": 90,
+          "hop": 3,
+          "label": {
+           "en": "Hop 3",
+           "es": "Salto 3"
+          }
+         },
+         {
+          "count": 2,
+          "hop": 4,
+          "label": {
+           "en": "Hop 4",
+           "es": "Salto 4"
+          }
+         }
+        ],
+        "kernel": "1.0.0",
+        "least_hit_rivals": [
+         {
+          "damage_pct": 0.0,
+          "entity": {
+           "id": "Cambricon",
+           "label": "Cambricon"
+          }
+         },
+         {
+          "damage_pct": 0.0,
+          "entity": {
+           "id": "Ceva",
+           "label": "CEVA"
+          }
+         },
+         {
+          "damage_pct": 10.0,
+          "entity": {
+           "id": "Cirrus_Logic",
+           "label": "Cirrus Logic"
+          }
+         },
+         {
+          "damage_pct": 0.0,
+          "entity": {
+           "id": "HiSilicon",
+           "label": "HiSilicon (Huawei)"
+          }
+         }
+        ],
+        "origin": {
+         "id": "TSMC",
+         "label": "TSMC"
+        },
+        "portfolio": {
+         "state": "no_positions"
+        },
+        "severity": 100.0,
+        "src": "hot_kernel",
+        "threshold_pct": 1,
+        "total": 318
+       },
+       "entity": {
+        "id": "TSMC",
+        "label": "TSMC"
+       },
+       "id": "b1",
+       "menu": [
+        "where_from",
+        "ask"
+       ],
+       "pinnable": true,
+       "prov": {
+        "args": "TSMC",
+        "call": 3,
+        "fact": "F4",
+        "generation": "g0.r1d6ee563.c91e3f319.snapshot",
+        "graph_version": 0,
+        "kind": "tool",
+        "name": "run_scenario"
+       },
+       "sources": [
+        "F4"
+       ],
+       "state": "ready",
+       "subtitle": {
+        "en": "single server kernel · not a price forecast",
+        "es": "motor único del servidor · no es un pronóstico de precios"
+       },
+       "title": {
+        "en": "Shock at TSMC",
+        "es": "Choque en TSMC"
+       },
+       "type": "impact.cascade"
+      },
+      {
+       "data": {
+        "lang": "en",
+        "marks": [
+         {
+          "e": 7,
+          "kind": "entity",
+          "ref": "TSMC",
+          "s": 3
+         },
+         {
+          "e": 54,
+          "kind": "fact",
+          "ref": "F4",
+          "s": 50
+         }
+        ],
+        "md": "Si TSMC cae, el golpe llega a cientos de empresas [F4]."
+       },
+       "id": "t2",
+       "state": "ready",
+       "type": "text"
+      },
+      {
+       "data": {
+        "items": [
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia"
+          },
+          "kind": "open_xray",
+          "label": {
+           "en": "X-Ray: Nvidia",
+           "es": "Radiografía: Nvidia"
+          }
+         },
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia"
+          },
+          "kind": "open_dossier",
+          "label": {
+           "en": "Dossier: Nvidia",
+           "es": "Dossier: Nvidia"
+          }
+         }
+        ]
+       },
+       "id": "act",
+       "state": "ready",
+       "type": "actions"
+      },
+      {
+       "data": {
+        "items": [
+         {
+          "as_of": "2026-10-13T20:00:02Z",
+          "id": "F1",
+          "label": "Yahoo Finance",
+          "tool": "get_company"
+         },
+         {
+          "as_of": "2026-10-13T18:20:44.583Z",
+          "id": "F2",
+          "label": "Khipus supply-chain graph snapshot",
+          "tool": "get_supply_chain"
+         },
+         {
+          "as_of": "2026-10-12",
+          "id": "F3",
+          "label": "prices_eod",
+          "tool": "get_history"
+         },
+         {
+          "as_of": "2026-10-13T23:16:25Z",
+          "id": "F4",
+          "label": "Khipus supply-chain graph + kernel.params (governance release)",
+          "tool": "run_scenario"
+         },
+         {
+          "as_of": "2026-10-13T19:00:00Z",
+          "label": "Reuters",
+          "published": "2026-10-13T14:00:00Z",
+          "tool": "get_news",
+          "url": "https://example.org/n1"
+         }
+        ]
+       },
+       "id": "src",
+       "state": "ready",
+       "type": "sources"
+      }
+     ],
+     "impl": "genui.build@1",
+     "lang": "en",
+     "layout": "auto",
+     "spoken": {
+      "en": "I left the shock cascade on screen.",
+      "es": "Te dejé en pantalla la cascada del choque."
+     },
+     "state": "final",
+     "v": "kblocks/1"
+    },
+    {
+     "as_of": "2026-10-13T20:01:00Z",
+     "blocks": [
+      {
+       "data": {
+        "lang": "es",
+        "marks": [
+         {
+          "e": 8,
+          "kind": "entity",
+          "ref": "Nvidia",
+          "s": 2
+         },
+         {
+          "e": 50,
+          "kind": "entity",
+          "ref": "TSMC",
+          "s": 46
+         },
+         {
+          "e": 74,
+          "kind": "fact",
+          "ref": "F2",
+          "s": 70
+         }
+        ],
+        "md": "**Nvidia** diseña los chips pero depende de **TSMC** para fabricarlos [F2]."
+       },
+       "id": "t1",
+       "state": "ready",
+       "type": "text"
+      },
+      {
+       "alt": {
+        "en": "NVDA: from 120 USD (2025-10-13) to 147.48 USD (2026-10-12)",
+        "es": "NVDA: de 120 USD (2025-10-13) a 147,48 USD (2026-10-12)"
+       },
+       "data": {
+        "range": "1Y",
+        "ranges": [
+         "1M",
+         "3M",
+         "6M",
+         "1Y",
+         "2Y",
+         "5Y"
+        ],
+        "series": [
+         {
+          "adjusted": true,
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia",
+           "symbol": "NVDA"
+          },
+          "name": "NVDA",
+          "points": [
+           [
+            "2025-10-13",
+            120.0
+           ],
+           [
+            "2025-10-20",
+            121.9644
+           ],
+           [
+            "2025-10-27",
+            123.8366
+           ],
+           [
+            "2025-11-03",
+            125.5298
+           ],
+           [
+            "2025-11-10",
+            126.9688
+           ],
+           [
+            "2025-11-17",
+            128.0939
+           ],
+           [
+            "2025-11-24",
+            128.865
+           ],
+           [
+            "2025-12-01",
+            129.2639
+           ],
+           [
+            "2025-12-08",
+            129.2958
+           ],
+           [
+            "2025-12-15",
+            128.9884
+           ],
+           [
+            "2025-12-22",
+            128.3908
+           ],
+           [
+            "2025-12-29",
+            127.57
+           ],
+           [
+            "2026-01-05",
+            126.6067
+           ],
+           [
+            "2026-01-12",
+            125.5908
+           ],
+           [
+            "2026-01-19",
+            124.6153
+           ],
+           [
+            "2026-01-26",
+            123.7706
+           ],
+           [
+            "2026-02-02",
+            123.1392
+           ],
+           [
+            "2026-02-09",
+            122.7901
+           ],
+           [
+            "2026-02-16",
+            122.7748
+           ],
+           [
+            "2026-02-23",
+            123.1242
+           ],
+           [
+            "2026-03-02",
+            123.8465
+           ],
+           [
+            "2026-03-09",
+            124.9264
+           ],
+           [
+            "2026-03-16",
+            126.3268
+           ],
+           [
+            "2026-03-23",
+            127.9903
+           ],
+           [
+            "2026-03-30",
+            129.8435
+           ],
+           [
+            "2026-04-06",
+            131.8009
+           ],
+           [
+            "2026-04-13",
+            133.7707
+           ],
+           [
+            "2026-04-20",
+            135.6603
+           ],
+           [
+            "2026-04-27",
+            137.3819
+           ],
+           [
+            "2026-05-04",
+            138.8585
+           ],
+           [
+            "2026-05-11",
+            140.028
+           ],
+           [
+            "2026-05-18",
+            140.8476
+           ],
+           [
+            "2026-05-25",
+            141.2961
+           ],
+           [
+            "2026-06-01",
+            141.3756
+           ],
+           [
+            "2026-06-08",
+            141.1109
+           ],
+           [
+            "2026-06-15",
+            140.5483
+           ],
+           [
+            "2026-06-22",
+            139.7527
+           ],
+           [
+            "2026-06-29",
+            138.8033
+           ],
+           [
+            "2026-07-06",
+            137.7891
+           ],
+           [
+            "2026-07-13",
+            136.8029
+           ],
+           [
+            "2026-07-20",
+            135.9359
+           ],
+           [
+            "2026-07-27",
+            135.2718
+           ],
+           [
+            "2026-08-03",
+            134.8818
+           ],
+           [
+            "2026-08-10",
+            134.82
+           ],
+           [
+            "2026-08-17",
+            135.1201
+           ],
+           [
+            "2026-08-24",
+            135.7932
+           ],
+           [
+            "2026-08-31",
+            136.8273
+           ],
+           [
+            "2026-09-07",
+            138.188
+           ],
+           [
+            "2026-09-14",
+            139.8206
+           ],
+           [
+            "2026-09-21",
+            141.6533
+           ],
+           [
+            "2026-09-28",
+            143.6021
+           ],
+           [
+            "2026-10-05",
+            145.5756
+           ],
+           [
+            "2026-10-12",
+            147.481
+           ]
+          ],
+          "values": {
+           "as_of": "2026-10-12",
+           "fact": "F3",
+           "src": "prices_eod",
+           "unit": "USD"
+          }
+         }
+        ],
+        "variant": "full"
+       },
+       "entity": {
+        "id": "Nvidia",
+        "label": "Nvidia",
+        "symbol": "NVDA"
+       },
+       "id": "b1",
+       "menu": [
+        "table",
+        "where_from",
+        "ask",
+        "csv"
+       ],
+       "pinnable": true,
+       "prov": {
+        "args": "Nvidia, 1y",
+        "call": 2,
+        "fact": "F3",
+        "kind": "tool",
+        "name": "get_history"
+       },
+       "sources": [
+        "F3"
+       ],
+       "state": "ready",
+       "subtitle": {
+        "en": "adjusted closes",
+        "es": "cierres ajustados"
+       },
+       "title": {
+        "en": "NVDA price",
+        "es": "Precio de NVDA"
+       },
+       "type": "chart.line"
+      },
+      {
+       "data": {
+        "lang": "es",
+        "marks": [
+         {
+          "e": 7,
+          "kind": "entity",
+          "ref": "TSMC",
+          "s": 3
+         },
+         {
+          "e": 54,
+          "kind": "fact",
+          "ref": "F4",
+          "s": 50
+         }
+        ],
+        "md": "Si TSMC cae, el golpe llega a cientos de empresas [F4]."
+       },
+       "id": "t2",
+       "state": "ready",
+       "type": "text"
+      },
+      {
+       "actions": [
+        {
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "kind": "open_window",
+         "label": {
+          "en": "Open the chain",
+          "es": "Abrir la cadena"
+         },
+         "window": "supplychain"
+        }
+       ],
+       "alt": {
+        "en": "Nvidia. Suppliers: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Customers: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)",
+        "es": "Nvidia. Proveedores: SK Hynix, TSMC, Astera Labs, Boyd Thermal, Ibiden. Clientes: CoreWeave, Dell Technologies, Meta, Microsoft (Azure), Oracle (OCI)"
+       },
+       "data": {
+        "as_of": "2026-10-13T18:20:44.583Z",
+        "center": {
+         "id": "Nvidia",
+         "label": "Nvidia",
+         "symbol": "NVDA"
+        },
+        "edges": [
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "SKHynix",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "CoreWeave",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "fab",
+          "s": "TSMC",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "Dell",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Astera",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "Meta",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Boyd Thermal",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Microsoft",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Ibiden",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Oracle",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Khazna",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "xAI",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "license",
+          "s": "ARM",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Amazon",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Expeditors",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "HPE",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "OpenAI",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Nebius",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Quanta",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 4
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "cloud",
+          "s": "Nvidia",
+          "t": "Alphabet",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "ASE",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "Anthropic",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Apptronik",
+          "t": "Nvidia",
+          "verified": true,
+          "weight": 3
+         },
+         {
+          "conf": 1.0,
+          "rel_type": "supply",
+          "s": "Nvidia",
+          "t": "ByteDance",
+          "verified": true,
+          "weight": 3
+         }
+        ],
+        "nodes": [
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia",
+           "symbol": "NVDA"
+          },
+          "role": "center"
+         },
+         {
+          "entity": {
+           "id": "SKHynix",
+           "label": "SK Hynix",
+           "symbol": "HXSCL"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "CoreWeave",
+           "label": "CoreWeave",
+           "symbol": "CRWV"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "TSMC",
+           "label": "TSMC",
+           "symbol": "TSM"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "foundry",
+           "es": "fabrica"
+          }
+         },
+         {
+          "entity": {
+           "id": "Dell",
+           "label": "Dell Technologies",
+           "symbol": "DELL"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Astera",
+           "label": "Astera Labs",
+           "symbol": "ALAB"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Meta",
+           "label": "Meta",
+           "symbol": "META"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Boyd Thermal",
+           "label": "Boyd Thermal"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Microsoft",
+           "label": "Microsoft (Azure)",
+           "symbol": "MSFT"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Ibiden",
+           "label": "Ibiden",
+           "symbol": "IBIDF"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Oracle",
+           "label": "Oracle (OCI)",
+           "symbol": "ORCL"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Khazna",
+           "label": "Khazna"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "xAI",
+           "label": "xAI (+SpaceX)"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "ARM",
+           "label": "ARM",
+           "symbol": "ARM"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "license",
+           "es": "licencia"
+          }
+         },
+         {
+          "entity": {
+           "id": "Amazon",
+           "label": "Amazon (AWS)",
+           "symbol": "AMZN"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Expeditors",
+           "label": "Expeditors",
+           "symbol": "EXPD"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "HPE",
+           "label": "Hewlett Packard Ent.",
+           "symbol": "HPE"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "OpenAI",
+           "label": "OpenAI"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Nebius",
+           "label": "Nebius",
+           "symbol": "NBIS"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "Quanta",
+           "label": "Quanta Computer",
+           "symbol": "2382.TW"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Alphabet",
+           "label": "Alphabet (Google Cloud)",
+           "symbol": "GOOGL"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "cloud",
+           "es": "nube"
+          }
+         },
+         {
+          "entity": {
+           "id": "ASE",
+           "label": "ASE Technology",
+           "symbol": "ASX"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Anthropic",
+           "label": "Anthropic"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "Apptronik",
+           "label": "Apptronik"
+          },
+          "role": "supplier",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         },
+         {
+          "entity": {
+           "id": "ByteDance",
+           "label": "ByteDance"
+          },
+          "role": "customer",
+          "sub": {
+           "en": "supply",
+           "es": "suministro"
+          }
+         }
+        ],
+        "src": "khipus_graph"
+       },
+       "entity": {
+        "id": "Nvidia",
+        "label": "Nvidia",
+        "symbol": "NVDA"
+       },
+       "id": "b2",
+       "menu": [
+        "where_from",
+        "ask"
+       ],
+       "pinnable": true,
+       "prov": {
+        "args": "Nvidia",
+        "call": 1,
+        "fact": "F2",
+        "kind": "tool",
+        "name": "get_supply_chain"
+       },
+       "sources": [
+        "F2"
+       ],
+       "state": "ready",
+       "subtitle": {
+        "en": "flow only: suppliers → company → customers",
+        "es": "solo flujo: proveedores → empresa → clientes"
+       },
+       "title": {
+        "en": "Nvidia supply chain",
+        "es": "Cadena de suministro de Nvidia"
+       },
+       "type": "graph.mini"
+      },
+      {
+       "actions": [
+        {
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "kind": "open_dossier",
+         "label": {
+          "en": "Dossier",
+          "es": "Dossier"
+         }
+        },
+        {
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "kind": "open_xray",
+         "label": {
+          "en": "X-Ray",
+          "es": "Radiografía"
+         }
+        }
+       ],
+       "alt": {
+        "en": "Nvidia: price 182.4 USD, change −1.19 %, market cap 4,447.3 billion USD, NRS 37. Suppliers: SK Hynix, TSMC, Astera Labs. Customers: CoreWeave, Dell Technologies, Meta",
+        "es": "Nvidia: precio 182,4 USD, cambio −1,19 %, capitalización 4.447,3 mil millones USD, NRS 37. Proveedores: SK Hynix, TSMC, Astera Labs. Clientes: CoreWeave, Dell Technologies, Meta"
+       },
+       "data": {
+        "change": {
+         "as_of": "2026-10-13T19:58:00Z",
+         "fact": "F1",
+         "live": true,
+         "src": "yahoo",
+         "unit": "pct",
+         "v": -1.19
+        },
+        "company": {
+         "id": "Nvidia",
+         "label": "Nvidia",
+         "symbol": "NVDA"
+        },
+        "graph_as_of": "2026-10-13T18:20:44.583Z",
+        "listed": true,
+        "market_cap": {
+         "as_of": "2026-10-13T19:58:00Z",
+         "fact": "F1",
+         "src": "yahoo",
+         "unit": "USD_B",
+         "v": 4447.3
+        },
+        "market_state": "REGULAR",
+        "nrs": {
+         "as_of": "2026-10-13T23:16:25.395339+00:00",
+         "explain": "nrs",
+         "fact": "F1",
+         "src": "khipus_nrs",
+         "unit": "nrs",
+         "v": 37
+        },
+        "price": {
+         "as_of": "2026-10-13T19:58:00Z",
+         "fact": "F1",
+         "live": true,
+         "src": "yahoo",
+         "unit": "USD",
+         "v": 182.4
+        },
+        "spark": {
+         "adjusted": true,
+         "entity": {
+          "id": "Nvidia",
+          "label": "Nvidia",
+          "symbol": "NVDA"
+         },
+         "name": "NVDA",
+         "points": [
+          [
+           "2025-10-13",
+           120.0
+          ],
+          [
+           "2025-10-20",
+           121.9644
+          ],
+          [
+           "2025-10-27",
+           123.8366
+          ],
+          [
+           "2025-11-03",
+           125.5298
+          ],
+          [
+           "2025-11-10",
+           126.9688
+          ],
+          [
+           "2025-11-17",
+           128.0939
+          ],
+          [
+           "2025-11-24",
+           128.865
+          ],
+          [
+           "2025-12-01",
+           129.2639
+          ],
+          [
+           "2025-12-08",
+           129.2958
+          ],
+          [
+           "2025-12-15",
+           128.9884
+          ],
+          [
+           "2025-12-22",
+           128.3908
+          ],
+          [
+           "2025-12-29",
+           127.57
+          ],
+          [
+           "2026-01-05",
+           126.6067
+          ],
+          [
+           "2026-01-12",
+           125.5908
+          ],
+          [
+           "2026-01-19",
+           124.6153
+          ],
+          [
+           "2026-01-26",
+           123.7706
+          ],
+          [
+           "2026-02-02",
+           123.1392
+          ],
+          [
+           "2026-02-09",
+           122.7901
+          ],
+          [
+           "2026-02-16",
+           122.7748
+          ],
+          [
+           "2026-02-23",
+           123.1242
+          ],
+          [
+           "2026-03-02",
+           123.8465
+          ],
+          [
+           "2026-03-09",
+           124.9264
+          ],
+          [
+           "2026-03-16",
+           126.3268
+          ],
+          [
+           "2026-03-23",
+           127.9903
+          ],
+          [
+           "2026-03-30",
+           129.8435
+          ],
+          [
+           "2026-04-06",
+           131.8009
+          ],
+          [
+           "2026-04-13",
+           133.7707
+          ],
+          [
+           "2026-04-20",
+           135.6603
+          ],
+          [
+           "2026-04-27",
+           137.3819
+          ],
+          [
+           "2026-05-04",
+           138.8585
+          ],
+          [
+           "2026-05-11",
+           140.028
+          ],
+          [
+           "2026-05-18",
+           140.8476
+          ],
+          [
+           "2026-05-25",
+           141.2961
+          ],
+          [
+           "2026-06-01",
+           141.3756
+          ],
+          [
+           "2026-06-08",
+           141.1109
+          ],
+          [
+           "2026-06-15",
+           140.5483
+          ],
+          [
+           "2026-06-22",
+           139.7527
+          ],
+          [
+           "2026-06-29",
+           138.8033
+          ],
+          [
+           "2026-07-06",
+           137.7891
+          ],
+          [
+           "2026-07-13",
+           136.8029
+          ],
+          [
+           "2026-07-20",
+           135.9359
+          ],
+          [
+           "2026-07-27",
+           135.2718
+          ],
+          [
+           "2026-08-03",
+           134.8818
+          ],
+          [
+           "2026-08-10",
+           134.82
+          ],
+          [
+           "2026-08-17",
+           135.1201
+          ],
+          [
+           "2026-08-24",
+           135.7932
+          ],
+          [
+           "2026-08-31",
+           136.8273
+          ],
+          [
+           "2026-09-07",
+           138.188
+          ],
+          [
+           "2026-09-14",
+           139.8206
+          ],
+          [
+           "2026-09-21",
+           141.6533
+          ],
+          [
+           "2026-09-28",
+           143.6021
+          ],
+          [
+           "2026-10-05",
+           145.5756
+          ],
+          [
+           "2026-10-12",
+           147.481
+          ]
+         ],
+         "values": {
+          "as_of": "2026-10-12",
+          "fact": "F3",
+          "src": "prices_eod",
+          "unit": "USD"
+         }
+        },
+        "structure": {
+         "en": "Structure: supplier concentration low; main supplier country: EEUU",
+         "es": "Estructura: concentración de proveedores baja; país principal de sus proveedores: EEUU"
+        },
+        "top_customers": [
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "CoreWeave",
+           "label": "CoreWeave"
+          },
+          "rel_type": "cloud",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Dell",
+           "label": "Dell Technologies"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Meta",
+           "label": "Meta"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Microsoft",
+           "label": "Microsoft (Azure)"
+          },
+          "rel_type": "cloud",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Oracle",
+           "label": "Oracle (OCI)"
+          },
+          "rel_type": "cloud",
+          "verified": true,
+          "weight": 5
+         }
+        ],
+        "top_suppliers": [
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "SKHynix",
+           "label": "SK Hynix"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "TSMC",
+           "label": "TSMC"
+          },
+          "rel_type": "fab",
+          "verified": true,
+          "weight": 6
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Astera",
+           "label": "Astera Labs"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Boyd Thermal",
+           "label": "Boyd Thermal"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         },
+         {
+          "conf": 1.0,
+          "entity": {
+           "id": "Ibiden",
+           "label": "Ibiden"
+          },
+          "rel_type": "supply",
+          "verified": true,
+          "weight": 5
+         }
+        ]
+       },
+       "entity": {
+        "id": "Nvidia",
+        "label": "Nvidia",
+        "symbol": "NVDA"
+       },
+       "id": "b3",
+       "menu": [
+        "where_from",
+        "ask"
+       ],
+       "pinnable": true,
+       "prov": {
+        "args": "Nvidia",
+        "call": 0,
+        "fact": "F1",
+        "kind": "tool",
+        "name": "get_company"
+       },
+       "sources": [
+        "F1"
+       ],
+       "state": "ready",
+       "title": {
+        "en": "Nvidia card",
+        "es": "Ficha de Nvidia"
+       },
+       "type": "company.card"
+      },
+      {
+       "data": {
+        "items": [
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia"
+          },
+          "kind": "open_xray",
+          "label": {
+           "en": "X-Ray: Nvidia",
+           "es": "Radiografía: Nvidia"
+          }
+         },
+         {
+          "entity": {
+           "id": "Nvidia",
+           "label": "Nvidia"
+          },
+          "kind": "open_dossier",
+          "label": {
+           "en": "Dossier: Nvidia",
+           "es": "Dossier: Nvidia"
+          }
+         }
+        ]
+       },
+       "id": "act",
+       "state": "ready",
+       "type": "actions"
+      },
+      {
+       "data": {
+        "items": [
+         {
+          "as_of": "2026-10-13T20:00:02Z",
+          "id": "F1",
+          "label": "Yahoo Finance",
+          "tool": "get_company"
+         },
+         {
+          "as_of": "2026-10-13T18:20:44.583Z",
+          "id": "F2",
+          "label": "Khipus supply-chain graph snapshot",
+          "tool": "get_supply_chain"
+         },
+         {
+          "as_of": "2026-10-12",
+          "id": "F3",
+          "label": "prices_eod",
+          "tool": "get_history"
+         },
+         {
+          "as_of": "2026-10-13T23:16:25Z",
+          "id": "F4",
+          "label": "Khipus supply-chain graph + kernel.params (governance release)",
+          "tool": "run_scenario"
+         },
+         {
+          "as_of": "2026-10-13T19:00:00Z",
+          "label": "Reuters",
+          "published": "2026-10-13T14:00:00Z",
+          "tool": "get_news",
+          "url": "https://example.org/n1"
+         }
+        ]
+       },
+       "id": "src",
+       "state": "ready",
+       "type": "sources"
+      }
+     ],
+     "dropped": [
+      {
+       "index": 4,
+       "reason": "over_budget",
+       "type": "impact.cascade"
+      }
+     ],
+     "impl": "genui.build@1",
+     "lang": "es",
+     "layout": "auto",
+     "spoken": {
+      "en": "I left the price chart, the supply chain and the company card on screen.",
+      "es": "Te dejé en pantalla el gráfico de precio, la cadena de suministro y la ficha."
+     },
+     "state": "final",
+     "v": "kblocks/1"
+    }
+   ],
+   "sha": "a61aa14d4ff2abdc01b1c21fa8791c8c9b8c0877a2a786775588d6b64e708962"
+  }
+ ],
+ "key": "genui.build",
+ "version": 1
+}

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/app_main.js"
 lenguaje: "javascript"
-lineas: 4805
+lineas: 4806
 aliases: ["engine/app_main.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/app_main.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.805 líneas · `engine/app_main.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.806 líneas · `engine/app_main.js`
 
 ## Para qué sirve
 
@@ -67,7 +67,7 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **24 de 97** (línea 2611), después de [[nodes.merge_graph.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **24 de 98** (línea 2611), después de [[nodes.merge_graph.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 
@@ -91,6 +91,8 @@ Se carga en [[app.html]] en la posición **24 de 97** (línea 2611), después de
 - [[engine.desktop.js]] — usa `LANG`
 - [[engine.explain.js]] — usa `LANG`
 - [[engine.fincard.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
+- [[engine.genui.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
+- [[engine.genui_shapes.js]] — usa `BASE`
 - [[engine.globe.js]] — usa `BASE`, `LINKS`, `computeNRS`
 - [[engine.governance.js]] — usa `BASE`, `LANG`
 - [[engine.graph3d.js]] — usa `LINKS`, `NODE_BY_ID`, `_tickerWarnings`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `getLinkColorHex`, `jumpTo` y 2 más
@@ -172,6 +174,7 @@ Se carga en [[app.html]] en la posición **24 de 97** (línea 2611), después de
 
 - [[tests.test_app_split.py]]
 - [[tests.test_client_hardening.py]]
+- [[tests.test_genui_review_fixes.py]]
 - [[tests.test_market_keys_scope.py]]
 
 ## Mencionado en sesiones de trabajo

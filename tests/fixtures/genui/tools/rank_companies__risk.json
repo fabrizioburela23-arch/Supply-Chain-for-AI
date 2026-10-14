@@ -1,0 +1,152 @@
+{
+ "args": {
+  "by": "risk",
+  "limit": 10
+ },
+ "result": {
+  "as_of": "2026-10-13T18:20:44.583Z",
+  "by": "risk",
+  "explain": "degree = number of supplier/customer links in the curated graph; nrs = Network Risk Score 0-100 (higher = more fragile), a heuristic, not a forecast",
+  "filters": {
+   "country": null,
+   "listed_only": false,
+   "sector": null
+  },
+  "items": [
+   {
+    "category": "cloud",
+    "country": "China",
+    "degree": 16,
+    "id": "AlibabaCloud",
+    "label": "Alibaba Cloud",
+    "listed": false,
+    "nrs": 81,
+    "preipo": false,
+    "sector": "cloud_ia",
+    "sector_label": "Cloud & AI",
+    "symbol": null
+   },
+   {
+    "category": "fabless",
+    "country": "China",
+    "degree": 8,
+    "id": "HiSilicon",
+    "label": "HiSilicon (Huawei)",
+    "listed": false,
+    "nrs": 81,
+    "preipo": true,
+    "sector": "diseno",
+    "sector_label": "Design & IP",
+    "symbol": null
+   },
+   {
+    "category": "servers",
+    "country": "Taiwan",
+    "degree": 20,
+    "id": "Foxconn",
+    "label": "Hon Hai (Foxconn)",
+    "listed": true,
+    "nrs": 79,
+    "preipo": false,
+    "sector": "infra",
+    "sector_label": "Physical Infra",
+    "symbol": "HNHPF"
+   },
+   {
+    "category": "servers",
+    "country": "China",
+    "degree": 9,
+    "id": "Lenovo",
+    "label": "Lenovo",
+    "listed": true,
+    "nrs": 79,
+    "preipo": false,
+    "sector": "infra",
+    "sector_label": "Physical Infra",
+    "symbol": "LNVGY"
+   },
+   {
+    "category": "ailab",
+    "country": "China",
+    "degree": 8,
+    "id": "DeepSeek",
+    "label": "DeepSeek",
+    "listed": false,
+    "nrs": 79,
+    "preipo": true,
+    "sector": "cloud_ia",
+    "sector_label": "Cloud & AI",
+    "symbol": null
+   },
+   {
+    "category": "memory",
+    "country": "China",
+    "degree": 5,
+    "id": "YMTC",
+    "label": "YMTC",
+    "listed": false,
+    "nrs": 79,
+    "preipo": true,
+    "sector": "fabricacion",
+    "sector_label": "Manufacturing",
+    "symbol": null
+   },
+   {
+    "category": "foundry",
+    "country": "China",
+    "degree": 27,
+    "id": "SMIC",
+    "label": "SMIC",
+    "listed": true,
+    "nrs": 77,
+    "preipo": false,
+    "sector": "fabricacion",
+    "sector_label": "Manufacturing",
+    "symbol": "0981.HK"
+   },
+   {
+    "category": "fabless",
+    "country": "China",
+    "degree": 14,
+    "id": "Huawei",
+    "label": "Huawei",
+    "listed": false,
+    "nrs": 76,
+    "preipo": false,
+    "sector": "diseno",
+    "sector_label": "Design & IP",
+    "symbol": null
+   },
+   {
+    "category": "servers",
+    "country": "Taiwan",
+    "degree": 9,
+    "id": "Quanta",
+    "label": "Quanta Computer",
+    "listed": true,
+    "nrs": 71,
+    "preipo": false,
+    "sector": "infra",
+    "sector_label": "Physical Infra",
+    "symbol": "2382.TW"
+   },
+   {
+    "category": "fabless",
+    "country": "China",
+    "degree": 6,
+    "id": "Xiaomi",
+    "label": "Xiaomi",
+    "listed": true,
+    "nrs": 68,
+    "preipo": false,
+    "sector": "diseno",
+    "sector_label": "Design & IP",
+    "symbol": "1810.HK"
+   }
+  ],
+  "matched": 937,
+  "source": "Khipus supply-chain graph snapshot (data/grafo_v0.json, curated catalog)"
+ },
+ "sample": false,
+ "tool": "rank_companies"
+}

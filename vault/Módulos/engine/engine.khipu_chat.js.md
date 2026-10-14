@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/khipu_chat.js"
 lenguaje: "javascript"
-lineas: 1261
+lineas: 1311
 aliases: ["engine/khipu_chat.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/khipu_chat.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 1.261 líneas · `engine/khipu_chat.js`
+> Módulo · capa [[Capa Chat y agentes]] · 1.311 líneas · `engine/khipu_chat.js`
 
 ## Para qué sirve
 
@@ -29,6 +29,7 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.desktop.js]] — usa `KhipuDesk`
 - [[engine.fincard.js]] — usa `openFinCard`
+- [[engine.genui.js]] — usa `KhipuGenUI`
 - [[engine.mascot.js]] — usa `KhipuAgentPrefs`, `KhipuMascot`
 - [[engine.oswindows.js]] — usa `KhipuOSWin`
 - [[engine.pfcommittee.js]] — usa `KhipuPortfolioCommittee`, `KhipuProfile`
@@ -41,13 +42,14 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 
-Se carga en [[app.html]] en la posición **87 de 97** (línea 3144), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
+Se carga en [[app.html]] en la posición **88 de 98** (línea 3147), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 87)
+- [[app.html]] — lo carga con `<script>` (posición 88)
 - [[engine.cockpit.js]] — usa `KhipuChat`
 - [[engine.command_center.js]] — usa `KhipuChat`
+- [[engine.genui.js]] — usa `KhipuChat`
 - [[engine.pickers.js]] — usa `KhipuChat`
 - [[engine.voice.js]] — usa `KhipuChat`
 
@@ -65,6 +67,8 @@ Se carga en [[app.html]] en la posición **87 de 97** (línea 3144), después de
 - [[tests.test_cleanup_client.py]]
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_committee_os_ui.py]]
+- [[tests.test_genui_browser.py]]
+- [[tests.test_genui_client_static.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
 - [[tests.test_overnight_fixes_review.py]]

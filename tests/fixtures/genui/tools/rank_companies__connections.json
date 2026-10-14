@@ -1,0 +1,117 @@
+{
+ "args": {
+  "limit": 8
+ },
+ "result": {
+  "as_of": "2026-10-13T18:20:44.583Z",
+  "by": "connections",
+  "explain": "degree = number of supplier/customer links in the curated graph; nrs = Network Risk Score 0-100 (higher = more fragile), a heuristic, not a forecast",
+  "filters": {
+   "country": null,
+   "listed_only": false,
+   "sector": null
+  },
+  "items": [
+   {
+    "category": "fabless",
+    "country": "EEUU",
+    "degree": 196,
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "listed": true,
+    "preipo": false,
+    "sector": "diseno",
+    "sector_label": "Design & IP",
+    "symbol": "NVDA"
+   },
+   {
+    "category": "foundry",
+    "country": "Taiwan",
+    "degree": 175,
+    "id": "TSMC",
+    "label": "TSMC",
+    "listed": true,
+    "preipo": false,
+    "sector": "fabricacion",
+    "sector_label": "Manufacturing",
+    "symbol": "TSM"
+   },
+   {
+    "category": "cloud",
+    "country": "EEUU",
+    "degree": 157,
+    "id": "Amazon",
+    "label": "Amazon (AWS)",
+    "listed": true,
+    "preipo": false,
+    "sector": "cloud_ia",
+    "sector_label": "Cloud & AI",
+    "symbol": "AMZN"
+   },
+   {
+    "category": "cloud",
+    "country": "EEUU",
+    "degree": 151,
+    "id": "Microsoft",
+    "label": "Microsoft (Azure)",
+    "listed": true,
+    "preipo": false,
+    "sector": "cloud_ia",
+    "sector_label": "Cloud & AI",
+    "symbol": "MSFT"
+   },
+   {
+    "category": "cloud",
+    "country": "EEUU",
+    "degree": 76,
+    "id": "Alphabet",
+    "label": "Alphabet (Google Cloud)",
+    "listed": true,
+    "preipo": false,
+    "sector": "cloud_ia",
+    "sector_label": "Cloud & AI",
+    "symbol": "GOOGL"
+   },
+   {
+    "category": "foundry",
+    "country": "Corea",
+    "degree": 71,
+    "id": "Samsung",
+    "label": "Samsung Electronics",
+    "listed": true,
+    "preipo": false,
+    "sector": "fabricacion",
+    "sector_label": "Manufacturing",
+    "symbol": "SSNLF"
+   },
+   {
+    "category": "foundry",
+    "country": "EEUU",
+    "degree": 57,
+    "id": "Intel",
+    "label": "Intel",
+    "listed": true,
+    "preipo": false,
+    "sector": "fabricacion",
+    "sector_label": "Manufacturing",
+    "symbol": "INTC"
+   },
+   {
+    "category": "ailab",
+    "country": "EEUU",
+    "degree": 51,
+    "id": "Meta",
+    "label": "Meta",
+    "listed": true,
+    "preipo": false,
+    "sector": "cloud_ia",
+    "sector_label": "Cloud & AI",
+    "symbol": "META"
+   }
+  ],
+  "matched": 937,
+  "source": "Khipus supply-chain graph snapshot (data/grafo_v0.json, curated catalog)"
+ },
+ "sample": false,
+ "tool": "rank_companies"
+}

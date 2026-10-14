@@ -537,11 +537,28 @@
     if (recent.length) ctx.recent_entities = recent.slice();
     try {
       var pos = (W.MKT && W.MKT.pos) || {}, NB = W.NODE_BY_ID || {}, out = [];
+      // usd por posición (docs/CHAT_UI_GENERATIVA.md §5.2, paso 12): la MISMA valoración que KhipuHot.pnlLine
+      // (acciones × precio que muestra la app, en USD; engine/hotclient.js myPositions). Sin precio → sin usd
+      // (el servidor dice entonces «sin posiciones valoradas», nunca inventa el monto).
+      var usdBy = {};
+      try {
+        var mp = (W.KhipuHot && typeof W.KhipuHot.myPositions === 'function') ? W.KhipuHot.myPositions() : null;
+        ((mp && mp.positions) || []).forEach(function (q) { if (q && q.id && typeof q.usd === 'number' && q.usd > 0) usdBy[q.id] = q.usd; });
+      } catch (e) {}
       Object.keys(pos).forEach(function (id) {
         var n = NB[id], p = pos[id];
-        if (n && n.mkt && p && +p.sh > 0 && out.length < 30) out.push({ symbol: String(n.mkt), shares: +p.sh });
+        if (n && n.mkt && p && +p.sh > 0 && out.length < 30) {
+          var o = { symbol: String(n.mkt), shares: +p.sh };
+          if (usdBy[n.id] != null) o.usd = usdBy[n.id];
+          out.push(o);
+        }
       });
       if (out.length) ctx.portfolio = { positions: out };
+    } catch (e) {}
+    // respuestas visuales (beta): el servidor solo manda `ui` (kblocks/1) si el navegador lo pide y dice qué sabe pintar
+    try {
+      var G = W.KhipuGenUI;
+      if (G && G.enabled && G.enabled()) { ctx.genui = 1; ctx.genui_types = G.catalog(); }
     } catch (e) {}
     // Khipus OS: cómo quieres que te hable (Simple/Pro) y qué agentes participan (solo PRESENTACIÓN:
     // nunca cambia decisiones del comité ni tamaños de órdenes)
@@ -565,6 +582,8 @@
         Date.now() - (_lastPending._kcT0 || 0) < 2500) pend = _lastPending;
     var rid = (typeof opts.req_id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(opts.req_id)) ? opts.req_id : (pend && pend._kcReq) || newReqId();
     body.req_id = rid;
+    // «Preguntar sobre esto» (menú ⋯ de un bloque): la pregunta siguiente usa los mismos datos
+    try { var rb = W.KhipuGenUI && W.KhipuGenUI.enabled() && W.KhipuGenUI.takeRef ? W.KhipuGenUI.takeRef() : null; if (rb) body.context.ref_block = rb; } catch (e) {}
     // plazo PROPIO (la voz espera 55 s, no 70): el servidor recorta su techo para responder antes de que cortemos
     if (opts.timeout > 0) body.deadline_s = Math.round(opts.timeout / 1000);
     if (pend) {
@@ -1112,10 +1131,18 @@
     var main = el.querySelector('.kc-main') || el, foot = main.querySelector('.kc-foot');
     var put = function (node) { if (foot && foot.parentNode === main) main.insertBefore(node, foot); else main.appendChild(node); };
     var acts = Array.isArray(d.actions) ? d.actions : [];
+    // RESPUESTAS VISUALES (kblocks/1, docs/CHAT_UI_GENERATIVA.md §7.1): con la bandera kh_genui y un sobre `ui`,
+    // engine/genui.js pinta los bloques EN LUGAR de md(answer) + el gráfico `chart`. Contribuciones y meta siguen
+    // igual; las fuentes del pie se omiten si el sobre ya trae su bloque `sources` (no se repiten).
+    var gui = _genui(el, d, opts);
+    if (gui && foot && Array.isArray(d.ui.blocks) && d.ui.blocks.some(function (b) { return b && b.type === 'sources'; })) {
+      var ks = foot.querySelector('.kc-src'); if (ks && ks.parentNode) ks.parentNode.removeChild(ks);
+    }
     // FUSIÓN Khipu + Canvas: un gráfico pedido se dibuja AQUÍ, dentro de la respuesta
     // (y se puede abrir en ventana); así no hay que saltar a otra pantalla
     var inlineChart = acts.filter(function (a) { return a.type === 'chart' && typeof a.arg === 'string'; })[0];
-    if (inlineChart && opts.inlineChart !== false && W.BixbyCockpit && W.BixbyCockpit.canvasInto) {
+    if (inlineChart && gui) acts = acts.filter(function (a) { return a !== inlineChart; });
+    else if (inlineChart && opts.inlineChart !== false && W.BixbyCockpit && W.BixbyCockpit.canvasInto) {
       var host = W.document.createElement('div'); host.className = 'kc-chart';
       put(host);
       try { W.BixbyCockpit.canvasInto(host, inlineChart.arg); } catch (e) {}
@@ -1156,6 +1183,29 @@
       if (first) setTimeout(function () { try { (opts.onAction || runAction)(first); } catch (e) {} }, delay + plan.length * 260);
     }
     return el;
+  }
+
+  // acciones de los bloques (solo abrir/sugerir) → las del chat de siempre, para que la Cabina las maneje igual
+  var GENUI_ACT = { open_xray: 'open_xray', open_map: 'navigate', open_dossier: 'dossier', open_research: 'open_research', open_committee: 'open_committee' };
+  function _genui(el, d, opts) {
+    var G = W.KhipuGenUI;
+    if (!d || !d.ui || !G || !G.enabled || !G.enabled() || d.ui.v !== G.V || !Array.isArray(d.ui.blocks)) return null;
+    var body = el.querySelector('.kc-body'); if (!body) return null;
+    var onAction = function (a) {
+      if (!opts.onAction) return false;
+      var e = a && a.entity && a.entity.id;
+      if (GENUI_ACT[a.kind] && e) { opts.onAction({ type: GENUI_ACT[a.kind], arg: e }); return true; }
+      if (a.kind === 'open_world' && typeof a.lat === 'number') { opts.onAction({ type: 'open_world', arg: { lat: a.lat, lon: a.lon } }); return true; }
+      return false;
+    };
+    try {
+      body.classList.add('kc-genui');
+      var r = G.renderAnswer(body, d.ui, { answer: d.answer || '', onAction: onAction, reqId: el._kcReq || '' });
+      if (r) return r;
+    } catch (e) { try { console.warn('[KhipuChat] genui:', e); } catch (x) {} }
+    body.classList.remove('kc-genui');
+    body.innerHTML = md(d.answer || L('(sin respuesta)', '(no answer)'));   // respaldo: el texto de siempre
+    return null;
   }
 
   function pfCardHTML(c) {
