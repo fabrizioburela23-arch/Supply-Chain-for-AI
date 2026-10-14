@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_catalog_fix_categories.py"
 lenguaje: "python"
-lineas: 256
+lineas: 257
 aliases: ["tests/test_catalog_fix_categories.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_catalog_fix_categories.py
 
-> Prueba · capa [[Capa Pruebas]] · 256 líneas · `tests/test_catalog_fix_categories.py`
+> Prueba · capa [[Capa Pruebas]] · 257 líneas · `tests/test_catalog_fix_categories.py`
 
 ## Qué prueba
 
