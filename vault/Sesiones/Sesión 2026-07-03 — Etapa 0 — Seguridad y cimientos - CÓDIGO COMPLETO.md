@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-03"
-ruta: "docs/ESTADO.md#L2361"
+ruta: "docs/ESTADO.md#L2401"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa 0 — Seguridad y cimientos: ✅ CÓDIGO COMPLETO (2026-07-03)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2361 (23 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2401 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

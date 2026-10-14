@@ -196,6 +196,9 @@ def triples_of(kind, inp):
         return F.order_triples(inp)
     if kind == 'memo':
         return F.memo_triples(inp)
+    if kind == 'import':
+        from ontology import company_import as CI
+        return CI.import_triples(inp)
     return F.decision_triples(inp)
 
 
@@ -360,4 +363,7 @@ def single_defect_cases():
         M('khr:memo.quorum', quorum_ok=False, ai_used=False),
         M('khr:memo.quorum_no_ai', decision='HOLD', decision_code='INSUFFICIENT_DATA', quorum_ok=False),
     ]
+    # E2.5 (lote K): las 14 reglas de importación de empresas (company.ttl)
+    from tests.test_import_shapes import import_single_defect_cases
+    cases += import_single_defect_cases()
     return cases

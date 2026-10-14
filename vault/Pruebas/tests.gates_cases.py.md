@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/gates_cases.py"
 lenguaje: "python"
-lineas: 363
+lineas: 369
 aliases: ["tests/gates_cases.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/gates_cases.py
 
-> Prueba · capa [[Capa Pruebas]] · 363 líneas · `tests/gates_cases.py`
+> Prueba · capa [[Capa Pruebas]] · 369 líneas · `tests/gates_cases.py`
 
 ## Qué prueba
 
@@ -23,4 +23,5 @@ generador de focos ALEATORIOS (con semilla) y accesorios de un solo defecto para
 - [[core.__init__.py]]
 - [[core.decisions.py]]
 - [[ontology.actions.py]]
+- [[ontology.company_import.py]]
 - [[ontology.vocabulary.py]]

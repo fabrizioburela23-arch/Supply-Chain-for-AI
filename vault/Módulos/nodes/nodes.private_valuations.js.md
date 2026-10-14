@@ -31,11 +31,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
-Se carga en [[app.html]] en la posición **15 de 98** (línea 1450), después de [[nodes.listing_status.js]] y antes de [[nodes.links_all.js]].
+Se carga en [[app.html]] en la posición **16 de 99** (línea 1517), después de [[nodes.listing_status.js]] y antes de [[nodes.links_all.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 15)
+- [[app.html]] — lo carga con `<script>` (posición 16)
 - [[engine.app_main.js]] — usa `PRIVATE_VALUATIONS`
 - [[engine.fincard.js]] — usa `PRIVATE_VALUATIONS`
 - [[engine.voice.js]] — usa `PRIVATE_VALUATIONS`

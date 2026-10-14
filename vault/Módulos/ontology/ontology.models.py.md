@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/models.py"
 lenguaje: "python"
-lineas: 199
+lineas: 201
 aliases: ["ontology/models.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/models.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 199 líneas · `ontology/models.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 201 líneas · `ontology/models.py`
 
 ## Para qué sirve
 
@@ -30,6 +30,7 @@ esquema SQLAlchemy de la ontología.
 
 - [[ontology.governance_models.py]] — importa `governance_models`
 - [[ontology.history_models.py]] — importa `history_models`
+- [[ontology.import_models.py]] — importa `import_models`
 - [[ontology.ledger_models.py]] — importa `ledger_models`
 
 ## Lo usan
@@ -46,9 +47,11 @@ esquema SQLAlchemy de la ontología.
 - [[ontology.bitemporal.py]] — lo importa
 - [[ontology.bulk_import.py]] — lo importa
 - [[ontology.checkpoints.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.governance_models.py]] — lo importa
 - [[ontology.history_models.py]] — lo importa
+- [[ontology.import_models.py]] — lo importa
 - [[ontology.ingest_news.py]] — lo importa
 - [[ontology.ledger_models.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
@@ -63,7 +66,7 @@ esquema SQLAlchemy de la ontología.
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 67 pruebas (lista abajo)._
+_Además lo importan 72 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -76,6 +79,7 @@ _Además lo importan 67 pruebas (lista abajo)._
 - [[tests.test_cierre_infra.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_gates_resulting_state.py]]
+- [[tests.test_genui_k_server.py]]
 - [[tests.test_genui_ledger.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
@@ -85,6 +89,8 @@ _Además lo importan 67 pruebas (lista abajo)._
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_import_fast_path.py]]
+- [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_ledger_anchor.py]]
@@ -97,6 +103,7 @@ _Además lo importan 67 pruebas (lista abajo)._
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_lotej_review_fixes.py]]
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
@@ -123,6 +130,7 @@ _Además lo importan 67 pruebas (lista abajo)._
 - [[tests.test_repair_review2.py]]
 - [[tests.test_replay_determinism.py]]
 - [[tests.test_research.py]]
+- [[tests.test_resolve_ids.py]]
 - [[tests.test_retention_purge.py]]
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]

@@ -199,7 +199,8 @@ def init_schema(retries=6, delay=2.0):
     except Exception as e:  # noqa: BLE001
         log.warning('init_schema: research.models no cargó (%s)', type(e).__name__)
     for _m in ('brokerage.models', 'mcp_server.models', 'core.ops_check',   # Phase 3 + O1 (ops_checks), opcionales
-               'ontology.checkpoints'):                                     # paso 26: graph_checkpoints
+               'ontology.checkpoints',                                      # paso 26: graph_checkpoints
+               'ontology.import_models'):                                   # lote K: importación de empresas
         try:
             __import__(_m)
         except Exception as e:  # noqa: BLE001

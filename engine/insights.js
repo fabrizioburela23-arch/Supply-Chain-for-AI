@@ -213,7 +213,9 @@
 
     // 5) concentración geográfica
     var byCountry = {};
-    NODES.forEach(function (n) { if (n.country) byCountry[n.country] = (byCountry[n.country] || 0) + 1; });
+    // agrupado por clave del catálogo ('Taiwán' y 'Taiwan' son uno) vía GeoCoords.countryGroup; sin él, el texto tal cual
+    var cg = function (c) { var G = window.GeoCoords; return (G && G.countryGroup) ? G.countryGroup(c) : c; };
+    NODES.forEach(function (n) { if (n.country) { var k = cg(n.country); byCountry[k] = (byCountry[k] || 0) + 1; } });
     var tw = (byCountry['Taiwan'] || 0), cn = (byCountry['China'] || 0);
     if (tw + cn > 0) {
       var pct = Math.round((tw + cn) / NODES.length * 100);

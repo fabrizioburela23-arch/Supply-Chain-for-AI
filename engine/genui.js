@@ -1,8 +1,5 @@
-/* engine/genui.js — RESPUESTAS VISUALES del chat (kblocks/1). Contrato, API (window.KhipuGenUI) y reglas:
-   docs/CHAT_UI_GENERATIVA.md §7. Dibuja bloques; NUNCA calcula cifras (cada número trae src + as_of; sin dato «—»
-   con su motivo). DOM seguro (innerHTML solo con KhipuChat.md()), 17 tipos cerrados, acciones solo abrir/sugerir
-   (ningún botón de dinero), movimiento solo transform/opacity y «reducir movimiento» lo apaga, tokens --os-*,
-   bilingüe (S.es/S.en). genui_charts.js y genui_shapes.js se cargan PEREZOSOS desde aquí (loadExtras). */
+/* engine/genui.js — RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja; NUNCA calcula
+   cifras. DOM seguro, 17 tipos, acciones solo abrir/sugerir, tokens --os-*, bilingüe; charts/shapes PEREZOSOS. */
 (function (root) {
   'use strict';
   var W = root;
@@ -17,14 +14,14 @@
     open_committee: 1, prefill_chat: 1, set_range: 1, set_view: 1, pin: 1 };
   var WINDOWS = { glance: 1, supplychain: 1, conviction: 1, agents: 1, xray: 1, compare: 1, canvas: 1, sim: 1, geo: 1, genui: 1 };
   var IMG_RX = /^\/(static\/genui\/[a-z0-9_-]{1,60}\.(svg|png|webp)|api\/genui\/img\/[a-f0-9]{16,64})$/;
-  var ID_RX = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;   // ids del catálogo (p. ej. 'Nvidia'); el esquema pide minúsculas: ver informe F2
+  var ID_RX = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;   // ids del catálogo (p. ej. 'Nvidia')
   var EXPLAIN_RX = /^[a-z][a-z0-9_.-]{0,40}$/;
 
   function lang() {
     try { return (W.LANG || (W.localStorage && W.localStorage.getItem('eco_lang')) || 'es') === 'en' ? 'en' : 'es'; }
     catch (e) { return 'es'; }
   }
-  // textos PROPIOS (bilingües); los del servidor llegan como I18n {es,en}
+  // textos PROPIOS (bilingües); los del servidor llegan como I18n
   var S = {
     es: { pin: 'Fijar como ventana', pinned: 'Fijado como ventana', more: 'Más opciones', table: 'Ver como tabla', chart: 'Ver como gráfico',
       where: '¿De dónde sale?', ask: 'Preguntar sobre esto', csv: 'Descargar CSV', refresh: 'Actualizar', retry: 'Reintentar',
@@ -54,7 +51,7 @@
       ago: '', and: ' and ' }
   };
   function t(k) { var d = S[lang()]; return d[k] != null ? d[k] : S.es[k]; }
-  // I18n {es,en} o texto plano (nombres propios no se traducen)
+  // I18n {es,en} o texto plano
   function T(o) {
     if (o == null) return '';
     if (typeof o === 'string' || typeof o === 'number') return String(o);
@@ -72,14 +69,16 @@
     try { return new Intl.NumberFormat(lang() === 'en' ? 'en-US' : 'es-ES', { minimumFractionDigits: p, maximumFractionDigits: p }).format(v); }
     catch (e) { return Number(v).toFixed(p); }
   }
-  /* parts(v, unit, {precision, currency, sign}) → {pre, num, suf, text} — el número llega CRUDO del servidor;
-     aquí solo se le da formato (unidad, decimales, separadores es/en). Nunca se recalcula. */
+  /* parts(v, unit, {precision, currency, sign, compact}) → {pre, num, suf, text}: solo formato.
+     compact (tile): USD_B ≥ 1000 → T con 2 decimales («$5,52 T»); el texto completo queda en el tooltip. */
   function parts(v, unit, o) {
     o = o || {};
     if (v == null || typeof v !== 'number' || !isFinite(v)) return { pre: '', num: '—', suf: '', text: '—', na: true };
+    if (o.compact && unit === 'USD_B' && Math.abs(v) >= 1000) return parts(v / 1000, 'USD_T', { precision: 2, sign: o.sign });
+    if (o.compact && unit === 'USD' && Math.abs(v) >= 1e9) return parts(v / 1e9, 'USD_B', { precision: 1, sign: o.sign, compact: true });
     var u = unit || 'none', p = o.precision != null ? o.precision : (DEF_P[u] != null ? DEF_P[u] : 2), en = lang() === 'en';
     if (u === 'USD' && Math.abs(v) >= 1e3 && o.precision == null) p = 0;
-    // enteros sin decimales de relleno (50 %, 40×, índice 100), salvo precios en USD
+    // enteros sin decimales de relleno, salvo precios en USD
     if (o.precision == null && Number.isInteger(v) && INT_OK[u]) p = 0;
     var sign = v < 0 ? '−' : (o.sign && v > 0 ? '+' : '');
     var num = nf(Math.abs(v), p), pre = '', suf = '';
@@ -100,7 +99,7 @@
   }
   function fmt(v, unit, o) { return parts(v, unit, o).text; }
   function fmtFig(f, o) { f = f || {}; return parts(f.v, f.unit, { precision: f.precision, currency: f.currency, sign: o && o.sign }).text; }
-  // "hace 3 min" / "14:32" / "12 oct" — la hora de un dato (as_of), nunca inventada
+  // «hace 3 min» / «12 oct» — la hora de un dato (as_of)
   function when(iso) {
     if (!iso) return '';
     try { if (W.KhipuChat && W.KhipuChat.relTime) return W.KhipuChat.relTime(iso); } catch (e) {}
@@ -111,7 +110,7 @@
     var ts = Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(String(iso)) ? iso + 'T12:00:00' : String(iso));
     return isFinite(ts) && Date.now() - ts > hours * 3600e3;
   }
-  // vista de una cifra: lo que el usuario ve + la procedencia que va en el tooltip / aria-label
+  // vista de una cifra: lo que se ve + la procedencia (tooltip / aria-label)
   function vmFigure(f) {
     f = f || {};
     var p = parts(f.v, f.unit, { precision: f.precision, currency: f.currency });
@@ -142,14 +141,14 @@
     if (fn) b.addEventListener('click', function (e) { e.stopPropagation(); fn(e); });
     return b;
   }
-  // íconos de la cabecera (trazos CONSTANTES del módulo)
+  // íconos de la cabecera
   var ICON = { pin: 'M9 4h6l-1 5 3 3H7l3-3zM12 15v5', more: 'M5 12h.01M12 12h.01M19 12h.01', ext: 'M14 4h6v6M20 4l-9 9M18 14v5H5V6h5' };
   function icon(name) {
     var s = sv('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' });
     s.appendChild(sv('path', { d: ICON[name] }));
     return s;
   }
-  // enlaces: la MISMA regla que window.safeUrl (solo http/https); setAttribute no necesita el escapado HTML
+  // enlaces: la MISMA regla que window.safeUrl (solo http/https)
   function href(u) {
     var s = String(u == null ? '' : u).trim();
     if (!/^https?:\/\//i.test(s)) return null;
@@ -160,7 +159,7 @@
     }
     try { var p = new URL(s); return (p.protocol === 'http:' || p.protocol === 'https:') ? p.href : null; } catch (e) { return null; }
   }
-  // markdown ligero de khipu_chat.js (ESCAPA el HTML antes de dar formato); sin él, texto plano
+  // markdown ligero de khipu_chat.js (ESCAPA antes); sin él, texto plano
   function mdInto(el, text) {
     var K = W.KhipuChat;
     if (K && typeof K.md === 'function') { el.innerHTML = K.md(text); return true; }
@@ -204,9 +203,10 @@
     /* cifras */
     '.kg-tiles{display:grid;grid-template-columns:repeat(var(--kg-cols,4),minmax(0,1fr));gap:8px}' +
     '.kg-tile{background:var(--os-surface-2);border-radius:14px;padding:11px 12px 10px;min-width:0;display:flex;flex-direction:column}' +
-    '.kg-tile .l{font-size:12px;color:var(--os-ink-2);font-weight:600;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}' +
-    '.kg-tile .l span{overflow:hidden;text-overflow:ellipsis}' +
+    '.kg-tile .l{font-size:12px;color:var(--os-ink-2);font-weight:600;display:flex;align-items:flex-start;gap:5px;min-width:0}' +
+    '.kg-tile .l>span:first-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25;min-width:0}' +
     '.kg-big{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:3px 0 4px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.kg-big.kg-sm{font-size:20px}.kg-big.kg-xs{font-size:17px}.kg-tile .kg-src{white-space:normal;overflow-wrap:anywhere}.kg-tile .kg-d{white-space:normal}' +
     '.kg-big small{font-size:13px;font-weight:700;color:var(--os-ink-2);margin-left:2px}.kg-big.na{color:var(--os-ink-2)}' +
     '.kg-d{font-size:11.5px;color:var(--os-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '.kg-up{color:var(--os-good-ink)}.kg-dn{color:var(--os-bad-ink)}' +
@@ -320,7 +320,7 @@
 
   /* ══ popover (menú ⋯, ¿de dónde sale?) ══ */
   var _pop = null, _popAnchor = null;
-  // cerrar devuelve el foco al botón que abrió el menú (Esc o tras elegir), salvo que el foco ya esté en otra parte
+  // cerrar devuelve el foco al botón que abrió el menú, salvo que ya esté en otra parte
   function closePop(keepFocus) {
     var had = _pop, a = _popAnchor;
     if (_pop && _pop.parentNode) _pop.parentNode.removeChild(_pop);
@@ -330,7 +330,7 @@
       if (!ae || ae === W.document.body || had.contains(ae)) try { a.focus({ preventScroll: true }); } catch (e) {}
     }
   }
-  /* asMenu = lista de acciones (role=menu + menuitem + flechas); si no, un diálogo no modal (¿de dónde sale?) */
+  /* asMenu = lista de acciones (role=menu, flechas); si no, diálogo no modal (¿de dónde sale?) */
   function openPop(anchor, kids, label, asMenu) {
     closePop(true);
     var p = h('div', 'kg-pop kos-themed'); p.setAttribute('role', asMenu ? 'menu' : 'dialog');
@@ -375,20 +375,8 @@
     var b = btn('kg-q', '?', function () { W.explainMetric(key); }, lang() === 'en' ? 'What is this?' : '¿Qué es esto?');
     return b;
   }
-  function registerExplains() {
-    if (typeof W.explainRegister !== 'function') return;
-    var X = {
-      genui_na: { es: { t: 'Sin dato en vivo', b: 'Cuando no hay una fuente confiable en este momento, Khipu muestra «—» y el motivo, en vez de inventar un número.' },
-        en: { t: 'No live data', b: 'When there is no reliable source right now, Khipu shows “—” and the reason instead of inventing a number.' } },
-      genui_hops: { es: { t: 'Saltos del choque', b: 'Salto 1 = los clientes directos de la empresa que cae. Salto 2 = los clientes de esos clientes. Y así. Las cifras salen del motor de choques del servidor (el mismo de toda la app).' },
-        en: { t: 'Shock hops', b: 'Hop 1 = the direct customers of the company that fails. Hop 2 = their customers. And so on. The figures come from the server shock engine (the same one used across the app).' } },
-      genui_pf: { es: { t: 'Golpe a tu cartera', b: 'Estimación del motor de choques sobre TUS posiciones, con su banda de error. No es una predicción del precio. Si la calibración es débil, Khipu no da cifra.' },
-        en: { t: 'Hit to your portfolio', b: 'Shock-engine estimate on YOUR positions, with its error band. It is not a price forecast. If the calibration is weak, Khipu gives no figure.' } },
-      genui_index: { es: { t: 'Índice (inicio = 100)', b: 'Pone todo en la misma escala: el primer día vale 100 y el resto se compara con él. Sirve para comparar formas, no precios.' },
-        en: { t: 'Index (start = 100)', b: 'Puts everything on one scale: the first day is 100 and the rest compare to it. Good for comparing shapes, not prices.' } }
-    };
-    Object.keys(X).forEach(function (k) { try { W.explainRegister(k, X[k]); } catch (e) {} });
-  }
+  // los «?» genui_* viven en genui_charts.js (§8)
+  function registerExplains() { var X = W.KhipuGenUI && W.KhipuGenUI._explains; if (X && typeof W.explainRegister === 'function') Object.keys(X).forEach(function (k) { try { W.explainRegister(k, X[k]); } catch (e) {} }); }
 
   /* ══ contexto de pintado ══ */
   function mkCtx(opts, env) {
@@ -398,10 +386,10 @@
       if (b && b.type === 'sources' && b.data && Array.isArray(b.data.items)) b.data.items.forEach(function (it) { if (it && it.id) facts[it.id] = it; });
     });
     return { lang: lang(), compact: !!opts.compact, reduced: opts.reduced != null ? !!opts.reduced : reducedPref(), facts: facts,
-      onAction: opts.onAction || null, reqId: opts.reqId || (env && env._req) || '', pinned: !!opts.pinned, root: null };
+      onAction: opts.onAction || null, reqId: opts.reqId || (env && env._req) || '', pinned: !!opts.pinned, root: null, width: 0, acts: {} };
   }
 
-  /* ══ procedencia: chips de fuente al pie del bloque ══ */
+  /* ══ procedencia: chips de fuente ══ */
   function srcChip(id, ctx, fallbackLabel, asOf) {
     var f = ctx.facts[id] || null;
     var lab = (f && f.label) || fallbackLabel || '';
@@ -486,11 +474,22 @@
     }
     return false;
   }
+  // UNA acción por (kind, empresa|ventana) por respuesta (la primera gana); rótulo único: KhipuOSWin.actLabel
+  function actKey(a) {
+    var e = (a.entity && a.entity.id) || (a.lat != null ? a.lat + ',' + a.lon : '') || a.text || a.range || a.view || '';
+    return a.kind + '|' + (a.window || '') + '|' + e;
+  }
+  function actLabel(a, block) {
+    var O = W.KhipuOSWin;
+    if (O && typeof O.actLabel === 'function') { try { var x = O.actLabel(a, block && block.entity && block.entity.id); if (x) return x; } catch (e) {} }
+    return T(a.label);
+  }
   function actBtn(a, block, ctx, cls) {
     if (!a || !ACTION_KINDS[a.kind] || (a.kind === 'open_window' && !WINDOWS[a.window])) return null;
-    return btn(cls || 'kg-act', T(a.label), function () { runAction(a, block, ctx); });
+    if (ctx && ctx.acts) { var k = actKey(a); if (ctx.acts[k]) return null; ctx.acts[k] = 1; }
+    return btn(cls || 'kg-act', actLabel(a, block), function () { runAction(a, block, ctx); });
   }
-  // refinar un bloque SIN IA (POST /api/genui/block, fase F4). Si el servidor aún no lo tiene, se dice.
+  // refinar un bloque SIN IA (POST /api/genui/block, F4); si aún no existe, se dice
   function refine(block, opts, ctx) {
     if (!block || !block.prov || typeof fetch !== 'function') return false;
     var base = (typeof W.BASE === 'string' ? W.BASE : '');
@@ -509,7 +508,7 @@
     announce(msg);
   }
 
-  /* ══ anuncio accesible (role=status oculto) ══ */
+  /* ══ anuncio accesible ══ */
   var _st = null;
   function announce(msg) {
     var d = W.document; if (!d || !d.body) return;
@@ -531,7 +530,7 @@
     return t('ready') + (parts0.length ? ': ' + parts0.join(', ') : '');
   }
 
-  /* ══ la envoltura de un bloque: cabecera, cuerpo, pie con fuentes, ⋯, 📌 ══ */
+  /* ══ envoltura de un bloque: cabecera, cuerpo, pie, ⋯, 📌 ══ */
   function isPinnable(b) { return b.pinnable !== false && !BARE[b.type] && b.type !== 'callout' && b.type !== 'image'; }
   function header(b, ctx, wrap) {
     var hd = h('div', 'kg-hd');
@@ -601,8 +600,7 @@
     bd.textContent = '';
     if (on) bd.appendChild(tableEl(toTable(b)));
     else {
-      // volver al gráfico: cada renderizador esconde sus marcas hasta go(); sin llamarlo la línea, las barras y
-      // los conteos quedaban vacíos ('…')
+      // volver al gráfico: sin go() la línea, las barras y los conteos quedaban vacíos ('…')
       var c2 = Object.assign({}, ctx, { reduced: true }), r = renderBody(bd, b, c2);
       if (r && typeof r.go === 'function') try { r.go(true); } catch (e) {}
     }
@@ -627,7 +625,7 @@
     return w;
   }
 
-  /* ══ esqueleto con la forma real + altura reservada ══ */
+  /* ══ esqueleto con la forma real ══ */
   var SK = { 'metric.tiles': [[100, 74]], 'chart.line': [[34, 22], [100, 150]], 'chart.bar': [[90, 14], [70, 14], [55, 14], [40, 14]],
     'chart.candles': [[100, 170]], ranking: [[96, 14], [78, 14], [62, 14], [48, 14], [34, 14]], table: [[100, 16], [100, 16], [100, 16], [100, 16]],
     'company.card': [[60, 34], [100, 30], [70, 28]], 'graph.mini': [[100, 200]], 'impact.cascade': [[100, 70], [100, 18], [100, 18], [100, 18]],
@@ -661,7 +659,7 @@
     var u = h('div', 'kg-unk'); u.appendChild(h('b', null, t('unknown'))); u.appendChild(W.document.createTextNode(T(b.alt) || String(b.type || '')));
     return u;
   }
-  /* buildBlock(b, ctx) → {el, go} — el bloque completo según su estado (planned | ready | error | stale) */
+  /* buildBlock(b, ctx) → {el, go} según su estado (planned | ready | error | stale) */
   function buildBlock(b, ctx) {
     if (!b || typeof b !== 'object' || typeof b.type !== 'string') return null;
     var reg = REG[b.type];
@@ -704,7 +702,7 @@
     return x.el;
   }
 
-  // varias fichas seguidas (company.card) se dibujan en UNA fila, como "Las 3 primeras" del prototipo
+  // varias fichas seguidas (company.card) van en UNA fila
   function groupCards(blocks) {
     var out = [], run = [];
     var flush = function () { if (run.length >= 2) out.push({ cards: run }); else run.forEach(function (b) { out.push(b); }); run = []; };
@@ -738,17 +736,17 @@
     return { el: wrap, go: function (inst) { gos.forEach(function (f) { f(inst); }); } };
   }
 
-  /* validación otra vez en el cliente (lo mínimo: versión, catálogo, topes) */
+  /* validación mínima en el cliente */
   function validEnv(env) {
     return !!(env && typeof env === 'object' && env.v === V && Array.isArray(env.blocks));
   }
   function textOf(env) { return (env.blocks || []).some(function (b) { return b && b.type === 'text'; }); }
 
-  /* renderAnswer(host, env, opts) — pinta el sobre completo dentro de host (se vacía) */
+  /* renderAnswer(host, env, opts) — pinta el sobre completo en host */
   function renderAnswer(host, env, opts) {
     if (!host || !validEnv(env)) return null;
     opts = opts || {};
-    // gráficos aún no cargados: se pinta lo que ya se sabe pintar y, al llegar los archivos, el MISMO sobre de nuevo
+    // sin gráficos aún: se pinta lo que se sabe y, al llegar, el MISMO sobre otra vez
     if (needsExtras(env)) {
       loadExtras().then(function (ok) {
         var r = host.querySelector && host.querySelector('.kg-root');
@@ -761,7 +759,7 @@
     var rootEl = h('div', 'kg-root kos-themed');
     rootEl.setAttribute('aria-busy', 'true');
     if (ctx.reduced) rootEl.classList.add('kg-rm');
-    try { var w0 = host.clientWidth || 0; if (opts.compact != null ? opts.compact : (w0 > 0 && w0 < 520)) { ctx.compact = true; rootEl.classList.add('kg-compact'); } } catch (e) {}
+    try { var w0 = host.clientWidth || 0; ctx.width = w0; if (opts.compact != null ? opts.compact : (w0 > 0 && w0 < 520)) { ctx.compact = true; rootEl.classList.add('kg-compact'); } } catch (e) {}
     rootEl._kgEnv = env; rootEl._kgOpts = opts;
     ctx.root = rootEl;
     host.appendChild(rootEl);
@@ -769,14 +767,14 @@
     if (!textOf(env) && opts.answer) blocks.unshift({ id: 'kg-answer', type: 'text', state: 'ready', data: { md: String(opts.answer), lang: env.lang || lang() } });
     var built = [];
     groupCards(blocks).forEach(function (b) {
-      // F3: el bloque provisional que ya está a la vista se REUSA (opts.reuse, khipu_chat.js): ni entra ni se redibuja
+      // F3: el provisional ya a la vista se REUSA (opts.reuse)
       var o = opts.reuse && b && !b.cards ? opts.reuse(b) : null;
       var x = o ? { el: o, kept: 1 } : b && b.cards ? cardRow(b.cards, ctx) : buildBlock(b, ctx), R = opts.reuse;
       if (!x) return;
       if (b.cards && R && R.has && b.cards.every(R.has)) x.inst = 1;   // fichas ya a la vista: la fila sin entrada
       rootEl.appendChild(x.el); built.push(x);
     });
-    // entrada escalonada (55–90 ms, máx. 6) y luego el dibujo de cada gráfico; reducir movimiento = todo ya
+    // entrada escalonada (máx. 6) y luego cada dibujo; reducir movimiento = todo ya
     var vis = 0;
     built.forEach(function (x) {
       if (x.kept) return;
@@ -790,14 +788,14 @@
     watchSize(rootEl, host);
     return rootEl;
   }
-  /* update(host, partial) — bloques nuevos por seq: reemplaza el del mismo id (esqueleto → listo) o lo añade */
+  /* update(host, partial) — bloques nuevos por seq: reemplaza el del mismo id o lo añade */
   function update(host, part) {
     if (!host || !validEnv(part)) return null;
     ensureStyles(); wireTip(); wirePop();
     var rootEl = host.querySelector('.kg-root');
     if (!rootEl) return renderAnswer(host, part, { silent: true });
     var since = rootEl._kgSeq || 0, ctx = mkCtx(rootEl._kgOpts || {}, part);
-    ctx.root = rootEl; ctx.compact = rootEl.classList.contains('kg-compact');
+    ctx.root = rootEl; ctx.compact = rootEl.classList.contains('kg-compact'); ctx.width = host.clientWidth || 0;
     part.blocks.slice(0, MAX_BLOCKS).forEach(function (b) {
       if (!b || (b.seq != null && b.seq <= since)) return;
       var old = null, kids = rootEl.querySelectorAll('[data-kg-id]');
@@ -810,7 +808,7 @@
     if (typeof part.seq === 'number') rootEl._kgSeq = Math.max(since, part.seq);
     return rootEl;
   }
-  /* renderBlock(el, block, opts) — un bloque suelto (ventana 📌, historial) */
+  /* renderBlock(el, block, opts) — un bloque suelto (📌, historial) */
   function renderBlock(el, block, opts) {
     if (!el || !block) return null;
     opts = opts || {};
@@ -821,7 +819,7 @@
     var rootEl = h('div', 'kg-root kos-themed' + (opts.pinned ? ' kg-win' : '') + (opts.compact ? ' kg-compact' : ''));
     if (opts.compact) ctx.compact = true;
     if (ctx.reduced) rootEl.classList.add('kg-rm');
-    ctx.root = rootEl;
+    ctx.root = rootEl; ctx.width = el.clientWidth || 0;
     rootEl._kgFacts = ctx.facts;            // relang() repinta con las MISMAS fuentes (si no, el chip pierde su nombre)
     el.appendChild(rootEl);
     var x = buildBlock(block, ctx);
@@ -831,7 +829,7 @@
     return rootEl;
   }
 
-  /* ══ compacto por ancho (ResizeObserver, < 520 px) + idioma ══ */
+  /* ══ compacto por ancho (< 520 px) + idioma ══ */
   function rerender(rootEl) {
     var host = rootEl.parentNode, env = rootEl._kgEnv;
     if (!host || !env) return;
@@ -869,7 +867,7 @@
     try { _langObs.observe(W.document.documentElement, { attributes: true, attributeFilter: ['lang'] }); } catch (e) {}
   }
 
-  /* ══ 📌 fijar: el MISMO JSON se vuelve ventana (FLIP desde el bloque) ══ */
+  /* ══ 📌 fijar: el MISMO JSON se vuelve ventana (FLIP) ══ */
   var NATIVE = { 'company.card': function (b) { var id = entId(b.data && b.data.company); return id ? ['glance', { id: id }] : null; },
     'graph.mini': function (b) { var id = entId(b.data && b.data.center); return id ? ['supplychain', { id: id }] : null; },
     'impact.cascade': function (b) { var id = entId(b.data && b.data.origin); return id ? ['sim', { id: id, kind: 'collapse' }] : null; },
@@ -914,7 +912,7 @@
     if (pinBtn) { pinBtn.classList.add('on'); pinBtn.setAttribute('aria-pressed', 'true'); tip(pinBtn, t('pinned')); }
     return true;
   }
-  // sin Khipus OS: hoja inferior propia (móvil / vista clásica)
+  // sin Khipus OS: hoja inferior propia
   function sheet(block, rootEl) {
     var d = W.document, scrim = h('div', 'kg-scrim'), sh = h('div', 'kg-sheet kos-themed');
     sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-label', T(block.title) || t('pinned'));
@@ -929,7 +927,7 @@
     d.body.appendChild(scrim); d.body.appendChild(sh);
     renderBlock(body, block, { compact: true, pinned: true, instant: true, facts: rootEl ? mkCtx({}, rootEl._kgEnv).facts : null });
   }
-  // la ventana 📌 'genui' (cola de arranque de Khipus OS: sirve antes o después de cockpit.js)
+  // la ventana 📌 'genui' (cola de arranque de Khipus OS)
   (W.__kosKindQueue = W.__kosKindQueue || []).push(['genui', {
     icon: '📌', es: 'Bloque', en: 'Block', multi: true,
     title: function (arg) { var x = arg && arg.block && arg.block.title; return x ? T(x) : ''; },
@@ -956,9 +954,7 @@
     var en = enabled(); if (en) loadExtras();
     return en;
   }
-  /* ══ carga PEREZOSA de gráficos y formas (§8: ≤ 90 KB al abrir la app): genui_charts.js y genui_shapes.js solo se
-     descargan y se interpretan con la bandera encendida (o al llegar el primer sobre). Mismo origen y la misma
-     ?v= que genui.js (CSP: script-src 'self'); en orden (async=false) porque se registran en este archivo. ══ */
+  /* ══ carga PEREZOSA (§8): charts/shapes con la bandera o el primer sobre; misma ?v=, en orden ══ */
   var EXTRAS = ['genui_charts.js', 'genui_shapes.js', 'genui_progress.js'], _extras = null;
   var _selfSrc = (function () { try { var c = W.document && W.document.currentScript; return c && c.src ? String(c.src) : ''; } catch (e) { return ''; } })();
   function extrasReady() { return !!(REG['chart.line'] && REG['geo.mini']); }
@@ -982,11 +978,11 @@
     return !extrasReady() && ((env && env.blocks) || []).some(function (b) { return b && typeof b.type === 'string' && TYPES.indexOf(b.type) >= 0 && !REG[b.type]; });
   }
   var _ref = null;
-  // "Preguntar sobre esto": la próxima pregunta lleva context.ref_block (10 min, una vez)
+  // «Preguntar sobre esto»: la próxima pregunta lleva context.ref_block (10 min)
   function takeRef() { var r = _ref; _ref = null; return r && Date.now() - r.ts < 600000 ? { id: r.id, prov: r.prov } : null; }
 
-  /* ══ RENDERIZADORES BÁSICOS (los gráficos están en genui_charts.js; formas/mapa en genui_shapes.js) ══ */
-  // spark compartido (tiles, ficha): solo dibuja los puntos que llegaron; huecos = null
+  /* ══ RENDERIZADORES BÁSICOS (gráficos: genui_charts.js; formas/mapa: genui_shapes.js) ══ */
+  // spark compartido (tiles, ficha): solo los puntos que llegaron; huecos = null
   function spark(series, ctx) {
     var pts = (series && Array.isArray(series.points)) ? series.points : [];
     var vals = pts.map(function (p) { return Array.isArray(p) && typeof p[1] === 'number' && isFinite(p[1]) ? p[1] : null; });
@@ -1004,7 +1000,7 @@
     s._kgDraw = function (inst) { draw(p, inst, 650); };
     return s;
   }
-  // dibujo de una línea (stroke-dashoffset 1 → 0); reducir movimiento = ya dibujada
+  // dibujo de una línea (dashoffset 1 → 0); reducido = ya dibujada
   function draw(p, inst, dur) {
     if (!p) return;
     if (inst || typeof p.animate !== 'function') { p.setAttribute('stroke-dashoffset', '0'); return; }
@@ -1013,8 +1009,7 @@
       an.onfinish = function () { p.setAttribute('stroke-dashoffset', '0'); try { an.cancel(); } catch (e) {} };
     } catch (e) { p.setAttribute('stroke-dashoffset', '0'); }
   }
-  // cuenta hacia arriba SOLO para conteos y puntajes (nunca precios, capitalización ni P&L); el valor final ya
-  // está en aria-label desde el primer fotograma
+  // cuenta hacia arriba SOLO conteos y puntajes (nunca precios ni P&L); el final ya va en aria-label
   var COUNTABLE = { count: 1, score: 1 };
   function countUp(el, v, unit, o, inst) {
     var final = fmt(v, unit, o);
@@ -1025,7 +1020,7 @@
       if (t0 == null) t0 = now;
       var k = Math.min(1, (now - t0) / dur);
       var cur = Math.round(v * (1 - Math.pow(1 - k, 3)) * k10) / k10;
-      // nunca un «0» provisional (§7.4, §14.2): mientras el conteo redondeado sea 0 se queda «…»
+      // nunca un «0» provisional (§7.4): mientras redondee a 0 queda «…»
       el.textContent = k >= 1 ? final : (cur > 0 ? fmt(cur, unit, o) : '…');
       if (k < 1) W.requestAnimationFrame(step);
     };
@@ -1035,14 +1030,14 @@
   function bigFig(f, ctx) {
     var vm = vmFigure(f), el = h('div', 'kg-big kg-n' + (vm.na ? ' na' : ''));
     if (vm.na) { el.textContent = '—'; el.setAttribute('aria-label', t('nodata')); return { el: el, go: null }; }
-    // una cifra que cuenta hacia arriba empieza en «…» (no en el valor final para luego saltar a 0); con
-    // movimiento reducido se escribe ya la final
+    // la que cuenta empieza en «…» (nunca salta a 0); con movimiento reducido ya la final
     var counts = COUNTABLE[f.unit] && !(ctx && ctx.reduced) && typeof f.v === 'number' && f.v > 0;
-    var num = h('span', null, counts ? '…' : vm.pre + vm.num); el.appendChild(num);
-    if (vm.suf.trim()) el.appendChild(h('small', null, vm.suf.trim()));
+    var cp = parts(f.v, f.unit, { precision: f.precision, currency: f.currency, compact: true, sign: ctx && ctx._sign }), L = (cp.pre + cp.num + cp.suf).length;
+    if (L > 11) el.classList.add('kg-xs'); else if (L > 8) el.classList.add('kg-sm');
+    var num = h('span', null, counts ? '…' : cp.pre + cp.num); el.appendChild(num);
+    if (cp.suf.trim()) el.appendChild(h('small', null, cp.suf.trim()));
     el.setAttribute('aria-label', vm.text);
     tip(el, vm.text, (vm.src ? vm.src : '') + (vm.as_of ? ' · ' + when(vm.as_of) : ''));
-    // conteos y puntajes cuentan hacia arriba (no llevan sufijo); precios, %, capitalización y P&L aparecen tal cual
     var o = { precision: f.precision, currency: f.currency };
     return { el: el, go: COUNTABLE[f.unit] ? function (inst) { countUp(num, f.v, f.unit, o, inst); } : null };
   }
@@ -1054,7 +1049,7 @@
     return el;
   }
 
-  // UN ayudante para todo lo que se puede «abrir» con el teclado: role, tabindex, clic y Enter/Espacio
+  // todo lo que se «abre» con teclado: role, tabindex, clic y Enter/Espacio
   function linkify(el, fn, role) {
     if (!el || typeof fn !== 'function') return el;
     if (role !== null) el.setAttribute('role', role || 'link');
@@ -1065,15 +1060,14 @@
     });
     return el;
   }
-  // 1) texto (markdown-lite + marcas deterministas del servidor)
+  // 1) texto (markdown-lite + marcas del servidor)
   register('text', {
     render: function (el, b, ctx) {
       var d = b.data || {}, md = String(d.md || '').slice(0, 4000);
       var marks = (Array.isArray(d.marks) ? d.marks : []).filter(function (m) {
         return m && typeof m.s === 'number' && typeof m.e === 'number' && m.e > m.s && (m.kind === 'entity' || m.kind === 'fact' || m.kind === 'unverified');
       }).slice(0, 60).sort(function (a, b2) { return b2.s - a.s; });
-      // las marcas usan posiciones en UNIDADES UTF-16 (las de String.prototype.slice; el servidor convierte cuando
-      // hay emojis fuera del plano básico): se insertan marcadores privados de la posición más alta a la más baja
+      // marcas en unidades UTF-16 (String.prototype.slice); marcadores privados de atrás hacia adelante
       var used = [], low = function (k) { var c = md.charCodeAt(k); return c >= 0xDC00 && c <= 0xDFFF; };
       marks.forEach(function (m, i) {
         if (m.s < 0 || m.e > md.length) return;
@@ -1132,27 +1126,35 @@
     }
   }
 
-  // 2) cifras grandes con delta ▲▼, mini-sparkline, «?» y su fuente
+  // 2) cifras grandes con delta, sparkline, «?» y fuente
   register('metric.tiles', {
     render: function (el, b, ctx) {
-      var items = ((b.data || {}).items || []).slice(0, 6), g = h('div', 'kg-tiles'), gos = [];
-      g.style.setProperty('--kg-cols', String(Math.min(4, Math.max(1, items.length))));
+      var items = ((b.data || {}).items || []).slice(0, 6), g = h('div', 'kg-tiles'), gos = [], n = items.length;
+      g.style.setProperty('--kg-cols', String(tileCols(n, ctx)));
+      var sym = b.entity && b.entity.symbol, live = [];
       items.forEach(function (it) {
-        var f = it.value || {}, vm = vmFigure(f), tl = h('div', 'kg-tile');
+        var f = it.value || {}, vm = vmFigure(f), tl = h('div', 'kg-tile'), kind = liveKind(it, f);
         var lb = h('div', 'l'); lb.appendChild(h('span', null, T(it.label)));
         var q = qBtn(vm.explain || (vm.na ? 'genui_na' : '')); if (q) lb.appendChild(q);
         if (vm.live) lb.appendChild(tip(h('span', 'kg-live'), t('live')));
         tl.appendChild(lb);
-        var bf = bigFig(f, ctx); tl.appendChild(bf.el); if (bf.go) gos.push(bf.go);
+        var c2 = kind === 'pct' ? Object.assign({}, ctx, { _sign: true }) : ctx;
+        var bf = bigFig(f, c2); tl.appendChild(bf.el); if (bf.go) gos.push(bf.go);
         var dl = it.delta ? deltaEl(it.delta) : null;
         if (dl) tl.appendChild(dl);
         else if (vm.na) tl.appendChild(h('div', 'kg-d', vm.reason));
         if (it.sub) tl.appendChild(h('div', 'kg-d', T(it.sub)));
         if (it.spark) { var sp = spark(it.spark, ctx); if (sp) { tl.appendChild(sp); gos.push(sp._kgDraw); } }
         var ch = figChip(f, ctx); if (ch) tl.appendChild(ch);
+        if (kind && sym) live.push({ f: f, kind: kind, el: tl, put: function (f2) {
+          var nb = bigFig(f2, c2); tl.replaceChild(nb.el, bf.el); bf = nb;
+          var nc = figChip(f2, ctx); if (ch && nc) tl.replaceChild(nc, ch); else if (nc) tl.appendChild(nc); ch = nc;
+          var old = tl.querySelector('.kg-live'); if (f2.live && !old) lb.appendChild(tip(h('span', 'kg-live'), t('live'))); else if (!f2.live && old) old.remove();
+        } });
         g.appendChild(tl);
       });
       el.appendChild(g);
+      if (live.length) liveRefresh(sym, live);
       return { go: function (inst) { gos.forEach(function (fn) { fn(inst); }); } };
     },
     toTable: function (b) {
@@ -1163,6 +1165,19 @@
     },
     height: function (b, w) { var n = ((b.data || {}).items || []).length; return 70 + (w < 520 && n > 2 ? 2 : 1) * 110; }
   });
+
+  // columnas de los tiles por ancho real (≥ ~150 px por tile); 4 cifras en angosto = 2×2
+  function tileCols(n, ctx) {
+    var cols = Math.min(4, Math.max(1, n)), w = (ctx && ctx.width) || 0;
+    if (w > 0) { cols = Math.min(cols, Math.max(1, Math.floor((w - 28 + 8) / 158))); if (n === 4 && cols === 3) cols = 2; }
+    if (ctx && ctx.compact) cols = Math.min(cols, 2);
+    return cols;
+  }
+  // UNA cotización por empresa en pantalla (lote K): precio y cambio se refrescan desde /api/hot/quote
+  // (KhipuOSWin.quote, oswindows.js: el mismo sello que «en una mirada») si es más fresca que la cifra
+  function hq() { var O = W.KhipuOSWin; return O && O.quote ? O.quote : null; }
+  function liveKind(it, f) { var q = hq(); return q ? q.kind(T(it.label), f) : null; }
+  function liveRefresh(sym, specs) { var q = hq(); if (q) q.refresh(sym, specs); }
 
   // 8) ficha de empresa
   function linkLine(label, list) {
@@ -1182,16 +1197,21 @@
       if (d.structure) role = T(d.structure) + (role ? ' · ' + role : '');
       if (role) nm.appendChild(h('div', 'kg-cc-r', role));
       top.appendChild(nm); cc.appendChild(top);
-      var fl = h('div', 'kg-cc-f kg-n');
+      var fl = h('div', 'kg-cc-f kg-n'), live = [];
       [['price', t('price')], ['change', t('chg')], ['market_cap', t('mcap')], ['nrs', t('nrs')]].forEach(function (k) {
         var f = d[k[0]]; if (!f) return;
-        var vm = vmFigure(f), sp = h('span', null, k[1]);
-        var v = h('b', vm.na ? null : (k[0] === 'change' ? (f.v > 0 ? 'kg-up' : f.v < 0 ? 'kg-dn' : null) : null),
-          vm.na ? '—' : (k[0] === 'change' ? parts(f.v, f.unit, { precision: f.precision, sign: true }).text : vm.text));
-        tip(v, vm.na ? vm.reason : vm.text, (vm.src || '') + (vm.as_of ? ' · ' + when(vm.as_of) : ''));
-        sp.appendChild(v); fl.appendChild(sp);
+        var sp = h('span', null, k[1]), v = h('b');
+        var put = function (f1) {
+          var vm = vmFigure(f1);
+          v.className = vm.na ? '' : (k[0] === 'change' ? (f1.v > 0 ? 'kg-up' : f1.v < 0 ? 'kg-dn' : '') : '');
+          v.textContent = vm.na ? '—' : parts(f1.v, f1.unit, { precision: f1.precision, currency: f1.currency, sign: k[0] === 'change', compact: k[0] === 'market_cap' }).text;
+          tip(v, vm.na ? vm.reason : vm.text, (vm.src || '') + (vm.as_of ? ' · ' + when(vm.as_of) : ''));
+        };
+        put(f); sp.appendChild(v); fl.appendChild(sp);
+        if (k[0] === 'price' || k[0] === 'change') live.push({ f: f, kind: k[0] === 'price' ? 'px' : 'pct', el: v, put: put });
       });
       if (fl.firstChild) cc.appendChild(fl);
+      if (live.length && co.symbol && d.listed !== false) liveRefresh(co.symbol, live);
       if (d.private_valuation && d.private_valuation.value) {
         var pv = vmFigure(d.private_valuation.value), pl = h('div', 'kg-cc-l');
         pl.appendChild(h('b', null, t('privVal'))); pl.appendChild(W.document.createTextNode(pv.text + (d.private_valuation.round ? ' · ' + d.private_valuation.round : '')));
@@ -1203,9 +1223,9 @@
       var id = entId(co);
       if (id) {
         var bb = h('div', 'kg-cc-b');
-        bb.appendChild(actBtn({ kind: 'open_dossier', entity: co, label: { es: '📊 ' + S.es.dossier, en: '📊 ' + S.en.dossier } }, b, ctx));
-        bb.appendChild(actBtn({ kind: 'open_xray', entity: co, label: { es: '🔬 ' + S.es.xray, en: '🔬 ' + S.en.xray } }, b, ctx));
-        cc.appendChild(bb);
+        add(bb, actBtn({ kind: 'open_dossier', entity: co, label: { es: S.es.dossier, en: S.en.dossier } }, b, ctx),
+          actBtn({ kind: 'open_xray', entity: co, label: { es: S.es.xray, en: S.en.xray } }, b, ctx));
+        if (bb.firstChild) cc.appendChild(bb);
       }
       el.appendChild(ctx._inRow ? cc : (function () { var g = h('div', 'kg-cards'); g.appendChild(cc); return g; })());
       return { go: function (inst) { gos.forEach(function (fn) { fn(inst); }); } };
@@ -1221,7 +1241,7 @@
     }
   });
 
-  // 13) avisos: pros/contras (tool = investigación; model = «opinión de Khipu»), aviso, info, sin dato, descargo
+  // 13) avisos: pros/contras, aviso, info, sin dato, descargo
   function calloutItems(list, kind) {
     var col = h('div');
     (list || []).slice(0, 5).forEach(function (x) {
@@ -1266,7 +1286,7 @@
     }
   });
 
-  // 16) fila final de botones (≤ 4; solo abrir o sugerir)
+  // 16) fila final de botones (≤ 4)
   register('actions', {
     render: function (el, b, ctx) {
       var row = h('div', 'kg-acts');
@@ -1274,11 +1294,12 @@
         var x = actBtn(a, b, ctx, 'kg-chip'); if (x) row.appendChild(x);
       });
       el.appendChild(row);
+      if (!row.firstChild && ctx && ctx._el) ctx._el.hidden = true;      // todas repetidas: sin fila vacía
       return null;
     }
   });
 
-  // 17) fuentes [F#] con su hora; siempre al final
+  // 17) fuentes [F#] con su hora
   register('sources', {
     render: function (el, b, ctx) {
       var box = h('div', 'kg-srcs'); box.setAttribute('aria-label', t('sources'));
@@ -1301,7 +1322,7 @@
     }
   });
 
-  // 7) tabla: texto, entidad, número (con su unidad), fecha, insignia; ordenar por columna; 8 en línea + «Ver todo»
+  // 7) tabla: ordenar por columna; 8 en línea + «Ver todo»
   function cellText(c, v) {
     if (v == null) return '—';
     if (c.kind === 'number') return typeof v === 'number' ? fmt(v, (c.values || {}).unit, { currency: (c.values || {}).currency }) : '—';
@@ -1364,7 +1385,7 @@
     }
   });
 
-  // 11) línea de tiempo (date_known:false = «desde que se rastrea»); enlaces con safeUrl
+  // 11) línea de tiempo; enlaces con safeUrl
   var TL_IC = { news: '📰', event: '⚡', filing: '📄', earnings: '💵', link: '🔗', launch: '🚀', decision: '⚖' };
   register('timeline', {
     render: function (el, b, ctx) {
@@ -1404,10 +1425,11 @@
     register: register, toTable: toTable, pin: pin, catalog: catalog, relang: relang, takeRef: takeRef, ensureStyles: ensureStyles,
     // piezas compartidas con genui_charts.js / genui_shapes.js (y las pruebas en node)
     _u: { h: h, sv: sv, add: add, tip: tip, btn: btn, linkify: linkify, T: T, t: t, S: S, lang: lang, fmt: fmt, parts: parts, vmFigure: vmFigure, when: when,
-      isOld: isOld, spark: spark, draw: draw, countUp: countUp, runAction: runAction, actBtn: actBtn, entId: entId, href: href, qBtn: qBtn,
+      isOld: isOld, spark: spark, draw: draw, countUp: countUp, runAction: runAction, actBtn: actBtn, actKey: actKey, actLabel: actLabel, entId: entId, href: href, qBtn: qBtn,
+      tileCols: tileCols, liveKind: liveKind,
       skeleton: skeleton, height: height, summary: summary, validEnv: validEnv, IMG_RX: IMG_RX, ACTION_KINDS: ACTION_KINDS, WINDOWS: WINDOWS },
     _vm: { figure: vmFigure, fmt: fmt, parts: parts, summary: summary }
   };
-  // con la bandera ya encendida, los gráficos se piden al arrancar (llegan mucho antes que la primera respuesta)
+  // con la bandera encendida, los gráficos se piden al arrancar
   if (enabled()) { try { setTimeout(loadExtras, 0); } catch (e) {} }
 })(typeof window !== 'undefined' ? window : globalThis);

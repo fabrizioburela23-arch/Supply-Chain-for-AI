@@ -30,11 +30,11 @@ De nivel superior (globales del script): `NODES_SPACEX`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **5 de 98** (línea 1440), después de [[nodes.nodes_expand2.js]] y antes de [[nodes.nodes_expand3.js]].
+Se carga en [[app.html]] en la posición **6 de 99** (línea 1507), después de [[nodes.nodes_expand2.js]] y antes de [[nodes.nodes_expand3.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 5)
+- [[app.html]] — lo carga con `<script>` (posición 6)
 - [[engine.app_main.js]] — usa `NODES_SPACEX`
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 

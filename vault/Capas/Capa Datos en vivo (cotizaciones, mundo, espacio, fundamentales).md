@@ -9,11 +9,11 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.526 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.776 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[core.world.py]] — 2.133 líneas · WORLD MONITOR geopolítico: /api/world/\*.
+- [[core.world.py]] — 2.147 líneas · WORLD MONITOR geopolítico: /api/world/\*.
 - [[engine.spacemonitor.js]] — 1.350 líneas · SPACE MONITOR (pestaña 🚀 Espacio).
 - [[core.company_data.py]] — 1.332 líneas · estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del mundo (Dossier, 2026-09-28).
 - [[engine.worldmonitor.js]] — 1.326 líneas · WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
@@ -22,9 +22,9 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[engine.crypto.js]] — 989 líneas · Pestaña ₿ Cripto (Fase 1 módulo de datos + Expediente). - Datos VIVOS: /api/crypto/\* (server → core/providers/coingecko.py). - Capa ESTÁTICA: …
 - [[core.space.py]] — 640 líneas · SPACE MONITOR (pestaña 🚀 Espacio): /api/space2/\*.
 - [[core.world_feeds.py]] — 632 líneas · fuentes OFICIALES nuevas del World Monitor (2026-10-05).
+- [[engine.geo_coords.js]] — 632 líneas · Coordenadas geográficas para los globos 3D (Khipu Finance) Los nodos NO traen lat/long: solo `country` (EEUU, Japon, "Estados Unidos (HQ Denver, …
 - [[core.quotes.py]] — 463 líneas · cotización cruda compartida (server rutas + agentes de alertas).
 - [[core.geosit.py]] — 433 líneas · Sala de Situación geopolítica: /api/geo/\*.
-- [[engine.geo_coords.js]] — 396 líneas · Coordenadas geográficas para los globos 3D (Khipu Finance) Los nodos NO traen lat/long: solo `country` (EEUU, Japon, "Estados Unidos (HQ Denver, …
 - [[engine.termdata.js]] — 359 líneas · PANEL DE DATOS de la Terminal (feedback de Fabrizio: "te pedí que la terminal tuviera muchas más tablas" + "para muchas decía upstream 402 pero no …
 - [[core.gdelt_events.py]] — 307 líneas · conflicto / protestas / sanciones EN VIVO desde la base de EVENTOS de GDELT 2.0 (archivos crudos cada 15 minutos, públicos y sin clave).
 - [[engine.brief.js]] — 301 líneas · BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez al día, descartable), un overlay NEXUS resume: el mayor chokepoint, la …
@@ -46,20 +46,21 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Interfaz (Khipus OS)]] | 25 |
-| usa a | [[Capa Infraestructura]] | 21 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 20 |
-| la usa | [[Capa Infraestructura]] | 17 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 22 |
+| usa a | [[Capa Infraestructura]] | 22 |
+| la usa | [[Capa Infraestructura]] | 19 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
-| la usa | [[Capa MCP y API]] | 5 |
+| la usa | [[Capa MCP y API]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |
+| la usa | [[Capa Ontología y grafo temporal]] | 4 |
 | la usa | [[Capa Investigación]] | 3 |
-| la usa | [[Capa Ontología y grafo temporal]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
+| la usa | [[Capa Datos del catálogo]] | 2 |
 | la usa | [[Capa Voz]] | 2 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 2 |
 | usa a | [[Capa Investigación]] | 1 |

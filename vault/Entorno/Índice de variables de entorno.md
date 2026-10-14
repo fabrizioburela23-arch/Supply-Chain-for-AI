@@ -53,7 +53,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV COMMITTEE_MAX_SEATS]] | 1 | sí |
 | [[ENV CSP_ENABLED]] | 1 | sí |
 | [[ENV CSP_REPORT_ONLY]] | 1 | sí |
-| [[ENV DATABASE_URL]] | 7 | sí |
+| [[ENV DATABASE_URL]] | 8 | sí |
 | [[ENV DB_CONNECT_TIMEOUT_S]] | 1 | sí |
 | [[ENV DB_MAX_OVERFLOW]] | 1 | sí |
 | [[ENV DB_POOL_SIZE]] | 1 | sí |
@@ -150,7 +150,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV SPACE_LL2_BASE]] | 1 | sí |
 | [[ENV TAVILY_API_KEY]] | 1 | sí |
 | [[ENV TAVILY_KEY]] | 2 | sí |
-| [[ENV TRADE_PIN]] | 6 | sí |
+| [[ENV TRADE_PIN]] | 7 | sí |
 | [[ENV TYPESAFE_API_KEY]] | 1 | sí |
 | [[ENV TYPESAFE_API_URL]] | 1 | sí |
 | [[ENV TYPESAFE_KEY]] | 1 | sí |

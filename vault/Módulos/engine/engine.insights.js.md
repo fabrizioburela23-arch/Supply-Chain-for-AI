@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/insights.js"
 lenguaje: "javascript"
-lineas: 342
+lineas: 344
 aliases: ["engine/insights.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/insights.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 342 líneas · `engine/insights.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 344 líneas · `engine/insights.js`
 
 ## Para qué sirve
 
@@ -24,14 +24,15 @@ INSIGHTS AUTOMÁTICOS (Etapa 5, piel NEXUS) Genera tarjetas de lectura desde la 
 
 - [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `sectorName`, `switchTab`
 - [[engine.explain.js]] — usa `explainMetric`
+- [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **66 de 98** (línea 3123), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
+Se carga en [[app.html]] en la posición **67 de 99** (línea 3190), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 66)
+- [[app.html]] — lo carga con `<script>` (posición 67)
 - [[engine.app_main.js]] — usa `renderInsightsHistory`, `renderKhipuInsights`
 - [[engine.resolve.js]] — usa `renderKhipuInsights`
 
@@ -41,6 +42,7 @@ Se carga en [[app.html]] en la posición **66 de 98** (línea 3123), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_countries.py]]
 - [[tests.test_live_labels_misc.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight2_scenes_tokens.py]]

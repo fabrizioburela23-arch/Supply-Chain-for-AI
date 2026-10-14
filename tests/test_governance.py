@@ -174,7 +174,8 @@ def test_etag_del_vocabulario_es_el_hash_del_artefacto():
     c = server.app.test_client()
     r = c.get('/api/vocabulary')
     assert r.status_code == 200
-    assert r.headers['ETag'] == f'"vocab-{governance.artifact_hash_of("ontology.schema")[:16]}"'
+    # lote K: el ETag lleva además el sha8 de data/categories.json ("vocab-<hash16>-<sha8>")
+    assert r.headers['ETag'].startswith(f'"vocab-{governance.artifact_hash_of("ontology.schema")[:16]}')
 
 
 def test_api_active_con_etag(monkeypatch):

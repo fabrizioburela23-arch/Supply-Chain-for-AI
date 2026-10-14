@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/MCP.md"
 lenguaje: "markdown"
-lineas: 379
+lineas: 381
 aliases: ["docs/MCP.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/MCP.md
 
-> Documento · capa [[Capa Documentación]] · 379 líneas · `docs/MCP.md`
+> Documento · capa [[Capa Documentación]] · 381 líneas · `docs/MCP.md`
 
 ## De qué trata
 

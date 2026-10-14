@@ -31,15 +31,16 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.nodes_seed.js]] — usa `CATS_NEW`, `CAT_TO_SECTOR`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **9 de 98** (línea 1444), después de [[nodes.nodes_expand4.js]] y antes de [[nodes.meta_fill.js]].
+Se carga en [[app.html]] en la posición **10 de 99** (línea 1511), después de [[nodes.nodes_expand4.js]] y antes de [[nodes.meta_fill.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 9)
+- [[app.html]] — lo carga con `<script>` (posición 10)
 - [[engine.app_main.js]] — usa `LINKS_EXPAND5`, `NODES_EXPAND5`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 
+- [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_review_lists.py]]

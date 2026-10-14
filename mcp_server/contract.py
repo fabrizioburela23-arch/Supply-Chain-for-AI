@@ -79,6 +79,8 @@ def _sum_company(r):
         out['network_risk_score'] = {k: nrs.get(k) for k in ('value', 'level') if nrs.get(k) is not None}
     out['top_suppliers'] = [_nb(x) for x in (r.get('top_suppliers') or [])[:5]]
     out['top_customers'] = [_nb(x) for x in (r.get('top_customers') or [])[:5]]
+    if r.get('market_position'):      # E2.9: la posición de mercado es el motivo del pedido; cabe en el resumen
+        out['market_position'] = r['market_position'][:5]
     if r.get('counts'):
         out['counts'] = r['counts']
     st = r.get('structure') or {}

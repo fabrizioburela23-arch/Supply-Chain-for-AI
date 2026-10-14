@@ -46,7 +46,7 @@ def test_bolsa_moneda_y_tipo(nodes):
     assert I.exchange_info('NVDA')[1] == 'USD' and I.exchange_info('JPYUSD=X')[1] == 'USD'
     by = {n['id']: n for n in nodes}
     assert I.classify(by['Samsung']) == {'kind': 'otc', 'review': 'otc_adr'}
-    assert I.classify(by['TEL'])['kind'] == 'adr'
+    assert I.classify(by['TEL'])['kind'] == 'equity'   # lote K: TEL = 8035.T (TOELY pasó a listado secundario)
     assert I.classify(by['Tencent']) == {'kind': 'otc', 'review': 'multi_listed'}
     assert I.classify(by['Nvidia']) == {'kind': 'equity', 'review': None}
     ref = I.reference_instruments(['JPY', 'GBp', 'USD', 'EUR'])
@@ -59,10 +59,12 @@ def test_lista_de_revision_16_mas_28_con_alternativa_local(nodes):
     rows = I.review_list(nodes)
     multi = [r for r in rows if r['review'] == 'multi_listed']
     otc = [r for r in rows if r['review'] == 'otc_adr']
-    assert len(multi) == 16 and len(otc) == 28
+    assert len(multi) == 21 and len(otc) == 25   # lote K: +5 listados secundarios declarados
     by = {r['id']: r for r in rows}
     assert by['Samsung']['alternative'] == '005930.KS' and by['Samsung']['recommend'] == 'local'
-    assert by['TEL']['alternative'] == '8035.T' and by['Foxconn']['alternative'] == '2317.TW'
+    # lote K: TEL cotiza por 8035.T (principal) y el ADR TOELY es el listado secundario declarado
+    assert by['TEL']['current'] == '8035.T' and by['TEL']['alternative'] == 'TOELY'
+    assert by['Foxconn']['alternative'] == '2317.TW'
     assert by['Baidu']['alternative'] == '9888.HK' and by['Baidu']['recommend'] == 'keep'
     assert by['Tencent']['alternative'] == '0700.HK' and by['Tencent']['recommend'] == 'local'
     assert by['CNOOC']['alternative'] == '600938.SS'            # el otro listado, nunca el mismo de hoy
@@ -75,7 +77,7 @@ def test_documento_de_revision_lista_todos_los_casos_con_columnas(nodes):
     for r in I.review_list(nodes):
         assert f"(`{r['id']}`)" in doc, r['id']
         assert f"`{r['current']}`" in doc
-    assert '¿Mantener el de hoy?' in doc and '¿Cambiar a la otra?' in doc and doc.count('✔ / ✘') == 2 * 44
+    assert '¿Mantener el de hoy?' in doc and '¿Cambiar a la otra?' in doc and doc.count('✔ / ✘') == 2 * 46
     assert 'nada cambia solo' in doc
 
 

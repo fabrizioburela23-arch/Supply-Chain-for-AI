@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/vocabulary.py"
 lenguaje: "python"
-lineas: 253
+lineas: 315
 aliases: ["ontology/vocabulary.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/vocabulary.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 253 líneas · `ontology/vocabulary.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 315 líneas · `ontology/vocabulary.py`
 
 ## Para qué sirve
 
@@ -36,13 +36,18 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - `note_unknown(kind, value)` — Registra un valor fuera del vocabulario. Loguea la PRIMERA vez y lleva la cuenta, para que aparezca en /api/vocabulary/unknown y en … _(línea 218)_
 - `unknown_report()` _(línea 231)_
 - `reset_unknown()` _(línea 235)_
-- `snapshot()` — Vocabulario completo para servir al cliente (mata las copias duplicadas). _(línea 240)_
+- `categories_doc(force=…)` — data/categories.json entero (cacheado por mtime). {} si no existe o es ilegible: el vocabulario de relaciones no depende de él. _(línea 248)_
+- `categories()` — id → {es, en, sector, cssVar, x, aliases, status, origin} de TODAS las categorías (108 del catálogo + las del lote aprobadas por defecto); … _(línea 274)_
+- `category_aliases()` — alias (o id) → id consolidado. Un lote que traiga `battery_components` cae en `battery_cells`. _(línea 287)_
+- `resolve_category(cat)` — id consolidado de una categoría o alias (None si no existe). _(línea 297)_
+- `snapshot()` — Vocabulario completo para servir al cliente (mata las copias duplicadas). _(línea 302)_
 
-**Internas** (empiezan con `_`): `_path`
+**Internas** (empiezan con `_`): `_path`, `_categories_path`
 
 ## Depende de
 
 - [[core.governance.py]] — importa `governance`
+- [[data.categories.json]] — lo nombra por su ruta
 - [[ontology.vocabulary.json]] — lo nombra por su ruta
 
 ## Lo usan
@@ -58,6 +63,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 - [[ontology.bitemporal.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.service.py]] — lo importa
 - [[research.context.py]] — lo importa
@@ -70,11 +76,12 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 14 pruebas (lista abajo)._
+_Además lo importan 16 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
+- [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_context_engine.py]]
@@ -82,6 +89,7 @@ _Además lo importan 14 pruebas (lista abajo)._
 - [[tests.test_governance.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_import_adapter.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_scale_tensor.py]]

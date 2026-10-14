@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/db.py"
 lenguaje: "python"
-lineas: 275
+lineas: 276
 aliases: ["ontology/db.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/db.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 275 líneas · `ontology/db.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 276 líneas · `ontology/db.py`
 
 ## Para qué sirve
 
@@ -35,6 +35,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[core.ops_check.py]] — importa `(dinámico: core.ops_check)`
 - [[mcp_server.models.py]] — importa `(dinámico: mcp_server.models)`
 - [[ontology.checkpoints.py]] — importa `(dinámico: ontology.checkpoints)`
+- [[ontology.import_models.py]] — importa `(dinámico: ontology.import_models)`
 - [[ontology.models.py]] — importa `Base`
 - [[research.models.py]] — importa `research.models`
 
@@ -73,6 +74,8 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 - [[ontology.checkpoints.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
+- [[ontology.import_models.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 - [[research.api.py]] — lo importa
 - [[research.auto_events.py]] — lo importa
@@ -82,6 +85,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[scripts.audit_graph.py]] — lo importa
 - [[scripts.build_graph_review.py]] — lo importa
 - [[scripts.calibrate_kernel.py]] — lo importa
+- [[scripts.import_companies.py]] — lo importa
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[scripts.reconcile_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
@@ -104,7 +108,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 85 pruebas (lista abajo)._
+_Además lo importan 92 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -125,12 +129,14 @@ _Además lo importan 85 pruebas (lista abajo)._
 - [[tests.test_bitemporal.py]]
 - [[tests.test_bitemporal_review.py]]
 - [[tests.test_brokerage.py]]
+- [[tests.test_catalog_fix_symbols.py]]
 - [[tests.test_checkpoints.py]]
 - [[tests.test_cierre_defectos.py]]
 - [[tests.test_cierre_infra.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_gates_resulting_state.py]]
+- [[tests.test_genui_k_server.py]]
 - [[tests.test_genui_ledger.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
@@ -140,6 +146,9 @@ _Además lo importan 85 pruebas (lista abajo)._
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_import_adapter.py]]
+- [[tests.test_import_fast_path.py]]
+- [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_instruments.py]]
@@ -157,6 +166,7 @@ _Además lo importan 85 pruebas (lista abajo)._
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_lotej_review_fixes.py]]
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
@@ -190,6 +200,7 @@ _Además lo importan 85 pruebas (lista abajo)._
 - [[tests.test_repair_review2.py]]
 - [[tests.test_replay_determinism.py]]
 - [[tests.test_research.py]]
+- [[tests.test_resolve_ids.py]]
 - [[tests.test_retention_purge.py]]
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]

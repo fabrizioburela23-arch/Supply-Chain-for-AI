@@ -3,14 +3,14 @@ tipo: "datos"
 capa: "Datos del catálogo"
 ruta: "nodes/nodes_seed.js"
 lenguaje: "javascript"
-lineas: 2661
+lineas: 2680
 aliases: ["nodes/nodes_seed.js"]
 tags: ["capa/datos-catalogo", "tipo/datos"]
 ---
 
 # nodes/nodes_seed.js
 
-> Datos · capa [[Capa Datos del catálogo]] · 2.661 líneas · `nodes/nodes_seed.js`
+> Datos · capa [[Capa Datos del catálogo]] · 2.680 líneas · `nodes/nodes_seed.js`
 
 ## Para qué sirve
 
@@ -20,26 +20,26 @@ DATOS SEMILLA (extraídos de app.html, 2026-07) Catálogo base v7/v8: categoría
 
 - ~546 filas de vínculos (`[origen, destino, …]` o `{s, t}`)
 - ~369 entradas con clave
-- 293 KB
+- 297 KB
 
 _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 ## API pública (globales que define)
 
-De nivel superior (globales del script): `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS`, `NODE_META`, `RAW_LINKS`, `SECTORS9`, `SHARES_OUTSTANDING_B`, `sectorOf`
+De nivel superior (globales del script): `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS`, `NODE_META`, `RAW_LINKS`, `SECTORS9`, `SHARES_OUTSTANDING_B`, `_countryBucketCache`, `countryBucket`, `sectorOf`
 
 ## Depende de
 
-_Nada interno._
+- [[engine.geo_coords.js]] — usa `GeoCoords`, `KhipuCountries`
 
-Se carga en [[app.html]] en la posición **2 de 98** (línea 1437) y antes de [[nodes.nodes_expand.js]].
+Se carga en [[app.html]] en la posición **2 de 99** (línea 1503) y antes de [[nodes.categories_extra.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 2)
 - [[engine.app_canvas.js]] — usa `NODES`
 - [[engine.app_coordinator.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
-- [[engine.app_main.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS` y 4 más
+- [[engine.app_main.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS` y 5 más
 - [[engine.app_preflight.js]] — usa `NODES`
 - [[engine.app_scatter.js]] — usa `NODE_META`
 - [[engine.app_trade_panel.js]] — usa `NODES`
@@ -70,6 +70,7 @@ Se carga en [[app.html]] en la posición **2 de 98** (línea 1437) y antes de [[
 - [[engine.voice.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[engine.worldmonitor.js]] — usa `NODES`
 - [[engine.xray.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
+- [[nodes.categories_extra.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`
 - [[nodes.meta_fill.js]] — usa `NODE_META`
 - [[nodes.nodes_china.js]] — usa `NODE_META`
 - [[nodes.nodes_expand5.js]] — usa `CATS_NEW`, `CAT_TO_SECTOR`, `NODE_META`
@@ -80,6 +81,8 @@ Se carga en [[app.html]] en la posición **2 de 98** (línea 1437) y antes de [[
 
 ## Pruebas que lo cubren
 
+- [[tests.test_catalog_fix_categories.py]]
+- [[tests.test_countries.py]]
 - [[tests.test_graph_audit.py]]
 
 ## Mencionado en sesiones de trabajo

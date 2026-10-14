@@ -76,6 +76,9 @@ CON_DECISION = {
     'POST /api/ontology/ingest/news': 'ontology.news_ingest (cierre del lote H, E3)',
     'POST /api/ontology/reconcile/apply': 'reconcile.apply (una por categoría; cierre del lote H, E2)',
     'POST /api/ontology/reconcile/rollback': 'reconcile.rollback (cierre del lote H, E2)',
+    'POST /api/ontology/import/files': 'ontology.bulk_import (etapa upload: guarda el archivo en import_files; lote K, E2.4)',
+    'POST /api/ontology/import/apply': 'ontology.bulk_import (UNA por corrida; lote K, E2.4)',
+    'POST /api/ontology/import/rollback': 'ontology.import_rollback (lote K, E2.4)',
     'POST /api/portfolio-report/ask': 'chat.answer (async)',
     'POST /api/prices/backfill': 'data.backfill',
     'POST /api/prices/backfill/stop': 'data.backfill',
@@ -109,6 +112,7 @@ CON_DECISION = {
 # brecha (CAMBIA algo y todavía no deja decisión: pendiente, ver docs/CIERRE_INFRA.md)
 SIN_DECISION = {
     'POST /api/quotes/live': 'lectura',
+    'POST /api/ontology/import/plan': 'lectura',   # plan PURO (lote K, E2.3): no escribe nada
     'POST /api/news/portfolio': 'lectura',
     'POST /api/portfolio/risk_report': 'lectura',
     'POST /api/portfolio/vega_report': 'lectura',

@@ -840,6 +840,120 @@ def company_comparison(pairs, b0):
     return [blk]
 
 
+# ── get_fundamentals → chart.bar (ingresos por período) + metric.tiles (márgenes) [+ chart.bar utilidad] ─────────
+FUND_MAX_BARS = 8
+
+
+def _period_label(r):
+    """Rótulo corto del período: 'FY2025' tal cual; trimestre 'Q 2025-07-31' → '2025-07'."""
+    p = str(r.get('period') or '')
+    if p.startswith('Q ') and len(p) >= 9:
+        return p[2:9]
+    return clip(p, 12) or clip(r.get('period_end'), 12)
+
+
+def _fund_bar(res, b, key, title_es, title_en, kind, role=None):
+    items = []
+    for r in (res.get('periods') or [])[-FUND_MAX_BARS:]:
+        if not isinstance(r, dict):
+            continue
+        lab = _period_label(r)
+        if not lab:
+            continue
+        items.append({'label': lab, 'v': num(r.get(key))})
+    if not items or all(it['v'] is None for it in items):
+        return None
+    as_of = norm_dt(res.get('as_of'))
+    if not as_of:
+        return None
+    src = src_id(res.get('source'), 'yahoo')
+    vs = {'label': i18n(title_es, title_en), 'unit': 'USD', 'src': src, 'as_of': as_of, 'explain': 'genui_' + key}
+    if b.fact:
+        vs['fact'] = b.fact
+    ent = entity(res.get('id'), res.get('label'), res.get('symbol'))
+    name = (ent or {}).get('label') or clip(res.get('symbol'), 20) or ''
+    q = res.get('period') == 'quarterly'
+    sub = i18n('por trimestre, en USD como lo reporta la fuente' if q else 'por año fiscal, en USD como lo reporta la fuente',
+               'by quarter, in USD as reported' if q else 'by fiscal year, in USD as reported')
+    meta = {'group': 'fundamentals', 'kind': kind}
+    if role:
+        meta['role'] = role
+    return _block('chart.bar', b, 'get_fundamentals', i18n(f'{title_es} de {name}', f'{name} {title_en.lower()}'),
+                  {'orientation': 'v', 'values': vs, 'diverging': key != 'revenue', 'sort': 'none', 'items': items},
+                  subtitle=sub, entity_=ent, menu=MENU_DATA, meta=meta)
+
+
+def b_get_fundamentals(res, b):
+    out = []
+    bar = _fund_bar(res, b, 'revenue', 'Ingresos', 'Revenue', 'fund_bar')
+    if bar is None:
+        return []
+    out.append(bar)
+    last = res.get('latest') if isinstance(res.get('latest'), dict) else None
+    ent = entity(res.get('id'), res.get('label'), res.get('symbol'))
+    name = (ent or {}).get('label') or clip(res.get('symbol'), 20) or ''
+    when = res.get('as_of')
+    src = src_id(res.get('source'), 'yahoo')
+    if last:
+        miss = ('la fuente no reporta este dato', 'the source does not report this figure')
+        spec = ((('Ingresos', 'Revenue'), last.get('revenue'), 'USD', 'genui_revenue'),
+                (('Utilidad neta', 'Net income'), last.get('net_income'), 'USD', 'genui_net_income'),
+                (('Margen bruto', 'Gross margin'), last.get('gross_margin_pct'), 'pct', 'genui_margin'),
+                (('Margen operativo', 'Operating margin'), last.get('operating_margin_pct'), 'pct', 'genui_margin'),
+                (('Margen neto', 'Net margin'), last.get('net_margin_pct'), 'pct', 'genui_margin'),
+                (('Crecimiento de ingresos', 'Revenue growth'), last.get('revenue_growth_pct'), 'pct', 'genui_growth'))
+        items = [{'label': i18n(*lab), 'value': figure(v, unit, src, when, b, missing=miss, explain=ex)}
+                 for lab, v, unit, ex in spec]
+        per = _period_label(last)
+        out.append(_block('metric.tiles', b, 'get_fundamentals', i18n(f'{name}: último período ({per})',
+                                                                      f'{name}: latest period ({per})'),
+                          {'items': items}, entity_=ent, menu=MENU_BASIC,
+                          meta={'group': 'fundamentals', 'kind': 'fund_tiles'}))
+    bar2 = _fund_bar(res, b, 'net_income', 'Utilidad neta', 'Net income', 'fund_bar2', role='secondary')
+    if bar2 is not None:
+        out.append(bar2)
+    return out
+
+
+# ── rank_by_market → ranking (posición de mercado investigada, E2.9) ─────────────────────────────────────────────
+def b_rank_by_market(res, b):
+    as_of = norm_dt(res.get('as_of'))
+    if not as_of:
+        return []
+    by = 'rank' if res.get('sorted_by') == 'rank' else 'share_pct'
+    items = []
+    for r in (res.get('items') or [])[:20]:
+        if not isinstance(r, dict):
+            continue
+        ent = entity(r.get('id'), r.get('label'), r.get('symbol'))
+        if not ent:
+            continue
+        v = num(r.get(by))
+        it = {'rank': len(items) + 1, 'entity': ent, 'v': v}
+        when = norm_dt(r.get('as_of'))
+        if when:
+            it['as_of'] = when
+        bits = [clip(r.get(k), 40) for k in ('market', 'period', 'measured_by') if r.get(k)]
+        if bits:
+            it['note'] = i18n(' · '.join(bits), ' · '.join(bits))
+        items.append(it)
+    if not items:
+        return []
+    metric = ({'label': i18n('Cuota de mercado', 'Market share'), 'unit': 'pct', 'src': 'khipus_graph', 'as_of': as_of,
+               'explain': 'genui_market_share'} if by == 'share_pct' else
+              {'label': i18n('Puesto en el mercado', 'Market rank'), 'unit': 'none', 'src': 'khipus_graph',
+               'as_of': as_of, 'explain': 'genui_market_rank'})
+    if b.fact:
+        metric['fact'] = b.fact
+    mkt = clip(res.get('market'), 50)
+    reg = str(res.get('region') or 'GLOBAL')
+    sub = i18n('posición investigada por empresa, con su fuente · ' + ('mundial' if reg == 'GLOBAL' else reg),
+               'researched position per company, with its source · ' + ('global' if reg == 'GLOBAL' else reg))
+    return [_block('ranking', b, 'rank_by_market', i18n(f'Las más grandes en {mkt}', f'Largest in {mkt}'),
+                   {'metric': metric, 'direction': 'higher_better' if by == 'share_pct' else 'lower_better',
+                    'items': items}, subtitle=sub, menu=MENU_DATA, meta={'kind': 'market_rank'})]
+
+
 BUILDERS = {
     'get_company': b_get_company,
     'get_supply_chain': b_get_supply_chain,
@@ -853,4 +967,6 @@ BUILDERS = {
     'get_risk_report': b_get_risk_report,
     'get_history': b_get_history,
     'run_scenario': b_run_scenario,
+    'get_fundamentals': b_get_fundamentals,
+    'rank_by_market': b_rank_by_market,
 }

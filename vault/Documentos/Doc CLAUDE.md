@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 920
+lineas: 972
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 920 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 972 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -32,6 +32,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.company_data.py]]
 - [[core.config.py]]
 - [[core.context_engine.py]]
+- [[core.countries.py]]
 - [[core.decide.py]]
 - [[core.decision_sites.py]]
 - [[core.decisions.py]]
@@ -43,6 +44,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.http.py]]
 - [[core.identity.py]]
 - [[core.impls.py]]
+- [[core.import_normalize.py]]
 - [[core.instruments.py]]
 - [[core.khipu_chat.py]]
 - [[core.ledger.py]]
@@ -76,6 +78,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.voice_agent.py]]
 - [[core.voice_api.py]]
 - [[core.world.py]]
+- [[data.categories.json]]
 - [[data.grafo_v0.json]]
 - [[data.graph_audit_baseline.json]]
 - [[Doc ARQUITECTURA_V2]]
@@ -93,6 +96,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[Doc REPARACION_DIAGNOSTICO]]
 - [[Doc REVISION_GRAFO]]
 - [[Doc REVISION_INSTRUMENTOS]]
+- [[Doc REVISION_PAISES]]
 - [[engine.agents_registry.js]]
 - [[engine.aispend.js]]
 - [[engine.app_canvas.js]]
@@ -158,19 +162,25 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[mcp_server.contract.py]]
 - [[mcp_server.ops.py]]
 - [[mcp_server.tools.py]]
+- [[nodes.categories_extra.js]]
 - [[nodes.crypto_intel.js]]
 - [[nodes.legal_names.js]]
 - [[nodes.links_expand.js]]
 - [[nodes.listing_status.js]]
 - [[nodes.merge_graph.js]]
+- [[nodes.nodes_seed.js]]
 - [[nodes.ontology.js]]
 - [[nodes.preipo_intel.js]]
 - [[ontology.actions.py]]
 - [[ontology.agents.py]]
 - [[ontology.bitemporal.py]]
+- [[ontology.bulk_import.py]]
 - [[ontology.checkpoints.py]]
+- [[ontology.company_import.py]]
+- [[ontology.company_schema.py]]
 - [[ontology.db.py]]
 - [[ontology.history_models.py]]
+- [[ontology.import_models.py]]
 - [[ontology.ledger_models.py]]
 - [[ontology.provenance.py]]
 - [[ontology.reconcile.py]]
@@ -195,6 +205,8 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[research.runner.py]]
 - [[scripts.audit_graph.py]]
 - [[scripts.bench_scale.py]]
+- [[scripts.build_categories.py]]
+- [[scripts.build_country_review.py]]
 - [[scripts.build_governance.py]]
 - [[scripts.build_graph_review.py]]
 - [[scripts.build_impl_goldens.py]]
@@ -203,6 +215,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[scripts.build_vault.py]]
 - [[scripts.export_graph_v0.js]]
 - [[scripts.gen_synth_graph.py]]
+- [[scripts.import_companies.py]]
 - [[scripts.migrate_v0_to_ontology.py]]
 - [[scripts.reconcile_v0_to_ontology.py]]
 - [[scripts.smoke_mcp.py]]
@@ -216,9 +229,11 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_countries.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_graph_audit.py]]
 - [[tests.test_impl_registry.py]]
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_neo4j_retirado.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_order_single_path.py]]

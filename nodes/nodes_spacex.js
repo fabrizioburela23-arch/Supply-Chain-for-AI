@@ -65,7 +65,7 @@ const NODES_SPACEX = [
 "moat":"Diseños calificados directamente con SpaceX para terminales Starlink.",
 "loc":"EE.UU.","country":"EEUU","growth":"🔵 +25%","margin":0.22,"founded":2003,"employees":1100,"revenue_2025":"~$500M","geo_risk":"EE.UU. — bajo"},
 
-{"id":"SiTime","label":"SiTime","ticker":"SITS · Nasdaq","cat":"fabless","mkt":"SITS",
+{"id":"SiTime","label":"SiTime","ticker":"SITM · Nasdaq","cat":"fabless","mkt":"SITM",
 "role":"Osciladores MEMS de precisión para timing crítico en satélites LEO.",
 "moat":"Líder en MEMS timing con >85% de cuota; único proveedor calificado en múltiples constelaciones LEO.",
 "loc":"EE.UU.","country":"EEUU","growth":"🔵 +30%","margin":0.35,"founded":2005,"employees":280,"revenue_2025":"~$250M","geo_risk":"EE.UU. — bajo"},

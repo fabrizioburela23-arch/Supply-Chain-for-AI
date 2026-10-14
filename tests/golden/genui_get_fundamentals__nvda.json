@@ -1,0 +1,556 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "FY2021 16,675,000,000 USD; FY2022 26,914,000,000 USD; FY2023 26,974,000,000 USD; FY2024 60,922,000,000 USD; FY2025 130,497,000,000 USD",
+    "es": "FY2021 16.675.000.000 USD; FY2022 26.914.000.000 USD; FY2023 26.974.000.000 USD; FY2024 60.922.000.000 USD; FY2025 130.497.000.000 USD"
+   },
+   "data": {
+    "diverging": false,
+    "items": [
+     {
+      "label": "FY2021",
+      "v": 16675000000.0
+     },
+     {
+      "label": "FY2022",
+      "v": 26914000000.0
+     },
+     {
+      "label": "FY2023",
+      "v": 26974000000.0
+     },
+     {
+      "label": "FY2024",
+      "v": 60922000000.0
+     },
+     {
+      "label": "FY2025",
+      "v": 130497000000.0
+     }
+    ],
+    "orientation": "v",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-10-14T15:00:00Z",
+     "explain": "genui_revenue",
+     "fact": "F1",
+     "label": {
+      "en": "Revenue",
+      "es": "Ingresos"
+     },
+     "src": "yahoo",
+     "unit": "USD"
+    }
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_fundamentals"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "by fiscal year, in USD as reported",
+    "es": "por año fiscal, en USD como lo reporta la fuente"
+   },
+   "title": {
+    "en": "Nvidia revenue",
+    "es": "Ingresos de Nvidia"
+   },
+   "type": "chart.bar"
+  },
+  {
+   "alt": {
+    "en": "Revenue: 130,497,000,000 USD; Net income: 72,880,000,000 USD; Gross margin: 74.9 %; Operating margin: 62.4 %; Net margin: 55.8 %; Revenue growth: 114.2 %",
+    "es": "Ingresos: 130.497.000.000 USD; Utilidad neta: 72.880.000.000 USD; Margen bruto: 74,9 %; Margen operativo: 62,4 %; Margen neto: 55,8 %; Crecimiento de ingresos: 114,2 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Revenue",
+       "es": "Ingresos"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_revenue",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "USD",
+       "v": 130497000000.0
+      }
+     },
+     {
+      "label": {
+       "en": "Net income",
+       "es": "Utilidad neta"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_net_income",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "USD",
+       "v": 72880000000.0
+      }
+     },
+     {
+      "label": {
+       "en": "Gross margin",
+       "es": "Margen bruto"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_margin",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 74.9
+      }
+     },
+     {
+      "label": {
+       "en": "Operating margin",
+       "es": "Margen operativo"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_margin",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 62.4
+      }
+     },
+     {
+      "label": {
+       "en": "Net margin",
+       "es": "Margen neto"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_margin",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 55.8
+      }
+     },
+     {
+      "label": {
+       "en": "Revenue growth",
+       "es": "Crecimiento de ingresos"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_growth",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 114.2
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_fundamentals"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia: latest period (FY2025)",
+    "es": "Nvidia: último período (FY2025)"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "alt": {
+    "en": "FY2021 4,332,000,000 USD; FY2022 9,752,000,000 USD; FY2023 4,368,000,000 USD; FY2024 29,760,000,000 USD; FY2025 72,880,000,000 USD",
+    "es": "FY2021 4.332.000.000 USD; FY2022 9.752.000.000 USD; FY2023 4.368.000.000 USD; FY2024 29.760.000.000 USD; FY2025 72.880.000.000 USD"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "label": "FY2021",
+      "v": 4332000000.0
+     },
+     {
+      "label": "FY2022",
+      "v": 9752000000.0
+     },
+     {
+      "label": "FY2023",
+      "v": 4368000000.0
+     },
+     {
+      "label": "FY2024",
+      "v": 29760000000.0
+     },
+     {
+      "label": "FY2025",
+      "v": 72880000000.0
+     }
+    ],
+    "orientation": "v",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-10-14T15:00:00Z",
+     "explain": "genui_net_income",
+     "fact": "F1",
+     "label": {
+      "en": "Net income",
+      "es": "Utilidad neta"
+     },
+     "src": "yahoo",
+     "unit": "USD"
+    }
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_fundamentals"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "by fiscal year, in USD as reported",
+    "es": "por año fiscal, en USD como lo reporta la fuente"
+   },
+   "title": {
+    "en": "Nvidia net income",
+    "es": "Utilidad neta de Nvidia"
+   },
+   "type": "chart.bar"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "FY2021 16,675,000,000 USD; FY2022 26,914,000,000 USD; FY2023 26,974,000,000 USD; FY2024 60,922,000,000 USD; FY2025 130,497,000,000 USD",
+    "es": "FY2021 16.675.000.000 USD; FY2022 26.914.000.000 USD; FY2023 26.974.000.000 USD; FY2024 60.922.000.000 USD; FY2025 130.497.000.000 USD"
+   },
+   "data": {
+    "diverging": false,
+    "items": [
+     {
+      "label": "FY2021",
+      "v": 16675000000.0
+     },
+     {
+      "label": "FY2022",
+      "v": 26914000000.0
+     },
+     {
+      "label": "FY2023",
+      "v": 26974000000.0
+     },
+     {
+      "label": "FY2024",
+      "v": 60922000000.0
+     },
+     {
+      "label": "FY2025",
+      "v": 130497000000.0
+     }
+    ],
+    "orientation": "v",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-10-14T15:00:00Z",
+     "explain": "genui_revenue",
+     "fact": "F1",
+     "label": {
+      "en": "Revenue",
+      "es": "Ingresos"
+     },
+     "src": "yahoo",
+     "unit": "USD"
+    }
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_fundamentals"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "by fiscal year, in USD as reported",
+    "es": "por año fiscal, en USD como lo reporta la fuente"
+   },
+   "title": {
+    "en": "Nvidia revenue",
+    "es": "Ingresos de Nvidia"
+   },
+   "type": "chart.bar"
+  },
+  {
+   "alt": {
+    "en": "Revenue: 130,497,000,000 USD; Net income: 72,880,000,000 USD; Gross margin: 74.9 %; Operating margin: 62.4 %; Net margin: 55.8 %; Revenue growth: 114.2 %",
+    "es": "Ingresos: 130.497.000.000 USD; Utilidad neta: 72.880.000.000 USD; Margen bruto: 74,9 %; Margen operativo: 62,4 %; Margen neto: 55,8 %; Crecimiento de ingresos: 114,2 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Revenue",
+       "es": "Ingresos"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_revenue",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "USD",
+       "v": 130497000000.0
+      }
+     },
+     {
+      "label": {
+       "en": "Net income",
+       "es": "Utilidad neta"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_net_income",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "USD",
+       "v": 72880000000.0
+      }
+     },
+     {
+      "label": {
+       "en": "Gross margin",
+       "es": "Margen bruto"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_margin",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 74.9
+      }
+     },
+     {
+      "label": {
+       "en": "Operating margin",
+       "es": "Margen operativo"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_margin",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 62.4
+      }
+     },
+     {
+      "label": {
+       "en": "Net margin",
+       "es": "Margen neto"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_margin",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 55.8
+      }
+     },
+     {
+      "label": {
+       "en": "Revenue growth",
+       "es": "Crecimiento de ingresos"
+      },
+      "value": {
+       "as_of": "2026-10-14T15:00:00Z",
+       "explain": "genui_growth",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct",
+       "v": 114.2
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_fundamentals"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Nvidia: latest period (FY2025)",
+    "es": "Nvidia: último período (FY2025)"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "alt": {
+    "en": "FY2021 4,332,000,000 USD; FY2022 9,752,000,000 USD; FY2023 4,368,000,000 USD; FY2024 29,760,000,000 USD; FY2025 72,880,000,000 USD",
+    "es": "FY2021 4.332.000.000 USD; FY2022 9.752.000.000 USD; FY2023 4.368.000.000 USD; FY2024 29.760.000.000 USD; FY2025 72.880.000.000 USD"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "label": "FY2021",
+      "v": 4332000000.0
+     },
+     {
+      "label": "FY2022",
+      "v": 9752000000.0
+     },
+     {
+      "label": "FY2023",
+      "v": 4368000000.0
+     },
+     {
+      "label": "FY2024",
+      "v": 29760000000.0
+     },
+     {
+      "label": "FY2025",
+      "v": 72880000000.0
+     }
+    ],
+    "orientation": "v",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-10-14T15:00:00Z",
+     "explain": "genui_net_income",
+     "fact": "F1",
+     "label": {
+      "en": "Net income",
+      "es": "Utilidad neta"
+     },
+     "src": "yahoo",
+     "unit": "USD"
+    }
+   },
+   "entity": {
+    "id": "Nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "get_fundamentals"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "by fiscal year, in USD as reported",
+    "es": "por año fiscal, en USD como lo reporta la fuente"
+   },
+   "title": {
+    "en": "Nvidia net income",
+    "es": "Utilidad neta de Nvidia"
+   },
+   "type": "chart.bar"
+  }
+ ]
+}

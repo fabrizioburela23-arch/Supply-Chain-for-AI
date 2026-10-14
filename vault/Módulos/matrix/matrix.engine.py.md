@@ -67,10 +67,11 @@ construcción, modulación y propagación de matrices.
 - [[matrix.tensor.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[ontology.bulk_import.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[scripts.bench_scale.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 32 pruebas (lista abajo)._
+_Además lo importan 33 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -104,6 +105,7 @@ _Además lo importan 32 pruebas (lista abajo)._
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_replay_determinism.py]]
+- [[tests.test_resolve_ids_impact_perf.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_scale_kernel.py]]
 - [[tests.test_scale_tensor.py]]

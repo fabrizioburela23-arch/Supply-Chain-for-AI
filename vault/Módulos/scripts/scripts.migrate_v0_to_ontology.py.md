@@ -42,7 +42,7 @@ Fase 1: migra data/grafo_v0.json (el snapshot congelado en Fase 0) a la ontolog�
 
 - [[server.py]] — lo importa
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -54,10 +54,12 @@ _Además lo importan 1 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_graph.py]]
+- [[tests.test_resolve_ids.py]]
 - [[tests.test_review_lists.py]]

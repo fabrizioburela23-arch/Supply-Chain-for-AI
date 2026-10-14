@@ -305,7 +305,7 @@ def test_api_relleno_exige_pin_y_muestra_progreso(db, monkeypatch):
     st = c.get('/api/prices/status').get_json()
     assert st['db'] is True and 'rows' in st
     rv = c.get('/api/instruments/review').get_json()
-    assert rv['multi_listed'] == 16 and rv['otc_adr'] == 28
+    assert rv['multi_listed'] == 21 and rv['otc_adr'] == 25   # lote K
     pin._reset_for_tests()
 
 

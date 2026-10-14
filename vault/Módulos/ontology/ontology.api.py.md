@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/api.py"
 lenguaje: "python"
-lineas: 1386
+lineas: 1722
 aliases: ["ontology/api.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/api.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.386 líneas · `ontology/api.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.722 líneas · `ontology/api.py`
 
 ## Para qué sirve
 
@@ -54,12 +54,17 @@ API REST de la ontología: /api/ontology/\*
 - `reconcile_plan()` — Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1. No escribe nada. _(línea 1261)_
 - `reconcile_apply()` — Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id. _(línea 1323)_
 - `reconcile_rollback()` — Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos. _(línea 1366)_
+- `import_files()` — Subida por trozos. Body: {name, sha256 (del contenido entero sin comprimir), chunk, chunks, data (base64 del trozo comprimido con zlib), … _(línea 1535)_
+- `import_plan()` — Plan PURO (no escribe): {file_sha | records[, updates], approve_categories?, batch?, full?: 0|1, format?: json|md, lang?: es|en, fresh?: … _(línea 1628)_
+- `import_apply()` — Aplica el plan que la persona revisó: {file_sha | records, approve_categories?, batch?, confirm_db, expect: {plan_sha}}. Se recalcula el … _(línea 1649)_
+- `import_rollback()` — Deshace una corrida: {run_id, confirm_db}. Decisión ontology.import_rollback; de la más nueva a la más vieja. _(línea 1684)_
+- `import_runs()` — Corridas aplicadas/deshechas (las más nuevas primero) y cuántos vínculos esperan su contraparte. _(línea 1711)_
 
-**Internas** (empiezan con `_`): `_unavailable`, `_body`, `_BadArg`, `_int_arg`, `_bad_arg`, `_gate_violation`, `_ledger_unavailable`, `_principal`, `_require_db`, `_obj_to_dict`, `_mark_genesis`, `_link_to_dict`, `_event_to_dict`, `_known_bad`, `_action_event_to_dict`, `_proposal_to_dict`, `_cycle_bg`, `_try_start_cycle`, `_bulk_import_apply`, `_invest_bg`, `_claim_proposal`, `_cycle_may_auto_apply`, `_proposal_actor_and_id`, `_alert_to_dict`, `_recon_plan`, `_strict_operator`, `_strict_operator_required`, `_str_arg`
+**Internas** (empiezan con `_`): `_unavailable`, `_body`, `_BadArg`, `_int_arg`, `_bad_arg`, `_gate_violation`, `_ledger_unavailable`, `_principal`, `_require_db`, `_obj_to_dict`, `_mark_genesis`, `_link_to_dict`, `_event_to_dict`, `_known_bad`, `_action_event_to_dict`, `_proposal_to_dict`, `_cycle_bg`, `_try_start_cycle`, `_bulk_import_apply`, `_invest_bg`, `_claim_proposal`, `_cycle_may_auto_apply`, `_proposal_actor_and_id`, `_alert_to_dict`, `_recon_plan`, `_strict_operator`, `_strict_operator_required`, `_str_arg`, `_import_mod`, `_import_file`, `_import_bundle_from_body`, `_import_view_current`, `_import_plan_for`, `_import_plan_summary`, `_import_error`
 
 ## Depende de
 
-- [[core.__init__.py]] — importa `GateViolation`, `core.gates`
+- [[core.__init__.py]] — importa `GateViolation`, `builder`, `core.gates`, `hot`, `signals`
 - [[core.decision_sites.py]] — importa `decision_sites`
 - [[core.decisions.py]] — importa `LedgerUnavailable`, `decisions`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `resolve`
@@ -72,11 +77,13 @@ API REST de la ontología: /api/ontology/\*
 - [[ontology.bitemporal.py]] — importa `KnownAtError`, `bitemporal`
 - [[ontology.bulk_import.py]] — importa `(dinámico: ontology.bulk_import)`, `import_links_bulk`
 - [[ontology.checkpoints.py]] — importa `checkpoints`
+- [[ontology.company_import.py]] — importa `company_import`
 - [[ontology.db.py]] — importa `ontology_available`, `session_scope`
+- [[ontology.import_models.py]] — importa `import_models`
 - [[ontology.ingest_news.py]] — importa `ingest_news_for`, `news_for_object`
 - [[ontology.models.py]] — importa `Alert`, `Event`, `LinkRecord`, `ObjectRecord`, `ProposedAction`
 - [[ontology.provenance.py]] — importa `SOURCE_TYPE`, `provenance_for_object`, `source_to_dict`
-- [[ontology.reconcile.py]] — importa `reconcile`
+- [[ontology.reconcile.py]] — importa `ReconcileError`, `reconcile`
 - [[ontology.service.py]] — importa `OntologyError`, `_parse_dt`, `_utcnow`, `apply_event`, `as_of_graph`, `diff_graph`, `get_object`, `is_genesis` …
 - [[ontology.timeline.py]] — importa `entity_timeline`, `global_feed`
 - [[ontology.vocabulary.py]] — importa `is_economic`, `object_types`
@@ -112,6 +119,11 @@ _Además lo importan 6 pruebas (lista abajo)._
 | `GET` | `/api/ontology/gates` | `gates_status` | — |
 | `GET` | `/api/ontology/graph` | `graph` | [[engine.maptime.js]], 3 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[engine.khipu_lang.js]], 1 prueba |
+| `POST` | `/api/ontology/import/apply` | `import_apply` | [[scripts.import_companies.py]], 1 prueba |
+| `POST` | `/api/ontology/import/files` | `import_files` | [[scripts.import_companies.py]], 2 pruebas |
+| `POST` | `/api/ontology/import/plan` | `import_plan` | [[scripts.import_companies.py]], 1 prueba |
+| `POST` | `/api/ontology/import/rollback` | `import_rollback` | [[scripts.import_companies.py]], 1 prueba |
+| `GET` | `/api/ontology/import/runs` | `import_runs` | [[scripts.import_companies.py]], 1 prueba |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[engine.app_main.js]], [[engine.temporal-graph.js]], 4 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
@@ -141,10 +153,12 @@ Grupos: [[API ontology]]
 - [[tests.test_cierre_infra.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_graph_api.py]]
+- [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]

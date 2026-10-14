@@ -11,7 +11,8 @@
 // Lo usan engine/globe.js y engine/worldmonitor.js. El server tiene una réplica
 // EXACTA en core/world.py (exposición de la cadena a eventos) — tests/test_world.py
 // compara ambas implementaciones sobre los 949 nodos: si editas una tabla aquí,
-// edítala también allá.
+// edítala también allá. Al final vive `window.KhipuCountries` (ISO-2 ↔ clave ↔ nombre
+// ES/EN, gemela de core/countries.py; tabla GENERADA, ver abajo).
 
 (function () {
   'use strict';
@@ -302,9 +303,15 @@
   }
 
   // Texto libre de país ("Estados Unidos (HQ Denver, CO)", "Japón") → clave.
+  // Desde 2026-10-14 también un ISO-2 guardado por el importador ('US' → 'EEUU', 'JP' → 'Japon'): solo dos
+  // MAYÚSCULAS y solo si su clave existe en COUNTRY (igual que core/world.country_key).
   function countryKey(raw) {
     if (!raw) return null;
     if (Object.prototype.hasOwnProperty.call(COUNTRY, raw)) return raw;
+    const t = String(raw).trim();
+    if (KC_ISO_RX.test(t) && KC_TABLE[t] && Object.prototype.hasOwnProperty.call(COUNTRY, KC_TABLE[t].key)) {
+      return KC_TABLE[t].key;
+    }
     const n = norm(raw);
     if (ALIAS[n]) return ALIAS[n];
     const first = norm(String(raw).split(/[\/(,;—–]/)[0]);
@@ -392,5 +399,234 @@
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
   }
 
-  window.GeoCoords = { geoCoord, latLngToVec3, haversineKm, countryKey, COUNTRY, ALIAS, US_HUBS, HQ, CITY };
+  // ── KhipuCountries: ISO-2 ↔ clave del catálogo ↔ nombre ES/EN ↔ ¿Europa? ─────────────────────────────────
+  // Gemela EXACTA de core/countries.py (iso2_of / region_of / catalog_key_of / label / is_europe). La tabla de
+  // abajo se GENERA con `python scripts/build_country_review.py --js` (tests/test_countries.py exige paridad):
+  // no la edites a mano. Cada fila: [iso2, nombre EN, nombre ES, clave del catálogo de hoy ('' = ninguna), ¿Europa?].
+  // BEGIN KhipuCountries TABLE (generado)
+  const KC_DATA = {"regions":{"Europa":{"en":"Europe","es":"Europa"},"RestoEuropa":{"en":"Rest of Europe",
+    "es":"Resto de Europa"},"RestoMundo":{"en":"Rest of World","es":"Resto del mundo"}},"extra":{"aland":"AX",
+    "america":"US","aotearoa":"NZ","bahrein":"BH","bangladesh":"BD","belarus":"BY","bielorusia":"BY",
+    "bolivia plurinational state of":"BO","bosnia":"BA","britain":"GB","brunei darussalam":"BN","burma":"MM",
+    "cabo verde":"CV","cape verde":"CV","china continental":"CN","chinese taipei":"TW","congo brazzaville":"CG",
+    "congo kinshasa":"CD","corea sur":"KR","cote d ivoire":"CI","curacao":"CW","czech":"CZ","dprk":"KP","drc":"CD",
+    "east timor":"TL","eau":"AE","ee uu de america":"US","emiratos":"AE","emiratos arabes":"AE","escocia":"GB",
+    "eslovaquia":"SK","estados unidos de america":"US","falklands":"FK","faroes":"FO","gales":"GB","gran bretana":"GB",
+    "hk":"HK","holland":"NL","holy see":"VA","hong kong china":"HK","hong kong sar":"HK","hongkong":"HK",
+    "iran islamic republic of":"IR","irlanda del norte":"GB","islas virgenes":"VI","ivory coast":"CI","kazajstan":"KZ",
+    "kazakstan":"KZ","kingdom of saudi arabia":"SA","kirguizistan":"KG","korea democratic people s republic of":"KP",
+    "korea republic of":"KR","korea south":"KR","ksa":"SA","kyrgyz republic":"KG","lao":"LA",
+    "lao people s democratic republic":"LA","libyan arab jamahiriya":"LY","macao china":"MO","macau":"MO",
+    "macedonia":"MK","mainland china":"CN","malvinas":"FK","micronesia federated states of":"FM",
+    "moldova republic of":"MD","new caledonia":"NC","northern ireland":"GB","nueva zelandia":"NZ",
+    "palestinian territories":"PS","palestinian territory":"PS","people s republic of china":"CN","persia":"IR",
+    "pitcairn":"PN","rd congo":"CD","rdc":"CD","reino de arabia saudita":"SA","republic of china":"TW",
+    "republica checa":"CZ","republica de moldova":"MD","republica popular china":"CN","reunion":"RE","roc":"TW",
+    "rok":"KR","russian federation":"RU","sahara occidental":"EH","saint helena ascension and tristan da cunha":"SH",
+    "saint martin french part":"MF","santa sede":"VA","sao tome and principe":"ST","scotland":"GB",
+    "sint maarten dutch part":"SX","slovak republic":"SK","st helena":"SH","st kitts and nevis":"KN","st lucia":"LC",
+    "st vincent and the grenadines":"VC","suazilandia":"SZ","swaziland":"SZ","syrian arab republic":"SY",
+    "tadjikistan":"TJ","taiwan province of china":"TW","tanzania united republic of":"TZ","timor este":"TL",
+    "trinidad":"TT","turkiye":"TR","u k":"GB","u s a":"US","uae":"AE","united states virgin islands":"VI",
+    "us virgin islands":"VI","uzbekistan":"UZ","vatican":"VA","vaticano":"VA","venezuela bolivarian republic of":"VE",
+    "viet nam":"VN","virgin islands british":"VG","virgin islands u s":"VI","wales":"GB","zimbabue":"ZW",
+    "zimbabwe":"ZW"},"rows":[["AD","Andorra","Andorra","",1],["AE","United Arab Emirates","Emiratos Árabes Unidos","EAU",
+    0],["AF","Afghanistan","Afganistán","",0],["AG","Antigua and Barbuda","Antigua y Barbuda","",0],["AI","Anguilla",
+    "Anguila","",0],["AL","Albania","Albania","",1],["AM","Armenia","Armenia","",0],["AO","Angola","Angola","",0],["AQ",
+    "Antarctica","Antártida","",0],["AR","Argentina","Argentina","Argentina",0],["AS","American Samoa","Samoa Americana",
+    "",0],["AT","Austria","Austria","Austria",1],["AU","Australia","Australia","Australia",0],["AW","Aruba","Aruba","",0],
+    ["AX","Åland Islands","Islas Åland","",1],["AZ","Azerbaijan","Azerbaiyán","Azerbaiyan",0],["BA",
+    "Bosnia and Herzegovina","Bosnia y Herzegovina","",1],["BB","Barbados","Barbados","",0],["BD","Bangladesh",
+    "Bangladés","",0],["BE","Belgium","Bélgica","Belgica",1],["BF","Burkina Faso","Burkina Faso","",0],["BG","Bulgaria",
+    "Bulgaria","",1],["BH","Bahrain","Baréin","",0],["BI","Burundi","Burundi","",0],["BJ","Benin","Benín","",0],["BL",
+    "Saint Barthélemy","San Bartolomé","",0],["BM","Bermuda","Bermudas","",0],["BN","Brunei","Brunéi","",0],["BO",
+    "Bolivia","Bolivia","",0],["BQ","Bonaire, Sint Eustatius and Saba","Bonaire, San Eustaquio y Saba","",0],["BR",
+    "Brazil","Brasil","Brasil",0],["BS","Bahamas","Bahamas","",0],["BT","Bhutan","Bután","",0],["BV","Bouvet Island",
+    "Isla Bouvet","",0],["BW","Botswana","Botsuana","",0],["BY","Belarus","Bielorrusia","",1],["BZ","Belize","Belice","",
+    0],["CA","Canada","Canadá","Canada",0],["CC","Cocos (Keeling) Islands","Islas Cocos","",0],["CD",
+    "Democratic Republic of the Congo","República Democrática del Congo","",0],["CF","Central African Republic",
+    "República Centroafricana","",0],["CG","Republic of the Congo","República del Congo","",0],["CH","Switzerland",
+    "Suiza","Suiza",1],["CI","Côte d'Ivoire","Costa de Marfil","",0],["CK","Cook Islands","Islas Cook","",0],["CL",
+    "Chile","Chile","Chile",0],["CM","Cameroon","Camerún","",0],["CN","China","China","China",0],["CO","Colombia",
+    "Colombia","Colombia",0],["CR","Costa Rica","Costa Rica","",0],["CU","Cuba","Cuba","",0],["CV","Cape Verde",
+    "Cabo Verde","",0],["CW","Curaçao","Curazao","",0],["CX","Christmas Island","Isla de Navidad","",0],["CY","Cyprus",
+    "Chipre","",1],["CZ","Czechia","Chequia","Chequia",1],["DE","Germany","Alemania","Alemania",1],["DJ","Djibouti",
+    "Yibuti","",0],["DK","Denmark","Dinamarca","Dinamarca",1],["DM","Dominica","Dominica","",0],["DO",
+    "Dominican Republic","República Dominicana","",0],["DZ","Algeria","Argelia","Argelia",0],["EC","Ecuador","Ecuador","",
+    0],["EE","Estonia","Estonia","",1],["EG","Egypt","Egipto","Egipto",0],["EH","Western Sahara","Sáhara Occidental","",
+    0],["ER","Eritrea","Eritrea","",0],["ES","Spain","España","Espana",1],["ET","Ethiopia","Etiopía","",0],["FI",
+    "Finland","Finlandia","Finlandia",1],["FJ","Fiji","Fiyi","",0],["FK","Falkland Islands","Islas Malvinas","",0],["FM",
+    "Micronesia","Micronesia","",0],["FO","Faroe Islands","Islas Feroe","",1],["FR","France","Francia","Francia",1],["GA",
+    "Gabon","Gabón","",0],["GB","United Kingdom","Reino Unido","ReinoUnido",1],["GD","Grenada","Granada","",0],["GE",
+    "Georgia","Georgia","",0],["GF","French Guiana","Guayana Francesa","",0],["GG","Guernsey","Guernsey","",1],["GH",
+    "Ghana","Ghana","",0],["GI","Gibraltar","Gibraltar","",1],["GL","Greenland","Groenlandia","",0],["GM","Gambia",
+    "Gambia","",0],["GN","Guinea","Guinea","",0],["GP","Guadeloupe","Guadalupe","",0],["GQ","Equatorial Guinea",
+    "Guinea Ecuatorial","",0],["GR","Greece","Grecia","Grecia",1],["GS","South Georgia and the South Sandwich Islands",
+    "Islas Georgias del Sur y Sandwich del Sur","",0],["GT","Guatemala","Guatemala","",0],["GU","Guam","Guam","",0],["GW",
+    "Guinea-Bissau","Guinea-Bisáu","",0],["GY","Guyana","Guyana","",0],["HK","Hong Kong","Hong Kong","HongKong",0],["HM",
+    "Heard Island and McDonald Islands","Islas Heard y McDonald","",0],["HN","Honduras","Honduras","",0],["HR","Croatia",
+    "Croacia","",1],["HT","Haiti","Haití","",0],["HU","Hungary","Hungría","Hungria",1],["ID","Indonesia","Indonesia",
+    "Indonesia",0],["IE","Ireland","Irlanda","Irlanda",1],["IL","Israel","Israel","Israel",0],["IM","Isle of Man",
+    "Isla de Man","",1],["IN","India","India","India",0],["IO","British Indian Ocean Territory",
+    "Territorio Británico del Océano Índico","",0],["IQ","Iraq","Irak","",0],["IR","Iran","Irán","Iran",0],["IS",
+    "Iceland","Islandia","",1],["IT","Italy","Italia","Italia",1],["JE","Jersey","Jersey","",1],["JM","Jamaica","Jamaica",
+    "",0],["JO","Jordan","Jordania","",0],["JP","Japan","Japón","Japon",0],["KE","Kenya","Kenia","Kenia",0],["KG",
+    "Kyrgyzstan","Kirguistán","",0],["KH","Cambodia","Camboya","",0],["KI","Kiribati","Kiribati","",0],["KM","Comoros",
+    "Comoras","",0],["KN","Saint Kitts and Nevis","San Cristóbal y Nieves","",0],["KP","North Korea","Corea del Norte","",
+    0],["KR","South Korea","Corea del Sur","Corea",0],["KW","Kuwait","Kuwait","Kuwait",0],["KY","Cayman Islands",
+    "Islas Caimán","",0],["KZ","Kazakhstan","Kazajistán","Kazajistan",0],["LA","Laos","Laos","",0],["LB","Lebanon",
+    "Líbano","",0],["LC","Saint Lucia","Santa Lucía","",0],["LI","Liechtenstein","Liechtenstein","",1],["LK","Sri Lanka",
+    "Sri Lanka","",0],["LR","Liberia","Liberia","",0],["LS","Lesotho","Lesoto","",0],["LT","Lithuania","Lituania",
+    "Lituania",1],["LU","Luxembourg","Luxemburgo","Luxemburgo",1],["LV","Latvia","Letonia","",1],["LY","Libya","Libia","",
+    0],["MA","Morocco","Marruecos","",0],["MC","Monaco","Mónaco","",1],["MD","Moldova","Moldavia","",1],["ME",
+    "Montenegro","Montenegro","",1],["MF","Saint Martin","San Martín","",0],["MG","Madagascar","Madagascar","",0],["MH",
+    "Marshall Islands","Islas Marshall","",0],["MK","North Macedonia","Macedonia del Norte","",1],["ML","Mali","Malí","",
+    0],["MM","Myanmar","Birmania","",0],["MN","Mongolia","Mongolia","",0],["MO","Macao","Macao","",0],["MP",
+    "Northern Mariana Islands","Islas Marianas del Norte","",0],["MQ","Martinique","Martinica","",0],["MR","Mauritania",
+    "Mauritania","",0],["MS","Montserrat","Montserrat","",0],["MT","Malta","Malta","",1],["MU","Mauritius","Mauricio","",
+    0],["MV","Maldives","Maldivas","",0],["MW","Malawi","Malaui","",0],["MX","Mexico","México","Mexico",0],["MY",
+    "Malaysia","Malasia","Malasia",0],["MZ","Mozambique","Mozambique","",0],["NA","Namibia","Namibia","",0],["NC",
+    "New Caledonia","Nueva Caledonia","",0],["NE","Niger","Níger","",0],["NF","Norfolk Island","Isla Norfolk","",0],["NG",
+    "Nigeria","Nigeria","Nigeria",0],["NI","Nicaragua","Nicaragua","",0],["NL","Netherlands","Países Bajos","PaisesBajos",
+    1],["NO","Norway","Noruega","Noruega",1],["NP","Nepal","Nepal","",0],["NR","Nauru","Nauru","",0],["NU","Niue","Niue",
+    "",0],["NZ","New Zealand","Nueva Zelanda","NuevaZelanda",0],["OM","Oman","Omán","",0],["PA","Panama","Panamá",
+    "Panama",0],["PE","Peru","Perú","Peru",0],["PF","French Polynesia","Polinesia Francesa","",0],["PG",
+    "Papua New Guinea","Papúa Nueva Guinea","",0],["PH","Philippines","Filipinas","Filipinas",0],["PK","Pakistan",
+    "Pakistán","Pakistan",0],["PL","Poland","Polonia","Polonia",1],["PM","Saint Pierre and Miquelon",
+    "San Pedro y Miquelón","",0],["PN","Pitcairn Islands","Islas Pitcairn","",0],["PR","Puerto Rico","Puerto Rico","",0],
+    ["PS","Palestine","Palestina","",0],["PT","Portugal","Portugal","Portugal",1],["PW","Palau","Palaos","",0],["PY",
+    "Paraguay","Paraguay","",0],["QA","Qatar","Catar","Catar",0],["RE","Réunion","Reunión","",0],["RO","Romania",
+    "Rumania","Rumania",1],["RS","Serbia","Serbia","",1],["RU","Russia","Rusia","Rusia",0],["RW","Rwanda","Ruanda","",0],
+    ["SA","Saudi Arabia","Arabia Saudita","ArabiaSaudita",0],["SB","Solomon Islands","Islas Salomón","",0],["SC",
+    "Seychelles","Seychelles","",0],["SD","Sudan","Sudán","",0],["SE","Sweden","Suecia","Suecia",1],["SG","Singapore",
+    "Singapur","Singapur",0],["SH","Saint Helena","Santa Elena","",0],["SI","Slovenia","Eslovenia","",1],["SJ",
+    "Svalbard and Jan Mayen","Svalbard y Jan Mayen","",1],["SK","Slovakia","Eslovaquia","",1],["SL","Sierra Leone",
+    "Sierra Leona","",0],["SM","San Marino","San Marino","",1],["SN","Senegal","Senegal","",0],["SO","Somalia","Somalia",
+    "",0],["SR","Suriname","Surinam","",0],["SS","South Sudan","Sudán del Sur","",0],["ST","São Tomé and Príncipe",
+    "Santo Tomé y Príncipe","",0],["SV","El Salvador","El Salvador","",0],["SX","Sint Maarten","Sint Maarten","",0],["SY",
+    "Syria","Siria","",0],["SZ","Eswatini","Esuatini","",0],["TC","Turks and Caicos Islands","Islas Turcas y Caicos","",
+    0],["TD","Chad","Chad","",0],["TF","French Southern Territories","Territorios Australes Franceses","",0],["TG","Togo",
+    "Togo","",0],["TH","Thailand","Tailandia","Tailandia",0],["TJ","Tajikistan","Tayikistán","",0],["TK","Tokelau",
+    "Tokelau","",0],["TL","Timor-Leste","Timor Oriental","",0],["TM","Turkmenistan","Turkmenistán","",0],["TN","Tunisia",
+    "Túnez","",0],["TO","Tonga","Tonga","",0],["TR","Turkey","Turquía","Turquia",0],["TT","Trinidad and Tobago",
+    "Trinidad y Tobago","",0],["TV","Tuvalu","Tuvalu","",0],["TW","Taiwan","Taiwán","Taiwan",0],["TZ","Tanzania",
+    "Tanzania","",0],["UA","Ukraine","Ucrania","Ucrania",1],["UG","Uganda","Uganda","Uganda",0],["UM",
+    "United States Minor Outlying Islands","Islas Ultramarinas Menores de Estados Unidos","",0],["US","United States",
+    "Estados Unidos","EEUU",0],["UY","Uruguay","Uruguay","",0],["UZ","Uzbekistan","Uzbekistán","",0],["VA","Vatican City",
+    "Ciudad del Vaticano","",1],["VC","Saint Vincent and the Grenadines","San Vicente y las Granadinas","",0],["VE",
+    "Venezuela","Venezuela","",0],["VG","British Virgin Islands","Islas Vírgenes Británicas","",0],["VI",
+    "U.S. Virgin Islands","Islas Vírgenes de los Estados Unidos","",0],["VN","Vietnam","Vietnam","Vietnam",0],["VU",
+    "Vanuatu","Vanuatu","",0],["WF","Wallis and Futuna","Wallis y Futuna","",0],["WS","Samoa","Samoa","",0],["XK",
+    "Kosovo","Kosovo","",1],["YE","Yemen","Yemen","",0],["YT","Mayotte","Mayotte","",0],["ZA","South Africa","Sudáfrica",
+    "Sudafrica",0],["ZM","Zambia","Zambia","",0],["ZW","Zimbabwe","Zimbabue","",0]]};
+  // END KhipuCountries TABLE
+  const KC_TABLE = {}, KC_KEY_TO_ISO = {}, KC_EUROPE = {};
+  KC_DATA.rows.forEach(r => {
+    KC_TABLE[r[0]] = { key: r[3] || r[1], es: r[2], en: r[1], eu: !!r[4] };
+    if (r[3]) KC_KEY_TO_ISO[r[3]] = r[0];
+    if (r[4]) KC_EUROPE[r[0]] = 1;
+  });
+  const KC_REGIONS = { Europa: 1, RestoEuropa: 1, RestoMundo: 1 };
+  const KC_ISO_RX = /^[A-Z]{2}$/;
+  let KC_NAME_INDEX = null;
+  const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+
+  function kcNameIndex() {
+    if (!KC_NAME_INDEX) {
+      const idx = {};
+      KC_DATA.rows.forEach(r => {
+        const en = norm(r[1]), es = norm(r[2]);
+        if (!has(idx, en)) idx[en] = r[0];
+        if (!has(idx, es)) idx[es] = r[0];
+      });
+      Object.keys(KC_DATA.extra).forEach(k => { idx[k] = KC_DATA.extra[k]; });
+      KC_NAME_INDEX = idx;
+    }
+    return KC_NAME_INDEX;
+  }
+
+  // ¿Es un ISO-2 conocido? Solo dos MAYÚSCULAS ('CA' sí, 'ca' no).
+  function isIso2(text) {
+    const t = String(text == null ? '' : text).trim();
+    return KC_ISO_RX.test(t) && has(KC_TABLE, t);
+  }
+
+  // Cualquier grafía del país (136 del catálogo, ISO-2, nombre EN/ES) → ISO-2; regiones y desconocidos → null.
+  function iso2Of(text) {
+    if (text == null) return null;
+    const t = String(text).trim();
+    if (!t) return null;
+    if (isIso2(t)) return t;
+    const k = countryKey(t);
+    if (k && has(KC_KEY_TO_ISO, k)) return KC_KEY_TO_ISO[k];
+    if (k && KC_REGIONS[k]) return null;
+    if (k === 'Japan') return 'JP';
+    const idx = kcNameIndex();
+    const n = norm(t);
+    if (has(idx, n)) return idx[n];
+    const first = norm(t.split(/[\/(,;—–]/)[0]);
+    return has(idx, first) ? idx[first] : null;
+  }
+
+  // 'Europa' | 'RestoEuropa' | 'RestoMundo' cuando el texto NO nombra un país real; si no, null.
+  function regionOf(text) {
+    if (text == null) return null;
+    const t = String(text).trim();
+    if (!t) return null;
+    if (KC_REGIONS[t]) return t;
+    const k = countryKey(t);
+    return k && KC_REGIONS[k] ? k : null;
+  }
+
+  // ISO-2 → clave del catálogo de hoy ('GB' → 'ReinoUnido'); sin clave → nombre EN; desconocido → el mismo texto.
+  function catalogKeyOf(iso2) {
+    const t = String(iso2 == null ? '' : iso2).trim().toUpperCase();
+    return has(KC_TABLE, t) ? KC_TABLE[t].key : (iso2 == null ? '' : iso2);
+  }
+
+  // Nombre legible (ISO-2, región o clave del catálogo): label('US','es') → 'Estados Unidos'.
+  function countryLabel(code, lang) {
+    const lg = String(lang || '').toLowerCase().indexOf('en') === 0 ? 'en' : 'es';
+    const t = String(code == null ? '' : code).trim();
+    if (!t) return '';
+    if (has(KC_DATA.regions, t)) return KC_DATA.regions[t][lg];
+    let row = KC_ISO_RX.test(t.toUpperCase()) && has(KC_TABLE, t.toUpperCase()) ? KC_TABLE[t.toUpperCase()] : null;
+    if (!row && has(KC_KEY_TO_ISO, t)) row = KC_TABLE[KC_KEY_TO_ISO[t]];
+    return row ? row[lg] : t;
+  }
+
+  // ¿Europa? (ISO-2, clave o texto; 'Europa'/'RestoEuropa' también).
+  function isEurope(text) {
+    const iso = iso2Of(text);
+    if (iso) return !!KC_EUROPE[iso];
+    const r = regionOf(text);
+    return r === 'Europa' || r === 'RestoEuropa';
+  }
+
+  // Grupo para contar/filtrar por país en el navegador: la clave del catálogo si se reconoce, si no el texto tal cual.
+  function countryGroup(raw) {
+    const k = countryKey(raw);
+    return k || (raw == null ? null : String(raw)) || null;
+  }
+
+  // ISO-2 de un nodo: country (o loc cuando country es una región), como core/countries.iso2_of_props.
+  function countryIso2(node) {
+    if (!node) return null;
+    for (const k of ['hq_country', 'country_iso2']) {
+      const v = node[k];
+      if (v && isIso2(String(v).trim())) return String(v).trim();
+    }
+    const c = node.country || node.pais;
+    const iso = iso2Of(c);
+    if (iso) return iso;
+    if (!c || regionOf(c)) return iso2Of(node.loc);
+    return null;
+  }
+
+  window.KhipuCountries = {
+    TABLE: KC_TABLE, KEY_TO_ISO: KC_KEY_TO_ISO, EUROPE: KC_EUROPE, EXTRA_ALIAS: KC_DATA.extra,
+    iso2Of, regionOf, catalogKeyOf, label: countryLabel, isEurope, isIso2, countryIso2, countryGroup,
+  };
+  window.GeoCoords = { geoCoord, latLngToVec3, haversineKm, countryKey, countryIso2, countryGroup,
+    COUNTRY, ALIAS, US_HUBS, HQ, CITY };
 })();

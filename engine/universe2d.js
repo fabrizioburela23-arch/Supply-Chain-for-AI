@@ -54,6 +54,17 @@
     EEUU: 2.1, Canada: 2.5, Europa: 3, Alemania: 3, Francia: 3,
     PaisesBajos: 3, ReinoUnido: 3, RestoEuropa: 3,
   };
+  // Z por región para CUALQUIER grafía ('Taiwán', 'Estados Unidos (HQ…)', 'Suiza' → Europa) vía GeoCoords.countryKey
+  // (geo_coords.js carga después de este archivo: se consulta al calcular el layout, nunca al cargar).
+  function _regionZ(c) {
+    if (c == null) return null;
+    if (REGION_Z[c] != null) return REGION_Z[c];
+    const G = window.GeoCoords, KC = window.KhipuCountries;
+    const k = (G && G.countryKey) ? G.countryKey(c) : null;
+    if (k && REGION_Z[k] != null) return REGION_Z[k];
+    if (KC && KC.isEurope && KC.isEurope(c)) return REGION_Z.Europa;
+    return null;
+  }
   // 3 capas de profundidad: [escala de tamaño, alpha, factor de parallax]
   const LAYERS = [
     { scale: 0.72, alpha: 0.55, par: 0.85 },   // lejana (Asia)
@@ -446,8 +457,8 @@
       U.wx[i] = (catX - 0.5) * 2 * SPAN_X + _jit(n.id + 'x', 26);
       U.wy[i] = (nrs / 100 - 0.5) * 2 * SPAN_Y + _jit(n.id + 'y', 18);
       // Z (región) → capa de parallax: Asia lejos, Occidente cerca
-      const zk = REGION_Z[n.country] != null ? REGION_Z[n.country]
-               : REGION_Z[n.region] != null ? REGION_Z[n.region] : 0;
+      const zc = _regionZ(n.country), zg = zc != null ? zc : _regionZ(n.region);
+      const zk = zg != null ? zg : 0;
       U.layer[i] = zk < -1 ? 0 : zk > 1 ? 2 : 1;
       U.baseR[i] = _radiusOf(n.id, U.degUp[i] + U.degDown[i], n.big) * 0.62;
       // Color por MACRO-SECTOR (9 colores vivos) → coherente con el mapa y la

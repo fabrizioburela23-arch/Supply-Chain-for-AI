@@ -37,6 +37,7 @@ _Además lo importan 1 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_resolve_ids_impact_perf.py]]
 - [[tests.test_scale_budget.py]]
 - [[tests.test_scale_kernel.py]]
 - [[tests.test_scale_search.py]]

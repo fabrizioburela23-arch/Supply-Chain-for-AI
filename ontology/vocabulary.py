@@ -237,6 +237,68 @@ def reset_unknown():
         v.clear()
 
 
+# ── categorías del catálogo (data/categories.json = fuente única; lote 2026-10-14) ───────────────────────────────
+_CATS = {'data': None, 'mtime': None}
+
+
+def _categories_path():
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'categories.json')
+
+
+def categories_doc(force=False):
+    """data/categories.json entero (cacheado por mtime). {} si no existe o es ilegible: el vocabulario de relaciones
+    no depende de él."""
+    p = _categories_path()
+    try:
+        mtime = os.path.getmtime(p)
+    except OSError:
+        mtime = None
+    with _LOCK:
+        if not force and _CATS['data'] is not None and _CATS['mtime'] == mtime:
+            return _CATS['data']
+        data = {}
+        if mtime is not None:
+            try:
+                with open(p, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except Exception as e:  # noqa: BLE001
+                log.error('categories.json ilegible (%s)', e)
+                data = {}
+        if not isinstance(data, dict):
+            data = {}
+        _CATS['data'] = data
+        _CATS['mtime'] = mtime
+        return data
+
+
+def categories():
+    """id → {es, en, sector, cssVar, x, aliases, status, origin} de TODAS las categorías (108 del catálogo + las del
+    lote aprobadas por defecto); las `rejected` no salen. Es lo que valida el importador (E2)."""
+    out = {}
+    for cid, c in (categories_doc().get('categories') or {}).items():
+        if not isinstance(c, dict) or c.get('status') == 'rejected':
+            continue
+        out[cid] = {'es': c.get('es'), 'en': c.get('en'), 'sector': c.get('sector'), 'cssVar': c.get('cssVar'),
+                    'x': c.get('x'), 'aliases': list(c.get('aliases') or []), 'status': c.get('status'),
+                    'origin': c.get('origin')}
+    return out
+
+
+def category_aliases():
+    """alias (o id) → id consolidado. Un lote que traiga `battery_components` cae en `battery_cells`."""
+    out = {}
+    for cid, c in categories().items():
+        out[cid] = cid
+        for a in c['aliases']:
+            out.setdefault(a, cid)
+    return out
+
+
+def resolve_category(cat):
+    """id consolidado de una categoría o alias (None si no existe)."""
+    return category_aliases().get(str(cat or '').strip().lower())
+
+
 def snapshot():
     """Vocabulario completo para servir al cliente (mata las copias duplicadas)."""
     d = load()

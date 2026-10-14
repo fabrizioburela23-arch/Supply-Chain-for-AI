@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/statematrix.js"
 lenguaje: "javascript"
-lineas: 73
+lineas: 76
 aliases: ["engine/statematrix.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/statematrix.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 73 líneas · `engine/statematrix.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 76 líneas · `engine/statematrix.js`
 
 ## Para qué sirve
 
@@ -23,18 +23,20 @@ ESTADO VISUAL de la simulación (solo animación; SIN matemática de contagio) P
 ## Depende de
 
 - [[engine.app_main.js]] — usa `MKT`, `NODE_BY_ID`, `computeNRS`, `quotePx`
+- [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`
 
-Se carga en [[app.html]] en la posición **67 de 98** (línea 3124), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
+Se carga en [[app.html]] en la posición **68 de 99** (línea 3191), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 67)
+- [[app.html]] — lo carga con `<script>` (posición 68)
 - [[engine.compare.js]] — usa `KhipuState`
 - [[engine.livesim.js]] — usa `KhipuState`
 
 ## Pruebas que lo cubren
 
+- [[tests.test_countries.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_scenario_pnl_browser.py]]

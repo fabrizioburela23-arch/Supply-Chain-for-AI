@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_governance.py"
 lenguaje: "python"
-lineas: 367
+lineas: 368
 aliases: ["tests/test_governance.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_governance.py
 
-> Prueba · capa [[Capa Pruebas]] · 367 líneas · `tests/test_governance.py`
+> Prueba · capa [[Capa Pruebas]] · 368 líneas · `tests/test_governance.py`
 
 ## Qué prueba
 
@@ -27,6 +27,7 @@ INFRA_OPERATIVA paso 9: registro de gobernanza (core/governance, scripts/build_g
 - [[core.governance_lint.py]]
 - [[core.identity.py]]
 - [[core.pin.py]]
+- [[data.categories.json]]
 - [[matrix.engine.py]]
 - [[matrix.tensor.py]]
 - [[ontology.actions.py]]

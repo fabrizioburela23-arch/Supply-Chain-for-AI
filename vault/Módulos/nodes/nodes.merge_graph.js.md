@@ -26,11 +26,11 @@ De nivel superior (globales del script): `UNVERIFIED_CONF`, `UNVERIFIED_QUALIFIE
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **19 de 98** (línea 1454), después de [[nodes.links_connect.js]] y antes de [[engine.app_main.js]].
+Se carga en [[app.html]] en la posición **20 de 99** (línea 1521), después de [[nodes.links_connect.js]] y antes de [[engine.app_main.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 19)
+- [[app.html]] — lo carga con `<script>` (posición 20)
 - [[engine.app_main.js]] — usa `buildKhipusGraph`
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 - [[scripts.link_origins.js]] — lo nombra por su ruta

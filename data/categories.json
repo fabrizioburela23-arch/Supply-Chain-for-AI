@@ -1,0 +1,2787 @@
+{
+ "schema": "khipus.categories/1",
+ "as_of": "2026-10-14",
+ "_doc": "FUENTE ÚNICA de las categorías del catálogo (108 de nodes/*.js + 55 del lote 2026-10-14, aprobadas por defecto: Fabrizio puede rechazar poniendo status \"rejected\"). nodes/categories_extra.js se GENERA con python scripts/build_categories.py (nunca editarlo a mano); las variables CSS --c-<id> de las categorías con color_source \"css\" viven en app.html (claro en :root, oscuro en .dark) y deben coincidir con `color`; color_source \"sector\" = nodes_multicapa.js las pinta en vivo con el color de su sector. `aliases` = ids que un lote importado puede traer y que se consolidan en esta categoría (battery_components → battery_cells). `x` = posición en el eje semántico del mapa (0 aguas arriba → 1 aguas abajo); las nuevas se reparten en sectors[].x_range. label_fixed = la etiqueta del catálogo era el id crudo y la buena está aquí.",
+ "merged": {
+  "battery_components": "battery_cells"
+ },
+ "sectors": {
+  "fabricacion": {
+   "es": "Fabricación",
+   "en": "Manufacturing",
+   "color": "#FF7A45",
+   "x_range": [
+    0.4,
+    0.48
+   ]
+  },
+  "diseno": {
+   "es": "Diseño & IP",
+   "en": "Design & IP",
+   "color": "#9D6BFF",
+   "x_range": [
+    0.5,
+    0.56
+   ]
+  },
+  "equipos": {
+   "es": "Equipos & Materiales",
+   "en": "Equipment & Materials",
+   "color": "#2BD9C7",
+   "x_range": [
+    0.22,
+    0.34
+   ]
+  },
+  "infra": {
+   "es": "Infra física",
+   "en": "Physical Infra",
+   "color": "#4D7CFE",
+   "x_range": [
+    0.7,
+    0.84
+   ]
+  },
+  "cloud_ia": {
+   "es": "Cloud & IA",
+   "en": "Cloud & AI",
+   "color": "#00E0FF",
+   "x_range": [
+    0.86,
+    0.96
+   ]
+  },
+  "defensa": {
+   "es": "Defensa",
+   "en": "Defense",
+   "color": "#FF5470",
+   "x_range": [
+    0.58,
+    0.64
+   ]
+  },
+  "espacio": {
+   "es": "Espacio",
+   "en": "Space",
+   "color": "#B0BFFF",
+   "x_range": [
+    0.01,
+    0.05
+   ]
+  },
+  "energia": {
+   "es": "Energía & Nuclear",
+   "en": "Energy & Nuclear",
+   "color": "#9BE33A",
+   "x_range": [
+    0.66,
+    0.74
+   ]
+  },
+  "robotica": {
+   "es": "Robótica",
+   "en": "Robotics",
+   "color": "#FF7ED4",
+   "x_range": [
+    0.93,
+    0.97
+   ]
+  },
+  "materiales": {
+   "es": "Materiales",
+   "en": "Materials",
+   "color": "#C9A227",
+   "x_range": [
+    0.08,
+    0.16
+   ]
+  },
+  "macro_credito": {
+   "es": "Macro & Crédito",
+   "en": "Macro & Credit",
+   "color": "#7FB3D5",
+   "x_range": [
+    0.6,
+    0.66
+   ]
+  },
+  "inmobiliario": {
+   "es": "Inmobiliario",
+   "en": "Real Estate",
+   "color": "#B08968",
+   "x_range": [
+    0.8,
+    0.84
+   ]
+  },
+  "logistica": {
+   "es": "Logística",
+   "en": "Logistics",
+   "color": "#5FB49C",
+   "x_range": [
+    0.36,
+    0.4
+   ]
+  }
+ },
+ "categories": {
+  "aerospace_components": {
+   "es": "Motores y componentes aeroespaciales",
+   "en": "Aero engines and aerospace components",
+   "sector": "defensa",
+   "cssVar": "--c-aerospace_components",
+   "x": 0.58,
+   "color": {
+    "light": "#93064B",
+    "dark": "#FA3897"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "aero_engines",
+    "defense_engines",
+    "superalloys"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 29
+  },
+  "ai_agents": {
+   "es": "Agentes IA",
+   "en": "AI Agents",
+   "sector": "cloud_ia",
+   "cssVar": "--c-ai_agents",
+   "x": 0.95,
+   "color": {
+    "light": "#FFBB52",
+    "dark": "#FFDB72"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "ai_auto": {
+   "es": "IA Automotriz",
+   "en": "Automotive AI",
+   "sector": "cloud_ia",
+   "cssVar": "--c-ai_auto",
+   "x": 0.92,
+   "color": {
+    "light": "#52CDFF",
+    "dark": "#72EDFF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "ai_data": {
+   "es": "Datos y etiquetado para IA",
+   "en": "AI data and labeling",
+   "sector": "cloud_ia",
+   "cssVar": "--c-ai_data",
+   "x": 0.86,
+   "color": {
+    "light": "#07A786",
+    "dark": "#38FAD3"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "ai_data_labeling",
+    "ai_training_data",
+    "ai_data_services"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 10
+  },
+  "ai_defense": {
+   "es": "IA Defensa",
+   "en": "Defense AI",
+   "sector": "defensa",
+   "cssVar": "--c-ai_defense",
+   "x": 0.88,
+   "color": {
+    "light": "#FF5B6B",
+    "dark": "#FF7B8B"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "ai_finance": {
+   "es": "IA Finanzas",
+   "en": "Finance AI",
+   "sector": "cloud_ia",
+   "cssVar": "--c-ai_finance",
+   "x": 0.9,
+   "color": {
+    "light": "#9B8AF0",
+    "dark": "#BBAAFF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "ai_health": {
+   "es": "IA Salud",
+   "en": "Health AI",
+   "sector": "cloud_ia",
+   "cssVar": "--c-ai_health",
+   "x": 0.89,
+   "color": {
+    "light": "#FF78C4",
+    "dark": "#FF98E4"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "ailab": {
+   "es": "Labs IA Frontera",
+   "en": "Frontier AI Labs",
+   "sector": "cloud_ia",
+   "cssVar": "--c-ailab",
+   "x": 0.91,
+   "color": {
+    "light": "#8B2FA8",
+    "dark": "#C58BFF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "air_cargo": {
+   "es": "Carga aérea",
+   "en": "Air cargo",
+   "sector": "logistica",
+   "cssVar": "--c-air_cargo",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "airport_operator": {
+   "es": "Operador aeroportuario",
+   "en": "Airport operator",
+   "sector": "logistica",
+   "cssVar": "--c-airport_operator",
+   "x": 0.36,
+   "color": {
+    "light": "#1D673B",
+    "dark": "#5CD686"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 5
+  },
+  "aisoft": {
+   "es": "Software IA",
+   "en": "AI Software",
+   "sector": "cloud_ia",
+   "cssVar": "--c-aisoft",
+   "x": 0.98,
+   "color": {
+    "light": "#0E7A6E",
+    "dark": "#3DE0C8"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "alternative_asset_manager": {
+   "es": "Gestor de activos alternativos",
+   "en": "Alternative asset manager",
+   "sector": "macro_credito",
+   "cssVar": "--c-alternative_asset_manager",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "aluminum": {
+   "es": "Aluminio",
+   "en": "Aluminum",
+   "sector": "materiales",
+   "cssVar": "--c-aluminum",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "analog_mixed_signal": {
+   "es": "Chips analógicos y de señal mixta",
+   "en": "Analog and mixed-signal chips",
+   "sector": "diseno",
+   "cssVar": "--c-analog_mixed_signal",
+   "x": 0.5,
+   "color": {
+    "light": "#080693",
+    "dark": "#3B38FA"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 7
+  },
+  "asic_custom": {
+   "es": "ASICs Custom",
+   "en": "Custom ASICs",
+   "sector": "diseno",
+   "cssVar": "--c-asic_custom",
+   "x": 0.52,
+   "color": {
+    "light": "#FF9B5C",
+    "dark": "#FFBB7C"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "asset_manager": {
+   "es": "Gestor de activos",
+   "en": "Asset manager",
+   "sector": "macro_credito",
+   "cssVar": "--c-asset_manager",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "auto_oem": {
+   "es": "Fabricante de autos",
+   "en": "Automaker",
+   "sector": "robotica",
+   "cssVar": "--c-auto_oem",
+   "x": 0.93,
+   "color": {
+    "light": "#93068B",
+    "dark": "#FA38F8"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 48
+  },
+  "battery_cells": {
+   "es": "Celdas y paquetes de batería",
+   "en": "Battery cells and packs",
+   "sector": "energia",
+   "cssVar": "--c-battery_cells",
+   "x": 0.66,
+   "color": {
+    "light": "#808E0B",
+    "dark": "#D6E64C"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "battery_packs",
+    "battery_modules",
+    "battery_components"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 88
+  },
+  "battery_equipment": {
+   "es": "Equipos para fabricar baterías",
+   "en": "Battery manufacturing equipment",
+   "sector": "equipos",
+   "cssVar": "--c-battery_equipment",
+   "x": 0.22,
+   "color": {
+    "light": "#129B59",
+    "dark": "#5CD6A2"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 10
+  },
+  "battery_mat": {
+   "es": "Baterías/Materiales",
+   "en": "Battery Matls",
+   "sector": "energia",
+   "cssVar": "--c-battery_mat",
+   "x": 0.07,
+   "color": {
+    "light": "#88E06A",
+    "dark": "#A8F08A"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "battery_recycling": {
+   "es": "Reciclaje de baterías y metales",
+   "en": "Battery and metals recycling",
+   "sector": "energia",
+   "cssVar": "--c-battery_recycling",
+   "x": 0.668,
+   "color": {
+    "light": "#8BAC0D",
+    "dark": "#C3DD60"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "metals_recycling"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 17
+  },
+  "bis": {
+   "es": "Banco de Pagos Internacionales",
+   "en": "BIS",
+   "sector": "macro_credito",
+   "cssVar": "--c-bis",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "cables_power": {
+   "es": "Cables de energía y cobre",
+   "en": "Power cables and copper products",
+   "sector": "energia",
+   "cssVar": "--c-cables_power",
+   "x": 0.676,
+   "color": {
+    "light": "#66A50D",
+    "dark": "#AFE860"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "copper_products",
+    "copper_alloy_strip"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 34
+  },
+  "canal_authority": {
+   "es": "Autoridad de canal",
+   "en": "Canal authority",
+   "sector": "logistica",
+   "cssVar": "--c-canal_authority",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "cdn_edge": {
+   "es": "CDN / Edge DC",
+   "en": "CDN / Edge DC",
+   "sector": "infra",
+   "cssVar": "--c-cdn_edge",
+   "x": 0.84,
+   "color": {
+    "light": "#3DBCAA",
+    "dark": "#5DDCCA"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "cds_index_provider": {
+   "es": "Índices de CDS",
+   "en": "CDS index provider",
+   "sector": "macro_credito",
+   "cssVar": "--c-cds_index_provider",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "cement": {
+   "es": "Cemento",
+   "en": "Cement",
+   "sector": "materiales",
+   "cssVar": "--c-cement",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "central_bank": {
+   "es": "Banco central",
+   "en": "Central bank",
+   "sector": "macro_credito",
+   "cssVar": "--c-central_bank",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "chemicals": {
+   "es": "Químicos / Gases",
+   "en": "Chemicals / Gases",
+   "sector": "equipos",
+   "cssVar": "--c-chemicals",
+   "x": 0.34,
+   "color": {
+    "light": "#C0521F",
+    "dark": "#FF9B5C"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "cloud": {
+   "es": "Cloud / Neoclouds",
+   "en": "Cloud / Neoclouds",
+   "sector": "cloud_ia",
+   "cssVar": "--c-cloud",
+   "x": 0.86,
+   "color": {
+    "light": "#0A6CA8",
+    "dark": "#52B1FF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "coal": {
+   "es": "Carbón",
+   "en": "Coal",
+   "sector": "energia",
+   "cssVar": "--c-coal",
+   "x": 0.684,
+   "color": {
+    "light": "#4BB10E",
+    "dark": "#CAEF8E"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "coal_mining"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 6
+  },
+  "colocation": {
+   "es": "Colocación de datacenters",
+   "en": "Colocation",
+   "sector": "inmobiliario",
+   "cssVar": "--c-colocation",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "compound_semi": {
+   "es": "Semiconductores compuestos (SiC, GaN, InP)",
+   "en": "Compound semiconductors",
+   "sector": "fabricacion",
+   "cssVar": "--c-compound_semi",
+   "x": 0.4,
+   "color": {
+    "light": "#93060C",
+    "dark": "#FA3840"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 13
+  },
+  "connectivity_infra": {
+   "es": "Fibra / Submarinos",
+   "en": "Fiber / Subsea",
+   "sector": "infra",
+   "cssVar": "--c-connectivity_infra",
+   "x": 0.74,
+   "color": {
+    "light": "#3C7A89",
+    "dark": "#74C8DA"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "connectors": {
+   "es": "Conectores y cableado",
+   "en": "Connectors and cabling",
+   "sector": "fabricacion",
+   "cssVar": "--c-connectors",
+   "x": 0.413,
+   "color": {
+    "light": "#B31308",
+    "dark": "#FA5943"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "cable_assemblies",
+    "high_speed_cables",
+    "structured_cabling"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 40
+  },
+  "container_leasing": {
+   "es": "Contenedores y equipos portuarios",
+   "en": "Containers and port equipment",
+   "sector": "logistica",
+   "cssVar": "--c-container_leasing",
+   "x": 0.368,
+   "color": {
+    "light": "#258041",
+    "dark": "#86E0B8"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "container_manufacturing",
+    "container_equipment",
+    "port_equipment"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 14
+  },
+  "contract_logistics": {
+   "es": "Logística por contrato, almacenes y transporte terrestre",
+   "en": "Contract logistics, warehousing and trucking",
+   "sector": "logistica",
+   "cssVar": "--c-contract_logistics",
+   "x": 0.376,
+   "color": {
+    "light": "#26644C",
+    "dark": "#96DCC7"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "warehousing",
+    "cold_storage",
+    "trucking_ltl",
+    "trucking",
+    "trucking_truckload",
+    "express_parcel",
+    "digital_freight_platform",
+    "logistics_software",
+    "cargo_handling",
+    "equipment_rental"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 26
+  },
+  "cooling_thermal": {
+   "es": "Refrigeración de datacenters",
+   "en": "Data-center cooling",
+   "sector": "inmobiliario",
+   "cssVar": "--c-cooling_thermal",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "datacenter_operator": {
+   "es": "Operador de datacenters",
+   "en": "Data-center operator",
+   "sector": "inmobiliario",
+   "cssVar": "--c-datacenter_operator",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "datacenter_reit": {
+   "es": "REIT de datacenters",
+   "en": "Data-center REIT",
+   "sector": "inmobiliario",
+   "cssVar": "--c-datacenter_reit",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "dc_construction": {
+   "es": "Construcción de datacenters",
+   "en": "Data-center construction",
+   "sector": "inmobiliario",
+   "cssVar": "--c-dc_construction",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "dc_reit": {
+   "es": "DC REITs",
+   "en": "DC REITs",
+   "sector": "infra",
+   "cssVar": "--c-dc_reit",
+   "x": 0.82,
+   "color": {
+    "light": "#8B7FE8",
+    "dark": "#ABAFFB"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "defense_electronics": {
+   "es": "Electrónica de defensa",
+   "en": "Defense electronics",
+   "sector": "defensa",
+   "cssVar": "--c-defense_electronics",
+   "x": 0.595,
+   "color": {
+    "light": "#9F0739",
+    "dark": "#FA4380"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "defense_cyber",
+    "defense_components"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 33
+  },
+  "defense_prime": {
+   "es": "Defensa Prime",
+   "en": "Defense Primes",
+   "sector": "defensa",
+   "cssVar": "--c-defense_prime",
+   "x": 0.58,
+   "color": null,
+   "color_source": "none",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "derivatives_standards": {
+   "es": "Estándares de derivados (ISDA)",
+   "en": "Derivatives standards",
+   "sector": "macro_credito",
+   "cssVar": "--c-derivatives_standards",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "development_bank": {
+   "es": "Banca de desarrollo y crédito a la exportación",
+   "en": "Development and export-credit finance",
+   "sector": "macro_credito",
+   "cssVar": "--c-development_bank",
+   "x": 0.6,
+   "color": {
+    "light": "#26939C",
+    "dark": "#5CD3D6"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "export_credit_agency",
+    "multilateral_institution",
+    "infrastructure_lender"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 40
+  },
+  "drones_uav": {
+   "es": "Drones",
+   "en": "Drones and UAVs",
+   "sector": "defensa",
+   "cssVar": "--c-drones_uav",
+   "x": 0.61,
+   "color": {
+    "light": "#D2094A",
+    "dark": "#F93A65"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "drones",
+    "defense_drones"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 15
+  },
+  "earth_obs": {
+   "es": "Observación Terrestre",
+   "en": "Earth Obs",
+   "sector": "espacio",
+   "cssVar": "--c-earth_obs",
+   "x": 0.05,
+   "color": {
+    "light": "#4BD693",
+    "dark": "#6BF6B3"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "eda": {
+   "es": "EDA / Software CAD",
+   "en": "EDA / CAD SW",
+   "sector": "diseno",
+   "cssVar": "--c-eda",
+   "x": 0.2,
+   "color": {
+    "light": "#6B5DD3",
+    "dark": "#A99BFF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "edge_ai": {
+   "es": "Edge AI Silicon",
+   "en": "Edge AI",
+   "sector": "diseno",
+   "cssVar": "--c-edge_ai",
+   "x": 0.54,
+   "color": {
+    "light": "#F0A24A",
+    "dark": "#F0C06A"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "electronics_distribution": {
+   "es": "Distribución de electrónica",
+   "en": "Electronics distribution",
+   "sector": "logistica",
+   "cssVar": "--c-electronics_distribution",
+   "x": 0.384,
+   "color": {
+    "light": "#1AB985",
+    "dark": "#41EA90"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "it_distribution"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 12
+  },
+  "ems": {
+   "es": "Manufactura electrónica por contrato y pantallas",
+   "en": "Electronics manufacturing services and displays",
+   "sector": "fabricacion",
+   "cssVar": "--c-ems",
+   "x": 0.427,
+   "color": {
+    "light": "#972E06",
+    "dark": "#FB7C62"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "display_panels"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 8
+  },
+  "energy_trading": {
+   "es": "Comercialización de energía",
+   "en": "Energy trading",
+   "sector": "energia",
+   "cssVar": "--c-energy_trading",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "equip": {
+   "es": "Equipamiento",
+   "en": "Equipment",
+   "sector": "equipos",
+   "cssVar": "--c-equip",
+   "x": 0.22,
+   "color": {
+    "light": "#4E8B1E",
+    "dark": "#88E06A"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "equip_subsystems": {
+   "es": "Subsistemas y piezas para equipos de chips",
+   "en": "Chip equipment subsystems and parts",
+   "sector": "equipos",
+   "cssVar": "--c-equip_subsystems",
+   "x": 0.28,
+   "color": {
+    "light": "#15BA6D",
+    "dark": "#4BDF6D"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "test_sockets",
+    "pcb_equipment",
+    "smt_equipment",
+    "cleanroom_systems",
+    "cleanroom",
+    "ultrapure_water",
+    "wafer_services",
+    "precision_components",
+    "test_measurement",
+    "analysis_services",
+    "thermal_components"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 60
+  },
+  "ev_components": {
+   "es": "Autopartes, electrónica y software para autos",
+   "en": "Auto parts, electronics and software",
+   "sector": "robotica",
+   "cssVar": "--c-ev_components",
+   "x": 0.95,
+   "color": {
+    "light": "#B308A7",
+    "dark": "#FA43E5"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "auto_parts",
+    "auto_electronics",
+    "auto_software",
+    "lidar",
+    "lidar_sensors",
+    "ev_charging"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 57
+  },
+  "exchange_derivatives": {
+   "es": "Bolsa de derivados",
+   "en": "Derivatives exchange",
+   "sector": "macro_credito",
+   "cssVar": "--c-exchange_derivatives",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "exchange_index_provider": {
+   "es": "Bolsa e índices",
+   "en": "Exchange & index provider",
+   "sector": "macro_credito",
+   "cssVar": "--c-exchange_index_provider",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "fab_construction": {
+   "es": "Construcción de fábricas y salas limpias",
+   "en": "Fab and cleanroom construction",
+   "sector": "inmobiliario",
+   "cssVar": "--c-fab_construction",
+   "x": 0.8,
+   "color": {
+    "light": "#772E22",
+    "dark": "#D66C5C"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "cleanroom_engineering"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 11
+  },
+  "fabless": {
+   "es": "Diseño (Fabless)",
+   "en": "Design (Fabless)",
+   "sector": "diseno",
+   "cssVar": "--c-fabless",
+   "x": 0.5,
+   "color": {
+    "light": "#1B6DB5",
+    "dark": "#52B1FF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "fiber_optic_cable": {
+   "es": "Cable de fibra óptica",
+   "en": "Fiber-optic cable",
+   "sector": "materiales",
+   "cssVar": "--c-fiber_optic_cable",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "foundry": {
+   "es": "Foundry / IDM",
+   "en": "Foundry / IDM",
+   "sector": "fabricacion",
+   "cssVar": "--c-foundry",
+   "x": 0.42,
+   "color": {
+    "light": "#0F8C5F",
+    "dark": "#34E6A4"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "freight_forwarder": {
+   "es": "Transitario (freight forwarder)",
+   "en": "Freight forwarder",
+   "sector": "logistica",
+   "cssVar": "--c-freight_forwarder",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "glass_fiber": {
+   "es": "Fibra de vidrio",
+   "en": "Glass fiber",
+   "sector": "materiales",
+   "cssVar": "--c-glass_fiber",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "government_agency": {
+   "es": "Agencia o fondo estatal estratégico",
+   "en": "Strategic state agency or fund",
+   "sector": "macro_credito",
+   "cssVar": "--c-government_agency",
+   "x": 0.62,
+   "color": {
+    "light": "#216485",
+    "dark": "#55B1D4"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "ai_government_agency",
+    "government_funding_agency",
+    "state_industrial_fund",
+    "strategic_stockpile"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 8
+  },
+  "graphite": {
+   "es": "Grafito",
+   "en": "Graphite",
+   "sector": "materiales",
+   "cssVar": "--c-graphite",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "grid_equipment": {
+   "es": "Equipos de red eléctrica",
+   "en": "Grid and electrical equipment",
+   "sector": "energia",
+   "cssVar": "--c-grid_equipment",
+   "x": 0.692,
+   "color": {
+    "light": "#60D010",
+    "dark": "#8EE650"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "electrical_distribution",
+    "electrical_equipment",
+    "power_equipment",
+    "smart_meters",
+    "electrification_equipment"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 30
+  },
+  "grid_transmission": {
+   "es": "Transmisión eléctrica",
+   "en": "Grid transmission",
+   "sector": "energia",
+   "cssVar": "--c-grid_transmission",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "growth_equity": {
+   "es": "Capital de crecimiento",
+   "en": "Growth equity",
+   "sector": "macro_credito",
+   "cssVar": "--c-growth_equity",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "heavy_lift_logistics": {
+   "es": "Logística de cargas pesadas",
+   "en": "Heavy-lift logistics",
+   "sector": "logistica",
+   "cssVar": "--c-heavy_lift_logistics",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "high_purity_quartz": {
+   "es": "Cuarzo de alta pureza",
+   "en": "High-purity quartz",
+   "sector": "materiales",
+   "cssVar": "--c-high_purity_quartz",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "hpc_super": {
+   "es": "HPC / Supercomputación",
+   "en": "HPC / Supercomp",
+   "sector": "infra",
+   "cssVar": "--c-hpc_super",
+   "x": 0.8,
+   "color": {
+    "light": "#52B1FF",
+    "dark": "#72D1FF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "hydrogen": {
+   "es": "Hidrógeno",
+   "en": "Hydrogen",
+   "sector": "energia",
+   "cssVar": "--c-hydrogen",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "index_provider": {
+   "es": "Proveedor de índices",
+   "en": "Index provider",
+   "sector": "macro_credito",
+   "cssVar": "--c-index_provider",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "industrial_automation": {
+   "es": "Automatización industrial",
+   "en": "Industrial automation",
+   "sector": "robotica",
+   "cssVar": "--c-industrial_automation",
+   "x": 0.97,
+   "color": {
+    "light": "#AB077E",
+    "dark": "#FA4ECB"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "motors_drives",
+    "machine_vision",
+    "robot_components",
+    "robot_software",
+    "industrial_sensors",
+    "embedded_computing",
+    "industrial_computing",
+    "machine_tools",
+    "industrial_lasers",
+    "warehouse_automation",
+    "material_handling"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 66
+  },
+  "industrial_gas": {
+   "es": "Gases industriales",
+   "en": "Industrial gases",
+   "sector": "materiales",
+   "cssVar": "--c-industrial_gas",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "industrial_reit": {
+   "es": "REIT industrial",
+   "en": "Industrial REIT",
+   "sector": "inmobiliario",
+   "cssVar": "--c-industrial_reit",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "infrastructure_investor": {
+   "es": "Inversor en infraestructura",
+   "en": "Infrastructure investor",
+   "sector": "macro_credito",
+   "cssVar": "--c-infrastructure_investor",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "insurance": {
+   "es": "Seguros y reaseguros",
+   "en": "Insurance and reinsurance",
+   "sector": "macro_credito",
+   "cssVar": "--c-insurance",
+   "x": 0.64,
+   "color": {
+    "light": "#2B8AB0",
+    "dark": "#6EA5DB"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "reinsurance",
+    "insurance_broker",
+    "credit_insurance"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 38
+  },
+  "investment_bank": {
+   "es": "Banca de inversión",
+   "en": "Investment bank",
+   "sector": "macro_credito",
+   "cssVar": "--c-investment_bank",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "it_services": {
+   "es": "Servicios de TI",
+   "en": "IT services",
+   "sector": "cloud_ia",
+   "cssVar": "--c-it_services",
+   "x": 0.96,
+   "color": {
+    "light": "#09BBC6",
+    "dark": "#85F5F0"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 9
+  },
+  "lng": {
+   "es": "Gas natural licuado (GNL)",
+   "en": "LNG",
+   "sector": "energia",
+   "cssVar": "--c-lng",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "materials": {
+   "es": "Obleas / Materiales",
+   "en": "Wafers / Materials",
+   "sector": "equipos",
+   "cssVar": "--c-materials",
+   "x": 0.3,
+   "color": {
+    "light": "#B5790F",
+    "dark": "#F2C744"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "memory": {
+   "es": "Memoria",
+   "en": "Memory",
+   "sector": "fabricacion",
+   "cssVar": "--c-memory",
+   "x": 0.3,
+   "color": {
+    "light": "#C32B3C",
+    "dark": "#FF6478"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "midstream_pipeline": {
+   "es": "Oleoductos y gasoductos",
+   "en": "Midstream pipelines",
+   "sector": "energia",
+   "cssVar": "--c-midstream_pipeline",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "mining_cobalt": {
+   "es": "Minería de cobalto",
+   "en": "Cobalt mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_cobalt",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "mining_copper": {
+   "es": "Minería de cobre",
+   "en": "Copper mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_copper",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "mining_diversified": {
+   "es": "Minería diversificada",
+   "en": "Diversified mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_diversified",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "mining_equipment": {
+   "es": "Equipos de minería",
+   "en": "Mining equipment",
+   "sector": "materiales",
+   "cssVar": "--c-mining_equipment",
+   "x": 0.08,
+   "color": {
+    "light": "#6F3D15",
+    "dark": "#DE8254"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 4
+  },
+  "mining_lithium": {
+   "es": "Minería de litio",
+   "en": "Lithium mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_lithium",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "mining_nickel": {
+   "es": "Minería de níquel",
+   "en": "Nickel mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_nickel",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "mining_pgm": {
+   "es": "Metales del grupo del platino",
+   "en": "PGM mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_pgm",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "mining_tin": {
+   "es": "Minería de estaño",
+   "en": "Tin mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_tin",
+   "x": 0.096,
+   "color": {
+    "light": "#B76618",
+    "dark": "#D6A368"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "tin"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 11
+  },
+  "mining_tungsten": {
+   "es": "Minería de tungsteno",
+   "en": "Tungsten mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_tungsten",
+   "x": 0.112,
+   "color": {
+    "light": "#9E7C14",
+    "dark": "#E8C789"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 9
+  },
+  "mining_zinc": {
+   "es": "Minería de zinc",
+   "en": "Zinc mining",
+   "sector": "materiales",
+   "cssVar": "--c-mining_zinc",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "munitions": {
+   "es": "Municiones y energéticos",
+   "en": "Munitions and energetics",
+   "sector": "defensa",
+   "cssVar": "--c-munitions",
+   "x": 0.625,
+   "color": {
+    "light": "#CC0928",
+    "dark": "#FB595B"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "energetic_materials",
+    "defense_materials"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 30
+  },
+  "naval_shipbuilding": {
+   "es": "Astilleros",
+   "en": "Shipbuilding",
+   "sector": "defensa",
+   "cssVar": "--c-naval_shipbuilding",
+   "x": 0.64,
+   "color": {
+    "light": "#D80915",
+    "dark": "#FB6492"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "shipbuilding"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 29
+  },
+  "networking": {
+   "es": "Networking",
+   "en": "Networking",
+   "sector": "infra",
+   "cssVar": "--c-networking",
+   "x": 0.75,
+   "color": {
+    "light": "#0C7370",
+    "dark": "#3DE0C8"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "neuromorphic": {
+   "es": "Neuromórfica",
+   "en": "Neuromorphic",
+   "sector": "diseno",
+   "cssVar": "--c-neuromorphic",
+   "x": 0.07,
+   "color": {
+    "light": "#34D1BF",
+    "dark": "#54F1DF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "nuclear_equipment": {
+   "es": "Equipos nucleares",
+   "en": "Nuclear equipment",
+   "sector": "energia",
+   "cssVar": "--c-nuclear_equipment",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "nuclear_fusion": {
+   "es": "Nuclear · Fusión",
+   "en": "Nuclear · Fusion",
+   "sector": "energia",
+   "cssVar": "--c-nuclear_fusion",
+   "x": 0.72,
+   "color": {
+    "light": "#EAB308",
+    "dark": "#FACC15"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "nuclear_operator": {
+   "es": "Operador nuclear",
+   "en": "Nuclear operator",
+   "sector": "energia",
+   "cssVar": "--c-nuclear_operator",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "nuclear_smr": {
+   "es": "Nuclear · SMR",
+   "en": "Nuclear · SMR",
+   "sector": "energia",
+   "cssVar": "--c-nuclear_smr",
+   "x": 0.7,
+   "color": {
+    "light": "#84CC16",
+    "dark": "#A3E635"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "oil_gas_major": {
+   "es": "Petrolera integrada",
+   "en": "Oil & gas major",
+   "sector": "energia",
+   "cssVar": "--c-oil_gas_major",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "oil_gas_upstream": {
+   "es": "Petróleo y gas: exploración, refinación y servicios",
+   "en": "Oil and gas upstream, refining and services",
+   "sector": "energia",
+   "cssVar": "--c-oil_gas_upstream",
+   "x": 0.7,
+   "color": {
+    "light": "#56E806",
+    "dark": "#A5DE8D"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "gas_upstream",
+    "refining",
+    "oilfield_services",
+    "offshore_marine_contractor"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 33
+  },
+  "optical_transceivers": {
+   "es": "Transceptores, láseres y componentes ópticos",
+   "en": "Optical transceivers, lasers and components",
+   "sector": "infra",
+   "cssVar": "--c-optical_transceivers",
+   "x": 0.7,
+   "color": {
+    "light": "#054D7F",
+    "dark": "#388DFA"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "optical_components",
+    "lasers"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 41
+  },
+  "optics": {
+   "es": "Óptica",
+   "en": "Optics",
+   "sector": "equipos",
+   "cssVar": "--c-optics",
+   "x": 0.26,
+   "color": {
+    "light": "#9A6310",
+    "dark": "#F0B24A"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "osat": {
+   "es": "Empaquetado / OSAT",
+   "en": "Packaging / OSAT",
+   "sector": "fabricacion",
+   "cssVar": "--c-osat",
+   "x": 0.12,
+   "color": null,
+   "color_source": "none",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "passive_components": {
+   "es": "Componentes pasivos y de RF",
+   "en": "Passive and RF components",
+   "sector": "fabricacion",
+   "cssVar": "--c-passive_components",
+   "x": 0.44,
+   "color": {
+    "light": "#CC4009",
+    "dark": "#FA6A31"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "frequency_control",
+    "power_components",
+    "electromechanical_components",
+    "rf_components"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 62
+  },
+  "payments": {
+   "es": "Redes de pago",
+   "en": "Payment networks",
+   "sector": "macro_credito",
+   "cssVar": "--c-payments",
+   "x": 0.66,
+   "color": {
+    "light": "#264F9A",
+    "dark": "#98C7E5"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "payment_network"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 2
+  },
+  "pcb": {
+   "es": "Circuitos impresos y laminados",
+   "en": "PCBs, laminates and copper foil",
+   "sector": "fabricacion",
+   "cssVar": "--c-pcb",
+   "x": 0.453,
+   "color": {
+    "light": "#D86F09",
+    "dark": "#FCA578"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "ccl_laminates",
+    "copper_foil"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 48
+  },
+  "pension_fund": {
+   "es": "Fondo de pensiones",
+   "en": "Pension fund",
+   "sector": "macro_credito",
+   "cssVar": "--c-pension_fund",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "photonics_si": {
+   "es": "Fotónica Si",
+   "en": "Si Photonics",
+   "sector": "diseno",
+   "cssVar": "--c-photonics_si",
+   "x": 0.57,
+   "color": {
+    "light": "#C58BFF",
+    "dark": "#E578FF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "polysilicon": {
+   "es": "Polisilicio",
+   "en": "Polysilicon",
+   "sector": "materiales",
+   "cssVar": "--c-polysilicon",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "port_operator": {
+   "es": "Operador portuario",
+   "en": "Port operator",
+   "sector": "logistica",
+   "cssVar": "--c-port_operator",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "power": {
+   "es": "Energía / Cooling",
+   "en": "Power / Cooling",
+   "sector": "infra",
+   "cssVar": "--c-power",
+   "x": 0.71,
+   "color": {
+    "light": "#8A4410",
+    "dark": "#F0A24A"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "power_epc": {
+   "es": "Ingeniería y construcción eléctrica",
+   "en": "Power EPC and grid construction",
+   "sector": "energia",
+   "cssVar": "--c-power_epc",
+   "x": 0.708,
+   "color": {
+    "light": "#11D41B",
+    "dark": "#69E440"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "grid_construction",
+    "offshore_wind_services",
+    "power_plant_services"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 29
+  },
+  "power_generation_equipment": {
+   "es": "Turbinas y equipos de generación",
+   "en": "Turbines and generation equipment",
+   "sector": "energia",
+   "cssVar": "--c-power_generation_equipment",
+   "x": 0.716,
+   "color": {
+    "light": "#AAAA0E",
+    "dark": "#E9E363"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "gas_turbines",
+    "turbines",
+    "wind_turbines",
+    "wind_components",
+    "wind_equipment"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 38
+  },
+  "power_ipp": {
+   "es": "Energía IPP / PPA",
+   "en": "Power IPP / PPA",
+   "sector": "energia",
+   "cssVar": "--c-power_ipp",
+   "x": 0.06,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "power_semis": {
+   "es": "Semiconductores de potencia",
+   "en": "Power semiconductors",
+   "sector": "fabricacion",
+   "cssVar": "--c-power_semis",
+   "x": 0.467,
+   "color": {
+    "light": "#E48D0A",
+    "dark": "#EFBA90"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "power_semiconductors"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 20
+  },
+  "power_supplies": {
+   "es": "Fuentes de poder y componentes de servidor",
+   "en": "Power supplies and server components",
+   "sector": "infra",
+   "cssVar": "--c-power_supplies",
+   "x": 0.735,
+   "color": {
+    "light": "#07329F",
+    "dark": "#2F7CF9"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "server_components"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 21
+  },
+  "private_credit": {
+   "es": "Crédito privado",
+   "en": "Private credit",
+   "sector": "macro_credito",
+   "cssVar": "--c-private_credit",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "private_equity": {
+   "es": "Capital privado",
+   "en": "Private equity",
+   "sector": "macro_credito",
+   "cssVar": "--c-private_equity",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "quantum_hw": {
+   "es": "Quantum HW",
+   "en": "Quantum HW",
+   "sector": "diseno",
+   "cssVar": "--c-quantum_hw",
+   "x": 0.09,
+   "color": {
+    "light": "#7B2FBE",
+    "dark": "#C18BFF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "quantum_infra": {
+   "es": "Criogenia / Infra Q",
+   "en": "Cryogenics / Q-Infra",
+   "sector": "equipos",
+   "cssVar": "--c-quantum_infra",
+   "x": 0.09,
+   "color": {
+    "light": "#4B5FC2",
+    "dark": "#8DA0FF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "rail_equipment": {
+   "es": "Equipos ferroviarios",
+   "en": "Rail equipment",
+   "sector": "logistica",
+   "cssVar": "--c-rail_equipment",
+   "x": 0.392,
+   "color": {
+    "light": "#1CA6C4",
+    "dark": "#5F85D7"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 6
+  },
+  "rail_freight": {
+   "es": "Transporte ferroviario de carga",
+   "en": "Rail freight",
+   "sector": "logistica",
+   "cssVar": "--c-rail_freight",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "rare_earth": {
+   "es": "Tierras Raras",
+   "en": "Rare Earth",
+   "sector": "energia",
+   "cssVar": "--c-rare_earth",
+   "x": 0.03,
+   "color": {
+    "light": "#C2A44E",
+    "dark": "#E2C46E"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "rare_earth_magnets": {
+   "es": "Imanes de tierras raras",
+   "en": "Rare-earth magnets",
+   "sector": "materiales",
+   "cssVar": "--c-rare_earth_magnets",
+   "x": 0.128,
+   "color": {
+    "light": "#BC9418",
+    "dark": "#E6DE81"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 10
+  },
+  "rare_earths": {
+   "es": "Tierras raras (minería y refinación)",
+   "en": "Rare earths (mining & refining)",
+   "sector": "materiales",
+   "cssVar": "--c-rare_earths",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "rating_agency": {
+   "es": "Agencia de rating",
+   "en": "Rating agency",
+   "sector": "macro_credito",
+   "cssVar": "--c-rating_agency",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "real_estate_services": {
+   "es": "Servicios inmobiliarios",
+   "en": "Real-estate services",
+   "sector": "inmobiliario",
+   "cssVar": "--c-real_estate_services",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "renewables_utility": {
+   "es": "Utility de renovables",
+   "en": "Renewables utility",
+   "sector": "energia",
+   "cssVar": "--c-renewables_utility",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "robotics_physical": {
+   "es": "IA Física / Robótica",
+   "en": "Physical AI / Robotics",
+   "sector": "robotica",
+   "cssVar": "--c-robotics_physical",
+   "x": 0.95,
+   "color": {
+    "light": "#A0521E",
+    "dark": "#FF9B5C"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "satellite": {
+   "es": "Satélites / LEO",
+   "en": "Satellite / LEO",
+   "sector": "espacio",
+   "cssVar": "--c-satellite",
+   "x": 0.03,
+   "color": {
+    "light": "#74C8DA",
+    "dark": "#94E8FA"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "semi_ip": {
+   "es": "Propiedad intelectual de chips",
+   "en": "Semiconductor IP",
+   "sector": "diseno",
+   "cssVar": "--c-semi_ip",
+   "x": 0.56,
+   "color": {
+    "light": "#1C08B3",
+    "dark": "#6B57FB"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "silicon_ip",
+    "semiconductor_ip",
+    "wireless_ip"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 25
+  },
+  "semiconductor_rnd": {
+   "es": "Centros de I+D de semiconductores",
+   "en": "Semiconductor R&D centers",
+   "sector": "fabricacion",
+   "cssVar": "--c-semiconductor_rnd",
+   "x": 0.48,
+   "color": {
+    "light": "#DCBF09",
+    "dark": "#FAA92A"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 5
+  },
+  "servers": {
+   "es": "Servidores IA",
+   "en": "AI Servers",
+   "sector": "infra",
+   "cssVar": "--c-servers",
+   "x": 0.78,
+   "color": {
+    "light": "#4C3FA0",
+    "dark": "#A99BFF"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "shipping_line": {
+   "es": "Naviera de contenedores",
+   "en": "Container shipping line",
+   "sector": "logistica",
+   "cssVar": "--c-shipping_line",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "silicon_metal": {
+   "es": "Silicio metálico",
+   "en": "Silicon metal",
+   "sector": "materiales",
+   "cssVar": "--c-silicon_metal",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "silicon_wafers": {
+   "es": "Obleas de silicio",
+   "en": "Silicon wafers",
+   "sector": "equipos",
+   "cssVar": "--c-silicon_wafers",
+   "x": 0.34,
+   "color": {
+    "light": "#18D7AF",
+    "dark": "#2CF371"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 13
+  },
+  "solar_manufacturing": {
+   "es": "Fabricación solar",
+   "en": "Solar manufacturing",
+   "sector": "energia",
+   "cssVar": "--c-solar_manufacturing",
+   "x": 0.724,
+   "color": {
+    "light": "#A2C911",
+    "dark": "#D5FA48"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "solar_equipment",
+    "solar_glass",
+    "solar_inverters",
+    "inverters",
+    "solar_bos",
+    "solar_materials"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 41
+  },
+  "sovereign_fund": {
+   "es": "Fondo soberano",
+   "en": "Sovereign wealth fund",
+   "sector": "macro_credito",
+   "cssVar": "--c-sovereign_fund",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "space_infra": {
+   "es": "Infraestructura Espacial",
+   "en": "Space Infra",
+   "sector": "espacio",
+   "cssVar": "--c-space_infra",
+   "x": 0.02,
+   "color": {
+    "light": "#2F7DE0",
+    "dark": "#5AA0F0"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "space_launch": {
+   "es": "Lanzamiento Espacial",
+   "en": "Space Launch",
+   "sector": "espacio",
+   "cssVar": "--c-space_launch",
+   "x": 0.01,
+   "color": {
+    "light": "#FF6B35",
+    "dark": "#FF8B55"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "specialized_shipping": {
+   "es": "Transporte marítimo especializado (tanqueros, gaseros)",
+   "en": "Specialized shipping (tankers, gas carriers)",
+   "sector": "logistica",
+   "cssVar": "--c-specialized_shipping",
+   "x": 0.4,
+   "color": {
+    "light": "#169A91",
+    "dark": "#93ECAD"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "tanker_shipping",
+    "gas_carriers",
+    "roro_shipping",
+    "inland_marine",
+    "shipbroking",
+    "maritime_services"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 19
+  },
+  "specialty_chemical": {
+   "es": "Químicos especiales",
+   "en": "Specialty chemicals",
+   "sector": "materiales",
+   "cssVar": "--c-specialty_chemical",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "specialty_metals": {
+   "es": "Metales especiales y minerales críticos",
+   "en": "Specialty metals and critical minerals",
+   "sector": "materiales",
+   "cssVar": "--c-specialty_metals",
+   "x": 0.144,
+   "color": {
+    "light": "#9A8F1E",
+    "dark": "#DAD599"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "high_purity_metals",
+    "titanium",
+    "minor_metals",
+    "refractory_metals",
+    "tantalum_niobium",
+    "mining_niobium",
+    "ferroalloys",
+    "mining_manganese",
+    "mining_vanadium",
+    "molybdenum",
+    "mining_antimony",
+    "electrical_steel",
+    "superconducting_materials",
+    "high_purity_alumina",
+    "boron",
+    "fluorspar",
+    "phosphate",
+    "industrial_minerals",
+    "advanced_materials",
+    "carbon_fiber",
+    "carbon_materials",
+    "nonferrous_smelting",
+    "metallurgy_engineering",
+    "natural_rubber"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 59
+  },
+  "steel": {
+   "es": "Acero",
+   "en": "Steel",
+   "sector": "materiales",
+   "cssVar": "--c-steel",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "storage_grid": {
+   "es": "Almacenamiento en red (baterías)",
+   "en": "Grid storage",
+   "sector": "energia",
+   "cssVar": "--c-storage_grid",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "storage_systems": {
+   "es": "Almacenamiento de datos",
+   "en": "Data storage",
+   "sector": "infra",
+   "cssVar": "--c-storage_systems",
+   "x": 0.77,
+   "color": {
+    "light": "#053484",
+    "dark": "#266AF9"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "storage",
+    "ai_storage",
+    "hdd_components",
+    "storage_components"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 9
+  },
+  "subsea_cable": {
+   "es": "Cables submarinos",
+   "en": "Subsea cables",
+   "sector": "infra",
+   "cssVar": "--c-subsea_cable",
+   "x": 0.805,
+   "color": {
+    "light": "#0836B8",
+    "dark": "#6A7FEA"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "submarine_cable"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 30
+  },
+  "substrates": {
+   "es": "Sustratos",
+   "en": "Substrates",
+   "sector": "fabricacion",
+   "cssVar": "--c-substrates",
+   "x": 0.13,
+   "color": {
+    "light": "#B5316F",
+    "dark": "#FF7DC0"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "telecom_operator": {
+   "es": "Operador de telecomunicaciones y torres",
+   "en": "Telecom operator and towers",
+   "sector": "infra",
+   "cssVar": "--c-telecom_operator",
+   "x": 0.84,
+   "color": {
+    "light": "#0934D8",
+    "dark": "#6C74F3"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "telecom_towers"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 36
+  },
+  "trading_house": {
+   "es": "Comercializadoras de materias primas",
+   "en": "Commodity trading houses",
+   "sector": "materiales",
+   "cssVar": "--c-trading_house",
+   "x": 0.16,
+   "color": {
+    "light": "#D2CE1A",
+    "dark": "#F2EC3B"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "metals_trading"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 9
+  },
+  "transformers": {
+   "es": "Transformadores",
+   "en": "Transformers",
+   "sector": "energia",
+   "cssVar": "--c-transformers",
+   "x": 0.732,
+   "color": {
+    "light": "#A5E006",
+    "dark": "#CCE195"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [],
+   "label_fixed": false,
+   "proposed_companies": 40
+  },
+  "treasury": {
+   "es": "Tesoro",
+   "en": "Treasury",
+   "sector": "macro_credito",
+   "cssVar": "--c-treasury",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "universal_bank": {
+   "es": "Banca universal",
+   "en": "Universal bank",
+   "sector": "macro_credito",
+   "cssVar": "--c-universal_bank",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "uranium": {
+   "es": "Uranio",
+   "en": "Uranium",
+   "sector": "energia",
+   "cssVar": "--c-uranium",
+   "x": 0.68,
+   "color": {
+    "light": "#F97316",
+    "dark": "#FB923C"
+   },
+   "color_source": "css",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": false
+  },
+  "uranium_enrichment": {
+   "es": "Enriquecimiento de uranio",
+   "en": "Uranium enrichment",
+   "sector": "energia",
+   "cssVar": "--c-uranium_enrichment",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "uranium_mining": {
+   "es": "Minería de uranio",
+   "en": "Uranium mining",
+   "sector": "energia",
+   "cssVar": "--c-uranium_mining",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  },
+  "utility_integrated": {
+   "es": "Utility integrada",
+   "en": "Integrated utility",
+   "sector": "energia",
+   "cssVar": "--c-utility_integrated",
+   "x": 0.74,
+   "color": {
+    "light": "#8AEC06",
+    "dark": "#9BD15F"
+   },
+   "color_source": "css",
+   "origin": "lote_2026-10-14",
+   "status": "approved",
+   "aliases": [
+    "electric_utility",
+    "gas_utility",
+    "utility",
+    "energy_conglomerate",
+    "water_services"
+   ],
+   "label_fixed": false,
+   "proposed_companies": 72
+  },
+  "venture_capital": {
+   "es": "Capital de riesgo",
+   "en": "Venture capital",
+   "sector": "macro_credito",
+   "cssVar": "--c-venture_capital",
+   "x": 0.5,
+   "color": null,
+   "color_source": "sector",
+   "origin": "catalog",
+   "status": "active",
+   "aliases": [],
+   "label_fixed": true
+  }
+ }
+}

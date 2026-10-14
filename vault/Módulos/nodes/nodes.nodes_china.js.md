@@ -32,11 +32,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
 
-Se carga en [[app.html]] en la posición **11 de 98** (línea 1446), después de [[nodes.meta_fill.js]] y antes de [[nodes.nodes_multicapa.js]].
+Se carga en [[app.html]] en la posición **12 de 99** (línea 1513), después de [[nodes.meta_fill.js]] y antes de [[nodes.nodes_multicapa.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 11)
+- [[app.html]] — lo carga con `<script>` (posición 12)
 - [[engine.app_main.js]] — usa `LINKS_CHINA`, `NODES_CHINA`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta

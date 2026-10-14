@@ -452,8 +452,8 @@ if(!_mapClassicBoot) sim.stop();
 
 function setForces(){
   if(viewMode==='geo'){
-    sim.force('x', d3.forceX(d=>(COUNTRIES[d.country]||COUNTRIES.RestoMundo).x*W).strength(.55))
-       .force('y', d3.forceY(d=>(COUNTRIES[d.country]||COUNTRIES.RestoMundo).y*H).strength(.55));
+    sim.force('x', d3.forceX(d=>COUNTRIES[countryBucket(d.country)].x*W).strength(.55))
+       .force('y', d3.forceY(d=>COUNTRIES[countryBucket(d.country)].y*H).strength(.55));
   } else {
     sim.force('x', d3.forceX(d=>(CATS[d.cat]||CATS.aisoft).x*W).strength(.5))
        .force('y', d3.forceY(H/2).strength(.07));
@@ -996,7 +996,7 @@ function passesFilters(d){
   let vis=true;
   if(activePF) vis = inPortfolio(d, activePF);
   if(activeCat) vis = vis && d.cat===activeCat;
-  if(activeCountry) vis = vis && d.country===activeCountry;
+  if(activeCountry) vis = vis && countryBucket(d.country)===activeCountry;
   if(searchTerm) vis = vis && (d.label+' '+d.ticker+' '+d.id).toLowerCase().includes(searchTerm);
   return vis;
 }
@@ -2211,7 +2211,7 @@ const bandEl=document.getElementById('band');
 function renderBand(){
   if(viewMode==='geo'){
     const counts={};
-    NODES.forEach(n=>{ const k=COUNTRIES[n.country]?n.country:'RestoMundo'; counts[k]=(counts[k]||0)+1; });
+    NODES.forEach(n=>{ const k=countryBucket(n.country); counts[k]=(counts[k]||0)+1; });
     bandEl.innerHTML=Object.keys(COUNTRIES).map(k=>`
       <button class="band-item${activeCountry===k?' active':''}" data-country="${k}">
         <span class="bd" style="background:${countryColor(k)}"></span>${countryLabel(k)} <span class="bc">${counts[k]||0}</span>

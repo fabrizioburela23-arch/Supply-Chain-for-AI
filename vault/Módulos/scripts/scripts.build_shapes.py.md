@@ -38,9 +38,10 @@ compila las formas SHACL a IR (docs/INFRA_OPERATIVA.md §3.3; paso 10).
 
 _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_gates_conformance.py]]
 - [[tests.test_gates_ir_fresh.py]]
+- [[tests.test_import_shapes.py]]

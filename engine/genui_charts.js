@@ -1,15 +1,8 @@
-/* ============================================================================
-   engine/genui_charts.js — GRÁFICOS de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §7.2).
-
-   Portados de los renderizadores del Canvas (engine/app_canvas.js _cvLine / _cvBar) a los tokens --os-* de
-   Khipus OS y a CUALQUIER contenedor (sin ids globales: se pueden fijar dos copias del mismo bloque):
-     chart.line (full | spark) · chart.bar (h | v, divergente) · ranking · chart.candles
-     comparison (tabla | barras | forma) · graph.mini (solo flujo) · impact.cascade (salto a salto)
-   SVG construido en código (createElementNS); textos con textContent. Los números llegan del servidor con
-   su unidad: aquí solo se escalan para dibujar (ejes, largo de barras) y se formatean. El impacto sale SOLO
-   del kernel del servidor (src: hot_kernel); el navegador no propaga nada (tests/test_no_client_engine.py).
-   Se registra en window.KhipuGenUI (engine/genui.js, que se carga ANTES).
-   ============================================================================ */
+/* engine/genui_charts.js — GRÁFICOS de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §7.2).
+   Portados del Canvas (_cvLine/_cvBar) a tokens --os-* y a CUALQUIER contenedor (sin ids globales): chart.line ·
+   chart.bar (h|v) · ranking · chart.candles · comparison · graph.mini · impact.cascade. SVG en código; los números
+   llegan del servidor con su unidad (aquí solo se escalan y formatean); el impacto sale SOLO del kernel del servidor.
+   Se registra en window.KhipuGenUI (genui.js, cargado ANTES). */
 (function (root) {
   'use strict';
   var W = root, G = W.KhipuGenUI;
@@ -34,6 +27,31 @@
       rel: 'Relation', w: 'Weight', damage: ' damage', unverified: 'unverified link', hopRow: 'Hop {n}: {c} companies' }
   };
   function c(k) { var d = CS[lang()]; return d[k] != null ? d[k] : CS.es[k]; }
+
+  // «?» de las cifras (engine/explain.js): aquí por el presupuesto de genui.js (§8); se registran al cargar y en cada pintado
+  G._explains = {
+    genui_na: { es: { t: 'Sin dato en vivo', b: 'Cuando no hay una fuente confiable en este momento, Khipu muestra «—» y el motivo, en vez de inventar un número.' },
+      en: { t: 'No live data', b: 'When there is no reliable source right now, Khipu shows “—” and the reason instead of inventing a number.' } },
+    genui_hops: { es: { t: 'Saltos del choque', b: 'Salto 1 = los clientes directos de la empresa que cae. Salto 2 = los clientes de esos clientes. Y así. Las cifras salen del motor de choques del servidor (el mismo de toda la app).' },
+      en: { t: 'Shock hops', b: 'Hop 1 = the direct customers of the company that fails. Hop 2 = their customers. And so on. The figures come from the server shock engine (the same one used across the app).' } },
+    genui_pf: { es: { t: 'Golpe a tu cartera', b: 'Estimación del motor de choques sobre TUS posiciones, con su banda de error. No es una predicción del precio. Si la calibración es débil, Khipu no da cifra.' },
+      en: { t: 'Hit to your portfolio', b: 'Shock-engine estimate on YOUR positions, with its error band. It is not a price forecast. If the calibration is weak, Khipu gives no figure.' } },
+    genui_index: { es: { t: 'Índice (inicio = 100)', b: 'Pone todo en la misma escala: el primer día vale 100 y el resto se compara con él. Sirve para comparar formas, no precios.' },
+      en: { t: 'Index (start = 100)', b: 'Puts everything on one scale: the first day is 100 and the rest compare to it. Good for comparing shapes, not prices.' } },
+    genui_revenue: { es: { t: 'Ingresos', b: 'Todo lo que la empresa vendió en el período, antes de restar costos. Sale de sus estados financieros publicados (la fuente va en cada cifra), convertido a dólares. No es una estimación.' },
+      en: { t: 'Revenue', b: 'Everything the company sold in the period, before subtracting costs. It comes from its published financial statements (the source is on each figure), converted to US dollars. Not an estimate.' } },
+    genui_net_income: { es: { t: 'Utilidad neta', b: 'Lo que queda después de TODOS los costos, intereses e impuestos. Puede ser negativa (pérdida). Tal como la reportó la empresa, en dólares.' },
+      en: { t: 'Net income', b: 'What is left after ALL costs, interest and taxes. It can be negative (a loss). As reported by the company, in US dollars.' } },
+    genui_margin: { es: { t: 'Márgenes', b: 'Qué parte de cada dólar de ingresos queda como ganancia: bruto (tras el costo de lo vendido), operativo (tras los gastos de operar) y neto (tras intereses e impuestos). Se calculan dividiendo la cifra reportada entre los ingresos del mismo período.' },
+      en: { t: 'Margins', b: 'How much of each dollar of revenue is kept as profit: gross (after the cost of goods), operating (after operating expenses) and net (after interest and taxes). Each is the reported figure divided by the revenue of the same period.' } },
+    genui_growth: { es: { t: 'Crecimiento', b: 'Cuánto cambió la cifra frente al período anterior de la lista (año fiscal anterior, o trimestre anterior). Si falta un período en medio, no se calcula.' },
+      en: { t: 'Growth', b: 'How much the figure changed vs. the previous period in the list (previous fiscal year, or previous quarter). If a period is missing in between, it is not computed.' } },
+    genui_market_share: { es: { t: 'Cuota de mercado', b: 'Parte del mercado que vende esta empresa, según quien lo midió (va en cada fila con su fuente y fecha). Lo investigó una persona para la ficha; distintas fuentes miden distinto.' },
+      en: { t: 'Market share', b: 'The slice of the market this company sells, according to whoever measured it (each row shows the source and date). A person researched it for the company card; different sources measure differently.' } },
+    genui_market_rank: { es: { t: 'Puesto en el mercado', b: 'Posición (1.º, 2.º…) en ese mercado según la fuente de cada fila. Solo aparecen las empresas cuya ficha investigada lo registra.' },
+      en: { t: 'Market rank', b: 'Position (1st, 2nd…) in that market according to each row\'s source. Only companies whose researched card records it appear.' } }
+  };
+  if (typeof W.explainRegister === 'function') Object.keys(G._explains).forEach(function (k) { try { W.explainRegister(k, G._explains[k]); } catch (e) {} });
 
   var CSS = '' +
     '.kg-ch{width:100%;display:block;overflow:visible}' +
@@ -69,9 +87,9 @@
     '.kg-rka div:nth-child(2){border-top:1px solid var(--os-line);display:flex;justify-content:space-between;padding-top:3px}' +
     '.kg-cols{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:16px}' +
     '.kg-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}' +
-    '.kg-colb{width:70%;max-width:44px;border-radius:5px 5px 0 0;background:var(--kg-a);transform-origin:bottom;transform:scaleY(0);transition:transform var(--kg-d3) var(--kg-e)}' +
+    '.kg-colb{width:70%;max-width:44px;max-height:calc(100% - 36px);border-radius:5px 5px 0 0;background:var(--kg-a);transform-origin:bottom;transform:scaleY(0);transition:transform var(--kg-d3) var(--kg-e)}' +
     '.kg-colb.neg{background:var(--os-neg)}.kg-go .kg-colb{transform:scaleY(1)}' +
-    '.kg-col .v{font-size:11.5px;font-weight:700}.kg-col .l{font-size:11px;color:var(--os-ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+    '.kg-col .v{font-size:11.5px;font-weight:700;flex-shrink:0}.kg-col .l{font-size:11px;color:var(--os-ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}' +
     /* comparar */
     '.kg-cmh{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}' +
     '.kg-cell{display:flex;align-items:center;gap:8px}.kg-cell .bv{font-weight:800;min-width:30px;text-align:right;white-space:nowrap}' +
@@ -130,7 +148,7 @@
     '.kg-pfn{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px}.kg-pfs{font-size:12px;color:var(--os-ink-2)}' +
     '.kg-pfv{font-size:22px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;text-align:right}.kg-pfv small{display:block;font-size:12px;font-weight:600;color:var(--os-ink-2)}' +
     '.kg-pfv.bad{color:var(--os-bad-ink)}' +
-    '.kg-compact .kg-rkr,.kg-compact .kg-rka{grid-template-columns:var(--kg-lw) minmax(0,1fr) 54px;gap:8px}' +
+    '.kg-compact .kg-rkr,.kg-compact .kg-rka{grid-template-columns:var(--kg-lw) minmax(0,1fr) minmax(54px,auto);gap:8px}' +
     '.kg-compact .kg-hp{grid-template-columns:1fr}.kg-compact .kg-hpc{grid-column:1}.kg-compact .kg-gbr{grid-template-columns:1fr}' +
     '.kg-compact .kg-cell{gap:5px}.kg-compact .kg-cell .bt{display:none}.kg-compact .kg-win-dot{display:none}' +
     '.kg-compact .kg-lv .kg-big{font-size:24px}.kg-compact .kg-pf{grid-template-columns:auto minmax(0,1fr)}.kg-compact .kg-pfv{grid-column:1/-1;text-align:left}';
@@ -303,7 +321,7 @@
         tr.appendChild(f);
       }
       row.appendChild(tr);
-      var vv = h('div', 'kg-rkv kg-n', v == null ? '—' : fmt(v, unit.unit, { currency: unit.currency }));
+      var vv = h('div', 'kg-rkv kg-n', v == null ? '—' : fmt(v, unit.unit, { currency: unit.currency, compact: true }));
       if (it.delta && typeof it.delta.v === 'number') vv.appendChild(h('small', it.delta.v > 0 ? 'kg-up' : it.delta.v < 0 ? 'kg-dn' : null, (it.delta.v > 0 ? '▲ ' : it.delta.v < 0 ? '▼ ' : '') + U.parts(it.delta.v, it.delta.unit, { sign: true }).text));
       row.appendChild(vv);
       tip(row, lab + ': ' + (v == null ? '—' : fmt(v, unit.unit, { currency: unit.currency })), (it.note ? T(it.note) + ' · ' : '') + (unit.src || '') + ' · ' + when(it.as_of || unit.as_of));
@@ -328,7 +346,7 @@
         var cols = h('div', 'kg-cols'); cols.setAttribute('role', 'img'); cols.setAttribute('aria-label', T(b.alt) || T(b.title));
         items.forEach(function (it, i) {
           var cc = h('div', 'kg-col'), lab = it.entity ? it.entity.label : T(it.label);
-          cc.appendChild(h('div', 'v kg-n', typeof it.v === 'number' ? fmt(it.v, unit.unit, { currency: unit.currency }) : '—'));
+          cc.appendChild(h('div', 'v kg-n', typeof it.v === 'number' ? fmt(it.v, unit.unit, { currency: unit.currency, compact: true }) : '—'));
           var bar = h('div', 'kg-colb' + (it.v < 0 ? ' neg' : '')); paint(bar, 'height', (vals[i] / mx * 100).toFixed(1) + '%'); paint(bar, 'transition-delay', Math.min(i, 8) * 50 + 'ms');
           cc.appendChild(bar); cc.appendChild(h('div', 'l', lab));
           tip(cc, lab + ': ' + fmt(it.v, unit.unit, { currency: unit.currency }), (unit.src || '') + ' · ' + when(it.as_of || unit.as_of));

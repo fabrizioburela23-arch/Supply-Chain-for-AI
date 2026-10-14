@@ -1,6 +1,6 @@
 # EXPANSIÓN A ~5.000 EMPRESAS — plan técnico
 
-Fecha: 2026-10-13 · Estado: E0 y E1 (salvo E1.6) HECHOS el 2026-10-14 (lote J, ver §3); E2-E5 en plan · Base: 4 informes de trabajo medidos sobre el código real
+Fecha: 2026-10-13 · Estado: E0, E1 y E2 (salvo E2.7, el panel) HECHOS el 2026-10-14 (lotes J y K, ver §3); E3-E5 en plan · Base: 4 informes de trabajo medidos sobre el código real
 (A = inventario de campos, B = prueba de escala con grafos sintéticos de 5k/10k/20k, C = "en vivo al segundo",
 D = tubería de importación). Archivos que acompañan este plan: `company.schema.json`, `plantilla_empresa.json`,
 `ejemplo_CATL.json`, `INVESTIGAR_POR_EMPRESA.md`, `PROMPT_INVESTIGACION.md`, `empresas_existentes.csv`.
@@ -243,8 +243,10 @@ del tope (`dense_refused`).
 **E1.1 Kernel `propagate_block` disperso** — ✅ 2026-10-14. `_propagate_many_sparse` (bloques CSR n×k de 2.048,
 mismo orden de operaciones, modos persistente y no lineal): 0 diferencias en impactos, saltos y orden de inserción
 a 937/5k/10k/20k × kernel 1.0.0/2.0.0/2.1.0 (`tests/test_scale_kernel.py`). Medido: kernel 937 46 → 8,5 ms; 5k
-1.347 → 42 ms; Impact 5k 1.542 → 105-137 ms ✓. A 20k la vista Impact tarda ~630 ms (meta 500): lo que queda es el
-bucle de orden/huella por fuente de `core/hotviews/views/impact.py` (pendiente).
+1.347 → 42 ms; Impact 5k 1.542 → 105-137 ms ✓. A 20k la vista Impact tardaba ~630-743 ms (meta 500): el bucle de
+orden/huella por fuente de `core/hotviews/views/impact.py` se vectorizó en el lote K (orden global con clave compuesta +
+argsort estable, conteos por cumsum, GC apagado durante la construcción) → 20k 451-465 ms, 5k 100-104 ms, 937 17-25 ms,
+`content_sha` idéntico (tests/test_resolve_ids_impact_perf.py) ✓.
 
 - **Archivos**: `matrix/engine.py` (portar también los modos `persistent`/PROP-08 y `nonlinear`, que el prototipo no
   cubre).
@@ -303,7 +305,13 @@ varias transacciones; sobre con `rebuilding`. 250 vínculos en una transacción 
 - **Meta**: p50 ≤ 20 ms a 5k.
 - **Riesgo**: memoria del índice (~5 MB, aceptable).
 
-**E1.6 Resolver por identificadores** (defectos D-5 y D-6) — pendiente (va con E2: necesita los campos lei/isin/…).
+**E1.6 Resolver por identificadores** (defectos D-5 y D-6) — ✅ 2026-10-14 (lote K). `core/entities.resolve_ids(ids, name)`
+(orden lei 100 > isin/cik/qid 99 > figi 98 > símbolo Yahoo 97 > ticker@MIC 96 > dominio solo candidato > nombre ≥ 85; un
+ticker a secas nunca; `other_names`/`aliases` entran como alias → «宁德时代» resuelve; un identificador reclamado por dos
+empresas = `ambiguous_id`, nunca se elige en silencio). Medido: p50 0,009 ms a 937 y 0,002 ms a 5k (índice por generación,
+68 ms a 5k). MCP `search_companies` acepta lei/isin/cik/qid/yahoo_symbol/ticker+mic (también dentro de `query`). El
+importador delega siempre en este resolvedor cuando la vista es la vigente. Los listados secundarios declarados (TOELY,
+AJINY, SMNEY) siguen resolviendo como ticker blando.
 
 - **Archivos**: `core/entities.py`. Índices `lei/isin/cik/qid/yahoo_symbol` + `aliases` leídos de Postgres; el ticker
   solo resuelve con su bolsa.
@@ -343,7 +351,8 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 
 ### Bloque E2 — Importación de empresas (diseño D)
 
-**E2.1 Esquema como artefacto**
+**E2.1 Esquema como artefacto** — ✅ 2026-10-14 (lote K). `ontology.import_schema@1.0.0` = company.schema.json; espejo
+Pydantic v2 `ontology/company_schema.py` (equivalencia en forma normalizada + 13 negativos: tests/test_import_schema.py).
 
 - **Archivos**:
   - `governance/artifacts/ontology.import_schema@1.0.0.json` (= `company.schema.json`);
@@ -357,7 +366,8 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 - **Meta**: —
 - **Riesgo**: que Pydantic y el esquema se separen. Mitigación: la prueba de igualdad.
 
-**E2.2 Normalizar**
+**E2.2 Normalizar** — ✅ 2026-10-14. `core/import_normalize.py` (países vía `core/countries`; MIC → sufijo Yahoo + moneda;
+fechas parciales → inicio/fin sin inventar el día; dinero en unidades; ids CamelCase). Las 136 grafías mapean.
 
 - **Archivos**: `core/import_normalize.py`:
   - una tabla ÚNICA de países ISO → convención del catálogo (hoy hay 136 grafías y `COUNTRY_MAP` está duplicado);
@@ -368,7 +378,10 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 - **Meta**: —
 - **Riesgo**: "Europa"/"RestoMundo" no son países. Se marcan para revisión.
 
-**E2.3 Resolver, planear, aplicar, deshacer**
+**E2.3 Resolver, planear, aplicar, deshacer** — ✅ 2026-10-14. `ontology/company_import.py` (`resolve_batch`, `plan` PURO con
+`plan_sha`, `apply_run` = UNA decisión ontology.bulk_import + UNA transacción + UNA generación, `rollback_run` =
+ontology.import_rollback con retracciones dirigidas) + tablas append-only `import_files/import_runs/import_pending_links`
+(ontology/import_models.py). Plan del lote 1 (4.174 fichas): 3 s.
 
 - **Archivos**:
   - `ontology/company_import.py` (`resolve_batch` y `plan` PUROS; `apply_run`; `rollback_run`);
@@ -381,7 +394,9 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 - **Meta**: plan de 250 fichas ≤ 10 s.
 - **Riesgo**: conflicto con datos curados. Política: listar, nunca pisar (I-2).
 
-**E2.4 Rutas y script**
+**E2.4 Rutas y script** — ✅ 2026-10-14. `/api/ontology/import/files|plan|apply|rollback|runs` (PIN estricto, rate_limit,
+`expect.plan_sha` → 409, mismo candado que reconcile, subida en trozos ≤ 900 KB) + `scripts/import_companies.py`
+(--lote1 / --plan / --apply --server|--db / --rollback / --runs).
 
 - **Archivos**:
   - `/api/ontology/import/files|plan|apply|rollback|runs` (PIN, `rate_limit`, `expect = plan_sha`, mismo candado
@@ -395,7 +410,8 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 - **Meta**: —
 - **Riesgo**: lote a medias. Mitigación: una transacción por lote.
 
-**E2.5 Gobernanza**
+**E2.5 Gobernanza** — ✅ 2026-10-14. `policy.import@1.0.0`, `ledger.kinds@5.0.0` (ontology.import_rollback),
+`ontology.shapes@7.0.0` con `company.ttl` (puerta G-IMPORT, 14 reglas, SOMBRA; conformidad pySHACL en tests/test_import_shapes.py).
 
 - **Archivos**:
   - `policy.import@1.0.0`: umbrales 0,5 / trust 2, lote máx. 250, conflictos = listar, `owns` ≥ 50 %;
@@ -405,7 +421,8 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 - **Meta**: —
 - **Riesgo**: ninguno (sombra).
 
-**E2.6 "¿Qué cambia?" del GRAFO en el plan**
+**E2.6 "¿Qué cambia?" del GRAFO en el plan** — ✅ 2026-10-14. `company_import.kernel_what_changes` (mismo `propagate_many`
+sobre una copia: ρ, top-20 cuellos, TSMC antes/después, aviso de kernel.calibration viejo; lote vacío = idéntico; 50 ms a 5k).
 
 - **Archivos**: `company_import.plan`, sobre una copia en memoria con el mismo `propagate_many`. Muestra ρ, el top-20
   de cuellos de botella y a cuántas empresas golpea TSMC, antes y después, y avisa que `kernel.calibration` queda
@@ -422,7 +439,9 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 - **Meta**: —
 - **Riesgo**: ninguno.
 
-**E2.8 Escritura por lotes** (arregla también D-3)
+**E2.8 Escritura por lotes** (arregla también D-3) — ✅ 2026-10-14. `bulk_import.write_events_fast` (executemany por bloques,
+mismos eventos que apply_event campo a campo, valid_from/valid_to REALES, source_id/confidence, puertas G-BULK/G1 en bloque).
+Medido: 21.000 eventos en 11 s (tests/test_import_fast_path.py con KH_SCALE=1; meta ≤ 30 s); 134 eventos en 0,3 s.
 
 - **Archivos**: `executemany` de eventos en una transacción por bloque (siguen siendo eventos append-only, con UNA
   decisión). Cada vínculo lleva su fecha real: `valid_from` = `start` de la ficha (sin `start` → `GENESIS_SENTINEL`
@@ -435,7 +454,11 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 - **Meta**: 21k eventos ≤ 30 s (hoy 144 s).
 - **Riesgo**: saltarse las puertas G1. Mitigación: se evalúan en bloque antes de escribir.
 
-**E2.9 Posición de mercado al chat y al MCP** (el motivo del pedido)
+**E2.9 Posición de mercado al chat y al MCP** (el motivo del pedido) — ✅ 2026-10-14 (lote K). `views/card.py`
+`market_position_of`/`facilities_of` en toda ficha (`/api/hot/card/<id>`, MCP `get_company`); herramienta de lectura
+`rank_by_market(market, metric share_pct|rank, region, limit)` en `mcp_server/ops.py` (sinónimos ES/EN, región por
+`core/countries`, sin datos → «no tengo ese ranking»); el chat la usa para «¿cuál es la más grande en X?» y la pinta como
+`ranking` (intención `market`). Prueba con Postgres en tests/test_genui_k_server.py.
 
 - **Archivos**:
   - `views/card.py` expone `market_position[]` y `facilities[]` con `[F#]`;

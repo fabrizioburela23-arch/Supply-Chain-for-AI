@@ -242,6 +242,58 @@ tras los bloques los deja a la vista (`keepOnError`); fichas que el final agrupa
 height() de cascada/línea/mini-grafo medido en Chromium (±6 %) y los contadores reservan el ancho final (CLS 0).
 Medido a 5k: Impact 105-137 ms, tensor 96-141 ms, ficha p50 0,4 ms, primera ficha 213-297 ms, búsqueda p50 2,1-2,6 ms,
 pico 177 MB. Pendiente: Impact a 20k (~630 ms; el bucle de orden/huella de core/hotviews/views/impact.py), E1.6.
+**LOTE K (2026-10-14) — IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT (fundamentales y posición de mercado)**
+(EXPANSION_5K E2 ✅ salvo E2.7 el panel; E1.6 ✅; CHAT_UI_GENERATIVA F5.34 ✅). IMPORTADOR — ficha `khipus.company/1`
+(`data/import/company.schema.json` = artefacto `ontology.import_schema@1.0.0`; espejo Pydantic `ontology/company_schema.py`,
+JSON estricto, errores ES/EN) → `core/import_normalize.py` (países vía core/countries, MIC → sufijo Yahoo + moneda, fechas
+parciales → GENESIS nunca "ahora", `khipus_id_from` pliega Ø/Æ/ß/Ł) → `ontology/company_import.py`: `validate_batch`,
+`resolve_batch` (DELEGA en core/entities.resolve_ids cuando la vista es la vigente; índice propio solo de respaldo),
+`plan` PURO con `plan_sha` + `graph_key` + `kernel_what_changes` (mismo propagate_many sobre una copia: ρ, TSMC, top-20,
+calibración), `apply_run` (UNA decisión `ontology.bulk_import` en la MISMA transacción, candado de reconcile, 409
+`plan_changed|graph_changed|busy` —graph_changed también si la base avanzó sin reconstruir la vista—, `confirm_db`
+OBLIGATORIO = nombre exacto de la base), `rollback_run` (retracciones dirigidas, decisión `ontology.import_rollback`; volver
+a aplicar REVIVE la empresa retirada), `pending_links` (un pendiente se resuelve UNA vez y contra el mismo lote). Tablas
+append-only `import_files/import_runs/import_pending_links` (`ontology/import_models.py`; `graph_version_after` derivado
+de kh_tx_versions). Escritura rápida `bulk_import.write_events_fast` (executemany por bloques, valid_from/valid_to REALES
+= D-3, puertas G-BULK/G1 en bloque; 21.000 eventos en 11 s). Rutas `/api/ontology/import/files|plan|apply|rollback|runs`
+(PIN estricto, rate_limit, subida en trozos zlib ≤ 900 KB descomprimidos con tope → 413; `plan` = lectura, las otras con
+decisión; tests/test_cierre_infra.py). Terminal `scripts/import_companies.py` (`--lote1`, `--plan [--server URL --pin]`: la
+huella válida para `--apply --server` es LA DEL SERVIDOR; `--apply --server|--db --plan-sha --confirm-db`, `--rollback`,
+`--runs`). Puertas `governance/shapes/company.ttl` (14 reglas → 83 compiladas, sombra); artefactos `policy.import@1.0.0`
+(umbrales de nombre 85/60, tope de trozo), `ledger.kinds@5.0.0`, `ontology.shapes@7.0.0`. Adaptador del lote 1
+(`adapt_lote_2026_10_14`: CSV → fichas nivel A; certificados ADR/GDR/CEDEAR y bolsas regionales alemanas NUNCA
+principales —`_primary_rule`, aviso `primary_is_depositary`—; «(GDR)» fuera del nombre y a `other_names`; ISIN/FIGI del
+certificado solo en `listings[]`). Plan del lote 1 (nada aplicado; docs/expansion/LOTE_2026-10-14_PLAN.md): 4.174 fichas →
+4.135 crear · 39 fusionar · 934 actualizar · 0 omitir · 0 vínculos · 0 categorías por aprobar · ρ y top-20 idénticos.
+PAÍSES — `core/countries.py` (250 ISO-2 → {clave del catálogo, es, en, eu}; `iso2_of`, `catalog_key_of`, `label`,
+`iso2_of_props`; gemela `window.KhipuCountries` en engine/geo_coords.js GENERADA por `scripts/build_country_review.py --js`;
+paridad en tests/test_countries.py); el texto `country` NO se reescribe: `meta.country_iso2` derivado; vista geo, filtros,
+cartera (`portfolio_ai`: 130 → 47 grupos) y contexto agrupan por clave; `world.country_key` acepta ISO-2 ('US' → 'EEUU') y
+`_PLACE_EXTRA` cubre las abreviaturas de estados de EE.UU. ('Boulder, CO' → EEUU); NRS INTACTO (su tabla es gobernada:
+nrs.formula 1.1.0 con PIN si Fabrizio quiere); docs/REVISION_PAISES.md (generado, `--check`) para marcar. CATÁLOGO —
+8 símbolos corregidos + `listings[]` con fuente en nodes_seed.js (TEL 8035.T, Ajinomoto 2802.T, SiemensEnergy ENR.DE,
+TSMC 2330.TW secundario, SiTime SITM, QinetiQ QQ.L, Vulcan VUL.AX, Astroscale 186A.T) → `core/instruments.listings_of/
+secondary_listings/primary_conflicts` (sufijo `.IL`); los secundarios declarados resuelven como ticker BLANDO en
+core/entities (TOELY → TEL). Categorías con fuente ÚNICA `data/categories.json` (163 = 108 + 55; `merged`
+battery_components → battery_cells; etiquetas ES/EN; colores con ΔE ≥ 10 frente a todas, claro y oscuro) →
+`scripts/build_categories.py` (`--check`, `--css`) → `nodes/categories_extra.js` (GENERADO; CATS_NEW/CAT_TO_SECTOR sin
+pisar; `window.CAT_ALIASES`; en app.html tras nodes_seed.js, en el SHELL y en export_graph_v0.js) + `ontology/vocabulary.
+categories/resolve_category` + `/api/vocabulary.categories` (ETag con sha de categorías). docs/REVISION_INSTRUMENTOS.md
+§3 (generado): 7 símbolos que decide Fabrizio. RESOLVEDOR (E1.6) — `core/entities.resolve_ids(ids, name)`: lei 100 >
+isin/cik/qid 99 > figi 98 > yahoo_symbol 97 > ticker@MIC 96 > dominio (solo candidato) > nombre ≥ 85 (60-84 =
+possible_duplicate); ticker a secas NUNCA; `other_names`/`aliases` como alias («宁德时代»); identificador reclamado por dos
+= `ambiguous_id` (`identifier_conflicts()`); p50 ≤ 0,03 ms; MCP `search_companies` acepta lei/isin/cik/qid/yahoo_symbol/
+ticker+mic (también dentro de `query`). Impact vectorizado (`_order_and_stats`, guardia completa k ≤ 10000 → lexsort;
+GC apagado durante build): 20k 743 → ~455 ms, 5k ~100 ms, 937 ~20 ms, content_sha IDÉNTICO. CHAT — `get_fundamentals`
+(mcp_server/ops.py: anual company_data FMP→Yahoo→AV, trimestral Yahoo; → chart.bar ingresos + metric.tiles + barras de
+utilidad; intención `fundamentals` antes que `price`) y `rank_by_market` (E2.9: `market_position[]`/`facilities[]` de
+views/card.py en toda ficha y en MCP get_company; → ranking; sin datos «no tengo ese ranking») en MCP_READ_TOOLS;
+`strip_tool_names` saca nombres de herramientas de la prosa SIN tocar cifras (comas decimales); tiles que se ajustan al
+ancho (cifras compactas «$5,52 T», también en company.card); UNA cotización por empresa en pantalla (`KhipuOSWin.quote`,
+evento `khipu:hotquote`, tiles suscritos); acciones sin duplicar (`KhipuOSWin.actLabel`); barras compactas sin desborde
+(`genui_charts`, columna alta sin recorte). Revisión del lote (23 hallazgos) arreglada: tests/test_lotek_fixer.py.
+Pendiente: panel 🩺 → 📥 Importar (E2.7); `comparison` de fundamentales; account.py y khipu_chat.py:688 filtran país por
+texto; `prices_store._targets` no salta secundarios «dado de baja»; demotar primarios viejos en producción exige PIN.
 
 ## Arquitectura
 

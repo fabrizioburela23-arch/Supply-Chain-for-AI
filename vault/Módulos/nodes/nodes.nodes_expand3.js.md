@@ -30,11 +30,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **6 de 98** (línea 1441), después de [[nodes.nodes_spacex.js]] y antes de [[nodes.nodes_nuclear.js]].
+Se carga en [[app.html]] en la posición **7 de 99** (línea 1508), después de [[nodes.nodes_spacex.js]] y antes de [[nodes.nodes_nuclear.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 6)
+- [[app.html]] — lo carga con `<script>` (posición 7)
 - [[engine.app_main.js]] — usa `NODES_EXPAND3`
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 

@@ -159,6 +159,8 @@ REGLAS_CAPA = [
     ('scripts/build_governance.py', 'infra'), ('scripts/build_shapes.py', 'infra'),
     ('scripts/build_impl_goldens.py', 'infra'),
     ('scripts/build_instrument_review.py', 'catalogo'),
+    ('scripts/build_categories.py', 'catalogo'), ('scripts/build_country_review.py', 'catalogo'),
+    ('scripts/import_companies.py', 'ontologia'),
     ('scripts/fetch_ledger_anchor.py', 'infra'),
     ('engine/aispend.js', 'infra'), ('engine/sync.js', 'infra'),
     # Interfaz

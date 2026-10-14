@@ -18,6 +18,7 @@ const ROOT = path.join(__dirname, '..');
 
 const DATA_FILES = [
   'nodes/nodes_seed.js',
+  'nodes/categories_extra.js',
   'nodes/nodes_expand.js', 'nodes/nodes_expand2.js', 'nodes/nodes_spacex.js',
   'nodes/nodes_expand3.js', 'nodes/nodes_nuclear.js', 'nodes/nodes_expand4.js',
   'nodes/nodes_expand5.js', 'nodes/nodes_china.js', 'nodes/nodes_multicapa.js',

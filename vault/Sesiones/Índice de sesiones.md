@@ -6,8 +6,9 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-108 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+109 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-14 (c) — LOTE K - IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT]] — 13 archivos
 - [[Sesión 2026-10-14 (b) — LOTE J - SERVIDOR A 5.000 + CHAT PROGRESIVO (F3) + revisión — sw]] — 2 archivos
 - [[Sesión 2026-10-14 — RESPUESTAS VISUALES F2 - revisión (19 hallazgos) — sw v269]] — 4 archivos
 - [[Sesión 2026-10-13 (m) — app.html PARTIDO + 2 arreglos visibles — sw v268]] — 11 archivos

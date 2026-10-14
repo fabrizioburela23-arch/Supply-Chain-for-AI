@@ -44,7 +44,7 @@ Auditoría automática del grafo (misión de reparación, G1).
 
 - [[scripts.build_graph_review.py]] — lo importa
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -52,6 +52,7 @@ _Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_catalog_fix_symbols.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_graph_audit.py]]
 - [[tests.test_review_lists.py]]

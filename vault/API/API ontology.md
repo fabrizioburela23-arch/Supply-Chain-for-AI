@@ -1,13 +1,13 @@
 ---
 tipo: "api"
 capa: "Ontología y grafo temporal"
-rutas: 34
+rutas: 39
 tags: ["capa/ontologia", "tipo/api"]
 ---
 
 # API ontology
 
-> 34 rutas · definidas en [[ontology.api.py]] · prefijo `/api/ontology`
+> 39 rutas · definidas en [[ontology.api.py]] · prefijo `/api/ontology`
 
 Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
@@ -33,6 +33,11 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET` | `/api/ontology/gates` | `gates_status` | [[ontology.api.py]] | — |
 | `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] | [[engine.maptime.js]], 3 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 1 prueba |
+| `POST` | `/api/ontology/import/apply` | `import_apply` | [[ontology.api.py]] | [[scripts.import_companies.py]], 1 prueba |
+| `POST` | `/api/ontology/import/files` | `import_files` | [[ontology.api.py]] | [[scripts.import_companies.py]], 2 pruebas |
+| `POST` | `/api/ontology/import/plan` | `import_plan` | [[ontology.api.py]] | [[scripts.import_companies.py]], 1 prueba |
+| `POST` | `/api/ontology/import/rollback` | `import_rollback` | [[ontology.api.py]] | [[scripts.import_companies.py]], 1 prueba |
+| `GET` | `/api/ontology/import/runs` | `import_runs` | [[ontology.api.py]] | [[scripts.import_companies.py]], 1 prueba |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[ontology.api.py]] | [[engine.app_main.js]], [[engine.temporal-graph.js]], 4 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[ontology.api.py]] | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[ontology.api.py]] | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |

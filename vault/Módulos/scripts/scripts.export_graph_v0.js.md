@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos del catálogo"
 ruta: "scripts/export_graph_v0.js"
 lenguaje: "javascript"
-lineas: 104
+lineas: 105
 aliases: ["scripts/export_graph_v0.js"]
 tags: ["capa/datos-catalogo", "tipo/modulo"]
 ---
 
 # scripts/export_graph_v0.js
 
-> Módulo · capa [[Capa Datos del catálogo]] · 104 líneas · `scripts/export_graph_v0.js`
+> Módulo · capa [[Capa Datos del catálogo]] · 105 líneas · `scripts/export_graph_v0.js`
 
 ## Para qué sirve
 
@@ -22,6 +22,7 @@ De nivel superior (globales del script): `DATA_FILES`, `ROOT`, `buildSnapshot`, 
 
 ## Depende de
 
+- [[nodes.categories_extra.js]] — lo nombra por su ruta
 - [[nodes.legal_names.js]] — lo nombra por su ruta
 - [[nodes.links_all.js]] — lo nombra por su ruta
 - [[nodes.links_connect.js]] — lo nombra por su ruta

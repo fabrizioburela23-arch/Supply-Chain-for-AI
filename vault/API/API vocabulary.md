@@ -13,5 +13,5 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/vocabulary` | `api_vocabulary` | [[server.py]] | 2 pruebas |
+| `GET` | `/api/vocabulary` | `api_vocabulary` | [[server.py]] | 3 pruebas |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | [[server.py]] | — |

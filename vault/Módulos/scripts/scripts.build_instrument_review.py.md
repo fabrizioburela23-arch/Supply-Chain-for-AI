@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos del catálogo"
 ruta: "scripts/build_instrument_review.py"
 lenguaje: "python"
-lineas: 118
+lineas: 119
 aliases: ["scripts/build_instrument_review.py"]
 tags: ["capa/datos-catalogo", "tipo/modulo"]
 ---
 
 # scripts/build_instrument_review.py
 
-> Módulo · capa [[Capa Datos del catálogo]] · 118 líneas · `scripts/build_instrument_review.py`
+> Módulo · capa [[Capa Datos del catálogo]] · 119 líneas · `scripts/build_instrument_review.py`
 
 ## Para qué sirve
 
@@ -19,7 +19,7 @@ genera docs/REVISION_INSTRUMENTOS.md (BRECHAS_V2 L3-13, decisión #9).
 ## API pública
 
 - `render(nodes)` _(línea 34)_
-- `main(argv=…)` _(línea 97)_
+- `main(argv=…)` _(línea 98)_
 
 **Internas** (empiezan con `_`): `_row`, `_nodes`
 

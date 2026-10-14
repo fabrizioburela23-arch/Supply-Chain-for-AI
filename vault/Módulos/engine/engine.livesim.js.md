@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/livesim.js"
 lenguaje: "javascript"
-lineas: 442
+lineas: 445
 aliases: ["engine/livesim.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/livesim.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 442 líneas · `engine/livesim.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 445 líneas · `engine/livesim.js`
 
 ## Para qué sirve
 
@@ -23,15 +23,16 @@ SIMULACIÓN EN VIVO v3 (abierta, no cerrada) Constructor de escenarios: eliges e
 ## Depende de
 
 - [[engine.app_main.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `_liveRecolorByImpact`, `_liveResetColors`, `_liveSelectedNode`, `_liveTintLinks`, `jumpTo`, `sectorName`
+- [[engine.geo_coords.js]] — usa `GeoCoords`, `KhipuCountries`
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[engine.toast.js]] — usa `khipuActor`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **68 de 98** (línea 3125), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
+Se carga en [[app.html]] en la posición **69 de 99** (línea 3192), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 68)
+- [[app.html]] — lo carga con `<script>` (posición 69)
 - [[engine.command_center.js]] — usa `_lsToggle`
 
 ## Endpoints que llama
@@ -43,6 +44,7 @@ Se carga en [[app.html]] en la posición **68 de 98** (línea 3125), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_countries.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_scenario_pnl_browser.py]]
 

@@ -77,6 +77,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[core.decide.py]] — lo importa
 - [[core.decision_sites.py]] — lo importa
 - [[core.decisions.py]] — lo importa
+- [[core.entities.py]] — lo importa
 - [[core.governance_api.py]] — lo importa
 - [[core.governance_flow.py]] — lo importa
 - [[core.governance_lint.py]] — lo importa
@@ -96,6 +97,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[matrix.tensor.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.checkpoints.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.service.py]] — lo importa
 - [[ontology.vocabulary.py]] — lo importa
@@ -106,7 +108,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 27 pruebas (lista abajo)._
+_Además lo importan 30 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -124,6 +126,9 @@ _Además lo importan 27 pruebas (lista abajo)._
 - [[tests.test_governance_flow.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_impl_registry.py]]
+- [[tests.test_import_governance.py]]
+- [[tests.test_import_schema.py]]
+- [[tests.test_import_shapes.py]]
 - [[tests.test_kernel_monotone_edges.py]]
 - [[tests.test_kernel_monotone_severity.py]]
 - [[tests.test_kernel_reference_figures.py]]

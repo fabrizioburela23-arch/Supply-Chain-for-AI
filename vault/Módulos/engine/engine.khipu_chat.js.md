@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/khipu_chat.js"
 lenguaje: "javascript"
-lineas: 1415
+lineas: 1436
 aliases: ["engine/khipu_chat.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/khipu_chat.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 1.415 líneas · `engine/khipu_chat.js`
+> Módulo · capa [[Capa Chat y agentes]] · 1.436 líneas · `engine/khipu_chat.js`
 
 ## Para qué sirve
 
@@ -43,11 +43,11 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 
-Se carga en [[app.html]] en la posición **88 de 98** (línea 3147), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
+Se carga en [[app.html]] en la posición **89 de 99** (línea 3214), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 88)
+- [[app.html]] — lo carga con `<script>` (posición 89)
 - [[engine.cockpit.js]] — usa `KhipuChat`
 - [[engine.command_center.js]] — usa `KhipuChat`
 - [[engine.genui.js]] — usa `KhipuChat`

@@ -84,7 +84,7 @@ OLD_KEYS = ('answer', 'actions', 'tools_used', 'sources', 'model', 'answer_sourc
 def test_mapa_herramienta_agente_es_el_del_contrato():
     assert kc.TOOL_AGENT == {
         'get_company': 'analista', 'search_companies': 'analista', 'get_research': 'analista',
-        'get_claim_evidence': 'analista', 'get_supply_chain': 'cadena', 'rank_companies': 'cadena',
+        'get_claim_evidence': 'analista', 'get_fundamentals': 'analista', 'get_supply_chain': 'cadena', 'rank_companies': 'cadena',
         'get_news': 'radar', 'get_world_events': 'radar', 'web_search': 'radar', 'scenario_exposure': 'radar',
         'market_movers': 'tecnico', 'get_option_greeks': 'tecnico', 'get_risk_report': 'tecnico',
         'get_committee_memo': 'comite', 'get_conclusions_board': 'comite', 'get_track_record': 'comite',

@@ -1,5 +1,5 @@
 {
- "ir_hash": "095d41d1ad41fef864838a74524050454a636b563b9a6af4b9049e3856789947",
+ "ir_hash": "16b85385e8dbdcc242a2cac706a00003f6a619b7f9ffe07b38e63e8e023e8b4a",
  "rules": [
   "khr:action.agent_needs_human",
   "khr:action.auto_apply_allowed",
@@ -17,6 +17,20 @@
   "khr:factor.noop",
   "khr:factor.not_retired",
   "khr:factor.severity_scale",
+  "khr:import.cat_known",
+  "khr:import.counterparty_resolved",
+  "khr:import.criticality_range",
+  "khr:import.hq_country_iso2",
+  "khr:import.hq_country_known",
+  "khr:import.live_needs_trust",
+  "khr:import.no_live_fields",
+  "khr:import.one_primary_listing",
+  "khr:import.owns_share_min",
+  "khr:import.possible_duplicate",
+  "khr:import.route_in_vocab",
+  "khr:import.schema_valid",
+  "khr:import.summary_bilingual",
+  "khr:import.unverified_confidence",
   "khr:link.confidence_range",
   "khr:link.dated_fact_has_source",
   "khr:link.direction_text_suspect",
@@ -351,6 +365,7 @@
         "mcp.tool_call",
         "ontology.action",
         "ontology.bulk_import",
+        "ontology.import_rollback",
         "ontology.news_ingest",
         "ontology.raw_event",
         "order.cancel",
@@ -552,6 +567,364 @@
    ],
    "sparql": [],
    "target": "kh:Factor"
+  },
+  {
+   "iri": "khs:ImportRecordShape",
+   "props": [
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportCatKnown",
+     "msg_en": "The category is neither in the catalog nor approved in this batch (known: {value}): the nearest one is used and it stays proposed.",
+     "msg_es": "La categoría no está en el catálogo ni fue aprobada en este lote (conocida: {value}): se usa la más cercana y queda propuesta.",
+     "name": "categoría del catálogo o aprobada",
+     "path": "kh:catKnown",
+     "rule": "khr:import.cat_known",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      },
+      {
+       "flags": "",
+       "kind": "pattern",
+       "value": "^[A-Z]{2}$"
+      }
+     ],
+     "iri": "khs:ImportHqCountryIso2",
+     "msg_en": "The HQ country \"{value}\" is not an ISO 3166-1 alpha-2 code.",
+     "msg_es": "El país de la sede «{value}» no es un código ISO 3166-1 alfa-2.",
+     "name": "sede como ISO-2",
+     "path": "kh:hqCountry",
+     "rule": "khr:import.hq_country_iso2",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportHqCountryKnown",
+     "msg_en": "The HQ is unknown ({value}): the company stays under \"Rest of world\" until reviewed.",
+     "msg_es": "La sede es desconocida ({value}): la empresa queda en «Resto del mundo» hasta revisarla.",
+     "name": "sede conocida",
+     "path": "kh:hqKnown",
+     "rule": "khr:import.hq_country_known",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "datatype",
+       "value": "xsd:decimal"
+      },
+      {
+       "kind": "maxInclusive",
+       "value": 0
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportNoLiveFields",
+     "msg_en": "The record carries {value} field(s) the server computes live (price, market cap, NRS…): they are not imported.",
+     "msg_es": "La ficha trae {value} campo(s) que el servidor calcula en vivo (precio, capitalización, NRS…): no se importan.",
+     "name": "sin cifras en vivo en la ficha",
+     "path": "kh:forbiddenKeys",
+     "rule": "khr:import.no_live_fields",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "datatype",
+       "value": "xsd:decimal"
+      },
+      {
+       "kind": "maxInclusive",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportOnePrimaryListing",
+     "msg_en": "The record marks {value} listings as primary: there can be only one (company ≠ instrument).",
+     "msg_es": "La ficha marca {value} cotizaciones como principal: solo puede haber una (empresa ≠ instrumento).",
+     "name": "una sola cotización principal",
+     "path": "kh:primaryListings",
+     "rule": "khr:import.one_primary_listing",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportPossibleDuplicate",
+     "msg_en": "The name resembles an existing company (possible duplicate: {value}): review before creating it.",
+     "msg_es": "El nombre se parece a una empresa que ya existe (posible duplicado: {value}): revisar antes de crearla.",
+     "name": "posible duplicado por nombre",
+     "path": "kh:possibleDuplicate",
+     "rule": "khr:import.possible_duplicate",
+     "severity": "khs:RequiresApproval"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportSchemaValid",
+     "msg_en": "The record does not satisfy the khipus.company/1 schema (valid: {value}): it is not imported.",
+     "msg_es": "La ficha no cumple el esquema khipus.company/1 (válida: {value}): no se importa.",
+     "name": "la ficha cumple khipus.company/1",
+     "path": "kh:schemaValid",
+     "rule": "khr:import.schema_valid",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportSummaryBilingual",
+     "msg_en": "The profile has no English text (bilingual rule; has English: {value}): the card shows Spanish only until translated.",
+     "msg_es": "El perfil no trae inglés (regla bilingüe; con inglés: {value}): la ficha se muestra solo en español hasta traducirla.",
+     "name": "perfil en español e inglés",
+     "path": "kh:summaryEn",
+     "rule": "khr:import.summary_bilingual",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportUnverifiedConfidence",
+     "msg_en": "The record is unverified but declares high confidence ({value}): it is capped at the policy value.",
+     "msg_es": "La ficha no está verificada pero declara una confianza alta ({value}): se recorta a la de política.",
+     "name": "sin verificar = confianza baja",
+     "path": "kh:unverifiedHighConf",
+     "rule": "khr:import.unverified_confidence",
+     "severity": "sh:Warning"
+    }
+   ],
+   "sparql": [],
+   "target": "kh:ImportRecord"
+  },
+  {
+   "iri": "khs:ImportRelationShape",
+   "props": [
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        true
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportRelCounterparty",
+     "msg_en": "The counterparty does not exist in the graph yet (identified: {value}): the link stays PENDING until its record arrives.",
+     "msg_es": "La contraparte no existe todavía en el grafo (identificada: {value}): el vínculo queda PENDIENTE hasta que llegue su ficha.",
+     "name": "contraparte identificada",
+     "path": "kh:counterpartyResolved",
+     "rule": "khr:import.counterparty_resolved",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "datatype",
+       "value": "xsd:decimal"
+      },
+      {
+       "kind": "minInclusive",
+       "value": 1
+      },
+      {
+       "kind": "maxInclusive",
+       "value": 6
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportRelCriticality",
+     "msg_en": "Criticality {value} is outside the 1-6 scale (link weight).",
+     "msg_es": "La criticidad {value} está fuera de la escala 1-6 (peso del vínculo).",
+     "name": "criticidad 1-6",
+     "path": "kh:criticality",
+     "rule": "khr:import.criticality_range",
+     "severity": "sh:Violation"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        false
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportRelLiveTrusted",
+     "msg_en": "The link would enter LIVE without a trust ≥ 2 source or confidence ≥ 0.5 (unbacked: {value}): it goes as a proposal.",
+     "msg_es": "El vínculo entraría VIVO sin fuente con trust ≥ 2 ni confianza ≥ 0,5 (sin respaldo: {value}): va como propuesta.",
+     "name": "un vínculo vivo cita una fuente confiable",
+     "path": "kh:liveWithoutTrust",
+     "rule": "khr:import.live_needs_trust",
+     "severity": "khs:RequiresApproval"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "maxCount",
+       "value": 1
+      },
+      {
+       "kind": "lessThanOrEquals",
+       "value": "kh:ownsSharePct"
+      }
+     ],
+     "iri": "khs:ImportRelOwnsShare",
+     "msg_en": "An \"owns\" link needs at least {value}% ownership (the record has {limit}%): it should be \"invest\".",
+     "msg_es": "Un vínculo «owns» exige al menos {value} % de participación (la ficha trae {limit} %): debería ser «invest».",
+     "name": "owns desde la participación mínima",
+     "path": "kh:ownsMinPct",
+     "rule": "khr:import.owns_share_min",
+     "severity": "sh:Warning"
+    },
+    {
+     "constraints": [
+      {
+       "kind": "in",
+       "value": [
+        "live",
+        "proposed",
+        "pending",
+        "quarantine"
+       ]
+      },
+      {
+       "kind": "minCount",
+       "value": 1
+      },
+      {
+       "kind": "maxCount",
+       "value": 1
+      }
+     ],
+     "iri": "khs:ImportRelRouteInVocab",
+     "msg_en": "Route \"{value}\" does not exist: a link enters live, as a proposal, stays pending or is quarantined.",
+     "msg_es": "La ruta «{value}» no existe: un vínculo entra vivo, como propuesta, queda pendiente o en cuarentena.",
+     "name": "ruta del vínculo",
+     "path": "kh:route",
+     "rule": "khr:import.route_in_vocab",
+     "severity": "sh:Violation"
+    }
+   ],
+   "sparql": [],
+   "target": "kh:ImportRelation"
   },
   {
    "iri": "khs:LinkDatedFactHasSourceShape",
@@ -1557,5 +1930,5 @@
    "target": "kh:UnvalidatedMemo"
   }
  ],
- "source_sha": "3e967625d48f43d9b29adf04faaed891f6d0e298101725c136e396aa68b9508b"
+ "source_sha": "3c1db864af665fada58b8039076484c91d4d4f44e2226f5b6030d1df7d4e958c"
 }

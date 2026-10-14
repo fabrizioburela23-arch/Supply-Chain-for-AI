@@ -25,6 +25,15 @@ _INTENTS = (
                           r'impacto|impact|bloque[oa]|blockade|cascad|contagi', re.I)),
     ('compare', re.compile(r'compar|\bvs\.?\b|versus|frente a|\bo\b .{0,30}\bcu[aá]l\b|which is better|mejor entre', re.I)),
     ('risk', re.compile(r'\bvar\b|volatil|riesgo de (mi|la) cartera|portfolio risk|drawdown|\bbeta\b', re.I)),
+    # lote K: estados financieros («ganancias de X en un gráfico») y posición de mercado («la más grande en X») van
+    # ANTES de precio/cadena: «gráfico» o «proveedor» en la misma frase no los tapan
+    ('fundamentals', re.compile(r'ganancia|ingreso|utilidad|beneficio|facturaci|márgen|margen|flujo de caja|'
+                                r'estados? financ|resultados? (anual|trimestral|del a[nñ]o|de [12]\d{3})|'
+                                r'\brevenue|earnings|\bprofit|net income|\bsales\b|margin|cash ?flow|financial statement|'
+                                r'fundamental', re.I)),
+    ('market', re.compile(r'm[aá]s grande|mayor (empresa|fabricante|productor|fabricantes|productores)|l[ií]der (en|de|del|mundial)|'
+                          r'largest|biggest|leader in|leading (company|maker|producer)|cuota de mercado|market share|'
+                          r'\branking\b|\btop ?\d', re.I)),
     ('news', re.compile(r'noticia|news|qu[eé] pas[oó]|happened|evento|event|mundo|world|geopol', re.I)),
     ('price', re.compile(r'precio|cotiza|c[oó]mo (le )?(va|fue|ha ido)|how (is|did|has) .{0,40}(doing|done|perform)|'
                          r'\bprice|gr[aá]fic|chart|rendimiento|performance|meses|months|\ba[nñ]o\b|year|semana|week|'
@@ -45,9 +54,12 @@ _MAIN = {
     'committee': ('pros_cons', 'chart.bar'),
     'risk': ('risk_tiles',),
     'company': ('company',),
+    'fundamentals': ('fund_bar',),
+    'market': ('market_rank',),
 }
 # prioridad por defecto (sin intención clara)
-_DEFAULT = ('cascade', 'line', 'graph.mini', 'risk_tiles', 'pros_cons', 'ranking', 'chart.bar', 'timeline', 'company')
+_DEFAULT = ('cascade', 'line', 'graph.mini', 'risk_tiles', 'pros_cons', 'ranking', 'chart.bar', 'timeline', 'company',
+            'fund_bar', 'market_rank')
 
 
 def intent_of(message):
@@ -94,11 +106,19 @@ def select(cands, intent, primary, mode='simple'):
         ent = (main.get('_meta') or {}).get('entity')
         mains = [b for b in cands if _key(b) == 'company' and (b.get('_meta') or {}).get('entity') == ent]
         mains.sort(key=lambda b: 0 if (b.get('_meta') or {}).get('kind') == 'tiles' else 1)
+    if _key(main) == 'fund_bar':                 # resultados → ingresos por período + cifras del último período
+        ent = (main.get('_meta') or {}).get('entity')
+        mains = [b for b in cands if (b.get('_meta') or {}).get('group') == 'fundamentals'
+                 and (b.get('_meta') or {}).get('entity') == ent
+                 and (b.get('_meta') or {}).get('kind') in ('fund_bar', 'fund_tiles')]
+        mains.sort(key=lambda b: 0 if (b.get('_meta') or {}).get('kind') == 'fund_bar' else 1)
     used = {id(b) for b in mains}
     rest = [b for b in cands if id(b) not in used]
     # de secundario, una empresa va con su FICHA (las cifras ya están dentro): sin el bloque de cifras repetido
     rest = [b for b in rest if not ((b.get('_meta') or {}).get('kind') == 'tiles'
                                     and (b.get('_meta') or {}).get('group') == 'company')]
+    # ...ni las cifras del último período sin su gráfico de ingresos
+    rest = [b for b in rest if (b.get('_meta') or {}).get('kind') != 'fund_tiles']
     order = {k: i for i, k in enumerate(_DEFAULT)}
     rest.sort(key=lambda b: (0 if (b.get('_meta') or {}).get('entity') in (primary, None) else 1,
                              1 if (b.get('_meta') or {}).get('role') == 'secondary' else 0,

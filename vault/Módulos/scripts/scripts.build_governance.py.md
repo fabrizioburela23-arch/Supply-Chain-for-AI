@@ -42,11 +42,12 @@ mantiene governance/manifest.json (docs/INFRA_OPERATIVA.md §5.1-§5.3; paso 9).
 
 _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_genui_schema.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_flow.py]]
+- [[tests.test_import_governance.py]]
 - [[tests.test_review_infra_c.py]]

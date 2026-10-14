@@ -63,8 +63,11 @@
         return ((window.CAT_TO_SECTOR || {})[n.cat] || 'cloud_ia') === sec;
       }).map(function (n) { return n.id; });
     },
+    // `country` = clave del catálogo (GeoCoords.countryGroup, la misma que usa el selector de livesim) o el texto exacto
     idsInCountry: function (country) {
-      return (window.NODES || []).filter(function (n) { return n.country === country; }).map(function (n) { return n.id; });
+      var G = window.GeoCoords;
+      var cg = function (c) { return (G && G.countryGroup) ? G.countryGroup(c) : c; };
+      return (window.NODES || []).filter(function (n) { return n.country === country || cg(n.country) === country; }).map(function (n) { return n.id; });
     },
   };
 

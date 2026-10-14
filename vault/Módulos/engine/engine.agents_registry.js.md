@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/agents_registry.js"
 lenguaje: "javascript"
-lineas: 78
+lineas: 79
 aliases: ["engine/agents_registry.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/agents_registry.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 78 líneas · `engine/agents_registry.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 79 líneas · `engine/agents_registry.js`
 
 ## Para qué sirve
 
@@ -24,11 +24,11 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **29 de 98** (línea 3020), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
+Se carga en [[app.html]] en la posición **30 de 99** (línea 3087), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 29)
+- [[app.html]] — lo carga con `<script>` (posición 30)
 
 ## Pruebas que lo cubren
 

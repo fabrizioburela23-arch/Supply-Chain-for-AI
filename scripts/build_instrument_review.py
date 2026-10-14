@@ -81,6 +81,7 @@ def render(nodes):
     out += [_row(r, i + 1) for i, r in enumerate(multi)]
     out += ['', f'## 2. Empresas medidas hoy con un certificado OTC o ADR ({len(otc)})', '', head]
     out += [_row(r, i + 1) for i, r in enumerate(otc)]
+    out += I.lot_review_markdown()   # lote 2026-10-14: §3 símbolos corregidos / por decidir (core/instruments.LOT_2026_10_14)
     out += ['', '## Qué pasa después', '',
             '- Con tu elección, Khipus marca el instrumento elegido como **primario** (la tabla `instruments`; el '
             'otro queda guardado como secundario) y la historia de precios, el riesgo y los técnicos pasan a usarlo.',

@@ -3,7 +3,7 @@
    CACHE va en la línea 6 (regla de despliegue #1: bump vN → vN+1 en cada
    cambio de JS/HTML). server.py (_sw_version) lee SOLO los primeros 2048
    caracteres para inyectar ?v=N en los <script src> — no la bajes. */
-const CACHE = 'khipu-finance-v270';
+const CACHE = 'khipu-finance-v271';
 /* Reglas (auditoría estructural 2026-09-30, hallazgo #3 — incidente real: un
    502 HTML de Railway quedó guardado y se servía offline → "Unexpected token
    '<'", y /api/health cacheado devolvía {server:true} ocultando el aviso):
@@ -35,7 +35,7 @@ const CACHE = 'khipu-finance-v270';
 const SHELL = ['/', '/app.html',
   '/vendor/d3.min.js', '/vendor/three.min.js', '/vendor/chart.umd.min.js',
   '/vendor/satellite.min.js',
-  '/nodes/nodes_seed.js',
+  '/nodes/nodes_seed.js', '/nodes/categories_extra.js',
   '/nodes/nodes_expand.js', '/nodes/nodes_expand2.js', '/nodes/nodes_spacex.js',
   '/nodes/nodes_expand3.js', '/nodes/nodes_nuclear.js', '/nodes/nodes_expand4.js',
   '/nodes/nodes_expand5.js', '/nodes/meta_fill.js', '/nodes/nodes_china.js', '/nodes/nodes_multicapa.js',

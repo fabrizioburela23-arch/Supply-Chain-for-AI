@@ -24,11 +24,11 @@ EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversi
 
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **77 de 98** (línea 3134), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
+Se carga en [[app.html]] en la posición **78 de 99** (línea 3201), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 77)
+- [[app.html]] — lo carga con `<script>` (posición 78)
 - [[app.html]] — usa `explainMetric`
 - [[engine.app_coordinator.js]] — usa `explainChip`
 - [[engine.app_main.js]] — usa `explainChip`, `explainMetric`
@@ -38,6 +38,7 @@ Se carga en [[app.html]] en la posición **77 de 98** (línea 3134), después de
 - [[engine.committee.js]] — usa `explainChip`, `explainRegister`
 - [[engine.fincard.js]] — usa `explainChip`
 - [[engine.genui.js]] — usa `explainMetric`, `explainRegister`
+- [[engine.genui_charts.js]] — usa `explainRegister`
 - [[engine.governance.js]] — usa `explainChip`
 - [[engine.insights.js]] — usa `explainMetric`
 - [[engine.mcpconnect.js]] — usa `explainChip`, `explainRegister`

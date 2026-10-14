@@ -24,11 +24,11 @@ BixbyOrb: el orbe de voz de Khipu.
 
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **34 de 98** (línea 3025), después de [[engine.resolve.js]] y antes de [[engine.trade.js]].
+Se carga en [[app.html]] en la posición **35 de 99** (línea 3092), después de [[engine.resolve.js]] y antes de [[engine.trade.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 34)
+- [[app.html]] — lo carga con `<script>` (posición 35)
 - [[engine.cockpit.js]] — usa `BixbyOrb`
 - [[engine.voice.js]] — usa `BixbyOrb`
 

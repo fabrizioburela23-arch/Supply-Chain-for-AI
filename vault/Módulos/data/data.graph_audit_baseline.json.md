@@ -37,4 +37,5 @@ _Nada interno._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_catalog_fix_symbols.py]]
 - [[tests.test_graph_audit.py]]

@@ -49,6 +49,7 @@ GUARD_TABLES = {
     'alerts': ('UPDATE', 'DELETE'),
     'broker_clients': ('UPDATE', 'DELETE'),
     'ai_settings': ('UPDATE', 'DELETE'),
+    'import_runs': ('INSERT', 'UPDATE', 'DELETE'),   # lote K: toda corrida de importación nace dentro de decision_scope
 }
 # Columnas que NO son decisiones: un UPDATE que solo toca estas no cuenta para la guardia. Son el mundo observado (el
 # máximo histórico y el último patrimonio que devolvió Alpaca, el estado crudo de Alpaca de una orden) o datos

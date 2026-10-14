@@ -37,7 +37,9 @@ APPEND_ONLY_TABLES = ('events', 'kh_tx_versions', 'hot_view_builds',
                       # paso 22: contador y modo de la guardia de proyecciones (core/ledger_guard.py)
                       'kh_guard_violations', 'kh_guard_modes',
                       # paso 26: puntos de control del grafo (ontology/checkpoints.py)
-                      'graph_checkpoints')
+                      'graph_checkpoints',
+                      # lote K (E2.4): importación de empresas (ontology/import_models.py)
+                      'import_files', 'import_runs', 'import_pending_links')
 
 # Tablas con txid/seq añadidos como columnas tardías (ontology/db._COLUMNAS_TARDIAS): aquí solo el DEFAULT.
 TXID_SEQ_TABLES = ('events', 'broker_audit')

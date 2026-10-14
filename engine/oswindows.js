@@ -757,11 +757,133 @@
     });
   }
 
+  /* ── UNA cotización por empresa en pantalla (lote K, 2026-10-14): /api/hot/quote (V4, con su sello src/as_of/age)
+     es lo que leen las cifras del chat (engine/genui.js: tiles y ficha) y «en una mirada». Gana la MÁS FRESCA entre
+     lo que trajo /api/hot/quote y MKT.quotes (merge por as_of: nunca se pisa una más nueva). Una petición por símbolo
+     cada 15 s (la caché del servidor); sin red → lo que haya. ── */
+  var HQ = { by: {}, at: {}, pend: {}, TTL: 15000, subs: [] };
+  function hqMs(q) { var t = q && q.as_of ? Date.parse(q.as_of) : NaN; return isNaN(t) ? 0 : t; }
+  function hqToQuote(r) {          // → contrato MKT.quotes (CLAUDE.md): live = precio NUMÉRICO solo si el sello lo dice
+    var st = r.stamp || {}, q = { close: r.px, prev: r.prev, pct: r.pct, src: st.src, as_of: st.as_of, via: 'hot.quote',
+      age_seconds: st.age_s, live: st.live ? r.px : undefined };
+    if (r.currency) q.currency = r.currency;
+    if (r.converted) q.converted = true;
+    return q;
+  }
+  function hqGet(sym) {
+    sym = String(sym || '').toUpperCase(); if (!sym) return null;
+    var a = HQ.by[sym] || null, MK = window.MKT, b = MK && MK.quotes ? MK.quotes[sym] || null : null;
+    if (a && b) return hqMs(b) > hqMs(a) ? b : a;
+    return a || b;
+  }
+  function hqFetch(syms) {         // → Promise<{SÍMBOLO: cotización}> solo con lo que llegó; nunca rechaza
+    var want = [], waits = [], now = Date.now();
+    (Array.isArray(syms) ? syms : [syms]).forEach(function (x) {
+      var s0 = String(x || '').toUpperCase();
+      if (!s0 || want.indexOf(s0) >= 0) return;
+      if (HQ.pend[s0]) { if (waits.indexOf(HQ.pend[s0]) < 0) waits.push(HQ.pend[s0]); return; }   // ya en vuelo: la misma
+      if (!HQ.at[s0] || now - HQ.at[s0] > HQ.TTL) want.push(s0);
+    });
+    var mine = Promise.resolve({});
+    if (want.length && typeof fetch === 'function') {
+      var base = typeof window.BASE === 'string' ? window.BASE : '';
+      mine = fetch(base + '/api/hot/quote?symbols=' + encodeURIComponent(want.join(',')), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          var qs = (j && j.data && j.data.quotes) || {}, got = {}, t2 = Date.now();
+          want.forEach(function (s0) { HQ.at[s0] = t2; delete HQ.pend[s0]; });
+          Object.keys(qs).forEach(function (k) {
+            var q = hqToQuote(qs[k] || {}); if (!(q.close > 0)) return;
+            var S = k.toUpperCase(); HQ.by[S] = q; got[S] = q;
+            try { var MK = window.MKT; if (MK && MK.quotes && !(hqMs(MK.quotes[S]) > hqMs(q))) MK.quotes[S] = Object.assign({}, MK.quotes[S] || {}, q); } catch (e) {}
+          });
+          if (Object.keys(got).length) { try { window.dispatchEvent(new CustomEvent('khipu:hotquote', { detail: { symbols: Object.keys(got) } })); } catch (e) {} }
+          return got;
+        })
+        .catch(function () { want.forEach(function (s0) { delete HQ.pend[s0]; HQ.at[s0] = Date.now(); }); return {}; });
+      want.forEach(function (s0) { HQ.pend[s0] = mine; });
+    }
+    if (!waits.length) return mine;
+    return Promise.all([mine].concat(waits)).then(function (all) {
+      var got = {};
+      all.forEach(function (g) { Object.keys(g || {}).forEach(function (k) { got[k] = g[k]; }); });
+      return got;
+    });
+  }
+  // ayudantes para las cifras del chat (engine/genui.js, que tiene presupuesto de tamaño): qué tile es cotización,
+  // la cifra kblocks que sale de una cotización y el refresco en sitio
+  function hqKind(label, f) {
+    var u = f && f.unit, lab = String(label || '');
+    if ((u === 'USD' || u === 'CCY') && (f.live || /^(precio|price)$/i.test(lab))) return 'px';
+    if (u === 'pct' && (f.live || /^(cambio|change)/i.test(lab))) return 'pct';
+    return null;
+  }
+  function hqFig(q, f, kind) {
+    var v = kind === 'px' ? q.close : q.pct;
+    if (typeof v !== 'number' || !isFinite(v) || !q.as_of) return null;
+    var cur = q.currency && !q.converted ? String(q.currency).toUpperCase() : 'USD';
+    var f2 = { v: v, unit: kind === 'px' ? (cur === 'USD' ? 'USD' : 'CCY') : 'pct', src: q.src || 'hot.quote', as_of: q.as_of, live: typeof q.live === 'number' };
+    if (f2.unit === 'CCY') f2.currency = cur;
+    if (f && f.precision != null) f2.precision = f.precision;
+    else if (kind === 'pct') f2.precision = 2;          // el mismo «+1,36 %» que «en una mirada» (fmtPct a 2 decimales)
+    return f2;
+  }
+  function hqApply(sym, specs, q) {
+    if (!q || !(q.close > 0)) return;
+    specs.forEach(function (s0) {
+      if (!(hqMs(q) > hqMs(s0.f)) && s0.f.v != null) return;
+      var f2 = hqFig(q, s0.f, s0.kind); if (f2) { s0.f = f2; s0.put(f2); }
+    });
+  }
+  // los tiles/fichas del chat se quedan SUSCRITOS (HQ.subs): cada cotización nueva (hot.quote, WebSocket, lotes) los
+  // vuelve a pintar mientras sigan en el DOM, así nunca divergen de «en una mirada» (revisión lote K)
+  function hqRefresh(sym, specs) {   // specs = [{f: cifra actual, kind: 'px'|'pct', el?, put(f2)}]: solo si hay algo MÁS FRESCO
+    var S = String(sym || '').toUpperCase();
+    try {
+      hqApply(S, specs, hqGet(S)); hqFetch([S]).then(function (got) { hqApply(S, specs, got && got[S]); });
+      HQ.subs.push({ sym: S, specs: specs, at: Date.now() }); if (HQ.subs.length > 120) HQ.subs.splice(0, HQ.subs.length - 120);
+    } catch (e) {}
+  }
+  var _hqT = 0;
+  function hqRepaint() {
+    if (_hqT) return;
+    _hqT = setTimeout(function () {
+      _hqT = 0; var now = Date.now(), doc = window.document;
+      HQ.subs = HQ.subs.filter(function (s) {
+        var alive = s.specs.some(function (x) { return !x.el || doc.contains(x.el); });
+        if (!alive || now - s.at > 6 * 3600 * 1000) return false;
+        try { hqApply(s.sym, s.specs, hqGet(s.sym)); } catch (e) {}
+        return true;
+      });
+    }, 400);
+  }
+  window.addEventListener('khipu:quotes', hqRepaint);
+  window.addEventListener('khipu:hotquote', hqRepaint);
+  // nombres ÚNICOS de las acciones de los bloques del chat (Dossier, X-Ray, ventanas): los de la Cabina (KIND_META /
+  // BixbyCockpit.title) cuando la ventana existe allí; un solo rótulo por idioma, con la empresa solo si el bloque
+  // no es ya de esa empresa
+  var ACT_NAME = { open_dossier: ['📊', 'Dossier', 'Dossier'], open_xray: ['🔬', 'X-Ray', 'X-Ray'], open_map: ['🗺️', 'Mapa de la cadena', 'Supply-chain map'],
+    open_world: ['🌐', 'World Monitor', 'World Monitor'], open_research: ['💡', 'Investigación', 'Research'], open_committee: ['🏛', 'Comité', 'Committee'] };
+  var ACT_WIN = { glance: ['◉', 'En una mirada', 'At a glance'], supplychain: ['🔗', 'Cadena de suministro', 'Supply chain'], sim: ['◉', 'Caída simulada', 'Simulated failure'],
+    compare: ['⇄', 'Comparar', 'Compare'], geo: ['🌐', 'Geopolítica', 'Geopolitics'], canvas: ['✦', 'Gráfico', 'Chart'], xray: ['🔬', 'X-Ray', 'X-Ray'],
+    agents: ['🤖', 'Tus agentes', 'Your agents'], conviction: ['🎯', 'Convicción', 'Conviction'], genui: ['📌', 'Bloque', 'Block'] };
+  function actLabel(a, blockEntityId) {
+    var m = a && (a.kind === 'open_window' ? ACT_WIN[a.window] : ACT_NAME[a.kind]);
+    if (!m) { var l0 = a && a.label; return typeof l0 === 'string' ? l0 : (l0 ? String(l0[lang()] || l0.es || l0.en || '') : ''); }
+    var ic = m[0], name = m[lang() === 'en' ? 2 : 1], ck = window.BixbyCockpit;
+    if (a.kind === 'open_window' && ck && typeof ck.title === 'function') {
+      try { var tt = ck.title(a.window, {}); if (tt && tt !== a.window) name = String(tt).split(' · ')[0]; } catch (e) {}
+      try { var i2 = ck.icon && ck.icon(a.window); if (i2 && i2 !== '▫') ic = i2; } catch (e) {}
+    }
+    var e = a.entity && a.entity.label;
+    return ic + ' ' + name + (e && blockEntityId !== a.entity.id ? ': ' + e : '');
+  }
+
   /* ════════════════════════ «<Empresa> en una mirada» ═══════════════════════ */
   function quoteOfNode(n) {
-    var tk = n && n.mkt, MK = window.MKT;
-    if (!tk || !MK || !MK.quotes) return { tk: tk || null, q: null, px: 0 };
-    var qq = MK.quotes[tk] || null, px = 0;
+    var tk = n && n.mkt;
+    if (!tk) return { tk: null, q: null, px: 0 };
+    var qq = hqGet(tk), px = 0;            // la MISMA cotización que las cifras del chat (la más fresca)
     if (qq) {
       if (typeof window.quotePx === 'function') { try { px = +window.quotePx(qq) || 0; } catch (e) { px = 0; } }
       else px = +(typeof qq.live === 'number' ? qq.live : qq.close) || 0;
@@ -772,9 +894,11 @@
     return { tk: tk, q: qq, px: px, pct: pct };
   }
   var _askedQuote = {};
-  function ensureQuote(n) {   // sin cotización en memoria: se pide UNA vez (lote de 1, mismo camino que el resto)
+  function ensureQuote(n) {   // la cotización sellada de /api/hot/quote (una vez cada 15 s) + el lote de siempre si no hay nada
     var tk = n && n.mkt;
-    if (!tk || _askedQuote[tk] || typeof window.loadLiveQuotes !== 'function') return;
+    if (!tk) return;
+    try { hqFetch([tk]); } catch (e) {}
+    if (_askedQuote[tk] || typeof window.loadLiveQuotes !== 'function') return;
     var qq = quoteOfNode(n);
     if (qq.px > 0) return;
     _askedQuote[tk] = 1;
@@ -1492,14 +1616,16 @@
   window.addEventListener('storage', function (e) { if (e && e.key === 'eco_lang') onLang(); });
   // precios en vivo: repinta el precio de «en una mirada» (agrupado)
   var _qT = 0;
-  window.addEventListener('khipu:quotes', function () {
+  function onQuotes() {
     if (_qT) return;
     _qT = setTimeout(function () {
       _qT = 0;
       prune();
       INST.forEach(function (i) { if (i.kind === 'glance' && i.st && i.st.id) { paintGlanceQuote(i); paintGlanceMain(i); paintGlanceFoot(i); } });
     }, 400);
-  });
+  }
+  window.addEventListener('khipu:quotes', onQuotes);
+  window.addEventListener('khipu:hotquote', onQuotes);   // la cotización única de /api/hot/quote (también la piden los tiles del chat)
   // preferencias de agentes: la ventana «Tus agentes» refleja interruptores y modo
   window.addEventListener('khipu:agentprefs', function () { rerenderAll(function (i) { return i.kind === 'agents'; }); });
 
@@ -1509,6 +1635,9 @@
     render: render,
     open: open,
     register: ensureRegistered,
+    // UNA cotización por empresa en pantalla (lote K): la leen «en una mirada» y las cifras del chat (genui.js)
+    quote: { get: hqGet, fetch: hqFetch, kind: hqKind, fig: hqFig, refresh: hqRefresh, toQuote: hqToQuote, _hq: HQ },
+    actLabel: actLabel,
     // funciones puras (pruebas: tests/test_khipus_os_windows.py)
     _h: { fmtNum: fmtNum, fmtConv: fmtConv, fmtPct: fmtPct, fmtMoney: fmtMoney, barTone: barTone, barGeom: barGeom,
       visibleRows: visibleRows, chainOf: chainOf, boardItem: boardItem, structPC: structPC, clean: clean, argId: argId,

@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/CHAT_UI_GENERATIVA.md"
 lenguaje: "markdown"
-lineas: 761
+lineas: 762
 aliases: ["docs/CHAT_UI_GENERATIVA.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/CHAT_UI_GENERATIVA.md
 
-> Documento · capa [[Capa Documentación]] · 761 líneas · `docs/CHAT_UI_GENERATIVA.md`
+> Documento · capa [[Capa Documentación]] · 762 líneas · `docs/CHAT_UI_GENERATIVA.md`
 
 ## De qué trata
 
@@ -22,6 +22,7 @@ Chat con interfaz generativa: especificación v1 (kblocks/1) — - \*\*Fecha:\*\
 - [[app.html]]
 - [[brokerage.service.py]]
 - [[core.company_data.py]]
+- [[core.countries.py]]
 - [[core.entities.py]]
 - [[core.impls.py]]
 - [[core.khipu_chat.py]]

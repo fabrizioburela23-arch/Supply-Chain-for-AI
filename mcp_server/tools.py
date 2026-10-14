@@ -548,19 +548,85 @@ def _margin_pct(margin):
 # ════════════════════════════════════════════════════════════════════════════
 # READ — grafo y empresas
 # ════════════════════════════════════════════════════════════════════════════
+_ID_IN_QUERY = (                       # E1.6: identificadores que pueden venir escritos en `query`
+    ('lei', re.compile(r'^[A-Z0-9]{18}[0-9]{2}$')),
+    ('isin', re.compile(r'^[A-Z]{2}[A-Z0-9]{9}[0-9]$')),
+    ('qid', re.compile(r'^Q[1-9][0-9]*$')),
+    ('cik', re.compile(r'^[0-9]{10}$')),
+    ('yahoo_symbol', re.compile(r'^[A-Z0-9][A-Z0-9\-]{0,14}\.[A-Z]{1,3}$')),      # 3750.HK · 300750.SZ · ENR.DE
+    ('ticker@mic', re.compile(r'^([A-Z0-9][A-Z0-9.\-]{0,14})@([A-Z0-9]{4})$')),   # 3750@XHKG
+)
+
+
+def _identifiers_in(query, lei=None, isin=None, cik=None, qid=None, yahoo_symbol=None, ticker=None, mic=None):
+    """{identificador: valor} de los argumentos explícitos + lo que `query` tenga forma de identificador. Un ticker
+    suelto (sin MIC) NO es un identificador (core.entities.resolve_ids lo ignora): sigue siendo texto de búsqueda."""
+    ids = {}
+    for k, v in (('lei', lei), ('isin', isin), ('cik', cik), ('qid', qid), ('yahoo_symbol', yahoo_symbol),
+                 ('ticker', ticker), ('mic', mic)):
+        if v is not None and str(v).strip():
+            ids[k] = str(v).strip()
+    q = str(query or '').strip().upper()
+    for kind, rx in _ID_IN_QUERY:
+        m = rx.match(q)
+        if not m:
+            continue
+        if kind == 'ticker@mic':
+            ids.setdefault('ticker', m.group(1))
+            ids.setdefault('mic', m.group(2))
+        else:
+            ids.setdefault(kind, q)
+        break
+    return ids
+
+
 @tool('search_companies', 'Search companies in the Khipus graph', 'read',
       'Find companies/entities in the Khipus AI supply-chain graph (949 curated nodes: chips, foundries, '
       'memory, cloud, AI labs, energy, materials, logistics…) by name, ticker, alias or keyword. Returns ids to '
-      'use with the other tools. Data comes from the curated Khipus catalog; it never guesses.',
-      {'query': {'type': 'string', 'description': 'Name, ticker, alias or keyword (e.g. "TSMC", "NVDA", "HBM").',
+      'use with the other tools. Data comes from the curated Khipus catalog; it never guesses. Identifiers are '
+      'accepted too, in `query` (LEI, ISIN, Wikidata QID, 10-digit CIK, a Yahoo symbol with exchange suffix such '
+      'as "3750.HK", or TICKER@MIC such as "3750@XHKG") or as the optional arguments; an identifier match comes '
+      'first with its method. A bare ticker without exchange is searched as text and never resolves across '
+      'exchanges.',
+      {'query': {'type': 'string', 'description': 'Name, ticker, alias, keyword or identifier (e.g. "TSMC", '
+                                                  '"NVDA", "HBM", "2330.TW", "3750@XHKG", an ISIN or LEI).',
                  'maxLength': 120, 'minLength': 1},
-       'limit': {'type': 'integer', 'minimum': 1, 'maximum': 25, 'default': 10}},
+       'limit': {'type': 'integer', 'minimum': 1, 'maximum': 25, 'default': 10},
+       'lei': {'type': 'string', 'maxLength': 20, 'description': 'ISO 17442 LEI (20 chars).'},
+       'isin': {'type': 'string', 'maxLength': 12, 'description': 'ISIN (12 chars).'},
+       'cik': {'type': 'string', 'maxLength': 10, 'description': 'SEC CIK (up to 10 digits).'},
+       'qid': {'type': 'string', 'maxLength': 16, 'description': 'Wikidata QID (e.g. "Q1337386").'},
+       'yahoo_symbol': {'type': 'string', 'maxLength': 20,
+                        'description': 'Yahoo symbol with exchange suffix (e.g. "300750.SZ", "TSM").'},
+       'ticker': {'type': 'string', 'maxLength': 15,
+                  'description': 'Local ticker; ONLY identifies together with `mic` (e.g. "3750" + "XHKG").'},
+       'mic': {'type': 'string', 'maxLength': 4, 'description': 'ISO 10383 exchange code for `ticker` (XHKG, XTAI…).'}},
       required=['query'])
-def t_search_companies(ctx, query, limit=10):
+def t_search_companies(ctx, query, limit=10, lei=None, isin=None, cik=None, qid=None, yahoo_symbol=None,
+                       ticker=None, mic=None):
     res = _search(query, limit)
     snap = _snapshot()
-    return {'query': query, 'count': len(res), 'results': res, 'source': snap['source_label'],
-            'as_of': snap['as_of']}
+    out = {'query': query, 'count': len(res), 'results': res, 'source': snap['source_label'],
+           'as_of': snap['as_of']}
+    ids = _identifiers_in(query, lei, isin, cik, qid, yahoo_symbol, ticker, mic)
+    if ids:
+        from core.entities import resolve_ids
+        r = resolve_ids(ids)
+        out['identifiers'] = ids
+        if r is not None and r.get('id') and r['id'] in snap['nodes']:
+            hit = _brief(snap['nodes'][r['id']])
+            hit['match'] = {'score': r['score'], 'method': r['method']}
+            rest = [x for x in res if x['id'] != r['id']]
+            prev = next((x for x in res if x['id'] == r['id']), None)
+            if prev is not None and prev['match']['score'] > r['score']:
+                hit['match'] = prev['match']                         # el texto ya lo encontró con más puntaje
+            res = ([hit] + rest)[:limit] if isinstance(limit, int) and limit > 0 else [hit] + rest
+            out['results'], out['count'] = res, len(res)
+        if r is not None and r.get('conflicts'):
+            out['conflicts'] = r['conflicts']
+        if r is None and 'ticker' in ids and 'mic' not in ids:
+            out['identifiers_note'] = 'a ticker without its exchange MIC never identifies a company'
+    return out
 
 
 @tool('get_company', 'Company profile (catalog + live market data + risk)', 'read',
@@ -673,6 +739,10 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
             from core.hotviews.views import card as _card
             cv = _card.reader_view()
             st = cv.structure(nid) if cv is not None and nid in cv.cards else None
+            cc = cv.cards.get(nid) if cv is not None else None
+            if cc:   # E2.9 (lote K): posición de mercado e instalaciones investigadas, ya limpias por card.py
+                out['market_position'] = list(cc.get('market_position') or [])
+                out['facilities'] = list(cc.get('facilities') or [])
         except Exception:  # noqa: BLE001
             st = None
         if st is None:

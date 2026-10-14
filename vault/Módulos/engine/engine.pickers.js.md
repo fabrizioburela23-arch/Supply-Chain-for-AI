@@ -30,11 +30,11 @@ opciones FIJAS en vez de texto libre (pedido de Fabrizio 2026-10-05: "donde se e
 - [[nodes.crypto_intel2.js]] — usa `CRYPTO_INTEL`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **57 de 98** (línea 3099), después de [[engine.spacemonitor.js]] y antes de [[engine.committee.js]].
+Se carga en [[app.html]] en la posición **58 de 99** (línea 3166), después de [[engine.spacemonitor.js]] y antes de [[engine.committee.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 57)
+- [[app.html]] — lo carga con `<script>` (posición 58)
 - [[engine.clients.js]] — usa `KhipuPick`
 - [[engine.cockpit.js]] — usa `KhipuPick`
 - [[engine.command_center.js]] — usa `KhipuPick`

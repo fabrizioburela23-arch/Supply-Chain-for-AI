@@ -31,11 +31,11 @@ De nivel superior (globales del script): `LINKS_SPACEX`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **16 de 98** (línea 1451), después de [[nodes.private_valuations.js]] y antes de [[nodes.links_expand.js]].
+Se carga en [[app.html]] en la posición **17 de 99** (línea 1518), después de [[nodes.private_valuations.js]] y antes de [[nodes.links_expand.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 16)
+- [[app.html]] — lo carga con `<script>` (posición 17)
 - [[engine.app_main.js]] — usa `LINKS_SPACEX`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta

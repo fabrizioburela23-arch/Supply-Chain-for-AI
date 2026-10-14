@@ -367,7 +367,8 @@ def _fit(env):
 # ui_inputs). Las que admiten texto libre (run_scenario.scenario, y toda herramienta sin constructor: web_search,
 # search_companies…) NO: el modelo suele copiar ahí la pregunta del usuario, que el libro solo guarda como HMAC
 _ARGS_SAFE = ('get_company', 'get_supply_chain', 'rank_companies', 'market_movers', 'get_world_events', 'get_news',
-              'get_committee_memo', 'get_conclusions_board', 'get_research', 'get_risk_report', 'get_history')
+              'get_committee_memo', 'get_conclusions_board', 'get_research', 'get_risk_report', 'get_history',
+              'get_fundamentals')      # rank_by_market.market es texto libre: fuera
 _SOURCE_KEYS = ('label', 'url', 'as_of', 'tool', 'published')
 
 

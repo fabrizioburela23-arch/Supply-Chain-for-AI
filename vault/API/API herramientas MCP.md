@@ -1,13 +1,13 @@
 ---
 tipo: "api"
 capa: "MCP y API"
-herramientas: 32
+herramientas: 34
 tags: ["capa/mcp-api", "tipo/api"]
 ---
 
 # API herramientas MCP
 
-> 32 herramientas definidas en [[mcp_server.tools.py]] (y las v2 en [[mcp_server.ops.py]]) y servidas por [[mcp_server.api.py]] en `POST /mcp` (JSON-RPC). Alcances: **read** (consultas), **research** (gasta presupuesto de IA), **trade** (solo PROPONE órdenes; siempre aprobación humana).
+> 34 herramientas definidas en [[mcp_server.tools.py]] (y las v2 en [[mcp_server.ops.py]]) y servidas por [[mcp_server.api.py]] en `POST /mcp` (JSON-RPC). Alcances: **read** (consultas), **research** (gasta presupuesto de IA), **trade** (solo PROPONE órdenes; siempre aprobación humana).
 
 | Herramienta | Alcance | Solo lectura | Función | Módulos que usa |
 |---|---|---|---|---|
@@ -21,6 +21,7 @@ tags: ["capa/mcp-api", "tipo/api"]
 | `get_company` | read | sí | `t_get_company` | [[core.__init__.py]], [[core.entities.py]], [[core.world.py]], [[matrix.tensor.py]], [[mcp_server.contract.py]], [[ontology.agents.py]], [[ontology.db.py]], [[ontology.models.py]], [[ontology.vocabulary.py]] |
 | `get_conclusions_board` | read | sí | `t_get_conclusions_board` | [[mcp_server.contract.py]], [[ontology.db.py]], [[research.committee.py]] |
 | `get_exposure` | read | sí | `t_get_exposure` | [[core.__init__.py]], [[core.portfolio_advisor.py]], [[core.quotes.py]], [[matrix.tensor.py]] |
+| `get_fundamentals` | read | sí | `t_get_fundamentals` | [[core.__init__.py]], [[core.company_data.py]], [[core.entities.py]] |
 | `get_history` | read | sí | `t_get_history` | [[core.__init__.py]], [[core.entities.py]], [[core.risk_report.py]] |
 | `get_ontology_object` | read | sí | `t_get_ontology_object` | [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.bitemporal.py]], [[ontology.db.py]], [[ontology.models.py]], [[ontology.provenance.py]], [[ontology.service.py]] |
 | `get_option_greeks` | read | sí | `t_get_option_greeks` | [[core.options.py]], [[mcp_server.contract.py]] |
@@ -37,6 +38,7 @@ tags: ["capa/mcp-api", "tipo/api"]
 | `list_orders` | trade | sí | `t_list_orders` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 | `preview_order` | trade | **no** | `t_preview_order` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 | `project_portfolio` | read | sí | `t_project_portfolio` | [[core.__init__.py]], [[core.entities.py]], [[core.instruments.py]], [[core.quotes.py]], [[core.risk_models.py]], [[core.risk_report.py]] |
+| `rank_by_market` | read | sí | `t_rank_by_market` | [[core.__init__.py]], [[core.countries.py]] |
 | `replay_decision` | read | sí | `t_replay_decision` | [[core.identity.py]], [[core.replay.py]], [[mcp_server.contract.py]] |
 | `run_committee` | research | **no** | `t_run_committee` | [[brokerage.service.py]], [[core.__init__.py]], [[core.entities.py]], [[core.identity.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.vocabulary.py]], [[research.committee.py]] |
 | `run_research` | research | **no** | `t_run_research` | [[core.__init__.py]], [[core.ai.py]], [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.vocabulary.py]], [[research.runner.py]] |

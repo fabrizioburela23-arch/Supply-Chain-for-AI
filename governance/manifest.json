@@ -3,7 +3,7 @@
   "_doc": "GENERADO por scripts/build_governance.py --write: no editar a mano. El release del repositorio es una PROPUESTA; manda el aprobado en la base (core/governance.py).",
   "release": {
     "semver": "1.0.0",
-    "release_hash": "1d6ee563c827419a9351fdea0db28015359cc5e25e96d00eaef6e102675112d3",
+    "release_hash": "496957df98cc2e7ad25453934af34019229b35367fb456dae2b36d3b83f6b52f",
     "artifacts": {
       "kernel.calibration": {
         "semver": "1.0.0",
@@ -16,9 +16,9 @@
         "file": "artifacts/kernel.params@1.0.0.json"
       },
       "ledger.kinds": {
-        "semver": "4.0.0",
-        "hash": "68bd343e82d8fe4eb31fd735af8f2d22b58848cf0254b3843374cb086913e8f9",
-        "file": "artifacts/ledger.kinds@4.0.0.json"
+        "semver": "5.0.0",
+        "hash": "813a6bbe2349b1b998d5c7f1d9fd0054bd43127f6ca390eba29bf28a3e72b447",
+        "file": "artifacts/ledger.kinds@5.0.0.json"
       },
       "ledger.retention": {
         "semver": "1.0.0",
@@ -30,15 +30,20 @@
         "hash": "9a8222249e6e7ae9177792c061b629c97e3141eab30005a07cd537e1e267f458",
         "file": "artifacts/nrs.formula@1.0.0.json"
       },
+      "ontology.import_schema": {
+        "semver": "1.0.0",
+        "hash": "ee77e6752f3d6993cb88e9636707eb40750012ec46f74749cdef95de4ff3c2d5",
+        "file": "artifacts/ontology.import_schema@1.0.0.json"
+      },
       "ontology.schema": {
         "semver": "1.0.0",
         "hash": "1dd27c488d3e23d10722f2522f9a1dfa684c912ee96ddf09bbb673b2e766717b",
         "file": "artifacts/ontology.schema@1.0.0.json"
       },
       "ontology.shapes": {
-        "semver": "6.0.0",
-        "hash": "4a440319519cf4bbc68e5426cf565443a7f87e4ab9a584763b805897fabb6441",
-        "file": "artifacts/ontology.shapes@6.0.0.json"
+        "semver": "7.0.0",
+        "hash": "fcaceff58d7a76d57d885573eac2e7e1b0acae1300a03512d8890923e6d8e742",
+        "file": "artifacts/ontology.shapes@7.0.0.json"
       },
       "policy.auto_apply": {
         "semver": "1.0.0",
@@ -69,6 +74,11 @@
         "semver": "1.0.0",
         "hash": "4e2a1509c8b11d4ed60df67a076c0c4605a11705fcfea6536a7ad63604e801e2",
         "file": "artifacts/policy.guard@1.0.0.json"
+      },
+      "policy.import": {
+        "semver": "1.0.0",
+        "hash": "f890d5b306b535e7abff9cef3b7e5c19b17995460714af2a9c5d83ae470f1f2f",
+        "file": "artifacts/policy.import@1.0.0.json"
       },
       "policy.numbers_guard": {
         "semver": "1.0.0",
@@ -142,6 +152,13 @@
       "file": "artifacts/ledger.kinds@4.0.0.json"
     },
     {
+      "id": "ledger.kinds",
+      "semver": "5.0.0",
+      "hash": "813a6bbe2349b1b998d5c7f1d9fd0054bd43127f6ca390eba29bf28a3e72b447",
+      "change_kind": "major",
+      "file": "artifacts/ledger.kinds@5.0.0.json"
+    },
+    {
       "id": "ledger.retention",
       "semver": "1.0.0",
       "hash": "36d42dab77897f32367f0cdc1c315711e32d44041604f61f527e6e347a3c4357",
@@ -154,6 +171,13 @@
       "hash": "9a8222249e6e7ae9177792c061b629c97e3141eab30005a07cd537e1e267f458",
       "change_kind": "initial",
       "file": "artifacts/nrs.formula@1.0.0.json"
+    },
+    {
+      "id": "ontology.import_schema",
+      "semver": "1.0.0",
+      "hash": "ee77e6752f3d6993cb88e9636707eb40750012ec46f74749cdef95de4ff3c2d5",
+      "change_kind": "initial",
+      "file": "artifacts/ontology.import_schema@1.0.0.json"
     },
     {
       "id": "ontology.schema",
@@ -203,6 +227,13 @@
       "hash": "4a440319519cf4bbc68e5426cf565443a7f87e4ab9a584763b805897fabb6441",
       "change_kind": "major",
       "file": "artifacts/ontology.shapes@6.0.0.json"
+    },
+    {
+      "id": "ontology.shapes",
+      "semver": "7.0.0",
+      "hash": "fcaceff58d7a76d57d885573eac2e7e1b0acae1300a03512d8890923e6d8e742",
+      "change_kind": "major",
+      "file": "artifacts/ontology.shapes@7.0.0.json"
     },
     {
       "id": "policy.auto_apply",
@@ -282,6 +313,13 @@
       "change_kind": "major",
       "file": "artifacts/policy.guard@2.0.0.json",
       "activation": "pin"
+    },
+    {
+      "id": "policy.import",
+      "semver": "1.0.0",
+      "hash": "f890d5b306b535e7abff9cef3b7e5c19b17995460714af2a9c5d83ae470f1f2f",
+      "change_kind": "initial",
+      "file": "artifacts/policy.import@1.0.0.json"
     },
     {
       "id": "policy.numbers_guard",

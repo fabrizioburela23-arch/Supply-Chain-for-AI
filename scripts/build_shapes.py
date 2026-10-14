@@ -34,7 +34,7 @@ SHAPES_DIR = os.path.join(ROOT, 'governance', 'shapes')
 IR_PATH = os.path.join(SHAPES_DIR, 'compiled.ir.json')
 VOCAB_TTL = os.path.join(SHAPES_DIR, 'vocab.generated.ttl')
 SOURCES = ('prefixes.ttl', 'vocab.generated.ttl', 'link.ttl', 'object.ttl', 'factor.ttl', 'action.ttl',
-           'decision.ttl', 'order.ttl', 'committee.ttl')
+           'decision.ttl', 'order.ttl', 'committee.ttl', 'company.ttl')
 FORBIDDEN_SPARQL = re.compile(r'\b(VALUES|MINUS|SERVICE)\b', re.I)
 CONSTRAINT_ORDER = ('datatype', 'in', 'minInclusive', 'maxInclusive', 'minExclusive', 'maxExclusive', 'minCount',
                     'maxCount', 'pattern', 'lessThan', 'lessThanOrEquals', 'disjoint', 'class')

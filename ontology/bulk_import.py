@@ -72,12 +72,18 @@ def validate_bulk_links(records, existing_ids, valid_rel_types=None):
             quarantined.append({'record': rec, 'reason': f'weight no numérico: {rec.get("weight")!r}'})
             continue
         props = dict(rec.get('properties') or {})
-        accepted.append({
+        acc = {
             'source': src, 'target': tgt, 'rel_type': rel, 'weight': weight,
             'external_id': rec.get('external_id'),
             'properties': props,
             'evidenced_by': evidence_ids(rec, props),
-        })
+        }
+        # D-3 (EXPANSION_5K E2.8): la fecha REAL del hecho viaja con el registro (valid_from/valid_to); sin ella el
+        # llamador decide (import_links_bulk: la de la corrida). Nunca se inventa aquí.
+        for k in ('valid_from', 'valid_to'):
+            if rec.get(k) is not None:
+                acc[k] = rec[k]
+        accepted.append(acc)
     return accepted, quarantined
 
 
@@ -329,7 +335,8 @@ def _flush_batch(session, batch, provenance, valid_from, actor):
             props['evidenced_by'] = ev_by     # D-3: las fuentes citadas quedan con el vínculo (auditoría)
         ev = apply_event(session, 'LinkCreated', {
             'rel_type': rec['rel_type'], 'weight': rec['weight'], 'properties': props,
-        }, valid_from=valid_from, source=provenance, actor=actor,
+        }, valid_from=rec.get('valid_from') or valid_from, valid_to=rec.get('valid_to'),   # D-3: fecha del registro
+            source=provenance, actor=actor,
             object_id=rec['source'], target_id=rec['target'],
             # D-3: la fuente principal (la que la puerta acreditó) y la confianza declarada van al EVENTO
             source_id=rec.get('source_id') if 'source_id' in rec else (ev_by[0] if ev_by else None),
@@ -338,3 +345,314 @@ def _flush_batch(session, batch, provenance, valid_from, actor):
             n += 1                            # G5: un duplicado de otra fuente no cuenta como creado
     session.flush()   # aísla errores por lote sin cerrar la transacción entera
     return n
+
+
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# E2.8 (EXPANSION_5K): escritura POR BLOQUES — los MISMOS eventos que apply_event (campo a campo), con executemany
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# apply_event escribe un evento por viaje (INSERT + materializar + puertas); 21.000 eventos tardaban 144 s. Aquí un
+# bloque entra en UNA sentencia executemany (events), otra para objects y otra para links, con lo mismo que
+# apply_event deja: tipos del registro, valid_from REAL (el llamador la pone: la de la ficha o GENESIS, nunca
+# "ahora"), source_id/confidence del evento, release_hash, recorded_at = clock_timestamp(), dedup G2 de un vínculo
+# idéntico ya vigente, versión del grafo (hotviews.mark), efecto en la decisión en curso (note_event) y las puertas
+# evaluadas EN BLOQUE antes de escribir (G-BULK para vínculos; G1 de objetos diferida al cierre de la decisión).
+# Sigue siendo append-only: nada aquí hace UPDATE/DELETE sobre events.
+_FAST_SQL = (
+    'INSERT INTO events (id, event_type, object_id, target_id, payload, valid_from, valid_to, recorded_at, source, '
+    'actor, source_id, confidence, release_hash) VALUES (CAST(:id AS uuid), :event_type, :object_id, :target_id, '
+    'CAST(:payload AS jsonb), :valid_from, :valid_to, clock_timestamp(), :source, :actor, :source_id, :confidence, '
+    ':release_hash)')
+
+
+def _json(v):
+    import json
+    return json.dumps(v if v is not None else {}, ensure_ascii=False, separators=(',', ':'), default=str)
+
+
+class _EvRef:
+    """Lo que los ganchos (hotviews.mark, decisions.note_event) leen de un evento, sin instanciar el ORM."""
+    __slots__ = ('id', 'event_type', 'object_id', 'target_id', 'payload', 'valid_from', 'valid_to', 'source')
+
+    def __init__(self, row):
+        self.id = row['id']
+        self.event_type = row['event_type']
+        self.object_id = row['object_id']
+        self.target_id = row['target_id']
+        self.payload = row['_payload']
+        self.valid_from = row['valid_from']
+        self.valid_to = row['valid_to']
+        self.source = row['source']
+
+
+def _preload_objects(session, ids):
+    from sqlalchemy import select
+
+    from ontology.models import ObjectRecord
+    out = {}
+    for part in _chunks(sorted(ids), 500):
+        for oid, otype, label, props in session.execute(
+                select(ObjectRecord.id, ObjectRecord.type, ObjectRecord.label, ObjectRecord.properties)
+                .where(ObjectRecord.id.in_(part))).all():
+            out[oid] = {'type': otype, 'label': label, 'props': dict(props or {})}
+    return out
+
+
+def _preload_live_links(session, pairs):
+    """{(source, target, rel): [{id, event_id, valid_from, weight}]} vigentes (valid_to IS NULL) de esos pares."""
+    from sqlalchemy import select, tuple_
+
+    from ontology.models import LinkRecord
+    out = {}
+    for part in _chunks(sorted(pairs), 500):
+        for l in session.scalars(select(LinkRecord).where(
+                tuple_(LinkRecord.source_id, LinkRecord.target_id).in_(part), LinkRecord.valid_to.is_(None))).all():
+            out.setdefault((l.source_id, l.target_id, l.rel_type), []).append(
+                {'id': l.id, 'event_id': l.event_id, 'valid_from': l.valid_from, 'weight': l.weight})
+    return out
+
+
+def _dedup_twin(twins, valid_from, weight):
+    """La MISMA regla que ontology.service._dedup_link_payload: una fila vigente del par/rel con el mismo peso que
+    empezó antes o igual ya lo cubre → el nuevo evento es un no-op (dedup_of)."""
+    from ontology.service import _same_weight
+    for t in sorted(twins, key=lambda x: x['valid_from']):
+        if t['valid_from'] <= valid_from and _same_weight(t['weight'], weight):
+            return t
+    return None
+
+
+def write_events_fast(session, events, *, source, actor, chunk=1000, gate=True):
+    """Escribe `events` en bloques. Cada evento: {event_type, object_id, target_id, payload, valid_from (OBLIGATORIA),
+    valid_to, source_id, confidence}. Devuelve {'ids': [uuid…] en el orden de entrada, 'objects_created',
+    'objects_updated', 'links_created', 'links_dedup', 'links_closed', 'gate'}.
+
+    Admite ObjectCreated/ObjectUpdated, LinkCreated y LinkRemoved DIRIGIDO (retracts_event_id). Cualquier otro
+    evento (LinkRemoved comodín, LinkStatusChanged…) sale por apply_event, uno a uno (mismo resultado, más lento)."""
+    import uuid as _uuid
+
+    from sqlalchemy import insert, text
+
+    from ontology.models import LinkRecord, ObjectRecord
+    from ontology.service import (VALID_EVENT_TYPES, OntologyError, _parse_dt, _release_hash, _vigilar_vocabulario,
+                                  apply_event, _promote_dedup)
+    try:
+        from core.hotviews import signals as _sig
+    except Exception:  # noqa: BLE001
+        _sig = None
+    try:
+        from core import decisions as _dec
+    except Exception:  # noqa: BLE001
+        _dec = None
+    try:
+        import core.gates as _gates
+    except Exception:  # noqa: BLE001
+        _gates = None
+    source = (str(source) if source is not None else '')[:60]
+    out = {'ids': [], 'objects_created': 0, 'objects_updated': 0, 'links_created': 0, 'links_dedup': 0,
+           'links_closed': 0, 'gate': None, 'slow_path': 0}
+    rel_hash = _release_hash()
+    events = list(events)
+    for ev in events:
+        if ev.get('event_type') not in VALID_EVENT_TYPES:
+            raise OntologyError(f'event_type desconocido: {ev.get("event_type")}')
+        if ev.get('valid_from') is None:
+            raise OntologyError('write_events_fast: valid_from es obligatoria (la fecha real, nunca "ahora")')
+    for block in _chunks(events, chunk):
+        _write_block(session, block, source, actor, rel_hash, out, insert, text, LinkRecord, ObjectRecord,
+                     _parse_dt, _vigilar_vocabulario, apply_event, _promote_dedup, _sig, _dec, _gates, gate, _uuid)
+    return out
+
+
+def _write_block(session, block, source, actor, rel_hash, out, insert, text, LinkRecord, ObjectRecord, _parse_dt,
+                 _vigilar, apply_event, _promote_dedup, _sig, _dec, _gates, gate, _uuid):
+    from ontology.models import EventType
+    OC, OU, LC, LR = (EventType.OBJECT_CREATED.value, EventType.OBJECT_UPDATED.value, EventType.LINK_CREATED.value,
+                      EventType.LINK_REMOVED.value)
+    obj_ids = set()
+    pairs = set()
+    for ev in block:
+        if ev['event_type'] in (OC, OU, LC, LR):
+            if ev.get('object_id'):
+                obj_ids.add(ev['object_id'])
+            if ev.get('target_id'):
+                obj_ids.add(ev['target_id'])
+            if ev['event_type'] == LC:
+                pairs.add((ev['object_id'], ev['target_id']))
+    objs = _preload_objects(session, obj_ids)
+    live = _preload_live_links(session, pairs) if pairs else {}
+    rows, obj_new, obj_upd, link_rows, closes, slow = [], {}, [], [], [], []
+    confs = {}
+    for ev in block:
+        et = ev['event_type']
+        vf = _parse_dt(ev['valid_from'])
+        vt = _parse_dt(ev.get('valid_to'))
+        payload = dict(ev.get('payload') or {})
+        oid, tid = ev.get('object_id'), ev.get('target_id')
+        conf = ev.get('confidence')
+        if conf is not None:
+            try:
+                conf = max(0.0, min(1.0, float(conf)))
+            except (TypeError, ValueError):
+                conf = None
+        if et not in (OC, OU, LC, LR) or (et == LR and not ((payload.get('properties') or {}).get('retracts_event_id'))):
+            slow.append(ev)
+            rows.append(None)
+            continue
+        if et in (OC, OU) and not oid:
+            from ontology.service import OntologyError
+            raise OntologyError(f'{et} requiere object_id')
+        if et in (LC, LR) and (not oid or not tid):
+            from ontology.service import OntologyError
+            raise OntologyError(f'{et} requiere object_id (source) y target_id')
+        eid = _uuid.uuid4()
+        prev_type = None
+        if et in (OC, OU):
+            cur = objs.get(oid)
+            prev_type = cur['type'] if cur else None
+            new_props = payload.get('properties') or {}
+            label = payload.get('label') or (cur['label'] if cur else oid)
+            otype = payload.get('type') or (cur['type'] if cur else 'Company')
+            _vigilar('object_type', otype)
+            if cur is None:
+                objs[oid] = {'type': otype, 'label': label, 'props': dict(new_props), 'new': True, 'prev': None}
+                obj_new[oid] = {'id': oid, 'type': otype, 'label': label, 'properties': dict(new_props)}
+                out['objects_created'] += 1
+            else:
+                prev_props = dict(cur['props'])
+                if et == OU and 'properties_prev' in payload and payload['properties_prev'] is None:
+                    # el valor ANTERIOR de cada clave tocada queda en el evento: deshacer lo restaura exacto
+                    payload['properties_prev'] = {k: prev_props.get(k) for k in new_props}
+                merged = dict(cur['props'])
+                merged.update(new_props)
+                cur.update(type=otype, label=label, props=merged)
+                if oid in obj_new:
+                    obj_new[oid].update(type=otype, label=label, properties=merged)
+                else:
+                    cur.setdefault('prev', prev_props)
+                    obj_upd.append(oid)
+                    out['objects_updated'] += 1
+            if _gates is not None:
+                touches = any(k in new_props for k in ('severity', 'activo', 'severity_crisis'))
+                _gates.defer_object(session, oid, prev_type, (objs[oid].get('prev') if cur else None), touches)
+        elif et == LC:
+            rel = payload.get('rel_type') or payload.get('type') or 'supply'
+            _vigilar('rel_type', rel)
+            props = dict(payload.get('properties') or {})
+            twins = live.get((oid, tid, rel)) or []
+            twin = None if (vt is not None or props.get('allow_duplicate')) else _dedup_twin(twins, vf, payload.get('weight'))
+            if twin is not None:
+                props['dedup_of'] = str(twin['id'])
+                if twin.get('event_id'):
+                    props['dedup_event_id'] = str(twin['event_id'])
+                payload['properties'] = props
+                out['links_dedup'] += 1
+            else:
+                lid = _uuid.uuid4()
+                link_rows.append({'id': lid, 'source_id': oid, 'target_id': tid, 'rel_type': rel,
+                                  'weight': payload.get('weight'), 'properties': props, 'valid_from': vf,
+                                  'valid_to': vt, 'event_id': eid})
+                live.setdefault((oid, tid, rel), []).append({'id': lid, 'event_id': eid, 'valid_from': vf,
+                                                            'weight': payload.get('weight')})
+                out['links_created'] += 1
+                confs[eid] = (props.get('confidence'), ev.get('source_id'))
+        elif et == LR:
+            rid = (payload.get('properties') or {}).get('retracts_event_id')
+            try:
+                rid_u = _uuid.UUID(str(rid))
+            except ValueError:
+                from ontology.service import OntologyError
+                raise OntologyError(f'retracts_event_id inválido: {rid}')
+            closes.append({'rid': rid_u, 'vt': vf, 'promote': bool((payload.get('properties') or {}).get('promote_dedups'))})
+        rows.append({'id': str(eid), '_uuid': eid, 'event_type': et, 'object_id': oid, 'target_id': tid,
+                     'payload': _json(payload), '_payload': payload, 'valid_from': vf, 'valid_to': vt,
+                     'source': source, 'actor': actor, 'source_id': ev.get('source_id'), 'confidence': conf,
+                     'release_hash': rel_hash, '_prev_type': prev_type})
+    # 1) eventos (una sentencia por bloque; recorded_at = clock_timestamp() por fila, como apply_event)
+    real = [r for r in rows if r is not None]
+    if real:
+        session.execute(text(_FAST_SQL), [{k: v for k, v in r.items() if not k.startswith('_')} for r in real])
+    # 2) materialización
+    if obj_new:
+        session.execute(insert(ObjectRecord), list(obj_new.values()))
+    for oid in obj_upd:
+        o = session.get(ObjectRecord, oid)
+        if o is not None:
+            o.properties, o.label, o.type = objs[oid]['props'], objs[oid]['label'], objs[oid]['type']
+    if link_rows:
+        session.execute(insert(LinkRecord), link_rows)
+    for c in closes:
+        n = session.execute(text('UPDATE links SET valid_to = :vt WHERE event_id = CAST(:rid AS uuid) AND valid_to IS NULL'),
+                            {'vt': c['vt'], 'rid': str(c['rid'])}).rowcount
+        out['links_closed'] += int(n or 0)
+        if c['promote'] and n:
+            for r in session.execute(text('SELECT source_id, target_id, rel_type, weight FROM links WHERE event_id = '
+                                          'CAST(:rid AS uuid)'), {'rid': str(c['rid'])}).all():
+                _promote_dedup(session, r[0], r[1], r[2], r[3])
+    session.flush()
+    # 3) ganchos: versión del grafo + efecto de la decisión en curso
+    for r in real:
+        ref = _EvRef(r)
+        if _sig is not None:
+            _sig.mark(session, ref, r['_prev_type'])
+        if _dec is not None:
+            _dec.note_event(ref)
+        out['ids'].append(r['_uuid'])
+    # 4) puertas de los vínculos del bloque (G-BULK: la MISMA forma que G1 para cada uno, con SU valid_from)
+    if gate and link_rows:
+        out['gate'] = gate_links_block(session, link_rows, confs) or out['gate']
+    # 5) lo que el camino rápido no cubre: apply_event (idéntico, uno a uno)
+    for ev in slow:
+        e = apply_event(session, ev['event_type'], ev.get('payload') or {}, valid_from=ev['valid_from'], source=source,
+                        actor=actor, object_id=ev.get('object_id'), target_id=ev.get('target_id'),
+                        valid_to=ev.get('valid_to'), source_id=ev.get('source_id'), confidence=ev.get('confidence'))
+        out['ids'].append(e.id)
+        out['slow_path'] += 1
+    # el orden de `ids` sigue el de entrada: los lentos van al final solo si existen (lo normal: ninguno)
+    if slow:
+        fast_ids = iter(out['ids'][:len(real)])
+        slow_ids = iter(out['ids'][len(real):])
+        out['ids'] = [next(fast_ids) if r is not None else next(slow_ids) for r in rows]
+
+
+def gate_links_block(session, link_rows, confs=None):
+    """G-BULK para vínculos ya materializados en el bloque (cada uno con su valid_from): reporte único, registrado
+    en la decisión en curso; en bloqueo (policy.gates@2.0.0) lanza GateViolation ANTES de confirmar."""
+    try:
+        import core.gates as _gates
+        from core.gates import focus as _gf
+        from core.gates import report as _gr
+        accepted = [{'source': r['source_id'], 'target': r['target_id'], 'rel_type': r['rel_type'], 'weight': r['weight'],
+                     'properties': r['properties'], 'external_id': (r['properties'] or {}).get('external_id'),
+                     'evidenced_by': list((r['properties'] or {}).get('evidenced_by') or ()),
+                     'source_id': (confs or {}).get(r['event_id'], (None, None))[1]} for r in link_rows]
+        ctx = _bulk_context(session, accepted)
+        ends_all, sources_all, inv_all = ctx
+        lim, flow = _gf._limits(), _gf._flow_rels()
+        triples = []
+        for r, rec in zip(link_rows, accepted):
+            props = rec['properties'] or {}
+            ends = {x: ends_all.get(x) or {'type': None, 'live': False} for x in (rec['source'], rec['target'])}
+            ev_by = [rec['source_id']] if rec.get('source_id') else []
+            srcs = {sid: sources_all[sid] for sid in ev_by if sid in sources_all}
+            inv = inv_all.get((rec['target'], rec['source'], rec['rel_type'])) or ()
+            t, _f = _gf.link_triples({'id': str(r['id']), 'source': rec['source'], 'target': rec['target'],
+                                      'rel': rec['rel_type'], 'weight': rec['weight'],
+                                      'confidence': props.get('confidence'), 'valid_from': r['valid_from'],
+                                      'valid_to': r.get('valid_to'),
+                                      'rel_label': props.get('rel_label') or props.get('label'),
+                                      'evidenced_by': ev_by,
+                                      'dated': bool(props.get('predicate') or props.get('since'))},
+                                     ends, inv, srcs, lim, flow)
+            triples += t
+        rep = _gates.evaluate('ontology.g_bulk', list(dict.fromkeys(triples)), None)
+        if rep is None:
+            return None
+        _gr.record(rep, session=session)
+        if _gates.blocks(rep):
+            raise _gates.GateViolation(rep)
+        return {'mode': rep['mode'], 'outcome': rep['outcome'], 'checked': len(link_rows),
+                'by_rule': _gr.by_rule_of(rep), 'truncated': rep.get('truncated', 0), 'latency_us': rep.get('latency_us')}
+    except Exception as e:  # noqa: BLE001
+        if getattr(e, 'code', None) == 'gate_violation':
+            raise
+        return None

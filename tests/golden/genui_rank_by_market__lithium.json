@@ -1,0 +1,218 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Albemarle Corporation 20.5 %; SQM 17.3 %; Ganfeng Lithium 12.4 %; Tianqi Lithium —",
+    "es": "Albemarle Corporation 20,5 %; SQM 17,3 %; Ganfeng Lithium 12,4 %; Tianqi Lithium —"
+   },
+   "data": {
+    "direction": "higher_better",
+    "items": [
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "Albemarle",
+       "label": "Albemarle Corporation",
+       "symbol": "ALB"
+      },
+      "note": {
+       "en": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence",
+       "es": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 1,
+      "v": 20.5
+     },
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "SQM",
+       "label": "SQM",
+       "symbol": "SQM"
+      },
+      "note": {
+       "en": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence",
+       "es": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 2,
+      "v": 17.3
+     },
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "GanfengLithium",
+       "label": "Ganfeng Lithium",
+       "symbol": "1772.HK"
+      },
+      "note": {
+       "en": "litio para baterías · 2025 · Benchmark Mineral Intelligence",
+       "es": "litio para baterías · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 3,
+      "v": 12.4
+     },
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "TianqiLithium",
+       "label": "Tianqi Lithium",
+       "symbol": "9696.HK"
+      },
+      "note": {
+       "en": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence",
+       "es": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 4,
+      "v": null
+     }
+    ],
+    "metric": {
+     "as_of": "2026-10-14T15:00:00Z",
+     "explain": "genui_market_share",
+     "fact": "F1",
+     "label": {
+      "en": "Market share",
+      "es": "Cuota de mercado"
+     },
+     "src": "khipus_graph",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "rank_by_market"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "researched position per company, with its source · global",
+    "es": "posición investigada por empresa, con su fuente · mundial"
+   },
+   "title": {
+    "en": "Largest in litio para baterías",
+    "es": "Las más grandes en litio para baterías"
+   },
+   "type": "ranking"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Albemarle Corporation 20.5 %; SQM 17.3 %; Ganfeng Lithium 12.4 %; Tianqi Lithium —",
+    "es": "Albemarle Corporation 20,5 %; SQM 17,3 %; Ganfeng Lithium 12,4 %; Tianqi Lithium —"
+   },
+   "data": {
+    "direction": "higher_better",
+    "items": [
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "Albemarle",
+       "label": "Albemarle Corporation",
+       "symbol": "ALB"
+      },
+      "note": {
+       "en": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence",
+       "es": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 1,
+      "v": 20.5
+     },
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "SQM",
+       "label": "SQM",
+       "symbol": "SQM"
+      },
+      "note": {
+       "en": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence",
+       "es": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 2,
+      "v": 17.3
+     },
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "GanfengLithium",
+       "label": "Ganfeng Lithium",
+       "symbol": "1772.HK"
+      },
+      "note": {
+       "en": "litio para baterías · 2025 · Benchmark Mineral Intelligence",
+       "es": "litio para baterías · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 3,
+      "v": 12.4
+     },
+     {
+      "as_of": "2026-03-01",
+      "entity": {
+       "id": "TianqiLithium",
+       "label": "Tianqi Lithium",
+       "symbol": "9696.HK"
+      },
+      "note": {
+       "en": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence",
+       "es": "lithium chemicals (battery grade) · 2025 · Benchmark Mineral Intelligence"
+      },
+      "rank": 4,
+      "v": null
+     }
+    ],
+    "metric": {
+     "as_of": "2026-10-14T15:00:00Z",
+     "explain": "genui_market_share",
+     "fact": "F1",
+     "label": {
+      "en": "Market share",
+      "es": "Cuota de mercado"
+     },
+     "src": "khipus_graph",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "rank_by_market"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "researched position per company, with its source · global",
+    "es": "posición investigada por empresa, con su fuente · mundial"
+   },
+   "title": {
+    "en": "Largest in litio para baterías",
+    "es": "Las más grandes en litio para baterías"
+   },
+   "type": "ranking"
+  }
+ ]
+}

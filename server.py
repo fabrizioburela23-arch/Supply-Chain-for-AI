@@ -837,6 +837,33 @@ def api_vocabulary():
         snap = snapshot()
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': f'vocabulario no disponible: {str(e)[:120]}'}), 500
+    # Categorías del catálogo (data/categories.json = fuente única, lote 2026-10-14): las 108 de hoy + las nuevas
+    # aprobadas por defecto (con 0 empresas hasta que el importador las use), alias → id consolidado y cuántas
+    # empresas tiene cada una en la generación vigente. Sin el JSON, el vocabulario sale igual que antes.
+    cats_sha = ''
+    try:
+        from ontology.vocabulary import categories as _cats, category_aliases as _cat_alias, categories_doc as _cdoc
+        cats = _cats()
+        if cats:
+            alias = _cat_alias()
+            counts = {k: 0 for k in cats}
+            try:
+                from core.hotviews import hot as _hot
+                for n in (_hot.graph().snapshot or {}).get('nodes') or []:
+                    cid = alias.get(str(n.get('cat') or ''))
+                    if cid in counts:
+                        counts[cid] += 1
+            except Exception:  # noqa: BLE001
+                pass
+            for k, v in cats.items():
+                v['companies'] = counts[k]
+            snap['categories'] = cats
+            snap['category_aliases'] = {a: c for a, c in alias.items() if a != c}
+            snap['sectors'] = _cdoc().get('sectors') or {}
+            snap['categories_as_of'] = _cdoc().get('as_of')
+            cats_sha = hashlib.sha256(json.dumps(cats, sort_keys=True).encode('utf-8')).hexdigest()[:8]
+    except Exception as e:  # noqa: BLE001
+        snap['categories_error'] = str(e)[:120]
     resp = jsonify(snap)
     # Cambia poco → cacheable, pero versionado para invalidar al editarlo. GV-07 (paso 9): el ETag es el HASH del
     # artefacto `ontology.schema` del release vigente (antes "vocab-1" fijo: un vocabulario editado sin subir la
@@ -844,10 +871,10 @@ def api_vocabulary():
     resp.headers['Cache-Control'] = 'public, max-age=300'
     try:
         from core import governance as _g
-        resp.headers['ETag'] = f'"vocab-{_g.artifact_hash_of("ontology.schema")[:16]}"'
+        resp.headers['ETag'] = f'"vocab-{_g.artifact_hash_of("ontology.schema")[:16]}{"-" + cats_sha if cats_sha else ""}"'
         resp.headers['X-Khipu-Release'] = _g.release()[0][:16]
     except Exception:  # noqa: BLE001
-        resp.headers['ETag'] = f'"vocab-{snap.get("version", 0)}"'
+        resp.headers['ETag'] = f'"vocab-{snap.get("version", 0)}{"-" + cats_sha if cats_sha else ""}"'
     return resp
 
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/graph3d.js"
 lenguaje: "javascript"
-lineas: 1216
+lineas: 1227
 aliases: ["engine/graph3d.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/graph3d.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.216 líneas · `engine/graph3d.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.227 líneas · `engine/graph3d.js`
 
 ## Para qué sirve
 
@@ -24,6 +24,7 @@ Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos 
 
 - [[engine.app_coordinator.js]] — usa `_diag`, `khipuGraph3D`
 - [[engine.app_main.js]] — usa `LINKS`, `NODE_BY_ID`, `_tickerWarnings`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `getLinkColorHex`, `jumpTo`, `quotePx`, `selectNode`
+- [[engine.geo_coords.js]] — usa `GeoCoords`, `KhipuCountries`
 - [[nodes.nodes_seed.js]] — usa `CATS`
 
 ## Lo usan
@@ -35,6 +36,7 @@ Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos 
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_client.py]]
+- [[tests.test_countries.py]]
 - [[tests.test_server_smoke.py]]
 
 ## Mencionado en sesiones de trabajo

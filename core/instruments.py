@@ -14,6 +14,14 @@ en Hong Kong. Este módulo:
   · `nonsync(symbol)` dice si la bolsa cierra en otro horario que Nueva York (Asia/Europa/Oceanía): el riesgo usa beta
     de Dimson para ellas (L2-M1).
 
+  · LISTADOS SECUNDARIOS (lote 2026-10-14): una empresa del catálogo puede traer `listings` [{symbol, mic,
+    yahoo_symbol, is_primary, kind, currency, source_url, as_of, note, home?, ordinary_per_depositary?}] (la MISMA
+    forma que escribe el importador E2). El `mkt` sigue siendo el primario (= el listado con is_primary) y los
+    demás se siembran como instrumentos `is_primary = False` (`secondary_from_catalog`) — p. ej. TSMC: TSM (ADR,
+    el que cotiza la UI) primario y 2330.TW (bolsa de origen, `home`) secundario; TEL: 8035.T primario y TOELY
+    secundario. `classify` toma el tipo del listado primario y marca `multi_listed` si hay otro con símbolo.
+    `LOT_2026_10_14` = qué se hizo con cada uno de los 19 símbolos revisados (y qué debe decidir Fabrizio).
+
 Sin red, sin IA. Funciona sin base (las funciones puras); `seed` solo con DATABASE_URL.
 """
 import re
@@ -26,6 +34,7 @@ SUFFIX = {
     'SZ': ('Shenzhen (SZSE)', 'CNY', False), 'TW': ('Taiwán (TWSE)', 'TWD', False),
     'TWO': ('Taiwán (TPEx)', 'TWD', False), 'KS': ('Corea (KRX)', 'KRW', False), 'KQ': ('Corea (KOSDAQ)', 'KRW', False),
     'DE': ('Fráncfort (Xetra)', 'EUR', False), 'F': ('Fráncfort', 'EUR', False), 'L': ('Londres (LSE)', 'GBp', False),
+    'IL': ('Londres (LSE IOB, GDR)', 'USD', False),
     'PA': ('Euronext París', 'EUR', False), 'AS': ('Euronext Ámsterdam', 'EUR', False),
     'BR': ('Euronext Bruselas', 'EUR', False), 'MI': ('Milán', 'EUR', False), 'MC': ('Madrid', 'EUR', False),
     'LS': ('Lisboa', 'EUR', False), 'HE': ('Helsinki', 'EUR', False), 'IR': ('Dublín', 'EUR', False),
@@ -83,10 +92,55 @@ def major_ccy(ccy):
     return str(ccy).upper(), 1.0
 
 
+_KIND_MAP = {'gdr': 'adr', 'a_share': 'equity', 'h_share': 'equity', 'dual_class': 'equity', 'preferred': 'equity'}
+
+
+def listings_of(node):
+    """Los listados declarados en la ficha del catálogo (`listings`), normalizados: símbolo de Yahoo en mayúsculas,
+    `is_primary` = coincide con `mkt`. Lista vacía si la empresa no los declara (la mayoría, hoy)."""
+    mkt = str(node.get('mkt') or '').strip().upper()
+    out = []
+    for raw in node.get('listings') or []:
+        if not isinstance(raw, dict):
+            continue
+        ys = str(raw.get('yahoo_symbol') or '').strip().upper() or None
+        kind = _KIND_MAP.get(str(raw.get('kind') or 'equity').lower(), str(raw.get('kind') or 'equity').lower())
+        out.append({'symbol': str(raw.get('symbol') or (ys or '').split('.')[0]).upper(), 'mic': raw.get('mic'),
+                    'yahoo_symbol': ys, 'is_primary': bool(ys and ys == mkt), 'kind': kind,
+                    'currency': raw.get('currency'), 'source_url': raw.get('source_url'), 'as_of': raw.get('as_of'),
+                    'note': raw.get('note'), 'home': bool(raw.get('home')),
+                    'ordinary_per_depositary': raw.get('ordinary_per_depositary')})
+    return out
+
+
+def declared_exchange(node, symbol):
+    """Bolsa de un listado DECLARADO: el MIC manda (OTCM = certificado OTC en EE.UU., no NYSE/Nasdaq); si no, el
+    sufijo de Yahoo. None si la empresa no declara ese símbolo."""
+    sym = str(symbol or '').upper()
+    for l in listings_of(node):
+        if l['yahoo_symbol'] == sym:
+            if str(l['mic'] or '').upper() == 'OTCM':
+                return 'OTC (EE.UU.)'
+            return exchange_info(sym)[0] or (l['mic'] and f"MIC {l['mic']}") or None
+    return None
+
+
+def secondary_listings(node):
+    """Listados declarados que NO son el primario y sí tienen símbolo de Yahoo (los sin símbolo solo se anotan)."""
+    return [l for l in listings_of(node) if not l['is_primary'] and l['yahoo_symbol']]
+
+
 def classify(node):
-    """{kind, review} de una empresa del catálogo (mkt + texto 'ticker')."""
+    """{kind, review} de una empresa del catálogo (mkt + texto 'ticker'; si declara `listings`, mandan esos)."""
     mkt = str(node.get('mkt') or '').strip()
     txt = str(node.get('ticker') or '')
+    decl = listings_of(node)
+    if decl:
+        prim = next((l for l in decl if l['is_primary']), None)
+        kind = prim['kind'] if prim else 'equity'
+        if kind not in ('equity', 'adr', 'otc'):
+            kind = 'equity'
+        return {'kind': kind, 'review': 'multi_listed' if secondary_listings(node) else None}
     multi = ' / ' in txt
     otc = bool(OTC_RX.match(mkt)) or 'OTC' in txt.upper()
     parts = [p.strip() for p in txt.split('/')]
@@ -107,6 +161,9 @@ def local_alternative(node):
     """Para un caso de revisión: el símbolo de Yahoo del OTRO listado que declara el texto del catálogo (la acción
     local, o el listado de origen) — o None si no se puede deducir."""
     mkt = str(node.get('mkt') or '').strip().upper()
+    sec = secondary_listings(node)
+    if sec:
+        return sec[0]['yahoo_symbol']           # listado declarado (bolsa de origen primero, luego el resto)
     base = mkt.split('.')[0]
     txt = str(node.get('ticker') or '')
     for part in [p.strip() for p in re.split(r'\s/\s|/|;', txt) if p.strip()]:
@@ -137,9 +194,39 @@ def from_catalog(nodes):
         seen.add(mkt)
         exch, ccy, _sync = exchange_info(mkt)
         c = classify(n)
+        note = {'catalog_ticker': str(n.get('ticker') or '')[:200]}
+        sec = secondary_listings(n)
+        if sec:
+            note['secondaries'] = [l['yahoo_symbol'] for l in sec]
         out.append({'id': mkt[:32], 'company_id': str(n['id'])[:120], 'ticker': mkt[:32], 'exchange': exch,
                     'currency': ccy, 'kind': c['kind'], 'is_primary': True, 'review': c['review'],
-                    'note': {'catalog_ticker': str(n.get('ticker') or '')[:200]}, 'source': 'catalog'})
+                    'note': note, 'source': 'catalog'})
+    return out
+
+
+def secondary_from_catalog(nodes):
+    """Instrumentos SECUNDARIOS (is_primary False) de las empresas que declaran `listings` — nunca el `mkt`, nunca
+    un símbolo que ya sea primario de alguien; el precio de referencia sigue siendo el primario."""
+    prim = {str(n.get('mkt') or '').strip().upper() for n in nodes or [] if n.get('mkt')}
+    out, seen = [], set()
+    for n in nodes or []:
+        mkt = str(n.get('mkt') or '').strip().upper()
+        if not mkt or not n.get('id'):
+            continue
+        for l in secondary_listings(n):
+            ys = l['yahoo_symbol']
+            if ys in prim or ys in seen:
+                continue
+            seen.add(ys)
+            _e, ccy, _s = exchange_info(ys)
+            out.append({'id': ys[:32], 'company_id': str(n['id'])[:120], 'ticker': ys[:32],
+                        'exchange': declared_exchange(n, ys),
+                        'currency': ccy or l['currency'], 'kind': l['kind'] if l['kind'] in ('equity', 'adr', 'otc') else 'equity',
+                        'is_primary': False, 'review': None,
+                        'note': {k: v for k, v in (('primary', mkt), ('mic', l['mic']), ('home', l['home'] or None),
+                                                   ('note', l['note']), ('source_url', l['source_url']),
+                                                   ('as_of', l['as_of'])) if v},
+                        'source': 'catalog'})
     return out
 
 
@@ -163,7 +250,8 @@ def catalog_nodes():
 def all_instruments(nodes=None):
     nodes = catalog_nodes() if nodes is None else nodes
     prim = from_catalog(nodes)
-    return prim + reference_instruments(i['currency'] for i in prim)
+    sec = secondary_from_catalog(nodes)
+    return prim + sec + reference_instruments(i['currency'] for i in prim + sec)
 
 
 def review_list(nodes=None):
@@ -179,12 +267,15 @@ def review_list(nodes=None):
             continue
         alt = local_alternative(n)
         alt_exch, alt_ccy, _s = exchange_info(alt) if alt else (None, None, True)
+        alt_exch = declared_exchange(n, alt) or alt_exch
         cur_exch, cur_ccy, _s2 = exchange_info(mkt)
+        cur_exch = declared_exchange(n, mkt) or cur_exch
         rows.append({'id': n['id'], 'label': n.get('label') or n['id'], 'current': mkt, 'current_kind': c['kind'],
                      'current_exchange': cur_exch, 'current_currency': cur_ccy,
                      'catalog_ticker': str(n.get('ticker') or ''), 'review': c['review'],
                      'alternative': alt, 'alternative_exchange': alt_exch,
                      'alternative_currency': major_ccy(alt_ccy)[0] if alt_ccy else None,
+                     'declared': [l['yahoo_symbol'] for l in secondary_listings(n)],
                      'recommend': _recommend(c, mkt, alt)})
     rows.sort(key=lambda r: (0 if r['review'] == 'multi_listed' else 1, r['label'].lower()))
     return rows
@@ -198,6 +289,112 @@ def _recommend(c, mkt, alt):
     if c['review'] == 'otc_adr' or c['kind'] == 'otc':
         return 'local'
     return 'keep'
+
+
+def primary_conflicts(session):
+    """Empresas con MÁS de un instrumento primario en la base (pasa cuando el catálogo cambia de símbolo: la siembra
+    nunca pisa, así que el viejo sigue marcado primario hasta que Fabrizio lo decida). Solo lectura."""
+    from sqlalchemy import text
+    rows = session.execute(text("SELECT company_id, array_agg(id ORDER BY created_at, id) FROM instruments "
+                                "WHERE is_primary AND company_id IS NOT NULL GROUP BY company_id "
+                                "HAVING count(*) > 1 ORDER BY company_id")).all()
+    return [{'company_id': r[0], 'primaries': list(r[1])} for r in rows]
+
+
+# ── Lote 2026-10-14: los 19 símbolos revisados (data/import/lotes/2026-10-14/existentes_simbolos_revisar.csv) ─────
+# action: applied = corregido en nodes/*.js · confirmed = el catálogo ya estaba bien (fuente en listing_status.js)
+#         · fabrizio = la investigación contradice un dato GENERADO (nodes/listing_status.js) o no se pudo verificar
+LOT_2026_10_14 = (
+    ('SiTime', 'SiTime', 'SITT / SITS', 'SITM', 'applied', 'https://investor.sitime.com/',
+     'SITT no existía (y nodes_spacex.js decía SITS); el ticker de SiTime en Nasdaq es SITM.'),
+    ('SKHynix', 'SK Hynix', 'HXSCL', '000660.KS', 'applied', 'https://www.skhynix.com/ir/',
+     'HXSCL era incorrecto; la cotización principal es 000660 en la Bolsa de Corea (KRX).'),
+    ('qinetiq', 'QinetiQ', 'QQ.', 'QQ.L', 'applied', 'https://www.qinetiq.com/en/investors',
+     'Símbolo mal escrito; en Yahoo la acción de Londres es QQ.L.'),
+    ('TEL', 'Tokyo Electron', 'TOELY', '8035.T (+ TOELY secundario)', 'applied', 'https://www.tel.com/ir/stock/',
+     'La acción de Tokio pasa a primaria; el ADR TOELY queda como listado secundario (el agregador lo da de baja).'),
+    ('Ajinomoto', 'Ajinomoto', 'AJINY', '2802.T (+ AJINY secundario)', 'applied',
+     'https://www.ajinomoto.co.jp/company/en/ir/stock/',
+     'La acción de Tokio pasa a primaria; el ADR AJINY queda como secundario (el agregador lo da de baja).'),
+    ('SiemensEnergy', 'Siemens Energy', 'SMNEY', 'ENR.DE (+ SMNEY secundario)', 'applied',
+     'https://www.siemens-energy.com/global/en/home/investor-relations/share.html',
+     'La acción de Xetra pasa a primaria; el ADR SMNEY queda como secundario (el agregador lo da de baja).'),
+    ('VulcanEnergy', 'Vulcan Energy', 'VUL.DE', 'VUL.AX (+ Fráncfort sin símbolo)', 'applied',
+     'https://v-er.eu/investors/',
+     'VUL.DE no existe en el agregador; la principal es la ASX (VUL.AX). El listado de Fráncfort queda anotado sin '
+     'símbolo de Yahoo verificado.'),
+    ('TSMC', 'TSMC', 'TSM', 'TSM (ADR, sigue cotizando en la UI) + 2330.TW secundario', 'applied',
+     'https://investor.tsmc.com/english/stock-information',
+     'Se registra la bolsa de origen 2330.TW como listado secundario (home); el ADR TSM (1 ADR = 5 acciones) sigue '
+     'siendo el primario porque hoy es el que cotiza la app (nada cambia solo).'),
+    ('astroscale', 'Astroscale', '5034.T', '186A.T (en la fila cruda; listing_status.js sigue diciendo 5034.T)',
+     'fabrizio', 'https://astroscale.com/ir/',
+     '5034.T es unerry, Inc. Astroscale Holdings cotiza en TSE Growth como 186A desde jun-2024. La fila del catálogo '
+     'ya dice 186A.T, pero nodes/listing_status.js (GENERADO el 2026-09-29) la pisa con 5034.T: hay que corregir '
+     'data/listing_verification/ (astroscale → 186A.T, fuente astroscale.com/ir) y regenerar con '
+     'scripts/build_listing_status.py.'),
+    ('Kazatomprom', 'Kazatomprom', 'KAP.L', 'KAP.L (sin cambio)', 'fabrizio', 'https://www.kazatomprom.kz/en/investors',
+     'El GDR cotiza en Londres (IOB); el agregador no conoce KAP.L y en Yahoo el GDR suele ir como KAP.IL (USD). '
+     'La acción local es KAP en AIX/KASE (KZT). listing_status.js impone KAP.L: decidir KAP.IL o KAP (AIX) y '
+     'regenerar.'),
+    ('enflame', 'Enflame Technology', '688801.SS', '688801.SS (sin cambio)', 'confirmed',
+     'https://www.cnbc.com/2026/09/11/chinese-nvidia-rival-enflame-stock-market-debut-ai.html',
+     'Salida a bolsa reciente (STAR, 11-sep-2026): el agregador aún no la tiene; la fuente primaria confirma el código.'),
+    ('moorethreads', 'Moore Threads', '688795.SS', '688795.SS (sin cambio)', 'confirmed', 'https://english.sse.com.cn/',
+     'Salida a bolsa reciente (STAR, 2026): el agregador aún no la tiene.'),
+    ('Meeza', 'Meeza', 'MEZA.QA', 'MEZA.QA (sin cambio)', 'confirmed',
+     'https://www.meeza.net/meeza-successfully-listed-on-qatar-stock-exchange-main-market/',
+     'Cotiza en la Bolsa de Catar desde ago-2023 (fuente primaria); sufijo .QA correcto.'),
+    ('Mindspace Business Parks REIT', 'Mindspace Business Parks REIT', 'MINDSPACE.NS', 'MINDSPACE.NS (sin cambio)',
+     'confirmed', 'https://www.mindspacereit.com/investors', 'REIT listado en NSE/BSE; símbolo de Yahoo correcto.'),
+    ('Uniper', 'Uniper', 'UN01.DE', 'UN01.DE (sin cambio)', 'fabrizio',
+     'https://www.bloomberg.com/news/articles/2026-05-19/german-government-launches-privatization-of-energy-firm-uniper-mpc7nu4l',
+     'El agregador lo marca dado de baja; listing_status.js (fuente Bloomberg, may-2026) dice que cotiza en Xetra con '
+     '~99 % del Estado (flotante mínimo). Confirmar si sigue listado.'),
+    ('northern-data', 'Northern Data Group', 'NB2.DE', 'NB2.DE (sin cambio)', 'fabrizio',
+     'https://www.boerse-frankfurt.de/en',
+     'El agregador lo marca dado de baja (posible cierre de la compra por Rumble); listing_status.js lo da por cotizado '
+     'con fuente genérica. Confirmar antes de cambiar.'),
+    ('Qorvo', 'Qorvo', 'QRVO', 'QRVO (sin cambio)', 'fabrizio',
+     'https://finance.yahoo.com/technology/articles/skyworks-solutions-sees-qorvo-deal-140319451.html',
+     'El agregador lo marca dado de baja (fusión con Skyworks); listing_status.js (sep-2026) decía pendiente de China y '
+     'Corea. Si la fusión cerró, Qorvo pasa a "acquired" por Skyworks (SWKS).'),
+    ('Asetek', 'Asetek', 'ASTK.CO', 'ASTK.CO (sin cambio)', 'fabrizio', 'https://www.nasdaqomxnordic.com/',
+     'El agregador lo marca dado de baja; listing_status.js lo da por cotizado en Nasdaq Copenhague con fuente '
+     'genérica. Confirmar.'),
+    ('AustralianStrategicMaterials', 'Australian Strategic Materials', 'ASM.AX', 'ASM.AX (sin cambio)', 'fabrizio',
+     'https://asm-au.com/investors/',
+     'El agregador lo marca dado de baja (compra por Energy Fuels anunciada en ene-2026, cierre pospuesto). Si cerró, '
+     'pasa a "acquired" por Energy Fuels (UUUU).'),
+)
+_ACTION = {'applied': 'corregido en el catálogo', 'confirmed': 'confirmado (sin cambio)',
+           'fabrizio': 'decide Fabrizio'}
+
+
+def lot_review_markdown():
+    """Sección del documento de revisión con los 19 símbolos del lote 2026-10-14 (docs/REVISION_INSTRUMENTOS.md)."""
+    n_app = sum(1 for r in LOT_2026_10_14 if r[4] == 'applied')
+    n_ok = sum(1 for r in LOT_2026_10_14 if r[4] == 'confirmed')
+    n_fab = sum(1 for r in LOT_2026_10_14 if r[4] == 'fabrizio')
+    out = ['', f'## 3. Lote 2026-10-14: los {len(LOT_2026_10_14)} símbolos que no cuadraban con el agregador', '',
+           'La investigación externa (`data/import/lotes/2026-10-14/existentes_simbolos_revisar.csv`) comparó el '
+           'catálogo con una base de cotizaciones. Regla aplicada: **la cotización principal es la de la bolsa de '
+           'origen; los ADR/OTC son secundarios** (quedan registrados en `listings` de la ficha y en la tabla '
+           '`instruments` como secundarios, nunca se borran).',
+           '',
+           f'- **{n_app} corregidos** en `nodes/*.js` (con su fuente en `listings[].source_url`).',
+           f'- **{n_ok} confirmados** (el catálogo ya estaba bien; el agregador no conocía el símbolo).',
+           f'- **{n_fab} para que decidas tú** (la investigación contradice `nodes/listing_status.js`, que es GENERADO '
+           'y no se toca a mano, o no se pudo verificar sin red).',
+           '',
+           '| # | Empresa | Antes | Ahora | Qué pasó | Fuente | Nota |', '|---|---|---|---|---|---|---|']
+    for i, (cid, label, before, after, action, src, note) in enumerate(LOT_2026_10_14, 1):
+        out.append(f'| {i} | **{label}** (`{cid}`) | `{before}` | {after} | {_ACTION[action]} | {src} | {note} |')
+    out += ['',
+            'Ojo con la base: la siembra de `instruments` nunca pisa filas, así que los símbolos viejos (TOELY, AJINY, '
+            'SMNEY, HXSCL, SITT, QQ., VUL.DE) siguen marcados como primarios hasta que se decida; '
+            '`core.instruments.primary_conflicts()` los lista.']
+    return out
 
 
 def seed(session, nodes=None):

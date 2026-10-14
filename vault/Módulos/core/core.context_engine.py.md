@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/context_engine.py"
 lenguaje: "python"
-lineas: 794
+lineas: 797
 aliases: ["core/context_engine.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/context_engine.py
 
-> Módulo · capa [[Capa Infraestructura]] · 794 líneas · `core/context_engine.py`
+> Módulo · capa [[Capa Infraestructura]] · 797 líneas · `core/context_engine.py`
 
 ## Para qué sirve
 
@@ -27,18 +27,19 @@ EL motor de contexto (ARQUITECTURA_V2 §13; BRECHAS bloque 4: L4-01, L4-05, L4-1
 - `edge_score(R, e)` _(línea 413)_
 - `pack(items, budget, eligible=…, on_choose=…)` — items: [{'key', 'R', 'cost', 'groups': [(clave, sim)]}] → (elegidos en orden de elección, descartados). _(línea 426)_
 - `tail_summary(omitted, meta_of, lang=…)` — Estadísticos suficientes de lo que NO entró: conteo, % del peso, máximo, por salto, por tipo, países. _(línea 501)_
-- `pack_edges(edges, seeds, question=…, budget_chars=…, direction=…, view=…, max_nodes=…)` — Aristas candidatas (dicts con source/target/type/w/conf/hop/direction) → (filas elegidas ordenadas por R(e|Q), cola, R). Coherencia de … _(línea 538)_
-- `subgraph(seeds, question=…, depth=…, direction=…, budget_chars=…, include_partners=…, min_weight=…, min_conf=…, max_nodes=…, view=…)` — Vecindario de FLUJO de las semillas hasta `depth` saltos, ordenado por R(v|Q)/R(e|Q) y recortado al presupuesto, con la cola resumida. Las … _(línea 631)_
-- `pack_supply_chain(res, question=…, budget_chars=…)` — Un resultado de get_supply_chain (MCP) → el MISMO resultado con `edges` ordenadas por R(e|Q) y recortadas al presupuesto (los 2 saltos … _(línea 705)_
-- `rank_neighbors(nid, side, limit=…, question=…, view=…)` — Vecinos de FLUJO de `nid` ('up' proveedores / 'down' clientes) ordenados por R(e|Q). → [arista] _(línea 739)_
-- clase `FactBook` — Tabla de hechos de UNA respuesta: cada resultado que se le da a la IA lleva un id [F#] con su fuente y as_of. `public()` = lo que va en la … _(línea 756)_
-- `result_source(res)` — (fuente, as_of) declarados por un resultado de herramienta (primer nivel). _(línea 782)_
+- `pack_edges(edges, seeds, question=…, budget_chars=…, direction=…, view=…, max_nodes=…)` — Aristas candidatas (dicts con source/target/type/w/conf/hop/direction) → (filas elegidas ordenadas por R(e|Q), cola, R). Coherencia de … _(línea 541)_
+- `subgraph(seeds, question=…, depth=…, direction=…, budget_chars=…, include_partners=…, min_weight=…, min_conf=…, max_nodes=…, view=…)` — Vecindario de FLUJO de las semillas hasta `depth` saltos, ordenado por R(v|Q)/R(e|Q) y recortado al presupuesto, con la cola resumida. Las … _(línea 634)_
+- `pack_supply_chain(res, question=…, budget_chars=…)` — Un resultado de get_supply_chain (MCP) → el MISMO resultado con `edges` ordenadas por R(e|Q) y recortadas al presupuesto (los 2 saltos … _(línea 708)_
+- `rank_neighbors(nid, side, limit=…, question=…, view=…)` — Vecinos de FLUJO de `nid` ('up' proveedores / 'down' clientes) ordenados por R(e|Q). → [arista] _(línea 742)_
+- clase `FactBook` — Tabla de hechos de UNA respuesta: cada resultado que se le da a la IA lleva un id [F#] con su fuente y as_of. `public()` = lo que va en la … _(línea 759)_
+- `result_source(res)` — (fuente, as_of) declarados por un resultado de herramienta (primer nivel). _(línea 785)_
 
 **Internas** (empiezan con `_`): `_collapse`, `_detector`, `_fuzzy_hits`, `_Flow`, `_trust`, `_build_flow`, `_orientation`, `_jlen`, `_edge_row`, `_meta_fn`, `_now_iso`
 
 ## Depende de
 
 - [[core.__init__.py]] — importa `hot`
+- [[core.countries.py]] — importa `countries`
 - [[core.entities.py]] — importa `UMBRAL_BUSQUEDA`, `get_index`, `resolve`
 - [[ontology.vocabulary.py]] — importa `UNVERIFIED_CONF`, `UNVERIFIED_RX`, `flow_relation_types`
 
@@ -54,9 +55,10 @@ EL motor de contexto (ARQUITECTURA_V2 §13; BRECHAS bloque 4: L4-01, L4-05, L4-1
 - herramienta MCP `get_subgraph` → [[API herramientas MCP]]
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_alias_voz_paridad.py]]
 - [[tests.test_context_engine.py]]
+- [[tests.test_countries.py]]

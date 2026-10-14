@@ -877,20 +877,23 @@
         expVal[dep] = (expVal[dep] || 0) + h.value;
       });
       // exposición geográfica por país del holding y de sus dependencias-empresa
-      [h.id, ...seen].forEach(x => { const c = NB[x] && NB[x].country; if (c) ctryVal[c] = (ctryVal[c] || 0) + h.value / (seen.size || 1); });
+      // por clave del catálogo ('Taiwán' + 'Taiwan' = uno) vía GeoCoords.countryGroup; se muestra con nombre ES/EN
+      const cg = c => (window.GeoCoords && window.GeoCoords.countryGroup) ? window.GeoCoords.countryGroup(c) : c;
+      [h.id, ...seen].forEach(x => { const c = cg(NB[x] && NB[x].country); if (c) ctryVal[c] = (ctryVal[c] || 0) + h.value / (seen.size || 1); });
     });
     const topDeps = Object.keys(expCount).map(id => ({ id, n: expCount[id], val: expVal[id], e: resolveEntity(id) || { label: id } }))
       .sort((a, b) => b.val - a.val || b.n - a.n).slice(0, 10);
     const topCtry = Object.keys(ctryVal).map(c => ({ c, val: ctryVal[c] })).sort((a, b) => b.val - a.val).slice(0, 5);
+    const L = (es, en) => _lang() === 'en' ? en : es;   // regla bilingüe (lote K)
     const chip = (label, sub, color) => `<span style="display:inline-flex;flex-direction:column;gap:1px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:5px 9px;margin:0 5px 5px 0">
         <span style="font-size:11.5px;color:var(--ink-1);font-weight:600">${esc(label)}</span><span style="font-size:10px;color:${color || 'var(--ink-3)'}">${esc(sub)}</span></span>`;
     el.style.display = 'block';
     el.innerHTML = `<div style="border:1px solid rgba(67,200,150,.35);background:rgba(67,200,150,.06);border-radius:12px;padding:12px 14px">
-      <div style="font-size:13.5px;font-weight:700;color:var(--ink-1);margin-bottom:2px">🎯 Exposición de tu portafolio <span style="font-size:11px;color:var(--ink-3);font-weight:400">· ${_money(pf.total)} en ${pf.holdings.length} posiciones · ${fmtDate(_dateMs)}</span></div>
-      <div style="font-size:11px;color:var(--ink-3);margin:8px 0 3px">Depende (oculto) de:</div>
-      <div>${topDeps.map(d => chip(d.e.label, `${_money(d.val)} · ${d.n} posición${d.n > 1 ? 'es' : ''}`, '#43C896')).join('') || '<span style="font-size:12px;color:var(--ink-3)">sin dependencias mapeadas</span>'}</div>
-      <div style="font-size:11px;color:var(--ink-3);margin:8px 0 3px">Exposición geográfica:</div>
-      <div>${topCtry.map(c => chip(c.c, _money(c.val), '#E0B25C')).join('') || '—'}</div>
+      <div style="font-size:13.5px;font-weight:700;color:var(--ink-1);margin-bottom:2px">🎯 ${L('Exposición de tu portafolio', 'Your portfolio exposure')} <span style="font-size:11px;color:var(--ink-3);font-weight:400">· ${_money(pf.total)} ${L('en', 'in')} ${pf.holdings.length} ${L('posiciones', 'positions')} · ${fmtDate(_dateMs)}</span></div>
+      <div style="font-size:11px;color:var(--ink-3);margin:8px 0 3px">${L('Depende (oculto) de:', 'Depends (hidden) on:')}</div>
+      <div>${topDeps.map(d => chip(d.e.label, `${_money(d.val)} · ${d.n} ${d.n > 1 ? L('posiciones', 'positions') : L('posición', 'position')}`, '#43C896')).join('') || `<span style="font-size:12px;color:var(--ink-3)">${L('sin dependencias mapeadas', 'no mapped dependencies')}</span>`}</div>
+      <div style="font-size:11px;color:var(--ink-3);margin:8px 0 3px">${L('Exposición geográfica:', 'Geographic exposure:')}</div>
+      <div>${topCtry.map(c => chip((window.KhipuCountries && window.KhipuCountries.label) ? window.KhipuCountries.label(c.c, _lang()) : c.c, _money(c.val), '#E0B25C')).join('') || '—'}</div>
     </div>`;
   }
 

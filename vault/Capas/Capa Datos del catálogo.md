@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Datos del catálogo"
-archivos: 34
+archivos: 38
 tags: ["capa/datos-catalogo", "tipo/capa"]
 ---
 
@@ -9,12 +9,13 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 
 > El catálogo curado de empresas y vínculos (nodes/\*.js), el snapshot data/grafo_v0.json y sus generadores.
 
-**34 archivos · 64.681 líneas.** Volver al [[00 Mapa de Khipus]].
+**38 archivos · 68.734 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[data.grafo_v0.json]] — 45.570 líneas · Generado desde nodes/\*.js vía nodes/merge_graph.js (misma implementación que el navegador)
-- [[nodes.nodes_seed.js]] — 2.661 líneas · DATOS SEMILLA (extraídos de app.html, 2026-07) Catálogo base v7/v8: categorías, países, 137 nodos seed, 546 links seed, metadatos por empresa, …
+- [[data.grafo_v0.json]] — 46.123 líneas · Generado desde nodes/\*.js vía nodes/merge_graph.js (misma implementación que el navegador)
+- [[data.categories.json]] — 2.787 líneas · FUENTE ÚNICA de las categorías del catálogo (108 de nodes/\*.js + 55 del lote 2026-10-14, aprobadas por defecto: Fabrizio puede rechazar poniendo …
+- [[nodes.nodes_seed.js]] — 2.680 líneas · DATOS SEMILLA (extraídos de app.html, 2026-07) Catálogo base v7/v8: categorías, países, 137 nodos seed, 546 links seed, metadatos por empresa, …
 - [[nodes.nodes_expand5.js]] — 2.425 líneas · Informe de enriquecimiento 2026-07 Generado por scripts/ingest_enrichment_md.py desde el informe de Fabrizio (148 nuevas + 82 enriquecidas). NO …
 - [[nodes.listing_status.js]] — 2.048 líneas · GENERADO por scripts/build_listing_status.py. Estado en bolsa VERIFICADO con fuente (salió a bolsa / comprada / fusionada / filial / cerró) de …
 - [[nodes.nodes_expand.js]] — 1.778 líneas · Khipu Finance · Extended Node Universe ~250 additional company nodes across new and existing categories Generated 2026-06
@@ -27,16 +28,18 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 - [[nodes.crypto_intel.js]] — 405 líneas · Capa estática de inteligencia cripto (expediente jul-2026). Fuente: KHIPUS_CRIPTO_TOP50_EXPEDIENTE.md (snapshot CoinMarketCap, semana 6-12 jul 2026). …
 - [[scripts.ingest_enrichment_md.py]] — 404 líneas · Ingesta de informes de enriquecimiento.
 - [[nodes.nodes_expand3.js]] — 392 líneas · Khipu Finance · Extended Node Universe Part 3 62 verified-unique nodes — completing the 450-node supply chain map All IDs verified non-duplicate with …
+- [[scripts.build_categories.py]] — 365 líneas · genera nodes/categories_extra.js desde data/categories.json (FUENTE ÚNICA).
 - [[scripts.ingest_multicapa.py]] — 343 líneas · Ingesta de la EXPANSIÓN MULTICAPA de Fabrizio.
 - [[nodes.nodes_expand2.js]] — 310 líneas · Khipu Finance · Extended Node Universe Part 2 ~175 additional company nodes across semiconductor, AI, space, defense, infra categories
+- [[scripts.build_country_review.py]] — 310 líneas · LISTA DE REVISIÓN DE PAÍSES para Fabrizio (lote 2026-10-14) + gemela JS.
 - [[nodes.legal_names.js]] — 281 líneas · NOMBRES LEGALES y nombres alternativos → id del grafo (Phase 1 · M2, pendiente "Enriquecer alias con nombres legales completos").
 - [[nodes.nodes_spacex.js]] — 218 líneas · Ecosistema SpaceX y sector espacial completo
 - [[nodes.merge_graph.js]] — 207 líneas · EL merge del catálogo (única implementación) Usado por app.html (navegador) Y por scripts/export_graph_v0.js (Node vm). Antes esta lógica existía 3 …
 - [[nodes.links_connect.js]] — 186 líneas · Conexiones de cadena de suministro para nodos huérfanos Conecta los ~82 nodos que se habían añadido (expand2/expand3) sin enlaces, con relaciones …
 - [[nodes.nodes_nuclear.js]] — 150 líneas · Sector Energía Nuclear (Khipu Finance) SMR (reactores modulares pequeños) + Fusión + Uranio. La demanda 24/7 de energía de la IA es la tesis: los …
-- [[scripts.build_instrument_review.py]] — 118 líneas · genera docs/REVISION_INSTRUMENTOS.md (BRECHAS_V2 L3-13, decisión #9).
+- [[scripts.build_instrument_review.py]] — 119 líneas · genera docs/REVISION_INSTRUMENTOS.md (BRECHAS_V2 L3-13, decisión #9).
+- [[scripts.export_graph_v0.js]] — 105 líneas · Exporta el grafo canónico a data/grafo_v0.json v2 (Etapa 2, 2026-07): carga los nodes/\*.js reales en un sandbox vm y usa LA MISMA función de merge …
 - [[nodes.preipo_intel.js]] — 104 líneas · Inteligencia de empresas privadas / pre-IPO (Khipu Finance) Datos de financiación, inversores, timeline a IPO e hitos para el panel de empresa …
-- [[scripts.export_graph_v0.js]] — 104 líneas · Exporta el grafo canónico a data/grafo_v0.json v2 (Etapa 2, 2026-07): carga los nodes/\*.js reales en un sandbox vm y usa LA MISMA función de merge …
 - [[nodes.ontology_facts.js]] — 99 líneas · Hechos tipados de la ontología (Khipus AI Finance) Relaciones reales empresa↔objeto y objeto↔objeto, con tipo de relación (rel) y ventana temporal. …
 - [[nodes.temporal_seed_facts2.js]] — 98 líneas · Hechos temporales adicionales (Khipus AI Finance) Segunda tanda de hechos reales y verificados (2016–2026) de la cadena IA / semis / nuclear / …
 - [[nodes.temporal_seed_facts.js]] — 96 líneas · Hechos temporales curados (Khipus AI Finance) Grafo de Conocimiento Temporal: cada hecho tiene ventana de validez (valid_from → valid_until; null = …
@@ -47,17 +50,20 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 - [[scripts.build_listing_status.py]] — 63 líneas · genera nodes/listing_status.js.
 - [[nodes.links_all.js]] — 39 líneas · Links del ecosistema SpaceX y conexiones expandidas
 - [[data.graph_audit_baseline.json]] — 22 líneas · Línea base de scripts/audit_graph.py (G1). Las categorías de `metrics` NO pueden empeorar (tests/test_graph_audit.py); `info` es solo informativo. …
+- [[nodes.categories_extra.js]] — 17 líneas · GENERADO por scripts/build_categories.py desde data/categories.json. NO EDITAR A MANO: cambia el JSON y regenera. Se carga justo después de …
 
 ## Conexiones con otras capas
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| la usa | [[Capa Interfaz (Khipus OS)]] | 50 |
-| la usa | [[Capa Ontología y grafo temporal]] | 33 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 51 |
+| la usa | [[Capa Ontología y grafo temporal]] | 34 |
 | la usa | [[Capa Chat y agentes]] | 10 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 10 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 10 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
 | la usa | [[Capa Voz]] | 3 |
+| usa a | [[Capa Infraestructura]] | 2 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 2 |
 | la usa | [[Capa MCP y API]] | 1 |
-| usa a | [[Capa Infraestructura]] | 1 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 1 |

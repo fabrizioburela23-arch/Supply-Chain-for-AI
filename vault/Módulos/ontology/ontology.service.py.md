@@ -42,6 +42,7 @@ lógica de negocio de la ontología.
 
 ## Lo usan
 
+- [[core.import_normalize.py]] — lo importa
 - [[core.replay.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[matrix.engine.py]] — lo importa
@@ -51,6 +52,7 @@ lógica de negocio de la ontología.
 - [[ontology.bitemporal.py]] — lo importa
 - [[ontology.bulk_import.py]] — lo importa
 - [[ontology.checkpoints.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[ontology.ingest_news.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
@@ -58,7 +60,7 @@ lógica de negocio de la ontología.
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 43 pruebas (lista abajo)._
+_Además lo importan 49 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -67,12 +69,16 @@ _Además lo importan 43 pruebas (lista abajo)._
 - [[tests.test_bitemporal_review.py]]
 - [[tests.test_checkpoints.py]]
 - [[tests.test_gates_resulting_state.py]]
+- [[tests.test_genui_k_server.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_hot_contract.py]]
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_import_fast_path.py]]
+- [[tests.test_import_normalize.py]]
+- [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_ledger_anchor.py]]
@@ -80,6 +86,7 @@ _Además lo importan 43 pruebas (lista abajo)._
 - [[tests.test_ledger_chain.py]]
 - [[tests.test_ledger_core.py]]
 - [[tests.test_lotej_review_fixes.py]]
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_ontology.py]]
@@ -99,6 +106,7 @@ _Además lo importan 43 pruebas (lista abajo)._
 - [[tests.test_repair_ontology_review.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_replay_determinism.py]]
+- [[tests.test_resolve_ids.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_scale_hot_paging.py]]
 - [[tests.test_scale_hot_rebuild.py]]

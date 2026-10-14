@@ -197,3 +197,5 @@ from ontology import ledger_models as _ledger_models  # noqa: E402,F401
 from ontology import governance_models as _governance_models  # noqa: E402,F401
 # BRECHAS bloque 2 (memoria de los números): instrumentos, precios EOD, FX diario y fotos diarias.
 from ontology import history_models as _history_models  # noqa: E402,F401
+# Lote K (E2.4): importación de empresas por lotes (import_files, import_runs, import_pending_links), append-only.
+from ontology import import_models as _import_models  # noqa: E402,F401

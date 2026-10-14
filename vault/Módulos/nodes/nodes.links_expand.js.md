@@ -31,11 +31,11 @@ De nivel superior (globales del script): `LINKS_EXPAND`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **17 de 98** (línea 1452), después de [[nodes.links_all.js]] y antes de [[nodes.links_connect.js]].
+Se carga en [[app.html]] en la posición **18 de 99** (línea 1519), después de [[nodes.links_all.js]] y antes de [[nodes.links_connect.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 17)
+- [[app.html]] — lo carga con `<script>` (posición 18)
 - [[engine.app_main.js]] — usa `LINKS_EXPAND`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta

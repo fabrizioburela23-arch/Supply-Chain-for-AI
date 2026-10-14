@@ -48,7 +48,7 @@
     var st = d.createElement('style'); st.id = 'kg-styles-shapes'; st.textContent = CSS; d.head.appendChild(st);
   })();
 
-  /* ── el vocabulario cerrado: primitivas [etiqueta, atributos, clase] en una cuadrícula de 48×48 ── */
+  /* ── vocabulario cerrado: primitivas [etiqueta, atributos, clase] en cuadrícula 48×48 ── */
   var P = function (d, cls) { return ['path', { d: d }, cls || 's']; };
   var SHAPES = {
     chip: [['rect', { x: 12, y: 12, width: 24, height: 24, rx: 4 }, 'f2'], ['rect', { x: 12, y: 12, width: 24, height: 24, rx: 4 }, 's'],

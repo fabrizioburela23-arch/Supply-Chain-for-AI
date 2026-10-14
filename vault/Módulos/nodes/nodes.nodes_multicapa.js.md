@@ -34,11 +34,11 @@ De nivel superior (globales del script): `META_MULTICAPA`, `_MC_C2S`, `_MC_S9`
 
 - [[nodes.nodes_seed.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **12 de 98** (línea 1447), después de [[nodes.nodes_china.js]] y antes de [[nodes.preipo_intel.js]].
+Se carga en [[app.html]] en la posición **13 de 99** (línea 1514), después de [[nodes.nodes_china.js]] y antes de [[nodes.preipo_intel.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 12)
+- [[app.html]] — lo carga con `<script>` (posición 13)
 - [[engine.app_main.js]] — usa `LINKS_MULTICAPA`, `NODES_MULTICAPA`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
@@ -46,7 +46,7 @@ Se carga en [[app.html]] en la posición **12 de 98** (línea 1447), después de
 
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_catalog_fix_categories.py]]
 
 ## Mencionado en sesiones de trabajo
 

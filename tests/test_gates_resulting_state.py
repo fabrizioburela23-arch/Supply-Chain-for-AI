@@ -90,7 +90,7 @@ def test_autovinculo_y_relacion_fuera_del_vocabulario_quedan_registrados(db):
     assert all(len(g['ir_hash']) == 64 and g['mode'] == 'shadow' for g in gr)
     from core.gates import engine
     assert all(r.value is not None for r in rows) and rows[0].value['shapes_semver'] == __import__('core.governance', fromlist=['x']).artifact_semver('ontology.shapes')
-    assert engine.state()['available'] and engine.state()['rules'] == 69          # + 31 de órdenes (paso 17) + 7 del comité (paso 18)
+    assert engine.state()['available'] and engine.state()['rules'] == 83          # + 31 de órdenes (paso 17) + 7 del comité (paso 18) + 14 de importación (E2.5)
 
 
 @needs_db

@@ -57,9 +57,15 @@ class GraphData:
 
 
 def _meta_of(label, otype, props):
+    """`country` = el texto guardado (no se reescribe); `country_iso2` = ISO-2 DERIVADO (core/countries: hq_country del
+    importador > country > loc si country es una región); `hq_country` solo si la ficha lo trae."""
     props = props or {}
-    return {'label': label, 'type': otype, 'sector': props.get('sector'), 'ticker': props.get('ticker'),
-            'country': props.get('country') or props.get('pais')}
+    from core import countries as _C
+    m = {'label': label, 'type': otype, 'sector': props.get('sector'), 'ticker': props.get('ticker'),
+         'country': props.get('country') or props.get('pais'), 'country_iso2': _C.iso2_of_props(props)}
+    if props.get('hq_country'):
+        m['hq_country'] = props.get('hq_country')
+    return m
 
 
 # ── Postgres ────────────────────────────────────────────────────────────────

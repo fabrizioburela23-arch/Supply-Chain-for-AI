@@ -31,17 +31,18 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **14 de 98** (línea 1449), después de [[nodes.preipo_intel.js]] y antes de [[nodes.private_valuations.js]].
+Se carga en [[app.html]] en la posición **15 de 99** (línea 1516), después de [[nodes.preipo_intel.js]] y antes de [[nodes.private_valuations.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 14)
+- [[app.html]] — lo carga con `<script>` (posición 15)
 - [[engine.app_main.js]] — usa `LISTING_STATUS`
 - [[scripts.build_listing_status.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 
+- [[tests.test_catalog_fix_symbols.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_entities.py]]
 

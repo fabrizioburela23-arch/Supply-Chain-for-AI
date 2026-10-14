@@ -502,6 +502,7 @@ def tail_summary(omitted, meta_of, lang='en'):
     """Estadísticos suficientes de lo que NO entró: conteo, % del peso, máximo, por salto, por tipo, países."""
     if not omitted:
         return None
+    from core import countries as _C
     tot_w = sum(float(e.get('w') or 0) for e in omitted)
     by_hop, by_type, ctry = {}, {}, {}
     mx = None
@@ -510,14 +511,16 @@ def tail_summary(omitted, meta_of, lang='en'):
         by_hop[h] = by_hop.get(h, 0) + 1
         by_type[e.get('type') or 'supply'] = by_type.get(e.get('type') or 'supply', 0) + 1
         far = e.get('_far') or e.get('target')
-        c = (meta_of(far) or {}).get('country') or '?'
+        raw = (meta_of(far) or {}).get('country') or '?'
+        # países agrupados por ISO-2 derivado ('EEUU' + 'Estados Unidos (HQ…)' = uno) o por región; el texto crudo si no resuelve
+        c = _C.iso2_of(raw) or _C.region_of(raw) or raw
         ctry[c] = ctry.get(c, 0.0) + float(e.get('w') or 0)
         if mx is None or float(e.get('w') or 0) > float(mx.get('w') or 0):
             mx = e
     top_c = sorted(ctry.items(), key=lambda kv: (-kv[1], kv[0]))[:4]
     return {'omitted_edges': len(omitted), 'omitted_weight': round(tot_w, 2),
             'by_hop': dict(sorted(by_hop.items())), 'by_type': dict(sorted(by_type.items(), key=lambda kv: -kv[1])[:6]),
-            'top_countries_by_weight': [{'country': c, 'weight': round(w, 2)} for c, w in top_c],
+            'top_countries_by_weight': [{'country': _C.label(c, lang), 'weight': round(w, 2)} for c, w in top_c],
             'max_edge': {'source': mx.get('source'), 'target': mx.get('target'), 'w': mx.get('w'),
                          'type': mx.get('type')} if mx else None}
 

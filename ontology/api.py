@@ -1384,3 +1384,339 @@ def reconcile_rollback():
         return jsonify({'error': str(e)[:300], 'error_en': str(e)[:300]}), 400
     _RECON_CACHE.update(data=None)
     return jsonify({'status': 'ok', **res})
+
+
+# ── EXPANSION_5K E2.4: importación de fichas khipus.company/1 (ontology/company_import.py) ────────────────────
+# Subida en TROZOS (MAX_CONTENT_LENGTH es 1 MB: cada trozo ≤ policy.import.upload_chunk_max_bytes comprimido),
+# plan PURO (sin escritura; cacheado por archivo + categorías aprobadas + generación del grafo), aplicar con PIN +
+# `expect.plan_sha` (si el plan o el grafo cambiaron → 409) + mismo candado consultivo que reconcile, deshacer y
+# corridas. Toda escritura deja UNA decisión (ontology.bulk_import / ontology.import_rollback) o responde 503.
+import base64 as _b64  # noqa: E402
+import hashlib as _hashlib  # noqa: E402
+import zlib as _zlib  # noqa: E402
+
+_IMPORT_UPLOADS = {}                     # sha → {'name', 'chunks': {i: bytes}, 'n', 'at'}  (1 worker: memoria)
+_IMPORT_PLAN_CACHE = {'key': None, 'plan': None, 'ts': 0.0}
+_IMPORT_LOCK = _threading.Lock()
+_IMPORT_UPLOAD_TTL_S = 1800
+_IMPORT_UPLOADS_MAX = 8                  # subidas a medias a la vez (un cliente mal hecho no agota la RAM)
+_IMPORT_UPLOAD_MAX_BYTES = 64 * 1024 * 1024   # tope del archivo entero (sin comprimir) retenido en memoria
+
+
+def _import_mod():
+    from ontology import company_import as CI
+    return CI
+
+
+def _import_file(sha):
+    """Paquete (records/updates/approve_categories) guardado en import_files, o None."""
+    from ontology import import_models
+    CI = _import_mod()
+    if not import_models.ensure_tables():
+        return None
+    with session_scope() as s:
+        row = s.get(import_models.ImportFile, sha)
+        if row is None:
+            return None
+        text = _zlib.decompress(row.content).decode('utf-8')
+        name = row.name
+    return CI.parse_bundle(text, name=name)
+
+
+def _import_bundle_from_body(b):
+    """(paquete, file_sha) desde el cuerpo: `file_sha` (archivo subido) o fichas en línea (records/updates)."""
+    CI = _import_mod()
+    sha = _str_arg(b, 'file_sha', 64)
+    if sha:
+        bundle = _import_file(sha)
+        if bundle is None:
+            raise CI.ImportProblem('archivo no encontrado: súbelo primero (POST /api/ontology/import/files)',
+                                   'file not found: upload it first (POST /api/ontology/import/files)', 'file_not_found')
+    else:
+        recs = b.get('records')
+        if not isinstance(recs, list):
+            raise CI.ImportProblem('falta file_sha o records', 'file_sha or records is required', 'records_required')
+        bundle = {'records': recs, 'updates': list(b.get('updates') or []), 'approve_categories': [], 'batch': None}
+        sha = None
+    if isinstance(b.get('approve_categories'), list):
+        bundle['approve_categories'] = [c for c in b['approve_categories'] if isinstance(c, dict)]
+    if _str_arg(b, 'batch', 60):
+        bundle['batch'] = _str_arg(b, 'batch', 60)
+    return bundle, sha
+
+
+def _import_view_current():
+    """La vista rápida en la versión de la BASE (para aplicar): si va atrás, pide la reconstrucción y espera hasta
+    HOT_WAIT_S; si no llega → ImportProblem graph_stale (409: inténtalo en unos segundos)."""
+    from core.hotviews import builder, hot, signals
+    CI = _import_mod()
+    view = hot.graph()
+    if view is None or view.source != 'pg':
+        return view
+    try:
+        with session_scope() as s:
+            dbv = signals.read_db_version(s)
+    except Exception:  # noqa: BLE001
+        dbv = None
+    if not dbv or dbv[0] == view.graph_version:
+        return view
+    g = builder.ensure(dbv[0], dbv[1], timeout=hot.HOT_WAIT_S)
+    view = hot.graph()
+    if g is None or view is None or view.graph_version != dbv[0]:
+        raise CI.ImportProblem(f'la vista rápida (versión {view.graph_version if view else "?"}) va atrás de la base '
+                               f'(versión {dbv[0]}): inténtalo en unos segundos',
+                               f'the hot view (version {view.graph_version if view else "?"}) lags the database '
+                               f'(version {dbv[0]}): try again in a few seconds', 'graph_stale')
+    return view
+
+
+def _import_plan_for(bundle, sha, fresh=False, current=False):
+    """El plan del paquete sobre la generación VIGENTE (cacheado: mismo archivo + categorías + generación).
+    `current=True` (aplicar): la vista debe estar en la versión de la base (_import_view_current)."""
+    from core.hotviews import hot
+    CI = _import_mod()
+    view = _import_view_current() if current else hot.graph()
+    if view is None:
+        raise CI.ImportProblem('grafo no disponible', 'graph unavailable', 'graph_unavailable')
+    key = (sha or CI._sha(bundle['records'] + bundle['updates']), CI._sha(bundle.get('approve_categories') or []),
+           bundle.get('batch'), view.generation)
+    with _IMPORT_LOCK:
+        if not fresh and _IMPORT_PLAN_CACHE['key'] == key and _IMPORT_PLAN_CACHE['plan'] is not None:
+            return _IMPORT_PLAN_CACHE['plan'], view
+        pending = []
+        if ontology_available():
+            try:
+                with session_scope() as s:
+                    pending = CI.pending_links(s)
+            except Exception:  # noqa: BLE001 — sin pendientes el plan sale igual
+                pending = []
+        p = CI.plan(bundle['records'], bundle['updates'], view=view, batch=bundle.get('batch'),
+                    approve_categories=bundle.get('approve_categories'), pending=pending)
+        _IMPORT_PLAN_CACHE.update(key=key, plan=p, ts=time.time())
+        return p, view
+
+
+def _import_plan_summary(p, full=False):
+    if full:
+        return p
+    out = {k: v for k, v in p.items() if k not in ('items', 'updates', 'sources', 'pending_resolved')}
+    out['items'] = [{'record_id': it['record_id'], 'name': it.get('name'), 'action': it['action'], 'id': it.get('id'),
+                     'method': it.get('method'), 'score': it.get('score'), 'priority': it.get('priority'),
+                     'conflicts': it.get('conflicts') or [], 'warnings': [w.get('code') for w in it.get('warnings') or []],
+                     'links': [{'relation_id': l.get('relation_id'), 'rel_type': l.get('rel_type'), 'route': l.get('route'),
+                                'reason': l.get('reason'), 'counterparty': (l.get('counterparty') or {}).get('name'),
+                                'target': l.get('target'), 'source': l.get('source')} for l in it.get('links') or []]}
+                    for it in p['items']]
+    out['updates'] = [{'khipus_id': u.get('khipus_id'), 'action': u['action'], 'reason': u.get('reason'),
+                       'keys': sorted(k for k in (u.get('props') or {}) if k != 'country_facts'),
+                       'conflicts': u.get('conflicts') or []} for u in p['updates']]
+    out['pending_resolved'] = len(p.get('pending_resolved') or [])
+    out['sources_new'] = len(p.get('sources') or [])
+    return out
+
+
+def _import_error(e):
+    CI = _import_mod()
+    if isinstance(e, CI.ImportProblem):
+        code = 409 if e.code in ('plan_changed', 'graph_changed', 'graph_stale', 'later_runs', 'already_rolled_back', 'busy') \
+            else (404 if e.code in ('file_not_found', 'run_not_found') else (503 if e.code in ('graph_unavailable', 'import_tables_unavailable') else 400))
+        return jsonify({'error': str(e), 'error_en': e.en, 'code': e.code}), code
+    from ontology.reconcile import ReconcileError
+    if isinstance(e, ReconcileError):
+        return jsonify({'error': str(e), 'error_en': e.en, 'code': 'busy' if 'en curso' in str(e) else 'rejected'}), \
+            409 if 'en curso' in str(e) else 400
+    return jsonify({'error': str(e)[:300], 'error_en': str(e)[:300]}), 400
+
+
+@ontology_bp.route('/import/files', methods=['POST'])
+@_require_db
+@_strict_operator_required
+@rate_limit(240, 600)
+def import_files():
+    """Subida por trozos. Body: {name, sha256 (del contenido entero sin comprimir), chunk, chunks, data (base64 del
+    trozo comprimido con zlib), encoding: 'zlib'|'none'}. Con el último trozo: se verifica el sha, se cuenta el
+    paquete y se guarda en import_files (decisión ontology.bulk_import, etapa 'upload'). Respuesta: {status: partial|
+    stored, received, sha256, n_records, n_updates, batch}."""
+    from core import decisions as _decisions
+    from ontology import import_models
+    CI = _import_mod()
+    b = _body()
+    sha = _str_arg(b, 'sha256', 64).lower()
+    name = _str_arg(b, 'name', 200) or 'import.json'
+    try:
+        idx, n = int(b.get('chunk', 0)), int(b.get('chunks', 1))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'chunk/chunks deben ser enteros', 'error_en': 'chunk/chunks must be integers'}), 400
+    if len(sha) != 64 or idx < 0 or n < 1 or idx >= n or n > 400:
+        return jsonify({'error': 'sha256 (64 hex), chunk y chunks válidos requeridos',
+                        'error_en': 'valid sha256 (64 hex), chunk and chunks are required'}), 400
+    try:
+        raw = _b64.b64decode(str(b.get('data') or ''), validate=True)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'data no es base64', 'error_en': 'data is not base64'}), 400
+    limit = int(CI.policy('upload_chunk_max_bytes'))
+    if len(raw) > limit:
+        return jsonify({'error': f'trozo mayor que {limit} bytes', 'error_en': f'chunk larger than {limit} bytes',
+                        'code': 'chunk_too_big'}), 413
+    if (b.get('encoding') or 'zlib') == 'zlib':
+        # el tope se mide DESCOMPRIMIDO (un trozo zlib de 1 KB puede expandirse a 1 GB y tumbar el único worker)
+        try:
+            d = _zlib.decompressobj()
+            raw = d.decompress(raw, limit + 1)
+            if len(raw) > limit or d.unconsumed_tail:
+                return jsonify({'error': f'trozo mayor que {limit} bytes al descomprimir',
+                                'error_en': f'chunk larger than {limit} bytes once decompressed', 'code': 'chunk_too_big'}), 413
+        except _zlib.error:
+            return jsonify({'error': 'el trozo no es zlib', 'error_en': 'chunk is not zlib'}), 400
+    now = time.time()
+    with _IMPORT_LOCK:
+        for k in [k for k, v in _IMPORT_UPLOADS.items() if now - v['at'] > _IMPORT_UPLOAD_TTL_S]:
+            _IMPORT_UPLOADS.pop(k, None)
+        if sha not in _IMPORT_UPLOADS and len(_IMPORT_UPLOADS) >= _IMPORT_UPLOADS_MAX:
+            return jsonify({'error': 'demasiadas subidas a medias; espera a que terminen', 'error_en': 'too many uploads in '
+                            'progress; wait for them to finish', 'code': 'too_many_uploads'}), 429
+        up = _IMPORT_UPLOADS.setdefault(sha, {'name': name, 'chunks': {}, 'n': n, 'at': now})
+        if sum(len(c) for i, c in up['chunks'].items() if i != idx) + len(raw) > _IMPORT_UPLOAD_MAX_BYTES:
+            _IMPORT_UPLOADS.pop(sha, None)
+            return jsonify({'error': f'archivo mayor que {_IMPORT_UPLOAD_MAX_BYTES // (1024 * 1024)} MB',
+                            'error_en': f'file larger than {_IMPORT_UPLOAD_MAX_BYTES // (1024 * 1024)} MB',
+                            'code': 'file_too_big'}), 413
+        up['chunks'][idx] = raw
+        up['at'] = now
+        if len(up['chunks']) < n:
+            return jsonify({'status': 'partial', 'received': len(up['chunks']), 'chunks': n, 'sha256': sha})
+        content = b''.join(up['chunks'][i] for i in range(n))
+        _IMPORT_UPLOADS.pop(sha, None)
+    if _hashlib.sha256(content).hexdigest() != sha:
+        return jsonify({'error': 'el sha256 no coincide con el contenido recibido', 'error_en': 'sha256 does not match the '
+                        'received content', 'code': 'sha_mismatch'}), 400
+    try:
+        bundle = CI.parse_bundle(content.decode('utf-8'), name=name)
+    except (CI.ImportProblem, ValueError, UnicodeDecodeError) as e:
+        return jsonify({'error': f'archivo ilegible: {str(e)[:200]}', 'error_en': f'unreadable file: {str(e)[:200]}',
+                        'code': 'bad_file'}), 400
+    if not import_models.ensure_tables():
+        return jsonify({'error': 'tablas del importador no disponibles', 'error_en': 'import tables unavailable',
+                        'code': 'import_tables_unavailable'}), 503
+    principal = _principal(_str_arg(b, 'actor', 80) or None)
+    try:
+        with session_scope() as s, _decisions.decision_scope(
+                'ontology.bulk_import', principal, session=s,
+                subject={'import': True, 'stage': 'upload', 'file_sha': sha, 'name': name[:120],
+                         'n_records': len(bundle['records']), 'n_updates': len(bundle['updates'])}) as dctx:
+            if s.get(import_models.ImportFile, sha) is None:
+                s.add(import_models.ImportFile(sha256=sha, name=name, size_bytes=len(content), n_records=len(bundle['records']),
+                                               content_type='jsonl' if name.endswith('.jsonl') else 'json',
+                                               content=_zlib.compress(content, 6), uploaded_by=principal.id[:96]))
+                dctx.output = {'stored': True, 'file_sha': sha, 'n_records': len(bundle['records'])}
+            else:
+                dctx.output = {'stored': False, 'already': True, 'file_sha': sha}
+                dctx.status = 'noop'
+            dctx.status = dctx.status or 'recorded'
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
+    _IMPORT_PLAN_CACHE.update(key=None, plan=None)
+    return jsonify({'status': 'stored', 'sha256': sha, 'name': name, 'n_records': len(bundle['records']),
+                    'n_updates': len(bundle['updates']), 'batch': bundle.get('batch'),
+                    'approve_categories': len(bundle.get('approve_categories') or [])})
+
+
+@ontology_bp.route('/import/plan', methods=['POST'])
+@_require_db
+@_strict_operator_required
+@rate_limit(30, 600)
+def import_plan():
+    """Plan PURO (no escribe): {file_sha | records[, updates], approve_categories?, batch?, full?: 0|1, format?: json|md,
+    lang?: es|en, fresh?: 0|1}. Devuelve el resumen con `plan_sha` (`full=1`: con propiedades y vínculos)."""
+    from flask import Response
+    CI = _import_mod()
+    b = _body()
+    try:
+        bundle, sha = _import_bundle_from_body(b)
+        p, _view = _import_plan_for(bundle, sha, fresh=bool(b.get('fresh')))
+    except Exception as e:  # noqa: BLE001
+        return _import_error(e)
+    if (b.get('format') or 'json') == 'md':
+        lang = 'en' if (b.get('lang') or '').lower() == 'en' else 'es'
+        return Response(CI.render_summary(p, lang=lang), mimetype='text/markdown; charset=utf-8')
+    return jsonify({'status': 'ok', 'file_sha': sha, 'plan': _import_plan_summary(p, full=bool(b.get('full')))})
+
+
+@ontology_bp.route('/import/apply', methods=['POST'])
+@_require_db
+@_strict_operator_required
+@rate_limit(5, 600)
+def import_apply():
+    """Aplica el plan que la persona revisó: {file_sha | records, approve_categories?, batch?, confirm_db, expect:
+    {plan_sha}}. Se recalcula el plan sobre la generación vigente; otra huella → 409 plan_changed. UNA decisión
+    ontology.bulk_import; sin libro → 503."""
+    CI = _import_mod()
+    b = _body()
+    expect = b.get('expect') if isinstance(b.get('expect'), dict) else None
+    if expect is None or not isinstance(expect.get('plan_sha'), str) or len(expect['plan_sha']) != 64:
+        return jsonify({'error': 'falta expect con la huella del plan que revisaste (plan_sha)',
+                        'error_en': 'expect with the fingerprint of the plan you reviewed (plan_sha) is required',
+                        'code': 'expect_required'}), 400
+    confirm_db = _str_arg(b, 'confirm_db', 120) or None
+    if not confirm_db:
+        return jsonify({'error': 'falta confirm_db (el nombre EXACTO de la base, como en reconcile)',
+                        'error_en': 'confirm_db (the EXACT database name, as in reconcile) is required',
+                        'code': 'confirm_required'}), 400
+    principal = _principal(_str_arg(b, 'actor', 80) or None)
+    try:
+        bundle, sha = _import_bundle_from_body(b)
+        p, view = _import_plan_for(bundle, sha, fresh=True, current=True)
+        res = CI.apply_run(session_scope, p, principal, confirm_db=confirm_db, expect=expect, file_sha=sha, view=view)
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
+    except _GateViolation as e:
+        return _gate_violation(e)
+    except Exception as e:  # noqa: BLE001
+        return _import_error(e)
+    _IMPORT_PLAN_CACHE.update(key=None, plan=None)
+    return jsonify({'status': 'ok', **res})
+
+
+@ontology_bp.route('/import/rollback', methods=['POST'])
+@_require_db
+@_strict_operator_required
+@rate_limit(5, 600)
+def import_rollback():
+    """Deshace una corrida: {run_id, confirm_db}. Decisión ontology.import_rollback; de la más nueva a la más vieja."""
+    CI = _import_mod()
+    b = _body()
+    run_id = _str_arg(b, 'run_id', 60)
+    if not run_id:
+        return jsonify({'error': 'run_id requerido', 'error_en': 'run_id is required'}), 400
+    confirm_db = _str_arg(b, 'confirm_db', 120) or None
+    if not confirm_db:
+        return jsonify({'error': 'falta confirm_db (el nombre EXACTO de la base, como en reconcile)',
+                        'error_en': 'confirm_db (the EXACT database name, as in reconcile) is required',
+                        'code': 'confirm_required'}), 400
+    principal = _principal(_str_arg(b, 'actor', 80) or None)
+    try:
+        with session_scope() as s:
+            res = CI.rollback_run(s, run_id, principal, confirm_db=confirm_db)
+    except _LedgerUnavailable:
+        return _ledger_unavailable()
+    except Exception as e:  # noqa: BLE001
+        return _import_error(e)
+    _IMPORT_PLAN_CACHE.update(key=None, plan=None)
+    return jsonify({'status': 'ok', **res})
+
+
+@ontology_bp.route('/import/runs')
+@_require_db
+@rate_limit(60, 600)
+def import_runs():
+    """Corridas aplicadas/deshechas (las más nuevas primero) y cuántos vínculos esperan su contraparte."""
+    CI = _import_mod()
+    try:
+        with session_scope() as s:
+            runs = CI.list_runs(s, limit=_int_arg('limit', 20, 1, 200))
+            pending = len(CI.pending_links(s, limit=5000))
+    except _BadArg as e:
+        return _bad_arg(str(e))
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200], 'error_en': str(e)[:200]}), 503
+    return jsonify({'runs': runs, 'pending_links': pending, 'policy': CI.policy()})

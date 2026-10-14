@@ -31,11 +31,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **13 de 98** (línea 1448), después de [[nodes.nodes_multicapa.js]] y antes de [[nodes.listing_status.js]].
+Se carga en [[app.html]] en la posición **14 de 99** (línea 1515), después de [[nodes.nodes_multicapa.js]] y antes de [[nodes.listing_status.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 13)
+- [[app.html]] — lo carga con `<script>` (posición 14)
 - [[engine.app_main.js]] — usa `PREIPO_INTEL`
 - [[engine.fincard.js]] — usa `PREIPO_INTEL`
 - [[engine.portfolios.js]] — usa `PREIPO_INTEL`

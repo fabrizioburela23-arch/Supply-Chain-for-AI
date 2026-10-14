@@ -61,17 +61,17 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[nodes.nodes_expand5.js]] — usa `LINKS_EXPAND5`, `NODES_EXPAND5`
 - [[nodes.nodes_multicapa.js]] — usa `LINKS_MULTICAPA`, `NODES_MULTICAPA`
 - [[nodes.nodes_nuclear.js]] — usa `LINKS_NUCLEAR`, `NODES_NUCLEAR`
-- [[nodes.nodes_seed.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS`, `NODE_META`, `RAW_LINKS` y 2 más
+- [[nodes.nodes_seed.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS`, `NODE_META`, `RAW_LINKS` y 3 más
 - [[nodes.nodes_spacex.js]] — usa `NODES_SPACEX`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **24 de 98** (línea 2611), después de [[nodes.merge_graph.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **25 de 99** (línea 2678), después de [[nodes.merge_graph.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 24)
+- [[app.html]] — lo carga con `<script>` (posición 25)
 - [[app.html]] — usa `BASE`, `LANG`, `_injectGraphContext`, `_showUpdatePill`, `closeSistema`, `lanzarInvestigacion`, `loadCorporateEvents`, `openDiagnostics` y 5 más
 - [[engine.aispend.js]] — usa `BASE`, `LANG`
 - [[engine.app_canvas.js]] — usa `LANG`, `MKT`, `_selectedNode`, `computeNRS`
@@ -111,7 +111,7 @@ Se carga en [[app.html]] en la posición **24 de 98** (línea 2611), después de
 - [[engine.mcpconnect.js]] — usa `LANG`, `closeSistema`
 - [[engine.nav4.js]] — usa `activeTab`, `switchTab`
 - [[engine.orb.js]] — usa `LANG`
-- [[engine.oswindows.js]] — usa `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_canonId`, `loadLiveQuotes`, `quoteAge`, `quoteAgoText` y 3 más
+- [[engine.oswindows.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_canonId`, `loadLiveQuotes`, `quoteAge` y 4 más
 - [[engine.pfcommittee.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`
 - [[engine.pfreports.js]] — usa `BASE`, `LANG`
 - [[engine.pickers.js]] — usa `LANG`, `NODE_BY_ID`
@@ -173,7 +173,9 @@ Se carga en [[app.html]] en la posición **24 de 98** (línea 2611), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_app_split.py]]
+- [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_client_hardening.py]]
+- [[tests.test_countries.py]]
 - [[tests.test_genui_review_fixes.py]]
 - [[tests.test_market_keys_scope.py]]
 

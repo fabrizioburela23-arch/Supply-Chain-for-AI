@@ -1232,6 +1232,8 @@
     // (y se puede abrir en ventana); así no hay que saltar a otra pantalla
     var inlineChart = acts.filter(function (a) { return a.type === 'chart' && typeof a.arg === 'string'; })[0];
     if (inlineChart && gui) acts = acts.filter(function (a) { return a !== inlineChart; });
+    // con bloques pintados, las acciones que un bloque YA ofrece (Dossier, X-Ray, ventana…) no se repiten abajo
+    if (gui) acts = acts.filter(function (a) { return !_uiCovers(d.ui, a); });
     else if (inlineChart && opts.inlineChart !== false && W.BixbyCockpit && W.BixbyCockpit.canvasInto) {
       var host = W.document.createElement('div'); host.className = 'kc-chart';
       put(host);
@@ -1278,6 +1280,25 @@
 
   // acciones de los bloques (solo abrir/sugerir) → las del chat de siempre, para que la Cabina las maneje igual
   var GENUI_ACT = { open_xray: 'open_xray', open_map: 'navigate', open_dossier: 'dossier', open_research: 'open_research', open_committee: 'open_committee' };
+  // ¿algún bloque del sobre ya ofrece esta acción del chat? (misma clave kind|ventana|empresa que genui.js: una por respuesta)
+  var CHAT_ACT = { open_xray: 'open_xray', navigate: 'open_map', dossier: 'open_dossier', open_research: 'open_research', open_committee: 'open_committee', open_window: 'open_window', open_world: 'open_world' };
+  function _uiKeys(ui) {
+    var keys = {}, put = function (a) { if (!a || !a.kind) return; var e = (a.entity && a.entity.id) || (a.lat != null ? a.lat + ',' + a.lon : ''); keys[a.kind + '|' + (a.window || '') + '|' + e] = 1; };
+    ((ui && ui.blocks) || []).forEach(function (b) {
+      if (!b || typeof b !== 'object') return;
+      (Array.isArray(b.actions) ? b.actions : []).forEach(put);
+      if (b.type === 'actions' && b.data) (b.data.items || []).forEach(put);
+      if (b.type === 'company.card' && b.data && b.data.company && b.data.company.id) { put({ kind: 'open_dossier', entity: b.data.company }); put({ kind: 'open_xray', entity: b.data.company }); }
+    });
+    return keys;
+  }
+  function _uiCovers(ui, a) {
+    var kind = a && CHAT_ACT[a.type]; if (!kind) return false;
+    var win = a.type === 'open_window' ? (a.arg && a.arg.kind) || '' : '';
+    var e = a.type === 'open_window' ? (a.arg && a.arg.id) || '' : a.type === 'open_world' ? (a.arg && a.arg.lat != null ? a.arg.lat + ',' + a.arg.lon : '') : (typeof a.arg === 'string' ? a.arg : '');
+    if (!ui._kcKeys) ui._kcKeys = _uiKeys(ui);
+    return !!ui._kcKeys[kind + '|' + win + '|' + e];
+  }
   // acción de un bloque → la del chat de quien pinta la respuesta (opts.onAction: la Cabina pone la ventana al lado)
   function _actMap(opts) {
     return function (a) {

@@ -3,14 +3,14 @@ tipo: "datos"
 capa: "Datos del catálogo"
 ruta: "data/grafo_v0.json"
 lenguaje: "json"
-lineas: 45570
+lineas: 46123
 aliases: ["data/grafo_v0.json"]
 tags: ["capa/datos-catalogo", "tipo/datos"]
 ---
 
 # data/grafo_v0.json
 
-> Datos · capa [[Capa Datos del catálogo]] · 45.570 líneas · `data/grafo_v0.json`
+> Datos · capa [[Capa Datos del catálogo]] · 46.123 líneas · `data/grafo_v0.json`
 
 ## Para qué sirve
 
@@ -20,7 +20,7 @@ Generado desde nodes/\*.js vía nodes/merge_graph.js (misma implementación que 
 
 | Clave | Tipo | Tamaño / valor |
 |---|---|---|
-| `exported_at` | fecha | `2026-10-13T18:20:44.583Z` |
+| `exported_at` | fecha | `2026-10-14T07:30:43.800Z` |
 | `counts` | objeto | 8 |
 | `nodes` | lista | 937 |
 | `links` | lista | 2.510 |
@@ -28,9 +28,9 @@ Generado desde nodes/\*.js vía nodes/merge_graph.js (misma implementación que 
 | `legal_names` | objeto | 159 |
 | `voice_aliases` | objeto | 210 |
 | `resolve_stopwords` | lista | 14 |
-| `categories` | objeto | 108 |
+| `categories` | objeto | 163 |
 | `sectors9` | objeto | 13 |
-| `cat_to_sector` | objeto | 108 |
+| `cat_to_sector` | objeto | 163 |
 | `preipo_intel` | objeto | 14 |
 | `temporal_facts` | lista | 105 |
 | `ontology` | objeto | 4 |
@@ -43,6 +43,8 @@ _Nada interno._
 
 - [[ontology.reconcile.py]] — lo nombra por su ruta
 - [[scripts.audit_graph.py]] — lo nombra por su ruta
+- [[scripts.build_categories.py]] — lo nombra por su ruta
+- [[scripts.build_country_review.py]] — lo nombra por su ruta
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.build_instrument_review.py]] — lo nombra por su ruta
 - [[scripts.ingest_multicapa.py]] — lo nombra por su ruta
@@ -51,14 +53,18 @@ _Nada interno._
 ## Pruebas que lo cubren
 
 - [[tests.test_alias_voz_paridad.py]]
+- [[tests.test_catalog_fix_categories.py]]
+- [[tests.test_catalog_fix_symbols.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
+- [[tests.test_countries.py]]
 - [[tests.test_docs_facts.py]]
 - [[tests.test_entities.py]]
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_rivals.py]]
 - [[tests.test_genui_validate.py]]
 - [[tests.test_graph_audit.py]]
+- [[tests.test_import_normalize.py]]
 - [[tests.test_instruments.py]]
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_khipu_chat.py]]

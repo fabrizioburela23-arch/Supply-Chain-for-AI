@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "engine/temporal-graph.js"
 lenguaje: "javascript"
-lineas: 1463
+lineas: 1466
 aliases: ["engine/temporal-graph.js"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # engine/temporal-graph.js
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.463 líneas · `engine/temporal-graph.js`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.466 líneas · `engine/temporal-graph.js`
 
 ## Para qué sirve
 
@@ -24,6 +24,7 @@ Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada h
 
 - [[app.html]] — usa `_tradeErrText`, `_tradeFetch`, `safeUrl`
 - [[engine.app_main.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `SERVER_MODE`, `catLabel`, `computeNRS`, `fetchQuotes`, `getCatColorHex` y 2 más
+- [[engine.geo_coords.js]] — usa `GeoCoords`, `KhipuCountries`
 - [[engine.timeline3d.js]] — usa `KhipuTimeline3D`
 - [[engine.toast.js]] — usa `khipuActor`
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
@@ -33,11 +34,11 @@ Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada h
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **46 de 98** (línea 3037), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
+Se carga en [[app.html]] en la posición **47 de 99** (línea 3104), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 46)
+- [[app.html]] — lo carga con `<script>` (posición 47)
 - [[engine.app_main.js]] — usa `initTKGTab`
 - [[engine.cockpit.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.command_center.js]] — usa `__tkgOpenObj`
@@ -61,6 +62,8 @@ Se carga en [[app.html]] en la posición **46 de 98** (línea 3037), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_countries.py]]
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_neo4j_retirado.py]]
 - [[tests.test_review_infra_c.py]]
 

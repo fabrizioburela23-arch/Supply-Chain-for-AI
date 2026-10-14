@@ -48,11 +48,11 @@ De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`,
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **36 de 98** (línea 3027), después de [[engine.trade.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **37 de 99** (línea 3094), después de [[engine.trade.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 36)
+- [[app.html]] — lo carga con `<script>` (posición 37)
 - [[app.html]] — usa `BixbyVoice`
 - [[engine.cockpit.js]] — usa `BixbyVoice`
 - [[engine.command_center.js]] — usa `BixbyVoice`

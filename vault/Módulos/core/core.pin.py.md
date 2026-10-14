@@ -60,7 +60,7 @@ verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 23 pruebas (lista abajo)._
+_Además lo importan 24 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -77,6 +77,7 @@ _Además lo importan 23 pruebas (lista abajo)._
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
 - [[tests.test_governance_flow.py]]
+- [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ledger_anchor.py]]
 - [[tests.test_ledger_callsites_committee.py]]

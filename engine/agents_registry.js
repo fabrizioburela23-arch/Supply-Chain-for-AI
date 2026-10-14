@@ -70,6 +70,7 @@
   },
   "tool_agent": {
     "get_company": "analista", "search_companies": "analista", "get_research": "analista", "get_claim_evidence": "analista",
+    "get_fundamentals": "analista",
     "get_supply_chain": "cadena", "rank_companies": "cadena", "run_scenario": "cadena",
     "get_news": "radar", "get_world_events": "radar", "web_search": "radar", "scenario_exposure": "radar",
     "market_movers": "tecnico", "get_option_greeks": "tecnico", "get_risk_report": "tecnico", "get_history": "tecnico",

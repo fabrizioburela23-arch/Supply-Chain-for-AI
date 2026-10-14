@@ -6,14 +6,14 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-226 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+241 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
 | [[tests.__init__.py]] | 0 | 0 |
 | [[tests._app_source.py]] | 0 | 1 |
 | [[tests.conftest.py]] | 0 | 3 |
-| [[tests.gates_cases.py]] | 0 | 4 |
+| [[tests.gates_cases.py]] | 0 | 5 |
 | [[tests.js.localcharts_intents.js]] | 0 | 1 |
 | [[tests.js.localcharts_pfperf.js]] | 0 | 1 |
 | [[tests.test_agent_dudosos.py]] | 2 | 5 |
@@ -39,6 +39,8 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_bulk_import.py]] | 6 | 1 |
 | [[tests.test_canvas.py]] | 23 | 2 |
 | [[tests.test_canvas_charts.py]] | 4 | 1 |
+| [[tests.test_catalog_fix_categories.py]] | 10 | 12 |
+| [[tests.test_catalog_fix_symbols.py]] | 8 | 6 |
 | [[tests.test_chat_commands.py]] | 3 | 2 |
 | [[tests.test_chat_portfolio_agent.py]] | 3 | 6 |
 | [[tests.test_checkpoints.py]] | 4 | 7 |
@@ -57,6 +59,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_company_data.py]] | 28 | 3 |
 | [[tests.test_config_env_strip.py]] | 3 | 1 |
 | [[tests.test_context_engine.py]] | 17 | 11 |
+| [[tests.test_countries.py]] | 14 | 16 |
 | [[tests.test_csp_estricta.py]] | 4 | 4 |
 | [[tests.test_decide.py]] | 8 | 3 |
 | [[tests.test_docs_facts.py]] | 4 | 5 |
@@ -74,13 +77,15 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_genui_f3_client_static.py]] | 8 | 9 |
 | [[tests.test_genui_f3_server.py]] | 12 | 4 |
 | [[tests.test_genui_guardian.py]] | 4 | 2 |
+| [[tests.test_genui_k_browser.py]] | 4 | 1 |
+| [[tests.test_genui_k_server.py]] | 12 | 10 |
 | [[tests.test_genui_ledger.py]] | 7 | 14 |
 | [[tests.test_genui_render_node.py]] | 4 | 4 |
 | [[tests.test_genui_review_fixes.py]] | 10 | 5 |
 | [[tests.test_genui_rivals.py]] | 3 | 6 |
 | [[tests.test_genui_schema.py]] | 16 | 2 |
 | [[tests.test_genui_validate.py]] | 9 | 2 |
-| [[tests.test_governance.py]] | 20 | 17 |
+| [[tests.test_governance.py]] | 20 | 18 |
 | [[tests.test_governance_activation.py]] | 4 | 12 |
 | [[tests.test_governance_flow.py]] | 11 | 17 |
 | [[tests.test_governance_seed_parity.py]] | 7 | 12 |
@@ -92,6 +97,13 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_hot_review_fixes.py]] | 12 | 8 |
 | [[tests.test_hot_views_parity.py]] | 15 | 13 |
 | [[tests.test_impl_registry.py]] | 7 | 12 |
+| [[tests.test_import_adapter.py]] | 10 | 6 |
+| [[tests.test_import_fast_path.py]] | 4 | 4 |
+| [[tests.test_import_governance.py]] | 5 | 6 |
+| [[tests.test_import_normalize.py]] | 8 | 3 |
+| [[tests.test_import_roundtrip.py]] | 12 | 17 |
+| [[tests.test_import_schema.py]] | 8 | 2 |
+| [[tests.test_import_shapes.py]] | 7 | 4 |
 | [[tests.test_infra.py]] | 57 | 16 |
 | [[tests.test_ingest_news.py]] | 12 | 7 |
 | [[tests.test_instruments.py]] | 5 | 3 |
@@ -127,6 +139,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_live_labels_misc.py]] | 6 | 4 |
 | [[tests.test_localcharts_intents.py]] | 2 | 1 |
 | [[tests.test_lotej_review_fixes.py]] | 13 | 14 |
+| [[tests.test_lotek_fixer.py]] | 19 | 20 |
 | [[tests.test_map_search_reset.py]] | 2 | 0 |
 | [[tests.test_maptime_asof.py]] | 8 | 7 |
 | [[tests.test_market_keys_scope.py]] | 1 | 1 |
@@ -189,6 +202,8 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_repair_world.py]] | 7 | 2 |
 | [[tests.test_replay_determinism.py]] | 15 | 25 |
 | [[tests.test_research.py]] | 23 | 15 |
+| [[tests.test_resolve_ids.py]] | 13 | 7 |
+| [[tests.test_resolve_ids_impact_perf.py]] | 8 | 3 |
 | [[tests.test_retention_purge.py]] | 6 | 8 |
 | [[tests.test_review_batch_e.py]] | 4 | 4 |
 | [[tests.test_review_batch_g.py]] | 8 | 15 |

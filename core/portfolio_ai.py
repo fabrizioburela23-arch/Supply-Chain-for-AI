@@ -100,15 +100,6 @@ THEMES = OrderedDict([
 ])
 _BAD_LISTING = {'acquired', 'defunct', 'merged', 'subsidiary', 'delisted', 'bankrupt', 'private'}
 
-# Países escritos de varias formas → una clave (para agrupar la cartera por país; el NRS usa core/world).
-_COUNTRY_NORM = {'estados unidos': 'EEUU', 'eeuu': 'EEUU', 'usa': 'EEUU', 'us': 'EEUU',
-                 'japon': 'Japon', 'japón': 'Japon', 'japan': 'Japon',
-                 'taiwan': 'Taiwan', 'taiwán': 'Taiwan', 'corea': 'Corea', 'korea': 'Corea',
-                 'reino unido': 'ReinoUnido', 'reinounido': 'ReinoUnido', 'uk': 'ReinoUnido',
-                 'paises bajos': 'PaisesBajos', 'paisesbajos': 'PaisesBajos', 'china': 'China',
-                 'canada': 'Canada', 'canadá': 'Canada', 'alemania': 'Alemania', 'germany': 'Alemania',
-                 'francia': 'Francia', 'france': 'Francia', 'russia': 'Russia', 'rusia': 'Russia'}
-
 _CACHE = OrderedDict()     # clave → (ts, valor)
 _CACHE_LOCK = threading.Lock()
 _CACHE_MAX = 96
@@ -146,8 +137,12 @@ def _lang(v):
 
 
 def _country(c):
+    """País escrito de cualquier forma → clave del catálogo (core/world.country_key: 'Taiwán' → 'Taiwan',
+    'Estados Unidos (HQ Denver, CO)' → 'EEUU'); sin clave, el texto tal cual. Agrupa la cartera por país (el NRS usa
+    su propia tabla en core/world). Las claves 'Taiwan'/'China' del aviso geopolítico salen de aquí."""
+    from core.world import country_key
     c = str(c or '').strip()
-    return _COUNTRY_NORM.get(c.lower(), c or '?')
+    return country_key(c) or c or '?'
 
 
 def _norm(txt):
@@ -358,14 +353,14 @@ def _resolve_exclusions(exclude, lang):
     for sec in _graph()['sectors9']:
         for name in (sec, sector_label(sec, 'es'), sector_label(sec, 'en')):
             theme_by_norm.setdefault(_norm(name), [sec])
-    countries = {_norm(c): c for c in set(_COUNTRY_NORM.values())}
-    countries.update({_norm(k): v for k, v in _COUNTRY_NORM.items()})
+    from core.world import country_key          # cualquier grafía ('Taiwán', 'United States', 'Japón') → la clave de _country
     for x in exclude:
         nx = _norm(x)
+        ck = country_key(x)
         if nx in theme_by_norm:
             secs.update(theme_by_norm[nx])
-        elif nx in countries:
-            ctry.add(countries[nx])
+        elif ck:
+            ctry.add(ck)
         else:
             r = resolve(x, umbral=UMBRAL_ESCRITURA) or resolve(x)
             if r:

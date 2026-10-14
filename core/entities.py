@@ -145,6 +145,12 @@ def _build_index(snapshot_path=None, view=None):
         ids = external_ids(n)
         if ids.get('ticker'):
             por_ticker.setdefault(ids['ticker'], nid)
+        # lote K: los listados SECUNDARIOS declarados (TOELY = ADR OTC de TEL) también resuelven por ticker, como
+        # claves blandas (setdefault: el símbolo principal de otra empresa siempre gana)
+        for l in (n.get('listings') or []) if isinstance(n.get('listings'), (list, tuple)) else []:
+            ys = str((l.get('yahoo_symbol') if isinstance(l, dict) else '') or '').strip().upper()
+            if ys:
+                por_ticker.setdefault(ys, nid)
         lbl = n.get('label') or ''
         if lbl:
             por_label.setdefault(norm(lbl), nid)
@@ -185,15 +191,284 @@ def _build_index(snapshot_path=None, view=None):
             por_voz.setdefault(norm(alias), can)
     stop = frozenset(snap.get('resolve_stopwords') or ())
 
+    # E1.6: nombres alternativos de la FICHA importada (identity.other_names → props.other_names [{name, kind,
+    # lang}] + props.aliases [str]): siglas, marcas, nombres anteriores y escritura local ("宁德时代" → CATL).
+    # Van al final (setdefault): si chocan con un alias del merge o un nombre legal, gana lo curado. El catálogo
+    # de hoy no trae ninguno, así que resolve() no cambia para lo que ya existía.
+    for nid, n in nodos.items():
+        for nombre in _other_names(n):
+            k = norm(nombre)
+            if len(k) >= 2:
+                por_alias.setdefault(k, nid)
+                corto = strip_suffix(nombre)
+                if corto:
+                    por_alias.setdefault(corto, nid)
+
     alias_inv = {}      # canónico → ids viejos que apuntan a él (entity_ids_for)
     for a in alias_tbl:
         alias_inv.setdefault(canonico(a), []).append(a)
 
-    return {'nodos': nodos, 'por_id': por_id, 'por_ticker': por_ticker,
-            'por_label': por_label, 'por_label_corto': por_label_corto,
-            'por_alias': por_alias, 'alias_tbl': alias_tbl, 'alias_inv': alias_inv,
-            'por_voz': por_voz, 'stopwords': stop,
-            'preipo_intel': snap.get('preipo_intel') or {}, 'generation': generation}
+    out = {'nodos': nodos, 'por_id': por_id, 'por_ticker': por_ticker,
+           'por_label': por_label, 'por_label_corto': por_label_corto,
+           'por_alias': por_alias, 'alias_tbl': alias_tbl, 'alias_inv': alias_inv,
+           'por_voz': por_voz, 'stopwords': stop,
+           'preipo_intel': snap.get('preipo_intel') or {}, 'generation': generation}
+    out['identificadores'] = _indice_identificadores(nodos)
+    return out
+
+
+# ── E1.6 (docs/expansion/EXPANSION_5K.md): resolver por IDENTIFICADORES ───────────────────────────────────────────
+# Lo que la ficha khipus.company/1 escribe en las propiedades del objeto (contrato 3 del lote K): `ids` {lei, isin,
+# cik, qid, figi, domain, yahoo_symbol, ticker, mic}, `listings` [{symbol, mic, yahoo_symbol, isin, figi}], y lo que
+# el catálogo ya trae (`mkt` = símbolo de Yahoo con su sufijo de bolsa; `ticker` = "8035 · TSE", texto). Un ticker
+# SIN bolsa nunca identifica nada ("3750" es HK, TSE o TWSE); con su MIC se convierte al símbolo de Yahoo esperado
+# (core.import_normalize.yahoo_symbol_for) y se busca ahí. Un identificador que dos empresas reclaman (el mismo ISIN
+# en dos ids) no elige a ninguna: se devuelve como conflicto.
+_ID_KINDS = ('lei', 'isin', 'cik', 'qid', 'figi', 'yahoo', 'ticker_mic', 'domain')
+_ID_SCORE = {'lei': 100, 'isin': 99, 'cik': 99, 'qid': 99, 'figi': 98, 'yahoo_symbol': 97, 'ticker_mic': 96}
+_YAHOO_RX = re.compile(r'^[A-Z0-9^][A-Z0-9.=\-^]{0,19}$')
+
+
+def _lista(v):
+    if v is None or v == '':
+        return []
+    if isinstance(v, (list, tuple, set)):
+        return [x for x in v if x not in (None, '')]
+    return [v]
+
+
+def _cik(v):
+    d = re.sub(r'\D', '', str(v or ''))
+    return d.zfill(10) if d and len(d) <= 10 else None
+
+
+def _dominio(v):
+    d = str(v or '').strip().lower()
+    d = re.sub(r'^[a-z]+://', '', d)
+    d = d.split('/', 1)[0]
+    if d.startswith('www.'):
+        d = d[4:]
+    return d or None
+
+
+def _other_names(n):
+    """Nombres alternativos declarados en la ficha: props.other_names (dicts o cadenas) + props.aliases."""
+    out = []
+    for o in _lista(n.get('other_names')):
+        nombre = o.get('name') if isinstance(o, dict) else o
+        if isinstance(nombre, str) and nombre.strip():
+            out.append(nombre.strip())
+    for a in _lista(n.get('aliases')):
+        if isinstance(a, str) and a.strip():
+            out.append(a.strip())
+    return out
+
+
+def _simbolos_del_catalogo(n):
+    """Símbolos "de casa" que el TEXTO del catálogo declara ("005930 · KRX" → 005930.KS; "ENR · Xetra" → ENR.DE),
+    como claves BLANDAS del índice por símbolo de Yahoo (solo si nadie las declara de verdad). Sin bolsa reconocible
+    → nada: un código suelto no identifica."""
+    try:
+        from core.instruments import _EURONEXT, _VENUE_SUFFIX
+    except Exception:  # noqa: BLE001
+        return []
+    out = []
+    txt = str(n.get('ticker') or '')
+    for part in [p.strip() for p in re.split(r'\s/\s|/|;', txt) if p.strip()]:
+        m = re.match(r'^([0-9A-Za-z][0-9A-Za-z.\-]*)\s*·\s*(.+)$', part)
+        if not m:
+            continue
+        code, venue = m.group(1).upper(), m.group(2)
+        if '.' in code:
+            cand = code                                    # ya trae su sufijo ("0981.HK · HKEX")
+        elif 'OTC' in venue.upper() or venue.strip().upper().startswith(('NYSE', 'NASDAQ')):
+            cand = code.replace('.', '-')
+        elif 'Euronext' in venue and code in _EURONEXT:
+            cand = f'{code}.{_EURONEXT[code]}'
+        else:
+            cand = None
+            for key, suf in _VENUE_SUFFIX:
+                if key in venue:
+                    cand = f'{code.zfill(4) if suf == "HK" and code.isdigit() else code}.{suf}'
+                    break
+        if cand and _YAHOO_RX.match(cand):
+            out.append(cand)
+    return out
+
+
+def _indice_identificadores(nodos):
+    """{tipo: {clave: id}} + 'conflictos' {(tipo, clave): [ids]} de la generación. Primero lo DECLARADO (ids,
+    listings, mkt), después las claves blandas derivadas del texto del catálogo (nunca pisan ni crean conflictos)."""
+    try:
+        from core.import_normalize import yahoo_symbol_for
+    except Exception:  # noqa: BLE001
+        yahoo_symbol_for = None
+    tablas = {k: {} for k in _ID_KINDS}
+    conflictos = {}
+
+    def put(kind, key, nid):
+        if not key:
+            return
+        tb = tablas[kind]
+        cur = tb.get(key)
+        if cur is None:
+            tb[key] = nid
+        elif cur != nid:
+            lst = conflictos.setdefault((kind, key), [cur])
+            if nid not in lst:
+                lst.append(nid)
+
+    for nid, n in nodos.items():
+        ids = n.get('ids') if isinstance(n.get('ids'), dict) else {}
+        if ids.get('lei'):
+            put('lei', str(ids['lei']).strip().upper(), nid)
+        for x in _lista(ids.get('isin')):
+            put('isin', str(x).strip().upper(), nid)
+        if ids.get('cik'):
+            put('cik', _cik(ids['cik']), nid)
+        qid = ids.get('qid') or ids.get('wikidata_qid')
+        if qid:
+            put('qid', str(qid).strip().upper(), nid)
+        for x in _lista(ids.get('figi')):
+            put('figi', str(x).strip().upper(), nid)
+        if ids.get('domain'):
+            put('domain', _dominio(ids['domain']), nid)
+        if ids.get('yahoo_symbol'):
+            put('yahoo', str(ids['yahoo_symbol']).strip().upper(), nid)
+        mic = ids.get('mic') or ids.get('exchange_mic')
+        if ids.get('ticker') and mic:
+            put('ticker_mic', (str(ids['ticker']).strip().upper(), str(mic).strip().upper()), nid)
+        mkt = str(n.get('mkt') or '').strip().upper()
+        if mkt:
+            put('yahoo', mkt, nid)                 # el símbolo de Yahoo del catálogo (con su sufijo de bolsa)
+        for l in _lista(n.get('listings')):
+            if not isinstance(l, dict):
+                continue
+            ys = str(l.get('yahoo_symbol') or '').strip().upper()
+            if ys:
+                put('yahoo', ys, nid)
+            sym, lmic = str(l.get('symbol') or l.get('ticker') or '').strip().upper(), \
+                str(l.get('mic') or l.get('exchange_mic') or '').strip().upper()
+            if sym and lmic:
+                put('ticker_mic', (sym, lmic), nid)
+                if yahoo_symbol_for is not None:
+                    put('yahoo', yahoo_symbol_for(sym, lmic), nid)
+            if l.get('isin'):
+                put('isin', str(l['isin']).strip().upper(), nid)
+            if l.get('figi'):
+                put('figi', str(l['figi']).strip().upper(), nid)
+    # claves blandas del texto del catálogo: solo donde no hay nada declarado, sin conflictos
+    yahoo = tablas['yahoo']
+    for nid, n in nodos.items():
+        for cand in _simbolos_del_catalogo(n):
+            yahoo.setdefault(cand, nid)
+    # un identificador reclamado por dos empresas no identifica a ninguna
+    for (kind, key) in conflictos:
+        tablas[kind].pop(key, None)
+    tablas['conflictos'] = conflictos
+    return tablas
+
+
+def _umbrales_nombre():
+    """(escritura, posible duplicado) de policy.import si está en el release; si no, los de este módulo."""
+    try:
+        from core import governance
+        p = governance.section('policy.import') or {}
+        return int(p.get('name_write_threshold', UMBRAL_ESCRITURA)), int(p.get('name_possible_threshold', UMBRAL_BUSQUEDA))
+    except Exception:  # noqa: BLE001
+        return UMBRAL_ESCRITURA, UMBRAL_BUSQUEDA
+
+
+def resolve_ids(ids, name=None):
+    """Contrato E1.6 (lote K): identificadores → {'id', 'method', 'score', 'conflicts': [...]} o None.
+
+    `ids` puede traer lei, isin (uno o lista), cik, qid (wikidata_qid), figi, yahoo_symbol, ticker + mic
+    (exchange_mic), domain. Orden de fuerza: lei > isin/cik/qid > figi > yahoo_symbol / ticker@MIC > dominio (solo
+    CANDIDATO, nunca coincidencia) > nombre ≥ umbral de escritura (60-84 = 'possible_duplicate' en conflicts, NO
+    coincidencia). Un ticker sin MIC NUNCA resuelve. Identificadores que apuntan a empresas distintas se devuelven
+    como `id_conflict`; uno que dos empresas reclaman, como `ambiguous_id` (y no elige). Sin coincidencia pero con
+    conflictos → {'id': None, 'method': None, 'score': 0, 'conflicts': [...]}; sin nada → None.
+    Lee el índice de la generación vigente (Postgres: props ids/listings/other_names; catálogo: ticker/mkt)."""
+    ids = dict(ids or {})
+    idx = get_index()
+    tb = idx.get('identificadores') or _indice_identificadores(idx['nodos'])
+    nodos = idx['nodos']
+    conflicts, hits = [], []
+
+    def look(kind, key, method, score):
+        if not key:
+            return
+        conf = tb['conflictos'].get((kind, key))
+        if conf:
+            conflicts.append({'kind': 'ambiguous_id', 'method': method, 'ids': list(conf), 'key': str(key)})
+            return
+        oid = tb[kind].get(key)
+        if oid and oid in nodos:
+            hits.append((method, oid, score))
+
+    if ids.get('lei'):
+        look('lei', str(ids['lei']).strip().upper(), 'lei', _ID_SCORE['lei'])
+    for x in _lista(ids.get('isin')):
+        look('isin', str(x).strip().upper(), 'isin', _ID_SCORE['isin'])
+    if ids.get('cik'):
+        look('cik', _cik(ids['cik']), 'cik', _ID_SCORE['cik'])
+    qid = ids.get('qid') or ids.get('wikidata_qid')
+    if qid:
+        look('qid', str(qid).strip().upper(), 'qid', _ID_SCORE['qid'])
+    for x in _lista(ids.get('figi')):
+        look('figi', str(x).strip().upper(), 'figi', _ID_SCORE['figi'])
+    if ids.get('yahoo_symbol'):
+        look('yahoo', str(ids['yahoo_symbol']).strip().upper(), 'yahoo_symbol', _ID_SCORE['yahoo_symbol'])
+    mic = ids.get('mic') or ids.get('exchange_mic')
+    if ids.get('ticker') and mic:
+        t, m = str(ids['ticker']).strip().upper(), str(mic).strip().upper()
+        formas = [t]
+        if m == 'XHKG' and t.isdigit() and len(t) < 4:
+            formas.append(t.zfill(4))                   # HKEX: "981" y "0981" son el mismo código
+        for f in formas:
+            look('ticker_mic', (f, m), 'ticker_mic', _ID_SCORE['ticker_mic'])
+            try:
+                from core.import_normalize import yahoo_symbol_for
+                look('yahoo', yahoo_symbol_for(f, m), 'ticker_mic', _ID_SCORE['ticker_mic'])
+            except Exception:  # noqa: BLE001
+                pass
+    # un ticker SIN bolsa se ignora a propósito ("3750" → None): el mismo código vive en HK, Tokio y Taipéi
+
+    best = None
+    for method, oid, score in hits:
+        if best is None:
+            best = {'id': oid, 'method': method, 'score': score}
+        elif oid != best['id'] and not any(c.get('kind') == 'id_conflict' and c.get('id') == oid
+                                           and c.get('method') == method for c in conflicts):
+            conflicts.append({'kind': 'id_conflict', 'method': method, 'id': oid, 'vs': best['id']})
+    if ids.get('domain'):
+        cand = tb['domain'].get(_dominio(ids['domain']))
+        if cand and best is None:
+            conflicts.append({'kind': 'domain_candidate', 'id': cand})
+        elif cand and cand != best['id']:
+            conflicts.append({'kind': 'domain_conflict', 'id': cand, 'vs': best['id']})
+    if name and str(name).strip():
+        escr, posible = _umbrales_nombre()
+        r = resolve(str(name)[:120], umbral=min(escr, posible))
+        if r is not None:
+            if best is None and r['score'] >= escr:
+                best = {'id': r['id'], 'method': 'name:' + r['method'], 'score': r['score']}
+            elif best is not None and r['id'] != best['id']:
+                conflicts.append({'kind': 'name_conflict', 'id': r['id'], 'score': r['score'], 'vs': best['id']})
+            elif best is None:
+                conflicts.append({'kind': 'possible_duplicate', 'id': r['id'], 'score': r['score'],
+                                  'method': r['method']})
+    if best is None:
+        return {'id': None, 'method': None, 'score': 0, 'conflicts': conflicts} if conflicts else None
+    best['conflicts'] = conflicts
+    return best
+
+
+def identifier_conflicts():
+    """Identificadores que dos empresas reclaman en la generación vigente: [{'kind','key','ids'}] (🩺 / revisión)."""
+    tb = (get_index().get('identificadores') or {}).get('conflictos') or {}
+    return [{'kind': k, 'key': key if isinstance(key, str) else '@'.join(key), 'ids': list(v)}
+            for (k, key), v in sorted(tb.items(), key=lambda kv: (kv[0][0], str(kv[0][1])))]
 
 
 def get_index(force=False, snapshot_path=None):

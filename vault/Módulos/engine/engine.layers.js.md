@@ -24,11 +24,11 @@ _No define globales (código encapsulado)._
 
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **69 de 98** (línea 3126), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
+Se carga en [[app.html]] en la posición **70 de 99** (línea 3193), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 69)
+- [[app.html]] — lo carga con `<script>` (posición 70)
 
 ## Pruebas que lo cubren
 

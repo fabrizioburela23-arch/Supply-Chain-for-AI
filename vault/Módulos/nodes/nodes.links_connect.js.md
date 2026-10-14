@@ -31,11 +31,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **18 de 98** (línea 1453), después de [[nodes.links_expand.js]] y antes de [[nodes.merge_graph.js]].
+Se carga en [[app.html]] en la posición **19 de 99** (línea 1520), después de [[nodes.links_expand.js]] y antes de [[nodes.merge_graph.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 18)
+- [[app.html]] — lo carga con `<script>` (posición 19)
 - [[engine.app_main.js]] — usa `LINKS_CONNECT`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta

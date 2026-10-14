@@ -24,11 +24,11 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **28 de 98** (línea 3019), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
+Se carga en [[app.html]] en la posición **29 de 99** (línea 3086), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 28)
+- [[app.html]] — lo carga con `<script>` (posición 29)
 
 **Rutas que nombra y no existen en el servidor** (¿restos viejos?): `/api/hot/card/`, `/api/hot/chokepoints`, `/api/hot/factors`, `/api/hot/impact/`, `/api/hot/nrs`, `/api/hot/scenario`, `/api/hot/scenario_pnl`, `/api/hot/status`
 

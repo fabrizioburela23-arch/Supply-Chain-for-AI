@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/prices_store.py"
 lenguaje: "python"
-lineas: 861
+lineas: 867
 aliases: ["core/prices_store.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/prices_store.py
 
-> Módulo · capa [[Capa Infraestructura]] · 861 líneas · `core/prices_store.py`
+> Módulo · capa [[Capa Infraestructura]] · 867 líneas · `core/prices_store.py`
 
 ## Para qué sirve
 
@@ -31,12 +31,12 @@ LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, 
 - `volume_history(symbol, rng=…, today=…)` — ({'YYYY-MM-DD': volumen}, meta{source, as_of, n}) desde prices_eod si cubre el rango; None si no hay base, no cubre o el proveedor no trajo … _(línea 365)_
 - `fx_history(ccy, rng=…, today=…)` — ({'YYYY-MM-DD': tasa ccy→USD}, meta) desde fx_daily si cubre el rango; None si no. _(línea 388)_
 - `status()` — Resumen para el 🩺 y /api/prices/status (sin red). _(línea 412)_
-- `snapshot_daily(session, run_date=…, broker=…)` — metrics_eod + positions_eod del día (una fila por clave; repetir es un no-op). → {metrics, positions}. _(línea 620)_
-- `run_daily(now=…, getter=…, sleep=…, broker=…)` — Ingesta diaria (1 mes por instrumento, para detectar ajustes) + fotos del día. Bloqueante. _(línea 709)_
-- `daily_tick(now=…, threaded=…)` — Tarea del reloj: si toca, lanza la corrida del día en su propio hilo (no bloquea al reloj). _(línea 734)_
-- `backfill_state()` _(línea 772)_
-- `start_backfill(principal, years=…, symbols=…, getter=…, sleep=…, threaded=…, interval=…)` — Arranca el relleno (decisión 'data.backfill' por el operador). RuntimeError si ya corre. _(línea 782)_
-- `stop_backfill(principal)` — Pide detener el relleno (se puede reanudar: lo ya bajado se salta). Deja su decisión. _(línea 843)_
+- `snapshot_daily(session, run_date=…, broker=…)` — metrics_eod + positions_eod del día (una fila por clave; repetir es un no-op). → {metrics, positions}. _(línea 626)_
+- `run_daily(now=…, getter=…, sleep=…, broker=…)` — Ingesta diaria (1 mes por instrumento, para detectar ajustes) + fotos del día. Bloqueante. _(línea 715)_
+- `daily_tick(now=…, threaded=…)` — Tarea del reloj: si toca, lanza la corrida del día en su propio hilo (no bloquea al reloj). _(línea 740)_
+- `backfill_state()` _(línea 778)_
+- `start_backfill(principal, years=…, symbols=…, getter=…, sleep=…, threaded=…, interval=…)` — Arranca el relleno (decisión 'data.backfill' por el operador). RuntimeError si ya corre. _(línea 788)_
+- `stop_backfill(principal)` — Pide detener el relleno (se puede reanudar: lo ya bajado se salta). Deja su decisión. _(línea 849)_
 
 **Internas** (empiezan con `_`): `_env_float`, `_reads_paused`, `_read_failed`, `_now`, `_d`, `_f`, `_zone`, `_Pacer`, `_default_getter`, `_effective`, `_load_adjs`, `_covers`, `_targets`, `_coverage`, `_one`, `_run`, `_last_close`, `_fx_on`, `_positions_rows`, `_daily_due`, `_record_finish`, `_reset_for_tests`
 
@@ -63,7 +63,7 @@ LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, 
 - [[server.py]] — lo importa
 - herramienta MCP `find_anomalies` → [[API herramientas MCP]]
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -72,6 +72,7 @@ _Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_prices_eod.py]]
 - [[tests.test_risk_on_history.py]]
 - [[tests.test_risk_robust.py]]

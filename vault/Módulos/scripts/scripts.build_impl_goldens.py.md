@@ -30,9 +30,12 @@ salidas DORADAS de las implementaciones retenidas (core/impls.py; INFRA §5.2, p
 
 _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 
+_Además lo importan 1 pruebas (lista abajo)._
+
 ## Pruebas que lo cubren
 
 - [[tests.test_impl_registry.py]]
+- [[tests.test_import_governance.py]]
 
 ## Mencionado en sesiones de trabajo
 

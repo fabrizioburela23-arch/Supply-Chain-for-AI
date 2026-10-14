@@ -4,7 +4,9 @@ generación (GraphView `graph` + GraphCore + Impact) — nunca mezcla versiones.
 Por empresa: id, etiqueta, instrumento(s) (el ticker del catálogo es el principal), estado en bolsa, sector, país,
 rol/foso/qué provee ES/EN; conteos de FLUJO en PARES DISTINTOS (proveedores, clientes; socios/inversores aparte
 como "relacionadas"); top-5 proveedores y clientes {id, w, tipo, clase, conf, verificado}; impacto del colapso
-desde V2 (alcance ≥1 % y ≥10 %, Σ impacto, rango sistémico por Σ — PROP-06); valuación privada verificada.
+desde V2 (alcance ≥1 % y ≥10 %, Σ impacto, rango sistémico por Σ — PROP-06); valuación privada verificada;
+posición de mercado e instalaciones investigadas (E2.9: propiedades `market_position[]` / `facilities[]` del objeto,
+cada entrada con su fuente y as_of; `market_position_of` / `facilities_of` las limpian al contrato 3).
 
 A pedido (y precalentado en segundo plano tras publicar, core/hotviews/derived.prewarm):
   · NRS = LA fórmula (core.world.nrs_terms → client_nrs) con sus 5 términos, para TODAS las empresas a la vez
@@ -46,6 +48,74 @@ def _pv():
         return _private_valuations() or {}
     except Exception:  # noqa: BLE001
         return {}
+
+
+# ── posición de mercado e instalaciones (E2.9): propiedades del objeto escritas por el importador (contrato 3) ──
+MP_KEYS = ('market', 'rank', 'share_pct', 'metric', 'region', 'period', 'measured_by', 'source_url', 'as_of',
+           'confidence')
+FAC_KEYS = ('facility_id', 'name', 'kind', 'country', 'city', 'status', 'start', 'source_url', 'as_of')
+LIST_CAP = 20
+
+
+def _clean_num(v):
+    if isinstance(v, bool) or v is None:
+        return None
+    if isinstance(v, (int, float)):
+        return v if v == v else None
+    try:
+        return float(str(v).replace(',', '.'))
+    except (TypeError, ValueError):
+        return None
+
+
+def _clean_str(v, n=200):
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s[:n] if s else None
+
+
+def _rows(raw):
+    """Las entradas de una lista de objetos; en la vista los nodos vienen CONGELADOS (tuplas y FrozenDict)."""
+    from collections.abc import Mapping
+    return [e for e in (raw if isinstance(raw, (list, tuple)) else []) if isinstance(e, Mapping)]
+
+
+def market_position_of(raw):
+    """[{market, rank, share_pct, metric, region, period, measured_by, source_url, as_of, confidence}] limpios (solo
+    las claves del contrato; números como números; ≤ 20). Lo que no sea una lista de objetos → []."""
+    out = []
+    for e in _rows(raw):
+        if not _clean_str(e.get('market')):
+            continue
+        row = {'market': _clean_str(e.get('market'), 120), 'rank': _clean_num(e.get('rank')),
+               'share_pct': _clean_num(e.get('share_pct')), 'metric': _clean_str(e.get('metric'), 60),
+               'region': _clean_str(e.get('region'), 40), 'period': _clean_str(e.get('period'), 40),
+               'measured_by': _clean_str(e.get('measured_by'), 120), 'source_url': _clean_str(e.get('source_url'), 500),
+               'as_of': _clean_str(e.get('as_of'), 40), 'confidence': _clean_num(e.get('confidence'))}
+        if row['rank'] is not None:
+            row['rank'] = int(row['rank']) if float(row['rank']).is_integer() else row['rank']
+        out.append(row)
+        if len(out) >= LIST_CAP:
+            break
+    return out
+
+
+def facilities_of(raw):
+    """[{facility_id, name, kind, country, city, capacity:{value, unit}, status, start, source_url, as_of}] ≤ 20."""
+    from collections.abc import Mapping
+    out = []
+    for e in _rows(raw):
+        if not (_clean_str(e.get('name')) or _clean_str(e.get('facility_id'))):
+            continue
+        row = {k: _clean_str(e.get(k), 500 if k == 'source_url' else 120) for k in FAC_KEYS}
+        cap = e.get('capacity') if isinstance(e.get('capacity'), Mapping) else None
+        row['capacity'] = ({'value': _clean_num(cap.get('value')), 'unit': _clean_str(cap.get('unit'), 40)}
+                           if cap and _clean_num(cap.get('value')) is not None else None)
+        out.append(row)
+        if len(out) >= LIST_CAP:
+            break
+    return out
 
 
 class CardView:
@@ -257,6 +327,9 @@ def build(g):
             'private_valuation': None if not e else {
                 'value_usd_b': e.get('valuation_usd_b'), 'as_of': e.get('as_of'), 'url': e.get('source_url'),
                 'round': e.get('round'), 'kind': 'last closed round (verified), not a live price'},
+            # E2.9: lo que investigó la ficha (propiedades del objeto, contrato 3); cada entrada con su fuente y as_of
+            'market_position': market_position_of(n.get('market_position')),
+            'facilities': facilities_of(n.get('facilities')),
         }
     v = CardView()
     v.g = g

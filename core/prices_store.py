@@ -444,9 +444,15 @@ def _targets(session, symbols=None):
 
     from core import instruments
     instruments.seed(session)
-    rows = session.execute(text('SELECT id, kind, currency, note FROM instruments ORDER BY id')).all()
+    rows = session.execute(text('SELECT id, kind, currency, note, is_primary FROM instruments ORDER BY id')).all()
     want = {str(x).upper() for x in symbols} if symbols else None
-    eq = [r[0] for r in rows if r[1] != 'fx' and (want is None or r[0] in want)]
+
+    def _baja(r):
+        # secundario que el agregador marca «dado de baja» (listings[].note, lote 2026-10-14): la corrida diaria lo
+        # salta (evita descargas fallidas de TOELY/AJINY/SMNEY); a pedido explícito (symbols) sí se intenta.
+        return want is None and len(r) > 4 and r[4] is False and \
+            'dado de baja' in str(((r[3] or {}).get('note') if isinstance(r[3], dict) else '') or '').lower()
+    eq = [r[0] for r in rows if r[1] != 'fx' and (want is None or r[0] in want) and not _baja(r)]
     fx = [((r[3] or {}).get('ccy') or r[0][:3]) for r in rows if r[1] == 'fx' and (want is None or r[0] in want)]
     first = [s for s in ('SPY', '^IRX') if s in eq]
     return first + [s for s in eq if s not in first], fx

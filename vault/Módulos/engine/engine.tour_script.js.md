@@ -24,11 +24,11 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **30 de 98** (línea 3021), después de [[engine.agents_registry.js]] y antes de [[engine.mascot.js]].
+Se carga en [[app.html]] en la posición **31 de 99** (línea 3088), después de [[engine.agents_registry.js]] y antes de [[engine.mascot.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 30)
+- [[app.html]] — lo carga con `<script>` (posición 31)
 
 ## Pruebas que lo cubren
 

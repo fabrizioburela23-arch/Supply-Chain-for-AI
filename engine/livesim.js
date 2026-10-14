@@ -315,7 +315,10 @@
     var btn = document.createElement('div'); btn.id = 'ls-btn'; btn.className = 'kos-themed'; btn.innerHTML = '<span>◉</span> ' + L('En vivo', 'Live');
     btn.title = L('Simulación en vivo — arma tu escenario y ve reaccionar la red', 'Live simulation — build your scenario and watch the network react'); btn.onclick = toggle;
     var sectors = window.SECTORS9 || {};
-    var countries = {}; (window.NODES || []).forEach(function (n) { if (n.country) countries[n.country] = (countries[n.country] || 0) + 1; });
+    // países agrupados por clave del catálogo (GeoCoords.countryGroup: 'Taiwán' + 'Taiwan' = uno) con nombre ES/EN
+    var cg = function (c) { var G = window.GeoCoords; return (G && G.countryGroup) ? G.countryGroup(c) : c; };
+    var cName = function (k) { var KC = window.KhipuCountries; return (KC && KC.label) ? KC.label(k, isEn() ? 'en' : 'es') : k; };
+    var countries = {}; (window.NODES || []).forEach(function (n) { if (n.country) { var k = cg(n.country); countries[k] = (countries[k] || 0) + 1; } });
     var panel = document.createElement('div'); panel.id = 'ls-panel'; panel.className = 'kos-themed';   // tokens --os-* (claro/oscuro)
     panel.innerHTML = ''
       + '<h4><span data-l="title">' + S('title') + '</span> <span class="lsx" onclick="window._lsToggle()">✕</span></h4>'
@@ -325,7 +328,7 @@
       + '<div class="ls-chips" id="ls-presets">' + PRESETS.map(function (p) { return '<span class="ls-chip" data-p="' + p.id + '">' + L(p.es, p.en) + '</span>'; }).join('') + '</div>'
       + '<div class="ls-chips" style="gap:6px">'
       +   '<select class="ls-sel" id="ls-sector" style="flex:1"><option value="" data-l="sector">' + S('sector') + '</option>' + Object.keys(sectors).map(function (s) { return '<option value="' + s + '">' + (window.sectorName ? window.sectorName(s) : sectors[s].label) + '</option>'; }).join('') + '</select>'
-      +   '<select class="ls-sel" id="ls-country" style="flex:1"><option value="" data-l="country">' + S('country') + '</option>' + Object.keys(countries).sort().map(function (c) { return '<option value="' + c + '">' + c + ' (' + countries[c] + ')</option>'; }).join('') + '</select>'
+      +   '<select class="ls-sel" id="ls-country" style="flex:1"><option value="" data-l="country">' + S('country') + '</option>' + Object.keys(countries).sort(function (a, b) { return cName(a).localeCompare(cName(b)); }).map(function (c) { return '<option value="' + esc(c) + '">' + esc(cName(c)) + ' (' + countries[c] + ')</option>'; }).join('') + '</select>'
       + '</div>'
       + '<div class="ls-picks" id="ls-picks"></div>'
       + '<button class="ls-addbtn" id="ls-addbtn" data-l="add">' + S('add') + '</button>'

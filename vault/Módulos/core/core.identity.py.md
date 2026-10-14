@@ -72,6 +72,7 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 - [[research.committee.py]] — lo importa
 - [[research.committee_api.py]] — lo importa
@@ -79,7 +80,7 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - herramienta MCP `replay_decision` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 21 pruebas (lista abajo)._
+_Además lo importan 22 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -93,6 +94,7 @@ _Además lo importan 21 pruebas (lista abajo)._
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
 - [[tests.test_governance_flow.py]]
+- [[tests.test_import_roundtrip.py]]
 - [[tests.test_ledger_callsites.py]]
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_chain.py]]

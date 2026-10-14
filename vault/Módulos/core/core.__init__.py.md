@@ -55,6 +55,7 @@ _Nada interno._
 - [[ontology.api.py]] — lo importa
 - [[ontology.bitemporal.py]] — lo importa
 - [[ontology.bulk_import.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 - [[ontology.service.py]] — lo importa
 - [[research.agent_skills.py]] — lo importa
@@ -69,22 +70,26 @@ _Nada interno._
 - herramienta MCP `find_anomalies` → [[API herramientas MCP]]
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_exposure` → [[API herramientas MCP]]
+- herramienta MCP `get_fundamentals` → [[API herramientas MCP]]
 - herramienta MCP `get_history` → [[API herramientas MCP]]
 - herramienta MCP `get_supply_chain` → [[API herramientas MCP]]
 - herramienta MCP `project_portfolio` → [[API herramientas MCP]]
+- herramienta MCP `rank_by_market` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 52 pruebas (lista abajo)._
+_Además lo importan 61 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
 - [[tests.test_bitemporal.py]]
 - [[tests.test_bitemporal_review.py]]
+- [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_cierre_infra.py]]
+- [[tests.test_countries.py]]
 - [[tests.test_gates_conformance.py]]
 - [[tests.test_gates_ir_fresh.py]]
 - [[tests.test_gates_orders_parity.py]]
@@ -94,6 +99,7 @@ _Además lo importan 52 pruebas (lista abajo)._
 - [[tests.test_genui_contract.py]]
 - [[tests.test_genui_f3_server.py]]
 - [[tests.test_genui_guardian.py]]
+- [[tests.test_genui_k_server.py]]
 - [[tests.test_genui_ledger.py]]
 - [[tests.test_genui_review_fixes.py]]
 - [[tests.test_genui_rivals.py]]
@@ -106,18 +112,24 @@ _Además lo importan 52 pruebas (lista abajo)._
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_import_adapter.py]]
+- [[tests.test_import_roundtrip.py]]
+- [[tests.test_import_shapes.py]]
 - [[tests.test_kernel_monotone_edges.py]]
 - [[tests.test_kernel_monotone_severity.py]]
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_lotej_review_fixes.py]]
+- [[tests.test_lotek_fixer.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_graph_version.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_order_single_path.py]]
 - [[tests.test_replay_determinism.py]]
+- [[tests.test_resolve_ids.py]]
+- [[tests.test_resolve_ids_impact_perf.py]]
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]

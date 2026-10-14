@@ -3,18 +3,18 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/genui.js"
 lenguaje: "javascript"
-lineas: 1413
+lineas: 1435
 aliases: ["engine/genui.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/genui.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.413 líneas · `engine/genui.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.435 líneas · `engine/genui.js`
 
 ## Para qué sirve
 
-RESPUESTAS VISUALES del chat (kblocks/1). Contrato, API (window.KhipuGenUI) y reglas: docs/CHAT_UI_GENERATIVA.md §7. Dibuja bloques; NUNCA calcula cifras (cada número trae src + as_of; sin dato «—» con su motivo). DOM seguro (innerHTML solo con KhipuChat.md()), 17 tipos cerrados, acciones solo abrir/sugerir (ningún botón de dinero), movimiento solo transform/opacity y «reducir movimiento» lo apaga, tokens --os-\*, bilingüe (S.es/S.en). genui_charts.js y genui_shapes.js se cargan PEREZOSOS desde aquí (loadExtras).
+RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja; NUNCA calcula cifras. DOM seguro, 17 tipos, acciones solo abrir/sugerir, tokens --os-\*, bilingüe; charts/shapes PEREZOSOS.
 
 ## API pública (globales que define)
 
@@ -34,11 +34,11 @@ RESPUESTAS VISUALES del chat (kblocks/1). Contrato, API (window.KhipuGenUI) y re
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[engine.worldmonitor.js]] — usa `KhipuWorld`
 
-Se carga en [[app.html]] en la posición **86 de 98** (línea 3145), después de [[engine.portfolios.js]] y antes de [[engine.oswindows.js]].
+Se carga en [[app.html]] en la posición **87 de 99** (línea 3212), después de [[engine.portfolios.js]] y antes de [[engine.oswindows.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 86)
+- [[app.html]] — lo carga con `<script>` (posición 87)
 - [[engine.cockpit.js]] — usa `KhipuGenUI`
 - [[engine.genui_charts.js]] — usa `KhipuGenUI`
 - [[engine.genui_progress.js]] — usa `KhipuGenUI`
@@ -58,6 +58,7 @@ Se carga en [[app.html]] en la posición **86 de 98** (línea 3145), después de
 - [[tests.test_genui_f3_client_static.py]]
 - [[tests.test_genui_render_node.py]]
 - [[tests.test_genui_review_fixes.py]]
+- [[tests.test_lotek_fixer.py]]
 
 ## Mencionado en sesiones de trabajo
 

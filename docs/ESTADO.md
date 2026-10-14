@@ -9,6 +9,46 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-14 (c) — LOTE K: IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT (fundamentales y posición de mercado) — sw v271
+
+- 📥 **Importador (EXPANSION_5K E2 listo; falta el panel E2.7)**: ficha `khipus.company/1` validada en Python
+  (`ontology/company_schema.py`), normalización (`core/import_normalize.py`), PLAN puro con huella (`plan_sha`) y «¿qué
+  cambia?» del kernel, aplicar con PIN en UNA decisión `ontology.bulk_import`, deshacer con `ontology.import_rollback`;
+  rutas `/api/ontology/import/files|plan|apply|rollback|runs`; terminal `scripts/import_companies.py`; puertas
+  `governance/shapes/company.ttl` (14 reglas, en sombra); escritura por lotes: 21.000 eventos en 11 s.
+- 🧾 **Plan del lote 1 (NADA aplicado todavía)**: 4.174 fichas válidas → se crean 4.135, se fusionan 39 (Boeing, BMW,
+  Shell, Samsung Electronics (GDR) → Samsung, Ørsted → Orsted…), se actualizan 934 países, se omiten 0; vínculos 0 (nivel
+  A); 4.105 fuentes; 9.213 eventos (~5 s); 0 categorías por aprobar (las 56 ya están en el catálogo); el kernel NO cambia
+  (ρ 1,210718 → 1,210718 · TSMC golpea a 318 → 318 · top-20 idéntico). Detalle: docs/expansion/LOTE_2026-10-14_PLAN.md.
+- 🌍 **Países**: `core/countries.py` (ISO-2 ↔ clave del catálogo ↔ nombre ES/EN; gemela `window.KhipuCountries`); el texto
+  `country` NO se toca; vista geo, filtros, cartera y contexto agrupan por clave (RestoMundo 272 → 70); NRS intacto;
+  docs/REVISION_PAISES.md para marcar (71 regiones, 26 multi-país, 12 mapa≠clave, 20 desacuerdos).
+- 🏷️ **Catálogo**: 8 símbolos corregidos + listados secundarios (TOELY, AJINY, SMNEY, 2330.TW, 186A.T) en
+  `core/instruments`; 163 categorías con fuente única `data/categories.json` → `nodes/categories_extra.js` (colores
+  distinguibles); `/api/vocabulary.categories`; docs/REVISION_INSTRUMENTOS.md §3: 7 símbolos que decide Fabrizio.
+- 🔎 **Resolver por identificadores (E1.6)**: `core/entities.resolve_ids` (LEI > ISIN/CIK/QID > FIGI > Yahoo > ticker@MIC >
+  dominio > nombre ≥ 85; p50 ≤ 0,03 ms); MCP `search_companies` acepta identificadores; Impact a 20k 743 → ~455 ms (sha
+  idéntico), 5k ~100 ms.
+- 💬 **Chat**: `get_fundamentals` (ganancias por período → barras + cifras) y `rank_by_market` (E2.9: «¿cuál es la más
+  grande en baterías?» → ranking con fuente); tiles que caben en el celular; una cotización por empresa en pantalla; los
+  nombres de herramientas no salen en la prosa.
+- 🔍 **Revisión (23 hallazgos, todos arreglados; tests/test_lotek_fixer.py)**: 409 `graph_changed` si la base avanzó
+  aunque la vista no se reconstruyera; aplicar → deshacer → aplicar revive la empresa; un pendiente se resuelve una vez;
+  el importador delega en el resolvedor único; `confirm_db` obligatorio; `--plan --server` da la huella válida; ADR/GDR
+  nunca principales; «(GDR)» fuera del nombre; ISIN del CEDEAR fuera de los ids; trozo zlib bomba → 413; Ø/Æ/ß en ids;
+  TOELY/AJINY/SMNEY resuelven; «Boulder, CO» = EEUU; comas decimales intactas en el chat; barras y colores arreglados.
+- ✅ **Qué hacer ahora (Fabrizio)**: 1) Railway → Postgres → **Backups → Create backup**. 2) En la PC, carpeta del repo:
+  `python scripts/import_companies.py --lote1 --out lote1.json` y luego
+  `python scripts/import_companies.py --plan lote1.json --server https://<tu-app>.railway.app --pin <PIN> --md plan.md`;
+  leer plan.md y copiar la huella `plan_sha`. 3) Aplicar:
+  `python scripts/import_companies.py --apply lote1.json --server https://<tu-app>.railway.app --pin <PIN> --plan-sha <sha> --confirm-db railway`.
+  4) Si algo no gusta: `--rollback <run_id> --confirm-db railway --server … --pin <PIN>`. Aparte: marcar ✔/✘ en
+  docs/REVISION_PAISES.md y docs/REVISION_INSTRUMENTOS.md (7 símbolos; Kazatomprom KAP.IL).
+- Pendiente: panel 🩺 → 📥 Importar (E2.7); comparación completa de fundamentales; account.py y khipu_chat.py aún filtran
+  país por texto; `prices_store` no salta secundarios «dado de baja»; demotar primarios viejos en producción (PIN).
+
+---
+
 # SESIÓN 2026-10-14 (b) — LOTE J: SERVIDOR A 5.000 + CHAT PROGRESIVO (F3) + revisión — sw v270
 
 - Escala (EXPANSION_5K E0/E1, menos E1.6): kernel disperso (0 diferencias a 937/5k/10k/20k), tensor sin matrices

@@ -26,6 +26,16 @@ import numpy as np
 import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _thaw(x):
+    """La vista de lectura congela listas como tuplas (FrozenDict/freeze): para comparar con el archivo, de vuelta a
+    listas/dicts normales (lote K: los nodos con `listings[]` del catálogo son los primeros con propiedades en lista)."""
+    if isinstance(x, dict):
+        return {k: _thaw(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_thaw(v) for v in x]
+    return x
 sys.path.insert(0, ROOT)
 
 DATABASE_URL = os.getenv('DATABASE_URL', '')
@@ -134,7 +144,7 @@ def test_salidas_identicas_al_archivo_sin_base(nodb):
     # entidades
     idx = entities.get_index()
     assert list(idx['nodos']) == [n['id'] for n in nodes]
-    assert all(dict(idx['nodos'][n['id']]) == n for n in nodes)
+    assert all(_thaw(idx['nodos'][n['id']]) == n for n in nodes)
     assert entities.resolve('Taiwan Semiconductor Manufacturing Company')['id'] == 'TSMC'
     alias = cat['node_id_alias']
     a = next(k for k, v in alias.items() if v in idx['nodos'])
@@ -352,7 +362,7 @@ def test_con_base_las_propiedades_son_las_del_catalogo_migrado(pg):
     cat = _catalog()
     view = hot.graph()
     assert [n['id'] for n in view.nodes] == [n['id'] for n in cat['nodes']]
-    diff = [n['id'] for n in cat['nodes'] if dict(view.by_id[n['id']]) != n]
+    diff = [n['id'] for n in cat['nodes'] if _thaw(view.by_id[n['id']]) != n]
     assert diff == [], diff[:5]
     key = lambda l: (l['source'], l['target'], l.get('type') or 'supply')  # noqa: E731
     assert {key(l) for l in view.links} == {key(l) for l in cat['links']}

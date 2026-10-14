@@ -1,0 +1,29 @@
+{
+  "id": "policy.import",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "live_min_confidence": 0.5,
+    "live_min_trust": 2,
+    "block_size": 250,
+    "max_records_per_run": 5000,
+    "conflicts": "list",
+    "owns_min_pct": 50,
+    "unverified_confidence": 0.4,
+    "name_write_threshold": 85,
+    "name_possible_threshold": 60,
+    "upload_chunk_max_bytes": 921600,
+    "proposal_statuses": [
+      "rumored",
+      "disputed"
+    ],
+    "quarantine_supplier_types": [
+      "Country",
+      "Policy"
+    ]
+  },
+  "changelog_es": "EXPANSION_5K E2.5: política del importador de fichas khipus.company/1 con los valores de HOY. Un vínculo entra VIVO solo con confianza ≥ 0,5 y fuente con trust ≥ 2 (F-5); si no, es PROPUESTA. Conflicto con un dato curado = se LISTA, nunca se pisa (F-6). `owns` desde el 50 % de participación (menos = invest). Sin verificar = confianza 0,4. Nombre: ≥ 85 fusiona, 60-84 'posible duplicado'. Bloques de 250 fichas por transacción, máximo 5.000 por corrida; trozos de subida ≤ 900 KB.",
+  "changelog_en": "EXPANSION_5K E2.5: policy of the khipus.company/1 record importer with TODAY's values. A link enters LIVE only with confidence ≥ 0.5 and a source with trust ≥ 2 (F-5); otherwise it is a PROPOSAL. A conflict with a curated value is LISTED, never overwritten (F-6). `owns` from 50% ownership (less = invest). Unverified = confidence 0.4. Name: ≥ 85 merges, 60-84 'possible duplicate'. Blocks of 250 records per transaction, 5,000 per run at most; upload chunks ≤ 900 KB."
+}

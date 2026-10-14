@@ -381,9 +381,11 @@ class ToolFailure(Exception):
 # fuente y as_of → gráfico de línea) y run_scenario (choque con EL kernel → cascada salto a salto). El resto de
 # mcp_server/ops.py (get_subgraph, get_exposure, calculate_correlation, find_similar_entities) espera a la F5, una por
 # una y solo si el conjunto de evaluación no empeora la elección de herramientas.
+# (2026-10-14, lote K) get_fundamentals (estados financieros por período → barras + cifras; «no tengo la serie histórica
+# de ganancias» ya no vale) y rank_by_market (posición de mercado investigada, E2.9: «¿cuál es la más grande en X?»).
 MCP_READ_TOOLS = ('search_companies', 'get_company', 'get_supply_chain', 'get_research', 'get_research_health', 'get_claim_evidence',
                   'get_committee_memo', 'get_conclusions_board', 'get_track_record', 'get_risk_report',
-                  'get_world_events', 'get_history', 'run_scenario')
+                  'get_world_events', 'get_history', 'run_scenario', 'get_fundamentals', 'rank_by_market')
 
 _EXTRA = {}     # nombre → {'sig', 'desc', 'fn', 'available'}
 
@@ -1135,6 +1137,10 @@ incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda ma�
 peores" → rank_companies o market_movers. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
 get_history(id_or_ticker, range). "¿qué pasa si cae / falla X?" con una empresa CONCRETA → run_scenario(shocks=[{{"id":"X"}}]) \
 (las cifras de impacto salen de ese motor; si la pregunta es un escenario descrito en palabras, scenario_exposure). \
+"ganancias / ingresos / utilidad / márgenes / resultados de X" (también "en un gráfico") → \
+get_fundamentals(id_or_ticker, period) (estados financieros por año o trimestre; NUNCA digas que no tienes la serie sin \
+llamarla). "¿cuál es la empresa más grande / líder / con más cuota en <mercado>?" → rank_by_market(market, metric) \
+(posición de mercado investigada; si no la tiene, dilo tal cual). \
 Preguntas conceptuales (qué es el VaR, cómo funciona HBM) → sin \
 herramientas. get_company ya entiende nombres y tickers: NO gastes una ronda en search_companies salvo \
 ambigüedad real.
@@ -1144,7 +1150,9 @@ lista). Cada cifra con su fuente y fecha en la misma frase, p. ej. «233,95 USD 
 cifras ni datos: si no están, dilo. Usa el historial y lo que hay EN PANTALLA para resolver "ella / su / este". \
 Markdown ligero. Sin recomendaciones personalizadas de comprar/vender (sí riesgos, pros, contras, escenarios); \
 si piden operar, explica que la orden se prepara y confirma en el bróker de la app y ofrece la acción "broker". \
-Acciones de pantalla solo si ayudan (máx. 2) y sin anunciarlas. No menciones el protocolo ni nombres internos.{extra}
+Acciones de pantalla solo si ayudan (máx. 2) y sin anunciarlas. PROHIBIDO escribir nombres internos de herramientas \
+(get_company, get_history, run_scenario, get_fundamentals…) o el protocolo en la respuesta: la fuente se nombra como la \
+ve una persona —Yahoo Finance, Finnhub, Grafo Khipus, World Monitor, comité, estados financieros— con su fecha.{extra}
 
 HERRAMIENTAS:
 {tools}
@@ -1759,6 +1767,123 @@ def _src_name(src):
     return _SRC_NAMES.get(s.lower(), s)
 
 
+# ── nombres internos FUERA de la prosa (lote K, problema 5: «(get_company, Yahoo, hoy 2026-10-14)») ─────────────
+# herramienta → cómo la nombra una persona (ES, EN); se prefiere la fuente REAL del hecho [F#] de esa herramienta
+_TOOL_HUMAN = {
+    'get_company': ('Grafo Khipus', 'Khipus graph'), 'search_companies': ('Grafo Khipus', 'Khipus graph'),
+    'get_supply_chain': ('Grafo Khipus', 'Khipus graph'), 'rank_companies': ('Grafo Khipus', 'Khipus graph'),
+    'scenario_exposure': ('Grafo Khipus', 'Khipus graph'), 'get_subgraph': ('Grafo Khipus', 'Khipus graph'),
+    'get_exposure': ('Grafo Khipus', 'Khipus graph'), 'find_similar_entities': ('Grafo Khipus', 'Khipus graph'),
+    'get_ontology_object': ('Grafo Khipus', 'Khipus graph'),
+    'rank_by_market': ('posición de mercado investigada', 'researched market position'),
+    'get_history': ('Yahoo Finance', 'Yahoo Finance'), 'market_movers': ('Yahoo Finance', 'Yahoo Finance'),
+    'calculate_correlation': ('historia de precios', 'price history'), 'find_anomalies': ('historia de precios', 'price history'),
+    'project_portfolio': ('historia de precios', 'price history'),
+    'get_fundamentals': ('estados financieros', 'financial statements'),
+    'get_news': ('noticias', 'the news'), 'web_search': ('búsqueda web', 'web search'),
+    'get_world_events': ('World Monitor', 'World Monitor'), 'get_space_summary': ('Launch Library 2', 'Launch Library 2'),
+    'run_scenario': ('motor de choques de Khipus', 'Khipus shock engine'),
+    'get_research': ('investigación de Khipus', 'Khipus research'),
+    'get_claim_evidence': ('evidencia de la investigación', 'research evidence'),
+    'get_research_health': ('estado de la investigación', 'research status'),
+    'get_research_job': ('investigación de Khipus', 'Khipus research'),
+    'get_committee_memo': ('comité de inversión', 'investment committee'),
+    'get_conclusions_board': ('pizarra de conclusiones', 'conclusions board'),
+    'get_track_record': ('historial de aciertos', 'track record'),
+    'get_risk_report': ('reporte de riesgo de Khipus', 'Khipus risk report'),
+    'get_option_greeks': ('griegas de opciones', 'option greeks'), 'ask_agent': ('el analista', 'the analyst'),
+    'replay_decision': ('registro de decisiones', 'decision log'),
+}
+_HUMAN_RULES = (('yahoo', 'Yahoo Finance'), ('finnhub', 'Finnhub'), ('marketstack', 'Marketstack'),
+                ('alpha vantage', 'Alpha Vantage'), ('alphavantage', 'Alpha Vantage'), ('fmp', 'FMP'),
+                ('gdelt', 'GDELT'), ('world monitor', 'World Monitor'), ('kernel', None), ('prices_eod', None))
+
+
+def _human_source(label, lang):
+    """Fuente de un hecho → nombre que una persona reconoce; None si el rótulo es técnico (se usa _TOOL_HUMAN)."""
+    s = str(label or '').strip()
+    if not s:
+        return None
+    low = s.lower()
+    for k, v in _HUMAN_RULES:
+        if k in low:
+            return v
+    if 'grafo' in low or 'graph' in low or 'catalog' in low:
+        return 'Grafo Khipus' if lang == 'es' else 'Khipus graph'
+    if re.search(r'[_/(){}]|^[a-z0-9.:-]+$', s):      # ids, rutas, nombres de módulo: no son para la prosa
+        return None
+    return _clip(s, 60)
+
+
+def _tool_name_rx():
+    names = set(MCP_READ_TOOLS) | set(_EXTRA) | set(_TOOL_HUMAN)
+    try:
+        names |= set(_mcp().REGISTRY)
+    except Exception:  # noqa: BLE001
+        pass
+    alt = '|'.join(sorted((re.escape(n) for n in names), key=len, reverse=True))
+    return re.compile(r'(?:(?:la |the )?(?:herramienta|tool) )?`?(?<![\w/.])(' + alt + r')(?:\(\))?(?![\w/])`?')
+
+
+_TOOL_RX = {'rx': None, 'n': 0}
+
+
+_PAREN_SPLIT_RX = re.compile(r'(?<=\D),\s*(?=\D)|(?<=\D),\s+|,\s+(?=\D)')   # una coma entre dos dígitos NO separa
+
+
+def _dedupe_parens(text, only_with=None):
+    """«(Yahoo Finance, Yahoo Finance, hoy)» → «(Yahoo Finance, hoy)». Solo los paréntesis cortos que contienen
+    alguno de los textos de `only_with` (los que recibieron un reemplazo); una coma entre dígitos («1,36 %»,
+    «130,497,000 USD») nunca parte el elemento, así las cifras que el guardián verificó quedan intactas."""
+    def fix(m):
+        inner = m.group(1)
+        if only_with is not None and not any(w in inner for w in only_with):
+            return m.group(0)
+        parts = [x.strip() for x in _PAREN_SPLIT_RX.split(inner)]
+        seen, out = set(), []
+        for x in parts:
+            k = x.lower()
+            if x and k not in seen:
+                seen.add(k)
+                out.append(x)
+        return '(' + ', '.join(out) + ')'
+    return re.sub(r'\(([^()\n]{1,200})\)', fix, text)
+
+
+def strip_tool_names(text, facts=None, lang='es'):
+    """Quita de la respuesta todo nombre interno de herramienta y pone en su lugar la fuente humana: la del hecho
+    [F#] que esa herramienta aportó (Yahoo Finance, Grafo Khipus…) o, si no hay, _TOOL_HUMAN. Nunca lanza."""
+    t = str(text or '')
+    if '_' not in t:
+        return t
+    try:
+        cur = len(_EXTRA)
+        if _TOOL_RX['rx'] is None or _TOOL_RX['n'] != cur:
+            _TOOL_RX['rx'], _TOOL_RX['n'] = _tool_name_rx(), cur
+        rx = _TOOL_RX['rx']
+        by_tool = {}
+        for f in facts or []:
+            if isinstance(f, dict) and f.get('kind') and not str(f['kind']).endswith(':error'):
+                h = _human_source(f.get('source'), lang)
+                if h and f['kind'] not in by_tool:
+                    by_tool[str(f['kind'])] = h
+        hit = {'n': 0, 'with': set()}
+
+        def rep(m):
+            name = m.group(1)
+            hit['n'] += 1
+            h = by_tool.get(name) or _TOOL_HUMAN.get(name)
+            if isinstance(h, tuple):
+                h = h[1] if lang == 'en' else h[0]
+            h = h or ('los datos de la app' if lang != 'en' else 'the app data')
+            hit['with'].add(h)
+            return h
+        out = rx.sub(rep, t)
+        return _dedupe_parens(out, only_with=hit['with']) if hit['n'] else t
+    except Exception:  # noqa: BLE001
+        return t
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # KHIPUS OS: qué aportó cada agente (agents_used), tarjetas (cards) y empresas
 # (entities). TODO DETERMINISTA: solo valores que ESTÁN en los resultados de las
@@ -2342,7 +2467,47 @@ def _note_health(res, args, ctx):
             res.get('source'), res.get('as_of'))
 
 
-_NOTE_FN = {'get_company': _note_company, 'get_supply_chain': _note_supply_chain, 'rank_companies': _note_rank,
+def _note_fundamentals(res, args, ctx):
+    """get_fundamentals: «NVDA FY2025: ingresos 130,5 mil millones USD, margen neto 55,8 % (Yahoo Finance)»."""
+    last = res.get('latest') if isinstance(res.get('latest'), dict) else None
+    sym = res.get('symbol') or res.get('label')
+    if not last or not sym:
+        return None
+    rev = last.get('revenue')
+    rev_b = rev / 1e9 if isinstance(rev, (int, float)) and not isinstance(rev, bool) else None
+
+    def build(lang):
+        es = lang == 'es'
+        bits = [f'{sym} {last.get("period") or ""}'.strip()]
+        if rev_b is not None:
+            bits.append(('ingresos ' if es else 'revenue ') + _usd_b(rev_b, lang))
+        nm = _pct(last.get('net_margin_pct'), lang, 1)
+        if nm:
+            bits.append(('margen neto ' if es else 'net margin ') + nm)
+        return ': '.join([bits[0], ', '.join(bits[1:])]) if len(bits) > 1 else bits[0]
+    return build('es'), build('en'), res.get('source_label') or _src_name(res.get('source')), res.get('as_of')
+
+
+def _note_market_rank(res, args, ctx):
+    """rank_by_market: «Baterías: 1.º CATL (37,9 % · SNE Research)» — la primera fila tal cual viene."""
+    items = [x for x in (res.get('items') or []) if isinstance(x, dict)]
+    if not items:
+        return None
+    top = items[0]
+    by = 'rank' if res.get('sorted_by') == 'rank' else 'share_pct'
+
+    def build(lang):
+        es = lang == 'es'
+        v = top.get(by)
+        what = (_pct(v, lang, 1) if by == 'share_pct' else (f'puesto {v}' if es else f'rank {v}')) if v is not None else ''
+        who = top.get('measured_by')
+        tail = ' · '.join(x for x in (what, _clip(who, 40) if who else '') if x)
+        return f'{_clip(res.get("market"), 40)}: 1.º {top.get("label")}' + (f' ({tail})' if tail else '') if es else \
+            f'{_clip(res.get("market"), 40)}: #1 {top.get("label")}' + (f' ({tail})' if tail else '')
+    return build('es'), build('en'), 'Khipus graph (market position)', res.get('as_of')
+
+
+_NOTE_FN = {'get_company': _note_company, 'get_fundamentals': _note_fundamentals, 'rank_by_market': _note_market_rank, 'get_supply_chain': _note_supply_chain, 'rank_companies': _note_rank,
             'get_news': _note_news, 'get_world_events': _note_world, 'web_search': _note_web,
             'scenario_exposure': _note_scenario, 'market_movers': _note_movers, 'get_risk_report': _note_risk_report,
             'get_option_greeks': _note_greeks, 'get_committee_memo': _note_memo, 'get_conclusions_board': _note_board,
@@ -2666,6 +2831,7 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
     out.setdefault('entities', [])
     out.setdefault('agents_used', [])
     out.setdefault('cards', {})
+    out['answer'] = strip_tool_names(out.get('answer') or '', out.get('facts'), lang)
     ui = _genui_attach(out, message, lang, context)
     ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=ui)
     return out
@@ -2712,10 +2878,12 @@ _PLAN_SKELETON = {
     'get_news': ('timeline', ('news',), ('Noticias', 'News')),
     'get_risk_report': ('metric.tiles', ('risk',), ('Riesgo de la cartera', 'Portfolio risk')),
     'get_company': ('metric.tiles', ('company',), ('Cifras clave', 'Key figures')),
+    'get_fundamentals': ('chart.bar', ('fundamentals',), ('Ingresos por período', 'Revenue by period')),
+    'rank_by_market': ('ranking', ('market',), ('Posición de mercado', 'Market position')),
 }
 # sin intención clara: la MISMA prioridad que el orden automático (core/genui/layout._DEFAULT)
 _PLAN_PRIORITY = ('run_scenario', 'get_history', 'get_supply_chain', 'get_risk_report', 'get_world_events',
-                  'get_news', 'get_company')
+                  'get_news', 'get_company', 'get_fundamentals', 'rank_by_market')
 
 
 def _prog_ui_cfg(context, lang):

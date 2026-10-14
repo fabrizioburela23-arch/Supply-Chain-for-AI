@@ -770,3 +770,335 @@ def t_project_portfolio(ctx, positions, horizon_days=21, covariance='ewma', drif
             'uncertainty': ('assumes normal log-returns and a constant covariance: real crashes (fat tails, jumps, '
                             'correlations going to 1) are worse than the 5th percentile more often than 5%'),
             'source': 'Khipus prices_eod / Yahoo adjusted closes (+ daily FX when not USD)', 'as_of': _now_iso()}
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# get_fundamentals — estados financieros por período (lote K: «no tengo la serie histórica de ganancias»)
+# ════════════════════════════════════════════════════════════════════════════
+FUND_MAX_PERIODS = 5
+FUND_FIELDS = ('revenue', 'gross_profit', 'operating_income', 'net_income', 'fcf')
+# Yahoo fundamentals-timeseries, serie TRIMESTRAL (misma fuente que la anual de core/company_data; sin FMP/AV)
+_Q_TYPES = {'quarterlyTotalRevenue': 'revenue', 'quarterlyGrossProfit': 'gross_profit',
+            'quarterlyOperatingIncome': 'operating_income', 'quarterlyNetIncome': 'net_income',
+            'quarterlyFreeCashFlow': 'fcf', 'quarterlyOperatingCashFlow': 'ocf', 'quarterlyCapitalExpenditure': 'capex'}
+_Q_CACHE = {}                       # símbolo → (ts, resultado); TTL 1 h ok / 10 min fallo
+_Q_TTL_OK, _Q_TTL_FAIL, _Q_MAX = 3600, 600, 300
+_UNAVAILABLE = 'unavailable'
+
+
+def _pct(num, den):
+    """Margen en % (1 decimal) con denominador POSITIVO; si no, None (nunca un margen sobre ingresos negativos)."""
+    if num is None or den is None or not den > 0:
+        return None
+    return round(100.0 * num / den, 1)
+
+
+def _growth(cur, prev):
+    """Crecimiento en % contra el período anterior; con base ≤ 0 no tiene sentido (None)."""
+    if cur is None or prev is None or not prev > 0:
+        return None
+    return round((cur / prev - 1.0) * 100.0, 1)
+
+
+def _fund_row(label, period_end, vals):
+    row = {'period': label, 'period_end': period_end}
+    for k in FUND_FIELDS:
+        v = vals.get(k)
+        row[k] = (round(float(v), 2) if isinstance(v, (int, float)) and not isinstance(v, bool) else None)
+    row['gross_margin_pct'] = _pct(row['gross_profit'], row['revenue'])
+    row['operating_margin_pct'] = _pct(row['operating_income'], row['revenue'])
+    row['net_margin_pct'] = _pct(row['net_income'], row['revenue'])
+    return row
+
+
+def _annual_rows(fin, years):
+    ys = list(fin.get('years') or [])
+    rows = []
+    for i, y in enumerate(ys):
+        vals = {k: (fin.get(k) or [None] * len(ys))[i] for k in FUND_FIELDS}
+        rows.append((y, _fund_row(f'FY{y}', str(y), vals)))      # cierre fiscal exacto: no lo da la serie anual
+    from core.company_data import _consecutive
+    for i, (y, r) in enumerate(rows):
+        prev = rows[i - 1] if i > 0 and _consecutive(rows[i - 1][0], y) else None
+        r['revenue_growth_pct'] = _growth(r['revenue'], prev[1]['revenue']) if prev else None
+        r['net_income_growth_pct'] = _growth(r['net_income'], prev[1]['net_income']) if prev else None
+    return [r for _y, r in rows][-years:]
+
+
+def _quarterly_yahoo(sym):
+    """Trimestres (≤ 8) de Yahoo fundamentals-timeseries en USD: {'available', 'rows', 'currency', 'fx_rate',
+    'reason_en'}. Caché propia (1 h); la fuente puede no cubrir una bolsa: entonces se dice."""
+    import time as _t
+    hit = _Q_CACHE.get(sym)
+    if hit and _t.time() - hit[0] < (_Q_TTL_OK if hit[1].get('available') else _Q_TTL_FAIL):
+        return hit[1]
+    from core import company_data as cd
+    out = {'available': False, 'rows': [], 'currency': None, 'fx_rate': None, 'reason_en': None}
+    try:
+        payload, err = cd._yahoo_get(cd._Y_TS_URL.format(sym=cd._sym(sym)),
+                                     {'symbol': sym, 'type': ','.join(_Q_TYPES), 'period1': cd._PERIOD1,
+                                      'period2': int(_t.time())})
+    except Exception as e:  # noqa: BLE001
+        payload, err = None, type(e).__name__
+    if payload is None:
+        out['reason_en'] = f'Yahoo Finance: {err or "no data"}'
+    else:
+        by_date, curs = {}, {}
+        for item in (((payload or {}).get('timeseries') or {}).get('result') or []):
+            if not isinstance(item, dict):
+                continue
+            typ = ((item.get('meta') or {}).get('type') or [None])[0]
+            field = _Q_TYPES.get(typ)
+            if not field:
+                continue
+            for e in item.get(typ) or []:
+                if not isinstance(e, dict):
+                    continue
+                d, v = str(e.get('asOfDate') or '')[:10], cd._num(e.get('reportedValue'))
+                if len(d) != 10 or v is None:
+                    continue
+                by_date.setdefault(d, {})[field] = v
+                c = e.get('currencyCode')
+                if c:
+                    curs[c] = curs.get(c, 0) + 1
+        cur = max(curs, key=curs.get) if curs else 'USD'
+        conv = cd._Converter(None, cur)
+        rate = conv.rate(cur)
+        if not by_date:
+            out['reason_en'] = 'Yahoo Finance: no quarterly statements for this symbol'
+        elif rate is None:
+            out['reason_en'] = f'no {cur}→USD exchange rate'
+        else:
+            rows = []
+            for d in sorted(by_date):
+                r = by_date[d]
+                if r.get('fcf') is None and r.get('ocf') is not None and r.get('capex') is not None:
+                    r['fcf'] = r['ocf'] - abs(r['capex'])
+                if all(r.get(k) is None for k in ('revenue', 'net_income')):
+                    continue
+                rows.append(_fund_row(f'Q {d}', d, {k: conv(r.get(k), cur) for k in FUND_FIELDS}))
+            for i, r in enumerate(rows):
+                p1 = rows[i - 1] if i >= 1 else None
+                p4 = rows[i - 4] if i >= 4 else None
+                r['revenue_growth_pct'] = _growth(r['revenue'], p1['revenue']) if p1 else None
+                r['net_income_growth_pct'] = _growth(r['net_income'], p1['net_income']) if p1 else None
+                r['revenue_growth_yoy_pct'] = _growth(r['revenue'], p4['revenue']) if p4 else None
+            out.update(available=bool(rows), rows=rows[-8:], currency=cur, fx_rate=rate,
+                       reason_en=None if rows else 'Yahoo Finance: no quarterly statements for this symbol')
+    if len(_Q_CACHE) >= _Q_MAX:
+        _Q_CACHE.clear()
+    _Q_CACHE[sym] = (_t.time(), out)
+    return out
+
+
+def _annual_financials(sym):
+    """Estados anuales normalizados en USD (core/company_data: FMP → Yahoo → Alpha Vantage, caché)."""
+    from core import company_data as cd
+    return _bounded(cd.get_annual_financials, 15, sym)
+
+
+FUND_SRC_LABEL = {'fmp': 'FMP', 'yahoo': 'Yahoo Finance', 'alphavantage': 'Alpha Vantage'}
+
+
+@tool('get_fundamentals', 'Financial statements by period (revenue, profit, margins)', 'read',
+      'Reported financial statements of ONE listed company by period: revenue, gross profit, operating income, net '
+      'income and free cash flow in USD, the margins (gross / operating / net, % of revenue) and the growth vs the '
+      'previous period (%). period=annual (FMP → Yahoo → Alpha Vantage, cached) or quarterly (Yahoo). Each figure '
+      'is as REPORTED by the source (never estimated); a missing figure is null. Use it for "earnings / revenue / '
+      'profit / margins of X", also "in a chart". Private companies have no statements.',
+      {'id_or_ticker': {'type': 'string', 'minLength': 1, 'maxLength': 120},
+       'period': {'type': 'string', 'enum': ['annual', 'quarterly'], 'default': 'annual'},
+       'years': {'type': 'integer', 'minimum': 1, 'maximum': FUND_MAX_PERIODS, 'default': FUND_MAX_PERIODS,
+                 'description': 'How many fiscal years (annual) — quarterly always returns up to 8 quarters.'}},
+      required=['id_or_ticker'], open_world=True)
+def t_get_fundamentals(ctx, id_or_ticker, period='annual', years=FUND_MAX_PERIODS):
+    sym, eid = _symbol_of(id_or_ticker)
+    label = None
+    if eid:
+        try:
+            from core.hotviews import hot
+            n = hot.graph().by_id.get(eid) or {}
+            label = n.get('label')
+            if not n.get('mkt'):
+                sym = None                   # empresa del grafo SIN ticker (privada): no hay estados que pedir
+        except Exception:  # noqa: BLE001
+            label = None
+    if not sym:
+        raise ToolError('no listed ticker for this entity (private companies publish no financial statements)',
+                        code='no_data')
+    years = max(1, min(FUND_MAX_PERIODS, int(years or FUND_MAX_PERIODS)))
+    base = {'symbol': sym, 'id': eid, 'label': label or eid or sym, 'period': period, 'unit': 'USD',
+            'fields': list(FUND_FIELDS), 'known_at': _now_iso()}
+    if period == 'quarterly':
+        q = _quarterly_yahoo(sym)
+        if not q.get('available'):
+            raise ToolError(f'quarterly statements {_UNAVAILABLE} for {sym}: {q.get("reason_en") or "no data"}',
+                            code=_UNAVAILABLE)
+        rows = q['rows']
+        src = 'yahoo'
+        base.update(reported_currency=q.get('currency'), fx_rate=q.get('fx_rate'))
+    else:
+        fin = _annual_financials(sym) or {}
+        if not fin.get('available'):
+            raise ToolError(f'annual statements {_UNAVAILABLE} for {sym}: {fin.get("reason_en") or "no data"}',
+                            code=_UNAVAILABLE, data={'tried': fin.get('tried')})
+        rows = _annual_rows(fin, years)
+        src = str(fin.get('source') or 'yahoo')
+        base.update(reported_currency=fin.get('currency'), fx_rate=fin.get('fx_rate'), tried=fin.get('tried'))
+    if not rows:
+        raise ToolError(f'statements {_UNAVAILABLE} for {sym}: the source returned no usable period',
+                        code=_UNAVAILABLE)
+    last = rows[-1]
+    base.update({
+        'periods': rows, 'n': len(rows), 'latest': dict(last),
+        'source': src, 'source_label': FUND_SRC_LABEL.get(src, src), 'as_of': _now_iso(),
+        'method': ('figures as reported by the source and converted to USD at today\'s rate when the report is in '
+                   'another currency; margins = item / revenue × 100 (only with revenue > 0); growth = vs the previous '
+                   'period in this list (annual only between consecutive fiscal years; quarterly also YoY vs 4 quarters '
+                   'back)'),
+        'uncertainty': 'as_of is when Khipus read the statements; each period is the fiscal period as reported',
+    })
+    return base
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# rank_by_market — posición de mercado (E2.9): «¿cuál es la empresa de baterías más grande?»
+# ════════════════════════════════════════════════════════════════════════════
+MKT_GLOBAL = ('', 'global', 'world', 'worldwide', 'mundial', 'mundo', 'internacional', 'international')
+# raíces es ↔ en de mercados frecuentes: una pregunta en un idioma encuentra fichas escritas en el otro
+MKT_SYNONYMS = {
+    'bater': ('batter', 'bater', 'cell'), 'batter': ('batter', 'bater', 'cell'),
+    'memor': ('memor', 'dram', 'hbm', 'nand'), 'fundic': ('foundr', 'fundic'), 'foundr': ('foundr', 'fundic'),
+    'litogr': ('lithogr', 'litogr'), 'lithogr': ('lithogr', 'litogr'), 'nube': ('cloud', 'nube'),
+    'cloud': ('cloud', 'nube'), 'chip': ('chip', 'semicond'), 'semicond': ('semicond', 'chip'),
+    'graf': ('gpu', 'graf', 'graph'), 'gpu': ('gpu', 'graf', 'graph'), 'acelerad': ('accelerat', 'acelerad', 'gpu'),
+    'accelerat': ('accelerat', 'acelerad', 'gpu'), 'servid': ('server', 'servid'), 'server': ('server', 'servid'),
+    'equip': ('equip', 'tool'), 'robot': ('robot',), 'litio': ('lithium', 'litio'), 'lithium': ('lithium', 'litio'),
+    'energ': ('energ', 'power'), 'solar': ('solar', 'fotovolt', 'photovolt'), 'elect': ('elect',),
+    'vehic': ('vehic', 'ev', 'auto', 'car'), 'auto': ('auto', 'vehic', 'car'), 'red': ('network', 'red'),
+    'network': ('network', 'red'), 'almacen': ('storage', 'almacen'), 'storage': ('storage', 'almacen'),
+    'sustrat': ('substrat', 'sustrat'), 'substrat': ('substrat', 'sustrat'), 'oblea': ('wafer', 'oblea'),
+    'wafer': ('wafer', 'oblea'), 'satel': ('satell', 'satel'), 'satell': ('satell', 'satel'),
+    'refriger': ('cool', 'refriger'), 'cool': ('cool', 'refriger'), 'centro': ('data', 'centro'), 'dato': ('data', 'dato'),
+}
+_MKT_STOP = {'de', 'del', 'la', 'el', 'los', 'las', 'en', 'para', 'por', 'y', 'the', 'of', 'in', 'for', 'and', 'a',
+             'market', 'mercado', 'empresa', 'empresas', 'company', 'companies', 'sector', 'industria', 'industry',
+             'mas', 'más', 'grande', 'grandes', 'largest', 'biggest', 'mayor', 'lider', 'líder', 'leader'}
+
+
+def _mkt_tokens(text):
+    import re
+    import unicodedata
+    s = unicodedata.normalize('NFKD', str(text or '').lower())
+    s = ''.join(ch for ch in s if not unicodedata.combining(ch))
+    return [t for t in re.split(r'[^a-z0-9]+', s) if t and t not in _MKT_STOP]
+
+
+def _stem(tok):
+    """Raíz CORTA (≤ 6) que iguala singular/plural y es/en cercanos (baterías/batteries → 'bater'/'batter')."""
+    t = tok
+    for suf in ('ies', 'es', 's'):
+        if t.endswith(suf) and len(t) - len(suf) >= 3:
+            t = t[:-len(suf)]
+            break
+    return t[:6]
+
+
+def mkt_match(query, market):
+    """Puntaje 0-1: fracción de las raíces de la pregunta que aparecen (prefijo ≥ 3) en el texto del mercado,
+    con sinónimos es/en. 1 token en común alcanza para preguntas de una palabra."""
+    q = [_stem(t) for t in _mkt_tokens(query)]
+    m = [_stem(t) for t in _mkt_tokens(market)]
+    if not q or not m:
+        return 0.0
+    hit = 0
+    for qs in q:
+        alts = {qs}
+        for k, syn in MKT_SYNONYMS.items():          # la raíz de la pregunta y la clave se contienen (bateri ~ bater)
+            if qs.startswith(k) or k.startswith(qs):
+                alts |= set(syn)
+        if any(ms.startswith(a[:4]) or a.startswith(ms[:4]) for ms in m for a in alts if len(a) >= 3 and len(ms) >= 3):
+            hit += 1
+    return hit / len(q)
+
+
+def _region_key(x):
+    s = str(x or '').strip()
+    if s.lower() in MKT_GLOBAL:
+        return 'GLOBAL'
+    if len(s) == 2 and s.isalpha():
+        return s.upper()
+    try:
+        from core.countries import iso2_of
+        iso = iso2_of(s)
+        if iso:
+            return iso.upper()
+    except Exception:  # noqa: BLE001
+        pass
+    return s.upper()[:20]
+
+
+_MP_KEYS = ('market', 'rank', 'share_pct', 'metric', 'region', 'period', 'measured_by', 'source_url', 'as_of',
+            'confidence')
+
+
+@tool('rank_by_market', 'Who is biggest in a market (researched market position)', 'read',
+      'Ranks the companies of the Khipus graph by their RESEARCHED market position in one market (e.g. "EV '
+      'batteries", "DRAM", "foundry", "cloud"): market share % or rank, with the period, who measured it, the source '
+      'URL and the as_of of every entry. Use it for "which is the largest / leading company in X", "market share of '
+      'X". It only knows what the research cards recorded: when nothing matches it says so instead of guessing.',
+      {'market': {'type': 'string', 'minLength': 2, 'maxLength': 80},
+       'metric': {'type': 'string', 'enum': ['share_pct', 'rank'], 'default': 'share_pct'},
+       'region': {'type': 'string', 'minLength': 2, 'maxLength': 40, 'default': 'GLOBAL',
+                  'description': 'GLOBAL or an ISO-2 country code (CN, US…).'},
+       'limit': {'type': 'integer', 'minimum': 1, 'maximum': 20, 'default': 10}},
+      required=['market'])
+def t_rank_by_market(ctx, market, metric='share_pct', region='GLOBAL', limit=10):
+    from core.hotviews.views import card as _card
+    cv = _card.reader_view()
+    if cv is None:
+        raise ToolError('the graph is warming up — retry in a few seconds', code='unavailable')
+    want_region = _region_key(region)
+    rows, markets, any_entries = [], {}, 0
+    for oid, c in cv.cards.items():
+        for e in c.get('market_position') or []:
+            any_entries += 1
+            score = mkt_match(market, e.get('market'))
+            if score < 0.5:
+                continue
+            if _region_key(e.get('region')) != want_region:
+                continue
+            markets[str(e.get('market'))] = markets.get(str(e.get('market')), 0) + 1
+            rows.append((score, oid, c, e))
+    if not rows:
+        raise ToolError(f'I do not have that ranking: no company in the Khipus graph records a market position for '
+                        f'"{market}" ({want_region}); {any_entries} market-position entries exist for other markets',
+                        code='no_data', data={'market': market, 'region': want_region, 'entries_total': any_entries})
+    share_known = any(isinstance(e.get('share_pct'), (int, float)) for _s, _o, _c, e in rows)
+    rank_known = any(isinstance(e.get('rank'), (int, float)) for _s, _o, _c, e in rows)
+    by = metric if (metric == 'share_pct' and share_known) or (metric == 'rank' and rank_known) else (
+        'share_pct' if share_known else 'rank')
+
+    def key(t):
+        s, oid, c, e = t
+        if by == 'share_pct':
+            v = e.get('share_pct')
+            return (0 if isinstance(v, (int, float)) else 1, -(v if isinstance(v, (int, float)) else 0), -s, oid)
+        v = e.get('rank')
+        return (0 if isinstance(v, (int, float)) else 1, v if isinstance(v, (int, float)) else 10 ** 6, -s, oid)
+    rows.sort(key=key)
+    items = []
+    for i, (s, oid, c, e) in enumerate(rows[:int(limit)], 1):
+        it = {'position': i, 'id': oid, 'label': c.get('label') or oid, 'symbol': c.get('ticker'),
+              'match_score': round(s, 2)}
+        it.update({k: e.get(k) for k in _MP_KEYS})
+        items.append(it)
+    return {'market': market, 'region': want_region, 'metric': metric, 'sorted_by': by, 'items': items,
+            'n_matched': len(rows), 'markets_matched': sorted(markets, key=lambda k: -markets[k])[:8],
+            'source': 'Khipus graph — market_position facts researched per company (source_url and as_of per entry)',
+            'method': ('text match of the market name against each company\'s market_position entries (es/en roots), '
+                       'same region; sorted by share_pct (desc) or rank (asc); entries without the metric go last'),
+            'uncertainty': 'only companies whose research card records a market position; measured_by/period differ '
+                           'between entries — compare like with like',
+            'generation': cv.generation, 'graph_version': cv.graph_version, 'graph_source': cv.source,
+            'as_of': _now_iso()}

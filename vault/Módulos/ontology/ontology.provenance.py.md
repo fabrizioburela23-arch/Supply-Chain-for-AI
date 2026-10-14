@@ -43,6 +43,7 @@ Phase 1 · M1: procedencia de primera clase.
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[ontology.api.py]] — lo importa
+- [[ontology.company_import.py]] — lo importa
 - [[ontology.ingest_news.py]] — lo importa
 - [[ontology.timeline.py]] — lo importa
 - [[research.api.py]] — lo importa

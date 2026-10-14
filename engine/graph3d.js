@@ -232,6 +232,16 @@ class KhipuGraph3D {
       India: 0.2, RestoMundo: 0.9, Israel: 1.3, EEUU: 2.1, Canada: 2.5,
       Europa: 3, Alemania: 3, Francia: 3, PaisesBajos: 3, ReinoUnido: 3, RestoEuropa: 3,
     };
+    // Z por región para CUALQUIER grafía ('Taiwán', 'Estados Unidos (HQ…)', 'Suiza' → Europa) vía GeoCoords.countryKey.
+    const regionZ = c => {
+      if (c == null) return null;
+      if (REGION_Z[c] != null) return REGION_Z[c];
+      const G = window.GeoCoords, KC = window.KhipuCountries;
+      const k = (G && G.countryKey) ? G.countryKey(c) : null;
+      if (k && REGION_Z[k] != null) return REGION_Z[k];
+      if (KC && KC.isEurope && KC.isEurope(c)) return REGION_Z.Europa;
+      return null;
+    };
     const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) >>> 0; return h; };
     const jit = (seed, amp) => ((hash(seed) & 0xFFFF) / 0xFFFF - 0.5) * 2 * amp;
 
@@ -240,7 +250,8 @@ class KhipuGraph3D {
       const catX = (cat && cat.x != null) ? cat.x : 0.5;
       let nrs = 50;
       try { if (typeof computeNRS === 'function') nrs = computeNRS(n.id); } catch (e) {}
-      const zk = (REGION_Z[n.country] != null) ? REGION_Z[n.country] : 0;
+      const zr = regionZ(n.country);
+      const zk = zr != null ? zr : 0;
       n.x = (catX - 0.5) * 2 * SPAN_X + jit(n.id + 'x', 26);
       n.y = (nrs / 100 - 0.5) * 2 * SPAN_Y + jit(n.id + 'y', 18);
       n.z = (zk / 3) * SPAN_Z + jit(n.id + 'z', 30);

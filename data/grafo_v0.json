@@ -1,11 +1,11 @@
 {
- "exported_at": "2026-10-13T18:20:44.583Z",
+ "exported_at": "2026-10-14T07:30:43.800Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 937,
   "links": 2510,
   "unverified_links": 37,
-  "categories": 108,
+  "categories": 163,
   "sectors": 13,
   "preipo_entries": 14,
   "temporal_facts": 105,
@@ -653,7 +653,30 @@
    "capex_2026": "~¥200B (~$1.3B)",
    "backlog_status": "Órdenes 6–9 meses; pistas EUV ligadas 1:1 a entregas de ASML",
    "country": "Japon",
-   "mkt": "TOELY",
+   "mkt": "8035.T",
+   "listings": [
+    {
+     "symbol": "8035",
+     "mic": "XTKS",
+     "yahoo_symbol": "8035.T",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "JPY",
+     "source_url": "https://www.tel.com/ir/stock/",
+     "as_of": "2026-10-14"
+    },
+    {
+     "symbol": "TOELY",
+     "mic": "OTCM",
+     "yahoo_symbol": "TOELY",
+     "is_primary": false,
+     "kind": "adr",
+     "currency": "USD",
+     "source_url": "https://www.tel.com/ir/stock/",
+     "as_of": "2026-10-14",
+     "note": "ADR OTC: el agregador de cotizaciones lo marca dado de baja (lote 2026-10-14); verificar"
+    }
+   ],
    "role_en": "Near-monopoly worldwide in photoresist tracks (coater/developer).",
    "supplies_en": "Machines that apply and develop photoresists before and after each lithography exposure — coupled in-line to ASML's EUV scanners at TSMC, Samsung and Intel. Also etch and deposition.",
    "moat_en": "Big Five. ~90% share in EUV tracks: every ASML machine needs a TEL track beside it. Risk: ~40% of its sales go to China, exposed to export controls.",
@@ -952,7 +975,30 @@
    "capex_2026": "~$900M (grupo; ABF +50% capacidad)",
    "backlog_status": "ABF en asignación; capacidad comprometida 2027",
    "country": "Japon",
-   "mkt": "AJINY",
+   "mkt": "2802.T",
+   "listings": [
+    {
+     "symbol": "2802",
+     "mic": "XTKS",
+     "yahoo_symbol": "2802.T",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "JPY",
+     "source_url": "https://www.ajinomoto.co.jp/company/en/ir/stock/",
+     "as_of": "2026-10-14"
+    },
+    {
+     "symbol": "AJINY",
+     "mic": "OTCM",
+     "yahoo_symbol": "AJINY",
+     "is_primary": false,
+     "kind": "adr",
+     "currency": "USD",
+     "source_url": "https://www.ajinomoto.co.jp/company/en/ir/stock/",
+     "as_of": "2026-10-14",
+     "note": "ADR OTC: el agregador de cotizaciones lo marca dado de baja (lote 2026-10-14); verificar"
+    }
+   ],
    "role_en": "ABF film monopoly — an electronics gem disguised as a food company.",
    "supplies_en": "ABF (Ajinomoto Build-up Film): the insulating film that forms the substrate layers of ALL AI chips — without ABF there is no H100 or GB200. Supplied to Ibiden, Unimicron and the rest of the substrate makers.",
    "moat_en": "Effective monopoly with no qualified substitute: no rival has passed qualification in 25 years. The market values it as an MSG-and-soup company → a structural re-rating opportunity.",
@@ -1144,6 +1190,30 @@
    "big": true,
    "country": "Taiwan",
    "mkt": "TSM",
+   "listings": [
+    {
+     "symbol": "2330",
+     "mic": "XTAI",
+     "yahoo_symbol": "2330.TW",
+     "is_primary": false,
+     "kind": "equity",
+     "currency": "TWD",
+     "source_url": "https://investor.tsmc.com/english/stock-information",
+     "as_of": "2026-10-14",
+     "home": true
+    },
+    {
+     "symbol": "TSM",
+     "mic": "XNYS",
+     "yahoo_symbol": "TSM",
+     "is_primary": true,
+     "kind": "adr",
+     "currency": "USD",
+     "source_url": "https://investor.tsmc.com/english/stock-information",
+     "as_of": "2026-10-14",
+     "ordinary_per_depositary": 5
+    }
+   ],
    "role_en": "The foundry that manufactures 90%+ of the world's leading-edge chips.",
    "supplies_en": "3nm and 2nm logic chip manufacturing plus advanced CoWoS packaging for Nvidia, Apple, AMD and Qualcomm. The N2 node enters volume ramp in 2026, with fabs expanding in Arizona, Japan and Germany.",
    "moat_en": "Structural technical monopoly: without TSMC there is no iPhone, no Vera Rubin, no AMD chip. The most critical single point of failure in the entire chain, irreplaceable for 10+ years; its risk is geopolitical concentration in Taiwan.",
@@ -1515,7 +1585,20 @@
    "capex_2026": "~$22B (M15X y capacidad HBM)",
    "backlog_status": "HBM agotada todo 2026; HBM4 en calificación para Vera Rubin",
    "country": "Corea",
-   "mkt": "HXSCL",
+   "mkt": "000660.KS",
+   "listings": [
+    {
+     "symbol": "000660",
+     "mic": "XKRX",
+     "yahoo_symbol": "000660.KS",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "KRW",
+     "source_url": "https://www.skhynix.com/ir/",
+     "as_of": "2026-10-14",
+     "note": "HXSCL (OTC) era un símbolo incorrecto (lote 2026-10-14)"
+    }
+   ],
    "role_en": "World's #1 supplier of HBM memory and a critical Nvidia partner.",
    "supplies_en": "HBM3e memory stacked on every AI GPU — without SK Hynix the H100/B200 would not exist. HBM4 in qualification for Nvidia's Vera Rubin platform; also DDR5 DRAM for Dell servers and CoreWeave racks.",
    "moat_en": "~64% global HBM share with a 12–18 month technology lead over Samsung. The only qualified HBM3e supplier to Nvidia today; its entire 2026 HBM capacity is pre-sold at agreed prices.",
@@ -2241,7 +2324,30 @@
    "growth_en": "🟢 Revenue +13-14% FY2026; record orders",
    "capex_2026_en": "~€1.2B; transformer capacity",
    "backlog_status_en": "Record ~€140B; 4-year HVDC queue",
-   "mkt": "SMNEY"
+   "mkt": "ENR.DE",
+   "listings": [
+    {
+     "symbol": "ENR",
+     "mic": "XETR",
+     "yahoo_symbol": "ENR.DE",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "EUR",
+     "source_url": "https://www.siemens-energy.com/global/en/home/investor-relations/share.html",
+     "as_of": "2026-10-14"
+    },
+    {
+     "symbol": "SMNEY",
+     "mic": "OTCM",
+     "yahoo_symbol": "SMNEY",
+     "is_primary": false,
+     "kind": "adr",
+     "currency": "USD",
+     "source_url": "https://www.siemens-energy.com/global/en/home/investor-relations/share.html",
+     "as_of": "2026-10-14",
+     "note": "ADR OTC: el agregador de cotizaciones lo marca dado de baja (lote 2026-10-14); verificar"
+    }
+   ]
   },
   {
    "sector": "infra",
@@ -7428,10 +7534,23 @@
    "sector": "diseno",
    "id": "SiTime",
    "label": "SiTime Corporation",
-   "ticker": "SITT · Nasdaq",
+   "ticker": "SITM · Nasdaq",
    "cat": "fabless",
    "country": "EEUU",
-   "mkt": "SITT",
+   "mkt": "SITM",
+   "listings": [
+    {
+     "symbol": "SITM",
+     "mic": "XNAS",
+     "yahoo_symbol": "SITM",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "USD",
+     "source_url": "https://investor.sitime.com/",
+     "as_of": "2026-10-14",
+     "note": "SITT no existe (lote 2026-10-14)"
+    }
+   ],
    "geo": "EEUU",
    "big": false,
    "desc": "MEMS-based timing semiconductor solutions",
@@ -11427,6 +11546,19 @@
    "growth": "🟢 Contratos crecientes con JAXA, ESA, UK Space Agency y programas de defensa",
    "margin": null,
    "mkt": "5034.T",
+   "listings": [
+    {
+     "symbol": "186A",
+     "mic": "XTKS",
+     "yahoo_symbol": "186A.T",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "JPY",
+     "source_url": "https://astroscale.com/ir/",
+     "as_of": "2026-10-14",
+     "note": "5034.T es unerry, Inc.; Astroscale Holdings cotiza como 186A desde jun-2024 (lote 2026-10-14)"
+    }
+   ],
    "listing": {
     "as_of": "2026-09-29",
     "status": "public",
@@ -11902,7 +12034,7 @@
    "sector": "defensa",
    "id": "qinetiq",
    "label": "QinetiQ",
-   "ticker": "QQ. · LSE",
+   "ticker": "QQ · LSE",
    "cat": "defense_prime",
    "port": "",
    "role": "Empresa de tecnología de defensa y seguridad especializada en ensayo/evaluación, robótica, sistemas no tripulados y ciberdefensa para gobiernos aliados.",
@@ -11911,7 +12043,20 @@
    "country": "Reino Unido",
    "growth": "🟢 Expansión en EE.UU. (Pratt Miller, robótica militar) y crecimiento en presupuestos de defensa OTAN",
    "margin": 0.12,
-   "mkt": "QQ."
+   "mkt": "QQ.L",
+   "listings": [
+    {
+     "symbol": "QQ",
+     "mic": "XLON",
+     "yahoo_symbol": "QQ.L",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "GBp",
+     "source_url": "https://www.qinetiq.com/en/investors",
+     "as_of": "2026-10-14",
+     "note": "\"QQ.\" estaba mal escrito (lote 2026-10-14)"
+    }
+   ]
   },
   {
    "sector": "diseno",
@@ -14311,7 +14456,30 @@
    "country": "Australia / Germany",
    "growth": "🟡 Cierre financiero de €2.200M logrado may-2026, pero acción débil",
    "margin": null,
-   "mkt": "VUL.DE",
+   "mkt": "VUL.AX",
+   "listings": [
+    {
+     "symbol": "VUL",
+     "mic": "XASX",
+     "yahoo_symbol": "VUL.AX",
+     "is_primary": true,
+     "kind": "equity",
+     "currency": "AUD",
+     "source_url": "https://v-er.eu/investors/",
+     "as_of": "2026-10-14"
+    },
+    {
+     "symbol": "VUL",
+     "mic": "XFRA",
+     "yahoo_symbol": null,
+     "is_primary": false,
+     "kind": "equity",
+     "currency": "EUR",
+     "source_url": "https://v-er.eu/investors/",
+     "as_of": "2026-10-14",
+     "note": "Fráncfort; VUL.DE no existe en el agregador: símbolo de Yahoo sin verificar (lote 2026-10-14)"
+    }
+   ],
    "sector_hint": "materiales"
   },
   {
@@ -42422,6 +42590,726 @@
    "cssVar": "--c-uranium",
    "x": 0.68
   },
+  "aerospace_components": {
+   "cssVar": "--c-aerospace_components",
+   "en": "Aero engines and aerospace components",
+   "label": "Motores y componentes aeroespaciales",
+   "x": 0.58
+  },
+  "ai_data": {
+   "cssVar": "--c-ai_data",
+   "en": "AI data and labeling",
+   "label": "Datos y etiquetado para IA",
+   "x": 0.86
+  },
+  "airport_operator": {
+   "cssVar": "--c-airport_operator",
+   "en": "Airport operator",
+   "label": "Operador aeroportuario",
+   "x": 0.36
+  },
+  "analog_mixed_signal": {
+   "cssVar": "--c-analog_mixed_signal",
+   "en": "Analog and mixed-signal chips",
+   "label": "Chips analógicos y de señal mixta",
+   "x": 0.5
+  },
+  "auto_oem": {
+   "cssVar": "--c-auto_oem",
+   "en": "Automaker",
+   "label": "Fabricante de autos",
+   "x": 0.93
+  },
+  "battery_cells": {
+   "cssVar": "--c-battery_cells",
+   "en": "Battery cells and packs",
+   "label": "Celdas y paquetes de batería",
+   "x": 0.66
+  },
+  "battery_equipment": {
+   "cssVar": "--c-battery_equipment",
+   "en": "Battery manufacturing equipment",
+   "label": "Equipos para fabricar baterías",
+   "x": 0.22
+  },
+  "battery_recycling": {
+   "cssVar": "--c-battery_recycling",
+   "en": "Battery and metals recycling",
+   "label": "Reciclaje de baterías y metales",
+   "x": 0.668
+  },
+  "cables_power": {
+   "cssVar": "--c-cables_power",
+   "en": "Power cables and copper products",
+   "label": "Cables de energía y cobre",
+   "x": 0.676
+  },
+  "coal": {
+   "cssVar": "--c-coal",
+   "en": "Coal",
+   "label": "Carbón",
+   "x": 0.684
+  },
+  "compound_semi": {
+   "cssVar": "--c-compound_semi",
+   "en": "Compound semiconductors",
+   "label": "Semiconductores compuestos (SiC, GaN, InP)",
+   "x": 0.4
+  },
+  "connectors": {
+   "cssVar": "--c-connectors",
+   "en": "Connectors and cabling",
+   "label": "Conectores y cableado",
+   "x": 0.413
+  },
+  "container_leasing": {
+   "cssVar": "--c-container_leasing",
+   "en": "Containers and port equipment",
+   "label": "Contenedores y equipos portuarios",
+   "x": 0.368
+  },
+  "contract_logistics": {
+   "cssVar": "--c-contract_logistics",
+   "en": "Contract logistics, warehousing and trucking",
+   "label": "Logística por contrato, almacenes y transporte terrestre",
+   "x": 0.376
+  },
+  "defense_electronics": {
+   "cssVar": "--c-defense_electronics",
+   "en": "Defense electronics",
+   "label": "Electrónica de defensa",
+   "x": 0.595
+  },
+  "development_bank": {
+   "cssVar": "--c-development_bank",
+   "en": "Development and export-credit finance",
+   "label": "Banca de desarrollo y crédito a la exportación",
+   "x": 0.6
+  },
+  "drones_uav": {
+   "cssVar": "--c-drones_uav",
+   "en": "Drones and UAVs",
+   "label": "Drones",
+   "x": 0.61
+  },
+  "electronics_distribution": {
+   "cssVar": "--c-electronics_distribution",
+   "en": "Electronics distribution",
+   "label": "Distribución de electrónica",
+   "x": 0.384
+  },
+  "ems": {
+   "cssVar": "--c-ems",
+   "en": "Electronics manufacturing services and displays",
+   "label": "Manufactura electrónica por contrato y pantallas",
+   "x": 0.427
+  },
+  "equip_subsystems": {
+   "cssVar": "--c-equip_subsystems",
+   "en": "Chip equipment subsystems and parts",
+   "label": "Subsistemas y piezas para equipos de chips",
+   "x": 0.28
+  },
+  "ev_components": {
+   "cssVar": "--c-ev_components",
+   "en": "Auto parts, electronics and software",
+   "label": "Autopartes, electrónica y software para autos",
+   "x": 0.95
+  },
+  "fab_construction": {
+   "cssVar": "--c-fab_construction",
+   "en": "Fab and cleanroom construction",
+   "label": "Construcción de fábricas y salas limpias",
+   "x": 0.8
+  },
+  "government_agency": {
+   "cssVar": "--c-government_agency",
+   "en": "Strategic state agency or fund",
+   "label": "Agencia o fondo estatal estratégico",
+   "x": 0.62
+  },
+  "grid_equipment": {
+   "cssVar": "--c-grid_equipment",
+   "en": "Grid and electrical equipment",
+   "label": "Equipos de red eléctrica",
+   "x": 0.692
+  },
+  "industrial_automation": {
+   "cssVar": "--c-industrial_automation",
+   "en": "Industrial automation",
+   "label": "Automatización industrial",
+   "x": 0.97
+  },
+  "insurance": {
+   "cssVar": "--c-insurance",
+   "en": "Insurance and reinsurance",
+   "label": "Seguros y reaseguros",
+   "x": 0.64
+  },
+  "it_services": {
+   "cssVar": "--c-it_services",
+   "en": "IT services",
+   "label": "Servicios de TI",
+   "x": 0.96
+  },
+  "mining_equipment": {
+   "cssVar": "--c-mining_equipment",
+   "en": "Mining equipment",
+   "label": "Equipos de minería",
+   "x": 0.08
+  },
+  "mining_tin": {
+   "cssVar": "--c-mining_tin",
+   "en": "Tin mining",
+   "label": "Minería de estaño",
+   "x": 0.096
+  },
+  "mining_tungsten": {
+   "cssVar": "--c-mining_tungsten",
+   "en": "Tungsten mining",
+   "label": "Minería de tungsteno",
+   "x": 0.112
+  },
+  "munitions": {
+   "cssVar": "--c-munitions",
+   "en": "Munitions and energetics",
+   "label": "Municiones y energéticos",
+   "x": 0.625
+  },
+  "naval_shipbuilding": {
+   "cssVar": "--c-naval_shipbuilding",
+   "en": "Shipbuilding",
+   "label": "Astilleros",
+   "x": 0.64
+  },
+  "oil_gas_upstream": {
+   "cssVar": "--c-oil_gas_upstream",
+   "en": "Oil and gas upstream, refining and services",
+   "label": "Petróleo y gas: exploración, refinación y servicios",
+   "x": 0.7
+  },
+  "optical_transceivers": {
+   "cssVar": "--c-optical_transceivers",
+   "en": "Optical transceivers, lasers and components",
+   "label": "Transceptores, láseres y componentes ópticos",
+   "x": 0.7
+  },
+  "passive_components": {
+   "cssVar": "--c-passive_components",
+   "en": "Passive and RF components",
+   "label": "Componentes pasivos y de RF",
+   "x": 0.44
+  },
+  "payments": {
+   "cssVar": "--c-payments",
+   "en": "Payment networks",
+   "label": "Redes de pago",
+   "x": 0.66
+  },
+  "pcb": {
+   "cssVar": "--c-pcb",
+   "en": "PCBs, laminates and copper foil",
+   "label": "Circuitos impresos y laminados",
+   "x": 0.453
+  },
+  "power_epc": {
+   "cssVar": "--c-power_epc",
+   "en": "Power EPC and grid construction",
+   "label": "Ingeniería y construcción eléctrica",
+   "x": 0.708
+  },
+  "power_generation_equipment": {
+   "cssVar": "--c-power_generation_equipment",
+   "en": "Turbines and generation equipment",
+   "label": "Turbinas y equipos de generación",
+   "x": 0.716
+  },
+  "power_semis": {
+   "cssVar": "--c-power_semis",
+   "en": "Power semiconductors",
+   "label": "Semiconductores de potencia",
+   "x": 0.467
+  },
+  "power_supplies": {
+   "cssVar": "--c-power_supplies",
+   "en": "Power supplies and server components",
+   "label": "Fuentes de poder y componentes de servidor",
+   "x": 0.735
+  },
+  "rail_equipment": {
+   "cssVar": "--c-rail_equipment",
+   "en": "Rail equipment",
+   "label": "Equipos ferroviarios",
+   "x": 0.392
+  },
+  "rare_earth_magnets": {
+   "cssVar": "--c-rare_earth_magnets",
+   "en": "Rare-earth magnets",
+   "label": "Imanes de tierras raras",
+   "x": 0.128
+  },
+  "semi_ip": {
+   "cssVar": "--c-semi_ip",
+   "en": "Semiconductor IP",
+   "label": "Propiedad intelectual de chips",
+   "x": 0.56
+  },
+  "semiconductor_rnd": {
+   "cssVar": "--c-semiconductor_rnd",
+   "en": "Semiconductor R&D centers",
+   "label": "Centros de I+D de semiconductores",
+   "x": 0.48
+  },
+  "silicon_wafers": {
+   "cssVar": "--c-silicon_wafers",
+   "en": "Silicon wafers",
+   "label": "Obleas de silicio",
+   "x": 0.34
+  },
+  "solar_manufacturing": {
+   "cssVar": "--c-solar_manufacturing",
+   "en": "Solar manufacturing",
+   "label": "Fabricación solar",
+   "x": 0.724
+  },
+  "specialized_shipping": {
+   "cssVar": "--c-specialized_shipping",
+   "en": "Specialized shipping (tankers, gas carriers)",
+   "label": "Transporte marítimo especializado (tanqueros, gaseros)",
+   "x": 0.4
+  },
+  "specialty_metals": {
+   "cssVar": "--c-specialty_metals",
+   "en": "Specialty metals and critical minerals",
+   "label": "Metales especiales y minerales críticos",
+   "x": 0.144
+  },
+  "storage_systems": {
+   "cssVar": "--c-storage_systems",
+   "en": "Data storage",
+   "label": "Almacenamiento de datos",
+   "x": 0.77
+  },
+  "subsea_cable": {
+   "cssVar": "--c-subsea_cable",
+   "en": "Subsea cables",
+   "label": "Cables submarinos",
+   "x": 0.805
+  },
+  "telecom_operator": {
+   "cssVar": "--c-telecom_operator",
+   "en": "Telecom operator and towers",
+   "label": "Operador de telecomunicaciones y torres",
+   "x": 0.84
+  },
+  "trading_house": {
+   "cssVar": "--c-trading_house",
+   "en": "Commodity trading houses",
+   "label": "Comercializadoras de materias primas",
+   "x": 0.16
+  },
+  "transformers": {
+   "cssVar": "--c-transformers",
+   "en": "Transformers",
+   "label": "Transformadores",
+   "x": 0.732
+  },
+  "utility_integrated": {
+   "cssVar": "--c-utility_integrated",
+   "en": "Integrated utility",
+   "label": "Utility integrada",
+   "x": 0.74
+  },
+  "air_cargo": {
+   "cssVar": "--c-air_cargo",
+   "en": "Air cargo",
+   "label": "Carga aérea",
+   "x": 0.5
+  },
+  "alternative_asset_manager": {
+   "cssVar": "--c-alternative_asset_manager",
+   "en": "Alternative asset manager",
+   "label": "Gestor de activos alternativos",
+   "x": 0.5
+  },
+  "aluminum": {
+   "cssVar": "--c-aluminum",
+   "en": "Aluminum",
+   "label": "Aluminio",
+   "x": 0.5
+  },
+  "asset_manager": {
+   "cssVar": "--c-asset_manager",
+   "en": "Asset manager",
+   "label": "Gestor de activos",
+   "x": 0.5
+  },
+  "bis": {
+   "cssVar": "--c-bis",
+   "en": "BIS",
+   "label": "Banco de Pagos Internacionales",
+   "x": 0.5
+  },
+  "canal_authority": {
+   "cssVar": "--c-canal_authority",
+   "en": "Canal authority",
+   "label": "Autoridad de canal",
+   "x": 0.5
+  },
+  "cds_index_provider": {
+   "cssVar": "--c-cds_index_provider",
+   "en": "CDS index provider",
+   "label": "Índices de CDS",
+   "x": 0.5
+  },
+  "cement": {
+   "cssVar": "--c-cement",
+   "en": "Cement",
+   "label": "Cemento",
+   "x": 0.5
+  },
+  "central_bank": {
+   "cssVar": "--c-central_bank",
+   "en": "Central bank",
+   "label": "Banco central",
+   "x": 0.5
+  },
+  "colocation": {
+   "cssVar": "--c-colocation",
+   "en": "Colocation",
+   "label": "Colocación de datacenters",
+   "x": 0.5
+  },
+  "cooling_thermal": {
+   "cssVar": "--c-cooling_thermal",
+   "en": "Data-center cooling",
+   "label": "Refrigeración de datacenters",
+   "x": 0.5
+  },
+  "datacenter_operator": {
+   "cssVar": "--c-datacenter_operator",
+   "en": "Data-center operator",
+   "label": "Operador de datacenters",
+   "x": 0.5
+  },
+  "datacenter_reit": {
+   "cssVar": "--c-datacenter_reit",
+   "en": "Data-center REIT",
+   "label": "REIT de datacenters",
+   "x": 0.5
+  },
+  "dc_construction": {
+   "cssVar": "--c-dc_construction",
+   "en": "Data-center construction",
+   "label": "Construcción de datacenters",
+   "x": 0.5
+  },
+  "derivatives_standards": {
+   "cssVar": "--c-derivatives_standards",
+   "en": "Derivatives standards",
+   "label": "Estándares de derivados (ISDA)",
+   "x": 0.5
+  },
+  "energy_trading": {
+   "cssVar": "--c-energy_trading",
+   "en": "Energy trading",
+   "label": "Comercialización de energía",
+   "x": 0.5
+  },
+  "exchange_derivatives": {
+   "cssVar": "--c-exchange_derivatives",
+   "en": "Derivatives exchange",
+   "label": "Bolsa de derivados",
+   "x": 0.5
+  },
+  "exchange_index_provider": {
+   "cssVar": "--c-exchange_index_provider",
+   "en": "Exchange & index provider",
+   "label": "Bolsa e índices",
+   "x": 0.5
+  },
+  "fiber_optic_cable": {
+   "cssVar": "--c-fiber_optic_cable",
+   "en": "Fiber-optic cable",
+   "label": "Cable de fibra óptica",
+   "x": 0.5
+  },
+  "freight_forwarder": {
+   "cssVar": "--c-freight_forwarder",
+   "en": "Freight forwarder",
+   "label": "Transitario (freight forwarder)",
+   "x": 0.5
+  },
+  "glass_fiber": {
+   "cssVar": "--c-glass_fiber",
+   "en": "Glass fiber",
+   "label": "Fibra de vidrio",
+   "x": 0.5
+  },
+  "graphite": {
+   "cssVar": "--c-graphite",
+   "en": "Graphite",
+   "label": "Grafito",
+   "x": 0.5
+  },
+  "grid_transmission": {
+   "cssVar": "--c-grid_transmission",
+   "en": "Grid transmission",
+   "label": "Transmisión eléctrica",
+   "x": 0.5
+  },
+  "growth_equity": {
+   "cssVar": "--c-growth_equity",
+   "en": "Growth equity",
+   "label": "Capital de crecimiento",
+   "x": 0.5
+  },
+  "heavy_lift_logistics": {
+   "cssVar": "--c-heavy_lift_logistics",
+   "en": "Heavy-lift logistics",
+   "label": "Logística de cargas pesadas",
+   "x": 0.5
+  },
+  "high_purity_quartz": {
+   "cssVar": "--c-high_purity_quartz",
+   "en": "High-purity quartz",
+   "label": "Cuarzo de alta pureza",
+   "x": 0.5
+  },
+  "hydrogen": {
+   "cssVar": "--c-hydrogen",
+   "en": "Hydrogen",
+   "label": "Hidrógeno",
+   "x": 0.5
+  },
+  "index_provider": {
+   "cssVar": "--c-index_provider",
+   "en": "Index provider",
+   "label": "Proveedor de índices",
+   "x": 0.5
+  },
+  "industrial_gas": {
+   "cssVar": "--c-industrial_gas",
+   "en": "Industrial gases",
+   "label": "Gases industriales",
+   "x": 0.5
+  },
+  "industrial_reit": {
+   "cssVar": "--c-industrial_reit",
+   "en": "Industrial REIT",
+   "label": "REIT industrial",
+   "x": 0.5
+  },
+  "infrastructure_investor": {
+   "cssVar": "--c-infrastructure_investor",
+   "en": "Infrastructure investor",
+   "label": "Inversor en infraestructura",
+   "x": 0.5
+  },
+  "investment_bank": {
+   "cssVar": "--c-investment_bank",
+   "en": "Investment bank",
+   "label": "Banca de inversión",
+   "x": 0.5
+  },
+  "lng": {
+   "cssVar": "--c-lng",
+   "en": "LNG",
+   "label": "Gas natural licuado (GNL)",
+   "x": 0.5
+  },
+  "midstream_pipeline": {
+   "cssVar": "--c-midstream_pipeline",
+   "en": "Midstream pipelines",
+   "label": "Oleoductos y gasoductos",
+   "x": 0.5
+  },
+  "mining_cobalt": {
+   "cssVar": "--c-mining_cobalt",
+   "en": "Cobalt mining",
+   "label": "Minería de cobalto",
+   "x": 0.5
+  },
+  "mining_copper": {
+   "cssVar": "--c-mining_copper",
+   "en": "Copper mining",
+   "label": "Minería de cobre",
+   "x": 0.5
+  },
+  "mining_diversified": {
+   "cssVar": "--c-mining_diversified",
+   "en": "Diversified mining",
+   "label": "Minería diversificada",
+   "x": 0.5
+  },
+  "mining_lithium": {
+   "cssVar": "--c-mining_lithium",
+   "en": "Lithium mining",
+   "label": "Minería de litio",
+   "x": 0.5
+  },
+  "mining_nickel": {
+   "cssVar": "--c-mining_nickel",
+   "en": "Nickel mining",
+   "label": "Minería de níquel",
+   "x": 0.5
+  },
+  "mining_pgm": {
+   "cssVar": "--c-mining_pgm",
+   "en": "PGM mining",
+   "label": "Metales del grupo del platino",
+   "x": 0.5
+  },
+  "mining_zinc": {
+   "cssVar": "--c-mining_zinc",
+   "en": "Zinc mining",
+   "label": "Minería de zinc",
+   "x": 0.5
+  },
+  "nuclear_equipment": {
+   "cssVar": "--c-nuclear_equipment",
+   "en": "Nuclear equipment",
+   "label": "Equipos nucleares",
+   "x": 0.5
+  },
+  "nuclear_operator": {
+   "cssVar": "--c-nuclear_operator",
+   "en": "Nuclear operator",
+   "label": "Operador nuclear",
+   "x": 0.5
+  },
+  "oil_gas_major": {
+   "cssVar": "--c-oil_gas_major",
+   "en": "Oil & gas major",
+   "label": "Petrolera integrada",
+   "x": 0.5
+  },
+  "pension_fund": {
+   "cssVar": "--c-pension_fund",
+   "en": "Pension fund",
+   "label": "Fondo de pensiones",
+   "x": 0.5
+  },
+  "polysilicon": {
+   "cssVar": "--c-polysilicon",
+   "en": "Polysilicon",
+   "label": "Polisilicio",
+   "x": 0.5
+  },
+  "port_operator": {
+   "cssVar": "--c-port_operator",
+   "en": "Port operator",
+   "label": "Operador portuario",
+   "x": 0.5
+  },
+  "private_credit": {
+   "cssVar": "--c-private_credit",
+   "en": "Private credit",
+   "label": "Crédito privado",
+   "x": 0.5
+  },
+  "private_equity": {
+   "cssVar": "--c-private_equity",
+   "en": "Private equity",
+   "label": "Capital privado",
+   "x": 0.5
+  },
+  "rail_freight": {
+   "cssVar": "--c-rail_freight",
+   "en": "Rail freight",
+   "label": "Transporte ferroviario de carga",
+   "x": 0.5
+  },
+  "rare_earths": {
+   "cssVar": "--c-rare_earths",
+   "en": "Rare earths (mining & refining)",
+   "label": "Tierras raras (minería y refinación)",
+   "x": 0.5
+  },
+  "rating_agency": {
+   "cssVar": "--c-rating_agency",
+   "en": "Rating agency",
+   "label": "Agencia de rating",
+   "x": 0.5
+  },
+  "real_estate_services": {
+   "cssVar": "--c-real_estate_services",
+   "en": "Real-estate services",
+   "label": "Servicios inmobiliarios",
+   "x": 0.5
+  },
+  "renewables_utility": {
+   "cssVar": "--c-renewables_utility",
+   "en": "Renewables utility",
+   "label": "Utility de renovables",
+   "x": 0.5
+  },
+  "shipping_line": {
+   "cssVar": "--c-shipping_line",
+   "en": "Container shipping line",
+   "label": "Naviera de contenedores",
+   "x": 0.5
+  },
+  "silicon_metal": {
+   "cssVar": "--c-silicon_metal",
+   "en": "Silicon metal",
+   "label": "Silicio metálico",
+   "x": 0.5
+  },
+  "sovereign_fund": {
+   "cssVar": "--c-sovereign_fund",
+   "en": "Sovereign wealth fund",
+   "label": "Fondo soberano",
+   "x": 0.5
+  },
+  "specialty_chemical": {
+   "cssVar": "--c-specialty_chemical",
+   "en": "Specialty chemicals",
+   "label": "Químicos especiales",
+   "x": 0.5
+  },
+  "steel": {
+   "cssVar": "--c-steel",
+   "en": "Steel",
+   "label": "Acero",
+   "x": 0.5
+  },
+  "storage_grid": {
+   "cssVar": "--c-storage_grid",
+   "en": "Grid storage",
+   "label": "Almacenamiento en red (baterías)",
+   "x": 0.5
+  },
+  "treasury": {
+   "cssVar": "--c-treasury",
+   "en": "Treasury",
+   "label": "Tesoro",
+   "x": 0.5
+  },
+  "universal_bank": {
+   "cssVar": "--c-universal_bank",
+   "en": "Universal bank",
+   "label": "Banca universal",
+   "x": 0.5
+  },
+  "uranium_enrichment": {
+   "cssVar": "--c-uranium_enrichment",
+   "en": "Uranium enrichment",
+   "label": "Enriquecimiento de uranio",
+   "x": 0.5
+  },
+  "uranium_mining": {
+   "cssVar": "--c-uranium_mining",
+   "en": "Uranium mining",
+   "label": "Minería de uranio",
+   "x": 0.5
+  },
+  "venture_capital": {
+   "cssVar": "--c-venture_capital",
+   "en": "Venture capital",
+   "label": "Capital de riesgo",
+   "x": 0.5
+  },
   "power_ipp": {
    "label": "Energía IPP / PPA",
    "en": "Power IPP / PPA",
@@ -42439,396 +43327,6 @@
    "en": "Defense Primes",
    "cssVar": "--c-defense_prime",
    "x": 0.58
-  },
-  "air_cargo": {
-   "label": "air_cargo",
-   "en": "air_cargo",
-   "cssVar": "--c-air_cargo",
-   "x": 0.5
-  },
-  "alternative_asset_manager": {
-   "label": "alternative_asset_manager",
-   "en": "alternative_asset_manager",
-   "cssVar": "--c-alternative_asset_manager",
-   "x": 0.5
-  },
-  "aluminum": {
-   "label": "aluminum",
-   "en": "aluminum",
-   "cssVar": "--c-aluminum",
-   "x": 0.5
-  },
-  "asset_manager": {
-   "label": "asset_manager",
-   "en": "asset_manager",
-   "cssVar": "--c-asset_manager",
-   "x": 0.5
-  },
-  "bis": {
-   "label": "bis",
-   "en": "bis",
-   "cssVar": "--c-bis",
-   "x": 0.5
-  },
-  "canal_authority": {
-   "label": "canal_authority",
-   "en": "canal_authority",
-   "cssVar": "--c-canal_authority",
-   "x": 0.5
-  },
-  "cds_index_provider": {
-   "label": "cds_index_provider",
-   "en": "cds_index_provider",
-   "cssVar": "--c-cds_index_provider",
-   "x": 0.5
-  },
-  "cement": {
-   "label": "cement",
-   "en": "cement",
-   "cssVar": "--c-cement",
-   "x": 0.5
-  },
-  "central_bank": {
-   "label": "central_bank",
-   "en": "central_bank",
-   "cssVar": "--c-central_bank",
-   "x": 0.5
-  },
-  "colocation": {
-   "label": "colocation",
-   "en": "colocation",
-   "cssVar": "--c-colocation",
-   "x": 0.5
-  },
-  "cooling_thermal": {
-   "label": "cooling_thermal",
-   "en": "cooling_thermal",
-   "cssVar": "--c-cooling_thermal",
-   "x": 0.5
-  },
-  "datacenter_operator": {
-   "label": "datacenter_operator",
-   "en": "datacenter_operator",
-   "cssVar": "--c-datacenter_operator",
-   "x": 0.5
-  },
-  "datacenter_reit": {
-   "label": "datacenter_reit",
-   "en": "datacenter_reit",
-   "cssVar": "--c-datacenter_reit",
-   "x": 0.5
-  },
-  "dc_construction": {
-   "label": "dc_construction",
-   "en": "dc_construction",
-   "cssVar": "--c-dc_construction",
-   "x": 0.5
-  },
-  "derivatives_standards": {
-   "label": "derivatives_standards",
-   "en": "derivatives_standards",
-   "cssVar": "--c-derivatives_standards",
-   "x": 0.5
-  },
-  "energy_trading": {
-   "label": "energy_trading",
-   "en": "energy_trading",
-   "cssVar": "--c-energy_trading",
-   "x": 0.5
-  },
-  "exchange_derivatives": {
-   "label": "exchange_derivatives",
-   "en": "exchange_derivatives",
-   "cssVar": "--c-exchange_derivatives",
-   "x": 0.5
-  },
-  "exchange_index_provider": {
-   "label": "exchange_index_provider",
-   "en": "exchange_index_provider",
-   "cssVar": "--c-exchange_index_provider",
-   "x": 0.5
-  },
-  "fiber_optic_cable": {
-   "label": "fiber_optic_cable",
-   "en": "fiber_optic_cable",
-   "cssVar": "--c-fiber_optic_cable",
-   "x": 0.5
-  },
-  "freight_forwarder": {
-   "label": "freight_forwarder",
-   "en": "freight_forwarder",
-   "cssVar": "--c-freight_forwarder",
-   "x": 0.5
-  },
-  "glass_fiber": {
-   "label": "glass_fiber",
-   "en": "glass_fiber",
-   "cssVar": "--c-glass_fiber",
-   "x": 0.5
-  },
-  "graphite": {
-   "label": "graphite",
-   "en": "graphite",
-   "cssVar": "--c-graphite",
-   "x": 0.5
-  },
-  "grid_transmission": {
-   "label": "grid_transmission",
-   "en": "grid_transmission",
-   "cssVar": "--c-grid_transmission",
-   "x": 0.5
-  },
-  "growth_equity": {
-   "label": "growth_equity",
-   "en": "growth_equity",
-   "cssVar": "--c-growth_equity",
-   "x": 0.5
-  },
-  "heavy_lift_logistics": {
-   "label": "heavy_lift_logistics",
-   "en": "heavy_lift_logistics",
-   "cssVar": "--c-heavy_lift_logistics",
-   "x": 0.5
-  },
-  "high_purity_quartz": {
-   "label": "high_purity_quartz",
-   "en": "high_purity_quartz",
-   "cssVar": "--c-high_purity_quartz",
-   "x": 0.5
-  },
-  "hydrogen": {
-   "label": "hydrogen",
-   "en": "hydrogen",
-   "cssVar": "--c-hydrogen",
-   "x": 0.5
-  },
-  "index_provider": {
-   "label": "index_provider",
-   "en": "index_provider",
-   "cssVar": "--c-index_provider",
-   "x": 0.5
-  },
-  "industrial_gas": {
-   "label": "industrial_gas",
-   "en": "industrial_gas",
-   "cssVar": "--c-industrial_gas",
-   "x": 0.5
-  },
-  "industrial_reit": {
-   "label": "industrial_reit",
-   "en": "industrial_reit",
-   "cssVar": "--c-industrial_reit",
-   "x": 0.5
-  },
-  "infrastructure_investor": {
-   "label": "infrastructure_investor",
-   "en": "infrastructure_investor",
-   "cssVar": "--c-infrastructure_investor",
-   "x": 0.5
-  },
-  "investment_bank": {
-   "label": "investment_bank",
-   "en": "investment_bank",
-   "cssVar": "--c-investment_bank",
-   "x": 0.5
-  },
-  "lng": {
-   "label": "lng",
-   "en": "lng",
-   "cssVar": "--c-lng",
-   "x": 0.5
-  },
-  "midstream_pipeline": {
-   "label": "midstream_pipeline",
-   "en": "midstream_pipeline",
-   "cssVar": "--c-midstream_pipeline",
-   "x": 0.5
-  },
-  "mining_cobalt": {
-   "label": "mining_cobalt",
-   "en": "mining_cobalt",
-   "cssVar": "--c-mining_cobalt",
-   "x": 0.5
-  },
-  "mining_copper": {
-   "label": "mining_copper",
-   "en": "mining_copper",
-   "cssVar": "--c-mining_copper",
-   "x": 0.5
-  },
-  "mining_diversified": {
-   "label": "mining_diversified",
-   "en": "mining_diversified",
-   "cssVar": "--c-mining_diversified",
-   "x": 0.5
-  },
-  "mining_lithium": {
-   "label": "mining_lithium",
-   "en": "mining_lithium",
-   "cssVar": "--c-mining_lithium",
-   "x": 0.5
-  },
-  "mining_nickel": {
-   "label": "mining_nickel",
-   "en": "mining_nickel",
-   "cssVar": "--c-mining_nickel",
-   "x": 0.5
-  },
-  "mining_pgm": {
-   "label": "mining_pgm",
-   "en": "mining_pgm",
-   "cssVar": "--c-mining_pgm",
-   "x": 0.5
-  },
-  "mining_zinc": {
-   "label": "mining_zinc",
-   "en": "mining_zinc",
-   "cssVar": "--c-mining_zinc",
-   "x": 0.5
-  },
-  "nuclear_equipment": {
-   "label": "nuclear_equipment",
-   "en": "nuclear_equipment",
-   "cssVar": "--c-nuclear_equipment",
-   "x": 0.5
-  },
-  "nuclear_operator": {
-   "label": "nuclear_operator",
-   "en": "nuclear_operator",
-   "cssVar": "--c-nuclear_operator",
-   "x": 0.5
-  },
-  "oil_gas_major": {
-   "label": "oil_gas_major",
-   "en": "oil_gas_major",
-   "cssVar": "--c-oil_gas_major",
-   "x": 0.5
-  },
-  "pension_fund": {
-   "label": "pension_fund",
-   "en": "pension_fund",
-   "cssVar": "--c-pension_fund",
-   "x": 0.5
-  },
-  "polysilicon": {
-   "label": "polysilicon",
-   "en": "polysilicon",
-   "cssVar": "--c-polysilicon",
-   "x": 0.5
-  },
-  "port_operator": {
-   "label": "port_operator",
-   "en": "port_operator",
-   "cssVar": "--c-port_operator",
-   "x": 0.5
-  },
-  "private_credit": {
-   "label": "private_credit",
-   "en": "private_credit",
-   "cssVar": "--c-private_credit",
-   "x": 0.5
-  },
-  "private_equity": {
-   "label": "private_equity",
-   "en": "private_equity",
-   "cssVar": "--c-private_equity",
-   "x": 0.5
-  },
-  "rail_freight": {
-   "label": "rail_freight",
-   "en": "rail_freight",
-   "cssVar": "--c-rail_freight",
-   "x": 0.5
-  },
-  "rare_earths": {
-   "label": "rare_earths",
-   "en": "rare_earths",
-   "cssVar": "--c-rare_earths",
-   "x": 0.5
-  },
-  "rating_agency": {
-   "label": "rating_agency",
-   "en": "rating_agency",
-   "cssVar": "--c-rating_agency",
-   "x": 0.5
-  },
-  "real_estate_services": {
-   "label": "real_estate_services",
-   "en": "real_estate_services",
-   "cssVar": "--c-real_estate_services",
-   "x": 0.5
-  },
-  "renewables_utility": {
-   "label": "renewables_utility",
-   "en": "renewables_utility",
-   "cssVar": "--c-renewables_utility",
-   "x": 0.5
-  },
-  "shipping_line": {
-   "label": "shipping_line",
-   "en": "shipping_line",
-   "cssVar": "--c-shipping_line",
-   "x": 0.5
-  },
-  "silicon_metal": {
-   "label": "silicon_metal",
-   "en": "silicon_metal",
-   "cssVar": "--c-silicon_metal",
-   "x": 0.5
-  },
-  "sovereign_fund": {
-   "label": "sovereign_fund",
-   "en": "sovereign_fund",
-   "cssVar": "--c-sovereign_fund",
-   "x": 0.5
-  },
-  "specialty_chemical": {
-   "label": "specialty_chemical",
-   "en": "specialty_chemical",
-   "cssVar": "--c-specialty_chemical",
-   "x": 0.5
-  },
-  "steel": {
-   "label": "steel",
-   "en": "steel",
-   "cssVar": "--c-steel",
-   "x": 0.5
-  },
-  "storage_grid": {
-   "label": "storage_grid",
-   "en": "storage_grid",
-   "cssVar": "--c-storage_grid",
-   "x": 0.5
-  },
-  "treasury": {
-   "label": "treasury",
-   "en": "treasury",
-   "cssVar": "--c-treasury",
-   "x": 0.5
-  },
-  "universal_bank": {
-   "label": "universal_bank",
-   "en": "universal_bank",
-   "cssVar": "--c-universal_bank",
-   "x": 0.5
-  },
-  "uranium_enrichment": {
-   "label": "uranium_enrichment",
-   "en": "uranium_enrichment",
-   "cssVar": "--c-uranium_enrichment",
-   "x": 0.5
-  },
-  "uranium_mining": {
-   "label": "uranium_mining",
-   "en": "uranium_mining",
-   "cssVar": "--c-uranium_mining",
-   "x": 0.5
-  },
-  "venture_capital": {
-   "label": "venture_capital",
-   "en": "venture_capital",
-   "cssVar": "--c-venture_capital",
-   "x": 0.5
   }
  },
  "sectors9": {
@@ -42939,6 +43437,61 @@
   "battery_mat": "energia",
   "rare_earth": "energia",
   "robotics_physical": "robotica",
+  "aerospace_components": "defensa",
+  "ai_data": "cloud_ia",
+  "airport_operator": "logistica",
+  "analog_mixed_signal": "diseno",
+  "auto_oem": "robotica",
+  "battery_cells": "energia",
+  "battery_equipment": "equipos",
+  "battery_recycling": "energia",
+  "cables_power": "energia",
+  "coal": "energia",
+  "compound_semi": "fabricacion",
+  "connectors": "fabricacion",
+  "container_leasing": "logistica",
+  "contract_logistics": "logistica",
+  "defense_electronics": "defensa",
+  "development_bank": "macro_credito",
+  "drones_uav": "defensa",
+  "electronics_distribution": "logistica",
+  "ems": "fabricacion",
+  "equip_subsystems": "equipos",
+  "ev_components": "robotica",
+  "fab_construction": "inmobiliario",
+  "government_agency": "macro_credito",
+  "grid_equipment": "energia",
+  "industrial_automation": "robotica",
+  "insurance": "macro_credito",
+  "it_services": "cloud_ia",
+  "mining_equipment": "materiales",
+  "mining_tin": "materiales",
+  "mining_tungsten": "materiales",
+  "munitions": "defensa",
+  "naval_shipbuilding": "defensa",
+  "oil_gas_upstream": "energia",
+  "optical_transceivers": "infra",
+  "passive_components": "fabricacion",
+  "payments": "macro_credito",
+  "pcb": "fabricacion",
+  "power_epc": "energia",
+  "power_generation_equipment": "energia",
+  "power_semis": "fabricacion",
+  "power_supplies": "infra",
+  "rail_equipment": "logistica",
+  "rare_earth_magnets": "materiales",
+  "semi_ip": "diseno",
+  "semiconductor_rnd": "fabricacion",
+  "silicon_wafers": "equipos",
+  "solar_manufacturing": "energia",
+  "specialized_shipping": "logistica",
+  "specialty_metals": "materiales",
+  "storage_systems": "infra",
+  "subsea_cable": "infra",
+  "telecom_operator": "infra",
+  "trading_house": "materiales",
+  "transformers": "energia",
+  "utility_integrated": "energia",
   "power_ipp": "energia",
   "osat": "fabricacion",
   "defense_prime": "defensa",

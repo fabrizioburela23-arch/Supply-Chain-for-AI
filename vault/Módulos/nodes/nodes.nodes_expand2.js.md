@@ -30,11 +30,11 @@ De nivel superior (globales del script): `NODES_EXPAND2`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **4 de 98** (línea 1439), después de [[nodes.nodes_expand.js]] y antes de [[nodes.nodes_spacex.js]].
+Se carga en [[app.html]] en la posición **5 de 99** (línea 1506), después de [[nodes.nodes_expand.js]] y antes de [[nodes.nodes_spacex.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 4)
+- [[app.html]] — lo carga con `<script>` (posición 5)
 - [[engine.app_main.js]] — usa `NODES_EXPAND2`
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 

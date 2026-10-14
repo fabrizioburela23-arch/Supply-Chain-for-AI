@@ -1,0 +1,110 @@
+# governance/shapes/company.ttl — puerta G-IMPORT (sombra) sobre el PLAN del importador de fichas khipus.company/1
+# (docs/expansion/EXPANSION_5K.md E2.5; ontology/company_import.import_triples arma el foco).
+# Foco por ficha: `a kh:ImportRecord` con kh:recordId, kh:action, kh:schemaValid, kh:hqCountry (ISO-2; "ZZ" si no se
+# sabe) y kh:hqKnown, kh:catKnown, kh:summaryEn, kh:primaryListings, kh:unverifiedHighConf, kh:possibleDuplicate y kh:forbiddenKeys
+# (todos DERIVADOS en Python: la forma no repite números de política). Por vínculo del plan: `a kh:ImportRelation`
+# con kh:route, kh:criticality, kh:confidence, kh:liveWithoutTrust, kh:counterpartyResolved y, en `owns`,
+# kh:ownsSharePct contra kh:ownsMinPct (policy.import, entra como literal). Solo formas de propiedad: ninguna
+# implementación nueva en core/gates/rules.py. Modo SOMBRA: todo avisa y queda en la decisión ontology.bulk_import.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kh:   <https://khipus.ai/ont#> .
+@prefix khs:  <https://khipus.ai/shapes#> .
+@prefix khr:  <https://khipus.ai/rule#> .
+
+khs:ImportRecordShape a sh:NodeShape ;
+  sh:targetClass kh:ImportRecord ;
+  sh:name "Ficha de empresa por importar (plan)" ;
+  sh:property khs:ImportSchemaValid, khs:ImportHqCountryIso2, khs:ImportHqCountryKnown, khs:ImportCatKnown,
+              khs:ImportSummaryBilingual, khs:ImportOnePrimaryListing, khs:ImportUnverifiedConfidence,
+              khs:ImportPossibleDuplicate, khs:ImportNoLiveFields .
+
+khs:ImportSchemaValid a sh:PropertyShape ;
+  sh:path kh:schemaValid ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( true ) ;
+  sh:name "la ficha cumple khipus.company/1" ; khs:rule khr:import.schema_valid ; sh:severity sh:Violation ;
+  sh:message "La ficha no cumple el esquema khipus.company/1 (válida: {value}): no se importa."@es ,
+             "The record does not satisfy the khipus.company/1 schema (valid: {value}): it is not imported."@en .
+
+khs:ImportHqCountryIso2 a sh:PropertyShape ;
+  sh:path kh:hqCountry ; sh:minCount 1 ; sh:maxCount 1 ; sh:pattern "^[A-Z]{2}$" ;
+  sh:name "sede como ISO-2" ; khs:rule khr:import.hq_country_iso2 ; sh:severity sh:Violation ;
+  sh:message "El país de la sede «{value}» no es un código ISO 3166-1 alfa-2."@es ,
+             "The HQ country \"{value}\" is not an ISO 3166-1 alpha-2 code."@en .
+
+khs:ImportHqCountryKnown a sh:PropertyShape ;
+  sh:path kh:hqKnown ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( true ) ;
+  sh:name "sede conocida" ; khs:rule khr:import.hq_country_known ; sh:severity sh:Warning ;
+  sh:message "La sede es desconocida ({value}): la empresa queda en «Resto del mundo» hasta revisarla."@es ,
+             "The HQ is unknown ({value}): the company stays under \"Rest of world\" until reviewed."@en .
+
+khs:ImportCatKnown a sh:PropertyShape ;
+  sh:path kh:catKnown ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( true ) ;
+  sh:name "categoría del catálogo o aprobada" ; khs:rule khr:import.cat_known ; sh:severity sh:Warning ;
+  sh:message "La categoría no está en el catálogo ni fue aprobada en este lote (conocida: {value}): se usa la más cercana y queda propuesta."@es ,
+             "The category is neither in the catalog nor approved in this batch (known: {value}): the nearest one is used and it stays proposed."@en .
+
+khs:ImportSummaryBilingual a sh:PropertyShape ;
+  sh:path kh:summaryEn ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( true ) ;
+  sh:name "perfil en español e inglés" ; khs:rule khr:import.summary_bilingual ; sh:severity sh:Warning ;
+  sh:message "El perfil no trae inglés (regla bilingüe; con inglés: {value}): la ficha se muestra solo en español hasta traducirla."@es ,
+             "The profile has no English text (bilingual rule; has English: {value}): the card shows Spanish only until translated."@en .
+
+khs:ImportOnePrimaryListing a sh:PropertyShape ;
+  sh:path kh:primaryListings ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:maxInclusive 1 ;
+  sh:name "una sola cotización principal" ; khs:rule khr:import.one_primary_listing ; sh:severity sh:Violation ;
+  sh:message "La ficha marca {value} cotizaciones como principal: solo puede haber una (empresa ≠ instrumento)."@es ,
+             "The record marks {value} listings as primary: there can be only one (company ≠ instrument)."@en .
+
+khs:ImportUnverifiedConfidence a sh:PropertyShape ;
+  sh:path kh:unverifiedHighConf ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( false ) ;
+  sh:name "sin verificar = confianza baja" ; khs:rule khr:import.unverified_confidence ; sh:severity sh:Warning ;
+  sh:message "La ficha no está verificada pero declara una confianza alta ({value}): se recorta a la de política."@es ,
+             "The record is unverified but declares high confidence ({value}): it is capped at the policy value."@en .
+
+khs:ImportPossibleDuplicate a sh:PropertyShape ;
+  sh:path kh:possibleDuplicate ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( false ) ;
+  sh:name "posible duplicado por nombre" ; khs:rule khr:import.possible_duplicate ; sh:severity khs:RequiresApproval ;
+  sh:message "El nombre se parece a una empresa que ya existe (posible duplicado: {value}): revisar antes de crearla."@es ,
+             "The name resembles an existing company (possible duplicate: {value}): review before creating it."@en .
+
+khs:ImportNoLiveFields a sh:PropertyShape ;
+  sh:path kh:forbiddenKeys ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:maxInclusive 0 ;
+  sh:name "sin cifras en vivo en la ficha" ; khs:rule khr:import.no_live_fields ; sh:severity sh:Violation ;
+  sh:message "La ficha trae {value} campo(s) que el servidor calcula en vivo (precio, capitalización, NRS…): no se importan."@es ,
+             "The record carries {value} field(s) the server computes live (price, market cap, NRS…): they are not imported."@en .
+
+khs:ImportRelationShape a sh:NodeShape ;
+  sh:targetClass kh:ImportRelation ;
+  sh:name "Vínculo de una ficha por importar (plan)" ;
+  sh:property khs:ImportRelRouteInVocab, khs:ImportRelCriticality, khs:ImportRelLiveTrusted,
+              khs:ImportRelCounterparty, khs:ImportRelOwnsShare .
+
+khs:ImportRelRouteInVocab a sh:PropertyShape ;
+  sh:path kh:route ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "live" "proposed" "pending" "quarantine" ) ;
+  sh:name "ruta del vínculo" ; khs:rule khr:import.route_in_vocab ; sh:severity sh:Violation ;
+  sh:message "La ruta «{value}» no existe: un vínculo entra vivo, como propuesta, queda pendiente o en cuarentena."@es ,
+             "Route \"{value}\" does not exist: a link enters live, as a proposal, stays pending or is quarantined."@en .
+
+khs:ImportRelCriticality a sh:PropertyShape ;
+  sh:path kh:criticality ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 1 ; sh:maxInclusive 6 ;
+  sh:name "criticidad 1-6" ; khs:rule khr:import.criticality_range ; sh:severity sh:Violation ;
+  sh:message "La criticidad {value} está fuera de la escala 1-6 (peso del vínculo)."@es ,
+             "Criticality {value} is outside the 1-6 scale (link weight)."@en .
+
+khs:ImportRelLiveTrusted a sh:PropertyShape ;
+  sh:path kh:liveWithoutTrust ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( false ) ;
+  sh:name "un vínculo vivo cita una fuente confiable" ; khs:rule khr:import.live_needs_trust ; sh:severity khs:RequiresApproval ;
+  sh:message "El vínculo entraría VIVO sin fuente con trust ≥ 2 ni confianza ≥ 0,5 (sin respaldo: {value}): va como propuesta."@es ,
+             "The link would enter LIVE without a trust ≥ 2 source or confidence ≥ 0.5 (unbacked: {value}): it goes as a proposal."@en .
+
+khs:ImportRelCounterparty a sh:PropertyShape ;
+  sh:path kh:counterpartyResolved ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( true ) ;
+  sh:name "contraparte identificada" ; khs:rule khr:import.counterparty_resolved ; sh:severity sh:Warning ;
+  sh:message "La contraparte no existe todavía en el grafo (identificada: {value}): el vínculo queda PENDIENTE hasta que llegue su ficha."@es ,
+             "The counterparty does not exist in the graph yet (identified: {value}): the link stays PENDING until its record arrives."@en .
+
+khs:ImportRelOwnsShare a sh:PropertyShape ;
+  sh:path kh:ownsMinPct ; sh:maxCount 1 ; sh:lessThanOrEquals kh:ownsSharePct ;
+  sh:name "owns desde la participación mínima" ; khs:rule khr:import.owns_share_min ; sh:severity sh:Warning ;
+  sh:message "Un vínculo «owns» exige al menos {value} % de participación (la ficha trae {limit} %): debería ser «invest»."@es ,
+             "An \"owns\" link needs at least {value}% ownership (the record has {limit}%): it should be \"invest\"."@en .

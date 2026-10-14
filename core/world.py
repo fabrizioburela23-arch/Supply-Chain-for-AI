@@ -576,6 +576,12 @@ _PLACE_EXTRA = {
     'nevada': 'EEUU', 'oklahoma': 'EEUU', 'washington': 'EEUU', 'oregon': 'EEUU', 'idaho': 'EEUU',
     'montana': 'EEUU', 'wyoming': 'EEUU', 'utah': 'EEUU', 'arizona': 'EEUU', 'new mexico': 'EEUU',
     'colorado': 'EEUU', 'puerto rico': 'EEUU', 'district of columbia': 'EEUU', 'mx': 'Mexico',
+    # lote K: country_key acepta ISO-2 ('CO' → Colombia): las abreviaturas de estados de EE.UU. en los textos de
+    # GDELT/USGS ('Boulder, CO', 'Chicago, IL') se resuelven AQUÍ antes (place_country mira _PLACE_EXTRA primero)
+    **{k: 'EEUU' for k in ('al', 'ak', 'az', 'ar', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky',
+                           'la', 'me', 'md', 'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 'ny', 'nc',
+                           'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv',
+                           'wi', 'wy', 'dc', 'pr')},
     'b c': 'Mexico', 'japan region': 'Japon', 'taiwan region': 'Taiwan',
     'gaza strip': 'Israel', 'west bank': 'Israel', 'republic of china': 'Taiwan',
     'south korea region': 'Corea', 'north korea': None,
@@ -610,12 +616,20 @@ def _jitter(seed, amp):
 
 
 def country_key(raw):
-    """Texto libre de país → clave del catálogo ('Estados Unidos (HQ…)' → 'EEUU')."""
+    """Texto libre de país → clave del catálogo ('Estados Unidos (HQ…)' → 'EEUU'). Desde 2026-10-14 también un
+    ISO-2 guardado por el importador ('US' → 'EEUU', 'JP' → 'Japon'): solo dos MAYÚSCULAS ASCII ('ca' no es
+    Canadá) y solo si su clave existe en _COUNTRY; si no, sigue el camino de siempre. Gemela: geo_coords.countryKey."""
     if not raw:
         return None
     raw = str(raw)
     if raw in _COUNTRY:
         return raw
+    t = raw.strip()
+    if len(t) == 2 and t.isascii() and t.isalpha() and t.isupper():
+        from core.countries import TABLE as _ISO
+        k = (_ISO.get(t) or {}).get('key')
+        if k in _COUNTRY:
+            return k
     n = _js_norm(raw)
     if n in _ALIAS:
         return _ALIAS[n]

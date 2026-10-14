@@ -92,7 +92,7 @@ def _run(body, *args, timeout=60):
 
 # ── herramienta → mascota: el contrato §3.2 (y el mismo mapa que el servidor) ──
 SPEC_TOOL_AGENT = {
-    'get_company': 'analista', 'search_companies': 'analista', 'get_research': 'analista', 'get_claim_evidence': 'analista',
+    'get_company': 'analista', 'search_companies': 'analista', 'get_research': 'analista', 'get_claim_evidence': 'analista', 'get_fundamentals': 'analista',
     'get_supply_chain': 'cadena', 'rank_companies': 'cadena',
     'get_news': 'radar', 'get_world_events': 'radar', 'web_search': 'radar', 'scenario_exposure': 'radar',
     'market_movers': 'tecnico', 'get_option_greeks': 'tecnico', 'get_risk_report': 'tecnico',

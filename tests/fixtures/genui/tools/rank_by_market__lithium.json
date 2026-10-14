@@ -1,0 +1,99 @@
+{
+ "args": {
+  "limit": 10,
+  "market": "litio para baterías",
+  "metric": "share_pct",
+  "region": "GLOBAL"
+ },
+ "note": "MUESTRA grabada con la herramienta real sobre posiciones de mercado de prueba (empresas reales del catálogo, cifras ilustrativas)",
+ "result": {
+  "as_of": "2026-10-14T15:00:00Z",
+  "generation": "g.sample",
+  "graph_source": "sample",
+  "graph_version": 0,
+  "items": [
+   {
+    "as_of": "2026-03-01",
+    "confidence": 0.6,
+    "id": "Albemarle",
+    "label": "Albemarle Corporation",
+    "market": "lithium chemicals (battery grade)",
+    "match_score": 0.5,
+    "measured_by": "Benchmark Mineral Intelligence",
+    "metric": "share of global LCE supply",
+    "period": "2025",
+    "position": 1,
+    "rank": 1,
+    "region": "GLOBAL",
+    "share_pct": 20.5,
+    "source_url": "https://example.org/sample-lithium-2025",
+    "symbol": "ALB"
+   },
+   {
+    "as_of": "2026-03-01",
+    "confidence": 0.6,
+    "id": "SQM",
+    "label": "SQM",
+    "market": "lithium chemicals (battery grade)",
+    "match_score": 0.5,
+    "measured_by": "Benchmark Mineral Intelligence",
+    "metric": "share of global LCE supply",
+    "period": "2025",
+    "position": 2,
+    "rank": 2,
+    "region": "GLOBAL",
+    "share_pct": 17.3,
+    "source_url": "https://example.org/sample-lithium-2025",
+    "symbol": "SQM"
+   },
+   {
+    "as_of": "2026-03-01",
+    "confidence": 0.5,
+    "id": "GanfengLithium",
+    "label": "Ganfeng Lithium",
+    "market": "litio para baterías",
+    "match_score": 1.0,
+    "measured_by": "Benchmark Mineral Intelligence",
+    "metric": "share of global LCE supply",
+    "period": "2025",
+    "position": 3,
+    "rank": 3,
+    "region": "global",
+    "share_pct": 12.4,
+    "source_url": "https://example.org/sample-lithium-2025",
+    "symbol": "1772.HK"
+   },
+   {
+    "as_of": "2026-03-01",
+    "confidence": 0.4,
+    "id": "TianqiLithium",
+    "label": "Tianqi Lithium",
+    "market": "lithium chemicals (battery grade)",
+    "match_score": 0.5,
+    "measured_by": "Benchmark Mineral Intelligence",
+    "metric": "rank only",
+    "period": "2025",
+    "position": 4,
+    "rank": 4,
+    "region": null,
+    "share_pct": null,
+    "source_url": "https://example.org/sample-lithium-2025",
+    "symbol": "9696.HK"
+   }
+  ],
+  "market": "litio para baterías",
+  "markets_matched": [
+   "lithium chemicals (battery grade)",
+   "litio para baterías"
+  ],
+  "method": "text match of the market name against each company's market_position entries (es/en roots), same region; sorted by share_pct (desc) or rank (asc); entries without the metric go last",
+  "metric": "share_pct",
+  "n_matched": 4,
+  "region": "GLOBAL",
+  "sorted_by": "share_pct",
+  "source": "Khipus graph — market_position facts researched per company (source_url and as_of per entry)",
+  "uncertainty": "only companies whose research card records a market position; measured_by/period differ between entries — compare like with like"
+ },
+ "sample": true,
+ "tool": "rank_by_market"
+}
