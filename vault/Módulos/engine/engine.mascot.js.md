@@ -24,11 +24,11 @@ MASCOTAS BURBUJA de Khipus OS (2026-10-06)
 
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **33 de 100** (línea 3090), después de [[engine.tour_script.js]] y antes de [[engine.universe2d.js]].
+Se carga en [[app.html]] en la posición **34 de 101** (línea 3093), después de [[engine.tour_script.js]] y antes de [[engine.universe2d.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 33)
+- [[app.html]] — lo carga con `<script>` (posición 34)
 - [[engine.brief.js]] — usa `KhipuMascot`
 - [[engine.clients.js]] — usa `KhipuMascot`
 - [[engine.cockpit.js]] — usa `KhipuAgentPrefs`, `KhipuMascot`

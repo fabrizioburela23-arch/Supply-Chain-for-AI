@@ -224,6 +224,7 @@ global.fetch = (url) => {
 };
 require(ROOT + '/engine/agents_registry.js');
 require(ROOT + '/engine/mascot.js');
+require(ROOT + '/engine/pfstore.js');      // un solo lugar donde guardar (2026-10-15)
 require(ROOT + '/engine/portfolios.js');
 require(ROOT + '/engine/riskreport.js');
 const tick = () => new Promise(r => setTimeout(r, 15));
@@ -330,7 +331,9 @@ def test_asistente_con_mascota_y_mismos_controles(screens):
 
 def test_riesgo_semaforo_mapa_y_vega_con_tokens(screens):
     st = screens['rr_start']
-    assert 'class="ktabs"' in st and 'data-src="market"' in st and 'data-ex="semis"' in st and 'id="krr-q"' in st
+    assert 'class="ktabs"' in st and 'data-ex="semis"' in st and 'id="krr-q"' in st
+    # un solo lugar donde guardar (2026-10-15): ya no hay botón «Mi portafolio (Mercado)»; sin carteras, la pista
+    assert 'data-src="market"' not in st and 'Aún no tienes carteras' in st
     r = screens['rr_result']
     assert 'class="light high"' in r and 'style="border-color' not in r     # semáforo por clase, sin hex
     assert 'data-act="ai"' in r and 'class="km' in r                       # "Explícame con IA" con la mascota

@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 1015
+lineas: 1017
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 1.015 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 1.017 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -139,6 +139,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[engine.oswindows.js]]
 - [[engine.pfcommittee.js]]
 - [[engine.pfreports.js]]
+- [[engine.pfstore.js]]
 - [[engine.portfolios.js]]
 - [[engine.pricehist.js]]
 - [[engine.reconcile.js]]
@@ -245,6 +246,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274]]
 - [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]]

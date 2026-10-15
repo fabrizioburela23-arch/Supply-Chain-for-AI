@@ -28,11 +28,11 @@ TRADING COMPARTIDO del navegador (lote I4, G5-07: salió TAL CUAL de engine/voic
 - [[engine.resolve.js]] — usa `KhipuResolve`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **37 de 100** (línea 3094), después de [[engine.orb.js]] y antes de [[engine.voice.js]].
+Se carga en [[app.html]] en la posición **38 de 101** (línea 3097), después de [[engine.orb.js]] y antes de [[engine.voice.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 37)
+- [[app.html]] — lo carga con `<script>` (posición 38)
 - [[engine.cockpit.js]] — usa `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
 - [[engine.resolve.js]] — usa `_openBrokerStage`
 - [[engine.voice.js]] — usa `__tradeAcctCache`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`

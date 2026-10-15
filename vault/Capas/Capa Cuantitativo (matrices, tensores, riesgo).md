@@ -9,18 +9,18 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 > Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones.
 
-**24 archivos · 10.409 líneas.** Volver al [[00 Mapa de Khipus]].
+**24 archivos · 10.419 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[matrix.api.py]] — 1.275 líneas · blueprint Flask del motor de matrices: /api/matrix/\*.
 - [[matrix.engine.py]] — 1.103 líneas · construcción, modulación y propagación de matrices.
-- [[engine.riskreport.js]] — 1.033 líneas · REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
+- [[engine.riskreport.js]] — 1.042 líneas · REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
 - [[matrix.tensor.py]] — 846 líneas · ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
 - [[core.risk_report.py]] — 753 líneas · REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
 - [[core.sim_agents.py]] — 706 líneas · Motor de simulación POR AGENTES (interno).
 - [[core.scenario_engine.py]] — 548 líneas · ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
-- [[engine.hotclient.js]] — 484 líneas · EL cliente de las vistas rápidas del servidor (window.KhipuHot) INFRA_OPERATIVA §4.6-§4.7 (paso 13, 2026-10-13): en el navegador NO queda ningún …
+- [[engine.hotclient.js]] — 485 líneas · EL cliente de las vistas rápidas del servidor (window.KhipuHot) INFRA_OPERATIVA §4.6-§4.7 (paso 13, 2026-10-13): en el navegador NO queda ningún …
 - [[engine.livesim.js]] — 445 líneas · SIMULACIÓN EN VIVO v3 (abierta, no cerrada) Constructor de escenarios: eliges el TIPO de golpe (corte↓, demanda↑, precio, sanción) y el OBJETIVO …
 - [[scripts.calibrate_kernel.py]] — 355 líneas · calibra κ (escenario → dinero) con episodios reales (BRECHAS L2-13 / PROP-16; batch I3).
 - [[engine.insights.js]] — 344 líneas · INSIGHTS AUTOMÁTICOS (Etapa 5, piel NEXUS) Genera tarjetas de lectura desde la topología + el motor de matrices: - chokepoints (quién arrastra a más …

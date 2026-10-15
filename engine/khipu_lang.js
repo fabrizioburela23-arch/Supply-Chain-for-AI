@@ -286,7 +286,7 @@
       // Reporte completo (VaR/CVaR histórico y paramétrico, volatilidad, beta,
       // contribución al riesgo, correlaciones) con precios diarios reales.
       const en = (window.LANG || '') === 'en';
-      if (window.KhipuRisk) window.KhipuRisk.open({ tab: 'var', source: 'market', autorun: true });
+      if (window.KhipuRisk) window.KhipuRisk.open({ tab: 'var', autorun: true });   // la cartera activa
       return { answer: en ? 'Opening your portfolio risk report (VaR, volatility, beta, who brings the risk).'
                           : 'Abriendo el reporte de riesgo de tu cartera (VaR, volatilidad, beta, quién pone el riesgo).', actions: [] };
     }

@@ -3,7 +3,7 @@
    cada versión DISPONIBLE de un artefacto con «¿Qué cambia?» (contrafactual del servidor, sin tocar el motor vivo:
    GET /api/governance/preview) y «Activar (PIN)» (POST /api/governance/activate). Deshacer = activar la anterior.
    TODO por window._tradeFetch (PIN) y window.KhipuToast.confirm (nunca window.confirm). Textos ES/EN.
-   Paso 25 (flujo completo, core/governance_flow.py): «¿Qué cambia para mí?» con TUS posiciones (eco_pos; sin ellas, las
+   Paso 25 (flujo completo, core/governance_flow.py): «¿Qué cambia para mí?» con TUS posiciones (MKT.pos = la cartera ACTIVA; sin ellas, las
    10 empresas más críticas), «Proponer cambio» (formulario de números con su mínimo y máximo: governance/tunables.json),
    «Regresión» (contrafactual sobre el libro real, en segundo plano), «Activar ahora» o «Programar» (effective_from;
    «Cancelar» antes de que empiece), «Deshacer» el último cambio y el historial (GET /api/governance/history).
@@ -278,7 +278,7 @@
   // ── paso 25: flujo completo ─────────────────────────────────────────────────────────────────────────────────
   function myIds() {
     try {
-      var pos = JSON.parse(localStorage.getItem('eco_pos') || '{}') || {};
+      var pos = (window.MKT && window.MKT.pos) || (window.KhipuPfStore ? window.KhipuPfStore.view() : {}) || {};   // la cartera activa
       return Object.keys(pos).filter(function (k) { return pos[k]; }).slice(0, 25);
     } catch (e) { return []; }
   }

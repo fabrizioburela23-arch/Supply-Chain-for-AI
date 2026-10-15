@@ -732,8 +732,10 @@ pendientes esperan las fichas P2; E3.4/E3.5 (mapa a 1.339 abre +1,2 s); `link.di
   solo respaldo EOD opcional y nunca pisa una cotización más nueva (merge por as_of).
   `/api/quote/<t>` y `/api/quotes` delegan en la misma función (devuelven además `c/pc/dp/t`
   crudos por compatibilidad). `LivePrices.seed()` se ELIMINÓ (1.090 req/min → 429): no recrear.
-  Portafolio del usuario: `MKT.pos` en localStorage `eco_pos`, SINCRONIZADO con el
-  server por engine/sync.js (junto a kh_portfolios / kh_investor_profile; /api/user-state).
+  Portafolio del usuario (UN solo lugar donde guardar, 2026-10-15): `MKT.pos` es la VISTA {nodeId:{sh,bp}} de la
+  cartera ACTIVA de `kh_portfolios` (engine/pfstore.js, `window.KhipuPfStore`; escribir = `savePos()` → la activa);
+  `eco_pos` es SOLO una copia escrita (nunca se lee como fuente; un eco_pos ajeno que llega del servidor se adopta en
+  «Mi cartera», nunca se pisa). Todo se sincroniza por engine/sync.js (/api/user-state).
 - `window.NODE_BY_ID` SÍ está expuesto (antes era undefined — rompía el Grafo
   Temporal en silencio; no quitar la línea `window.NODE_BY_ID = NODE_BY_ID`).
 - `window.TEMPORAL_SEED_FACTS` + `window.ONTOLOGY` ({types, rels, objects})

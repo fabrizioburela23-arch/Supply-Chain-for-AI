@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/app_coordinator.js"
 lenguaje: "javascript"
-lineas: 2698
+lineas: 2703
 aliases: ["engine/app_coordinator.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/app_coordinator.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 2.698 líneas · `engine/app_coordinator.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 2.703 líneas · `engine/app_coordinator.js`
 
 ## Para qué sirve
 
@@ -43,11 +43,11 @@ De nivel superior (globales del script): `_DS_SRC`, `_TERM_ICON`, `_TERM_SEED`, 
 - [[engine.graph3d.js]] — lo nombra por su ruta
 - [[engine.hypergraph.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **96 de 100** (línea 3222), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
+Se carga en [[app.html]] en la posición **97 de 101** (línea 3225), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 96)
+- [[app.html]] — lo carga con `<script>` (posición 97)
 - [[app.html]] — usa `_dossierAddCompare`, `_dossierAutocomplete`, `_dossierLoad`, `_dossierToWarRoom`, `_go3D`, `_termCat`, `_termClearAll`, `_termFilter` y 2 más
 - [[engine.app_main.js]] — usa `_dossierRedrawIfNeeded`, `_dossierRelabel`, `_termRefreshPrices`, `initGdelt`, `initSimTab`, `initSpaceTab`, `initTerminalTab`, `renderNrsTop10`
 - [[engine.app_preflight.js]] — usa `initSimTab`

@@ -250,6 +250,7 @@ header{
 .mkt-btn.ghost:hover{color:var(--ink);background:var(--surface-2)}
 .mkt-btn:disabled{opacity:.45;cursor:wait}
 .mkt-ts{font-size:11px;color:var(--ink-3)}
+.mk-pf-switch{font-size:11px;color:var(--accent);text-decoration:underline;cursor:pointer;white-space:nowrap}
 .mkt-keyrow input:focus{outline:none;border-color:var(--blue)}
 .mkt-hint{font-size:10.5px;color:var(--ink-3);width:100%}
 .mkt-tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:2px;overflow-x:auto}
@@ -2094,13 +2095,14 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       </div>
       <div class="mkt-controls">
         <div class="seg" id="mkt-filter">
-          <button data-f="pos" data-i18n="mk_fpos">Posiciones</button>
+          <button data-f="pos" id="mk-fpos"><span data-i18n="mk_fpos">Mi cartera</span><span id="mk-pf-name"></span></button>
           <button data-f="C1">C1</button>
           <button data-f="C2">C2</button>
           <button data-f="all" class="active" data-i18n="mk_fall">Todas</button>
         </div>
+        <a href="#" class="mk-pf-switch" id="mk-pf-switch" data-i18n="mk_pf_switch">Cambiar de cartera ›</a>
         <button class="mkt-btn" id="mk-refresh">⟳ <span data-i18n="mk_refresh">Actualizar precios</span></button>
-        <button class="mkt-btn" onclick="window.KhipuRisk&&window.KhipuRisk.open({tab:'var',source:'market',autorun:true})" title="VaR · CVaR · volatilidad · beta · Vega">📉 <span data-i18n="mk_risk">Reporte de riesgo</span></button>
+        <button class="mkt-btn" onclick="window.KhipuRisk&&window.KhipuRisk.open({tab:'var',autorun:true})" title="VaR · CVaR · volatilidad · beta · Vega">📉 <span data-i18n="mk_risk">Reporte de riesgo</span></button>
         <button id="mk-events-btn" onclick="loadCorporateEvents()" style="padding:5px 10px;border:1px solid rgba(80,120,180,.3);border-radius:5px;background:none;color:#7a9cc4;font-size:11px;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(80,120,180,.1)'" onmouseout="this.style.background='none'">📰 Eventos</button>
         <button id="export-btn" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:11px;cursor:pointer" title="Exportar datos">⬇ CSV</button>
         <span class="live-pill" id="live-pill"><span class="live-dot"></span>LIVE</span>
@@ -2676,6 +2678,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 </aside>
 
 <div id="hover-tooltip"></div>
+<script src="engine/pfstore.js"></script>
 <script src="engine/app_main.js"></script>
 <!-- Second Brain Panel -->
 <div id="second-brain-panel" style="display:none;position:fixed;top:0;right:0;width:420px;height:100vh;z-index:500;background:var(--surface);border-left:1px solid var(--line);box-shadow:-4px 0 32px rgba(0,0,0,.16);overflow-y:auto;transition:transform .3s ease">

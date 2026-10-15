@@ -2039,7 +2039,7 @@ es: {
   em_start:'Empieza por los nodos centrales',
   disc:'Análisis informativo: precios y fundamentales en vivo donde dice ● / «en vivo»; lo rotulado «catálogo» son estimaciones curadas (revisión jun. 2026). Toda métrica de rentabilidad es margen sobre ventas. No constituye asesoría financiera.',
   mk_value:'Valor de posiciones', mk_pnl:'P&L total', mk_day:'Variación del día', mk_status:'Datos',
-  mk_fpos:'Posiciones', mk_fall:'Todas', mk_refresh:'Actualizar precios', mk_risk:'Reporte de riesgo', mk_key:'API key',
+  mk_fpos:'Mi cartera', mk_pf_switch:'Cambiar de cartera ›', mk_fall:'Todas', mk_refresh:'Actualizar precios', mk_risk:'Reporte de riesgo', mk_key:'API key',
   mk_save:'Guardar', mk_clear:'Borrar',
   mk_keyhint:'Se guarda solo en este navegador (localStorage), nunca en el archivo.',
   mk_foot:'Precios EN VIVO (Finnhub y Yahoo, todas las bolsas; el punto verde dice la fuente y la hora). Marketstack solo como respaldo de cierre. Las empresas privadas no cotizan: muestran su última valuación verificada (✓ fecha).',
@@ -2110,7 +2110,7 @@ en: {
   em_start:'Start with the central nodes',
   disc:'Informational analysis: live prices and fundamentals where marked ● / «live»; items labelled «catalog» are curated estimates (Jun 2026 review). All profitability metrics are margin on sales. Not financial advice.',
   mk_value:'Positions value', mk_pnl:'Total P&L', mk_day:'Day change', mk_status:'Data',
-  mk_fpos:'Positions', mk_fall:'All', mk_refresh:'Refresh prices', mk_risk:'Risk report', mk_key:'API key',
+  mk_fpos:'My portfolio', mk_pf_switch:'Switch portfolio ›', mk_fall:'All', mk_refresh:'Refresh prices', mk_risk:'Risk report', mk_key:'API key',
   mk_save:'Save', mk_clear:'Clear',
   mk_keyhint:'Stored only in this browser (localStorage), never inside the file.',
   mk_foot:'LIVE prices (Finnhub and Yahoo, all exchanges; the green dot shows the source and time). Marketstack only as an end-of-day fallback. Private companies do not trade: they show their last verified valuation (✓ date).',
@@ -2480,12 +2480,30 @@ var MKT = {
     return q;
   })(),
   ts: Number(localStorage.getItem('eco_quotes_ts'))||null,
-  pos: JSON.parse(localStorage.getItem('eco_pos')||'{}'),
+  // UN solo lugar donde guardar (2026-10-15): MKT.pos = vista {nodeId:{sh,bp}} de la cartera ACTIVA de
+  // engine/pfstore.js (kh_portfolios). Escribir: cambiar MKT.pos y llamar savePos() → va a esa cartera.
+  pos: (typeof window!=='undefined' && window.KhipuPfStore) ? window.KhipuPfStore.view() : {},
   filter:'all', editing:null, loading:false,
 };
 const fmtN=(v,dec=2)=> v==null||isNaN(v) ? '—' : Number(v).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
 const fmtPct=v=> v==null||isNaN(v) ? '—' : (v>=0?'+':'')+ (v*100).toFixed(2)+'%';
-function savePos(){ localStorage.setItem('eco_pos',JSON.stringify(MKT.pos)); }
+function savePos(){ if(window.KhipuPfStore) window.KhipuPfStore.applyView(MKT.pos); }
+/* «Mi cartera: <nombre>» en el filtro de Mercado + enlace para cambiarla en Carteras (sin botones nuevos) */
+function _mkPfLabel(){
+  const el=document.getElementById('mk-pf-name'); if(!el) return;
+  const nm=(window.KhipuPfStore&&window.KhipuPfStore.name())||'';
+  const same = nm.trim().toLowerCase()===String(t('mk_fpos')).toLowerCase();   // «Mi cartera: Mi cartera» → «Mi cartera»
+  el.textContent = (nm && !same) ? ': '+(nm.length>26?nm.slice(0,25)+'…':nm) : '';
+  const b=document.getElementById('mk-fpos'); if(b) b.title = nm || t('mk_fpos');
+}
+(function(){
+  const a=document.getElementById('mk-pf-switch');
+  if(a) a.addEventListener('click',e=>{ e.preventDefault();
+    if(typeof window._surface==='function') window._surface('tab','portfolios'); else switchTab('portfolios'); });
+  window.addEventListener('khipu:portfolio',()=>{
+    try{ _mkPfLabel(); if(typeof activeTab!=='undefined' && activeTab==='market' && !MKT.editing) renderMarket(true); }catch(e){}
+  });
+})();
 function quoteOf(n){ return n.mkt ? MKT.quotes[n.mkt] : null; }
 /* ── CONTRATO de MKT.quotes[ticker] (2026-10-04) ─────────────────────────────
    {close, prev, pct?, live?:<precio NUMÉRICO o ausente>, src:'finnhub'|'yahoo'|
@@ -2835,6 +2853,7 @@ function marketRows(){
 
 function renderMarket(keepStatus){
   if(activeTab!=='market') return;
+  _mkPfLabel();
   const rows=marketRows();
   let totVal=0, totCost=0, totDay=0, anyPos=false;
   rows.forEach(n=>{
@@ -2882,7 +2901,7 @@ function renderMarket(keepStatus){
       <td onclick="goMap('${n.id}')" style="display:flex;align-items:center;gap:6px">${LOGO_DOMAIN[n.id]?`<img src="https://logo.clearbit.com/${LOGO_DOMAIN[n.id]}?size=32" style="width:20px;height:20px;border-radius:4px;object-fit:contain;flex-shrink:0;background:#fff" onerror="this.style.display='none'" loading="lazy">`:'<span style="width:20px;flex-shrink:0"></span>'}<span>${esc(n.label)} <span class="tk">${esc(n.mkt||t('mk_npos'))}</span></span>${(window._tickerWarnings&&window._tickerWarnings.has(n.id)&&!(quotePx(q)>0))?' <span class="tk-warn" title="'+esc(LANG==='en'?'No price from Finnhub, Yahoo or the market-cap batch · the ticker may have changed':'Sin precio en Finnhub, Yahoo ni el lote de capitalización · el ticker puede haber cambiado')+'" style="color:#f59e0b;font-size:10px;cursor:help">⚠</span>':''}</td>
       <td class="mk-c-price">${q&&q.close!=null?'$'+fmtN(q.close):'<span class="td-dim">—</span>'}${quoteSrcChip(q, n.mkt)}</td>
       <td class="mk-c-chg ${chg==null?'td-dim':chg>=0?'td-up':'td-down'}">${fmtPct(chg)}</td>
-      <td>${p?fmtN(p.sh,0):'<span class="td-dim">—</span>'}</td>
+      <td>${p?fmtN(p.sh,Number.isInteger(p.sh)?0:(p.sh<1?4:2)):'<span class="td-dim">—</span>'}</td>
       <td>${p?'$'+fmtN(p.bp):'<span class="td-dim">—</span>'}</td>
       <td class="mk-c-val">${val!=null?'$'+fmtN(val):'<span class="td-dim">—</span>'}</td>
       <td class="mk-c-pnl ${pnlP==null?'td-dim':pnlP>=0?'td-up':'td-down'}">${fmtPct(pnlP)}</td>

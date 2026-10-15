@@ -209,12 +209,11 @@
     var am = low.match(accRx);
     if (am) {
       var brokerOnly = /br[oó]ker|broker|alpaca/.test(low);
-      var pfs = brokerOnly ? [] : pfSources().filter(function (x) { return x.key.indexOf('pf:') === 0 || x.key === 'market'; });
+      var pfs = brokerOnly ? [] : pfSources().filter(function (x) { return x.key.indexOf('pf:') === 0; });
       if (!pfs.length) return { kind: 'account' };
       var en2 = lang() === 'en';
       var acts = [{ type: 'broker' }].concat(pfs.map(function (x) {
-        return x.key === 'market' ? { type: 'switch_tab', arg: 'market', label: en2 ? 'My Market positions' : 'Mis posiciones de Mercado' }
-          : { type: 'open_portfolio', arg: x.key.slice(3), label: String(x.label).replace(/^[^\wÀ-ÿ]+\s*/, '') };
+        return { type: 'open_portfolio', arg: x.key.slice(3), label: String(x.label).replace(/^[^\wÀ-ÿ]+\s*/, '') };
       }));
       return _cmdActs(en2 ? 'Which one do you want to open? You have your broker account (Alpaca — real or paper money, the one with your actual orders) and ' + pfs.length + ' simulated portfolio(s):'
                           : '¿Cuál quieres abrir? Tienes tu cuenta del bróker (Alpaca — la de tus órdenes reales o de papel) y ' + pfs.length + ' cartera(s) simulada(s):', acts);
@@ -545,31 +544,28 @@
         var mp = (W.KhipuHot && typeof W.KhipuHot.myPositions === 'function') ? W.KhipuHot.myPositions() : null;
         ((mp && mp.positions) || []).forEach(function (q) { if (q && q.id && typeof q.usd === 'number' && q.usd > 0) usdBy[q.id] = q.usd; });
       } catch (e) {}
+      var unlisted = 0;   // empresas sin ticker (privadas / pre-IPO): están en la cartera aunque no tengan precio
       Object.keys(pos).forEach(function (id) {
         var n = NB[id], p = pos[id];
+        if (p && +p.sh > 0 && !(n && n.mkt)) unlisted++;
         if (n && n.mkt && p && +p.sh > 0 && out.length < 30) {
           var o = { symbol: String(n.mkt), shares: +p.sh };
           if (usdBy[n.id] != null) o.usd = usdBy[n.id];
           out.push(o);
         }
       });
-      if (out.length) ctx.portfolio = { positions: out };
-    } catch (e) {}
-    // carteras de práctica (kh_portfolios, simuladas): van con su NOMBRE para que Khipu diga de qué lista habla
-    // (Fabrizio 2026-10-15: «quiero que mencione la cartera de donde está sacando la info»)
-    try {
-      var pfs = JSON.parse(W.localStorage.getItem('kh_portfolios') || '[]'), act = W.localStorage.getItem('kh_pf_active');
-      var NB2 = W.NODE_BY_ID || {}, prac = [];
-      (Array.isArray(pfs) ? pfs : []).slice(0, 5).forEach(function (pf) {
-        if (!pf) return;
-        var ps = [];
-        (pf.positions || []).forEach(function (q) {
-          var n = q && NB2[q.nodeId];
-          if (n && +q.shares > 0 && ps.length < 20) ps.push({ symbol: String(n.mkt || n.id), shares: +q.shares });
-        });
-        prac.push({ name: String(pf.name || '').slice(0, 60), active: pf.id != null && String(pf.id) === String(act), positions: ps });
-      });
-      if (prac.length) ctx.practice_portfolios = prac;
+      // UN solo lugar donde guardar (2026-10-15): MKT.pos es la vista de la cartera ACTIVA (engine/pfstore.js) →
+      // va con su NOMBRE («tu cartera “<nombre>”»); de las otras carteras solo van los nombres (nunca dos veces lo mismo)
+      var PS = W.KhipuPfStore, pfName = '';
+      try { pfName = PS ? String(PS.name() || '').slice(0, 60) : ''; } catch (e) {}
+      if (out.length) { ctx.portfolio = { positions: out }; if (pfName) ctx.portfolio.name = pfName; }
+      try {
+        var oth = PS ? PS.others().slice(0, 5).map(function (x) { return String(x).slice(0, 60); }) : [];
+        if (oth.length) ctx.other_portfolios = oth;
+        // «VACÍA» solo si de verdad no tiene nada; con solo privadas/pre-IPO se dice cuántas (sin precio de mercado)
+        if (unlisted) ctx.portfolio_unlisted = { name: pfName, n: Math.min(unlisted, 999) };
+        else if (pfName && !out.length && !Object.keys(pos).length) ctx.portfolio_empty = pfName;
+      } catch (e) {}
     } catch (e) {}
     // respuestas visuales (beta): el servidor solo manda `ui` (kblocks/1) si el navegador lo pide y dice qué sabe pintar
     try {
@@ -1415,7 +1411,7 @@
           return a.arg.kind === 'supplychain' ? (surf('graph', a.arg.id) || false) : (surf('xray', a.arg.id) || (W.openXRay && W.openXRay(a.arg.id)) || false);
         case 'open_committee': if (W.KhipuCommittee) { W.KhipuCommittee.open(a.arg); return true; } return false;
         case 'open_portfolio':
-          try { W.localStorage.setItem('kh_pf_active', String(a.arg)); } catch (e) {}
+          try { if (W.KhipuPfStore) W.KhipuPfStore.setActive(String(a.arg)); } catch (e) {}
           surf('tab', 'portfolios') || (W.switchTab && W.switchTab('portfolios'));
           setTimeout(function () { try { if (W.KhipuPortfolios && W.KhipuPortfolios.refresh) W.KhipuPortfolios.refresh(); } catch (e) {} }, 300);
           return true;

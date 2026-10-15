@@ -1,6 +1,8 @@
 /* engine/riskreport.js — REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
 
-   window.KhipuRisk.open({ tab: 'var'|'vega', source?: 'market'|'pf:<id>'|'manual', autorun? })
+   window.KhipuRisk.open({ tab: 'var'|'vega', source?: 'pf:<id>'|'manual', autorun? })
+   (2026-10-15, un solo lugar donde guardar: sin source = la cartera ACTIVA de engine/pfstore.js; 'market' es
+   un alias viejo de la activa — ya no hay una lista «Mi portafolio (Mercado)» aparte)
 
    REDISEÑO 2026-09-30 (pedido de Fabrizio: "los análisis de riesgo de cartera
    no los entiendo, cómo usar, no me deja — que haya una forma más fácil"):
@@ -124,18 +126,21 @@
 
   /* ── fuentes de posiciones del usuario ───────────────────────────────── */
   function pfList() {
-    try { return (window.KhipuPortfolios && window.KhipuPortfolios._list ? window.KhipuPortfolios._list() : []) || []; } catch (e) { return []; }
+    try {
+      if (window.KhipuPfStore) return window.KhipuPfStore.list() || [];
+      return (window.KhipuPortfolios && window.KhipuPortfolios._list ? window.KhipuPortfolios._list() : []) || [];
+    } catch (e) { return []; }
   }
+  // la cartera ACTIVA (la misma de Mercado, la Terminal y el chat) → 'pf:<id>'; sin carteras → null
+  function activeSrc() {
+    try { var a = window.KhipuPfStore && window.KhipuPfStore.active(); return a ? 'pf:' + a.id : null; } catch (e) { return null; }
+  }
+  function isActive(id) { var a = activeSrc(); return !!a && a === 'pf:' + id; }
+  function normSrc(src) { return src === 'market' ? (activeSrc() || 'pf:') : String(src || ''); }
   function positionsFrom(src) {
     var NB = window.NODE_BY_ID || {}, out = [], skipped = [];
-    if (src === 'market') {
-      var pos = (window.MKT && window.MKT.pos) || {};
-      Object.keys(pos).forEach(function (id) {
-        var n = NB[id], p = pos[id] || {};
-        if (n && n.mkt && (p.sh || p.shares)) out.push({ symbol: n.mkt, shares: +(p.sh || p.shares), label: n.label });
-        else skipped.push((n && n.label) || id);
-      });
-    } else if (src.indexOf('pf:') === 0) {
+    src = normSrc(src);
+    if (src.indexOf('pf:') === 0) {
       var id = src.slice(3);
       var pf = pfList().filter(function (x) { return x.id === id; })[0];
       ((pf && pf.positions) || []).forEach(function (p) {
@@ -153,8 +158,11 @@
     return { positions: out, skipped: skipped };
   }
   function sourceName(src) {
-    if (src === 'market') return L('Mi portafolio (Mercado)', 'My portfolio (Market)');
-    if (src.indexOf('pf:') === 0) { var p = pfList().filter(function (x) { return x.id === src.slice(3); })[0]; return '🧪 ' + ((p && p.name) || src.slice(3)); }
+    src = normSrc(src);
+    if (src.indexOf('pf:') === 0) {
+      var p = pfList().filter(function (x) { return x.id === src.slice(3); })[0];
+      return L('Tu cartera «', 'Your portfolio “') + ((p && p.name) || src.slice(3)) + L('»', '”');
+    }
     return L('Tickers escritos a mano', 'Hand-typed tickers');
   }
 
@@ -382,17 +390,16 @@
     if (S.notice) h += '<div class="info">ℹ️ ' + esc(S.notice) + '</div>';
     h += '<div class="start">';
     // (a) mis posiciones — si no hay ninguna, va al final (primero lo que sí funciona)
-    var mk = positionsFrom('market').positions.length, pfs = pfList();
-    var hasMine = mk > 0 || pfs.some(function (p) { return positionsFrom('pf:' + p.id).positions.length > 0; });
-    var ha = '<div class="opt" style="order:' + (hasMine ? 0 : 3) + '"><div class="k">📂</div><h3>' + esc(L('Usar mis posiciones', 'Use my positions')) + '</h3>' +
-      '<div class="note">' + esc(L('Las acciones que ya guardaste en la app.', 'The stocks you already saved in the app.')) + '</div>' +
-      srcBtn('market', L('Mi portafolio (Mercado)', 'My portfolio (Market)'), mk,
-        L('Vacío — agrega acciones en Mercado (✏️ en cada fila)', 'Empty — add stocks in Market (✏️ on each row)'));
+    // UNA sola lista de carteras (2026-10-15): la ACTIVA primero (es la que ves en Mercado), luego las demás
+    var pfs = pfList().slice().sort(function (a, b) { return (isActive(b.id) ? 1 : 0) - (isActive(a.id) ? 1 : 0); });
+    var hasMine = pfs.some(function (p) { return positionsFrom('pf:' + p.id).positions.length > 0; });
+    var ha = '<div class="opt" style="order:' + (hasMine ? 0 : 3) + '"><div class="k">📂</div><h3>' + esc(L('Usar mi cartera', 'Use my portfolio')) + '</h3>' +
+      '<div class="note">' + esc(L('Las acciones que ya guardaste en la app (pestaña Carteras; la activa es la misma de Mercado).', 'The stocks you already saved in the app (Portfolios tab; the active one is the same as in Market).')) + '</div>';
     pfs.forEach(function (p) {
-      ha += srcBtn('pf:' + p.id, '🧪 ' + (p.name || p.id), positionsFrom('pf:' + p.id).positions.length,
-        L('Sin acciones todavía — compra en la Cartera simulada', 'No stocks yet — buy in the simulated portfolio'));
+      ha += srcBtn('pf:' + p.id, '💼 ' + (p.name || p.id) + (isActive(p.id) ? L(' · activa', ' · active') : ''), positionsFrom('pf:' + p.id).positions.length,
+        L('Sin acciones todavía — agrégalas en Carteras o en Mercado', 'No stocks yet — add them in Portfolios or in Market'));
     });
-    if (!pfs.length) ha += '<div class="note">' + esc(L('Tip: en Mercado → Carteras puedes crear carteras simuladas.', 'Tip: in Market → Portfolios you can create simulated portfolios.')) + '</div>';
+    if (!pfs.length) ha += '<div class="note">' + esc(L('Aún no tienes carteras: crea una en Carteras o anota acciones en Mercado (✏️ en cada fila).', 'No portfolios yet: create one in Portfolios or note stocks in Market (✏️ on each row).')) + '</div>';
     h += ha + '</div>';
     // (b) cartera rápida
     var qk = loadQuick(), tot = qk.reduce(function (a, x) { return a + x.usd; }, 0);
@@ -682,13 +689,13 @@
     var got = positionsFrom(src);
     if (!got.positions.length) {
       S.view = 'start';
-      S.notice = src === 'market'
-        ? L('Tu portafolio de Mercado está vacío. Elige otra opción: arma una cartera rápida en dólares o prueba un ejemplo.', 'Your Market portfolio is empty. Pick another option: build a quick portfolio in dollars or try an example.')
+      S.notice = (src === 'market' || src === 'pf:')
+        ? L('Tu cartera está vacía. Elige otra opción: arma una cartera rápida en dólares o prueba un ejemplo.', 'Your portfolio is empty. Pick another option: build a quick portfolio in dollars or try an example.')
         : src === 'manual' ? L('No entendí los tickers. Usa el formato NVDA:10, AMD:5 — o mejor, arma una cartera rápida en dólares.', 'I could not read the tickers. Use the NVDA:10, AMD:5 format — or better, build a quick portfolio in dollars.')
-          : L('Esa cartera simulada no tiene acciones todavía. Elige otra opción.', 'That simulated portfolio has no stocks yet. Pick another option.');
+          : L('Esa cartera no tiene acciones todavía. Elige otra opción.', 'That portfolio has no stocks yet. Pick another option.');
       return render();
     }
-    S.source = src;
+    S.source = normSrc(src);
     runSpec({ positions: got.positions, skipped: got.skipped, label: sourceName(src), kind: 'mine' });
   }
   function runQuick() {
@@ -853,7 +860,7 @@
       'A big market scare (volatility +10 points): ' + smoney(up.pnl_usd) + '. Total calm (−10 points): ' + smoney(dn.pnl_usd) + '.'));
     return out;
   }
-  // Griegas por empresa: las ACCIONES de "Mi portafolio" aportan Delta = nº de
+  // Griegas por empresa: las ACCIONES de tu cartera activa aportan Delta = nº de
   // acciones (Gamma, Theta y Vega 0); las opciones, lo que dice el modelo.
   function greeksByUnderlying(r) {
     var NB = window.NODE_BY_ID || {}, pos = (window.MKT && window.MKT.pos) || {}, sh = {};
@@ -869,8 +876,8 @@
       syms.map(function (k) {
         var x = g[k], s0 = sh[k] || 0;
         return '<tr><td>' + esc(k) + '</td><td>' + num(s0, 0) + '</td><td>' + num(s0 + x.d, 0) + '</td><td>' + num(x.gm, 2) + '</td><td>' + usd(x.t) + '</td><td>' + usd(x.v) + '</td></tr>';
-      }).join('') + '</table></div><div class="note">' + esc(L('Delta total = tus acciones (de "Mi portafolio") + la Delta de tus opciones. Las acciones no tienen Gamma, Theta ni Vega.',
-        'Total Delta = your shares (from "My portfolio") + your options\' Delta. Shares have no Gamma, Theta or Vega.')) + '</div></div>';
+      }).join('') + '</table></div><div class="note">' + esc(L('Delta total = tus acciones (de tu cartera activa) + la Delta de tus opciones. Las acciones no tienen Gamma, Theta ni Vega.',
+        'Total Delta = your shares (from your active portfolio) + your options\' Delta. Shares have no Gamma, Theta or Vega.')) + '</div></div>';
   }
   function pickVSym(sym, label) {
     S.vsym = sym; S.vlabel = label || ((bySym(sym) || {}).label) || sym; S.vq = S.vlabel;
@@ -1017,12 +1024,14 @@
     open: function (o) {
       o = o || {};
       if (o.tab) S.tab = o.tab;
-      if (o.source) S.source = o.source;
+      // sin fuente = la cartera ACTIVA (un solo lugar donde guardar); 'market' = alias viejo de la activa
+      var src = o.source ? normSrc(o.source) : (o.autorun ? (activeSrc() || 'pf:') : null);
+      if (src) S.source = src;
       shell().classList.add('show');
       S.notice = null;
-      if (S.tab === 'var' && o.autorun && o.source) {
+      if (S.tab === 'var' && o.autorun && src) {
         if (S.busy) return render();
-        return runSource(o.source);          // vacío → pantalla guiada con aviso (no un error)
+        return runSource(src);               // vacío → pantalla guiada con aviso (no un error)
       }
       if (S.tab === 'var' && S.view === 'result' && !S.rep) S.view = 'start';
       render();

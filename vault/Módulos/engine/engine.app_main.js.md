@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/app_main.js"
 lenguaje: "javascript"
-lineas: 4825
+lineas: 4844
 aliases: ["engine/app_main.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/app_main.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.825 líneas · `engine/app_main.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.844 líneas · `engine/app_main.js`
 
 ## Para qué sirve
 
@@ -20,7 +20,7 @@ Global error reporter — shows uncaught JS errors on screen (no devtools needed
 
 `window.APP_NAME`, `window.ASSISTANT_NAME`, `window.CATS`, `window.CAT_TO_SECTOR`, `window.DataLayer`, `window.KhipuLive`, `window.KhipuLiveCaps`, `window.KhipuLiveFund`, `window.LANG`, `window.LINKS`, `window.NODES`, `window.NODE_BY_ID`, `window.NODE_META`, `window.NRS_FLOW_TYPES`, `window.OntologyAlerts`, `window.SECTORS9`, `window.V8detail`, `window.V8feed`, `window.__khOsGaveUp`, `window._appVersion`, `window._buildNrsDegree`, `window._canonId`, `window._ensureMapSettled`, `window._injectGraphContext`, `window._invalidateNRS`, `window._khipuLoaderDismiss`, `window._khipuLoaderFallback`, `window._lblOn`, `window._liveLoading`, `window._liveRecolorByImpact`, `window._liveResetColors`, `window._liveSelectedNode`, `window._liveTintLinks`, `window._mapLayers`, `window._mapState`, `window._resizeNodesByCap`, `window._selectedNode`, `window._showUpdatePill`, `window._tickerWarnings`, `window._toggleColorMode`, `window._updPending`, `window.addToPortfolio`, `window.applyVerifiedValuations`, `window.clearStressBtn`, `window.closePropuestas`, `window.closeSistema`, `window.computeNRS`, `window.computeNRSBreakdown`, `window.esc`, `window.fillLiveMcap`, `window.fillLiveMeta`, `window.goMap`, `window.jumpTo`, `window.lanzarInvestigacion`, `window.liveCapDot`, `window.loadLiveQuotes`, `window.loadStockChart`, `window.openDiagnostics`, `window.openPropuestas`, `window.openRegistro`, `window.openSistema`, `window.posCancel`, `window.posDel`, `window.posEdit`, `window.posSave`, `window.quoteAge`, `window.quoteAgoText`, `window.quoteExchange`, `window.quoteIsLive`, `window.quotePx`, `window.quoteSrcChip`, `window.quoteSrcName`, `window.refreshStyles`, `window.runAgentes`, `window.sectorName`, `window.setChartMode`, `window.settleGraph`, `window.stressBtn`
 
-De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`, `I18N`, `LBL_MAX`, `LINK_TYPE_COLORS`, `LIVE_BATCH`, `LT_ORDER`, `MAP_FIRST_ALPHA`, `MAP_POS_KEY`, `MKT`, `SERVER_MODE`, `STRESS_DEAD_PCT`, `USER_PORTFOLIOS`, `V8`, `W`, `_NRS_GEO`, `_NRS_GEO_ALIAS`, `_afterQuotesMerged`, `_alphaDecay`, `_bcCache`, `_capResizeT`, `_chargeStr`, `_chartModes`, `_deselect`, `_filterCache`, `_lblMinR`, `_ldrSet`, `_liveTick`, `_loaderBar`, `_loaderText`, `_mapBootWaiting`, `_mapCkOpen`, `_mapCkSeen`, `_mapClassicBoot`, `_mapCovered`, `_mapFirstRecipe`, `_mapFirstSettleAsync`, `_mapFitPending`, `_mapFlyPending`, `_mapHint`, `_mapHintEl`, `_mapLaidNow`, `_mapLaidOnce`, `_mapOsExpected`, `_mapPosSave`, `_mapPosSaveSoon`, `_mapPosSaveT`, `_mapPosSeed`, `_mapPost`, `_mapReheat`, `_mapSeeded`, `_mapSettleJob`, `_mapSig`, `_mergeLiveQuote`, `_mergeResult`, `_mixHex`, `_nodeCount`, `_nrsCache`, `_nrsCountry`, `_nrsDegree`, `_nrsTerms`, `_paintGraph`, `_persistQuotes`, `_processMktData`, `_recalcLblMin`, `_refreshStylesCore`, `_resizeT`, `_resolveId`, `_selectNode`, `_showEventsAlert`, `_stockCache`, `activateStress`, `activeTab`, `applyLang`, `applyView`, `backdropEl`, `bandEl`, `bfsPath`, `buildFilterCache` y 99 más
+De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`, `I18N`, `LBL_MAX`, `LINK_TYPE_COLORS`, `LIVE_BATCH`, `LT_ORDER`, `MAP_FIRST_ALPHA`, `MAP_POS_KEY`, `MKT`, `SERVER_MODE`, `STRESS_DEAD_PCT`, `USER_PORTFOLIOS`, `V8`, `W`, `_NRS_GEO`, `_NRS_GEO_ALIAS`, `_afterQuotesMerged`, `_alphaDecay`, `_bcCache`, `_capResizeT`, `_chargeStr`, `_chartModes`, `_deselect`, `_filterCache`, `_lblMinR`, `_ldrSet`, `_liveTick`, `_loaderBar`, `_loaderText`, `_mapBootWaiting`, `_mapCkOpen`, `_mapCkSeen`, `_mapClassicBoot`, `_mapCovered`, `_mapFirstRecipe`, `_mapFirstSettleAsync`, `_mapFitPending`, `_mapFlyPending`, `_mapHint`, `_mapHintEl`, `_mapLaidNow`, `_mapLaidOnce`, `_mapOsExpected`, `_mapPosSave`, `_mapPosSaveSoon`, `_mapPosSaveT`, `_mapPosSeed`, `_mapPost`, `_mapReheat`, `_mapSeeded`, `_mapSettleJob`, `_mapSig`, `_mergeLiveQuote`, `_mergeResult`, `_mixHex`, `_mkPfLabel`, `_nodeCount`, `_nrsCache`, `_nrsCountry`, `_nrsDegree`, `_nrsTerms`, `_paintGraph`, `_persistQuotes`, `_processMktData`, `_recalcLblMin`, `_refreshStylesCore`, `_resizeT`, `_resolveId`, `_selectNode`, `_showEventsAlert`, `_stockCache`, `activateStress`, `activeTab`, `applyLang`, `applyView`, `backdropEl`, `bandEl`, `bfsPath` y 100 más
 
 ## Depende de
 
@@ -45,6 +45,7 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.pricehist.js]] — usa `KhipuPriceHistory`
 - [[engine.reconcile.js]] — usa `KhipuReconcile`
 - [[engine.research.js]] — usa `KhipuResearch`
+- [[engine.resolve.js]] — usa `_surface`
 - [[engine.temporal-graph.js]] — usa `initTKGTab`
 - [[engine.toast.js]] — usa `khipuActor`
 - [[engine.worldmonitor.js]] — usa `KhipuWorld`
@@ -69,11 +70,11 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.importer.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **26 de 100** (línea 2679), después de [[engine.catalog_sync.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **27 de 101** (línea 2682), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 26)
+- [[app.html]] — lo carga con `<script>` (posición 27)
 - [[app.html]] — usa `BASE`, `LANG`, `_injectGraphContext`, `_showUpdatePill`, `closeSistema`, `lanzarInvestigacion`, `loadCorporateEvents`, `openDiagnostics` y 5 más
 - [[engine.aispend.js]] — usa `BASE`, `LANG`
 - [[engine.app_canvas.js]] — usa `LANG`, `MKT`, `_selectedNode`, `computeNRS`
@@ -97,7 +98,7 @@ Se carga en [[app.html]] en la posición **26 de 100** (línea 2679), después d
 - [[engine.genui.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
 - [[engine.genui_shapes.js]] — usa `BASE`
 - [[engine.globe.js]] — usa `BASE`, `LINKS`, `computeNRS`
-- [[engine.governance.js]] — usa `BASE`, `LANG`
+- [[engine.governance.js]] — usa `BASE`, `LANG`, `MKT`
 - [[engine.graph3d.js]] — usa `LINKS`, `NODE_BY_ID`, `_tickerWarnings`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `getLinkColorHex`, `jumpTo` y 2 más
 - [[engine.guide.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`
 - [[engine.hypergraph.js]] — usa `DataLayer`, `NODE_BY_ID`, `getCatColorHex`
@@ -116,7 +117,7 @@ Se carga en [[app.html]] en la posición **26 de 100** (línea 2679), después d
 - [[engine.nav4.js]] — usa `activeTab`, `switchTab`
 - [[engine.orb.js]] — usa `LANG`
 - [[engine.oswindows.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_canonId`, `loadLiveQuotes`, `quoteAge` y 4 más
-- [[engine.pfcommittee.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`
+- [[engine.pfcommittee.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
 - [[engine.pfreports.js]] — usa `BASE`, `LANG`
 - [[engine.pickers.js]] — usa `LANG`, `NODE_BY_ID`
 - [[engine.portfolios.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `fetchQuotes`
@@ -128,7 +129,7 @@ Se carga en [[app.html]] en la posición **26 de 100** (línea 2679), después d
 - [[engine.secondbrain.js]] — usa `DataLayer`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8detail`, `activateStress`, `catColor` y 9 más
 - [[engine.spacemonitor.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `quotePx` y 1 más
 - [[engine.statematrix.js]] — usa `MKT`, `NODE_BY_ID`, `computeNRS`, `quotePx`
-- [[engine.sync.js]] — usa `BASE`, `MKT`, `renderMarket`
+- [[engine.sync.js]] — usa `BASE`
 - [[engine.temporal-graph.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `SERVER_MODE`, `catLabel`, `computeNRS` y 4 más
 - [[engine.termdata.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `fillLiveMeta`, `liveCapDot` y 1 más
 - [[engine.timeline3d.js]] — usa `LANG`, `NODE_BY_ID`, `getLinkColorHex`
@@ -185,6 +186,7 @@ Se carga en [[app.html]] en la posición **26 de 100** (línea 2679), después d
 - [[tests.test_import_panel_static.py]]
 - [[tests.test_lotel_fixer.py]]
 - [[tests.test_market_keys_scope.py]]
+- [[tests.test_one_portfolio_store.py]]
 
 ## Mencionado en sesiones de trabajo
 

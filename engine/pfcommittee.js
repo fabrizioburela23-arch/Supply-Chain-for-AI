@@ -6,8 +6,8 @@
    otra), a modo de consejo y advirtiendo que es una IA… que una persona sin
    experiencia pueda tener carteras de acuerdo a sus expectativas".
 
-   · Fuente: tus posiciones de Mercado (MKT.pos), cualquier cartera simulada
-     (window.KhipuPortfolios) o tu cuenta del bróker (🔒 PIN, /api/trade/positions/detail).
+   · Fuente: tus carteras (engine/pfstore.js — UN solo lugar donde guardar desde 2026-10-15; la ACTIVA, que es
+     la misma de Mercado, va primero) o tu cuenta del bróker (🔒 PIN, /api/trade/positions/detail).
    · Perfil del inversionista (3 preguntas + nivel de involucramiento), guardado
      en localStorage 'kh_investor_profile' (window.KhipuProfile.get()).
    · POST /api/committee/portfolio → salud vs perfil, KPIs, gráficos (pesos,
@@ -176,29 +176,31 @@
     ['news', '📰', 'Noticias', 'News'], ['ask', '💬', 'Pregúntale', 'Ask it']];
 
   // ── fuentes de posiciones ──────────────────────────────────────────────────
+  function pfAll() {
+    try {
+      if (window.KhipuPfStore) return window.KhipuPfStore.list() || [];
+      return (window.KhipuPortfolios && window.KhipuPortfolios._list && window.KhipuPortfolios._list()) || [];
+    } catch (e) { return []; }
+  }
+  function activePfId() { try { var a = window.KhipuPfStore && window.KhipuPfStore.active(); return a ? a.id : ''; } catch (e) { return ''; } }
   function sources() {
-    var out = [];
-    var mp = (window.MKT && window.MKT.pos) || {}, ids = Object.keys(mp);
-    if (ids.length) out.push({ key: 'market', label: L('Mis posiciones (Mercado)', 'My positions (Market)') + ' · ' + ids.length });
-    var list = [];
-    try { list = (window.KhipuPortfolios && window.KhipuPortfolios._list && window.KhipuPortfolios._list()) || []; } catch (e) {}
-    // TODAS las carteras (2026-10-05): antes se ocultaban las vacías y parecía que no se habían guardado
-    list.forEach(function (p) { var n = (p.positions || []).length; out.push({ key: 'pf:' + p.id, label: '🧪 ' + p.name + ' · ' + (n || L('vacía', 'empty')) }); });
+    var out = [], act = activePfId();
+    // TODAS las carteras (2026-10-05: antes se ocultaban las vacías y parecía que no se habían guardado), la ACTIVA
+    // primero; ya no hay una lista «Mis posiciones (Mercado)» aparte: Mercado muestra la cartera activa (2026-10-15)
+    var list = pfAll().slice().sort(function (a, b) { return (b.id === act ? 1 : 0) - (a.id === act ? 1 : 0); });
+    list.forEach(function (p) {
+      var n = (p.positions || []).length;
+      out.push({ key: 'pf:' + p.id, label: '💼 ' + p.name + (p.id === act ? L(' (activa)', ' (active)') : '') + ' · ' + (n || L('vacía', 'empty')) });
+    });
     out.push({ key: 'broker', label: '🔒 ' + L('Mi cuenta del bróker (PIN)', 'My broker account (PIN)') });
     return out;
   }
   function nodeOf(id) { return (window.NODE_BY_ID || {})[id] || null; }
   function positionsFor(key) {
-    if (key === 'market') {
-      var mp = (window.MKT && window.MKT.pos) || {};
-      return Promise.resolve({ positions: Object.keys(mp).map(function (id) {
-        var p = mp[id], n = nodeOf(id);
-        return { id: id, symbol: n && n.mkt, label: n ? n.label : id, shares: p.sh, cost_usd: p.sh * p.bp };
-      }), cash: 0, start: null });
-    }
+    if (key === 'market') key = 'pf:' + activePfId();      // alias viejo («Mis posiciones») = la cartera activa
     if (key && key.indexOf('pf:') === 0) {
       var id = key.slice(3), pf = null;
-      try { (window.KhipuPortfolios._list() || []).forEach(function (p) { if (p.id === id) pf = p; }); } catch (e) {}
+      pfAll().forEach(function (p) { if (p.id === id) pf = p; });
       if (!pf) return Promise.resolve({ positions: [] });
       return Promise.resolve({ positions: pf.positions.map(function (p) {
         var n = nodeOf(p.nodeId);
@@ -430,7 +432,7 @@
         '<div class="pfo-seg pfo-nav" role="tablist" aria-label="' + esc(L('Secciones de tu cartera', 'Portfolio sections')) + '">' + SECTIONS.map(function (x) {
           var on = S.section === x[0];
           return '<button type="button" role="tab" aria-selected="' + on + '"' + (on ? ' class="on"' : '') + ' data-sec="' + x[0] + '">' + x[1] + ' ' + esc(L(x[2], x[3])) + '</button>'; }).join('') + '</div>' +
-        (srcs.length === 1 ? '<div class="cm-note" style="margin:-4px 0 12px">' + esc(L('No tienes posiciones en Mercado ni carteras simuladas. Crea una en Mercado → Carteras (o pídele una al 🤖 Asistente) y vuelve.', 'You have no positions in Market nor simulated portfolios. Create one in Market → Portfolios (or ask the 🤖 Assistant) and come back.')) + '</div>' : '') : '') +
+        (srcs.length === 1 ? '<div class="cm-note" style="margin:-4px 0 12px">' + esc(L('Aún no tienes carteras. Crea una en Carteras (o pídele una al 🤖 Asistente), o anota acciones en Mercado, y vuelve.', 'You have no portfolios yet. Create one in Portfolios (or ask the 🤖 Assistant), or note stocks in Market, and come back.')) + '</div>' : '') : '') +
       (S.section !== 'diag' && getProfile() && !S.editingProfile ? '<div id="pfx"></div>' : '') +
       (S.err ? card('<div class="cm-note" style="color:' + WARN + '">' + esc(S.err) + '</div>') : '') +
       (S.section !== 'diag' ? '' : S.busy ? card('<div class="pfo-busy">' + masc('comite', 34, 'think') + '<span><span class="cm-spin">◌</span> ' + esc(L('Midiendo el riesgo con precios reales, cruzando con la investigación y preparando consejos… (10-40 s)', 'Measuring risk with real prices, crossing with research and preparing advice… (10-40 s)')) + '</span></div>') : '') +

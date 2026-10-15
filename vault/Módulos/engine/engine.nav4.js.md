@@ -24,11 +24,11 @@ NAVEGACIÓN DE 4 PESTAÑAS (simplificación pedida por Fabrizio) Las 10 pestaña
 
 - [[engine.app_main.js]] — usa `activeTab`, `switchTab`
 
-Se carga en [[app.html]] en la posición **75 de 100** (línea 3198), después de [[engine.matrixview.js]] y antes de [[engine.localcharts.js]].
+Se carga en [[app.html]] en la posición **76 de 101** (línea 3201), después de [[engine.matrixview.js]] y antes de [[engine.localcharts.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 75)
+- [[app.html]] — lo carga con `<script>` (posición 76)
 
 ## Pruebas que lo cubren
 

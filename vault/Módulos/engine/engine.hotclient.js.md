@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/hotclient.js"
 lenguaje: "javascript"
-lineas: 484
+lineas: 485
 aliases: ["engine/hotclient.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/hotclient.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 484 líneas · `engine/hotclient.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 485 líneas · `engine/hotclient.js`
 
 ## Para qué sirve
 
@@ -24,11 +24,11 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **30 de 100** (línea 3087), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
+Se carga en [[app.html]] en la posición **31 de 101** (línea 3090), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 30)
+- [[app.html]] — lo carga con `<script>` (posición 31)
 
 **Rutas que nombra y no existen en el servidor** (¿restos viejos?): `/api/hot/card/`, `/api/hot/chokepoints`, `/api/hot/factors`, `/api/hot/impact/`, `/api/hot/nrs`, `/api/hot/scenario`, `/api/hot/scenario_pnl`, `/api/hot/status`
 
@@ -40,6 +40,7 @@ Se carga en [[app.html]] en la posición **30 de 100** (línea 3087), después d
 - [[tests.test_khipus_os_perf.py]]
 - [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_no_client_engine.py]]
+- [[tests.test_one_portfolio_store.py]]
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_scenario_pnl.py]]
 - [[tests.test_scenario_pnl_browser.py]]

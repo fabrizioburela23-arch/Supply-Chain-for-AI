@@ -17,25 +17,25 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 246 |
-| Líneas de código | 147.925 |
+| Archivos de código (Python, JS, HTML) | 247 |
+| Líneas de código | 148.399 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 255 |
+| Archivos de prueba | 256 |
 | Documentos | 31 |
 | Rutas HTTP | 262 |
 | Grupos de API | 61 |
 | Herramientas MCP | 34 |
 | Variables de entorno | 158 |
-| Sesiones de trabajo | 110 |
+| Sesiones de trabajo | 112 |
 | Aristas `calls_endpoint` | 763 |
 | Aristas `defines_endpoint` | 296 |
-| Aristas `imports` | 2.336 |
-| Aristas `loads_script` | 92 |
-| Aristas `mentions_in_session` | 581 |
+| Aristas `imports` | 2.339 |
+| Aristas `loads_script` | 93 |
+| Aristas `mentions_in_session` | 587 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
-| Aristas `tested_by` | 1.825 |
-| Aristas `uses_global` | 461 |
+| Aristas `tested_by` | 1.838 |
+| Aristas `uses_global` | 462 |
 
 ## Nodos "dios" (más conectados)
 
@@ -43,8 +43,8 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
-| [[app.html]] | 120 | 27 | 93 | [[Capa Interfaz (Khipus OS)]] |
-| [[engine.app_main.js]] | 111 | 65 | 46 | [[Capa Interfaz (Khipus OS)]] |
+| [[app.html]] | 121 | 27 | 94 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.app_main.js]] | 112 | 65 | 47 | [[Capa Interfaz (Khipus OS)]] |
 | [[server.py]] | 98 | 31 | 67 | [[Capa Infraestructura]] |
 | [[ontology.db.py]] | 58 | 48 | 10 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 50 | 14 | 36 | [[Capa Interfaz (Khipus OS)]] |
@@ -57,8 +57,8 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[engine.app_coordinator.js]] | 34 | 16 | 18 | [[Capa Interfaz (Khipus OS)]] |
 | [[ontology.api.py]] | 34 | 10 | 24 | [[Capa Ontología y grafo temporal]] |
 | [[core.khipu_chat.py]] | 33 | 6 | 27 | [[Capa Chat y agentes]] |
+| [[engine.resolve.js]] | 33 | 21 | 12 | [[Capa Chat y agentes]] |
 | [[core.identity.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
-| [[engine.resolve.js]] | 32 | 20 | 12 | [[Capa Chat y agentes]] |
 | [[core.world.py]] | 31 | 21 | 10 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[ontology.models.py]] | 31 | 27 | 4 | [[Capa Ontología y grafo temporal]] |
 | [[engine.voice.js]] | 30 | 4 | 26 | [[Capa Voz]] |

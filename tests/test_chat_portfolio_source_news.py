@@ -1,7 +1,8 @@
 """Chat: de qué lista sale la cartera y qué hacer con una noticia que cuenta el usuario (Fabrizio, 2026-10-15).
 
-1) «quiero que mencione la cartera de donde está sacando la info»: el contexto separa «Mis posiciones (Mercado)» de las
-   carteras de práctica (con su nombre) y la regla obliga a nombrar la fuente.
+1) «quiero que mencione la cartera de donde está sacando la info»: el contexto lleva la cartera ACTIVA con su nombre
+   (desde «que solo haya uno donde guardar», 2026-10-15, ya no hay «Mis posiciones (Mercado)» aparte: Mercado muestra
+   la cartera activa) + los nombres de las otras, y la regla obliga a nombrar la fuente.
 2) Reunión con Diego: «le pasamos una noticia como si la hubiéramos escuchado y dijo que no la puede confirmar»: la
    noticia se busca, se dice si se confirmó y, si no, se analiza como HIPÓTESIS (nunca como hecho).
 """
@@ -25,18 +26,29 @@ def _ctx(r):
         (r.get('context') if isinstance(r, dict) else next(x for x in r if isinstance(x, dict) and 'mode' in x))
 
 
-def test_carteras_de_practica_con_nombre_y_fuente_en_el_prompt():
+def test_cartera_activa_con_nombre_y_las_otras_solo_nombres():
+    """Un solo lugar donde guardar (2026-10-15): la cartera del contexto es la ACTIVA, con su nombre; de las otras
+    solo van los nombres (nunca dos listas con las mismas posiciones); ya no existe «Mis posiciones (Mercado)»."""
     c = _ctx(_req('¿cómo va mi cartera?',
-                  portfolio={'positions': [{'symbol': 'TSLA', 'shares': 10000}]},
-                  practice_portfolios=[{'name': 'Tecnología <script>', 'active': True,
-                                        'positions': [{'symbol': 'NVDA', 'shares': 5}, {'symbol': 'X', 'shares': -1}]},
-                                       {'name': 'Vacía', 'positions': []}]))
-    assert c['practice_portfolios'][0]['name'] == 'Tecnología script'          # sin caracteres peligrosos
-    assert c['practice_portfolios'][0]['positions'] == [{'symbol': 'NVDA', 'shares': 5.0}]
+                  portfolio={'name': 'Tecnología <script>', 'positions': [{'symbol': 'TSLA', 'shares': 10000},
+                                                                         {'symbol': 'X', 'shares': -1}]},
+                  other_portfolios=['Energía', 'Tecnología <script>', 'Energía', 42]))
+    assert c['portfolio'] == [{'symbol': 'TSLA', 'shares': 10000.0}]
+    assert c['portfolio_name'] == 'Tecnología script'                          # sin caracteres peligrosos
+    assert c['other_portfolios'] == ['Energía']                                  # sin la activa, sin repetidas
+    assert 'practice_portfolios' not in c
     p = K.build_prompt('¿cómo va mi cartera?', [], 'es', c, [], 2, False)
-    assert 'MIS POSICIONES' in p and '«Mis posiciones' in p and 'TSLA 10000' in p
-    assert '«Tecnología script» [activa]: NVDA 5' in p and '«Vacía»: vacía' in p
-    assert 'REGLA DE CARTERAS' in p
+    assert 'TU CARTERA del usuario «Tecnología script»' in p and 'TSLA 10000' in p
+    assert 'MISMA que muestran Mercado' in p and 'OTRAS CARTERAS' in p and '«Energía»' in p
+    assert 'REGLA DE CARTERAS' in p and '«tu cartera “<nombre>”»' in p
+    assert 'Mis posiciones' not in p and 'MIS POSICIONES' not in p and 'CARTERAS DE PRÁCTICA' not in p
+
+
+def test_cartera_activa_vacia_se_dice_con_su_nombre():
+    c = _ctx(_req('¿qué tengo?', portfolio_empty='Mi cartera'))
+    assert c['portfolio_empty'] == 'Mi cartera' and 'portfolio' not in c
+    p = K.build_prompt('¿qué tengo?', [], 'es', c, [], 2, False)
+    assert '«Mi cartera»' in p and 'VACÍA' in p and 'REGLA DE CARTERAS' in p
 
 
 def test_sin_carteras_no_hay_regla():
@@ -56,6 +68,7 @@ def test_noticia_contada_por_el_usuario_se_busca_y_si_no_se_confirma_es_hipotesi
     assert not _ctx(_req('¿cómo va Nvidia hoy?')).get('user_claim')
 
 
-def test_cliente_manda_las_carteras_de_practica_con_nombre():
+def test_cliente_manda_la_cartera_activa_con_nombre():
     js = open(os.path.join(ROOT, 'engine', 'khipu_chat.js'), encoding='utf-8').read()
-    assert "ctx.practice_portfolios = prac" in js and "kh_portfolios" in js and 'kh_pf_active' in js
+    assert 'ctx.portfolio.name = pfName' in js and 'ctx.other_portfolios = oth' in js and 'PS.name()' in js
+    assert 'practice_portfolios' not in js and "getItem('kh_portfolios')" not in js

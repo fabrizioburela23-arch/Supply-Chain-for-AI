@@ -25,11 +25,11 @@ NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que 
 - [[app.html]] — usa `_tradeFetch`, `_tradeStatusInfo`
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **29 de 100** (línea 3086), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
+Se carga en [[app.html]] en la posición **30 de 101** (línea 3089), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 29)
+- [[app.html]] — lo carga con `<script>` (posición 30)
 - [[app.html]] — usa `KhipuToast`
 - [[engine.aispend.js]] — usa `khipuActor`
 - [[engine.app_coordinator.js]] — usa `KhipuToast`

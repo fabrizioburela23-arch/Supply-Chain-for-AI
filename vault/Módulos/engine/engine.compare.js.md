@@ -26,11 +26,11 @@ COMPARAR DOS EMPRESAS lado a lado (decidir entre 2) Overlay NEXUS: elige dos emp
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **73 de 100** (línea 3196), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
+Se carga en [[app.html]] en la posición **74 de 101** (línea 3199), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 73)
+- [[app.html]] — lo carga con `<script>` (posición 74)
 - [[engine.command_center.js]] — usa `openCompare`
 - [[engine.resolve.js]] — usa `openCompare`
 - [[engine.voice.js]] — usa `openCompare`

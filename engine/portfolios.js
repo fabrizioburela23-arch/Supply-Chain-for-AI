@@ -16,6 +16,9 @@
      { id, name, cash, startCash,
        positions:[{ nodeId, shares, avgPrice, ts }], createdAt }
    La cartera activa se recuerda en localStorage 'kh_pf_active'.
+   UN SOLO LUGAR DONDE GUARDAR (2026-10-15): leer y guardar pasa por
+   engine/pfstore.js (window.KhipuPfStore). La cartera ACTIVA es la misma que
+   muestran Mercado (MKT.pos), la Terminal, el reporte de riesgo y el chat.
 
    🤖 Asistente de carteras (pestaña interna 'Asistente'): preguntas y
    propuestas vía /api/portfolio-ai/* (core/portfolio_ai.py). "Crear esta
@@ -33,8 +36,8 @@
 (function () {
   'use strict';
 
-  var LS_KEY = 'kh_portfolios';
-  var LS_ACTIVE = 'kh_pf_active';
+  // la persistencia vive en engine/pfstore.js (UN solo lugar): aquí solo se usa
+  function S() { return window.KhipuPfStore; }
   var DEFAULT_CASH = 100000;
 
   // estado de UI (no persistido)
@@ -87,51 +90,12 @@
     return fallback == null ? '' : fallback;
   }
 
-  /* ── persistencia ─────────────────────────────────────────────────────── */
-  function loadAll() {
-    try {
-      var raw = localStorage.getItem(LS_KEY);
-      var list = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(list)) list = [];
-      // saneo defensivo
-      return list.filter(function (p) { return p && p.id; }).map(function (p) {
-        p.positions = Array.isArray(p.positions) ? p.positions : [];
-        p.cash = isFinite(p.cash) ? p.cash : 0;
-        p.startCash = isFinite(p.startCash) ? p.startCash : (p.cash || DEFAULT_CASH);
-        return p;
-      });
-    } catch (e) { return []; }
-  }
-  // Si el navegador no deja guardar (almacenamiento lleno / modo privado) se AVISA:
-  // antes fallaba en silencio y la cartera "desaparecía" al recargar (2026-10-05).
-  function saveAll(list) {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(list)); return true; }
-    catch (e) {
-      try {   // libera cachés desechables y reintenta una vez
-        Object.keys(localStorage).forEach(function (k) { if (/^ai_analysis2_|^kh_chartcache$|^eco_quotes$/.test(k)) localStorage.removeItem(k); });
-        localStorage.setItem(LS_KEY, JSON.stringify(list)); return true;
-      } catch (e2) {
-        var msg = T('⚠ No se pudo guardar la cartera en este navegador (almacenamiento lleno o modo privado).',
-                    '⚠ Could not save the portfolio in this browser (storage full or private mode).');
-        if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'error', title: msg }); else toast(msg);
-        return false;
-      }
-    }
-  }
-  function activeId() {
-    try { return localStorage.getItem(LS_ACTIVE) || ''; } catch (e) { return ''; }
-  }
-  function setActiveId(id) {
-    try { localStorage.setItem(LS_ACTIVE, id || ''); } catch (e) {}
-  }
-  function activePortfolio(list) {
-    list = list || loadAll();
-    if (!list.length) return null;
-    var id = activeId();
-    var found = null;
-    list.forEach(function (p) { if (p.id === id) found = p; });
-    return found || list[0];
-  }
+  /* ── persistencia: engine/pfstore.js ─────────────────────────────────── */
+  function loadAll() { return S() ? S().list() : []; }
+  function saveAll(list) { return S() ? S().save(list) : false; }
+  function activeId() { return S() ? S().activeId() : ''; }
+  function setActiveId(id) { if (S()) S().setActive(id); }
+  function activePortfolio(list) { return S() ? S().active(list) : null; }
 
   /* ── catálogo / resolución de empresas ────────────────────────────────── */
   function nodes() { return window.NODES || []; }
@@ -588,6 +552,8 @@
       return;
     }
     html += topBar(list, pf) + (_creating ? createForm() : '');
+    if (pf) html += '<div class="kpf-actnote">★ ' + T('Cartera activa: es la misma que ves en Mercado, la Terminal, el reporte de riesgo y el chat. Cámbiala con el selector.',
+      'Active portfolio: the same one you see in Market, the Terminal, the risk report and the chat. Switch it with the selector.') + '</div>';
 
     if (!pf) {
       html += emptyState();
@@ -995,6 +961,7 @@
       '--kpf-cshadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}' +
     '.kpf-wrap{max-width:1000px;margin:0 auto;padding:16px 16px 48px;box-sizing:border-box}' +
     '.kpf-root *{box-sizing:border-box}' +
+    '.kpf-actnote{font-size:12px;line-height:1.45;color:var(--os-ink-2,#A6A8B5);margin:-4px 2px 12px}' +
     '.kpf-root button,.kpf-root input,.kpf-root select{font-family:inherit}' +
     // «?» de explainChip: trae un cian fijo en línea (1,3-1,6:1 sobre fondo claro) → acento del tema
     '.kpf-root span[onclick*="explainMetric"]{color:var(--os-accent,#4C8DF6)!important;border-color:color-mix(in srgb,var(--os-accent,#4C8DF6) 45%,transparent)!important}' +
@@ -1351,6 +1318,19 @@
 
   // escape mínimo para selectores por atributo (los ids del grafo son [A-Za-z0-9_])
   function cssEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
+
+  // cambió desde otro lugar (Mercado, otra pestaña, sincronización): repintar si está a la vista y no estás escribiendo
+  try {
+    window.addEventListener('khipu:portfolio', function () {
+      if (!_container || _view === 'ai') return;
+      try {
+        if (_container.isConnected === false) return;
+        var ae = document.activeElement;
+        if (ae && _container.contains && _container.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName || '')) return;
+      } catch (e) {}
+      render();
+    });
+  } catch (e) {}
 
   /* ── API pública ──────────────────────────────────────────────────────── */
   window.KhipuPortfolios = {

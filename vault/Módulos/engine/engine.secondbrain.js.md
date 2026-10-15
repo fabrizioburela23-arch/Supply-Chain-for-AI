@@ -29,11 +29,11 @@ De nivel superior (globales del script): `_sbEn`, `_sbFlow`, `_sbL`
 - [[engine.app_main.js]] — usa `DataLayer`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8detail`, `activateStress`, `catColor`, `computeNRS`, `computeNRSBreakdown` y 7 más
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **39 de 100** (línea 3096), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
+Se carga en [[app.html]] en la posición **40 de 101** (línea 3099), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 39)
+- [[app.html]] — lo carga con `<script>` (posición 40)
 - [[engine.app_coordinator.js]] — usa `SecondBrain`
 
 ## Endpoints que llama

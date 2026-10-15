@@ -1041,8 +1041,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var P = window.KhipuPortfolios; if (!P || !P._list || !P._stats) return null;
     var list = []; try { list = P._list() || []; } catch (e) { list = []; }
     if (!list.length) return { none: true };
-    var act = null; try { act = localStorage.getItem('kh_pf_active'); } catch (e) {}
-    var pf = list.filter(function (x) { return x && x.id === act; })[0] || list[0];
+    var pf = (window.KhipuPfStore && window.KhipuPfStore.active(list)) || list[0];   // la cartera ACTIVA (engine/pfstore.js)
     var st = null; try { st = P._stats(pf); } catch (e) { st = null; }
     if (!st || !isFinite(+st.total)) return null;
     return { name: pf.name, total: +st.total, plPct: +st.plPct || 0, n: (pf.positions || []).length, count: list.length };
@@ -1227,6 +1226,11 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     try { new MutationObserver(function () { _paintThemeBtn(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
     // agentes encendidos/apagados (ventana "Tus agentes") → pila de mascotas y encabezado del chat
     window.addEventListener('khipu:agentprefs', function () { _paintAgentsBtn(); _paintChatHeader(); _paintAgentRow(); });
+    // la cartera activa cambió (compra/venta, Mercado, otra cartera elegida): el saldo de la barra la sigue al instante
+    window.addEventListener('khipu:portfolio', function () {
+      var pin = false; try { pin = !!(window._tradePinStored && window._tradePinStored()); } catch (e) {}
+      if (open && !pin) _balRefresh();     // con PIN la barra muestra el bróker: una compra de práctica no lo cambia
+    });
     // la voz cambió de estado (conectando / escuchando / hablando / apagada / error) → micrófono y píldora
     window.addEventListener('khipu:voice', _onVoiceEvent);
     // carteras o nombre cambiados en otra pestaña
@@ -3176,7 +3180,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       el.querySelectorAll('.bcp-home-pf').forEach(function (a) {
         a.addEventListener('click', function (e) {
           e.preventDefault();
-          try { localStorage.setItem('kh_pf_active', a.getAttribute('data-pf')); } catch (x) {}
+          try { if (window.KhipuPfStore) window.KhipuPfStore.setActive(a.getAttribute('data-pf')); } catch (x) {}
           if (open) stage('portfolios');
           else if (window._surface) window._surface('tab', 'portfolios'); else if (window.switchTab) window.switchTab('portfolios');
           setTimeout(function () { try { window.KhipuPortfolios.refresh(); } catch (x) {} _balRefresh(); }, 300);

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-15"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L51"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-15 — LOTE L: 386 EMPRESAS COMPLETAS + PANEL 📥 IMPORTAR + MAPA CON LAS DE LA BASE + PRECIOS EN VIVO — sw v272
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (33 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 51 (33 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -19,4 +19,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[tests.test_import_lote2_e2e.py]]
 - [[tests.test_lotel_fixer.py]]
 
-← más antigua: [[Sesión 2026-10-14 (c) — LOTE K - IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT]]
+← más antigua: [[Sesión 2026-10-14 (c) — LOTE K - IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT]] · más nueva: [[Sesión 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274]] →

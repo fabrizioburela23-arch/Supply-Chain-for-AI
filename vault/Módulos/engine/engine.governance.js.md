@@ -14,7 +14,7 @@ tags: ["capa/interfaz", "tipo/modulo"]
 
 ## Para qué sirve
 
-🩺 Sistema → Gobernanza (INFRA_OPERATIVA paso 12; pieza mínima del paso 25). Muestra el RELEASE vigente (reglas y números versionados), «Ratificar (PIN)» si el de arranque aún no lo está, y cada versión DISPONIBLE de un artefacto con «¿Qué cambia?» (contrafactual del servidor, sin tocar el motor vivo: GET /api/governance/preview) y «Activar (PIN)» (POST /api/governance/activate). Deshacer = activar la anterior. TODO por window._tradeFetch (PIN) y window.KhipuToast.confirm (nunca window.confirm). Textos ES/EN. Paso 25 (flujo completo, core/governance_flow.py): «¿Qué cambia para mí?» con TUS posiciones (eco_pos; sin ellas, las 10 empresas más críticas), «Proponer cambio» …
+🩺 Sistema → Gobernanza (INFRA_OPERATIVA paso 12; pieza mínima del paso 25). Muestra el RELEASE vigente (reglas y números versionados), «Ratificar (PIN)» si el de arranque aún no lo está, y cada versión DISPONIBLE de un artefacto con «¿Qué cambia?» (contrafactual del servidor, sin tocar el motor vivo: GET /api/governance/preview) y «Activar (PIN)» (POST /api/governance/activate). Deshacer = activar la anterior. TODO por window._tradeFetch (PIN) y window.KhipuToast.confirm (nunca window.confirm). Textos ES/EN. Paso 25 (flujo completo, core/governance_flow.py): «¿Qué cambia para mí?» con TUS posiciones (MKT.pos = la cartera ACTIVA; sin ellas, las 10 empresas más …
 
 ## API pública (globales que define)
 
@@ -23,15 +23,15 @@ tags: ["capa/interfaz", "tipo/modulo"]
 ## Depende de
 
 - [[app.html]] — usa `_tradeFetch`
-- [[engine.app_main.js]] — usa `BASE`, `LANG`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`
 - [[engine.explain.js]] — usa `explainChip`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **81 de 100** (línea 3204), después de [[engine.reconcile.js]] y antes de [[engine.audit.js]].
+Se carga en [[app.html]] en la posición **82 de 101** (línea 3207), después de [[engine.reconcile.js]] y antes de [[engine.audit.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 81)
+- [[app.html]] — lo carga con `<script>` (posición 82)
 - [[engine.app_main.js]] — usa `KhipuGovernance`
 
 ## Endpoints que llama

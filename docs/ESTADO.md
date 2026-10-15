@@ -9,6 +9,45 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-15 b — REVISIÓN DE «UN SOLO LUGAR»: NADA SE PIERDE ENTRE DISPOSITIVOS — sw v275
+
+- 🔒 **Tres casos raros en que unas posiciones podían perderse, arreglados** (`engine/pfstore.js` + `engine/sync.js`):
+  - una pestaña vieja (sin recargar) o un teléfono recién vinculado traen un `eco_pos` que no es copia de ninguna
+    cartera → `KhipuPfStore.fromServer` lo **adopta** en «Mi cartera» (o crea una) ANTES de reescribir la copia;
+    copias atrasadas que este navegador ya vio (`kh_pos_seen`, solo local) no se adoptan (no duplica);
+  - si la «Mi cartera» que migró este navegador choca por id (`pf_main`) con la que subió otro y su contenido es
+    distinto (p. ej. un cambio sin conexión), tras bajar vuelve con otro id y queda activa.
+- 💬 **Chat**: una cartera con solo empresas privadas/pre-IPO ya no se dice «VACÍA» (`portfolio_unlisted`).
+- 📊 **Terminal VaR**: ya no manda ids de privadas como si fueran tickers; aviso en ES/EN.
+- ℹ️ **Así funciona (no es error)**: anotar o vender en Mercado/panel simulado mueve el capital inicial, no la caja;
+  una venta simulada no suma caja y borra el P&L realizado de esa posición. Un `eco_pos` adoptado de una pestaña
+  vieja SUMA a «Mi cartera» (si allá se borró algo, aquí vuelve: preferimos no perder nada).
+- ✅ **Qué hacer ahora (Fabrizio)**: nada; si alguna vez ves dos «Mi cartera», es una copia rescatada: revisa y borra
+  la que sobre. Pruebas: tests/test_one_portfolio_store.py (17).
+
+---
+
+# SESIÓN 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274
+
+- 🗂 **Qué pediste**: «que solo haya uno donde guardar, no 3». Antes: «Mis posiciones» de Mercado (`eco_pos`), las
+  carteras de práctica (`kh_portfolios`) y la cuenta del bróker. Ahora lo que guardas vive SOLO en tus **carteras**
+  (`engine/pfstore.js`, `window.KhipuPfStore`). La cuenta del bróker sigue aparte: es la cuenta REAL.
+- 💼 **Cartera activa = lo que ves en todos lados**: `MKT.pos` es la VISTA de la cartera activa. Mercado (filtro
+  «Mi cartera: <nombre>» + enlace «Cambiar de cartera ›»), la Terminal, el reporte de riesgo, el comité, el chat
+  («tu cartera “<nombre>”» + solo los nombres de las otras) y la barra de saldo muestran lo mismo que Carteras.
+- ✏️ **Anotar en Mercado** (✎ en cada fila) escribe en la cartera activa: «la tengo a este precio» — no gasta la caja,
+  sube el capital inicial en lo que costó (quitarla lo baja), así el P&L sigue siendo valor − costo. Sin carteras, se
+  crea «Mi cartera».
+- 🔁 **Migración automática, una vez** (bandera `kh_pos_migrated`, nunca pierde datos): si tenías «Mis posiciones», pasan
+  a la cartera **«Mi cartera»** (id fijo `pf_main`) y queda ACTIVA. `eco_pos` queda solo como COPIA escrita de la activa
+  (servidor/lectores viejos); nunca más se lee como fuente. El servidor no la cuenta dos veces en `positions_eod`
+  (`prices_store._is_mirror`). Pruebas: tests/test_one_portfolio_store.py.
+- ✅ **Qué hacer ahora (Fabrizio)**: nada. Al abrir la app verás en Carteras «Mi cartera» con tus posiciones de antes;
+  para que Mercado/chat muestren otra, elígela en el selector de Carteras (o «Cambiar de cartera ›» en Mercado).
+- (Hecho en la sesión b: CLAUDE.md ya dice que `MKT.pos` es la vista de la cartera activa y `eco_pos` solo copia.)
+
+---
+
 # SESIÓN 2026-10-15 — LOTE L: 386 EMPRESAS COMPLETAS + PANEL 📥 IMPORTAR + MAPA CON LAS DE LA BASE + PRECIOS EN VIVO — sw v272
 
 - 📦 **Qué pediste**: «integra esto, agrega las que tengan info completa solamente». Entran SOLO las **386 fichas

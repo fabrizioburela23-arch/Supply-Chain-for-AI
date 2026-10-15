@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "engine/pfcommittee.js"
 lenguaje: "javascript"
-lineas: 550
+lineas: 552
 aliases: ["engine/pfcommittee.js"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # engine/pfcommittee.js
 
-> Módulo · capa [[Capa Comité]] · 550 líneas · `engine/pfcommittee.js`
+> Módulo · capa [[Capa Comité]] · 552 líneas · `engine/pfcommittee.js`
 
 ## Para qué sirve
 
@@ -23,7 +23,7 @@ tags: ["capa/comite", "tipo/modulo"]
 ## Depende de
 
 - [[app.html]] — usa `_tradeFetch`
-- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.explain.js]] — usa `explainMetric`
 - [[engine.mascot.js]] — usa `KhipuMascot`
@@ -33,11 +33,11 @@ tags: ["capa/comite", "tipo/modulo"]
 - [[engine.sync.js]] — usa `KhipuSync`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **62 de 100** (línea 3170), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
+Se carga en [[app.html]] en la posición **63 de 101** (línea 3173), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 62)
+- [[app.html]] — lo carga con `<script>` (posición 63)
 - [[engine.committee.js]] — usa `KhipuPortfolioCommittee`
 - [[engine.khipu_chat.js]] — usa `KhipuPortfolioCommittee`, `KhipuProfile`
 - [[engine.localcharts.js]] — usa `KhipuPortfolioCommittee`
@@ -60,6 +60,7 @@ Se carga en [[app.html]] en la posición **62 de 100** (línea 3170), después d
 - [[tests.test_committee_os_pf_apply.py]]
 - [[tests.test_committee_os_pf_tokens.py]]
 - [[tests.test_committee_os_ui.py]]
+- [[tests.test_one_portfolio_store.py]]
 - [[tests.test_portfolio_persist.py]]
 
 ## Mencionado en sesiones de trabajo

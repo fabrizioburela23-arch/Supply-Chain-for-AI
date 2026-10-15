@@ -26,11 +26,11 @@ tags: ["capa/interfaz", "tipo/modulo"]
 - [[engine.app_main.js]] — usa `BASE`, `LANG`
 - [[engine.explain.js]] — usa `explainChip`
 
-Se carga en [[app.html]] en la posición **82 de 100** (línea 3205), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
+Se carga en [[app.html]] en la posición **83 de 101** (línea 3208), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 82)
+- [[app.html]] — lo carga con `<script>` (posición 83)
 - [[engine.app_main.js]] — usa `KhipuAudit`
 
 ## Endpoints que llama

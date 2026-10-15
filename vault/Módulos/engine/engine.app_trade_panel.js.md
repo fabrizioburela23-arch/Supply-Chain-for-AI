@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/app_trade_panel.js"
 lenguaje: "javascript"
-lineas: 608
+lineas: 609
 aliases: ["engine/app_trade_panel.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/app_trade_panel.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 608 líneas · `engine/app_trade_panel.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 609 líneas · `engine/app_trade_panel.js`
 
 ## Para qué sirve
 
@@ -27,11 +27,11 @@ Professional Trade Panel
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **97 de 100** (línea 3523), después de [[engine.app_coordinator.js]] y antes de [[engine.app_preflight.js]].
+Se carga en [[app.html]] en la posición **98 de 101** (línea 3526), después de [[engine.app_coordinator.js]] y antes de [[engine.app_preflight.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 97)
+- [[app.html]] — lo carga con `<script>` (posición 98)
 - [[app.html]] — usa `_tpRefreshAgentStatus`, `_tpRefreshBlotter`, `_tpRefreshPositions`, `closeTradePanelFn`, `setTradePanelQtyPct`, `setTradePanelSide`, `submitTradePanelOrder`, `toggleTradingAgent` y 1 más
 - [[engine.app_coordinator.js]] — usa `openTradeModal`
 - [[engine.app_main.js]] — usa `openTradeModal`

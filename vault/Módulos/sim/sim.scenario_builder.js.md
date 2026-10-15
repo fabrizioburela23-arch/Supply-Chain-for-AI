@@ -28,11 +28,11 @@ De nivel superior (globales del script): `HISTORICAL_PRECEDENTS`, `STRUCTURAL_BA
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 
-Se carga en [[app.html]] en la posición **95 de 100** (línea 3220), después de [[engine.command_center.js]] y antes de [[engine.app_coordinator.js]].
+Se carga en [[app.html]] en la posición **96 de 101** (línea 3223), después de [[engine.command_center.js]] y antes de [[engine.app_coordinator.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 95)
+- [[app.html]] — lo carga con `<script>` (posición 96)
 - [[engine.app_coordinator.js]] — usa `ScenarioBuilder`, `buildLiveReportContext`
 - [[engine.voice.js]] — usa `ScenarioBuilder`
 

@@ -6,8 +6,10 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-110 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+112 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-15 — b — REVISIÓN DE UN SOLO LUGAR - NADA SE PIERDE ENTRE DISPOSITIVOS]] — 3 archivos
+- [[Sesión 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274]] — 3 archivos
 - [[Sesión 2026-10-15 — LOTE L - 386 EMPRESAS COMPLETAS + PANEL IMPORTAR + MAPA CON LAS DE LA]] — 2 archivos
 - [[Sesión 2026-10-14 (c) — LOTE K - IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT]] — 13 archivos
 - [[Sesión 2026-10-14 (b) — LOTE J - SERVIDOR A 5.000 + CHAT PROGRESIVO (F3) + revisión — sw]] — 2 archivos

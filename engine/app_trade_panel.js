@@ -226,11 +226,12 @@
       const bp = side === 'sell' ? (cur.bp || px)
         : (((cur.sh || 0) * (cur.bp || px) + qty * px) / Math.max(1, newSh));
       if (newSh <= 0) delete MKT.pos[node.id]; else MKT.pos[node.id] = { sh: newSh, bp };
-      if (typeof savePos === 'function') savePos();
+      if (typeof savePos === 'function') savePos();     // → la cartera ACTIVA (engine/pfstore.js: un solo lugar)
       if (typeof renderMarket === 'function' && typeof activeTab !== 'undefined' && activeTab === 'market') renderMarket(true);
+      const pfn = _tpE((window.KhipuPfStore && window.KhipuPfStore.name()) || _tpL('Mi cartera', 'My portfolio'));
       setS('#fbbf24', _tpL(
-        `✓ Operación <b>simulada en tu portafolio local</b> (no hay bróker configurado): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">Para operar en el bróker hay que configurar TRADE_PIN y Alpaca en Railway (revisa 🩺).</span>`,
-        `✓ <b>Simulated in your local portfolio</b> (no broker configured): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">To trade on the broker, set TRADE_PIN and Alpaca in Railway (see 🩺).</span>`));
+        `✓ Operación <b>simulada en tu cartera «${pfn}»</b> (no hay bróker configurado): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">Para operar en el bróker hay que configurar TRADE_PIN y Alpaca en Railway (revisa 🩺).</span>`,
+        `✓ <b>Simulated in your portfolio “${pfn}”</b> (no broker configured): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">To trade on the broker, set TRADE_PIN and Alpaca in Railway (see 🩺).</span>`));
       if (window.KhipuToast) window.KhipuToast.order.result(Object.assign({}, ord || { side, symbol: ticker, qty }, { price: px }), { ok: true, local: true }, tid);
       else if (typeof toast === 'function') toast(_tpL('Simulada (local): ', 'Simulated (local): ') + `${side} ${qty}× ${ticker}`);
     } else {

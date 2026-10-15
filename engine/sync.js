@@ -5,6 +5,10 @@
    perfil de inversionista, tus posiciones de Mercado) también en el teléfono, y
    que los reportes automáticos usen tu cartera de HOY.
    · Claves: kh_portfolios, kh_pf_active, kh_investor_profile, eco_pos, kh_agent_prefs
+     (eco_pos desde 2026-10-15 es solo la COPIA de la cartera activa que escribe engine/pfstore.js; nunca se lee
+     como fuente. Lo que llega del servidor pasa ANTES por KhipuPfStore.fromServer: si ese eco_pos no es la copia
+     de ninguna cartera —una pestaña con el código viejo, o un dueño que aún no migró al vincular— sus posiciones
+     se guardan en «Mi cartera» antes de reescribir la copia; nunca se pierden)
      (Khipus OS: tus agentes — modo Simple/Pro, quién participa y qué ventana abre solo).
    · Servidor: GET/PUT /api/user-state (core/portfolio_reports_api.py), por dueño
      = llave aleatoria del navegador (localStorage kh_owner_key → X-Khipu-Owner).
@@ -86,7 +90,11 @@
   }
   function refreshUI(keys) {
     try {
-      if (keys.indexOf('eco_pos') >= 0 && window.MKT) { window.MKT.pos = JSON.parse(ls('eco_pos') || '{}'); if (typeof window.renderMarket === 'function') window.renderMarket(); }
+      // un solo lugar donde guardar: la vista (MKT.pos), la copia eco_pos y el aviso 'khipu:portfolio' salen de pfstore
+      if ((keys.indexOf('kh_portfolios') >= 0 || keys.indexOf('kh_pf_active') >= 0 || keys.indexOf('eco_pos') >= 0) && window.KhipuPfStore) {
+        if (window.KhipuPfStore.fromServer) window.KhipuPfStore.fromServer(keys, ls('eco_pos'));
+        else window.KhipuPfStore.refresh();
+      }
     } catch (e) {}
     try { if ((keys.indexOf('kh_portfolios') >= 0 || keys.indexOf('kh_pf_active') >= 0) && window.KhipuPortfolios && window.KhipuPortfolios.refresh) window.KhipuPortfolios.refresh(); } catch (e) {}
     // preferencias de agentes llegadas de otro dispositivo → la ventana "Tus agentes" y el chat se enteran
@@ -122,7 +130,10 @@
   }
 
   window.KhipuSync = { code: code, link: link, pull: pull, keys: KEYS, _merge: mergePortfolios };
-  setTimeout(function () { owner(); pull(false); }, 2500);
+  setTimeout(function () {
+    owner();
+    pull(false).then(function () { try { if (window.KhipuPfStore && window.KhipuPfStore.afterSync) window.KhipuPfStore.afterSync(); } catch (e) {} });
+  }, 2500);
   setInterval(function () { if (!document.hidden) pull(false); }, 120000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) pull(false); });
 })();

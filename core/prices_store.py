@@ -631,16 +631,47 @@ def _fx_on(session, ccy, on, cache):
     return cache[maj] * mult if cache[maj] else None
 
 
+def _pf_view(positions):
+    """{nodeId: acciones} de una cartera (filas repetidas se suman), como engine/pfstore.js viewOf."""
+    out = {}
+    for p in positions or []:
+        if not isinstance(p, dict) or not p.get('nodeId'):
+            continue
+        q = _f(p.get('shares'))
+        if q and q > 0:
+            out[p['nodeId']] = out.get(p['nodeId'], 0.0) + q
+    return out
+
+
+def _is_mirror(eco, pfs):
+    """¿eco_pos es la COPIA de una cartera de kh_portfolios? Desde 2026-10-15 (un solo lugar donde guardar) el
+    navegador escribe en eco_pos la vista de la cartera activa: contarla aparte sería contar dos veces lo mismo."""
+    if not isinstance(eco, dict) or not isinstance(pfs, list):
+        return False
+    mine = {k: _f((v or {}).get('sh')) for k, v in eco.items() if isinstance(v, dict) and (_f(v.get('sh')) or 0) > 0}
+    if not mine:
+        return False
+    for pf in pfs:
+        if not isinstance(pf, dict):
+            continue
+        view = _pf_view(pf.get('positions'))
+        if view.keys() == mine.keys() and all(abs(view[k] - mine[k]) <= 1e-6 * max(1.0, abs(mine[k])) for k in mine):
+            return True
+    return False
+
+
 def _positions_rows(session, run_date, nodes_by_id, broker=True):
-    """Filas de positions_eod: eco_pos / kh_portfolios de cada dueño + cuentas de corretaje."""
+    """Filas de positions_eod: eco_pos / kh_portfolios de cada dueño + cuentas de corretaje.
+    eco_pos que es copia de una cartera (engine/pfstore.js) no se cuenta: esa cartera ya está con su pf:<id>."""
     from sqlalchemy import text
     rows = []
     try:
         st = session.execute(text("SELECT owner_hash, key, value FROM user_state WHERE key IN ('eco_pos', 'kh_portfolios')")).all()
     except Exception:  # noqa: BLE001
         st = []
+    pfs_by_owner = {owner: val for owner, key, val in st if key == 'kh_portfolios'}
     for owner, key, val in st:
-        if key == 'eco_pos' and isinstance(val, dict):
+        if key == 'eco_pos' and isinstance(val, dict) and not _is_mirror(val, pfs_by_owner.get(owner)):
             for nid, p in val.items():
                 sym = (nodes_by_id.get(nid) or {}).get('mkt')
                 qty = _f((p or {}).get('sh')) if isinstance(p, dict) else None

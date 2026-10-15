@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-255 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+256 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -46,7 +46,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_catalog_fix_symbols.py]] | 8 | 6 |
 | [[tests.test_chat_commands.py]] | 3 | 2 |
 | [[tests.test_chat_portfolio_agent.py]] | 3 | 6 |
-| [[tests.test_chat_portfolio_source_news.py]] | 4 | 2 |
+| [[tests.test_chat_portfolio_source_news.py]] | 5 | 2 |
 | [[tests.test_checkpoints.py]] | 4 | 7 |
 | [[tests.test_cierre_defectos.py]] | 11 | 17 |
 | [[tests.test_cierre_infra.py]] | 6 | 13 |
@@ -165,6 +165,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_neo4j_retirado.py]] | 4 | 2 |
 | [[tests.test_no_client_engine.py]] | 14 | 24 |
 | [[tests.test_numbers_guard.py]] | 6 | 2 |
+| [[tests.test_one_portfolio_store.py]] | 17 | 12 |
 | [[tests.test_ontology.py]] | 12 | 8 |
 | [[tests.test_ontology_actions.py]] | 18 | 6 |
 | [[tests.test_ontology_agents.py]] | 7 | 7 |
@@ -187,7 +188,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_overnight_ai_routing.py]] | 31 | 9 |
 | [[tests.test_overnight_fixes_review.py]] | 20 | 16 |
 | [[tests.test_overnight_ui_dossier_clients.py]] | 12 | 6 |
-| [[tests.test_overnight_ui_portfolios_risk.py]] | 9 | 4 |
+| [[tests.test_overnight_ui_portfolios_risk.py]] | 9 | 5 |
 | [[tests.test_overnight_ui_small_panels.py]] | 13 | 7 |
 | [[tests.test_overnight_ui_xray_research.py]] | 10 | 9 |
 | [[tests.test_overnight_voice_client.py]] | 13 | 2 |

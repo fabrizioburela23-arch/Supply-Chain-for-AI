@@ -1736,15 +1736,20 @@ function initSimTab() {
   });
   document.getElementById('var-calc-btn').addEventListener('click', async () => {
     const positions = Object.entries(MKT.pos || {});
-    if (!positions.length) { toast('Agrega posiciones en la pestaña Mercado'); return; }
+    if (!positions.length) { toast(LANG === 'en' ? 'Your active portfolio is empty: add stocks in Portfolios or in Market' : 'Tu cartera activa está vacía: agrega acciones en Carteras o en Mercado'); return; }
     const varResults = document.getElementById('var-results');
     const varLoading = document.getElementById('var-loading');
     const varContent = document.getElementById('var-content');
     varResults.style.display = 'block'; varLoading.style.display = 'block'; varContent.style.display = 'none';
     try {
       const posMap = {};
-      positions.forEach(([id,p]) => { const n=NODE_BY_ID[id]; const tk=n?.mkt||id; if(tk&&p.sh>0) posMap[tk]={shares:p.sh,buy_price:p.bp}; });
-      if (!Object.keys(posMap).length) { toast('Sin tickers válidos en el portfolio'); return; }
+      // solo empresas que cotizan (con ticker): una privada/pre-IPO de la cartera (p. ej. OpenAI) no tiene precio de mercado
+      positions.forEach(([id,p]) => { const n=NODE_BY_ID[id]; const tk=n?.mkt; if(tk&&p.sh>0) posMap[tk]={shares:p.sh,buy_price:p.bp}; });
+      if (!Object.keys(posMap).length) {
+        varResults.style.display = 'none';
+        toast(LANG === 'en' ? 'Your active portfolio has no listed stocks (private companies have no market price)' : 'Tu cartera activa no tiene acciones que coticen en bolsa (las empresas privadas no tienen precio de mercado)');
+        return;
+      }
       const resp = await fetch('/api/portfolio-risk', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({positions: posMap})
@@ -1887,8 +1892,8 @@ function initTerminalTab() {
   }
 }
 
-// Primera apertura: los paneles VACÍOS se llenan con tus posiciones (cartera
-// local MKT.pos) y luego con anclas de la cadena de IA — así la Terminal nunca
+// Primera apertura: los paneles VACÍOS se llenan con tus posiciones (MKT.pos = tu
+// cartera activa, engine/pfstore.js) y luego con anclas de la cadena de IA — así la Terminal nunca
 // abre como cuatro cajas vacías. Solo gráficos de datos reales (/api/candles).
 const _TERM_SEED = ['NVDA', 'TSM', 'ASML', 'AVGO', 'AMD', 'MSFT', 'GOOGL', 'MU', 'META'];
 function _termSeed() {

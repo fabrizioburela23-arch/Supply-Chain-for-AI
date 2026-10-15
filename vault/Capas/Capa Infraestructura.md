@@ -9,7 +9,7 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**47 archivos · 27.256 líneas.** Volver al [[00 Mapa de Khipus]].
+**47 archivos · 27.298 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
@@ -21,7 +21,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.ai.py]] — 1.196 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.governance.py]] — 1.109 líneas · EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan).
 - [[core.governance_flow.py]] — 1.016 líneas · FLUJO DE GOBERNANZA COMPLETO (docs/INFRA_OPERATIVA.md §5.3; paso 25 del plan).
-- [[core.prices_store.py]] — 914 líneas · LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, §20.1 #1-#3).
+- [[core.prices_store.py]] — 945 líneas · LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, §20.1 #1-#3).
 - [[core.decisions.py]] — 902 líneas · EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan).
 - [[core.numbers.py]] — 869 líneas · guardián de CIFRAS (anti-alucinación numérica).
 - [[core.decision_sites.py]] — 816 líneas · decisiones del COMITÉ, la INVESTIGACIÓN, las PROPUESTAS y las ALERTAS (docs/INFRA_OPERATIVA.md §2.5; pasos 18 y 19 del plan).
@@ -51,7 +51,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.http.py]] — 189 líneas · llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology y matrix).
 - [[security_audit.py]] — 182 líneas · Khipu Finance (Fase 2H)
 - [[core.governance_shadow.py]] — 179 líneas · FORMAS PROPUESTAS EN SOMBRA junto a las vigentes (docs/INFRA_OPERATIVA.md §5.3; paso 25).
-- [[engine.sync.js]] — 128 líneas · SINCRONIZACIÓN ENTRE DISPOSITIVOS (carteras, perfil, posiciones)
+- [[engine.sync.js]] — 139 líneas · SINCRONIZACIÓN ENTRE DISPOSITIVOS (carteras, perfil, posiciones)
 - [[core.prices_api.py]] — 125 líneas · /api/prices/\* y /api/instruments/\* (BRECHAS bloque 2: la memoria de los números). Nunca /v1/\*.
 - [[core.scheduler.py]] — 116 líneas · tareas periódicas del SERVIDOR (misión de reparación 2026-10-04, R5).
 - [[scripts.fetch_ledger_anchor.py]] — 98 líneas · baja el ANCLA DIARIA pública del libro de decisiones y la guarda fuera de la base (docs/INFRA_OPERATIVA.md §2.8, paso 7, decisión D7). La corre el …

@@ -330,7 +330,8 @@
   var PNL_POS_CAP = 100;
   function myPositions() {
     var pos = null;
-    try { pos = (W.MKT && W.MKT.pos) || JSON.parse((W.localStorage && W.localStorage.getItem('eco_pos')) || '{}'); } catch (e) { pos = null; }
+    // la cartera ACTIVA (engine/pfstore.js: un solo lugar donde guardar); MKT.pos es su vista
+    try { pos = (W.MKT && W.MKT.pos) || (W.KhipuPfStore ? W.KhipuPfStore.view() : null); } catch (e) { pos = null; }
     var NB = W.NODE_BY_ID || {}, Q = (W.MKT && W.MKT.quotes) || {};
     var out = [], noPrice = 0;
     Object.keys(pos || {}).forEach(function (id) {

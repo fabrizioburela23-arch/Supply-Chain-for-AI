@@ -418,6 +418,13 @@ def _principal():
 _SERVER_ARGS = ('positions',)
 
 
+def _pf_name(v):
+    """Nombre de una cartera del usuario, sin caracteres peligrosos para el prompt ('' si no sirve)."""
+    if not isinstance(v, str):
+        return ''
+    return re.sub(r'[^\w .,:·()\-/+&áéíóúñüÁÉÍÓÚÑÜ]', '', v)[:60].strip()
+
+
 def _server_args(name, args, context):
     """Copia de `args` sin lo que el modelo no puede elegir, más lo que pone el servidor. Nunca lanza."""
     if name != 'run_scenario' or not isinstance(args, dict):
@@ -1050,29 +1057,37 @@ def validate_request(body):
                 pos.append(row)
         if pos:
             ctx['portfolio'] = pos
+            # UN solo lugar donde guardar (2026-10-15): la cartera es la ACTIVA de la pestaña Carteras, con su nombre
+            name = _pf_name(pf.get('name'))
+            if name:
+                ctx['portfolio_name'] = name
+    # empresas de la cartera activa SIN ticker (privadas / pre-IPO): la cartera NO está vacía aunque no haya acciones
+    # con precio (revisión 2026-10-15 b: antes se decía «VACÍA» de una cartera con OpenAI)
+    unl = ctx_raw.get('portfolio_unlisted')
+    if isinstance(unl, dict):
+        try:
+            n_unl = int(unl.get('n'))
+        except (TypeError, ValueError):
+            n_unl = 0
+        if 0 < n_unl <= 999:
+            ctx['portfolio_unlisted'] = n_unl
+            if 'portfolio_name' not in ctx and _pf_name(unl.get('name')):
+                ctx['portfolio_name'] = _pf_name(unl.get('name'))
+    if 'portfolio' not in ctx and 'portfolio_unlisted' not in ctx:
+        empty = _pf_name(ctx_raw.get('portfolio_empty'))
+        if empty:
+            ctx['portfolio_empty'] = empty
     if USER_CLAIM_RX.search(msg):
         ctx['user_claim'] = True
-    pp = ctx_raw.get('practice_portfolios')
-    if isinstance(pp, list):
-        out_pp = []
-        for pf in pp[:5]:
-            if not isinstance(pf, dict):
-                continue
-            name = re.sub(r'[^\w .,:·()\-/+&áéíóúñüÁÉÍÓÚÑÜ]', '', str(pf.get('name') or ''))[:60].strip() or '—'
-            rows = []
-            for q in (pf.get('positions') or [])[:20]:
-                if not isinstance(q, dict):
-                    continue
-                sym = re.sub(r'[^A-Za-z0-9.\-^=/_]', '', str(q.get('symbol') or ''))[:20]
-                try:
-                    sh = float(q.get('shares'))
-                except (TypeError, ValueError):
-                    continue
-                if sym and math.isfinite(sh) and sh > 0:
-                    rows.append({'symbol': sym, 'shares': sh})
-            out_pp.append({'name': name, 'active': bool(pf.get('active')), 'positions': rows})
-        if out_pp:
-            ctx['practice_portfolios'] = out_pp
+    op = ctx_raw.get('other_portfolios')
+    if isinstance(op, list):
+        names = []
+        for x in op[:5]:
+            nm = _pf_name(x)
+            if nm and nm not in names and nm != ctx.get('portfolio_name'):
+                names.append(nm)
+        if names:
+            ctx['other_portfolios'] = names
     # Khipus OS: preferencias de PRESENTACIÓN del usuario (kh_agent_prefs). Solo cambian el prompt
     # (tono y qué herramientas priorizar); nunca decisiones del comité ni órdenes.
     mode = str(ctx_raw.get('mode') or body.get('mode') or '').strip().lower()
@@ -1415,19 +1430,29 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
         ctx.append('LA PREGUNTA ES SOBRE UN BLOQUE VISUAL de tu respuesta anterior: sus datos salieron de '
                    f'{rb["tool"]}({rb.get("args") or ""}) — si necesitas sus cifras, vuelve a llamar ESA herramienta con '
                    'esos argumentos (son los mismos datos que el usuario está mirando)')
+    pf_name = context.get('portfolio_name') or ''
     if context.get('portfolio'):
-        ctx.append('MIS POSICIONES del usuario (fuente: «Mis posiciones» de la pestaña Mercado, guardadas en la app; NO son '
-                   'las carteras de práctica ni la cuenta del bróker), acciones: ' +
-                   ', '.join(f'{p["symbol"]} {p["shares"]:g}' for p in context['portfolio']))
-    if context.get('practice_portfolios'):
-        ctx.append('CARTERAS DE PRÁCTICA del usuario (simuladas, pestaña Carteras; cada una es una lista aparte): ' + ' · '.join(
-            f'«{pf["name"]}»' + (' [activa]' if pf.get('active') else '') + ': ' +
-            (', '.join(f'{q["symbol"]} {q["shares"]:g}' for q in pf['positions']) or 'vacía')
-            for pf in context['practice_portfolios']))
-    if context.get('portfolio') or context.get('practice_portfolios'):
-        ctx.append('REGLA DE CARTERAS: cuando uses posiciones del usuario, di SIEMPRE de qué lista salen («Mis posiciones '
-                   '(Mercado)», «cartera de práctica “<nombre>”» o «cuenta del bróker»); son listas distintas. Si pregunta '
-                   'por una que no está en este contexto, dilo con esas palabras y ofrece abrirla.')
+        ctx.append('TU CARTERA del usuario' + (f' «{pf_name}»' if pf_name else '') + ' (la cartera ACTIVA de la pestaña '
+                   'Carteras, guardada en la app: es la MISMA que muestran Mercado, la Terminal y el reporte de riesgo; '
+                   'NO es la cuenta del bróker), acciones: ' +
+                   ', '.join(f'{p["symbol"]} {p["shares"]:g}' for p in context['portfolio']) +
+                   (f' (y además {context["portfolio_unlisted"]} empresas NO cotizadas en bolsa, sin precio de mercado)'
+                    if context.get('portfolio_unlisted') else ''))
+    elif context.get('portfolio_unlisted'):
+        ctx.append('TU CARTERA del usuario' + (f' «{pf_name}»' if pf_name else '') + ' (la activa de la pestaña Carteras) '
+                   f'tiene {context["portfolio_unlisted"]} empresas NO cotizadas en bolsa (privadas o pre-IPO), sin '
+                   'acciones con precio de mercado: NO digas que está vacía.')
+    elif context.get('portfolio_empty'):
+        ctx.append(f'TU CARTERA del usuario «{context["portfolio_empty"]}» (la activa de la pestaña Carteras) está VACÍA.')
+    if context.get('other_portfolios'):
+        ctx.append('OTRAS CARTERAS guardadas del usuario (no activas; aquí solo van sus nombres): ' +
+                   ', '.join(f'«{n}»' for n in context['other_portfolios']))
+    if context.get('portfolio') or context.get('portfolio_unlisted') or context.get('portfolio_empty') or \
+            context.get('other_portfolios'):
+        ctx.append('REGLA DE CARTERAS: el usuario guarda sus posiciones en UN solo lugar (sus carteras) y la que ves es la '
+                   'activa. Cuando uses sus posiciones, di SIEMPRE de dónde salen: «tu cartera “<nombre>”» o «tu cuenta del '
+                   'bróker» (la cuenta real, aparte). Si pregunta por otra cartera, dile que la elija como activa en Carteras '
+                   '(o ábrela); no inventes sus posiciones.')
     if context.get('user_claim'):
         ctx.append('EL USUARIO CUENTA UNA NOTICIA QUE NADIE VERIFICÓ TODAVÍA. Haz esto: (1) búscala — get_news de las '
                    'empresas mencionadas' + (' y web_search con la frase clave' if _web_available() else '') + '; '

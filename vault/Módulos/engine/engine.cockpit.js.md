@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 5033
+lineas: 5037
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.033 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.037 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -56,11 +56,11 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **92 de 100** (línea 3217), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **93 de 101** (línea 3220), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 92)
+- [[app.html]] — lo carga con `<script>` (posición 93)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.app_main.js]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
