@@ -1,0 +1,10 @@
+record_id,khipus_id_hint,nombre,tier,vinculos,aviso
+fb-2026-jiangxi-zichen,JiangxiZichen,Jiangxi Zichen,A,5,tier A: menos de 3 vínculos verificables
+fb-2026-shoei-chemical,ShoeiChemical,Shoei Chemical,A,1,tier A: menos de 3 vínculos verificables
+fb-2026-gudeng,Gudeng,Gudeng,A,2,tier A: menos de 3 vínculos verificables
+fb-2026-horiba-stec,HoribaSTEC,HORIBA STEC,A,1,tier A: menos de 3 vínculos verificables
+fb-2026-swagelok,Swagelok,Swagelok,A,1,tier A: menos de 3 vínculos verificables
+fb-2026-asml-berlin-ex-berliner-glas,ASMLBerlin,ASML Berlin,A,2,tier A: menos de 3 vínculos verificables
+fb-2026-nippon-kodoshi,NipponKodoshi,Nippon Kodoshi,A,4,tier A: menos de 3 vínculos verificables
+fb-2026-stargate,Stargate,Stargate,B,10,sin identificador fuerte
+fb-2026-china-integrated-circuit-industry-investment-fund-big-fund,BigFund,Big Fund,B,10,sin identificador fuerte

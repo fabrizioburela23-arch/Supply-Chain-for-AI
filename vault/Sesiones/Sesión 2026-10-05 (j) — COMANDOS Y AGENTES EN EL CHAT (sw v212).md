@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L1145"
+ruta: "docs/ESTADO.md#L1178"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (j) — COMANDOS Y AGENTES EN EL CHAT (sw v212)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1145 (11 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1178 (11 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

@@ -71,7 +71,7 @@ construcción, modulación y propagación de matrices.
 - [[scripts.bench_scale.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 33 pruebas (lista abajo)._
+_Además lo importan 34 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -88,6 +88,7 @@ _Además lo importan 33 pruebas (lista abajo)._
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_impl_registry.py]]
+- [[tests.test_import_lote2_e2e.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_kernel_monotone_edges.py]]
 - [[tests.test_kernel_monotone_severity.py]]

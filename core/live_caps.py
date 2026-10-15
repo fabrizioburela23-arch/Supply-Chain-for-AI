@@ -6,8 +6,15 @@ portafolio y la terminal lo leían tal cual. Aquí se consulta en LOTE a Yahoo
 (~580 símbolos en ~15 pedidos), en un hilo de fondo, con caché de 15 min.
 El cliente (app.html, KhipuLiveCaps) pisa NODE_META con estos valores y
 marca cada uno como "en vivo". Sin red → devuelve lo último que tenga (o nada).
+
+Lote L (2026-10-15): el universo es `core.instruments.live_symbols()` — el grafo VIGENTE (catálogo + empresas
+importadas a Postgres con su listado principal), un símbolo una sola vez, sin listados dados de baja. Los símbolos
+NUEVOS (fuera del catálogo del repo) entran de a `NEW_PER_CYCLE` por ciclo (`instruments.phase_in`) y los pedidos a
+Yahoo pasan por el tope de 15 por minuto (core/quotes.YAHOO_BATCH_LIMITER): importar miles de empresas alarga el
+ciclo, nunca sube la tasa. La capitalización sale SIEMPRE de Yahoo en vivo (nunca de la ficha).
 """
 import logging
+import math
 import threading
 import time
 from datetime import datetime, timezone
@@ -15,40 +22,95 @@ from datetime import datetime, timezone
 log = logging.getLogger(__name__)
 
 TTL_S = 15 * 60
-_STATE = {'caps': {}, 'as_of': None, 'ts': 0.0, 'running': False, 'error': None}
+NEW_PER_CYCLE = 120          # símbolos nuevos (fuera del catálogo del repo) que se suman por ciclo = 3 pedidos de 40
+_STATE = {'caps': {}, 'as_of': None, 'ts': 0.0, 'running': False, 'error': None, 'cycle': None}
 _LOCK = threading.Lock()
+_PHASE = {'admitted': set(), 'universe': 0, 'pending': 0}
 
 
 def _symbols_by_id():
-    from core.entities import get_index
-    out = {}
-    for nid, n in get_index()['nodos'].items():
-        mkt = (n.get('mkt') or '').strip().upper()
-        if mkt:
-            out[nid] = mkt
-    return out
+    """{company_id: símbolo de Yahoo} = EL universo en vivo (core.instruments.live_symbols): primarios vigentes del
+    grafo, uno por símbolo, en orden de prioridad (catálogo → base → importados). Lo leen también los fundamentales
+    en vivo (core/live_fundamentals)."""
+    from core import instruments
+    return instruments.live_symbols()
+
+
+def _phase(ids):
+    """(ids de este ciclo, símbolos nuevos admitidos ahora, pendientes). El catálogo entra siempre; lo nuevo de a
+    NEW_PER_CYCLE (lo ya admitido en este proceso sigue entrando)."""
+    from core import instruments
+    syms = list(dict.fromkeys(ids.values()))
+    inc, now, pending = instruments.phase_in(syms, _PHASE['admitted'], NEW_PER_CYCLE)
+    _PHASE['admitted'].update(now)
+    _PHASE.update(universe=len(syms), pending=len(pending))
+    keep = set(inc)
+    return {nid: s for nid, s in ids.items() if s in keep}, now, pending
+
+
+def phase_state():
+    """Cuántos símbolos tiene el universo, cuántos nuevos ya entraron y cuántos esperan su tanda."""
+    return {'universe': _PHASE['universe'], 'admitted_new': len(_PHASE['admitted']), 'pending': _PHASE['pending'],
+            'new_per_cycle': NEW_PER_CYCLE}
+
+
+def _caps_of(ids, quotes):
+    """{company_id: capitalización/precio} de los símbolos que trajeron dato (nunca de la ficha)."""
+    caps = {}
+    for nid, sym in ids.items():
+        q = quotes.get(sym)
+        if q and (q.get('mcap_b') is not None or q.get('price') is not None):
+            caps[nid] = {'mcap_b': q.get('mcap_b'), 'price': q.get('price'),
+                         # price_usd: convertido con tipo de cambio en vivo (el
+                         # cliente SOLO pinta con "$" este, nunca `price` local)
+                         'price_usd': q.get('price_usd'),
+                         'currency': q.get('currency'), 'change_pct': q.get('change_pct'),
+                         'price_ts': q.get('ts'), 'market_state': q.get('market_state'),   # R9: hora real
+                         'symbol': sym}
+    return caps
 
 
 def refresh(fetch=None):
     """Consulta todas las cotizadas (bloqueante). `fetch` inyectable en tests."""
-    from core.quotes import fetch_quotes_batch_yahoo
+    from core.quotes import YAHOO_BATCH_CHUNK, fetch_quotes_batch_yahoo
     fetch = fetch or fetch_quotes_batch_yahoo
+    t0 = time.monotonic()
     try:
         ids = _symbols_by_id()     # dentro del try: si falla, el finally libera 'running'
-        quotes = fetch(sorted(set(ids.values())))
-        caps = {}
-        for nid, sym in ids.items():
-            q = quotes.get(sym)
-            if q and (q.get('mcap_b') is not None or q.get('price') is not None):
-                caps[nid] = {'mcap_b': q.get('mcap_b'), 'price': q.get('price'),
-                             # price_usd: convertido con tipo de cambio en vivo (el
-                             # cliente SOLO pinta con "$" este, nunca `price` local)
-                             'price_usd': q.get('price_usd'),
-                             'currency': q.get('currency'), 'change_pct': q.get('change_pct'),
-                             'price_ts': q.get('ts'), 'market_state': q.get('market_state'),   # R9: hora real
-                             'symbol': sym}
+        ids, admitted_now, pending = _phase(ids)
+        # el CATÁLOGO primero: tras un despliegue (estado vacío) se publica en cuanto llega (≤ 15 pedidos, sin esperar
+        # el minuto del tope de Yahoo) y lo importado completa el ciclo después. Revisión del lote L: con 688 símbolos
+        # el pedido 16 esperaba ~60 s y el mapa quedaba un minuto sin capitalizaciones en vivo.
+        from core import instruments
+        base = instruments.baseline_symbols()
+        allsyms = set(ids.values())
+        first = sorted(x for x in allsyms if x in base)
+        rest = sorted(x for x in allsyms if x not in base)
+        syms = first + rest
+        warming = not _STATE.get('caps')
+        if warming and first and rest:
+            parts = [first, rest]
+        else:
+            parts = [syms]
+        quotes, requests = {}, 0
+        for i, part in enumerate(parts):
+            quotes.update(fetch(part) or {})
+            requests += math.ceil(len(part) / YAHOO_BATCH_CHUNK) if part else 0
+            if i == 0 and len(parts) > 1:
+                early = _caps_of(ids, quotes)
+                if early:
+                    with _LOCK:
+                        if not _STATE.get('caps'):
+                            _STATE.update(caps=early, as_of=datetime.now(timezone.utc).isoformat(), error=None,
+                                          ts=time.time())
+        caps = _caps_of(ids, quotes)
+        cycle = {'symbols': len(syms), 'requests': requests,
+                 'new_admitted': len(admitted_now), 'pending': len(pending), 'with_data': len(caps),
+                 'seconds': round(time.monotonic() - t0, 2), 'at': datetime.now(timezone.utc).isoformat()}
         with _LOCK:
-            if caps:     # un fallo total NO borra lo último bueno
+            _STATE['cycle'] = cycle
+            if caps:     # un fallo total NO borra lo último bueno (un ciclo con datos reemplaza todo: un
+                         # valor viejo nunca sale sellado con la hora de este lote)
                 _STATE.update(caps=caps, as_of=datetime.now(timezone.utc).isoformat(), error=None)
             else:
                 _STATE['error'] = 'sin datos de la fuente'
@@ -124,4 +186,6 @@ def get_caps(start=True):
             threading.Thread(target=refresh, name='live-caps', daemon=True).start()
         return {'caps': dict(_STATE['caps']), 'as_of': _STATE['as_of'], 'source': 'yahoo',
                 'warming': _STATE['running'] and not _STATE['caps'], 'refreshing': _STATE['running'],
-                'error': _STATE['error'], 'n': len(_STATE['caps'])}
+                'error': _STATE['error'], 'n': len(_STATE['caps']),
+                # lote L: tamaño del universo, tandas de símbolos nuevos y el último ciclo (símbolos, pedidos, segundos)
+                'universe': phase_state(), 'cycle': _STATE.get('cycle')}

@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.nodes_seed.js]] — usa `CATS_NEW`, `CAT_TO_SECTOR`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **10 de 99** (línea 1511), después de [[nodes.nodes_expand4.js]] y antes de [[nodes.meta_fill.js]].
+Se carga en [[app.html]] en la posición **10 de 100** (línea 1511), después de [[nodes.nodes_expand4.js]] y antes de [[nodes.meta_fill.js]].
 
 ## Lo usan
 

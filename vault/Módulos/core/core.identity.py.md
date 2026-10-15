@@ -80,7 +80,7 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - herramienta MCP `replay_decision` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 22 pruebas (lista abajo)._
+_Además lo importan 24 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -89,6 +89,7 @@ _Además lo importan 22 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_ai_calls.py]]
+- [[tests.test_catalog_api_pg.py]]
 - [[tests.test_cierre_defectos.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
@@ -102,6 +103,7 @@ _Además lo importan 22 pruebas (lista abajo)._
 - [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
+- [[tests.test_live_universe_db.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_order_single_path.py]]

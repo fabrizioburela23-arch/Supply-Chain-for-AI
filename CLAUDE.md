@@ -292,8 +292,51 @@ views/card.py en toda ficha y en MCP get_company; → ranking; sin datos «no te
 ancho (cifras compactas «$5,52 T», también en company.card); UNA cotización por empresa en pantalla (`KhipuOSWin.quote`,
 evento `khipu:hotquote`, tiles suscritos); acciones sin duplicar (`KhipuOSWin.actLabel`); barras compactas sin desborde
 (`genui_charts`, columna alta sin recorte). Revisión del lote (23 hallazgos) arreglada: tests/test_lotek_fixer.py.
-Pendiente: panel 🩺 → 📥 Importar (E2.7); `comparison` de fundamentales; account.py y khipu_chat.py:688 filtran país por
-texto; `prices_store._targets` no salta secundarios «dado de baja»; demotar primarios viejos en producción exige PIN.
+Pendiente: `comparison` de fundamentales; account.py y khipu_chat.py:688 filtran país por texto; demotar primarios viejos
+en producción exige PIN.
+**LOTE L (2026-10-15) — 386 EMPRESAS COMPLETAS, PANEL 📥 IMPORTAR, MAPA CON EMPRESAS DE LA BASE, PRECIOS EN VIVO PARA LAS
+IMPORTADAS** (pedido: «integra esto, agrega las que tengan info completa solamente»; EXPANSION_5K E2.7 ✅, E3.1 ✅). LOTE —
+SOLO las 386 fichas completas del Excel (395 − 9 con aviso; las 3.773 filas P2/P3 sin ficha NO): `data/import/lotes/
+2026-10-15/` (fichas_completas.jsonl.gz byte a byte + ORIGEN.json con sha, completas_record_ids.txt, fichas_excluidas.csv,
+bundle_lote2_completas.json.gz SANEADO + sanitize_log.json) que arma `scripts/import_companies.py --lote2 [--check] [--md
+docs/expansion/LOTE_2026-10-15_PLAN.md]` (determinista; `--check` en las pruebas). Esquema `ontology.import_schema@2.0.0`
+(MAYOR para el lint; toda ficha 1.0.0 sigue válida: años 1000-2099, largos, holding sin pct, `value_en` en sanciones,
+`yyyy-H1`, `counterparty.id_hint`…) + `policy.import@1.1.0` (solo AGREGA: owns sin dependency → `default_owns` 3/4/5 por
+el % que la ficha declara y vivo solo con ≥ 50 %; partner/invest sin dependency → peso 1; participación sin % → nunca
+viva). SANEADOR `core/import_normalize.sanitize_record` (puro, idempotente, SOLO formato; registro ruta/antes/después/
+regla; lo irreparable se quita SOLO ese campo; `listing_ticker_conflict`: un certificado sin ticker cuyo Yahoo no es de
+la ficha se quita —Boeing traía «BAC.BA»—): 386/386 validan (antes 29), 1.613 reparados, 6 quitados, 0 rechazadas. PLAN
+(catálogo de esta PC): 372 crear · 14 fusionar · vínculos 658 vivos / 511 propuestos / 2.031 pendientes / 0 cuarentena ·
+2.843 fuentes · 4.398 eventos · ρ 1,210718 → 1,199581 · TSMC 318 → 348 · top-20 entra Eoptolink, sale AMAT · vínculos
+3.142 → 3.753 (entradas de las matrices: `_nnz`, la MISMA medida antes y después) · `counts.links_default_weight` (vivos
+con peso de la política: owns 2, socio/inversor 37). IMPORTADOR — un PENDIENTE que se resuelve sigue las MISMAS reglas
+que un vínculo nuevo (`_route_resolved_pending`: rumor, nombre, sin %, confianza < 0,5, sin `verified`, owns sin % de
+control → PROPUESTO); participaciones guardan `this_role` (owned/owner: nunca al revés); `pending_links(limit=None)` y sin
+los de corridas DESHECHAS; contraparte del mismo lote por LEI/ISIN (`_batch_index`); nombre que apunta a la propia
+empresa ≠ ella (Brookfield Corporation ≠ BAM: sin lazo propio); una URL = una Source con el trust más alto
+(`_merge_source`); una PROPUESTA nunca cubre a un vínculo vivo (`bulk_import._dedup_twin` y `service._dedup_link_payload`);
+G-BULK suma todos los bloques (`_sum_gate`); vínculos terminados (valid_to) fuera del «¿qué cambia?»; `margin` = margen
+OPERATIVO de la ficha (nunca el bruto); `fiscal_year_label_start` = aviso (14 fichas japonesas rotulan con el año de
+inicio; el número no se toca). PANEL (E2.7) — `GET /api/ontology/import/packages` (sin PIN, lista blanca
+`data/import/lotes/<fecha>/bundle_*.json.gz`, sin enlaces; caché SOLO de meta, fichas en LRU de 1 soltado tras el plan:
+`_pkg_release`) + `GET /import/packages/plan?package=` (sin PIN, 20/10 min, resumen `_import_panel_summary`, misma huella)
++ `{package}` en POST plan/apply (400 `ambiguous_source`), `sanitize: 1`, `view: 'panel'`, `plan_counts`;
+`engine/importer.js` (`window.KhipuImporter`, PEREZOSO desde `_sysImporter()` de engine/app_main.js al abrir 🩺
+Diagnóstico; en el SHELL, nunca en app.html): ver plan → Aplicar (casilla de copia + nombre de la base + PIN por
+_tradeFetch + expect.plan_sha) → Deshacer; tras aplicar/deshacer pide RECARGAR (F5). MAPA (E3.1) — `GET /api/hot/catalog`
+(core/hotviews/api.py: SOLO lo que el grafo de los lectores tiene y el catálogo estático no; columnas, páginas, ETag =
+generación, 409 `generation_changed`) + `/api/hot/catalog/detail?ids=`; `engine/catalog_sync.js` (`window.
+KhipuCatalogSync`, justo después de nodes/merge_graph.js en app.html y SHELL) SOLO AÑADE (nodos `from_db`, vínculos,
+alias, nombres), un re-asentado, banda/contadores/_deg rehechos; la ficha de una importada dice «ficha importada (con
+fuente)» y «sin dato» (no «pre-ingresos»). PRECIOS — EL universo `core.instruments.universe()/live_symbols()/
+eod_symbols()` (catálogo + primarios importados; `primary_symbol`, `baseline_symbols`, `phase_in`) lo leen live_caps,
+live_fundamentals y prices_store; nuevos de a `NEW_PER_CYCLE` 120 (live_caps) / `NEW_PER_DAILY_RUN` 500 (historia); Yahoo
+≤ 15 pedidos/min (`core/quotes.YAHOO_BATCH_LIMITER`); tras un despliegue live_caps publica el CATÁLOGO primero;
+`/api/market/live_caps` trae `universe` y `cycle`; `prices_store._targets` = tabla ∩ universo (salta «dado de baja» y lo
+deshecho); el navegador NO pide en su ronda los `from_db` (llegan por live_caps). Sin variables de entorno nuevas.
+Pendiente: aplicar en producción (Fabrizio, PIN); 6 «¿duplicada?» del plan; volver a calibrar `kernel.calibration`; 2.031
+pendientes esperan las fichas P2; E3.4/E3.5 (mapa a 1.339 abre +1,2 s); `link.direction_text_suspect` con «Bank USA»
+(nueva versión de shapes); suffix .BK/.SN/.CA/.BA sin hora de bolsa (beta de Dimson).
 
 ## Arquitectura
 

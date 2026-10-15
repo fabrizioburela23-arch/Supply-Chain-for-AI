@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L999"
+ruta: "docs/ESTADO.md#L1032"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (t) — ESTRECHOS Y PAÍSES: CURADO + EN VIVO (sw v226)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 999 (8 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1032 (8 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

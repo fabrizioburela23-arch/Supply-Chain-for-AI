@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_import_roundtrip.py"
 lenguaje: "python"
-lineas: 387
+lineas: 388
 aliases: ["tests/test_import_roundtrip.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_import_roundtrip.py
 
-> Prueba · capa [[Capa Pruebas]] · 387 líneas · `tests/test_import_roundtrip.py`
+> Prueba · capa [[Capa Pruebas]] · 388 líneas · `tests/test_import_roundtrip.py`
 
 ## Qué prueba
 

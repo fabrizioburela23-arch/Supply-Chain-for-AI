@@ -24,11 +24,11 @@ Sistema de animaciones de carga por NIVEL DE ESPERA. Pedido de Fabrizio (2026-07
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **27 de 99** (línea 3084), después de [[engine.app_main.js]] y antes de [[engine.toast.js]].
+Se carga en [[app.html]] en la posición **28 de 100** (línea 3085), después de [[engine.app_main.js]] y antes de [[engine.toast.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 27)
+- [[app.html]] — lo carga con `<script>` (posición 28)
 - [[engine.cockpit.js]] — usa `KhipuLoading`
 
 ## Pruebas que lo cubren

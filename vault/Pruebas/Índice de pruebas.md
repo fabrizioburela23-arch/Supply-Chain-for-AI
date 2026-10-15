@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-241 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+254 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -39,6 +39,9 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_bulk_import.py]] | 6 | 1 |
 | [[tests.test_canvas.py]] | 23 | 2 |
 | [[tests.test_canvas_charts.py]] | 4 | 1 |
+| [[tests.test_catalog_api.py]] | 8 | 3 |
+| [[tests.test_catalog_api_client.py]] | 8 | 5 |
+| [[tests.test_catalog_api_pg.py]] | 4 | 10 |
 | [[tests.test_catalog_fix_categories.py]] | 10 | 12 |
 | [[tests.test_catalog_fix_symbols.py]] | 8 | 6 |
 | [[tests.test_chat_commands.py]] | 3 | 2 |
@@ -100,8 +103,15 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_import_adapter.py]] | 10 | 6 |
 | [[tests.test_import_fast_path.py]] | 4 | 4 |
 | [[tests.test_import_governance.py]] | 5 | 6 |
+| [[tests.test_import_lote2.py]] | 16 | 4 |
+| [[tests.test_import_lote2_e2e.py]] | 23 | 19 |
 | [[tests.test_import_normalize.py]] | 8 | 3 |
+| [[tests.test_import_panel.py]] | 10 | 14 |
+| [[tests.test_import_panel_browser.py]] | 5 | 12 |
+| [[tests.test_import_panel_static.py]] | 10 | 5 |
 | [[tests.test_import_roundtrip.py]] | 12 | 17 |
+| [[tests.test_import_sanitize.py]] | 17 | 2 |
+| [[tests.test_import_sanitize_schema.py]] | 8 | 5 |
 | [[tests.test_import_schema.py]] | 8 | 2 |
 | [[tests.test_import_shapes.py]] | 7 | 4 |
 | [[tests.test_infra.py]] | 57 | 16 |
@@ -137,9 +147,12 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_live_facts_entities.py]] | 1 | 1 |
 | [[tests.test_live_fundamentals.py]] | 3 | 2 |
 | [[tests.test_live_labels_misc.py]] | 6 | 4 |
+| [[tests.test_live_universe.py]] | 10 | 6 |
+| [[tests.test_live_universe_db.py]] | 4 | 14 |
 | [[tests.test_localcharts_intents.py]] | 2 | 1 |
 | [[tests.test_lotej_review_fixes.py]] | 13 | 14 |
 | [[tests.test_lotek_fixer.py]] | 19 | 20 |
+| [[tests.test_lotel_fixer.py]] | 14 | 10 |
 | [[tests.test_map_search_reset.py]] | 2 | 0 |
 | [[tests.test_maptime_asof.py]] | 8 | 7 |
 | [[tests.test_market_keys_scope.py]] | 1 | 1 |
@@ -184,7 +197,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_portfolio_ai.py]] | 24 | 4 |
 | [[tests.test_portfolio_persist.py]] | 3 | 7 |
 | [[tests.test_portfolio_reports.py]] | 5 | 5 |
-| [[tests.test_prices_eod.py]] | 18 | 8 |
+| [[tests.test_prices_eod.py]] | 18 | 9 |
 | [[tests.test_provenance.py]] | 16 | 7 |
 | [[tests.test_providers.py]] | 17 | 6 |
 | [[tests.test_quotes_live.py]] | 18 | 5 |

@@ -1,0 +1,27 @@
+{
+  "schema": "khipus.lote-origin/1",
+  "batch": "lote-2026-10-15-completas",
+  "received": "2026-10-15",
+  "package": "khipus_entrega_final.zip",
+  "package_file": "2_fichas_P1_nivelB.jsonl",
+  "package_file_sha256": "3f75a9dbe656e0877ef822abbb40ad9cc76b7e3070f11f6e78f1e3fe8b83172a",
+  "package_records": 395,
+  "excel": "empresas_completas.xlsx",
+  "excel_sha256": "495b0f5381574950a56a65a8ffd37bb65b38ebc65128487cda5d9c6953b7d7d1",
+  "excel_rows": 386,
+  "kept_records": 386,
+  "kept_lines_sha256": "a3590dd336fc19b1e1cbe36ef0a72c693ea6e97083962d3c6ecc7197ae6ef4b6",
+  "excluded": [
+    "fb-2026-jiangxi-zichen",
+    "fb-2026-shoei-chemical",
+    "fb-2026-gudeng",
+    "fb-2026-horiba-stec",
+    "fb-2026-swagelok",
+    "fb-2026-asml-berlin-ex-berliner-glas",
+    "fb-2026-nippon-kodoshi",
+    "fb-2026-stargate",
+    "fb-2026-china-integrated-circuit-industry-investment-fund-big-fund"
+  ],
+  "note_es": "fichas_completas.jsonl.gz = las líneas ORIGINALES (byte a byte) de las 386 fichas completas; las 9 de fichas_excluidas.csv (aviso: tier A con menos de 3 vínculos verificables, o sin identificador fuerte) no entran. Las filas P2/P3 del CSV (3.773 sin ficha) no son parte de este lote.",
+  "note_en": "fichas_completas.jsonl.gz = the ORIGINAL lines (byte for byte) of the 386 complete records; the 9 in fichas_excluidas.csv (warning: tier A with fewer than 3 verifiable links, or no strong identifier) do not enter. The P2/P3 CSV rows (3,773 without a record) are not part of this batch."
+}

@@ -976,6 +976,7 @@ MKT_SYNONYMS = {
     'equip': ('equip', 'tool'), 'robot': ('robot',), 'litio': ('lithium', 'litio'), 'lithium': ('lithium', 'litio'),
     'energ': ('energ', 'power'), 'solar': ('solar', 'fotovolt', 'photovolt'), 'elect': ('elect',),
     'vehic': ('vehic', 'ev', 'auto', 'car'), 'auto': ('auto', 'vehic', 'car'), 'red': ('network', 'red'),
+    'ev': ('ev', 'vehic', 'electr'),
     'network': ('network', 'red'), 'almacen': ('storage', 'almacen'), 'storage': ('storage', 'almacen'),
     'sustrat': ('substrat', 'sustrat'), 'substrat': ('substrat', 'sustrat'), 'oblea': ('wafer', 'oblea'),
     'wafer': ('wafer', 'oblea'), 'satel': ('satell', 'satel'), 'satell': ('satell', 'satel'),
@@ -1017,7 +1018,8 @@ def mkt_match(query, market):
         for k, syn in MKT_SYNONYMS.items():          # la raíz de la pregunta y la clave se contienen (bateri ~ bater)
             if qs.startswith(k) or k.startswith(qs):
                 alts |= set(syn)
-        if any(ms.startswith(a[:4]) or a.startswith(ms[:4]) for ms in m for a in alts if len(a) >= 3 and len(ms) >= 3):
+        if any(ms == a or (len(a) >= 3 and len(ms) >= 3 and (ms.startswith(a[:4]) or a.startswith(ms[:4])))
+               for ms in m for a in alts):
             hit += 1
     return hit / len(q)
 
@@ -1070,6 +1072,11 @@ def t_rank_by_market(ctx, market, metric='share_pct', region='GLOBAL', limit=10)
                 continue
             markets[str(e.get('market'))] = markets.get(str(e.get('market')), 0) + 1
             rows.append((score, oid, c, e))
+    if rows:
+        # solo el MEJOR parecido: «EV batteries» no mezcla celdas de smartphone ni ánodos (que solo comparten «baterías»)
+        best = max(r[0] for r in rows)
+        rows = [r for r in rows if r[0] >= best - 1e-9]
+        markets = {k: n for k, n in markets.items() if any(str(r[3].get('market')) == k for r in rows)}
     if not rows:
         raise ToolError(f'I do not have that ranking: no company in the Khipus graph records a market position for '
                         f'"{market}" ({want_region}); {any_entries} market-position entries exist for other markets',

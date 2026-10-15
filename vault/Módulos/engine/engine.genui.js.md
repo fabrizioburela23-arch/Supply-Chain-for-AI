@@ -34,11 +34,11 @@ RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[engine.worldmonitor.js]] — usa `KhipuWorld`
 
-Se carga en [[app.html]] en la posición **87 de 99** (línea 3212), después de [[engine.portfolios.js]] y antes de [[engine.oswindows.js]].
+Se carga en [[app.html]] en la posición **88 de 100** (línea 3213), después de [[engine.portfolios.js]] y antes de [[engine.oswindows.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 87)
+- [[app.html]] — lo carga con `<script>` (posición 88)
 - [[engine.cockpit.js]] — usa `KhipuGenUI`
 - [[engine.genui_charts.js]] — usa `KhipuGenUI`
 - [[engine.genui_progress.js]] — usa `KhipuGenUI`

@@ -168,7 +168,8 @@ def test_plan_sobre_postgres(ronda):
     l5 = next(l for l in it['links'] if l['relation_id'] == 'rel-005')
     assert l5['valid_to'].startswith('2020-07-01')
     wc = p['what_changes']
-    assert wc['added_links'] == 3 and wc['calibration_stale'] is True and wc['before']['tsmc_hit'] == 318
+    # rel-005 terminó (valid_to): fuera del kernel de «ahora» → 2 vivos que cuentan, no 3
+    assert wc['added_links'] == 2 and wc['calibration_stale'] is True and wc['before']['tsmc_hit'] == 318
 
 
 def test_aplicar_una_decision_una_generacion_append_only(ronda):

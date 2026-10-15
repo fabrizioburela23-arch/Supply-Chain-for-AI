@@ -176,7 +176,7 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[security_audit.py]] — lo importa
 - [[security_audit.py]] — lo nombra por su ruta
 
-_Además lo importan 72 pruebas (lista abajo)._
+_Además lo importan 74 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -241,7 +241,7 @@ _Además lo importan 72 pruebas (lista abajo)._
 | `GET` | `/api/trade/history` | `trade_history` | [[engine.app_trade_panel.js]], [[engine.cockpit.js]], [[engine.toast.js]], 2 pruebas |
 | `POST` | `/api/trade/order` | `trade_order` | [[engine.app_trade_panel.js]], [[engine.crypto.js]], [[engine.trade.js]], 2 pruebas |
 | `GET` | `/api/trade/positions/detail` | `trade_positions_detail` | [[engine.app_trade_panel.js]], [[engine.cockpit.js]], [[engine.pfcommittee.js]], [[engine.voice.js]], 2 pruebas |
-| `GET` | `/api/trade/status` | `trade_status` | [[app.html]], 1 prueba |
+| `GET` | `/api/trade/status` | `trade_status` | [[app.html]], 2 pruebas |
 | `GET` | `/api/vocabulary` | `api_vocabulary` | 3 pruebas |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | — |
 | `POST` | `/api/ws-key` | `ws_key` | [[engine.app_main.js]], 1 prueba |
@@ -298,6 +298,7 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_ai_usage.py]]
 - [[tests.test_bitemporal.py]]
 - [[tests.test_canvas.py]]
+- [[tests.test_catalog_api_client.py]]
 - [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_chat_portfolio_agent.py]]
 - [[tests.test_checkpoints.py]]
@@ -319,6 +320,9 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_import_lote2_e2e.py]]
+- [[tests.test_import_panel.py]]
+- [[tests.test_import_panel_browser.py]]
 - [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]

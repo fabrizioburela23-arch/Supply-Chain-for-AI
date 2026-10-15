@@ -80,13 +80,15 @@ _Nada interno._
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 61 pruebas (lista abajo)._
+_Además lo importan 69 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
 - [[tests.test_bitemporal.py]]
 - [[tests.test_bitemporal_review.py]]
+- [[tests.test_catalog_api.py]]
+- [[tests.test_catalog_api_pg.py]]
 - [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_cierre_infra.py]]
 - [[tests.test_countries.py]]
@@ -113,6 +115,10 @@ _Además lo importan 61 pruebas (lista abajo)._
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_import_adapter.py]]
+- [[tests.test_import_lote2.py]]
+- [[tests.test_import_lote2_e2e.py]]
+- [[tests.test_import_panel.py]]
+- [[tests.test_import_panel_browser.py]]
 - [[tests.test_import_roundtrip.py]]
 - [[tests.test_import_shapes.py]]
 - [[tests.test_kernel_monotone_edges.py]]
@@ -120,8 +126,10 @@ _Además lo importan 61 pruebas (lista abajo)._
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_ledger_callsites_committee.py]]
+- [[tests.test_live_universe_db.py]]
 - [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_lotek_fixer.py]]
+- [[tests.test_lotel_fixer.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ops_graph_version.py]]

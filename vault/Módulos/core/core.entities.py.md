@@ -45,7 +45,6 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - [[core.agents_api.py]] — lo importa
 - [[core.context_engine.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
-- [[core.live_caps.py]] — lo importa
 - [[core.live_facts.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
@@ -79,7 +78,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 9 pruebas (lista abajo)._
+_Además lo importan 10 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -87,6 +86,7 @@ _Además lo importan 9 pruebas (lista abajo)._
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_context_engine.py]]
 - [[tests.test_entities.py]]
+- [[tests.test_import_lote2_e2e.py]]
 - [[tests.test_lotek_fixer.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_review2.py]]

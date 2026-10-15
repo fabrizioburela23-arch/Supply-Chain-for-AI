@@ -56,11 +56,11 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **91 de 99** (línea 3216), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **92 de 100** (línea 3217), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 91)
+- [[app.html]] — lo carga con `<script>` (posición 92)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.app_main.js]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
@@ -103,6 +103,7 @@ Se carga en [[app.html]] en la posición **91 de 99** (línea 3216), después de
 - [[tests.test_committee_os_ui.py]]
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_client_static.py]]
+- [[tests.test_import_panel_browser.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_fixes_shell.py]]
 - [[tests.test_khipus_os_integration.py]]

@@ -32,7 +32,7 @@ De nivel superior (globales del script): `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `C
 
 - [[engine.geo_coords.js]] — usa `GeoCoords`, `KhipuCountries`
 
-Se carga en [[app.html]] en la posición **2 de 99** (línea 1503) y antes de [[nodes.categories_extra.js]].
+Se carga en [[app.html]] en la posición **2 de 100** (línea 1503) y antes de [[nodes.categories_extra.js]].
 
 ## Lo usan
 
@@ -45,6 +45,7 @@ Se carga en [[app.html]] en la posición **2 de 99** (línea 1503) y antes de [[
 - [[engine.app_trade_panel.js]] — usa `NODES`
 - [[engine.brief.js]] — usa `NODES`
 - [[engine.canvas-data.js]] — usa `NODES`
+- [[engine.catalog_sync.js]] — usa `CATS`, `NODES`, `NODE_ID_ALIAS`, `NODE_META`
 - [[engine.cockpit.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[engine.command_center.js]] — usa `NODES`
 - [[engine.compare.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`

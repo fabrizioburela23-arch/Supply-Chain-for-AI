@@ -3,7 +3,7 @@
    CACHE va en la línea 6 (regla de despliegue #1: bump vN → vN+1 en cada
    cambio de JS/HTML). server.py (_sw_version) lee SOLO los primeros 2048
    caracteres para inyectar ?v=N en los <script src> — no la bajes. */
-const CACHE = 'khipu-finance-v271';
+const CACHE = 'khipu-finance-v272';
 /* Reglas (auditoría estructural 2026-09-30, hallazgo #3 — incidente real: un
    502 HTML de Railway quedó guardado y se servía offline → "Unexpected token
    '<'", y /api/health cacheado devolvía {server:true} ocultando el aviso):
@@ -40,13 +40,13 @@ const SHELL = ['/', '/app.html',
   '/nodes/nodes_expand3.js', '/nodes/nodes_nuclear.js', '/nodes/nodes_expand4.js',
   '/nodes/nodes_expand5.js', '/nodes/meta_fill.js', '/nodes/nodes_china.js', '/nodes/nodes_multicapa.js',
   '/nodes/preipo_intel.js', '/nodes/listing_status.js', '/nodes/private_valuations.js',
-  '/nodes/links_all.js', '/nodes/merge_graph.js', '/nodes/links_expand.js', '/nodes/links_connect.js',
+  '/nodes/links_all.js', '/nodes/merge_graph.js', '/engine/catalog_sync.js', '/nodes/links_expand.js', '/nodes/links_connect.js',
   '/engine/loading.js', '/engine/graph3d.js', '/engine/universe2d.js', '/engine/orb.js', '/engine/hypergraph.js', '/engine/resolve.js', '/engine/trade.js', '/engine/voice.js',
   '/engine/secondbrain.js', '/engine/geo_coords.js', '/engine/globe.js',
   '/engine/canvas-data.js', '/engine/command_center.js',
   '/engine/temporal-graph.js', '/nodes/temporal_seed_facts.js',
   '/nodes/temporal_seed_facts2.js', '/nodes/ontology.js', '/nodes/ontology_facts.js', '/nodes/legal_names.js',
-  '/engine/timeline3d.js', '/engine/maptime.js', '/engine/khipu_lang.js', '/engine/guide.js', '/engine/xray.js', '/engine/research.js', '/engine/riskreport.js', '/engine/worldmonitor.js', '/engine/spacemonitor.js', '/engine/committee.js', '/engine/aispend.js', '/engine/pfcommittee.js', '/engine/pfreports.js', '/engine/toast.js', '/engine/agents_registry.js', '/engine/tour_script.js', '/engine/mascot.js', '/engine/sync.js', '/engine/clients.js', '/engine/mcpconnect.js', '/engine/insights.js', '/engine/hotclient.js', '/engine/statematrix.js', '/engine/livesim.js', '/engine/layers.js', '/engine/brief.js', '/engine/compare.js', '/engine/matrixview.js', '/engine/nav4.js', '/engine/oswindows.js', '/engine/khipu_chat.js', '/engine/desktop.js', '/engine/cockpit.js', '/engine/live.js', '/engine/localcharts.js', '/engine/fincard.js', '/engine/termdata.js', '/engine/explain.js', '/engine/pickers.js', '/engine/reconcile.js', '/engine/governance.js', '/engine/audit.js', '/engine/pricehist.js', '/engine/crypto.js', '/engine/portfolios.js', '/engine/genui.js', '/engine/genui_charts.js', '/engine/genui_shapes.js', '/engine/genui_progress.js',
+  '/engine/timeline3d.js', '/engine/maptime.js', '/engine/khipu_lang.js', '/engine/guide.js', '/engine/xray.js', '/engine/research.js', '/engine/riskreport.js', '/engine/worldmonitor.js', '/engine/spacemonitor.js', '/engine/committee.js', '/engine/aispend.js', '/engine/pfcommittee.js', '/engine/pfreports.js', '/engine/toast.js', '/engine/agents_registry.js', '/engine/tour_script.js', '/engine/mascot.js', '/engine/sync.js', '/engine/clients.js', '/engine/mcpconnect.js', '/engine/insights.js', '/engine/hotclient.js', '/engine/statematrix.js', '/engine/livesim.js', '/engine/layers.js', '/engine/brief.js', '/engine/compare.js', '/engine/matrixview.js', '/engine/nav4.js', '/engine/oswindows.js', '/engine/khipu_chat.js', '/engine/desktop.js', '/engine/cockpit.js', '/engine/live.js', '/engine/localcharts.js', '/engine/fincard.js', '/engine/termdata.js', '/engine/explain.js', '/engine/pickers.js', '/engine/reconcile.js', '/engine/governance.js', '/engine/audit.js', '/engine/pricehist.js', '/engine/crypto.js', '/engine/portfolios.js', '/engine/genui.js', '/engine/genui_charts.js', '/engine/genui_shapes.js', '/engine/genui_progress.js', '/engine/importer.js',
   '/nodes/crypto_intel.js', '/nodes/crypto_intel2.js',
   '/sim/scenario_builder.js',
   // G5-06: el JS propio que antes iba inline en app.html (mismo orden de carga)

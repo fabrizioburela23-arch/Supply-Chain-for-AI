@@ -1,5 +1,15 @@
 """ontology/company_schema.py — espejo Pydantic v2 de `data/import/company.schema.json` (khipus.company/1; E2.1).
 
+Versión del esquema = la del artefacto `ontology.import_schema` (hoy 2.0.0, lote L 2026-10-15): 2.0.0 solo AFLOJA reglas
+de FORMATO de 1.0.0 (toda ficha válida en 1.0.0 sigue siendo válida; el registro de gobernanza lo cuenta como MAYOR porque
+cambian patrones y obligatorios): fechas desde el año 1000 (empresas fundadas en 1867), textos más largos donde la
+investigación real los necesita, `other_names.kind = other`, `value_en` en sanciones/controles de exportación, `pct`
+opcional en la estructura societaria, `confidence` opcional en la línea de tiempo y en ESG (el importador pone la de la
+política, marcada), semestres `AAAA-H1/H2`, `dependency` (y su `criticality`) opcional SOLO en owns/partner/invest, `since` de una lista
+restringida y `status` de un litigio opcionales, `status` de una planta opcional, `counterparty.id_hint` (un id del grafo
+con guion o espacio). Lo que se repara en formato (URLs con espacios, años como texto, tickers con espacio, símbolos de
+Yahoo derivables…) lo hace ANTES `core/import_normalize.sanitize_record`, con registro de cada cambio.
+
 `jsonschema` NO está en requirements: la ficha de UNA empresa se valida con estos modelos (estrictos: `extra='forbid'`
 en todos los niveles = `additionalProperties`/`unevaluatedProperties: false`; modo JSON estricto: un número no es
 texto, un bool no es "true"). El artefacto `ontology.import_schema` lleva el JSON Schema; tests/test_import_schema.py
@@ -16,9 +26,10 @@ from typing import Annotated, Any, List, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 SCHEMA_ID = 'khipus.company/1'
+SCHEMA_VERSION = '2.0.0'          # = ontology.import_schema@2.0.0 (data/import/company.schema.json)
 
 # ── patrones (copiados del artefacto; la prueba de equivalencia los compara) ────────────────────────────────────
-DATE_PARTIAL = r'^(19|20)[0-9]{2}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$'
+DATE_PARTIAL = r'^(1[0-9]|20)[0-9]{2}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$'   # años 1000-2099
 URL = r'^https?://[^\s/]+\.[^\s]+$'
 COUNTRY = r'^[A-Z]{2}$'
 CURRENCY = r'^[A-Z]{3}$'
@@ -33,8 +44,9 @@ TICKER = r'^[A-Z0-9][A-Z0-9.\-]{0,14}$'
 DOMAIN = r'^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
 RECORD_ID = r'^[A-Za-z0-9][A-Za-z0-9._:-]{2,79}$'
 KHIPUS_ID = r'^[A-Za-z][A-Za-z0-9_]{1,79}$'
+ID_HINT = r"^[A-Za-z0-9][A-Za-z0-9 _.&()'\-]{0,79}$"   # ids VIEJOS del grafo (guion, espacio, 01AI)
 CAT = r'^[a-z][a-z0-9_]{1,39}$'
-PERIOD = r'^(FY[0-9]{4}|[0-9]{4}-Q[1-4]|TTM-[0-9]{4}-[0-9]{2}|point)$'
+PERIOD = r'^(FY[0-9]{4}|[0-9]{4}-Q[1-4]|[0-9]{4}-H[12]|TTM-[0-9]{4}-[0-9]{2}|point)$'
 LANG = r'^[a-z]{2}(-[A-Za-z]{2,4})?$'
 REGION_MP = r'^(GLOBAL|[A-Z]{2}|EU|ASIA|LATAM)$'
 REGION_EXPO = r'^(GLOBAL|OTHER|[A-Z]{2}|EU|ASIA|LATAM|NA|EMEA|APAC)$'
@@ -43,7 +55,7 @@ FAC_ID = r'^fac-[0-9]{3}$'
 REL_ID = r'^[A-Za-z0-9._-]{1,40}$'
 NAICS = r'^[0-9]{2,6}$'
 FYE = r'^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
-QPERIOD = r'^[0-9]{4}-Q[1-4]$'
+QPERIOD = r'^[0-9]{4}-(Q[1-4]|H[12])$'
 
 SourceKind = Literal['primary', 'press', 'trade', 'corporate', 'rumor', 'aggregator', 'state']
 RelType = Literal['supply', 'fab', 'cloud', 'license', 'ppa', 'deploy', 'owns', 'invest', 'partner']
@@ -72,7 +84,7 @@ class _M(BaseModel):
 # ── procedencia ─────────────────────────────────────────────────────────────────────────────────────────────────
 class Evidence(_M):
     source_url: Url
-    source_name: Annotated[str, Field(max_length=160)] = None
+    source_name: Annotated[str, Field(max_length=300)] = None
     source_kind: SourceKind = None
     published_at: DatePartial = None
     as_of: DatePartial
@@ -89,7 +101,7 @@ class RelationEvidence(Evidence):
 class FactBase(_M):
     value: Any
     source_url: Url
-    source_name: Annotated[str, Field(max_length=160)] = None
+    source_name: Annotated[str, Field(max_length=300)] = None
     source_kind: SourceKind = None
     as_of: DatePartial
     retrieved_at: date = None
@@ -99,8 +111,20 @@ class FactBase(_M):
     note: Annotated[str, Field(max_length=300)] = None
 
 
+class FactBaseSoft(FactBase):
+    """Igual que FactBase pero con `confidence` opcional (ESG y línea de tiempo: el importador pone la de la política
+    —policy.import.unverified_confidence— y lo marca)."""
+    confidence: Conf = None
+
+
 class FStr(FactBase):
     value: Annotated[str, Field(min_length=1, max_length=2000)]
+
+
+class FStrBi(FactBase):
+    """Texto con su traducción OPCIONAL (regla bilingüe: sanciones y controles de exportación)."""
+    value: Annotated[str, Field(min_length=1, max_length=2000)]
+    value_en: Annotated[str, Field(min_length=1, max_length=2000)] = None
 
 
 class FTextEs(FactBase):
@@ -109,6 +133,11 @@ class FTextEs(FactBase):
 
 
 class FNum(FactBase):
+    value: float
+    unit: Annotated[str, Field(max_length=30)] = None
+
+
+class FNumSoft(FactBaseSoft):
     value: float
     unit: Annotated[str, Field(max_length=30)] = None
 
@@ -143,9 +172,13 @@ class FSharePct(FactBase):
     value: Annotated[float, Field(ge=0, le=100)]
 
 
+class FSharePctSoft(FactBaseSoft):
+    value: Annotated[float, Field(ge=0, le=100)]
+
+
 class FQty(FactBase):
     value: Annotated[float, Field(ge=0)]
-    unit: Annotated[str, Field(min_length=1, max_length=30)]
+    unit: Annotated[str, Field(min_length=1, max_length=80)]
 
 
 class FStatus(FactBase):
@@ -176,6 +209,7 @@ class CounterpartyIds(_M):
 class Counterparty(_M):
     name: Annotated[str, Field(min_length=2, max_length=160)]
     khipus_id: Annotated[str, Field(pattern=KHIPUS_ID)] = None
+    id_hint: Annotated[str, Field(pattern=ID_HINT)] = None
     record_id: Annotated[str, Field(max_length=80)] = None
     ids: CounterpartyIds = None
     country: Country = None
@@ -184,7 +218,7 @@ class Counterparty(_M):
 
 class OtherName(_M):
     name: Annotated[str, Field(min_length=2, max_length=160)]
-    kind: Literal['acronym', 'local_script', 'brand', 'former', 'transliteration', 'common']
+    kind: Literal['acronym', 'local_script', 'brand', 'former', 'transliteration', 'common', 'other']
     lang: Annotated[str, Field(pattern=LANG)] = None
     until: DatePartial = None
 
@@ -220,7 +254,7 @@ class ResearchMeta(_M):
     tools: Annotated[List[Annotated[str, Field(max_length=60)]], Field(max_length=10)] = None
     tier: Literal['A', 'B', 'C']
     revision: Annotated[int, Field(ge=1)] = None
-    not_found: Annotated[List[Annotated[str, Field(max_length=120)]], Field(max_length=80)] = None
+    not_found: Annotated[List[Annotated[str, Field(max_length=300)]], Field(max_length=80)] = None
     notes: Annotated[str, Field(max_length=2000)] = None
     priority: Literal['P1', 'P2', 'P3'] = None
     batch: Annotated[str, Field(max_length=60)] = None
@@ -237,7 +271,7 @@ class Listing(_M):
     currency: Currency
     kind: Literal['equity', 'a_share', 'h_share', 'adr', 'gdr', 'otc', 'preferred', 'dual_class']
     is_primary: bool
-    share_class: Annotated[str, Field(max_length=20)] = None
+    share_class: Annotated[str, Field(max_length=80)] = None
     listed_since: DatePartial = None
     delisted_at: DatePartial = None
     source_url: Url
@@ -280,7 +314,7 @@ class Classification(_M):
 
 class KeyPerson(_M):
     name: Annotated[str, Field(max_length=120)]
-    role: Annotated[str, Field(max_length=80)]
+    role: Annotated[str, Field(max_length=160)]
     since: DatePartial = None
     source_url: Url
     as_of: DatePartial
@@ -302,7 +336,7 @@ class Profile(_M):
 # ── estructura / mercado / productos / plantas ──────────────────────────────────────────────────────────────────
 class Holding(_M):
     entity: Counterparty
-    pct: FSharePct
+    pct: FSharePct = None              # 2.0.0: la relación es información aunque no se sepa el %
     voting_pct: FSharePct = None
     since: DatePartial = None
     until: DatePartial = None
@@ -324,9 +358,9 @@ class MarketPosition(_M):
     region: Annotated[str, Field(pattern=REGION_MP)]
     rank: Annotated[int, Field(ge=1, le=100)] = None
     share_pct: Annotated[float, Field(ge=0, le=100)] = None
-    period: Annotated[str, Field(max_length=20)] = None
+    period: Annotated[str, Field(max_length=80)] = None
     source_url: Url
-    source_name: Annotated[str, Field(max_length=160)] = None
+    source_name: Annotated[str, Field(max_length=300)] = None
     source_kind: SourceKind = None
     as_of: DatePartial
     confidence: Conf
@@ -353,7 +387,7 @@ class Product(_M):
 
 class Capacity(_M):
     value: Annotated[float, Field(ge=0)]
-    unit: Annotated[str, Field(max_length=30)]
+    unit: Annotated[str, Field(max_length=80)]
 
 
 class Facility(_M):
@@ -366,7 +400,7 @@ class Facility(_M):
     lat: Annotated[float, Field(ge=-90, le=90)] = None
     lon: Annotated[float, Field(ge=-180, le=180)] = None
     capacity: Capacity = None
-    status: Literal['operating', 'ramping', 'construction', 'planned', 'paused', 'closed']
+    status: Literal['operating', 'ramping', 'construction', 'planned', 'paused', 'closed'] = None
     start: DatePartial = None
     end: DatePartial = None
     owner_share_pct: Annotated[float, Field(ge=0, le=100)] = None
@@ -450,8 +484,8 @@ class Exposure(_M):
     revenue_by_region: Annotated[List[RevenueByRegion], Field(max_length=20)] = None
     customer_concentration_top1_pct: FSharePct = None
     customer_concentration_top5_pct: FSharePct = None
-    export_controls: FStr = None
-    sanctions: FStr = None
+    export_controls: FStrBi = None
+    sanctions: FStrBi = None
     subsidies: Annotated[List[Subsidy], Field(max_length=15)] = None
 
 
@@ -460,7 +494,7 @@ class RestrictedList(_M):
                   'FCC_covered', 'UFLPA', 'EU_sanctions', 'UK_sanctions', 'CN_unreliable_entity', 'CN_export_control',
                   'other']
     list_other: Annotated[str, Field(max_length=120)] = None
-    since: DatePartial
+    since: DatePartial = None
     until: DatePartial = None
     entity_named: Annotated[str, Field(max_length=200)] = None
     source_url: Url
@@ -472,7 +506,7 @@ class Litigation(_M):
     kind: Literal['antitrust', 'patent', 'trade', 'regulatory', 'securities', 'other']
     text_es: Annotated[str, Field(max_length=500)]
     text_en: Annotated[str, Field(max_length=500)]
-    status: Literal['open', 'settled', 'won', 'lost', 'appeal']
+    status: Literal['open', 'settled', 'won', 'lost', 'appeal'] = None
     since: DatePartial = None
     source_url: Url
     as_of: DatePartial
@@ -500,11 +534,11 @@ class Innovation(_M):
 
 
 class Esg(_M):
-    emissions_scope1_tco2e: FNum = None
-    emissions_scope2_tco2e: FNum = None
-    energy_use_mwh: FNum = None
-    water_use_m3: FNum = None
-    renewable_share_pct: FSharePct = None
+    emissions_scope1_tco2e: FNumSoft = None
+    emissions_scope2_tco2e: FNumSoft = None
+    energy_use_mwh: FNumSoft = None
+    water_use_m3: FNumSoft = None
+    renewable_share_pct: FSharePctSoft = None
     controversies: Annotated[List[Risk], Field(max_length=10)] = None
 
 
@@ -519,7 +553,7 @@ class TimelineEvent(_M):
     source_url: Url
     source_kind: SourceKind = None
     as_of: DatePartial
-    confidence: Conf
+    confidence: Conf = None
 
 
 # ── vínculos ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -542,7 +576,7 @@ class FacilityRef(_M):
 
 
 class Dependency(_M):
-    criticality: Annotated[int, Field(ge=1, le=6)]
+    criticality: Annotated[int, Field(ge=1, le=6)] = None   # 2.0.0: obligatoria SOLO en vínculos de FLUJO (validador)
     sole_source: bool = None
     share_of_supplier_revenue: FSharePct = None
     share_of_customer_purchases: FSharePct = None
@@ -569,7 +603,7 @@ class Relation(_M):
     status: Literal['active', 'ended', 'announced', 'planned', 'rumored', 'disputed']
     start: DatePartial = None
     end: DatePartial = None
-    dependency: Dependency
+    dependency: Dependency = None      # 2.0.0: obligatoria (con criticality) SOLO en vínculos de FLUJO (validador)
     evidence: Annotated[List[RelationEvidence], Field(min_length=1, max_length=6)]
     confidence: Conf
 
@@ -579,6 +613,9 @@ class Relation(_M):
         if self.this_role not in ok:
             raise ValueError(f'this_role {self.this_role!r} no corresponde a rel_type {self.rel_type!r} (admite '
                              f'{"/".join(ok)}) / this_role does not match rel_type')
+        if self.rel_type in FLOW_RELS and (self.dependency is None or self.dependency.criticality is None):
+            raise ValueError(f'un vínculo de flujo ({self.rel_type}) necesita dependency.criticality / a flow relation '
+                             f'({self.rel_type}) needs dependency.criticality')
         if self.status == 'ended' and self.end is None:
             raise ValueError('un vínculo terminado (ended) necesita end / an ended relation needs end')
         return self

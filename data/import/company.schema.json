@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:khipus:schema:company:1.0.0",
+  "$id": "urn:khipus:schema:company:2.0.0",
   "title": "Khipus — ficha de UNA empresa para importar al grafo (khipus.company/1)",
-  "description": "Versión 1.0.0 (2026-10-13). Una ficha = una empresa = una línea de un archivo .jsonl (o un .json suelto). Todo dato investigado va dentro de un \"fact\" con source_url (enlace), as_of (fecha en que el dato es verdad: AAAA, AAAA-MM o AAAA-MM-DD) y confidence (0-1). PROHIBIDO lo que cambia solo (precio, capitalización, volumen, EV, múltiplos P/E, tipo de cambio, valuación \"en negociación\", NRS u otra cifra que calcula Khipus): el servidor lo trae en vivo con los identificadores de identity.ids, listings y live_hooks. Dirección de vínculos: la empresa dice su PAPEL (this_role) y el importador escribe la forma canónica \"source PROVEE a target\". Campos desconocidos = error (additionalProperties false), así nada se pierde en silencio. Montos en UNIDADES de su moneda original (no millones). Porcentajes en 0-100. Países ISO 3166-1 alfa-2. Bolsas ISO 10383 MIC. Monedas ISO 4217.",
+  "description": "Versión 2.0.0 (2026-10-15; lote L): solo AFLOJA reglas de FORMATO de 1.0.0 —toda ficha válida en 1.0.0 sigue siendo válida; el registro de gobernanza la cuenta como MAYOR porque cambian patrones y obligatorios—. Antes de validar, el importador repara el formato (core/import_normalize.sanitize_record: URLs con espacios o corchetes codificadas, años escritos como texto, tickers con espacio, símbolo de Yahoo/moneda/bolsa derivables) y registra cada cambio; lo que no se puede reparar se QUITA (solo ese campo) con registro, nunca se inventa. Una ficha = una empresa = una línea de un archivo .jsonl (o un .json suelto). Todo dato investigado va dentro de un \"fact\" con source_url (enlace), as_of (fecha en que el dato es verdad: AAAA, AAAA-MM o AAAA-MM-DD) y confidence (0-1). PROHIBIDO lo que cambia solo (precio, capitalización, volumen, EV, múltiplos P/E, tipo de cambio, valuación \"en negociación\", NRS u otra cifra que calcula Khipus): el servidor lo trae en vivo con los identificadores de identity.ids, listings y live_hooks. Dirección de vínculos: la empresa dice su PAPEL (this_role) y el importador escribe la forma canónica \"source PROVEE a target\". Campos desconocidos = error (additionalProperties false), así nada se pierde en silencio. Montos en UNIDADES de su moneda original (no millones). Porcentajes en 0-100. Países ISO 3166-1 alfa-2. Bolsas ISO 10383 MIC. Monedas ISO 4217.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -124,14 +124,15 @@
   },
   "$defs": {
     "date_partial": {
-      "description": "Fecha con la precisión que se conoce: AAAA, AAAA-MM o AAAA-MM-DD. Nunca inventar el día.",
+      "description": "Fecha con la precisión que se conoce: AAAA, AAAA-MM o AAAA-MM-DD (años 1000-2099: hay empresas fundadas en 1867). Nunca inventar el día.",
       "type": "string",
-      "pattern": "^(19|20)[0-9]{2}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$"
+      "pattern": "^(1[0-9]|20)[0-9]{2}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$"
     },
     "url": {
       "type": "string",
       "maxLength": 600,
-      "pattern": "^https?://[^\\s/]+\\.[^\\s]+$"
+      "pattern": "^https?://[^\\s/]+\\.[^\\s]+$",
+      "description": "Enlace http(s) sin espacios. El importador codifica espacios y corchetes (%20, %5B, %5D) ANTES de validar; el patrón sigue estricto."
     },
     "country": {
       "description": "ISO 3166-1 alfa-2 (US, CN, TW, KR, JP, DE…). El importador lo traduce a la convención del catálogo (EEUU, China…).",
@@ -173,7 +174,7 @@
         },
         "source_name": {
           "type": "string",
-          "maxLength": 160
+          "maxLength": 300
         },
         "source_kind": {
           "$ref": "#/$defs/source_kind"
@@ -211,7 +212,7 @@
         },
         "source_name": {
           "type": "string",
-          "maxLength": 160
+          "maxLength": 300
         },
         "source_kind": {
           "$ref": "#/$defs/source_kind"
@@ -371,9 +372,9 @@
           "$ref": "#/$defs/currency"
         },
         "period": {
-          "description": "FY2025, 2025-Q2, TTM-2026-06, o 'point' para un saldo a una fecha.",
+          "description": "FY2025, 2025-Q2, 2025-H1, TTM-2026-06, o 'point' para un saldo a una fecha. Un año fiscal partido (FY2025/26) se escribe con el año en que TERMINA (FY2026): el importador lo convierte y lo registra.",
           "type": "string",
-          "pattern": "^(FY[0-9]{4}|[0-9]{4}-Q[1-4]|TTM-[0-9]{4}-[0-9]{2}|point)$"
+          "pattern": "^(FY[0-9]{4}|[0-9]{4}-Q[1-4]|[0-9]{4}-H[12]|TTM-[0-9]{4}-[0-9]{2}|point)$"
         }
       },
       "required": [
@@ -525,7 +526,7 @@
           "maxItems": 80,
           "items": {
             "type": "string",
-            "maxLength": 120
+            "maxLength": 300
           }
         },
         "notes": {
@@ -598,7 +599,8 @@
                   "brand",
                   "former",
                   "transliteration",
-                  "common"
+                  "common",
+                  "other"
                 ]
               },
               "lang": {
@@ -721,7 +723,7 @@
         },
         "share_class": {
           "type": "string",
-          "maxLength": 20
+          "maxLength": 80
         },
         "listed_since": {
           "$ref": "#/$defs/date_partial"
@@ -749,7 +751,8 @@
           "type": "string",
           "pattern": "^BBG[A-Z0-9]{9}$"
         }
-      }
+      },
+      "description": "Una cotización. yahoo_symbol, currency, exchange_mic y kind son obligatorios; el importador los DERIVA cuando salen sin ambigüedad de otros campos de la misma cotización (ticker + MIC → símbolo de Yahoo; MIC → moneda; sufijo de Yahoo → MIC; bolsa de la sede → kind) y quita la cotización si no se puede. Un ticker con espacio (ERIC B) se escribe con guion (ERIC-B)."
     },
     "classification": {
       "type": "object",
@@ -895,7 +898,7 @@
               },
               "role": {
                 "type": "string",
-                "maxLength": 80
+                "maxLength": 160
               },
               "since": {
                 "$ref": "#/$defs/date_partial"
@@ -966,8 +969,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "entity",
-        "pct"
+        "entity"
       ],
       "properties": {
         "entity": {
@@ -985,7 +987,8 @@
         "until": {
           "$ref": "#/$defs/date_partial"
         }
-      }
+      },
+      "description": "Participación societaria. pct opcional desde 2.0.0: la relación es información aunque no se sepa el %."
     },
     "market_position": {
       "type": "object",
@@ -1037,14 +1040,14 @@
         },
         "period": {
           "type": "string",
-          "maxLength": 20
+          "maxLength": 80
         },
         "source_url": {
           "$ref": "#/$defs/url"
         },
         "source_name": {
           "type": "string",
-          "maxLength": 160
+          "maxLength": 300
         },
         "source_kind": {
           "$ref": "#/$defs/source_kind"
@@ -1124,7 +1127,6 @@
         "name",
         "kind",
         "country",
-        "status",
         "source_url",
         "as_of"
       ],
@@ -1190,7 +1192,7 @@
             "unit": {
               "description": "GWh/año, wspm (obleas/mes), MW, t/año, racks…",
               "type": "string",
-              "maxLength": 30
+              "maxLength": 80
             }
           }
         },
@@ -1258,7 +1260,8 @@
               "fiscal_year": {
                 "type": "integer",
                 "minimum": 1990,
-                "maximum": 2100
+                "maximum": 2100,
+                "description": "Año en que TERMINA el ejercicio (entero). El importador convierte \"2025\" → 2025 y \"2025/26\" → 2026 y lo registra."
               },
               "revenue": {
                 "$ref": "#/$defs/f_money"
@@ -1309,7 +1312,7 @@
           "$ref": "#/$defs/f_money"
         },
         "quarterly": {
-          "description": "Solo privadas o datos que las APIs no dan (segmentos, backlog). En cotizadas los trimestres los trae el servidor.",
+          "description": "Solo privadas o datos que las APIs no dan (segmentos, backlog). En cotizadas los trimestres los trae el servidor. Desde 2.0.0 también semestres (AAAA-H1/H2) cuando la empresa solo publica semestres.",
           "type": "array",
           "maxItems": 12,
           "items": {
@@ -1321,7 +1324,7 @@
             "properties": {
               "period": {
                 "type": "string",
-                "pattern": "^[0-9]{4}-Q[1-4]$"
+                "pattern": "^[0-9]{4}-(Q[1-4]|H[12])$"
               },
               "revenue": {
                 "$ref": "#/$defs/f_money"
@@ -1479,10 +1482,10 @@
           "$ref": "#/$defs/f_share_pct"
         },
         "export_controls": {
-          "$ref": "#/$defs/f_str"
+          "$ref": "#/$defs/f_str_bi"
         },
         "sanctions": {
-          "$ref": "#/$defs/f_str"
+          "$ref": "#/$defs/f_str_bi"
         },
         "subsidies": {
           "description": "Subsidios/ayudas públicas relevantes (CHIPS Act, IRA, fondos estatales…).",
@@ -1591,6 +1594,11 @@
           "type": "string",
           "pattern": "^[A-Za-z][A-Za-z0-9_]{1,79}$"
         },
+        "id_hint": {
+          "description": "Id de una empresa que YA está en el grafo con un formato viejo (guion, espacio, empieza con número: lockheed-martin, CBRE Group, 01AI). Solo pista: el importador lo usa si existe; si no, resuelve por identificadores y nombre.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.&()'\\-]{0,79}$"
+        },
         "record_id": {
           "description": "Si la contraparte viene en ESTE lote u otro, su record_id.",
           "type": "string",
@@ -1628,7 +1636,6 @@
         "label_es",
         "label_en",
         "status",
-        "dependency",
         "evidence",
         "confidence"
       ],
@@ -1701,9 +1708,6 @@
         "dependency": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "criticality"
-          ],
           "properties": {
             "criticality": {
               "description": "1-6 = peso del vínculo (escala de hoy, policy.gates.limits.max_weight=6). 6: proveedor único, sin sustituto en <12 meses. 5: >50 % del insumo o calificación >1 año. 4: proveedor principal con 1-2 alternativas. 3: uno de pocos. 2: uno de varios. 1: menor/marginal.",
@@ -1766,7 +1770,8 @@
                 "maxLength": 160
               }
             }
-          }
+          },
+          "description": "Obligatoria en los vínculos de FLUJO (supply/fab/cloud/license/ppa/deploy), con criticality. En owns/partner/invest es opcional (y su criticality también): sin ella, owns toma la criticidad de la tabla policy.import.owns_default_criticality (criticality_source = default_owns) y partner/invest el peso fijo policy.import.nonflow_default_weight."
         },
         "evidence": {
           "type": "array",
@@ -1885,6 +1890,34 @@
               "end"
             ]
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "rel_type": {
+                "enum": [
+                  "supply",
+                  "fab",
+                  "cloud",
+                  "license",
+                  "ppa",
+                  "deploy"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "dependency"
+            ],
+            "properties": {
+              "dependency": {
+                "required": [
+                  "criticality"
+                ]
+              }
+            }
+          }
         }
       ]
     },
@@ -1973,7 +2006,6 @@
             "additionalProperties": false,
             "required": [
               "list",
-              "since",
               "source_url",
               "as_of",
               "confidence"
@@ -2035,7 +2067,6 @@
               "kind",
               "text_es",
               "text_en",
-              "status",
               "source_url",
               "as_of"
             ],
@@ -2102,19 +2133,19 @@
       "additionalProperties": false,
       "properties": {
         "emissions_scope1_tco2e": {
-          "$ref": "#/$defs/f_num"
+          "$ref": "#/$defs/f_num_soft"
         },
         "emissions_scope2_tco2e": {
-          "$ref": "#/$defs/f_num"
+          "$ref": "#/$defs/f_num_soft"
         },
         "energy_use_mwh": {
-          "$ref": "#/$defs/f_num"
+          "$ref": "#/$defs/f_num_soft"
         },
         "water_use_m3": {
-          "$ref": "#/$defs/f_num"
+          "$ref": "#/$defs/f_num_soft"
         },
         "renewable_share_pct": {
-          "$ref": "#/$defs/f_share_pct"
+          "$ref": "#/$defs/f_share_pct_soft"
         },
         "controversies": {
           "type": "array",
@@ -2134,8 +2165,7 @@
         "text_es",
         "text_en",
         "source_url",
-        "as_of",
-        "confidence"
+        "as_of"
       ],
       "properties": {
         "date": {
@@ -2185,7 +2215,8 @@
         "confidence": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "Opcional desde 2.0.0: sin ella el importador pone policy.import.unverified_confidence (marcada)."
         }
       }
     },
@@ -2220,7 +2251,7 @@
         "unit": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 30
+          "maxLength": 80
         }
       },
       "required": [
@@ -2278,6 +2309,109 @@
           ]
         }
       ]
+    },
+    "fact_base_soft": {
+      "description": "Como fact_base pero con confidence OPCIONAL (ESG y línea de tiempo): sin ella, el importador pone policy.import.unverified_confidence y lo marca (confidence_default).",
+      "type": "object",
+      "required": [
+        "value",
+        "source_url",
+        "as_of"
+      ],
+      "properties": {
+        "value": true,
+        "source_url": {
+          "$ref": "#/$defs/url"
+        },
+        "source_name": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "source_kind": {
+          "$ref": "#/$defs/source_kind"
+        },
+        "as_of": {
+          "$ref": "#/$defs/date_partial"
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "quote": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "also_sources": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 300
+        }
+      }
+    },
+    "f_num_soft": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/fact_base_soft"
+        }
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 30
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "f_share_pct_soft": {
+      "description": "Porcentaje de 0 a 100 (participación, cuota, % de ingresos o de compras).",
+      "allOf": [
+        {
+          "$ref": "#/$defs/fact_base_soft"
+        }
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "f_str_bi": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/fact_base"
+        }
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "value_en": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "unevaluatedProperties": false,
+      "description": "Texto con fuente y su traducción al inglés OPCIONAL (regla bilingüe)."
     }
   },
   "$comment": "Claves PROHIBIDAS en cualquier nivel (las trae el servidor en vivo o las calcula Khipus): price, market_cap, mktcap, mktcap_b, enterprise_value, ev, pe, pe_ratio, volume, fx_rate, shares_outstanding (cotizadas), valuation_in_talks, nrs, flow_degree, impact. additionalProperties:false las rechaza."

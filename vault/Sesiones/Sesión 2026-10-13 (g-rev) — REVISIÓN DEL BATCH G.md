@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L270"
+ruta: "docs/ESTADO.md#L303"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (g-rev) — REVISIÓN DEL BATCH G (12 hallazgos, todos corregidos con prueba)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 270 (20 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 303 (20 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

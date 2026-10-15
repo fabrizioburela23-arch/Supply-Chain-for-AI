@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_prices_eod.py"
 lenguaje: "python"
-lineas: 414
+lineas: 422
 aliases: ["tests/test_prices_eod.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_prices_eod.py
 
-> Prueba · capa [[Capa Pruebas]] · 414 líneas · `tests/test_prices_eod.py`
+> Prueba · capa [[Capa Pruebas]] · 422 líneas · `tests/test_prices_eod.py`
 
 ## Qué prueba
 
@@ -26,6 +26,7 @@ la memoria de los números (BRECHAS bloque 2: L3-01, L2-12, L3-14).
 - [[core.prices_api.py]]
 - [[core.prices_store.py]]
 - [[core.world.py]]
+- [[data.grafo_v0.json]]
 - [[ontology.db.py]]
 - [[server.py]]
 

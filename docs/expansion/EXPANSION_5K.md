@@ -1,6 +1,6 @@
 # EXPANSIÓN A ~5.000 EMPRESAS — plan técnico
 
-Fecha: 2026-10-13 · Estado: E0, E1 y E2 (salvo E2.7, el panel) HECHOS el 2026-10-14 (lotes J y K, ver §3); E3-E5 en plan · Base: 4 informes de trabajo medidos sobre el código real
+Fecha: 2026-10-13 · Estado: E0, E1 y E2 HECHOS (lotes J y K 2026-10-14; E2.7 el panel, lote L 2026-10-15); lote L (2026-10-15): esquema 2.0.0 + saneador de formato + paquete de las 386 fichas completas (plan en LOTE_2026-10-15_PLAN.md, nada aplicado en producción) + panel 📥 + E3.1 (las empresas de la base salen en el mapa y la búsqueda) + precios en vivo para las importadas; E3.2-E5 en plan · Base: 4 informes de trabajo medidos sobre el código real
 (A = inventario de campos, B = prueba de escala con grafos sintéticos de 5k/10k/20k, C = "en vivo al segundo",
 D = tubería de importación). Archivos que acompañan este plan: `company.schema.json`, `plantilla_empresa.json`,
 `ejemplo_CATL.json`, `INVESTIGAR_POR_EMPRESA.md`, `PROMPT_INVESTIGACION.md`, `empresas_existentes.csv`.
@@ -353,6 +353,7 @@ de más trust) va al evento (`source_id`) con la confianza; la lista queda en el
 
 **E2.1 Esquema como artefacto** — ✅ 2026-10-14 (lote K). `ontology.import_schema@1.0.0` = company.schema.json; espejo
 Pydantic v2 `ontology/company_schema.py` (equivalencia en forma normalizada + 13 negativos: tests/test_import_schema.py).
+Lote L (2026-10-15): `ontology.import_schema@2.0.0` solo AFLOJA formato (MAYOR en el registro: cambian patrones y obligatorios; toda ficha 1.0.0 sigue válida) — tests/test_import_sanitize_schema.py.
 
 - **Archivos**:
   - `governance/artifacts/ontology.import_schema@1.0.0.json` (= `company.schema.json`);
@@ -368,6 +369,7 @@ Pydantic v2 `ontology/company_schema.py` (equivalencia en forma normalizada + 13
 
 **E2.2 Normalizar** — ✅ 2026-10-14. `core/import_normalize.py` (países vía `core/countries`; MIC → sufijo Yahoo + moneda;
 fechas parciales → inicio/fin sin inventar el día; dinero en unidades; ids CamelCase). Las 136 grafías mapean.
+Lote L (2026-10-15): `sanitize_record` = saneador de FORMATO con registro (puro, idempotente, sin inventar; lo irreparable se quita solo ese campo) — 386/386 fichas reales validan (antes 29) — tests/test_import_sanitize.py.
 
 - **Archivos**: `core/import_normalize.py`:
   - una tabla ÚNICA de países ISO → convención del catálogo (hoy hay 136 grafías y `COUNTRY_MAP` está duplicado);
@@ -382,6 +384,7 @@ fechas parciales → inicio/fin sin inventar el día; dinero en unidades; ids Ca
 `plan_sha`, `apply_run` = UNA decisión ontology.bulk_import + UNA transacción + UNA generación, `rollback_run` =
 ontology.import_rollback con retracciones dirigidas) + tablas append-only `import_files/import_runs/import_pending_links`
 (ontology/import_models.py). Plan del lote 1 (4.174 fichas): 3 s.
+Lote L (2026-10-15): la `khipus_id_hint` que EXISTE en el grafo manda sobre el nombre (un identificador fuerte que apunta a otra empresa gana y se lista); un parecido de nombre que la ficha nombra como su contraparte no fusiona; contrapartes por `id_hint` y por la pista de otra ficha del lote; todas las empresas se escriben antes que los vínculos. Plan de las 386: 372 crear · 14 fusionar — tests/test_import_lote2.py.
 
 - **Archivos**:
   - `ontology/company_import.py` (`resolve_batch` y `plan` PUROS; `apply_run`; `rollback_run`);
@@ -396,7 +399,7 @@ ontology.import_rollback con retracciones dirigidas) + tablas append-only `impor
 
 **E2.4 Rutas y script** — ✅ 2026-10-14. `/api/ontology/import/files|plan|apply|rollback|runs` (PIN estricto, rate_limit,
 `expect.plan_sha` → 409, mismo candado que reconcile, subida en trozos ≤ 900 KB) + `scripts/import_companies.py`
-(--lote1 / --plan / --apply --server|--db / --rollback / --runs).
+(--lote1 / --plan / --apply --server|--db / --rollback / --runs). Lote L: `--lote2 [--check] [--md]` y `.gz` (se sube descomprimido).
 
 - **Archivos**:
   - `/api/ontology/import/files|plan|apply|rollback|runs` (PIN, `rate_limit`, `expect = plan_sha`, mismo candado
@@ -412,6 +415,7 @@ ontology.import_rollback con retracciones dirigidas) + tablas append-only `impor
 
 **E2.5 Gobernanza** — ✅ 2026-10-14. `policy.import@1.0.0`, `ledger.kinds@5.0.0` (ontology.import_rollback),
 `ontology.shapes@7.0.0` con `company.ttl` (puerta G-IMPORT, 14 reglas, SOMBRA; conformidad pySHACL en tests/test_import_shapes.py).
+Lote L (2026-10-15): `policy.import@1.1.0` (solo AGREGA: owns sin dependency → tabla de criticidad `default_owns`, vivo solo con ≥ 50 % declarado; partner/invest sin dependency → peso 1; participación sin % → nunca viva).
 
 - **Archivos**:
   - `policy.import@1.0.0`: umbrales 0,5 / trust 2, lote máx. 250, conflictos = listar, `owns` ≥ 50 %;
@@ -431,7 +435,13 @@ sobre una copia: ρ, top-20 cuellos, TSMC antes/después, aviso de kernel.calibr
 - **Meta**: ≤ 3 s a 5k (tras E1.1).
 - **Riesgo**: ρ puede subir con los hubs. Hay que verlo antes de aplicar.
 
-**E2.7 Panel 🩺 → 📥 Importar**
+**E2.7 Panel 🩺 → 📥 Importar** — ✅ 2026-10-15 (lote L). `engine/importer.js` (perezoso desde engine/app_main.js al
+abrir 🩺 Diagnóstico; en el SHELL): lista de paquetes del repositorio (`GET /api/ontology/import/packages`, sin PIN, lista
+blanca `data/import/lotes/<fecha>/bundle_*.json.gz`, solo la META en memoria), «Ver plan» sin PIN
+(`GET /import/packages/plan`, resumen corto, misma huella que la terminal), «Aplicar…» = confirmación + copia de
+seguridad + nombre de la base + PIN (`window._tradeFetch`) + `expect.plan_sha`, «Deshacer» la corrida más nueva, subir un
+archivo propio (trozos con PIN, `sanitize: 1`); pide recargar (F5) tras aplicar/deshacer. Pruebas:
+tests/test_import_panel*.py (Chromium 7/7).
 
 - **Archivos**: `engine/importer.js` (subir, plan, aplicar con PIN, deshacer; bilingüe, con "?") + bump de `sw.js` +
   `SHELL`.
@@ -472,7 +482,13 @@ Medido: 21.000 eventos en 11 s (tests/test_import_fast_path.py con KH_SCALE=1; m
 
 ### Bloque E3 — Navegador a 5k
 
-**E3.1 Catálogo compacto por API + adaptador**
+**E3.1 Catálogo compacto por API + adaptador** — ✅ 2026-10-15 (lote L), con otra forma: `GET /api/hot/catalog` (en
+`core/hotviews/api.py`: SOLO la diferencia entre el grafo de los lectores y el catálogo estático, columnas compactas,
+paginado, ETag = generación, 409 `generation_changed`) + `/api/hot/catalog/detail?ids=` (textos a pedido) +
+`engine/catalog_sync.js` (cargado justo después de nodes/merge_graph.js: solo AÑADE a NODES/LINKS/NODE_BY_ID/LEGAL_NAMES,
+nodos en el mapa con la misma forma, re-asentado único, banda y contadores rehechos). Medido: lote 2 = ~27 KB gz; a 5k
+~120 KB gz de nodos; NRS navegador = servidor en las 1.339. Falta: E3.4/E3.5 (abrir el mapa con 1.339 tarda +1,2 s) y
+volver a sincronizar sin recargar. Pruebas: tests/test_catalog_api*.py.
 
 - **Archivos**:
   - `/api/hot/catalog|links` en `core/hotviews/views/`;

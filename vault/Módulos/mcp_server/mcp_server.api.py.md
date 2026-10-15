@@ -67,14 +67,14 @@ _Además lo importan 6 pruebas (lista abajo)._
 |---|---|---|---|
 | `GET` | `/api/mcp/audit` | `mcp_audit_list` | [[engine.mcpconnect.js]], 2 pruebas |
 | `GET` | `/api/mcp/status` | `mcp_status` | [[engine.mcpconnect.js]], 2 pruebas |
-| `GET` | `/api/mcp/tokens` | `mcp_tokens_list` | [[engine.mcpconnect.js]], 5 pruebas |
-| `POST` | `/api/mcp/tokens` | `mcp_tokens_create` | [[engine.mcpconnect.js]], 5 pruebas |
+| `GET` | `/api/mcp/tokens` | `mcp_tokens_list` | [[engine.mcpconnect.js]], 6 pruebas |
+| `POST` | `/api/mcp/tokens` | `mcp_tokens_create` | [[engine.mcpconnect.js]], 6 pruebas |
 | `POST` | `/api/mcp/tokens/<token_id>/revoke` | `mcp_tokens_revoke` | [[engine.mcpconnect.js]], 4 pruebas |
 | `GET` | `/api/mcp/tools` | `mcp_tools_catalog` | [[engine.mcpconnect.js]], 1 prueba |
-| `DELETE` | `/mcp` | `mcp_delete` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 2 pruebas |
-| `GET` | `/mcp` | `mcp_get` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 2 pruebas |
-| `OPTIONS` | `/mcp` | `mcp_options` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 2 pruebas |
-| `POST` | `/mcp` | `mcp_post` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 2 pruebas |
+| `DELETE` | `/mcp` | `mcp_delete` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 3 pruebas |
+| `GET` | `/mcp` | `mcp_get` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 3 pruebas |
+| `OPTIONS` | `/mcp` | `mcp_options` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 3 pruebas |
+| `POST` | `/mcp` | `mcp_post` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 3 pruebas |
 
 Grupos: [[API MCP transporte y OAuth]], [[API mcp]]
 
@@ -99,6 +99,7 @@ Grupos: [[API MCP transporte y OAuth]], [[API mcp]]
 
 ## Pruebas que lo cubren
 
+- [[tests.test_import_lote2_e2e.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_ops_identity.py]]

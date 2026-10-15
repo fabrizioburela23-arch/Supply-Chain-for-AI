@@ -1,0 +1,42 @@
+{
+  "id": "policy.import",
+  "semver": "1.1.0",
+  "kind": "policy",
+  "change_kind": "minor",
+  "parent": "policy.import@1.0.0",
+  "params": {
+    "live_min_confidence": 0.5,
+    "live_min_trust": 2,
+    "block_size": 250,
+    "max_records_per_run": 5000,
+    "conflicts": "list",
+    "owns_min_pct": 50,
+    "unverified_confidence": 0.4,
+    "name_write_threshold": 85,
+    "name_possible_threshold": 60,
+    "upload_chunk_max_bytes": 921600,
+    "proposal_statuses": [
+      "rumored",
+      "disputed"
+    ],
+    "quarantine_supplier_types": [
+      "Country",
+      "Policy"
+    ],
+    "owns_default_criticality": {
+      "pct_ge_90": 5,
+      "pct_ge_50": 4,
+      "pct_lt_50": 3,
+      "pct_unknown": 3
+    },
+    "owns_default_live_min_pct": 50,
+    "nonflow_default_weight": 1,
+    "holding_unknown_pct_rel": {
+      "parent": "owns",
+      "subsidiaries": "owns",
+      "major_shareholders": "invest"
+    }
+  },
+  "changelog_es": "Lote L (2026-10-15): solo AGREGA reglas para fichas sin ciertos datos (los valores de 1.0.0 no cambian). (1) Un vínculo owns SIN dependency toma su criticidad de una tabla fija según el % de participación que la MISMA ficha declara en corporate (≥ 90 % → 5; ≥ 50 % → 4; < 50 % → 3; sin % → 3) y lleva criticality_source = 'default_owns'; entra VIVO al kernel solo si la ficha declara un % de control (≥ 50 %, owns_default_live_min_pct); si no, queda PROPUESTO (un 6,38 % de TSMC no es control). (2) partner/invest SIN dependency no son flujo: peso fijo 1 (la regla de hoy para invest). (3) Una participación societaria SIN %: matriz y filiales = owns, accionistas principales = invest; sin fuente propia entran como PROPUESTA, nunca vivas.",
+  "changelog_en": "Batch L (2026-10-15): only ADDS rules for records missing some data (1.0.0 values do not change). (1) An owns link WITHOUT dependency takes its criticality from a fixed table by the ownership % that the SAME record declares in corporate (≥ 90% → 5; ≥ 50% → 4; < 50% → 3; no % → 3) and carries criticality_source = 'default_owns'; it enters the kernel LIVE only if the record declares a control % (≥ 50%, owns_default_live_min_pct); otherwise it stays PROPOSED (6.38% of TSMC is not control). (2) partner/invest WITHOUT dependency are not flow: fixed weight 1 (today's rule for invest). (3) A holding WITHOUT %: parent and subsidiaries = owns, major shareholders = invest; with no source of their own they enter as PROPOSALS, never live."
+}

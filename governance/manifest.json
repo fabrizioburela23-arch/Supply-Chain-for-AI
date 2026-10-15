@@ -3,7 +3,7 @@
   "_doc": "GENERADO por scripts/build_governance.py --write: no editar a mano. El release del repositorio es una PROPUESTA; manda el aprobado en la base (core/governance.py).",
   "release": {
     "semver": "1.0.0",
-    "release_hash": "496957df98cc2e7ad25453934af34019229b35367fb456dae2b36d3b83f6b52f",
+    "release_hash": "837297ef6db9e1bff240576395f4a70b73618b147d97bd86981ed4df2b4e94fb",
     "artifacts": {
       "kernel.calibration": {
         "semver": "1.0.0",
@@ -31,9 +31,9 @@
         "file": "artifacts/nrs.formula@1.0.0.json"
       },
       "ontology.import_schema": {
-        "semver": "1.0.0",
-        "hash": "ee77e6752f3d6993cb88e9636707eb40750012ec46f74749cdef95de4ff3c2d5",
-        "file": "artifacts/ontology.import_schema@1.0.0.json"
+        "semver": "2.0.0",
+        "hash": "b45fa0026577201da38727dcbe942e78e86311035f09c688d2f70506d774e638",
+        "file": "artifacts/ontology.import_schema@2.0.0.json"
       },
       "ontology.schema": {
         "semver": "1.0.0",
@@ -76,9 +76,9 @@
         "file": "artifacts/policy.guard@1.0.0.json"
       },
       "policy.import": {
-        "semver": "1.0.0",
-        "hash": "f890d5b306b535e7abff9cef3b7e5c19b17995460714af2a9c5d83ae470f1f2f",
-        "file": "artifacts/policy.import@1.0.0.json"
+        "semver": "1.1.0",
+        "hash": "057213994e36af930367cd2a3d18694d2bf2ca8b9abb3e66b8e0496a91a6a548",
+        "file": "artifacts/policy.import@1.1.0.json"
       },
       "policy.numbers_guard": {
         "semver": "1.0.0",
@@ -178,6 +178,13 @@
       "hash": "ee77e6752f3d6993cb88e9636707eb40750012ec46f74749cdef95de4ff3c2d5",
       "change_kind": "initial",
       "file": "artifacts/ontology.import_schema@1.0.0.json"
+    },
+    {
+      "id": "ontology.import_schema",
+      "semver": "2.0.0",
+      "hash": "b45fa0026577201da38727dcbe942e78e86311035f09c688d2f70506d774e638",
+      "change_kind": "major",
+      "file": "artifacts/ontology.import_schema@2.0.0.json"
     },
     {
       "id": "ontology.schema",
@@ -320,6 +327,13 @@
       "hash": "f890d5b306b535e7abff9cef3b7e5c19b17995460714af2a9c5d83ae470f1f2f",
       "change_kind": "initial",
       "file": "artifacts/policy.import@1.0.0.json"
+    },
+    {
+      "id": "policy.import",
+      "semver": "1.1.0",
+      "hash": "057213994e36af930367cd2a3d18694d2bf2ca8b9abb3e66b8e0496a91a6a548",
+      "change_kind": "minor",
+      "file": "artifacts/policy.import@1.1.0.json"
     },
     {
       "id": "policy.numbers_guard",

@@ -14,7 +14,7 @@ tags: ["capa/pruebas", "tipo/prueba"]
 
 ## Qué prueba
 
-EXPANSION_5K E2.5: los artefactos del importador están en el registro de gobernanza (policy.import@1.0.0, ontology.import_schema@1.0.0, ledger.kinds@5.0.0 con ontology.import_rollback, ontology.shapes@7.0.0) y el código lee la política de ahí; nada cambia números del kernel (los dorados siguen iguales).
+EXPANSION_5K E2.5: los artefactos del importador están en el registro de gobernanza (policy.import@1.1.0, ontology.import_schema@2.0.0 —lote L—, ledger.kinds@5.0.0 con ontology.import_rollback, ontology.shapes@7.0.0) y el código lee la política de ahí; nada cambia números del kernel (los dorados siguen iguales).
 
 **5** funciones `test_…`.
 

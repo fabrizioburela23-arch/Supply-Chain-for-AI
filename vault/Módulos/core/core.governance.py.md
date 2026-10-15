@@ -108,7 +108,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 30 pruebas (lista abajo)._
+_Además lo importan 31 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -127,6 +127,7 @@ _Además lo importan 30 pruebas (lista abajo)._
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_impl_registry.py]]
 - [[tests.test_import_governance.py]]
+- [[tests.test_import_sanitize_schema.py]]
 - [[tests.test_import_schema.py]]
 - [[tests.test_import_shapes.py]]
 - [[tests.test_kernel_monotone_edges.py]]

@@ -407,15 +407,24 @@ def _preload_live_links(session, pairs):
         for l in session.scalars(select(LinkRecord).where(
                 tuple_(LinkRecord.source_id, LinkRecord.target_id).in_(part), LinkRecord.valid_to.is_(None))).all():
             out.setdefault((l.source_id, l.target_id, l.rel_type), []).append(
-                {'id': l.id, 'event_id': l.event_id, 'valid_from': l.valid_from, 'weight': l.weight})
+                {'id': l.id, 'event_id': l.event_id, 'valid_from': l.valid_from, 'weight': l.weight,
+                 'proposal': _is_proposal(l.properties)})
     return out
 
 
-def _dedup_twin(twins, valid_from, weight):
+def _is_proposal(props):
+    """Una PROPUESTA o un RECHAZO (fuera del grafo de lectura y del kernel: confianza 0) no cubre un vínculo vivo."""
+    return (props or {}).get('status') in ('proposed', 'rejected')
+
+
+def _dedup_twin(twins, valid_from, weight, proposal=False):
     """La MISMA regla que ontology.service._dedup_link_payload: una fila vigente del par/rel con el mismo peso que
-    empezó antes o igual ya lo cubre → el nuevo evento es un no-op (dedup_of)."""
+    empezó antes o igual ya lo cubre → el nuevo evento es un no-op (dedup_of). Una PROPUESTA nunca cubre a un vínculo
+    vivo (si lo cubriera, el vivo no entraría al grafo: HitachiEnergy→TenneT en el lote L)."""
     from ontology.service import _same_weight
     for t in sorted(twins, key=lambda x: x['valid_from']):
+        if t.get('proposal') and not proposal:
+            continue
         if t['valid_from'] <= valid_from and _same_weight(t['weight'], weight):
             return t
     return None
@@ -539,7 +548,8 @@ def _write_block(session, block, source, actor, rel_hash, out, insert, text, Lin
             _vigilar('rel_type', rel)
             props = dict(payload.get('properties') or {})
             twins = live.get((oid, tid, rel)) or []
-            twin = None if (vt is not None or props.get('allow_duplicate')) else _dedup_twin(twins, vf, payload.get('weight'))
+            twin = None if (vt is not None or props.get('allow_duplicate')) else _dedup_twin(
+                twins, vf, payload.get('weight'), _is_proposal(props))
             if twin is not None:
                 props['dedup_of'] = str(twin['id'])
                 if twin.get('event_id'):
@@ -552,7 +562,8 @@ def _write_block(session, block, source, actor, rel_hash, out, insert, text, Lin
                                   'weight': payload.get('weight'), 'properties': props, 'valid_from': vf,
                                   'valid_to': vt, 'event_id': eid})
                 live.setdefault((oid, tid, rel), []).append({'id': lid, 'event_id': eid, 'valid_from': vf,
-                                                            'weight': payload.get('weight')})
+                                                            'weight': payload.get('weight'),
+                                                            'proposal': _is_proposal(props)})
                 out['links_created'] += 1
                 confs[eid] = (props.get('confidence'), ev.get('source_id'))
         elif et == LR:
@@ -599,7 +610,7 @@ def _write_block(session, block, source, actor, rel_hash, out, insert, text, Lin
         out['ids'].append(r['_uuid'])
     # 4) puertas de los vínculos del bloque (G-BULK: la MISMA forma que G1 para cada uno, con SU valid_from)
     if gate and link_rows:
-        out['gate'] = gate_links_block(session, link_rows, confs) or out['gate']
+        out['gate'] = _sum_gate(out['gate'], gate_links_block(session, link_rows, confs))
     # 5) lo que el camino rápido no cubre: apply_event (idéntico, uno a uno)
     for ev in slow:
         e = apply_event(session, ev['event_type'], ev.get('payload') or {}, valid_from=ev['valid_from'], source=source,
@@ -612,6 +623,19 @@ def _write_block(session, block, source, actor, rel_hash, out, insert, text, Lin
         fast_ids = iter(out['ids'][:len(real)])
         slow_ids = iter(out['ids'][len(real):])
         out['ids'] = [next(fast_ids) if r is not None else next(slow_ids) for r in rows]
+
+
+def _sum_gate(prev, g):
+    """Resumen G-BULK de VARIOS bloques: vínculos revisados y conteo por regla sumados; el peor desenlace."""
+    if not g or not prev:
+        return g or prev
+    from core.gates.engine import worst
+    by_rule = dict(prev.get('by_rule') or {})
+    for k, v in (g.get('by_rule') or {}).items():
+        by_rule[k] = by_rule.get(k, 0) + v
+    return dict(g, checked=prev['checked'] + g['checked'], by_rule=by_rule, outcome=worst(prev['outcome'], g['outcome']),
+                truncated=(prev.get('truncated') or 0) + (g.get('truncated') or 0),
+                latency_us=(prev.get('latency_us') or 0) + (g.get('latency_us') or 0))
 
 
 def gate_links_block(session, link_rows, confs=None):

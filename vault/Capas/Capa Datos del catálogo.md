@@ -56,7 +56,7 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| la usa | [[Capa Interfaz (Khipus OS)]] | 51 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 53 |
 | la usa | [[Capa Ontología y grafo temporal]] | 34 |
 | la usa | [[Capa Chat y agentes]] | 10 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 10 |

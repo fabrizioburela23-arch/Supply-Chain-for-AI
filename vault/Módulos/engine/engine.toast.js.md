@@ -25,11 +25,11 @@ NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que 
 - [[app.html]] — usa `_tradeFetch`, `_tradeStatusInfo`
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **28 de 99** (línea 3085), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
+Se carga en [[app.html]] en la posición **29 de 100** (línea 3086), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 28)
+- [[app.html]] — lo carga con `<script>` (posición 29)
 - [[app.html]] — usa `KhipuToast`
 - [[engine.aispend.js]] — usa `khipuActor`
 - [[engine.app_coordinator.js]] — usa `KhipuToast`
@@ -42,6 +42,7 @@ Se carga en [[app.html]] en la posición **28 de 99** (línea 3085), después de
 - [[engine.desktop.js]] — usa `KhipuToast`
 - [[engine.genui.js]] — usa `KhipuToast`
 - [[engine.governance.js]] — usa `KhipuToast`
+- [[engine.importer.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.khipu_chat.js]] — usa `khipuActor`
 - [[engine.khipu_lang.js]] — usa `khipuActor`
 - [[engine.livesim.js]] — usa `khipuActor`
@@ -64,6 +65,7 @@ Se carga en [[app.html]] en la posición **28 de 99** (línea 3085), después de
 
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_genui_browser.py]]
+- [[tests.test_import_panel_browser.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]
 - [[tests.test_overnight3_toast_tokens.py]]

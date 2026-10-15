@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/app_main.js"
 lenguaje: "javascript"
-lineas: 4806
+lineas: 4825
 aliases: ["engine/app_main.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/app_main.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.806 líneas · `engine/app_main.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.825 líneas · `engine/app_main.js`
 
 ## Para qué sirve
 
@@ -36,6 +36,7 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.governance.js]] — usa `KhipuGovernance`
 - [[engine.graph3d.js]] — usa `_graph3d_updateLiveColors`
 - [[engine.guide.js]] — usa `initGuiaTab`
+- [[engine.importer.js]] — usa `KhipuImporter`
 - [[engine.insights.js]] — usa `renderInsightsHistory`, `renderKhipuInsights`
 - [[engine.maptime.js]] — usa `KhipuMapTime`, `_mapTimePaint`
 - [[engine.matrixview.js]] — usa `renderMatrixView`
@@ -65,13 +66,14 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[nodes.nodes_spacex.js]] — usa `NODES_SPACEX`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
+- [[engine.importer.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **25 de 99** (línea 2678), después de [[nodes.merge_graph.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **26 de 100** (línea 2679), después de [[engine.catalog_sync.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 25)
+- [[app.html]] — lo carga con `<script>` (posición 26)
 - [[app.html]] — usa `BASE`, `LANG`, `_injectGraphContext`, `_showUpdatePill`, `closeSistema`, `lanzarInvestigacion`, `loadCorporateEvents`, `openDiagnostics` y 5 más
 - [[engine.aispend.js]] — usa `BASE`, `LANG`
 - [[engine.app_canvas.js]] — usa `LANG`, `MKT`, `_selectedNode`, `computeNRS`
@@ -82,6 +84,7 @@ Se carga en [[app.html]] en la posición **25 de 99** (línea 2678), después de
 - [[engine.audit.js]] — usa `BASE`, `LANG`
 - [[engine.brief.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `switchTab`
 - [[engine.canvas-data.js]] — usa `BASE`
+- [[engine.catalog_sync.js]] — usa `KhipuLiveFund`, `LANG`, `LINKS`, `NODE_BY_ID`, `_canonId`, `_invalidateNRS`, `_lblOn`, `_liveTick` y 15 más
 - [[engine.clients.js]] — usa `LANG`
 - [[engine.cockpit.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_ensureMapSettled`, `_liveRecolorByImpact`, `_liveSelectedNode`, `catLabel` y 8 más
 - [[engine.command_center.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `switchTab`
@@ -98,6 +101,7 @@ Se carga en [[app.html]] en la posición **25 de 99** (línea 2678), después de
 - [[engine.graph3d.js]] — usa `LINKS`, `NODE_BY_ID`, `_tickerWarnings`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `getLinkColorHex`, `jumpTo` y 2 más
 - [[engine.guide.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`
 - [[engine.hypergraph.js]] — usa `DataLayer`, `NODE_BY_ID`, `getCatColorHex`
+- [[engine.importer.js]] — usa `BASE`, `LANG`
 - [[engine.insights.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `sectorName` y 1 más
 - [[engine.khipu_chat.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_liveSelectedNode`, `_selectedNode`, `activeTab`, `jumpTo` y 1 más
 - [[engine.khipu_lang.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `switchTab`
@@ -173,10 +177,13 @@ Se carga en [[app.html]] en la posición **25 de 99** (línea 2678), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_app_split.py]]
+- [[tests.test_catalog_api_client.py]]
 - [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_client_hardening.py]]
 - [[tests.test_countries.py]]
 - [[tests.test_genui_review_fixes.py]]
+- [[tests.test_import_panel_static.py]]
+- [[tests.test_lotel_fixer.py]]
 - [[tests.test_market_keys_scope.py]]
 
 ## Mencionado en sesiones de trabajo

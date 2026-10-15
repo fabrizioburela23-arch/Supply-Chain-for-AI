@@ -218,13 +218,16 @@ def currency_of_mic(mic):
 
 # ── fechas parciales ─────────────────────────────────────────────────────────────────────────────────────────────
 _PARTIAL = re.compile(r'^(19|20)[0-9]{2}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$')
+# esquema 2.0.0: años 1000-2099 (empresas fundadas en 1867, vínculos que empiezan antes de 1900)
+_PARTIAL_WIDE = re.compile(r'^(1[0-9]|20)[0-9]{2}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$')
 
 
-def partial_date(text):
+def partial_date(text, wide=False):
     """'2021' | '2021-07' | '2021-07-15' → (inicio, fin_exclusivo, precisión) en UTC. El día nunca se inventa: la
-    precisión dice cuánto se sabe ('year' | 'month' | 'day'). None si no es una fecha parcial válida."""
+    precisión dice cuánto se sabe ('year' | 'month' | 'day'). None si no es una fecha parcial válida. Por omisión
+    solo 1900-2099 (como siempre); `wide=True` acepta 1000-2099 (el patrón del esquema 2.0.0)."""
     s = str(text or '').strip()
-    if not _PARTIAL.match(s):
+    if not (_PARTIAL_WIDE if wide else _PARTIAL).match(s):
         return None
     parts = s.split('-')
     y = int(parts[0])
@@ -250,7 +253,7 @@ def partial_date(text):
 def valid_from_of(start_text):
     """`start` de un vínculo → (valid_from ISO, valid_from_known). Sin start → el centinela GENESIS (2000-01-01,
     "desde que se rastrea") con known=False; NUNCA "ahora" (D-3)."""
-    p = partial_date(start_text) if start_text else None
+    p = partial_date(start_text, wide=True) if start_text else None
     if p is None:
         from ontology.service import GENESIS_SENTINEL
         return GENESIS_SENTINEL, False
@@ -259,7 +262,7 @@ def valid_from_of(start_text):
 
 def valid_to_of(end_text):
     """`end` → valid_to = primer instante DESPUÉS del período conocido ('2021-07' → 2021-08-01). None sin end."""
-    p = partial_date(end_text) if end_text else None
+    p = partial_date(end_text, wide=True) if end_text else None
     return p[1].isoformat() if p else None
 
 
@@ -323,3 +326,482 @@ def khipus_id_from(name):
 
 def is_khipus_id(s):
     return bool(_KHIPUS_ID.match(str(s or '')))
+
+
+# ── SANEADOR de fichas (lote L, 2026-10-15): solo FORMATO, con registro de cada cambio ───────────────────────────
+# Reglas (cada cambio deja {path, rule, action, before, after} en el registro; `path` en las coordenadas de la ficha
+# ORIGINAL; nada se inventa: un valor que no se puede reparar se QUITA —solo ese campo— y queda en el registro):
+#   url_trim / url_percent_encode   espacios en los extremos fuera; espacios y corchetes de ruta/consulta → %20 %5B %5D
+#   fiscal_year_text_to_int         "2025" → 2025 (también "FY2025")
+#   fiscal_year_split_end           "2025/26" → 2026: un ejercicio partido se nombra por el año en que TERMINA
+#   period_fy_split_end             "FY2025/26" → "FY2026" (misma regla); "FY 2025" → "FY2025"
+#   ticker_space_to_dash            "ERIC B" → "ERIC-B" (la clase de acción con guion, como Yahoo)
+#   counterparty_id_to_hint         counterparty.khipus_id que no cumple el patrón de ids NUEVOS ("lockheed-martin",
+#                                   "50Hertz") → counterparty.id_hint (el resolvedor lo usa si existe en el grafo)
+#   listing_mic_from_yahoo          sufijo de Yahoo con UNA sola bolsa posible → exchange_mic (".CO" → XCSE)
+#   listing_ticker_from_yahoo       símbolo de Yahoo cuyo sufijo es el de la bolsa → ticker ("ABC.BA" en XBUE → ABC)
+#   listing_ticker_conflict         un CERTIFICADO (adr/gdr/cedear/bdr) sin ticker cuyo símbolo de Yahoo no es ninguno de
+#                                   los tickers que la MISMA ficha declara se quita entero (Boeing traía «BAC.BA», el
+#                                   CEDEAR de Bank of America: derivar BAC lo habría hecho pasar por bueno)
+#   listing_yahoo_from_ticker_mic   ticker + MIC → símbolo de Yahoo (MIC_SUFFIX; GDR en Londres → ".IL", la convención
+#                                   de core/instruments.SUFFIX)
+#   listing_currency_from_yahoo     sufijo de Yahoo → moneda (core/instruments.SUFFIX; GBp → GBP); sin sufijo
+#                                   conocido y sin certificado: la moneda de la bolsa (currency_of_mic)
+#   listing_kind_home_exchange      sin `kind` y la bolsa es la del país de la sede → equity / a_share / h_share / otc
+#   drop_forbidden_live_field       un dato EN VIVO (price, market_cap…) se quita: lo trae el servidor
+#   drop_unknown_field / drop_invalid  lo que sigue sin cumplir el esquema se quita: el campo opcional o el elemento de
+#                                   lista MÁS PEQUEÑO que lo contiene
+#   reject                          solo si la IDENTIDAD queda inservible (identity, research_meta, classification,
+#                                   profile, record_id): la ficha no entra
+SANITIZE_RULES = ('url_trim', 'url_percent_encode', 'fiscal_year_text_to_int', 'fiscal_year_split_end',
+                  'period_fy_split_end', 'ticker_space_to_dash', 'counterparty_id_to_hint', 'listing_mic_from_yahoo',
+                  'listing_ticker_from_yahoo', 'listing_ticker_conflict', 'listing_yahoo_from_ticker_mic',
+                  'listing_currency_from_yahoo',
+                  'listing_kind_home_exchange', 'drop_forbidden_live_field', 'drop_unknown_field', 'drop_invalid',
+                  'reject')
+_URL_KEYS = ('source_url', 'website', 'ir_url')
+_URL_LIST_KEYS = ('sources_consulted', 'rss_urls')
+_URL_FMT = re.compile(r'^https?://[^\s/]+\.[^\s]+$')
+_TICKER_FMT = re.compile(r'^[A-Z0-9][A-Z0-9.\-]{0,14}$')
+_YAHOO_FMT = re.compile(r'^[A-Z0-9^][A-Z0-9.=\-^]{0,19}$')
+_ID_HINT_FMT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.&()'\-]{0,79}$")
+_CP_DICT_KEYS = ('counterparty', 'entity', 'successor', 'merged_into')
+_CP_LIST_KEYS = ('lead_investors', 'other_investors')
+_PROTECTED_TOP = ('schema', 'record_id', 'research_meta', 'identity', 'classification', 'profile')
+_FY_ONE = re.compile(r'^\s*(?:FY\s*)?([12][0-9]{3})\s*$')
+_FY_SPLIT = re.compile(r'^\s*(FY)?\s*([12][0-9]{3})\s*[/\-–]\s*([0-9]{2}|[12][0-9]{3})\s*$')
+_FY_SPACE = re.compile(r'^FY\s+([12][0-9]{3})$')
+_SANITIZE_MAX_DROPS = 400
+
+
+def _p_key(path, key):
+    return f'{path}.{key}' if path else str(key)
+
+
+def _p_idx(path, i):
+    return f'{path}[{i}]'
+
+
+def _log(log, path, rule, action, before, after=None, **extra):
+    ent = {'path': path or '(raíz)', 'rule': rule, 'action': action, 'before': before}
+    if action != 'drop' and action != 'reject':
+        ent['after'] = after
+    ent.update(extra)
+    log.append(ent)
+
+
+def encode_url(url):
+    """Repara el FORMATO de un enlace: quita espacios de los extremos y codifica los espacios internos y los corchetes
+    de la ruta/consulta (%20, %5B, %5D; otros espacios Unicode en UTF-8). El servidor (host) no se toca; '%' existentes
+    no se recodifican → idempotente."""
+    from urllib.parse import quote
+    s = str(url).strip()
+    m = re.match(r'^([A-Za-z][A-Za-z0-9+.\-]*://[^/?#\s]*)(.*)$', s)
+    head, tail = (m.group(1), m.group(2)) if m else ('', s)
+    out = []
+    for ch in tail:
+        if ch.isspace():
+            out.append(quote(ch, safe=''))
+        elif ch == '[':
+            out.append('%5B')
+        elif ch == ']':
+            out.append('%5D')
+        else:
+            out.append(ch)
+    return head + ''.join(out)
+
+
+def _fiscal_year_of(text):
+    """(año, regla) de un fiscal_year escrito como texto; None si no se puede leer sin adivinar."""
+    s = str(text)
+    m = _FY_ONE.match(s)
+    if m:
+        return int(m.group(1)), 'fiscal_year_text_to_int'
+    m = _FY_SPLIT.match(s)
+    if m:
+        start, end = int(m.group(2)), m.group(3)
+        end_y = int(end) if len(end) == 4 else (start // 100) * 100 + int(end)
+        if len(end) == 2 and end_y < start:
+            end_y += 100
+        if end_y == start + 1:                 # solo un ejercicio de 12 meses partido en dos años calendario
+            return end_y, 'fiscal_year_split_end'
+    return None
+
+
+def _period_fixed(text):
+    """(período, regla) para 'FY2025/26' → 'FY2026' y 'FY 2025' → 'FY2025'; None si no aplica."""
+    s = str(text)
+    m = _FY_SPLIT.match(s)
+    if m and m.group(1):
+        fy = _fiscal_year_of(s)
+        if fy is not None:
+            return f'FY{fy[0]}', 'period_fy_split_end'
+    m = _FY_SPACE.match(s.strip())
+    if m and s != f'FY{m.group(1)}':
+        return f'FY{m.group(1)}', 'period_fy_split_end'
+    return None
+
+
+def _ticker_fixed(t):
+    if not isinstance(t, str):
+        return None
+    s = re.sub(r'\s+', '-', t.strip()).upper()
+    return s if s != t and _TICKER_FMT.match(s) else None
+
+
+def _suffix_mics(suffix):
+    """Bolsas (MIC) cuyo sufijo de Yahoo es `suffix` ('IL' = Londres IOB → XLON)."""
+    if suffix == 'IL':
+        return ['XLON']
+    return sorted(m for m, sf in MIC_SUFFIX.items() if sf == suffix)
+
+
+def _yahoo_suffix(ys):
+    s = str(ys or '').strip().upper()
+    return s.rsplit('.', 1)[1] if '.' in s else ''
+
+
+def _currency_of_suffix(suffix):
+    try:
+        from core.instruments import MINOR_UNITS, SUFFIX
+    except Exception:  # noqa: BLE001
+        return None
+    ent = SUFFIX.get(suffix)
+    if not ent or not ent[1]:
+        return None
+    ccy = ent[1]
+    return MINOR_UNITS[ccy][0] if ccy in MINOR_UNITS else ccy
+
+
+_CERT_KINDS = ('adr', 'gdr', 'cedear', 'bdr')
+
+
+def _declared_tickers(listings):
+    """Tickers que la ficha DECLARA (antes de derivar nada), en mayúsculas."""
+    return {l['ticker'].strip().upper() for l in listings if isinstance(l, dict) and isinstance(l.get('ticker'), str)
+            and l['ticker'].strip()}
+
+
+def _sanitize_listing(l, hq, path, log, own_tickers=None):
+    """Deriva lo que falta de UNA cotización a partir de sus otros campos (nunca de fuera de la ficha). Devuelve
+    'ticker_conflict' si es un certificado sin ticker cuyo símbolo de Yahoo no corresponde a ningún ticker de la ficha
+    (quien llama la quita entera, con registro)."""
+    if not isinstance(l, dict):
+        return None
+    mic = l.get('exchange_mic') if isinstance(l.get('exchange_mic'), str) else None
+    ys = l.get('yahoo_symbol') if isinstance(l.get('yahoo_symbol'), str) else None
+    if own_tickers and l.get('kind') in _CERT_KINDS and ys and not (isinstance(l.get('ticker'), str) and l['ticker'].strip()):
+        suf = _yahoo_suffix(ys)
+        base = ys.strip().upper().rsplit('.', 1)[0] if suf else ys.strip().upper()
+        if base not in own_tickers:
+            return 'ticker_conflict'
+    if not mic and ys:
+        suf = _yahoo_suffix(ys)
+        mics = _suffix_mics(suf) if suf else []
+        if len(mics) == 1:
+            l['exchange_mic'] = mic = mics[0]
+            _log(log, _p_key(path, 'exchange_mic'), 'listing_mic_from_yahoo', 'derive', None, mic, source=ys)
+    t = l.get('ticker') if isinstance(l.get('ticker'), str) else None
+    if not t and ys and mic:
+        suf = _yahoo_suffix(ys)
+        ok = yahoo_matches_mic(ys, mic) or (suf == 'IL' and mic == 'XLON')
+        base = ys.strip().upper().rsplit('.', 1)[0] if suf else ys.strip().upper()
+        if ok and _TICKER_FMT.match(base):
+            l['ticker'] = t = base
+            _log(log, _p_key(path, 'ticker'), 'listing_ticker_from_yahoo', 'derive', None, t, source=ys)
+    if not ys and t and mic and _TICKER_FMT.match(t):
+        if l.get('kind') == 'gdr' and mic == 'XLON':
+            cand = f'{t.upper()}.IL'                       # GDR en la LSE (IOB): core/instruments.SUFFIX['IL']
+        else:
+            cand = yahoo_symbol_for(t, mic)
+        if cand and _YAHOO_FMT.match(cand):
+            l['yahoo_symbol'] = ys = cand
+            _log(log, _p_key(path, 'yahoo_symbol'), 'listing_yahoo_from_ticker_mic', 'derive', None, cand,
+                 source=f'{t}@{mic}' + (' (gdr)' if l.get('kind') == 'gdr' else ''))
+    if not l.get('currency'):
+        ccy = None
+        if ys and _yahoo_suffix(ys):
+            ccy = _currency_of_suffix(_yahoo_suffix(ys))
+        if ccy is None and mic and l.get('kind') not in ('adr', 'gdr'):
+            ccy = currency_of_mic(mic)
+        if ccy:
+            l['currency'] = ccy
+            _log(log, _p_key(path, 'currency'), 'listing_currency_from_yahoo', 'derive', None, ccy, source=ys or mic)
+    if not l.get('kind') and mic and hq:
+        try:
+            from ontology.company_import import MIC_COUNTRY, _listing_kind
+        except Exception:  # noqa: BLE001
+            MIC_COUNTRY, _listing_kind = {}, None
+        home = MIC_COUNTRY.get(mic) == hq or (hq == 'CN' and mic == 'XHKG')
+        if _listing_kind is not None and home:
+            kind = _listing_kind(mic, hq, None)
+            l['kind'] = kind
+            _log(log, _p_key(path, 'kind'), 'listing_kind_home_exchange', 'derive', None, kind, source=f'{mic}/{hq}')
+
+
+def _sanitize_counterparty(cp, path, log):
+    if not isinstance(cp, dict):
+        return
+    k = cp.get('khipus_id')
+    if isinstance(k, str) and not is_khipus_id(k):
+        cp.pop('khipus_id')
+        if _ID_HINT_FMT.match(k.strip()) and not cp.get('id_hint'):
+            cp['id_hint'] = k.strip()
+            _log(log, _p_key(path, 'khipus_id'), 'counterparty_id_to_hint', 'move', k, k.strip(),
+                 to=_p_key(path, 'id_hint'))
+        else:
+            _log(log, _p_key(path, 'khipus_id'), 'counterparty_id_to_hint', 'drop', k,
+                 reason='ni id nuevo ni id del grafo / neither a new id nor a graph id')
+
+
+def _repair(node, path, key, log):
+    """Recorre la ficha y aplica las reparaciones de FORMATO en su lugar (sin quitar nada). `key` = la clave bajo la
+    que cuelga este nodo (para un elemento de lista, la clave de la lista)."""
+    if isinstance(node, dict):
+        if key in _CP_DICT_KEYS or key in _CP_LIST_KEYS:
+            _sanitize_counterparty(node, path, log)
+        for k in list(node.keys()):
+            v = node[k]
+            p = _p_key(path, k)
+            if k in _URL_KEYS and isinstance(v, str):
+                fixed = encode_url(v)
+                if fixed != v:
+                    rule = 'url_trim' if fixed == v.strip() else 'url_percent_encode'
+                    _log(log, p, rule, 'repair', v, fixed)
+                    node[k] = fixed
+            elif k in _URL_LIST_KEYS and isinstance(v, list):
+                for i, u in enumerate(v):
+                    if isinstance(u, str):
+                        fixed = encode_url(u)
+                        if fixed != u:
+                            rule = 'url_trim' if fixed == u.strip() else 'url_percent_encode'
+                            _log(log, _p_idx(p, i), rule, 'repair', u, fixed)
+                            v[i] = fixed
+            elif k == 'fiscal_year' and isinstance(v, str):
+                got = _fiscal_year_of(v)
+                if got is not None:
+                    _log(log, p, got[1], 'repair', v, got[0])
+                    node[k] = got[0]
+            elif k == 'period' and isinstance(v, str):
+                got = _period_fixed(v)
+                if got is not None:
+                    _log(log, p, got[1], 'repair', v, got[0])
+                    node[k] = got[0]
+            elif k == 'ticker' and isinstance(v, str) and key in ('ids', 'listings'):
+                fixed = _ticker_fixed(v)
+                if fixed:
+                    _log(log, p, 'ticker_space_to_dash', 'repair', v, fixed)
+                    node[k] = fixed
+            if isinstance(node.get(k), (dict, list)):
+                _repair(node[k], p, k, log)
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            if isinstance(v, (dict, list)):
+                _repair(v, _p_idx(path, i), key, log)
+
+
+# ── fase de quitar lo irreparable: guiada por el validador (ontology/company_schema) ──────────────────────────────
+def _field_info(cls, name):
+    if cls is None:
+        return None
+    fields = getattr(cls, 'model_fields', None) or {}
+    if name in fields:
+        return fields[name]
+    for fname, fi in fields.items():
+        if fi.alias == name:
+            return fi
+    return None
+
+
+def _inner_model(ann):
+    """Tipo de un campo → (modelo Pydantic | None, es_lista)."""
+    import typing
+    from pydantic import BaseModel
+    is_list = False
+    for _ in range(6):
+        origin = typing.get_origin(ann)
+        if origin is typing.Annotated:
+            ann = typing.get_args(ann)[0]
+            continue
+        if origin in (list, typing.List):
+            is_list = True
+            ann = typing.get_args(ann)[0]
+            continue
+        if origin is typing.Union:
+            args = [a for a in typing.get_args(ann) if a is not type(None)]
+            ann = args[0] if args else ann
+            continue
+        break
+    try:
+        return (ann if isinstance(ann, type) and issubclass(ann, BaseModel) else None), is_list
+    except TypeError:
+        return None, is_list
+
+
+def _drop_target(loc, err_type):
+    """loc de un error → índice (en loc) del nodo MÁS PEQUEÑO que se puede quitar: un campo opcional o un elemento
+    de lista. None = la identidad no se puede salvar (habría que quitar la raíz o una parte obligatoria de arriba)."""
+    from ontology.company_schema import CompanyRecord
+    steps = []          # (paso_en_loc, quitable)
+    cls = CompanyRecord
+    list_cls = None
+    for n, part in enumerate(loc):
+        if isinstance(part, int):
+            steps.append((n, True))
+            cls, list_cls = list_cls, None
+            continue
+        fi = _field_info(cls, part)
+        if fi is None:          # campo desconocido (extra_forbidden) o dentro de un valor libre
+            steps.append((n, True))
+            cls = None
+            continue
+        steps.append((n, not fi.is_required()))
+        inner, is_list = _inner_model(fi.annotation)
+        if is_list:
+            list_cls, cls = inner, None
+        else:
+            cls = inner
+    # un campo que FALTA no existe: se empieza por su padre
+    usable = steps[:-1] if err_type == 'missing' else steps
+    for n, droppable in reversed(usable):
+        if not droppable:
+            continue
+        if n == 0 and str(loc[0]) in _PROTECTED_TOP:
+            return None
+        return n
+    return None
+
+
+def _orig_paths(rec):
+    """id(contenedor) → ruta ORIGINAL; id(lista) → índices originales de sus elementos (se actualizan al quitar)."""
+    paths, idxs = {id(rec): ''}, {}
+
+    def walk(x, p):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if isinstance(v, (dict, list)):
+                    paths[id(v)] = _p_key(p, k)
+                    walk(v, _p_key(p, k))
+        elif isinstance(x, list):
+            idxs[id(x)] = list(range(len(x)))
+            for i, v in enumerate(x):
+                if isinstance(v, (dict, list)):
+                    paths[id(v)] = _p_idx(p, i)
+                    walk(v, _p_idx(p, i))
+    walk(rec, '')
+    return paths, idxs
+
+
+def _drop_order_key(k):
+    """Orden total de rutas de error: mismo tipo por posición (números como números, textos como textos)."""
+    return [(0, p, '') if isinstance(p, int) else (1, 0, str(p)) for p in k]
+
+
+def _drop_invalid(rec, log):
+    """Valida; quita el nodo quitable más pequeño de cada error; repite. (rec, rechazada?)."""
+    import json as _json
+    from pydantic import ValidationError
+    from ontology.company_schema import FORBIDDEN_KEYS, CompanyRecord
+    paths, idxs = _orig_paths(rec)
+    dropped = 0
+    while True:
+        try:
+            CompanyRecord.model_validate_json(_json.dumps(rec, ensure_ascii=False, default=str))
+            return rec, False
+        except ValidationError as e:
+            errs = e.errors(include_url=False)
+        targets = {}
+        for x in errs:
+            loc = tuple(x.get('loc') or ())
+            n = _drop_target(loc, x.get('type'))
+            if n is None:
+                _log(log, '.'.join(str(p) for p in loc) or '(raíz)', 'reject', 'reject', None,
+                     reason=f"{x.get('type')}: {str(x.get('msg'))[:160]}")
+                return rec, True
+            key = loc[:n + 1]
+            targets.setdefault(key, x)
+        # el ancestro manda (quitar un vínculo ya quita su evidencia)
+        chosen = []
+        for k in sorted(targets, key=lambda k: (len(k), [str(p) for p in k])):
+            if not any(k[:len(c)] == c for c in chosen):
+                chosen.append(k)
+        if not chosen:
+            return rec, True
+        # quitar de atrás hacia adelante: en una misma lista, el índice MÁS ALTO primero (los pendientes no se mueven);
+        # el registro de la ronda queda en el orden de la ficha
+        round_log = []
+        for k in sorted(chosen, key=_drop_order_key, reverse=True):
+            parent = rec
+            for part in k[:-1]:
+                parent = parent[part]
+            last = k[-1]
+            x = targets[k]
+            et = x.get('type')
+            if isinstance(last, int):
+                oi = idxs.get(id(parent))
+                opath = _p_idx(paths.get(id(parent), '?'), oi[last] if oi and last < len(oi) else last)
+                before = parent.pop(last)
+                if oi and last < len(oi):
+                    oi.pop(last)
+            else:
+                opath = _p_key(paths.get(id(parent), '?'), last)
+                before = parent.pop(last, None)
+            if et == 'extra_forbidden' and str(last) in FORBIDDEN_KEYS:
+                rule = 'drop_forbidden_live_field'
+            elif et == 'extra_forbidden':
+                rule = 'drop_unknown_field'
+            else:
+                rule = 'drop_invalid'
+            bad = '.'.join(str(p) for p in (x.get('loc') or ()))
+            ent = []
+            _log(ent, opath, rule, 'drop', before, reason=f"{et}: {str(x.get('msg'))[:200]}", error_at=bad)
+            round_log.append((k, ent[0]))
+            dropped += 1
+        log.extend(e for _k, e in sorted(round_log, key=lambda t: _drop_order_key(t[0])))
+        if dropped > _SANITIZE_MAX_DROPS:
+            _log(log, '(raíz)', 'reject', 'reject', None, reason='demasiados campos inválidos / too many invalid fields')
+            return rec, True
+
+
+def sanitize_record(rec):
+    """Ficha (dict) → (ficha_saneada, registro). PURA (copia profunda; la entrada no se toca), DETERMINISTA e
+    IDEMPOTENTE (sanitize(sanitize(x)) == sanitize(x), registro vacío la segunda vez). Solo cambia el FORMATO (tipos,
+    codificación, mayúsculas, espacios y derivaciones desde otros campos de la MISMA ficha); lo irreparable se quita
+    (solo ese campo, o el elemento de lista más pequeño que lo contiene) y queda en el registro con su valor. Una ficha
+    se rechaza solo si su identidad queda inservible (regla 'reject')."""
+    import copy
+    log = []
+    if not isinstance(rec, dict):
+        return rec, [{'path': '(raíz)', 'rule': 'reject', 'action': 'reject', 'before': None,
+                      'reason': 'la ficha no es un objeto / the record is not an object'}]
+    out = copy.deepcopy(rec)
+    _repair(out, '', None, log)
+    hq = None
+    try:
+        hq = out['identity']['hq_country']['value']
+    except (KeyError, TypeError):
+        hq = None
+    lst = out.get('listings') if isinstance(out.get('listings'), list) else []
+    own = _declared_tickers(lst)
+    bad = []
+    for i, l in enumerate(lst):
+        if _sanitize_listing(l, hq, _p_idx('listings', i), log, own) == 'ticker_conflict':
+            bad.append(i)
+    for i in reversed(bad):
+        _log(log, _p_idx('listings', i), 'listing_ticker_conflict', 'drop', copy.deepcopy(lst[i]),
+             reason=('certificado sin ticker cuyo símbolo de Yahoo no es ningún ticker de la ficha (' +
+                     ', '.join(sorted(own)) + ') / certificate without ticker whose Yahoo symbol matches no ticker '
+                     'of the record'))
+        del lst[i]
+    _drop_invalid(out, log)
+    return out, log
+
+
+def sanitize_summary(logs):
+    """{regla: n} de uno o varios registros (lista de entradas o lista de listas)."""
+    from collections import Counter
+    c = Counter()
+    for x in logs:
+        for e in (x if isinstance(x, list) else [x]):
+            c[e.get('rule')] += 1
+    return dict(sorted(c.items()))

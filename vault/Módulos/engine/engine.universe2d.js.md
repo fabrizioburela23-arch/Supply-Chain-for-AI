@@ -27,11 +27,11 @@ Universo 2D: respaldo TOTAL del mapa 3D sin WebGL.
 - [[engine.geo_coords.js]] — usa `GeoCoords`, `KhipuCountries`
 - [[nodes.nodes_seed.js]] — usa `CATS`, `CAT_TO_SECTOR`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **33 de 99** (línea 3090), después de [[engine.mascot.js]] y antes de [[engine.resolve.js]].
+Se carga en [[app.html]] en la posición **34 de 100** (línea 3091), después de [[engine.mascot.js]] y antes de [[engine.resolve.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 33)
+- [[app.html]] — lo carga con `<script>` (posición 34)
 - [[engine.app_coordinator.js]] — usa `KhipuUniverse2D`
 
 ## Pruebas que lo cubren

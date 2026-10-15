@@ -26,11 +26,11 @@ Preflight debounce wiring
 - [[engine.app_main.js]] — usa `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `switchTab`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **97 de 99** (línea 3525), después de [[engine.app_trade_panel.js]] y antes de [[engine.app_canvas.js]].
+Se carga en [[app.html]] en la posición **98 de 100** (línea 3526), después de [[engine.app_trade_panel.js]] y antes de [[engine.app_canvas.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 97)
+- [[app.html]] — lo carga con `<script>` (posición 98)
 
 ## Endpoints que llama
 

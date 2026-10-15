@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L187"
+ruta: "docs/ESTADO.md#L220"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (h) — PASO 24: REPETIR DECISIONES (replay), IMPLEMENTACIONES RETENIDAS Y ⚖ AUDITORÍA — sw v263
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 187 (59 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 220 (59 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

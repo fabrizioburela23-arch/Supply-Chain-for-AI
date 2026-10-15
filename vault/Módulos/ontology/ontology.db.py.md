@@ -108,7 +108,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 92 pruebas (lista abajo)._
+_Además lo importan 99 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -129,6 +129,8 @@ _Además lo importan 92 pruebas (lista abajo)._
 - [[tests.test_bitemporal.py]]
 - [[tests.test_bitemporal_review.py]]
 - [[tests.test_brokerage.py]]
+- [[tests.test_catalog_api.py]]
+- [[tests.test_catalog_api_pg.py]]
 - [[tests.test_catalog_fix_symbols.py]]
 - [[tests.test_checkpoints.py]]
 - [[tests.test_cierre_defectos.py]]
@@ -148,6 +150,9 @@ _Además lo importan 92 pruebas (lista abajo)._
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_import_adapter.py]]
 - [[tests.test_import_fast_path.py]]
+- [[tests.test_import_lote2.py]]
+- [[tests.test_import_lote2_e2e.py]]
+- [[tests.test_import_panel.py]]
 - [[tests.test_import_roundtrip.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_ingest_news.py]]
@@ -165,8 +170,10 @@ _Además lo importan 92 pruebas (lista abajo)._
 - [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
+- [[tests.test_live_universe_db.py]]
 - [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_lotek_fixer.py]]
+- [[tests.test_lotel_fixer.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]

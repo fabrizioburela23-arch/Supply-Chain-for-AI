@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "core/live_caps.py"
 lenguaje: "python"
-lineas: 127
+lineas: 191
 aliases: ["core/live_caps.py"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # core/live_caps.py
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 127 líneas · `core/live_caps.py`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 191 líneas · `core/live_caps.py`
 
 ## Para qué sirve
 
@@ -18,15 +18,16 @@ capitalización EN VIVO de TODAS las cotizadas del grafo.
 
 ## API pública
 
-- `refresh(fetch=…)` — Consulta todas las cotizadas (bloqueante). `fetch` inyectable en tests. _(línea 32)_
-- `get_caps(start=…)` — Estado actual; si está vencido lanza un refresco en segundo plano. _(línea 118)_
+- `phase_state()` — Cuántos símbolos tiene el universo, cuántos nuevos ya entraron y cuántos esperan su tanda. _(línea 51)_
+- `refresh(fetch=…)` — Consulta todas las cotizadas (bloqueante). `fetch` inyectable en tests. _(línea 73)_
+- `get_caps(start=…)` — Estado actual; si está vencido lanza un refresco en segundo plano. _(línea 180)_
 
-**Internas** (empiezan con `_`): `_symbols_by_id`, `_daily_outcomes`
+**Internas** (empiezan con `_`): `_symbols_by_id`, `_phase`, `_caps_of`, `_daily_outcomes`
 
 ## Depende de
 
-- [[core.entities.py]] — importa `get_index`
-- [[core.quotes.py]] — importa `fetch_quotes_batch_yahoo`
+- [[core.instruments.py]] — importa `instruments`
+- [[core.quotes.py]] — importa `YAHOO_BATCH_CHUNK`, `fetch_quotes_batch_yahoo`
 - [[ontology.db.py]] — importa `ontology_available`, `session_scope`
 - [[research.auto_events.py]] — importa `dispatch_earnings`, `dispatch_price_anomalies`
 - [[research.outcomes.py]] — importa `evaluate_due`
@@ -43,12 +44,15 @@ capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[server.py]] — lo importa
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 8 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_live_caps.py]]
+- [[tests.test_live_universe.py]]
+- [[tests.test_live_universe_db.py]]
+- [[tests.test_lotel_fixer.py]]
 - [[tests.test_repair_committee.py]]
 - [[tests.test_repair_prices.py]]
 - [[tests.test_tensor.py]]

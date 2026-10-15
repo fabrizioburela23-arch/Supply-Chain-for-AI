@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/service.py"
 lenguaje: "python"
-lineas: 762
+lineas: 765
 aliases: ["ontology/service.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/service.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 762 líneas · `ontology/service.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 765 líneas · `ontology/service.py`
 
 ## Para qué sirve
 
@@ -21,13 +21,13 @@ lógica de negocio de la ontología.
 - clase `OntologyError` _(línea 40)_
 - `is_genesis(dt)` — ¿`dt` es la fecha centinela (2000-01-01)? Acepta datetime (con o sin zona), date, texto ISO o None. Solo mira el día: el centinela se … _(línea 58)_
 - `apply_event(session, event_type, payload, valid_from, source, actor, object_id=…, target_id=…, valid_to=…, source_id=…, confidence=…)` — Inserta el evento (inmutable) y actualiza objects/links (materializado). Devuelve el Event insertado. Lanza OntologyError si el evento es … _(línea 113)_
-- `get_object(session, object_id)` _(línea 536)_
-- `list_objects(session, type_=…, q=…, limit=…, offset=…)` _(línea 540)_
-- `func_lower_like(col, pattern)` _(línea 551)_
-- `object_links(session, object_id, direction=…)` — Vínculos VIGENTES ahora (valid_to IS NULL) para un objeto. _(línea 556)_
-- `object_history(session, object_id, known=…)` — Todos los eventos donde el objeto participó (como object_id o target_id), ordenados por valid_from. Es la 'línea de tiempo' del objeto. … _(línea 570)_
-- `as_of_graph(session, as_of_dt=…, known_at=…)` — Grafo (nodos + aristas) vigente en `as_of_dt` (default: ahora). _(línea 683)_
-- `diff_graph(session, from_dt, to_dt, known_at=…)` — Qué vínculos aparecieron/desaparecieron entre dos fechas de validez, y Δθ (paso 23, L3-07): qué propiedades de los nodos económicos y … _(línea 734)_
+- `get_object(session, object_id)` _(línea 539)_
+- `list_objects(session, type_=…, q=…, limit=…, offset=…)` _(línea 543)_
+- `func_lower_like(col, pattern)` _(línea 554)_
+- `object_links(session, object_id, direction=…)` — Vínculos VIGENTES ahora (valid_to IS NULL) para un objeto. _(línea 559)_
+- `object_history(session, object_id, known=…)` — Todos los eventos donde el objeto participó (como object_id o target_id), ordenados por valid_from. Es la 'línea de tiempo' del objeto. … _(línea 573)_
+- `as_of_graph(session, as_of_dt=…, known_at=…)` — Grafo (nodos + aristas) vigente en `as_of_dt` (default: ahora). _(línea 686)_
+- `diff_graph(session, from_dt, to_dt, known_at=…)` — Qué vínculos aparecieron/desaparecieron entre dos fechas de validez, y Δθ (paso 23, L3-07): qué propiedades de los nodos económicos y … _(línea 737)_
 
 **Internas** (empiezan con `_`): `_utcnow`, `_parse_dt`, `_vigilar_vocabulario`, `_prev_object_state`, `_gate_g1`, `_same_weight`, `_dedup_link_payload`, `_creation_event_for`, `_wkey`, `_known_clause`, `_kq`, `_pair_history`, `_killed`, `_promotion_choice`, `_promote_dedup`, `_replay_promotions`, `_release_hash`, `_uuid_str`, `_materialize`, `_apply_link_status`, `_links_active_at`, `_as_of_graph_known`
 

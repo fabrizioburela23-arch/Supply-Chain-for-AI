@@ -1295,6 +1295,9 @@ function renderDetail(id){
      ficha extendida (Mizuho no tenía `founded` → ni siquiera había dónde
      mostrar su capitalización en vivo) */
   const _en = LANG==='en';
+  // empresa que solo está en la base (catalog_sync): sus datos vienen de una ficha investigada CON fuente, no del
+  // catálogo curado — sin margen dice «sin dato» (no «pre-ingresos») y el crecimiento es un hecho, no una proyección
+  const _imp = !!d.from_db, _impSub = _en ? 'imported record (sourced)' : 'ficha importada (con fuente)';
   const metaHTML = (meta.founded || d.mkt) ? `
     <div class="meta-grid">
       <div class="meta-item"><div class="meta-l">${_en?'Founded':'Fundada'}</div><div class="meta-v">${meta.founded||'—'}</div></div>
@@ -1363,7 +1366,7 @@ function renderDetail(id){
       <div class="fin-card">
         <div class="fl">${t('d_margin')}</div>
         <div class="fv${m.neg?' neg':''}" data-live="margin">${m.v}</div>
-        <div class="fs" data-live-sub="margin">${d.margin_live ? (_en?'operating · last 12 mo · live':'operativo · últ. 12 meses · en vivo') : m.sub + ' · ' + (_en?'catalog':'catálogo')}</div>
+        <div class="fs" data-live-sub="margin">${d.margin_live ? (_en?'operating · last 12 mo · live':'operativo · últ. 12 meses · en vivo') : _imp ? (d.margin==null ? (_en?'no data':'sin dato') : (_en?'operating':'operativo')) + ' · ' + _impSub : m.sub + ' · ' + (_en?'catalog':'catálogo')}</div>
       </div>
       <div class="fin-card">
         <div class="fl">${t('d_capex')}</div>
@@ -1377,9 +1380,9 @@ function renderDetail(id){
       </div>
     </div>
     <div class="growth-box">
-      <div class="gl" data-live-label="growth">${t('d_growth')}</div>
-      <div class="gv" data-live="growth">${esc(nf(d,'growth'))}</div>
-      <div class="fs" data-live-sub="growth" style="font-size:10px;color:var(--ink-3);margin-top:4px">${_en?'catalog projection (curated)':'proyección del catálogo (curada)'}</div>
+      <div class="gl" data-live-label="growth">${_imp ? (_en?'Growth (researched record)':'Crecimiento (ficha investigada)') : t('d_growth')}</div>
+      <div class="gv" data-live="growth"${_imp?' style="font-family:inherit;font-size:13px;font-weight:400;line-height:1.5"':''}>${esc(nf(d,'growth'))}</div>
+      <div class="fs" data-live-sub="growth" style="font-size:10px;color:var(--ink-3);margin-top:4px">${_imp ? _impSub : (_en?'catalog projection (curated)':'proyección del catálogo (curada)')}</div>
     </div>
     ${d.mkt && !isPreipoTicker(d.ticker) ? `
     <div class="d-section" id="stock-chart-section-${id}">
@@ -2607,7 +2610,10 @@ window.loadLiveQuotes = function(opts){
   opts = opts || {};
   if(window._liveLoading) return window._liveLoading;          // ya en curso: no duplicar
   const full = !opts.tickers;
-  const all = opts.tickers || [...new Set(NODES.filter(n=>n.mkt).map(n=>n.mkt))];
+  // las empresas que solo están en la base (catalog_sync, n.from_db) NO van en la ronda completa: su precio llega por
+  // el lote de capitalizaciones del servidor (live_caps: por tandas y con tope de pedidos a Yahoo). Pedidas a mano
+  // (posiciones, ficha abierta) sí, con opts.tickers. Revisión del lote L: +183 símbolos sin tope en CADA refresco.
+  const all = opts.tickers || [...new Set(NODES.filter(n=>n.mkt && !n.from_db).map(n=>n.mkt))];
   const run = (async()=>{
     const batches=[]; for(let i=0;i<all.length;i+=LIVE_BATCH) batches.push(all.slice(i,i+LIVE_BATCH));
     let got=0, failed=0, quota=false; const srcs={};
@@ -2722,7 +2728,7 @@ async function validateTickers(){
   if(!anyPrice) return;                 // fallo GLOBAL de fuentes: no es culpa del ticker
   const meta = window.NODE_META || {};
   const hasCapPx = n => { const l=(meta[n.id]||{}).mktcap_live; return !!(l && l.price!=null && isFinite(+l.price) && +l.price>0); };
-  const missing=NODES.filter(n=>n.mkt&&!n.preipo&&!(quotePx(MKT.quotes[n.mkt])>0)&&!hasCapPx(n));
+  const missing=NODES.filter(n=>n.mkt&&!n.preipo&&!n.from_db&&!(quotePx(MKT.quotes[n.mkt])>0)&&!hasCapPx(n));
   if(!window._tickerWarnings) window._tickerWarnings=new Set();
   // ya tienen precio → quitar el ⚠ viejo
   NODES.forEach(n=>{ if(n.mkt && window._tickerWarnings.has(n.id) && quotePx(MKT.quotes[n.mkt])>0){ window._tickerWarnings.delete(n.id);
@@ -3280,6 +3286,18 @@ function _sysErrCard(title, msg, hint){
     ${hint ? `<div class="ksys-fix"><span class="ksys-fix-h">${esc(_sysL('Qué hacer', 'What to do'))}</span>${esc(hint)}</div>` : ''}
   </div>`;
 }
+// EXPANSION_5K E2.7: engine/importer.js se descarga PEREZOSO (solo al abrir 🩺 con base de datos), con la misma ?v=
+let _sysImporterEl = null;
+function _sysImporter(){
+  if(window.KhipuImporter){ window.KhipuImporter.mount('sistema-diag'); return; }
+  if(_sysImporterEl) return;
+  const v = ((document.querySelector('script[src*="engine/app_main.js"]') || {}).src || '').match(/[?&](v=[^&#]+)/);
+  const el = _sysImporterEl = document.createElement('script');
+  el.src = 'engine/importer.js' + (v ? '?' + v[1] : '');
+  el.onload = () => { if(window.KhipuImporter) window.KhipuImporter.mount('sistema-diag'); };
+  el.onerror = () => { _sysImporterEl = null; };
+  document.head.appendChild(el);
+}
 window.openDiagnostics = async function(fresh){
   const body = $('diag-body'), sum = $('diag-summary');
   if(fresh) body.innerHTML = _sysEmpty('Re-probando servicios en vivo…', 'Re-testing services live…');
@@ -3297,6 +3315,7 @@ window.openDiagnostics = async function(fresh){
     if(window.KhipuReconcile && d.services && d.services.ontologia && d.services.ontologia.configured) window.KhipuReconcile.mount('recon-box');
     if(window.KhipuGovernance) window.KhipuGovernance.mount('gov-box');
     if(window.KhipuPriceHistory) window.KhipuPriceHistory.mount('prices-box');
+    if(d.services && d.services.ontologia && d.services.ontologia.configured) _sysImporter();   // E2.7: 📥 Importar empresas
   }catch(e){
     body.innerHTML = _sysErrCard(_sysL('No se pudo obtener el diagnóstico', 'Could not load the diagnostics'), String(e.message||e),
       _sysL('El diagnóstico en vivo necesita el servidor de Khipus (backend Flask). Si acabas de desplegar, espera un minuto y pulsa ↻ Re-probar.',

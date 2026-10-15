@@ -213,12 +213,56 @@ def fetch_market_cap_yahoo(symbol, timeout=6):
 
 _MINOR_UNITS = {'GBp': ('GBP', 100), 'ZAc': ('ZAR', 100), 'ILA': ('ILS', 100)}
 
+# ── Tope de pedidos del lote de capitalizaciones (lote L, 2026-10-15) ────────
+# Con el catálogo (568 símbolos, lotes de 40) el refresco hace 15 pedidos seguidos cada 15 min: ese es el
+# presupuesto de HOY. Al importar empresas el universo crece (core/instruments.universe) y el ciclo pediría más;
+# la ventana deslizante garantiza que NUNCA salgan más de 15 pedidos en un minuto (los que sobran esperan su turno
+# en el hilo de fondo: el ciclo se alarga, la tasa no sube).
+YAHOO_BATCH_CHUNK = 40
+YAHOO_BATCH_PER_MIN = 15
 
-def fetch_quotes_batch_yahoo(symbols, chunk=40, timeout=10):
+
+class WindowLimiter:
+    """A lo sumo `per_window` pedidos en cualquier ventana de `window_s` segundos. Reloj y espera inyectables
+    (pruebas sin dormir). `acquire()` devuelve cuánto esperó."""
+
+    def __init__(self, per_window, window_s=60.0, clock=time.monotonic, sleep=time.sleep):
+        self.per_window, self.window_s = int(per_window), float(window_s)
+        self.clock, self.sleep = clock, sleep
+        self._stamps = []
+        self._lock = threading.Lock()
+        self.count = 0
+        self.waited_s = 0.0
+
+    def acquire(self):
+        with self._lock:
+            waited = 0.0
+            now = self.clock()
+            self._stamps = [t for t in self._stamps if now - t < self.window_s]
+            while len(self._stamps) >= self.per_window:
+                gap = self._stamps[0] + self.window_s - now
+                if gap > 0:
+                    self.sleep(gap)
+                    waited += gap
+                self._stamps.pop(0)          # el más viejo ya salió de la ventana (sin bucles por redondeo)
+                now = self.clock()
+                self._stamps = [t for t in self._stamps if now - t < self.window_s]
+            self._stamps.append(self.clock())
+            self.count += 1
+            self.waited_s += waited
+            return waited
+
+
+YAHOO_BATCH_LIMITER = WindowLimiter(YAHOO_BATCH_PER_MIN, 60.0)
+
+
+def fetch_quotes_batch_yahoo(symbols, chunk=YAHOO_BATCH_CHUNK, timeout=10, limiter=None):
     """Cotización + capitalización EN LOTE (Yahoo v7 quote, `chunk` símbolos
     por pedido). Devuelve {símbolo: {mcap_b (USD), price (moneda local),
     price_usd, currency, change_pct}}; los símbolos sin dato se omiten (nunca
-    se inventan)."""
+    se inventan). Cada pedido pasa por `limiter` (por defecto el tope de 15 por
+    minuto, YAHOO_BATCH_LIMITER)."""
+    limiter = YAHOO_BATCH_LIMITER if limiter is None else limiter
     out, rates = {}, {}
     syms = [s for s in dict.fromkeys(symbols or []) if s]
     for i in range(0, len(syms), chunk):
@@ -228,12 +272,14 @@ def fetch_quotes_batch_yahoo(symbols, chunk=40, timeout=10):
             params = {'symbols': ','.join(part)}
             if crumb:
                 params['crumb'] = crumb
+            limiter.acquire()
             r = s.get('https://query2.finance.yahoo.com/v7/finance/quote', params=params, timeout=timeout)
             if r.status_code in (401, 403):
                 _Y_SESS['ts'] = 0          # crumb caducado → sesión nueva
                 s, crumb = _yahoo_session()
                 if crumb:
                     params['crumb'] = crumb
+                limiter.acquire()
                 r = s.get('https://query2.finance.yahoo.com/v7/finance/quote', params=params, timeout=timeout)
             rows = (((r.json() or {}).get('quoteResponse') or {}).get('result')) or []
         except Exception:  # noqa: BLE001

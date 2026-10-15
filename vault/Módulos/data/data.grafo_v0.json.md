@@ -53,6 +53,7 @@ _Nada interno._
 ## Pruebas que lo cubren
 
 - [[tests.test_alias_voz_paridad.py]]
+- [[tests.test_catalog_api.py]]
 - [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_catalog_fix_symbols.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
@@ -69,10 +70,12 @@ _Nada interno._
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
+- [[tests.test_live_universe.py]]
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_prices_eod.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_server_smoke.py]]

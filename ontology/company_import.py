@@ -37,12 +37,18 @@ ROUTES = ('live', 'proposed', 'pending', 'quarantine')
 ACTIONS = ('create', 'merge', 'update', 'skip')
 CHOKEPOINTS_TOP = 20
 TSMC_ID = 'TSMC'
-# políticas del artefacto policy.import@1.0.0 (los valores de HOY; el artefacto manda cuando está)
+# políticas del artefacto policy.import@1.1.0 (los valores de HOY; el artefacto manda cuando está). 1.1.0 solo AGREGA
+# las reglas del lote L para fichas sin ciertos datos (owns sin dependency, partner/invest sin dependency, participación
+# societaria sin %): con un release que aún tenga 1.0.0, esas claves salen de aquí (mismos valores).
 POLICY_DEFAULTS = {
     'live_min_confidence': 0.5, 'live_min_trust': 2, 'block_size': 250, 'max_records_per_run': 5000,
     'conflicts': 'list', 'owns_min_pct': 50, 'unverified_confidence': 0.4, 'name_write_threshold': 85,
     'name_possible_threshold': 60, 'upload_chunk_max_bytes': 921600, 'proposal_statuses': ['rumored', 'disputed'],
     'quarantine_supplier_types': ['Country', 'Policy'],
+    'owns_default_criticality': {'pct_ge_90': 5, 'pct_ge_50': 4, 'pct_lt_50': 3, 'pct_unknown': 3},
+    'owns_default_live_min_pct': 50,
+    'nonflow_default_weight': 1,
+    'holding_unknown_pct_rel': {'parent': 'owns', 'subsidiaries': 'owns', 'major_shareholders': 'invest'},
 }
 # claves del catálogo que son DATOS CURADOS: en una fusión nunca se pisan (se listan como conflicto)
 _CURATED_KEYS = ('cat', 'sector', 'country', 'ticker', 'mkt', 'role', 'role_en', 'supplies', 'supplies_en', 'moat',
@@ -90,10 +96,18 @@ def _sha(obj):
 def load_bundle(path):
     """Archivo → {'records': [...], 'updates': [...], 'approve_categories': [...], 'batch': str|None}.
     `.jsonl`: una ficha por línea (líneas vacías o `#` se ignoran). `.json`: una lista de fichas o un paquete
-    {schema: 'khipus.import/1', batch, records, updates, approve_categories}."""
-    with open(path, encoding='utf-8') as fh:
-        text = fh.read()
-    return parse_bundle(text, name=os.path.basename(path))
+    {schema: 'khipus.import/1', batch, records, updates, approve_categories}. Un `.gz` (gzip) se descomprime antes
+    (`bundle_lote2_completas.json.gz`, `fichas_completas.jsonl.gz`): el nombre sin `.gz` decide el formato."""
+    name = os.path.basename(path)
+    if name.endswith('.gz'):
+        import gzip
+        with gzip.open(path, 'rt', encoding='utf-8') as fh:
+            text = fh.read()
+        name = name[:-3]
+    else:
+        with open(path, encoding='utf-8') as fh:
+            text = fh.read()
+    return parse_bundle(text, name=name)
 
 
 def parse_bundle(text, name='import.json'):
@@ -151,6 +165,29 @@ def validate_batch(records):
         seen.add(rid)
         valid.append((rec, model))
     return valid, invalid
+
+
+def sanitize_batch(records):
+    """Saneador de FORMATO (core/import_normalize.sanitize_record) sobre un lote → (fichas, registros, resumen).
+    `registros` = {record_id (o '#<índice>'): [cambios]} solo de las fichas que cambiaron; `resumen` = {by_rule,
+    records_changed, fields_repaired, fields_dropped, rejected}. Puro y determinista."""
+    from core.import_normalize import sanitize_record, sanitize_summary
+    out, logs = [], OrderedDict()
+    for i, rec in enumerate(records or []):
+        if not isinstance(rec, dict) or rec.get('_parse_error'):
+            out.append(rec)
+            continue
+        r2, log = sanitize_record(rec)
+        out.append(r2)
+        if log:
+            rid = rec.get('record_id') if isinstance(rec.get('record_id'), str) else f'#{i}'
+            logs[rid] = log
+    flat = [e for log in logs.values() for e in log]
+    summary = {'by_rule': sanitize_summary(flat), 'records_changed': len(logs),
+               'fields_repaired': sum(1 for e in flat if e.get('action') in ('repair', 'derive', 'move')),
+               'fields_dropped': sum(1 for e in flat if e.get('action') == 'drop'),
+               'rejected': sorted(rid for rid, log in logs.items() if any(e.get('action') == 'reject' for e in log))}
+    return out, logs, summary
 
 
 # ── identidad: índice de identificadores de la generación vigente ───────────────────────────────────────────────
@@ -315,7 +352,7 @@ def _ids_of(model):
     ids = model.identity.ids
     out = {}
     if ids is not None:
-        out = {k: v for k, v in ids.model_dump(exclude_none=True).items() if k != 'national_registry'}
+        out = {k: v for k, v in ids.model_dump(mode='json', exclude_none=True).items() if k != 'national_registry'}
         if 'wikidata_qid' in out:
             out['qid'] = out.pop('wikidata_qid')
         if 'exchange_mic' in out:
@@ -332,9 +369,74 @@ def _ids_of(model):
     return out
 
 
+def _identity_contradiction(model, ids, cand, nodes, score=None):
+    """¿La ficha y la empresa `cand` del grafo son OTRA empresa según sus cotizaciones y su sede? (conflicto, info):
+    misma bolsa y otra acción (SoftBank Corp. 9434.T ≠ SoftBank Group 9984.T) → listing_mismatch; otra acción Y otra
+    sede (MOL Hungría ≠ MOL Japón) → country_mismatch; otra acción, misma sede o sede desconocida → (None,
+    listing_differs) = se puede fusionar pero se lista. (None, None) si no hay con qué comparar."""
+    mine, theirs = ids.get('yahoo_symbol'), (nodes.get(cand) or {}).get('mkt')
+    if not (mine and theirs):
+        return None, None
+    if _suffix(mine) == _suffix(theirs) and _base_symbol(mine) != _base_symbol(theirs):
+        return {'kind': 'listing_mismatch', 'id': cand, 'score': score, 'record_symbol': mine,
+                'catalog_symbol': theirs}, None
+    if _base_symbol(mine) != _base_symbol(theirs):
+        from core.import_normalize import iso2_of
+        rec_hq = model.identity.hq_country.value
+        cat_hq = iso2_of((nodes.get(cand) or {}).get('country'))
+        if rec_hq and cat_hq and rec_hq != 'ZZ' and rec_hq != cat_hq:
+            return {'kind': 'country_mismatch', 'id': cand, 'score': score, 'record_symbol': mine,
+                    'catalog_symbol': theirs, 'record_hq': rec_hq, 'catalog_hq': cat_hq}, None
+        return None, {'kind': 'listing_differs', 'id': cand, 'record_symbol': mine, 'catalog_symbol': theirs}
+    return None, None
+
+
+def _explicit_counterparty_ids(model, view, ix):
+    """Ids del grafo que la ficha nombra EXPLÍCITAMENTE como su contraparte (khipus_id / id_hint de sus vínculos y de
+    su estructura societaria). Una empresa no es su propia contraparte: si el parecido de NOMBRE lleva a uno de estos
+    ids, ese parecido está mal (Moody's ≠ su filial Moody's Ratings; S&P Global ≠ S&P Global Ratings)."""
+    out = set()
+
+    def add(cp):
+        if cp is None:
+            return
+        for k in (cp.khipus_id, getattr(cp, 'id_hint', None)):
+            hit = _hint_in_graph(k, view, ix) if k else None
+            if hit:
+                out.add(hit)
+    for rel in model.relations or []:
+        add(rel.counterparty)
+    corp = model.corporate
+    if corp is not None:
+        for h in [corp.parent, corp.ultimate_parent, *(corp.major_shareholders or []), *(corp.subsidiaries or [])]:
+            if h is not None:
+                add(h.entity)
+    return out
+
+
+def _hint_in_graph(hint, view, ix):
+    """La pista del investigador → id CANÓNICO del grafo (un alias lleva al canónico) o None si no existe."""
+    if not hint:
+        return None
+    cand = hint
+    if view is not None and hasattr(view, 'canonical'):
+        try:
+            cand = view.canonical(hint) or hint
+        except Exception:  # noqa: BLE001
+            cand = hint
+    return cand if cand in ix.ids else None
+
+
 def resolve_batch(valid, view=None):
     """[(dict, model)] → {record_id: {'action', 'id', 'method', 'score', 'conflicts', 'reason'}}. Puro (lee el grafo
-    vigente). Dos fichas del lote que caen en la misma empresa: la segunda se omite (duplicate_in_batch)."""
+    vigente). Dos fichas del lote que caen en la misma empresa: la segunda se omite (duplicate_in_batch).
+
+    Orden de la identidad (lote L, 2026-10-15): identificador FUERTE (lei > isin/cik/qid > figi > Yahoo > ticker@MIC)
+    > `khipus_id_hint` que EXISTE en el grafo (la afirmación explícita del investigador: «es esta empresa») > nombre
+    ≥ 85. Un identificador fuerte que apunta a OTRA empresa que la pista → se fusiona con la del identificador y el
+    conflicto se LISTA (`hint_mismatch`), nunca en silencio. La pista se contrasta con la cotización y la sede de su
+    empresa: si dicen que es otra (misma bolsa y otra acción; otra acción y otra sede) NO se fusiona: se lista
+    `hint_contradicted` y la ficha nace con un id propio, como sin pista."""
     from core.import_normalize import is_khipus_id, khipus_id_from
     ix = id_index(view)
     out, taken, taken_ids = OrderedDict(), {}, set()
@@ -344,41 +446,51 @@ def resolve_batch(valid, view=None):
         ids = _ids_of(model)
         r = resolve_ids(ids, model.identity.short_name, view=view)
         hint = model.khipus_id_hint
+        hint_c = _hint_in_graph(hint, view, ix)
         conflicts = list((r or {}).get('conflicts') or [])
         blocked = None            # candidato por nombre descartado: la pista (derivada del mismo nombre) tampoco vale
-        if r is not None and r.get('id') and str(r.get('method') or '').startswith('name'):
+        by_name = r is not None and r.get('id') and str(r.get('method') or '').startswith('name')
+        if by_name and hint_c and hint_c != r['id']:
+            # la pista del investigador manda sobre el parecido de nombre (si no la contradicen cotización y sede)
+            contra, _info = _identity_contradiction(model, ids, hint_c, nodes)
+            if contra is None:
+                conflicts.append({'kind': 'name_differs_from_hint', 'id': r['id'], 'score': r.get('score'),
+                                  'hint': hint_c})
+                r, by_name = None, False
+        if by_name and r['id'] in _explicit_counterparty_ids(model, view, ix):
+            # la propia ficha nombra a ese candidato como OTRA empresa (su filial, su socio…): el nombre se equivoca
+            conflicts.append({'kind': 'name_target_is_counterparty', 'id': r['id'], 'score': r.get('score'),
+                              'method': r.get('method')})
+            r, by_name, blocked = None, False, r['id']
+        if by_name:
             cand = r['id']
             if r['method'] == 'name:ticker':
                 # el NOMBRE coincide con un ticker del catálogo (NOK = Nippon Mektron ≠ Nokia): no es una coincidencia
                 conflicts.append({'kind': 'possible_duplicate', 'id': cand, 'score': r['score'], 'method': 'ticker'})
                 r, blocked = None, cand
             else:
-                mine, theirs = ids.get('yahoo_symbol'), (nodes.get(cand) or {}).get('mkt')
-                if mine and theirs and _suffix(mine) == _suffix(theirs) and _base_symbol(mine) != _base_symbol(theirs):
-                    # misma etiqueta pero OTRA acción en la MISMA bolsa (SoftBank Corp. 9434.T ≠ SoftBank Group 9984.T):
-                    # es otra empresa. Con bolsas distintas (ADR vs. casa) no se puede saber: se fusiona y se lista.
-                    conflicts.append({'kind': 'listing_mismatch', 'id': cand, 'score': r['score'], 'record_symbol': mine,
-                                      'catalog_symbol': theirs})
+                contra, info = _identity_contradiction(model, ids, cand, nodes, r['score'])
+                if contra is not None:
+                    # otra empresa (misma bolsa y otra acción; u otra acción y otra sede): no se fusiona por nombre
+                    conflicts.append(contra)
                     r, blocked = None, cand
-                elif mine and theirs and _base_symbol(mine) != _base_symbol(theirs):
-                    from core.import_normalize import iso2_of
-                    rec_hq = model.identity.hq_country.value
-                    cat_hq = iso2_of((nodes.get(cand) or {}).get('country'))
-                    if rec_hq and cat_hq and rec_hq != 'ZZ' and rec_hq != cat_hq:
-                        # otra acción Y otra sede (MOL Hungría ≠ MOL Japón; SAIC EE.UU. ≠ SAIC Motor China): otra empresa
-                        conflicts.append({'kind': 'country_mismatch', 'id': cand, 'score': r['score'], 'record_symbol': mine,
-                                          'catalog_symbol': theirs, 'record_hq': rec_hq, 'catalog_hq': cat_hq})
-                        r, blocked = None, cand
-                    else:
-                        conflicts.append({'kind': 'listing_differs', 'id': cand, 'record_symbol': mine, 'catalog_symbol': theirs})
+                elif info is not None:
+                    conflicts.append(info)      # bolsas distintas (ADR vs. casa): se fusiona y se lista
         if r is not None and r.get('id'):
             cid, method, score = r['id'], r['method'], r['score']
-            if hint and hint != cid and hint in ix.ids:
-                conflicts.append({'kind': 'hint_mismatch', 'hint': hint, 'resolved': cid})
+            if hint_c and hint_c != cid:
+                conflicts.append({'kind': 'hint_mismatch', 'hint': hint_c, 'resolved': cid})
             action = 'merge'
-        elif hint and hint in ix.ids and hint != blocked:
-            cid, method, score, action = hint, 'hint', 90, 'merge'
+        elif hint_c and hint_c != blocked and _identity_contradiction(model, ids, hint_c, nodes)[0] is None:
+            cid, method, score, action = hint_c, 'hint', 90, 'merge'
+            _c, info = _identity_contradiction(model, ids, hint_c, nodes)
+            if info is not None:
+                conflicts.append(info)
         else:
+            if hint_c and hint_c != blocked:
+                contra, _i = _identity_contradiction(model, ids, hint_c, nodes)
+                conflicts.append({'kind': 'hint_contradicted', 'hint': hint_c,
+                                  **({'because': contra['kind']} if contra else {})})
             action, method, score = 'create', 'new', 0
             base = hint if (hint and is_khipus_id(hint) and hint not in ix.ids) else khipus_id_from(model.identity.short_name)
             cid = base
@@ -445,6 +557,19 @@ def _source_entry(url, kind, title='', as_of=None):
             'title': (title or '')[:200], 'publisher': publisher_from_url(url), 'as_of': as_of}
 
 
+def _merge_source(sources, s):
+    """Una URL = UNA Source: si otra cita de la misma URL la declara con un tipo de MÁS confianza (p. ej. la evidencia
+    del vínculo dice 'primary' y una cita anterior no traía source_kind → 'corporate'), la Source toma ese tipo. La
+    ruta viva de un vínculo se decide con la confianza de SU evidencia: la Source guardada no puede decir menos."""
+    if not s:
+        return
+    cur = sources.get(s['id'])
+    if cur is None:
+        sources[s['id']] = s
+    elif s['trust'] > cur['trust']:
+        sources[s['id']] = dict(cur, kind=s['kind'], trust=s['trust'])
+
+
 def _direction(this_id, other_id, rel_type, this_role):
     """Forma canónica "source PROVEE a target" a partir del papel de ESTA empresa."""
     if this_role in ('supplier', 'investor', 'owner', 'partner'):
@@ -472,17 +597,93 @@ def _route_link(rel, counterparty_id, counterparty_type, resolved_how, pol):
     return 'live', 'ok'
 
 
-def _resolve_counterparty(cp, batch_ids, view):
-    """(id, cómo) de la contraparte: khipus_id del grafo > record_id del lote > identificadores > nombre."""
+def _route_resolved_pending(pl, props, method, cp_type, pol):
+    """('live'|'proposed'|'quarantine', motivo) de un PENDIENTE cuya contraparte ya existe: las MISMAS reglas que el
+    plan aplica a un vínculo nuevo (_route_link + owns por defecto + participación sin %), leídas de lo que el plan de
+    entonces guardó en el payload. Sin esto, todo pendiente resuelto por id entraba VIVO (revisión del lote L: 825 de
+    2.050 habrían sido propuestas: participaciones sin %, owns sin % de control, confianza < 0,5, fuente débil)."""
+    rel_type = pl.get('rel_type')
+    if cp_type in (pol['quarantine_supplier_types'] or ()) and rel_type in ('supply', 'fab', 'cloud', 'license', 'ppa',
+                                                                           'deploy') and props.get('this_role') == 'customer':
+        return 'quarantine', 'flow_supplier_type'
+    if props.get('status') in (pol['proposal_statuses'] or ()):
+        return 'proposed', f"status_{props.get('status')}"
+    if str(method or '').startswith('name') or method in ('possible',):
+        return 'proposed', 'counterparty_by_name_only'
+    if props.get('share_pct_known') is False:
+        return 'proposed', 'holding_without_pct'
+    try:
+        conf = float(props.get('confidence'))
+    except (TypeError, ValueError):
+        conf = 0.0
+    if conf < float(pol['live_min_confidence']):
+        return 'proposed', 'low_confidence'
+    if props.get('verified') is not True:          # verified = fuente con trust ≥ live_min_trust Y confianza ≥ mínimo
+        return 'proposed', 'source_trust_low'
+    if props.get('criticality_source') == 'default_owns':
+        min_pct = float(pol.get('owns_default_live_min_pct', POLICY_DEFAULTS['owns_default_live_min_pct']))
+        pct = props.get('criticality_pct')
+        if pct is None or float(pct) < min_pct:
+            return 'proposed', 'owns_without_control_pct'
+    return 'live', 'ok'
+
+
+def _proposed_props(props, reason):
+    """Lo que _link_spec pone en una PROPUESTA (D-1): status proposed y confianza 0 hasta que una persona confirme."""
+    out = {'status': 'proposed', 'proposed': True, 'proposed_reason': reason, 'confidence': 0.0}
+    if 'declared_confidence' not in props:
+        out['declared_confidence'] = props.get('confidence')
+    if 'declared_status' not in props and props.get('status') not in (None, 'proposed'):
+        out['declared_status'] = props.get('status')
+    return {k: v for k, v in out.items() if v is not None}
+
+
+def _batch_index(valid, batch_ids):
+    """({(clave, ID)}: id, {nombre normalizado: id}) de las fichas de ESTE lote: identificadores fuertes y nombre corto.
+    Lo usan las relaciones (_resolve_counterparty) Y los pendientes de corridas anteriores (la misma regla)."""
+    from core.entities import norm as _norm
+    by_name, by_ids = {}, {}
+    for _rec, model in valid:
+        rid = model.record_id
+        if rid not in batch_ids:
+            continue
+        by_name.setdefault(_norm(model.identity.short_name), batch_ids[rid])
+        for k, v in _ids_of(model).items():
+            for x in (v if isinstance(v, list) else [v]):
+                if k in ('lei', 'isin', 'cik', 'qid', 'figi', 'yahoo_symbol') and x:
+                    by_ids.setdefault((k, str(x).upper()), batch_ids[rid])
+    return by_ids, by_name
+
+
+def _resolve_counterparty(cp, batch_ids, view, batch_hints=None, batch_idx=None):
+    """(id, cómo) de la contraparte: khipus_id del grafo (o su `id_hint`: un id viejo con guion/espacio, esquema 2.0.0)
+    > record_id del lote > khipus_id de OTRA ficha de este lote (su khipus_id_hint) > identificador fuerte de OTRA ficha
+    de este lote (`batch_idx`) > identificadores / nombre en el grafo > nombre EXACTO de otra ficha del lote ('name')."""
     ix = id_index(view)
-    if cp.khipus_id and cp.khipus_id in ix.ids:
-        return cp.khipus_id, 'khipus_id'
+    for k in (cp.khipus_id, getattr(cp, 'id_hint', None)):
+        hit = _hint_in_graph(k, view, ix) if k else None
+        if hit:
+            return hit, 'khipus_id'
     if cp.record_id and cp.record_id in batch_ids:
         return batch_ids[cp.record_id], 'record_id'
+    for k in (cp.khipus_id, getattr(cp, 'id_hint', None)):
+        if k and batch_hints and k in batch_hints:
+            return batch_hints[k], 'record_id'
     ids = _counterparty_ids(cp)
+    by_ids, by_name = batch_idx or ({}, {})
+    for k, v in ids.items():
+        for x in (v if isinstance(v, list) else [v]):
+            hit = by_ids.get((k, str(x).upper())) if x else None
+            if hit:
+                return hit, 'ids'
     r = resolve_ids(ids, cp.name, view=view) if (ids or cp.name) else None
     if r and r.get('id'):
         return r['id'], ('name' if str(r['method']).startswith('name') else 'ids')
+    if cp.name and by_name:
+        from core.entities import norm as _norm
+        hit = by_name.get(_norm(cp.name))
+        if hit:
+            return hit, 'name'
     return None, 'unknown'
 
 
@@ -490,7 +691,7 @@ def _counterparty_ids(cp):
     """Identificadores de la contraparte de una relación (dict plano: qid/mic normalizados), {} si no trae."""
     if cp is None or cp.ids is None:
         return {}
-    ids = {k: v for k, v in cp.ids.model_dump(exclude_none=True).items() if k != 'national_registry'}
+    ids = {k: v for k, v in cp.ids.model_dump(mode='json', exclude_none=True).items() if k != 'national_registry'}
     if 'wikidata_qid' in ids:
         ids['qid'] = ids.pop('wikidata_qid')
     if 'exchange_mic' in ids:
@@ -505,11 +706,58 @@ def _counterparty_dict(cp, cp_id, cp_how):
         out['ids'] = ids        # un vínculo PENDIENTE se vuelve a resolver con ellos (no solo por nombre)
     if cp.record_id:
         out['record_id'] = cp.record_id
+    for k in ('khipus_id', 'id_hint'):          # …y con el id que dio la investigación (lote L)
+        if getattr(cp, k, None):
+            out[k] = getattr(cp, k)
     return out
 
 
-def _link_spec(this_id, rec_id, rel, cp_id, cp_how, cp_type, pol):
-    """Un vínculo listo para el plan: dirección canónica, peso = criticidad, fechas reales, fuentes, ruta."""
+def _owns_default_criticality(pct, pol):
+    """Criticidad de un owns SIN dependency (policy.import.owns_default_criticality): tabla fija por el % que la
+    misma ficha declara (≥ 90 → pct_ge_90; ≥ 50 → pct_ge_50; < 50 → pct_lt_50; sin % → pct_unknown)."""
+    t = dict(POLICY_DEFAULTS['owns_default_criticality'], **(pol.get('owns_default_criticality') or {}))
+    if pct is None:
+        return int(t['pct_unknown'])
+    if pct >= 90:
+        return int(t['pct_ge_90'])
+    if pct >= 50:
+        return int(t['pct_ge_50'])
+    return int(t['pct_lt_50'])
+
+
+def _owns_pct_from_corporate(model, rel, cp_id):
+    """(% , ruta) de la participación que la MISMA ficha declara en `corporate` para la contraparte de un vínculo owns
+    (misma khipus_id / id_hint / id resuelto, o el mismo nombre normalizado). (None, None) si no la declara."""
+    corp = getattr(model, 'corporate', None) if model is not None else None
+    if corp is None:
+        return None, None
+    from core.entities import norm
+    cp = rel.counterparty
+    keys = {x for x in (cp.khipus_id, getattr(cp, 'id_hint', None), cp_id) if x}
+    name = norm(cp.name) if cp.name else None
+    if rel.this_role == 'owned':
+        pools = (('parent', [corp.parent] if corp.parent is not None else [], False),
+                 ('ultimate_parent', [corp.ultimate_parent] if corp.ultimate_parent is not None else [], False),
+                 ('major_shareholders', corp.major_shareholders or [], True))
+    else:
+        pools = (('subsidiaries', corp.subsidiaries or [], True),)
+    for key, holdings, is_list in pools:
+        for i, h in enumerate(holdings):
+            if h is None or h.pct is None:
+                continue
+            e = h.entity
+            same = bool((e.khipus_id and e.khipus_id in keys) or (getattr(e, 'id_hint', None) and e.id_hint in keys)
+                        or (name and e.name and norm(e.name) == name))
+            if same:
+                return float(h.pct.value), f'corporate.{key}' + (f'[{i}]' if is_list else '') + '.pct'
+    return None, None
+
+
+def _link_spec(this_id, rec_id, rel, cp_id, cp_how, cp_type, pol, model=None):
+    """Un vínculo listo para el plan: dirección canónica, peso = criticidad, fechas reales, fuentes, ruta. Sin
+    dependency (esquema 2.0.0, solo owns/partner/invest): owns toma la criticidad de la tabla de la política
+    (`criticality_source: 'default_owns'`, con el % de la misma ficha si lo declara) y partner/invest el peso fijo de
+    los vínculos que no son flujo (`criticality_source: 'default_nonflow'`)."""
     from core.import_normalize import valid_from_of, valid_to_of
     route, reason = _route_link(rel, cp_id, cp_type, cp_how, pol)
     src, tgt = _direction(this_id, cp_id, rel.rel_type, rel.this_role) if cp_id else (None, None)
@@ -521,7 +769,27 @@ def _link_spec(this_id, rec_id, rel, cp_id, cp_how, cp_type, pol):
             sources.append(s)
     primary = _source_entry(url, kind) if url else None
     vf, known = valid_from_of(rel.start)
-    dep = rel.dependency.model_dump(exclude_none=True)
+    dep_m = rel.dependency
+    crit = dep_m.criticality if dep_m is not None else None
+    dep = dep_m.model_dump(mode='json', exclude_none=True) if dep_m is not None else None
+    crit_extra = {}
+    if crit is not None:
+        weight = float(crit)
+    elif rel.rel_type == 'owns':
+        pct, pct_from = _owns_pct_from_corporate(model, rel, cp_id)
+        c = _owns_default_criticality(pct, pol)
+        weight = float(c)
+        crit_extra = {'criticality': c, 'criticality_source': 'default_owns'}
+        if pct is not None:
+            crit_extra.update(criticality_pct=pct, criticality_pct_from=pct_from)
+        min_pct = float(pol.get('owns_default_live_min_pct', POLICY_DEFAULTS['owns_default_live_min_pct']))
+        if route == 'live' and (pct is None or pct < min_pct):
+            # un owns SIN criticidad investigada y SIN un % de control declarado (6,38 % de TSMC ≠ control) no entra
+            # vivo al kernel con un peso por defecto: queda PROPUESTO hasta que una persona lo confirme
+            route, reason = 'proposed', 'owns_without_control_pct'
+    else:
+        weight = float(pol.get('nonflow_default_weight', POLICY_DEFAULTS['nonflow_default_weight']))
+        crit_extra = {'criticality_source': 'default_nonflow'}
     props = {
         'rel_label': rel.label_es, 'rel_label_en': rel.label_en, 'product': rel.product,
         'dependency': dep, 'status': rel.status, 'external_id': f'{rec_id}:{rel.relation_id}',
@@ -531,11 +799,11 @@ def _link_spec(this_id, rec_id, rel, cp_id, cp_how, cp_type, pol):
         'this_role': rel.this_role, 'record_id': rec_id, 'relation_id': rel.relation_id,
     }
     props = {k: v for k, v in props.items() if v is not None}
+    props.update(crit_extra)
     if route == 'proposed':
         # D-1: una PROPUESTA de verdad (status proposed, confianza 0 hasta que una persona confirme)
         props.update({'status': 'proposed', 'proposed': True, 'declared_status': rel.status,
                       'declared_confidence': rel.confidence, 'confidence': 0.0, 'proposed_reason': reason})
-    weight = float(rel.dependency.criticality)
     return {'relation_id': rel.relation_id, 'record_id': rec_id, 'rel_type': rel.rel_type, 'source': src, 'target': tgt,
             'counterparty': _counterparty_dict(rel.counterparty, cp_id, cp_how),
             'weight': weight, 'properties': props, 'valid_from': vf, 'valid_from_known': known,
@@ -543,9 +811,41 @@ def _link_spec(this_id, rec_id, rel, cp_id, cp_how, cp_type, pol):
             'confidence': rel.confidence, 'route': route, 'reason': reason, 'sources': sources}
 
 
-def _holding_links(this_id, rec_id, model, batch_ids, view, pol):
+def _holding_link_without_pct(this_id, rec_id, n, direction, h, kind, cp_id, how, pol):
+    """Esquema 2.0.0: una participación SIN % (la relación es información). Tipo por la tabla de la política
+    (holding_unknown_pct_rel: matriz/filiales = owns, accionistas = invest); sin % no hay fuente propia → NUNCA vivo:
+    PROPUESTA si la contraparte existe, PENDIENTE si no. owns pesa la criticidad «sin %» de la tabla (default_owns)."""
+    from core.import_normalize import valid_from_of, valid_to_of
+    rel_type = (pol.get('holding_unknown_pct_rel') or POLICY_DEFAULTS['holding_unknown_pct_rel']).get(kind, 'invest')
+    rel_type = rel_type if rel_type in ('owns', 'invest') else 'invest'
+    src, tgt = ((cp_id, this_id) if direction == 'in' else (this_id, cp_id)) if cp_id else (None, None)
+    route = 'pending' if cp_id is None else 'proposed'
+    vf, known = valid_from_of(h.since)
+    if rel_type == 'owns':
+        crit = _owns_default_criticality(None, pol)
+        weight = float(crit)
+        extra = {'criticality': crit, 'criticality_source': 'default_owns'}
+    else:
+        weight = float(pol.get('nonflow_default_weight', POLICY_DEFAULTS['nonflow_default_weight']))
+        extra = {'criticality_source': 'default_nonflow'}
+    props = {'rel_label': f'{"posee" if rel_type == "owns" else "participa en"} (sin % publicado)',
+             'rel_label_en': f'{"owns" if rel_type == "owns" else "holds a stake in"} (no % published)',
+             'external_id': f'{rec_id}:holding-{n:03d}', 'source': PROVENANCE, 'confidence': 0.0,
+             'evidenced_by': [], 'since': h.since, 'until': h.until, 'record_id': rec_id, 'holding_kind': kind,
+             'this_role': 'owned' if direction == 'in' else 'owner', 'share_pct_known': False, **extra}
+    props = {k: v for k, v in props.items() if v is not None}
+    if route == 'proposed':
+        props.update({'status': 'proposed', 'proposed': True, 'proposed_reason': 'holding_without_pct'})
+    return {'relation_id': f'holding-{n:03d}', 'record_id': rec_id, 'rel_type': rel_type, 'source': src, 'target': tgt,
+            'counterparty': _counterparty_dict(h.entity, cp_id, how),
+            'weight': weight, 'properties': props, 'valid_from': vf, 'valid_from_known': known,
+            'valid_to': valid_to_of(h.until), 'source_id': None, 'confidence': 0.0, 'route': route,
+            'reason': 'holding_without_pct' if route == 'proposed' else 'counterparty_unknown', 'sources': []}
+
+
+def _holding_links(this_id, rec_id, model, batch_ids, view, pol, batch_hints=None, batch_idx=None):
     """corporate.parent / subsidiaries / major_shareholders → owns (≥ owns_min_pct) o invest; siempre PROPUESTA si la
-    contraparte se resolvió solo por nombre; pendiente si no existe."""
+    contraparte se resolvió solo por nombre; pendiente si no existe. Sin % (esquema 2.0.0) → _holding_link_without_pct."""
     from core.import_normalize import valid_from_of, valid_to_of
     out = []
     corp = model.corporate
@@ -553,13 +853,24 @@ def _holding_links(this_id, rec_id, model, batch_ids, view, pol):
         return out
     items = []
     for h in (corp.major_shareholders or []):
-        items.append(('in', h))
+        items.append(('in', h, 'major_shareholders'))
     if corp.parent is not None:
-        items.append(('in', corp.parent))
+        items.append(('in', corp.parent, 'parent'))
     for h in (corp.subsidiaries or []):
-        items.append(('out', h))
-    for n, (direction, h) in enumerate(items, 1):
-        cp_id, how = _resolve_counterparty(h.entity, batch_ids, view)
+        items.append(('out', h, 'subsidiaries'))
+    for n, (direction, h, kind) in enumerate(items, 1):
+        cp_id, how = _resolve_counterparty(h.entity, batch_ids, view, batch_hints, batch_idx)
+        if cp_id == this_id:
+            if how == 'name':
+                cp_id, how = None, 'unknown'     # el NOMBRE llevó a esta misma empresa (Brookfield Corporation ≠ BAM)
+            else:
+                out.append({'relation_id': f'holding-{n:03d}', 'record_id': rec_id, 'rel_type': 'owns',
+                            'route': 'quarantine', 'reason': 'self_link',
+                            'counterparty': {'name': h.entity.name, 'id': cp_id}})
+                continue
+        if h.pct is None:
+            out.append(_holding_link_without_pct(this_id, rec_id, n, direction, h, kind, cp_id, how, pol))
+            continue
         pct = float(h.pct.value)
         rel_type = 'owns' if pct >= float(pol['owns_min_pct']) else 'invest'
         src, tgt = ((cp_id, this_id) if direction == 'in' else (this_id, cp_id)) if cp_id else (None, None)
@@ -570,14 +881,16 @@ def _holding_links(this_id, rec_id, model, batch_ids, view, pol):
         props = {'rel_label': f'{"posee" if rel_type == "owns" else "participa en"} {pct:g} %',
                  'rel_label_en': f'{"owns" if rel_type == "owns" else "holds"} {pct:g}%', 'share_pct': pct,
                  'external_id': f'{rec_id}:holding-{n:03d}', 'source': PROVENANCE, 'confidence': float(h.pct.confidence),
-                 'evidenced_by': [s['id']] if s else [], 'since': h.since, 'until': h.until, 'record_id': rec_id}
+                 'evidenced_by': [s['id']] if s else [], 'since': h.since, 'until': h.until, 'record_id': rec_id,
+                 'this_role': 'owned' if direction == 'in' else 'owner',
+                 'verified': bool((s or {}).get('trust', 0) >= int(pol['live_min_trust'])
+                                  and float(h.pct.confidence) >= float(pol['live_min_confidence']))}
         props = {k: v for k, v in props.items() if v is not None}
         if route == 'proposed':
             props.update({'status': 'proposed', 'proposed': True, 'declared_confidence': float(h.pct.confidence),
                           'confidence': 0.0, 'proposed_reason': 'holding_unverified'})
         out.append({'relation_id': f'holding-{n:03d}', 'record_id': rec_id, 'rel_type': rel_type, 'source': src,
-                    'target': tgt, 'counterparty': {'name': h.entity.name, 'id': cp_id, 'how': how,
-                                                    'object_type': h.entity.object_type or 'Company'},
+                    'target': tgt, 'counterparty': _counterparty_dict(h.entity, cp_id, how),
                     'weight': 1.0 if rel_type == 'invest' else max(1.0, min(6.0, round(pct / 100 * 6, 2))),
                     'properties': props, 'valid_from': vf, 'valid_from_known': known, 'valid_to': valid_to_of(h.until),
                     'source_id': s['id'] if s else None, 'confidence': float(h.pct.confidence), 'route': route,
@@ -599,6 +912,25 @@ def _text_pair(f):
     if en and en.startswith(_EN_PENDING):
         en = None
     return f.value, en
+
+
+def _fiscal_year_label_start(fin):
+    """Cuántos `annual[].fiscal_year` usan el año en que EMPIEZA el ejercicio: alguna cifra del año tiene as_of =
+    cierre del ejercicio (`fiscal_year_end` MM-DD) del año SIGUIENTE (MHI fiscal_year 2025 con as_of 2026-03-31; Toyota
+    lo rotula 2026). Solo cuenta (aviso del plan): el número del año NO se toca (el esquema 2.0.0 describe el año de
+    cierre; la investigación mezcla las dos convenciones)."""
+    fye = getattr(fin, 'fiscal_year_end', None)
+    if not fye or str(fye) in ('12-31',):
+        return 0
+    n = 0
+    for a in fin.annual or []:
+        want = f'{int(a.fiscal_year) + 1}-{fye}'
+        for k, v in a:
+            as_of = getattr(v, 'as_of', None)
+            if as_of is not None and str(as_of)[:10] == want:
+                n += 1
+                break
+    return n
 
 
 def company_props(model, rec, cid, cats, c2s, approved, pol, warnings):
@@ -623,9 +955,9 @@ def company_props(model, rec, cid, cats, c2s, approved, pol, warnings):
     if idn.hq_city is not None:
         props['hq_city'] = idn.hq_city.value
     if idn.hq_coords is not None:
-        props['hq_coords'] = idn.hq_coords.model_dump(exclude_none=True)
+        props['hq_coords'] = idn.hq_coords.model_dump(mode='json', exclude_none=True)
     if idn.other_names:
-        props['other_names'] = [o.model_dump(exclude_none=True) for o in idn.other_names]
+        props['other_names'] = [o.model_dump(mode='json', exclude_none=True) for o in idn.other_names]
         props['aliases'] = [o.name for o in idn.other_names]
     # categoría (un alias del catálogo —`battery_components`— cae en su id consolidado: data/categories.json)
     cat = cls.cat
@@ -641,6 +973,11 @@ def company_props(model, rec, cid, cats, c2s, approved, pol, warnings):
             cat = alias_of
             if cat_prop and cat_prop.get('id') not in cats:
                 cat_prop = None          # la «nueva» ya existe fusionada en el catálogo: nada que aprobar
+    if cat_prop and cat_prop.get('id') in cats and cat_prop.get('id') != cat:
+        # lote L: la ficha trae la categoría existente MÁS CERCANA en `cat` y la que propone en `cat_proposed`; si la
+        # propuesta ya está APROBADA en el catálogo (data/categories.json, lote K) manda la propuesta: nada que aprobar
+        props.setdefault('cat_declared', cls.cat)
+        cat = cat_prop['id']
     if cat in cats:
         sector = c2s.get(cat)
     elif cat in approved:
@@ -671,7 +1008,7 @@ def company_props(model, rec, cid, cats, c2s, approved, pol, warnings):
     # identificadores y cotizaciones
     ids = {}
     if idn.ids is not None:
-        d = idn.ids.model_dump(exclude_none=True)
+        d = idn.ids.model_dump(mode='json', exclude_none=True)
         for k_src, k in (('lei', 'lei'), ('isin', 'isin'), ('cik', 'cik'), ('wikidata_qid', 'qid'), ('figi', 'figi'),
                          ('domain', 'domain'), ('yahoo_symbol', 'yahoo_symbol')):
             if d.get(k_src) is not None:
@@ -679,7 +1016,7 @@ def company_props(model, rec, cid, cats, c2s, approved, pol, warnings):
     listings = []
     primary = None
     for l in model.listings or []:
-        d = l.model_dump(exclude_none=True)
+        d = l.model_dump(mode='json', exclude_none=True)
         entry = {'symbol': d['ticker'], 'mic': d['exchange_mic'], 'yahoo_symbol': d['yahoo_symbol'],
                  'is_primary': bool(d['is_primary']), 'kind': d['kind'], 'currency': d['currency']}
         for k in ('isin', 'figi', 'ordinary_per_depositary', 'listed_since', 'delisted_at', 'share_class',
@@ -740,35 +1077,58 @@ def company_props(model, rec, cid, cats, c2s, approved, pol, warnings):
     if prof.technologies:
         props['technologies'] = list(prof.technologies)
     if prof.key_people:
-        props['key_people'] = [k.model_dump(exclude_none=True) for k in prof.key_people]
+        props['key_people'] = [k.model_dump(mode='json', exclude_none=True) for k in prof.key_people]
     # mercado, plantas, productos, exposición, regulación, riesgos, línea de tiempo (con su procedencia)
     if model.market_position:
-        props['market_position'] = [m.model_dump(exclude_none=True) for m in model.market_position]
+        props['market_position'] = [m.model_dump(mode='json', exclude_none=True) for m in model.market_position]
     if model.facilities:
-        props['facilities'] = [f.model_dump(exclude_none=True) for f in model.facilities]
+        props['facilities'] = [f.model_dump(mode='json', exclude_none=True) for f in model.facilities]
     if model.products:
-        props['products'] = [p.model_dump(exclude_none=True) for p in model.products]
+        props['products'] = [p.model_dump(mode='json', exclude_none=True) for p in model.products]
     if model.exposure is not None:
-        props['exposure'] = model.exposure.model_dump(exclude_none=True)
+        props['exposure'] = model.exposure.model_dump(mode='json', exclude_none=True)
     if model.regulatory is not None:
-        props['regulatory'] = model.regulatory.model_dump(exclude_none=True)
+        props['regulatory'] = model.regulatory.model_dump(mode='json', exclude_none=True)
     if model.risks:
-        props['risks'] = [r.model_dump(exclude_none=True) for r in model.risks]
+        props['risks'] = [r.model_dump(mode='json', exclude_none=True) for r in model.risks]
     if model.timeline:
-        props['timeline'] = [t.model_dump(exclude_none=True) for t in model.timeline]
+        props['timeline'] = []
+        for t in model.timeline:
+            d = t.model_dump(mode='json', exclude_none=True)
+            if t.confidence is None:      # esquema 2.0.0: sin confianza → la de la política, MARCADA
+                d.update(confidence=float(pol['unverified_confidence']), confidence_default=True)
+            props['timeline'].append(d)
     if model.financials is not None:
-        props['financials'] = model.financials.model_dump(exclude_none=True)
+        props['financials'] = model.financials.model_dump(mode='json', exclude_none=True)
         ann = model.financials.annual or []
         last = max(ann, key=lambda a: a.fiscal_year) if ann else None
-        if last is not None and last.gross_margin_pct is not None:
+        # `margin` del catálogo = margen OPERATIVO (la ficha lo muestra así y el NRS lo lee; las cifras en vivo lo
+        # reemplazan con el operativo de 12 meses). El margen BRUTO de la ficha nunca pasa por operativo.
+        if last is not None and last.operating_margin_pct is not None:
             from core.import_normalize import pct
-            props['margin'] = pct(last.gross_margin_pct.value)
+            props['margin'] = pct(last.operating_margin_pct.value)
+        n_start = _fiscal_year_label_start(model.financials)
+        if n_start:
+            warnings.append({'code': 'fiscal_year_label_start', 'n': n_start,
+                             'es': f'{n_start} año(s) fiscal(es) rotulado(s) con el año en que EMPIEZA el ejercicio (la '
+                                   'fecha del dato cae al cierre del año siguiente); no se cambia, solo se avisa',
+                             'en': f'{n_start} fiscal year(s) labelled with the year the period STARTS (the fact date '
+                                   'falls at the close of the next year); not changed, only flagged'})
     if model.innovation is not None:
-        props['innovation'] = model.innovation.model_dump(exclude_none=True)
+        props['innovation'] = model.innovation.model_dump(mode='json', exclude_none=True)
     if model.esg is not None:
-        props['esg'] = model.esg.model_dump(exclude_none=True)
+        props['esg'] = model.esg.model_dump(mode='json', exclude_none=True)
+        for k, v in list(props['esg'].items()):
+            if isinstance(v, dict) and 'value' in v and v.get('confidence') is None:
+                props['esg'][k] = dict(v, confidence=float(pol['unverified_confidence']), confidence_default=True)
+    n_def = sum(1 for t in props.get('timeline') or [] if t.get('confidence_default')) + sum(
+        1 for v in (props.get('esg') or {}).values() if isinstance(v, dict) and v.get('confidence_default'))
+    if n_def:
+        warnings.append({'code': 'confidence_defaulted', 'n': n_def,
+                         'es': f'{n_def} dato(s) sin confianza: se usa la de la política ({pol["unverified_confidence"]}), marcada',
+                         'en': f'{n_def} fact(s) without confidence: the policy value ({pol["unverified_confidence"]}) is used, flagged'})
     if model.live_hooks is not None:
-        props['live_hooks'] = model.live_hooks.model_dump(exclude_none=True)
+        props['live_hooks'] = model.live_hooks.model_dump(mode='json', exclude_none=True)
     # valuación SOLO de privadas (última ronda cerrada con valuación post-money)
     if idn.status.value in ('private', 'subsidiary', 'state_owned', 'cooperative') and model.funding:
         closed = [f for f in model.funding if f.post_money_valuation is not None and (f.status or 'closed') == 'closed']
@@ -779,7 +1139,7 @@ def company_props(model, rec, cid, cats, c2s, approved, pol, warnings):
                                   'confidence': last.confidence}
             props['preipo'] = True
     if model.funding:
-        props['funding'] = [f.model_dump(exclude_none=True) for f in model.funding]
+        props['funding'] = [f.model_dump(mode='json', exclude_none=True) for f in model.funding]
     # verificación y meta
     rm = model.research_meta
     verified = bool(idn.legal_name.confidence >= float(pol['live_min_confidence']))
@@ -801,9 +1161,7 @@ def _record_sources(model):
         if isinstance(x, dict):
             u = x.get('source_url')
             if isinstance(u, str) and u.startswith('http'):
-                s = _source_entry(u, x.get('source_kind'), x.get('source_name') or '', x.get('as_of'))
-                if s and s['id'] not in out:
-                    out[s['id']] = s
+                _merge_source(out, _source_entry(u, x.get('source_kind'), x.get('source_name') or '', x.get('as_of')))
             for v in x.values():
                 walk(v)
         elif isinstance(x, list):
@@ -814,12 +1172,15 @@ def _record_sources(model):
 
 
 # ── el plan ─────────────────────────────────────────────────────────────────────────────────────────────────────
-def plan(records, updates=None, *, view=None, batch=None, approve_categories=None, pending=None, what_changes=True):
+def plan(records, updates=None, *, view=None, batch=None, approve_categories=None, pending=None, what_changes=True,
+         sanitize=False):
     """PURO: no escribe nada. Devuelve el plan (qué se crea / fusiona / actualiza / omite y por qué; categorías por
     aprobar; vínculos por ruta; fuentes nuevas; "¿qué cambia?" del kernel) con `plan_sha` (huella de lo que se
     aplicaría sobre ESTA generación del grafo). `records` = fichas (dicts); `updates` = [{khipus_id, props, source}]
     para empresas existentes (p. ej. países verificados); `approve_categories` = [{id,label_es,label_en,sector}] que
-    Fabrizio aprueba en este lote (F-8); `pending` = filas de import_pending_links (dicts) a reintentar."""
+    Fabrizio aprueba en este lote (F-8); `pending` = filas de import_pending_links (dicts) a reintentar.
+    `sanitize=True` pasa antes el saneador de FORMATO (sanitize_batch; el resumen queda en `plan['sanitize']`, fuera de
+    la huella): un paquete ya saneado (`--lote2`) da el MISMO plan con o sin él (el saneador es idempotente)."""
     from core.hotviews import hot
     view = view or hot.graph()
     if view is None:
@@ -829,6 +1190,9 @@ def plan(records, updates=None, *, view=None, batch=None, approve_categories=Non
     cats, c2s = _catalog_cats(view)
     approved = {c['id']: c for c in (approve_categories or []) if isinstance(c, dict) and c.get('id')}
     ix = id_index(view)
+    san_summary = None
+    if sanitize:
+        records, _logs, san_summary = sanitize_batch(records or [])
     valid, invalid = validate_batch(records or [])
     if len(valid) > int(pol['max_records_per_run']):
         raise ImportProblem(f'el lote trae {len(valid)} fichas; el máximo por corrida es {pol["max_records_per_run"]}',
@@ -836,6 +1200,12 @@ def plan(records, updates=None, *, view=None, batch=None, approve_categories=Non
                             'batch_too_large')
     res = resolve_batch(valid, view=view)
     batch_ids = {rid: r['id'] for rid, r in res.items() if r['action'] != 'skip'}
+    # khipus_id_hint de cada ficha del lote → su id resuelto (una contraparte que cita la pista de OTRA ficha del lote)
+    batch_hints = {}
+    for _rec, _m in valid:
+        if _m.khipus_id_hint and _m.record_id in batch_ids:
+            batch_hints.setdefault(_m.khipus_id_hint, batch_ids[_m.record_id])
+    batch_idx = _batch_index(valid, batch_ids)
     items, sources, cat_to_approve = [], OrderedDict(), OrderedDict()
     counts = Counter()
     link_counts = Counter()
@@ -911,27 +1281,31 @@ def plan(records, updates=None, *, view=None, batch=None, approve_categories=Non
         rec_sources = _record_sources(model)
         item['sources'] = [s['id'] for s in rec_sources]
         for s in rec_sources:
-            sources.setdefault(s['id'], s)
+            _merge_source(sources, s)
         # vínculos
         this_id = r['id']
         for rel in model.relations or []:
-            cp_id, how = _resolve_counterparty(rel.counterparty, batch_ids, view)
+            cp_id, how = _resolve_counterparty(rel.counterparty, batch_ids, view, batch_hints, batch_idx)
             cp_type = rel.counterparty.object_type or 'Company'
             if cp_id is not None and cp_id in ix.ids:
                 cp_type = (view.by_id.get(cp_id) or {}).get('type') or cp_type
+            if cp_id == this_id and how == 'name':
+                # el NOMBRE de la contraparte llevó a esta misma empresa (Brookfield Corporation ≠ Brookfield = BAM):
+                # el parecido está mal → queda PENDIENTE (se resolverá cuando la contraparte exista)
+                cp_id, how = None, 'unknown'
             if cp_id == this_id:
                 spec = {'relation_id': rel.relation_id, 'record_id': rid, 'rel_type': rel.rel_type, 'route': 'quarantine',
                         'reason': 'self_link', 'counterparty': {'name': rel.counterparty.name, 'id': cp_id}}
             else:
-                spec = _link_spec(this_id, rid, rel, cp_id, how, cp_type, pol)
+                spec = _link_spec(this_id, rid, rel, cp_id, how, cp_type, pol, model=model)
             for s in spec.get('sources') or []:
-                sources.setdefault(s['id'], s)
+                _merge_source(sources, s)
             spec.pop('sources', None)
             item['links'].append(spec)
             link_counts[spec['route']] += 1
-        for spec in _holding_links(this_id, rid, model, batch_ids, view, pol):
+        for spec in _holding_links(this_id, rid, model, batch_ids, view, pol, batch_hints, batch_idx):
             for s in spec.get('sources') or []:
-                sources.setdefault(s['id'], s)
+                _merge_source(sources, s)
             spec.pop('sources', None)
             item['links'].append(spec)
             link_counts[spec['route']] += 1
@@ -973,27 +1347,23 @@ def plan(records, updates=None, *, view=None, batch=None, approve_categories=Non
     # ESTE lote (por record_id, identificadores o nombre). pending_links() ya excluye los consumidos.
     pend_items = []
     from core.entities import norm as _norm
-    batch_by_name = {}
-    batch_by_ids = {}
-    for rec, model in valid:
-        rid = model.record_id
-        if rid not in batch_ids:
-            continue
-        batch_by_name.setdefault(_norm(model.identity.short_name), batch_ids[rid])
-        for k, v in _ids_of(model).items():
-            for x in (v if isinstance(v, list) else [v]):
-                if k in ('lei', 'isin', 'cik', 'qid', 'figi', 'yahoo_symbol') and x:
-                    batch_by_ids.setdefault((k, str(x).upper()), batch_ids[rid])
+    batch_by_ids, batch_by_name = batch_idx
     for p in pending or []:
         cp = p.get('counterparty') or {}
         if not cp:
             continue
-        r = resolve_ids(cp.get('ids') or {}, cp.get('name'), view=view)
-        cid = (r or {}).get('id') if r else None
-        method = str((r or {}).get('method') or '')
+        cid, method = None, ''
+        for k in (cp.get('khipus_id'), cp.get('id_hint')):      # el id que dio la investigación (lote L)
+            hit = _hint_in_graph(k, view, ix) if k else None
+            if hit:
+                cid, method = hit, 'khipus_id'
+                break
+            if k and k in batch_hints:
+                cid, method = batch_hints[k], 'record_id'
+                break
         if cid is None and cp.get('record_id') and cp['record_id'] in batch_ids:
             cid, method = batch_ids[cp['record_id']], 'record_id'
-        if cid is None:
+        if cid is None:          # un identificador FUERTE de una ficha de este lote gana a un parecido de nombre
             for k, v in (cp.get('ids') or {}).items():
                 for x in (v if isinstance(v, list) else [v]):
                     hit = batch_by_ids.get((k, str(x).upper())) if x else None
@@ -1002,31 +1372,55 @@ def plan(records, updates=None, *, view=None, batch=None, approve_categories=Non
                         break
                 if cid:
                     break
+        if cid is None:
+            r = resolve_ids(cp.get('ids') or {}, cp.get('name'), view=view)
+            cid = (r or {}).get('id') if r else None
+            method = str((r or {}).get('method') or '')
+            if cid == p.get('company_id') and method.startswith('name'):
+                cid, method = None, ''   # el NOMBRE de la matriz se parece al de la filial: no es ella
         if cid is None and cp.get('name') and _norm(cp['name']) in batch_by_name:
             cid, method = batch_by_name[_norm(cp['name'])], 'name:batch'
         if cid is None or cid == p.get('company_id'):
             continue
         pl = dict(p.get('payload') or {})
-        role = (pl.get('properties') or {}).get('this_role')
+        props_p = dict(pl.get('properties') or {})
+        role = props_p.get('this_role')
         src, tgt = _direction(p['company_id'], cid, pl.get('rel_type'), role or 'supplier')
-        pl.update(source=src, target=tgt, route='live' if not method.startswith('name') else 'proposed',
-                  reason='pending_resolved', from_pending=str(p.get('id')))
+        cp_type = (view.by_id.get(cid) or {}).get('type') if cid in ix.ids else 'Company'
+        route, why = _route_resolved_pending(pl, props_p, method, cp_type or 'Company', pol)
+        if route == 'quarantine':
+            link_counts['quarantine'] += 1
+            continue
+        if route == 'proposed':
+            props_p.update(_proposed_props(props_p, why))
+        pl.update(source=src, target=tgt, route=route, reason='pending_resolved', route_reason=why,
+                  properties=props_p, from_pending=str(p.get('id')))
         pend_items.append(pl)
         link_counts[pl['route']] += 1
     new_sources = [s for sid, s in sources.items() if sid not in ix.ids]
+    # vínculos que entran con un peso de la POLÍTICA (no una criticidad investigada): se cuentan para que se vean
+    # antes de aplicar (revisión del lote L: 39 vivos —2 owns con % declarado, 37 socio/inversor con peso 1—)
+    dflt = {}
+    for l in [l for it in items for l in it['links']] + pend_items:
+        cs = (l.get('properties') or {}).get('criticality_source')
+        if cs and l.get('route') in ('live', 'proposed'):
+            dflt.setdefault(l['route'], Counter())[cs] += 1
     out = {
         'schema': PLAN_SCHEMA, 'batch': batch, 'generation': view.generation, 'graph_key': graph_key(view),
         'graph_version': view.graph_version, 'graph_source': view.source, 'policy': pol,
         'counts': {'records': len(records or []), 'valid': len(valid), 'invalid': len(invalid),
                    'create': counts['create'], 'merge': counts['merge'], 'update': counts['update'],
                    'skip': counts['skip'], 'links': {k: link_counts.get(k, 0) for k in ROUTES},
-                   'sources_new': len(new_sources), 'categories_to_approve': len(cat_to_approve)},
+                   'sources_new': len(new_sources), 'categories_to_approve': len(cat_to_approve),
+                   'links_default_weight': {r: dict(sorted(dflt[r].items())) for r in ROUTES if r in dflt}},
         'items': items, 'updates': upd_items, 'pending_resolved': pend_items, 'invalid': invalid,
         'sources': new_sources, 'categories': {'to_approve': list(cat_to_approve.values()),
                                                'approved_now': sorted(approved)},
     }
     out['counts']['events_estimated'] = _events_estimate(out)
     out['plan_sha'] = plan_sha(out)
+    if san_summary is not None:
+        out['sanitize'] = san_summary
     if what_changes:
         try:
             out['what_changes'] = kernel_what_changes(view, out)
@@ -1084,6 +1478,16 @@ def plan_sha(p):
     return _sha(body)
 
 
+def _nnz(mats):
+    """Entradas (origen, destino, tipo) de las matrices del kernel: la MISMA medida antes y después (antes se comparaban
+    pares únicos de la vista con tripletas del plan: «2.594 → 3.798» mezclaba dos cosas)."""
+    import numpy as np
+    n = 0
+    for m in mats:
+        n += int(m.nnz) if hasattr(m, 'nnz') else int(np.count_nonzero(m))
+    return n
+
+
 # ── "¿qué cambia?" (E2.6): el MISMO kernel sobre una copia en memoria ─────────────────────────────────────────
 def kernel_what_changes(view, p):
     """ρ, top-20 de cuellos de botella y a cuántas empresas golpea TSMC, ANTES (la vista Impact publicada) y DESPUÉS
@@ -1102,18 +1506,18 @@ def kernel_what_changes(view, p):
         if it['action'] not in ('create', 'merge'):
             continue
         for l in it['links']:
-            if l['route'] != 'live' or not l.get('source') or not l.get('target'):
-                continue
+            if l['route'] != 'live' or not l.get('source') or not l.get('target') or l.get('valid_to'):
+                continue                # terminado: en la base queda con valid_to → fuera del kernel de «ahora»
             props = l.get('properties') or {}
             new_triples.append((l['source'], l['target'], l['rel_type'],
                                 E._eff_weight(l['weight'], props.get('source'), E.link_confidence(props))))
     for l in p.get('pending_resolved') or []:
-        if l.get('route') == 'live':
+        if l.get('route') == 'live' and not l.get('valid_to'):
             props = l.get('properties') or {}
             new_triples.append((l['source'], l['target'], l['rel_type'],
                                 E._eff_weight(l.get('weight'), props.get('source'), E.link_confidence(props))))
     before = {
-        'nodes': len(core.ids), 'links': int(core.n_links), 'rho': (core.rho or {}).get('rho') if isinstance(core.rho, dict) else None,
+        'nodes': len(core.ids), 'links': _nnz(core.mats.values()), 'rho': (core.rho or {}).get('rho') if isinstance(core.rho, dict) else None,
         'damping_rho': (core.rho or {}).get('damping_rho') if isinstance(core.rho, dict) else None,
         'tsmc_hit': (imp.stats.get(TSMC_ID) or {}).get('reach_1'),
         'chokepoints': [{'id': k, 'reach_1': imp.stats[k]['reach_1'], 'sum_impact': imp.stats[k]['sum_impact']}
@@ -1160,7 +1564,7 @@ def kernel_what_changes(view, p):
     except Exception:  # noqa: BLE001
         rho = {}
     after = {
-        'nodes': len(ids), 'links': len(triples), 'rho': rho.get('rho'), 'damping_rho': rho.get('damping_rho'),
+        'nodes': len(ids), 'links': _nnz(mats.values()), 'rho': rho.get('rho'), 'damping_rho': rho.get('damping_rho'),
         'tsmc_hit': (stats.get(TSMC_ID) or {}).get('reach_1'),
         'chokepoints': [{'id': k, 'reach_1': stats[k]['reach_1'], 'sum_impact': stats[k]['sum_impact']}
                         for k in (by_sum if E._P('chokepoint_rank_by', 'count') == 'sum' else by_count)[:CHOKEPOINTS_TOP]],
@@ -1207,9 +1611,11 @@ def import_triples(item, pol=None):
         t.add(L, F.kh('record'), R)
         t.add(L, F.kh('relType'), str(l.get('rel_type')))
         t.add(L, F.kh('route'), str(l.get('route')))
-        dep = (l.get('properties') or {}).get('dependency') or {}
-        if 'criticality' in dep:
-            t.add(L, F.kh('criticality'), F.num(dep.get('criticality')))
+        lp = l.get('properties') or {}
+        dep = lp.get('dependency') or {}
+        crit = dep.get('criticality', lp.get('criticality'))      # sin dependency: la criticidad por defecto (owns)
+        if crit is not None:
+            t.add(L, F.kh('criticality'), F.num(crit))
         t.add(L, F.kh('confidence'), F.num(l.get('confidence')))
         t.add(L, F.kh('liveMinConf'), F.num(pol['live_min_confidence']))
         t.add(L, F.kh('liveMinTrust'), F.num(pol['live_min_trust']))
@@ -1261,6 +1667,8 @@ def events_of(p, run_id, revive_ids=None):
     from ontology.service import GENESIS_SENTINEL
     revive_ids = set(revive_ids or ())
     evs, pend, quar = [], [], []
+    link_evs = []          # TODOS los vínculos van DESPUÉS de todas las empresas: un vínculo puede apuntar a una empresa
+    #                        que crea OTRA ficha del lote (contraparte por record_id o por su khipus_id_hint, lote L)
     for s in p['sources']:
         evs.append({'event_type': 'ObjectCreated', 'object_id': s['id'], 'payload': {
             'label': (s.get('title') or s.get('publisher') or s['url'])[:200], 'type': SOURCE_TYPE,
@@ -1275,7 +1683,7 @@ def events_of(p, run_id, revive_ids=None):
         vf = GENESIS_SENTINEL
         if founded:
             from core.import_normalize import partial_date
-            pd = partial_date(founded)
+            pd = partial_date(founded, wide=True)     # esquema 2.0.0: fundada en 1867 → valid_from 1867
             if pd:
                 vf = pd[0].isoformat()
         primary_src = it['sources'][0] if it.get('sources') else None
@@ -1303,11 +1711,11 @@ def events_of(p, run_id, revive_ids=None):
                              'counterparty': l.get('counterparty'), 'payload': {k: v for k, v in l.items() if k != 'counterparty'},
                              'reason': l.get('reason') or 'counterparty_unknown'})
             else:
-                evs.append({'event_type': 'LinkCreated', 'object_id': l['source'], 'target_id': l['target'],
-                            'payload': {'rel_type': l['rel_type'], 'weight': l['weight'],
-                                        'properties': dict(l['properties'], import_run=run_id)},
-                            'valid_from': l['valid_from'], 'valid_to': l.get('valid_to'), 'source_id': l.get('source_id'),
-                            'confidence': l.get('properties', {}).get('confidence', l.get('confidence')), 'kind': 'link'})
+                link_evs.append({'event_type': 'LinkCreated', 'object_id': l['source'], 'target_id': l['target'],
+                                 'payload': {'rel_type': l['rel_type'], 'weight': l['weight'],
+                                             'properties': dict(l['properties'], import_run=run_id)},
+                                 'valid_from': l['valid_from'], 'valid_to': l.get('valid_to'), 'source_id': l.get('source_id'),
+                                 'confidence': l.get('properties', {}).get('confidence', l.get('confidence')), 'kind': 'link'})
     for u in p['updates']:
         if u['action'] != 'update':
             continue
@@ -1316,6 +1724,7 @@ def events_of(p, run_id, revive_ids=None):
                                 'update_kind': 'country_facts'},
                     'valid_from': _now().isoformat(), 'source_id': u.get('source_id'), 'confidence': u.get('confidence'),
                     'kind': 'update'})
+    evs.extend(link_evs)
     for l in p.get('pending_resolved') or []:
         evs.append({'event_type': 'LinkCreated', 'object_id': l['source'], 'target_id': l['target'],
                     'payload': {'rel_type': l['rel_type'], 'weight': l['weight'],
@@ -1640,13 +2049,17 @@ def consumed_pending_ids(session):
     return {str(r[0]) for r in rows if r[0]}
 
 
-def pending_links(session, limit=500, include_consumed=False):
-    """Vínculos a la espera de su contraparte, SIN los que una corrida ya resolvió (consumed_pending_ids)."""
+def pending_links(session, limit=None, include_consumed=False):
+    """Vínculos a la espera de su contraparte, SIN los que una corrida ya resolvió (consumed_pending_ids) y SIN los de
+    una corrida DESHECHA (deshacer retira lo que la corrida dejó, también sus pendientes). `limit=None` = todos."""
     from sqlalchemy import select
     from ontology import import_models
     import_models.ensure_tables()
-    rows = session.scalars(select(import_models.ImportPendingLink)
-                           .order_by(import_models.ImportPendingLink.created_at.desc()).limit(limit)).all()
+    q = select(import_models.ImportPendingLink).order_by(import_models.ImportPendingLink.created_at.desc())
+    rows = session.scalars(q.limit(limit) if limit else q).all()
+    rolled = {str(x) for x in session.scalars(select(import_models.ImportRun.rolled_back_run).where(
+        import_models.ImportRun.kind == 'rollback', import_models.ImportRun.rolled_back_run.isnot(None))).all()}
+    rows = [r for r in rows if str(r.run_id) not in rolled]
     done = set() if include_consumed else consumed_pending_ids(session)
     return [{'id': str(r.id), 'run_id': str(r.run_id), 'record_id': r.record_id, 'relation_id': r.relation_id,
              'company_id': r.company_id, 'counterparty': r.counterparty, 'payload': r.payload, 'reason': r.reason,
@@ -1654,6 +2067,18 @@ def pending_links(session, limit=500, include_consumed=False):
 
 
 # ── resumen legible del plan (para el documento y la terminal) ──────────────────────────────────────────────────
+def _default_weight_text(d, es=True):
+    """«owns 2 (peso 3-5 por el % declarado) · socio/inversor 37 (peso 1)» — de counts.links_default_weight[ruta]."""
+    parts = []
+    if d.get('default_owns'):
+        parts.append(f"owns {d['default_owns']} " + ('(peso 3-5 según el % que declara la ficha)' if es else
+                                                      '(weight 3-5 by the % the record declares)'))
+    if d.get('default_nonflow'):
+        parts.append(('socio/inversor ' if es else 'partner/investor ') + f"{d['default_nonflow']} " +
+                     ('(peso 1)' if es else '(weight 1)'))
+    return ' · '.join(parts) or '0'
+
+
 def render_summary(p, lang='es', limit=25):
     """Markdown corto: conteos, categorías por aprobar, ¿qué cambia?, conflictos principales."""
     es = lang != 'en'
@@ -1673,6 +2098,10 @@ def render_summary(p, lang='es', limit=25):
              f"{'cuarentena' if es else 'quarantine'} {lk['quarantine']}")
     L.append(f"- {'Fuentes nuevas' if es else 'New sources'}: {c['sources_new']} · {'eventos estimados' if es else 'estimated events'}: "
              f"{c['events_estimated']}")
+    dw = c.get('links_default_weight') or {}
+    if dw.get('live'):
+        L.append(f"- {'Vivos con peso POR DEFECTO de la política (no investigado)' if es else 'Live with a POLICY default weight (not researched)'}"
+                 f": {_default_weight_text(dw['live'], es)}")
     cats = p['categories']['to_approve']
     L.append('')
     L.append(('## Categorías por aprobar' if es else '## Categories to approve') + f' ({len(cats)})')
@@ -2020,3 +2449,251 @@ def adapt_lote_2026_10_14(path=None, categories=None):
                         'n_declared': int(c['empresas'] or 0), 'groups': c.get('agrupa')})
     return {'schema': 'khipus.import/1', 'batch': LOTE1_BATCH, 'records': records, 'updates': updates,
             'approve_categories': approve, 'warnings': warnings}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# Lote 2026-10-15 (lote L): las 386 fichas COMPLETAS de la entrega P1 (nivel B) → paquete saneado + registro
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+LOTE2_DIR = os.path.join(ROOT, 'data', 'import', 'lotes', '2026-10-15')
+LOTE2_BATCH = 'lote-2026-10-15-completas'
+LOTE2_FICHAS = 'fichas_completas.jsonl.gz'           # las líneas ORIGINALES de la entrega (sin tocar), comprimidas
+LOTE2_IDS = 'completas_record_ids.txt'               # la lista del Excel «empresas_completas.xlsx» (hoja empresas)
+LOTE2_BUNDLE = 'bundle_lote2_completas.json.gz'      # paquete khipus.import/1 con las fichas SANEADAS
+LOTE2_LOG = 'sanitize_log.json'                      # cada cambio del saneador (ruta, antes, después, regla)
+SANITIZE_LOG_SCHEMA = 'khipus.sanitize-log/1'
+
+
+def _read_lines_gz(path):
+    import gzip
+    with gzip.open(path, 'rt', encoding='utf-8') as fh:
+        return [ln for ln in fh.read().splitlines() if ln.strip()]
+
+
+def complete_record_ids(d=None):
+    """Los record_id de las fichas COMPLETAS (una por línea; vacías y '#' se ignoran), en el orden del archivo."""
+    with open(os.path.join(d or LOTE2_DIR, LOTE2_IDS), encoding='utf-8') as fh:
+        return [ln.strip() for ln in fh if ln.strip() and not ln.startswith('#')]
+
+
+def build_lote_2026_10_15(d=None):
+    """fichas_completas.jsonl.gz + completas_record_ids.txt → {'bundle', 'log', 'kept', 'missing'}.
+    Solo entran las fichas cuyo record_id está en la lista (las 386 completas; la entrega trae 395: las 9 con aviso
+    —fichas_excluidas.csv— no entran). Cada ficha pasa por el saneador de FORMATO; el paquete conserva el ORDEN del
+    archivo original. Puro y determinista (mismo texto JSON en cualquier PC)."""
+    d = d or LOTE2_DIR
+    keep = complete_record_ids(d)
+    keep_set = set(keep)
+    records, seen = [], set()
+    for n, line in enumerate(_read_lines_gz(os.path.join(d, LOTE2_FICHAS)), 1):
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError as e:
+            raise ImportProblem(f'{LOTE2_FICHAS} línea {n}: {e.msg}', f'{LOTE2_FICHAS} line {n}: {e.msg}', 'bad_file')
+        rid = rec.get('record_id') if isinstance(rec, dict) else None
+        if rid in keep_set and rid not in seen:
+            seen.add(rid)
+            records.append(rec)
+    sanitized, logs, summary = sanitize_batch(records)
+    bundle = {'schema': 'khipus.import/1', 'batch': LOTE2_BATCH, 'records': sanitized, 'updates': [],
+              'approve_categories': []}
+    log = {'schema': SANITIZE_LOG_SCHEMA, 'batch': LOTE2_BATCH, 'source_file': LOTE2_FICHAS,
+           'records_in': len(records), 'summary': summary, 'records': logs}
+    return {'bundle': bundle, 'log': log, 'kept': len(records), 'missing': sorted(keep_set - seen)}
+
+
+def lote2_texts(built):
+    """(texto JSON del paquete, texto JSON del registro): la forma CANÓNICA que se escribe y que --check compara
+    (se compara el texto, no los bytes del .gz: zlib de otra PC comprime distinto)."""
+    b = json.dumps(built['bundle'], ensure_ascii=False, separators=(',', ':')) + '\n'
+    lg = json.dumps(built['log'], ensure_ascii=False, indent=1) + '\n'
+    return b, lg
+
+
+# ── el plan del lote 2 en Markdown simple (docs/expansion/LOTE_2026-10-15_PLAN.md) ──────────────────────────────
+SANITIZE_RULES_ES = {
+    'url_percent_encode': 'Enlaces con espacios o corchetes → escritos en formato web (%20, %5B, %5D). Llevan al mismo lugar.',
+    'url_trim': 'Espacios sobrantes al principio o al final de un enlace.',
+    'fiscal_year_text_to_int': 'Año fiscal escrito como texto ("2025") → número (2025).',
+    'fiscal_year_split_end': 'Año fiscal partido ("2025/26") → el año en que TERMINA (2026).',
+    'period_fy_split_end': 'Período "FY2025/26" → "FY2026" (la misma regla: el año en que termina).',
+    'ticker_space_to_dash': 'Ticker con espacio ("ERIC B") → con guion ("ERIC-B"), como lo escribe Yahoo.',
+    'counterparty_id_to_hint': 'Id de una empresa escrito con guion o espacio ("lockheed-martin") → pasa a `id_hint`: el '
+                               'importador lo usa para encontrarla en el grafo.',
+    'listing_mic_from_yahoo': 'Bolsa (MIC) deducida del sufijo de Yahoo cuando hay UNA sola posible (".CO" → XCSE).',
+    'listing_ticker_from_yahoo': 'Ticker deducido del símbolo de Yahoo de la misma cotización ("ABC.BA" → ABC).',
+    'listing_ticker_conflict': 'Certificado (ADR/GDR/CEDEAR) sin ticker cuyo símbolo de Yahoo no es de esta empresa: se '
+                               'quitó entero (Boeing traía «BAC.BA», que es de Bank of America).',
+    'listing_yahoo_from_ticker_mic': 'Símbolo de Yahoo deducido de ticker + bolsa (GDR en Londres → ".IL").',
+    'listing_currency_from_yahoo': 'Moneda deducida de la bolsa de la cotización (".IL" = USD).',
+    'listing_kind_home_exchange': 'Tipo de acción deducido de que cotiza en la bolsa de su país.',
+    'drop_forbidden_live_field': 'Dato EN VIVO (precio, capitalización…) quitado: lo trae el servidor.',
+    'drop_unknown_field': 'Campo desconocido quitado.',
+    'drop_invalid': 'Dato que NO se pudo reparar: se quitó SOLO ese dato (queda guardado en el registro).',
+    'reject': 'Ficha rechazada: su identidad quedó inservible.',
+}
+_ROUTE_ES = {'live': 'vivos', 'proposed': 'propuestos', 'pending': 'pendientes', 'quarantine': 'cuarentena'}
+_REASON_ES = {
+    'counterparty_unknown': 'la otra empresa aún no está en Khipus', 'pending': 'participación con una empresa que aún no está',
+    'source_trust_low': 'fuente de poca confianza (prensa/agregador)', 'proposed': 'participación con fuente débil o contraparte por nombre',
+    'owns_without_control_pct': 'dueño sin % de control declarado', 'holding_without_pct': 'participación sin %',
+    'low_confidence': 'confianza baja', 'status_rumored': 'es un rumor', 'status_disputed': 'está en disputa',
+    'counterparty_by_name_only': 'la otra empresa se encontró solo por nombre', 'self_link': 'apunta a sí misma',
+    'flow_supplier_type': 'un país o una política no puede ser proveedor',
+}
+_WARN_ES = {'confidence_defaulted': 'datos de ESG/línea de tiempo sin confianza (se usa 0,4, marcada)',
+            'fiscal_year_label_start': 'año fiscal rotulado con el año en que EMPIEZA (p. ej. abr-2025→mar-2026 = 2025; '
+                                       'no se cambia)',
+            'listing_added_secondary': 'cotización que entra como secundaria (la principal curada se queda)'}
+_CONFLICT_ES = {'curated_differs': 'dato curado distinto (no se pisa)', 'possible_duplicate': '¿duplicada?',
+                'value_differs': 'valor distinto (no se pisa)', 'name_target_is_counterparty': 'el nombre apuntaba a su filial',
+                'listing_differs': 'cotización distinta a la curada', 'hint_mismatch': 'la pista apunta a otra empresa',
+                'hint_contradicted': 'la pista choca con cotización/sede', 'name_differs_from_hint': 'el nombre apuntaba a otra'}
+
+
+def _n(x):
+    """Entero con punto de miles (español)."""
+    try:
+        return f'{int(x):,}'.replace(',', '.')
+    except (TypeError, ValueError):
+        return str(x)
+_REL_ES = {'supply': 'provee', 'fab': 'fabrica', 'cloud': 'nube', 'license': 'licencia', 'ppa': 'energía (PPA)',
+           'deploy': 'despliega', 'owns': 'es dueño', 'invest': 'invierte', 'partner': 'socio'}
+
+
+def render_lote2_md(p, built, d=None):
+    """El plan del lote 2026-10-15 en español simple. Determinista (sin horas ni milisegundos)."""
+    d = d or LOTE2_DIR
+    c, lk = p['counts'], p['counts']['links']
+    summ = built['log']['summary']
+    try:
+        from core import governance
+        kver = governance.artifact_semver('kernel.params')
+    except Exception:  # noqa: BLE001
+        kver = '?'
+    L = ['# Lote 2026-10-15 — 386 empresas con ficha COMPLETA (plan; nada aplicado)', '',
+         '> Fabrizio pidió: «integra esto, agrega las que tengan info completa solamente». Entran SOLO las 386 fichas '
+         'completas del Excel `empresas_completas.xlsx`; las 9 con aviso y las 3.773 filas P2/P3 sin ficha NO.', '',
+         '## En una mirada', '',
+         f'- 📥 Fichas: **{c["records"]}** · válidas después de reparar el formato: **{c["valid"]}** · inválidas: {c["invalid"]}',
+         f'- 🆕 Se crean **{c["create"]}** · 🔗 se fusionan con una que ya existe **{c["merge"]}** · se omiten {c["skip"]}',
+         f'- 🧵 Vínculos: vivos **{_n(lk["live"])}** · propuestos {_n(lk["proposed"])} (esperan a una persona) · pendientes '
+         f'{_n(lk["pending"])} (la otra empresa aún no está en Khipus) · cuarentena {lk["quarantine"]}',
+         f'- 📚 Fuentes nuevas: {_n(c["sources_new"])} · eventos estimados: {_n(c["events_estimated"])}',
+         f'- ⚖️ Vivos con peso POR DEFECTO de la política (no investigado): '
+         f'{_default_weight_text((c.get("links_default_weight") or {}).get("live") or {})}',
+         f'- 🏷️ Categorías por aprobar: {c["categories_to_approve"]} (las 55 nuevas ya están en el catálogo desde el lote K)',
+         f'- 🧾 Huella del plan en ESTA PC: `{p["plan_sha"]}` (grafo `{p["graph_key"]}`). La que vale para aplicar en '
+         'producción es la que da `--plan … --server` (otro grafo).', '']
+    # fusiones
+    merges = [it for it in p['items'] if it['action'] == 'merge']
+    how_es = {'yahoo_symbol': 'mismo símbolo de Yahoo', 'hint': 'id que dio la investigación', 'lei': 'mismo LEI',
+              'isin': 'mismo ISIN'}
+    L += ['## 🔗 Fusiones (no se crea otra empresa: se completa la que ya existe)', '']
+    for it in merges:
+        m = it['method'] or ''
+        L.append(f'- {it["name"]} → `{it["id"]}` ({how_es.get(m, "mismo nombre o id" if m.startswith("name") else m)})')
+    L += ['', 'Lo CURADO (país, categoría, textos, ticker…) nunca se pisa: si la ficha dice otra cosa, se lista como '
+          'conflicto para revisar.', '']
+    special = [it for it in p['items'] if any(cf.get('kind') in ('name_target_is_counterparty', 'hint_contradicted')
+                                             for cf in it.get('conflicts') or [])]
+    L += ['## 🚫 Parecidas pero NO son la misma empresa (no se fusionan)', '']
+    for it in special:
+        cf = next(cf for cf in it['conflicts'] if cf.get('kind') in ('name_target_is_counterparty', 'hint_contradicted'))
+        L.append(f'- {it["name"]} → se crea `{it["id"]}`; NO se fusiona con `{cf.get("id") or cf.get("hint")}` '
+                 '(la propia ficha la nombra como otra empresa: su filial).')
+    for rid, why in (('fb-2026-brookfield-renewable', 'Brookfield Renewable es otra empresa (no Brookfield = BAM)'),
+                     ('fb-2026-tsmc-arizona', 'TSMC Arizona es una filial de TSMC (vínculo «es dueño»)'),
+                     ('fb-2026-softbank-vision-fund', 'SoftBank Vision Fund no es SoftBank Group')):
+        it = next((x for x in p['items'] if x['record_id'] == rid), None)
+        if it is not None:
+            L.append(f'- {it["name"]} → `{it["id"]}` ({"se crea" if it["action"] == "create" else it["action"]}): {why}.')
+    L += ['- MOL (Hungría) y SoftBank Corp. no traen ficha completa: no están en este lote.', '']
+    # vínculos por tipo
+    by = Counter((l['rel_type'], l['route']) for it in p['items'] for l in it['links'])
+    by_reason = Counter(l.get('reason') for it in p['items'] for l in it['links'] if l.get('route') != 'live')
+    L += ['## 🧵 Vínculos por tipo', '', '| tipo | vivos | propuestos | pendientes | cuarentena |', '|---|---:|---:|---:|---:|']
+    for rt in ('supply', 'fab', 'cloud', 'license', 'ppa', 'deploy', 'owns', 'invest', 'partner'):
+        row = [by.get((rt, r), 0) for r in ROUTES]
+        if any(row):
+            L.append(f'| {rt} ({_REL_ES[rt]}) | ' + ' | '.join(str(x) for x in row) + ' |')
+    L += ['', '- Solo los VIVOS cambian los números del grafo hoy. Los propuestos esperan que una persona los confirme; '
+          'los pendientes se conectan cuando llegue la otra empresa, con las MISMAS reglas (vivo o propuesto).',
+          '- Por qué no quedan vivos: ' + '; '.join(f'{_REASON_ES.get(k, k)} {_n(v)}'
+                                                   for k, v in sorted(by_reason.items(), key=lambda x: (-x[1], str(x[0])))),
+          '- `owns` sin criticidad investigada toma la tabla de `policy.import` (criticality_source = default_owns) y '
+          'solo entra vivo si la ficha declara ≥ 50 % de participación; si no, queda propuesto.', '']
+    # ¿qué cambia?
+    wc = p.get('what_changes') or {}
+    L += ['## 📈 ¿Qué cambia en el kernel?', '']
+    if wc.get('available'):
+        b, a = wc['before'], wc['after']
+        tb = [x['id'] for x in b.get('chokepoints') or []]
+        ta = [x['id'] for x in a.get('chokepoints') or []]
+        L += [f'- Nodos {_n(b["nodes"])} → {_n(a["nodes"])} · vínculos {_n(b["links"])} → {_n(a["links"])}',
+              f'- ρ (qué tan fuerte se propaga un golpe): {b.get("rho")} → {a.get("rho")}',
+              f'- TSMC golpea a: {b.get("tsmc_hit")} → {a.get("tsmc_hit")} empresas',
+              f'- Top-20 cuellos de botella: entran {", ".join(x for x in ta if x not in tb) or "ninguno"} · salen '
+              f'{", ".join(x for x in tb if x not in ta) or "ninguno"}',
+              f'- Antes: {", ".join(tb)}', f'- Después: {", ".join(ta)}',
+              f'- Calculado con el kernel del repositorio (kernel.params {kver}) sobre el catálogo de esta PC. En '
+              'producción manda el kernel que Fabrizio activó: el plan del servidor da los números reales.']
+        if wc.get('calibration_stale'):
+            L.append('- ⚠️ Entran vínculos vivos: hasta que Claude vuelva a calibrar (un script, no tienes que hacer nada), '
+                     'la cifra en DINERO de los escenarios puede salir sin monto. Los porcentajes de impacto sí salen.')
+    else:
+        L.append(f'- no disponible: {wc.get("reason") or wc.get("error")}')
+    L.append('')
+    # saneador
+    L += ['## 🧹 Qué se reparó (solo FORMATO; ningún número cambió)', '',
+          f'- Fichas con algún arreglo: {summ["records_changed"]} de {built["kept"]} · datos reparados o deducidos: '
+          f'{summ["fields_repaired"]} · datos quitados: {summ["fields_dropped"]} · fichas rechazadas: {len(summ["rejected"])}',
+          '', '| regla | veces | qué hace |', '|---|---:|---|']
+    for rule, n in sorted(summ['by_rule'].items(), key=lambda x: (-x[1], x[0])):
+        L.append(f'| `{rule}` | {n} | {SANITIZE_RULES_ES.get(rule, "")} |')
+    drops = [(rid, e) for rid, log in built['log']['records'].items() for e in log if e.get('action') == 'drop']
+    if drops:
+        L += ['', 'Quitados (no había forma de completarlos sin inventar):']
+        for rid, e in drops:
+            bef = e.get('before') if isinstance(e.get('before'), dict) else {}
+            what = (f' (cotización {bef.get("ticker") or bef.get("yahoo_symbol") or "sin ticker"}'
+                    f'{"@" + bef["exchange_mic"] if bef.get("exchange_mic") else ""})') if 'listings' in e['path'] else ''
+            field = str(e.get('error_at') or '').rsplit('.', 1)[-1]
+            why = (f'faltaba `{field}` y no sale de otro dato de la misma cotización'
+                   if str(e.get('reason') or '').startswith('missing') else
+                   'certificado cuyo símbolo de Yahoo no es ningún ticker de esta empresa (parece de otra)'
+                   if e.get('rule') == 'listing_ticker_conflict' else str(e.get('reason') or '')[:90])
+            L.append(f'- {rid}: `{e["path"]}`{what} — {why}')
+    L += ['', 'Cada cambio (ruta, antes, después, regla) está en `data/import/lotes/2026-10-15/sanitize_log.json`.', '']
+    # excluidas
+    L += ['## ⛔ Las 9 fichas que NO entran (no están completas)', '']
+    try:
+        for r in _read_csv(os.path.join(d, 'fichas_excluidas.csv')):
+            L.append(f'- {r.get("nombre")} (`{r.get("record_id")}`): {r.get("aviso")}')
+    except FileNotFoundError:
+        L.append('- (falta fichas_excluidas.csv)')
+    L.append('')
+    # conflictos y avisos
+    kinds = Counter(cf.get('kind') for it in p['items'] for cf in it.get('conflicts') or [])
+    L += ['## 🔎 Para revisar', '', '- Conflictos: ' + ('; '.join(f'{_CONFLICT_ES.get(k, k)} {v}'
+                                                            for k, v in sorted(kinds.items(), key=lambda x: (-x[1], x[0])))
+                                                  or 'ninguno')]
+    for it in p['items']:
+        for cf in it.get('conflicts') or []:
+            if cf.get('kind') == 'possible_duplicate':
+                L.append(f'- ¿Duplicada? {it["name"]} se parece a `{cf.get("id")}` (puntaje {cf.get("score")}): se crea '
+                         'aparte; si es la misma, fusionar después con FusionarEntidad.')
+    warn = Counter(w.get('code') for it in p['items'] for w in it.get('warnings') or [])
+    if warn:
+        L.append('- Avisos: ' + '; '.join(f'{_WARN_ES.get(k, k)} {v}' for k, v in sorted(warn.items(), key=lambda x: (-x[1], x[0]))))
+    L += ['', '## ✅ Qué hacer ahora (Fabrizio)', '',
+          '1. Railway → Postgres → **Backups → Create backup**.',
+          '2. En la app: 🩺 → **Diagnóstico** → **📥 Importar empresas** → «Lote 2 — 386 empresas completas» → **Ver plan** '
+          '(no cambia nada) → **Aplicar…** → marcar «Hice una copia de seguridad» → nombre de la base (`railway`) → tu PIN.',
+          '3. Al terminar: **recargar la página (F5)** para ver las empresas nuevas en el mapa y en la búsqueda.',
+          '4. Si algo no gusta: en el mismo panel, **Corridas → Deshacer** (PIN). Nada se borra: se deshace con eventos.',
+          '',
+          'Alternativa por terminal (misma huella, mismo resultado): `python scripts/import_companies.py --plan '
+          'data/import/lotes/2026-10-15/bundle_lote2_completas.json.gz --server https://<tu-app>.railway.app --pin <PIN>` '
+          '(copiar la huella `plan_sha`) y luego `--apply … --plan-sha <huella> --confirm-db railway`; deshacer con '
+          '`--rollback <run_id> --confirm-db railway --server … --pin <PIN>`.', '']
+    return '\n'.join(L)

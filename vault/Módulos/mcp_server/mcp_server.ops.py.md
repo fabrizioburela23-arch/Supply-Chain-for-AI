@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/ops.py"
 lenguaje: "python"
-lineas: 1104
+lineas: 1111
 aliases: ["mcp_server/ops.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/ops.py
 
-> Módulo · capa [[Capa MCP y API]] · 1.104 líneas · `mcp_server/ops.py`
+> Módulo · capa [[Capa MCP y API]] · 1.111 líneas · `mcp_server/ops.py`
 
 ## Para qué sirve
 
@@ -30,8 +30,8 @@ las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión
 - `t_find_anomalies(ctx, symbols, window=…, lookback_days=…, z_threshold=…)` _(línea 575)_
 - `t_project_portfolio(ctx, positions, horizon_days=…, covariance=…, drift=…)` _(línea 688)_
 - `t_get_fundamentals(ctx, id_or_ticker, period=…, years=…)` _(línea 914)_
-- `mkt_match(query, market)` — Puntaje 0-1: fracción de las raíces de la pregunta que aparecen (prefijo ≥ 3) en el texto del mercado, con sinónimos es/en. 1 token en … _(línea 1007)_
-- `t_rank_by_market(ctx, market, metric=…, region=…, limit=…)` _(línea 1056)_
+- `mkt_match(query, market)` — Puntaje 0-1: fracción de las raíces de la pregunta que aparecen (prefijo ≥ 3) en el texto del mercado, con sinónimos es/en. 1 token en … _(línea 1008)_
+- `t_rank_by_market(ctx, market, metric=…, region=…, limit=…)` _(línea 1058)_
 
 **Internas** (empiezan con `_`): `_graph`, `_kernel`, `_gen_meta`, `_least_hit_rivals`, `_prices`, `_pct_map`, `_symbol_of`, `_series`, `_downsample`, `_ranks`, `_risk_pol`, `_usd_series`, `_pct`, `_growth`, `_fund_row`, `_annual_rows`, `_quarterly_yahoo`, `_annual_financials`, `_mkt_tokens`, `_stem`, `_region_key`
 
@@ -67,5 +67,6 @@ _Además lo importan 3 pruebas (lista abajo)._
 
 - [[tests.test_genui_k_server.py]]
 - [[tests.test_genui_rivals.py]]
+- [[tests.test_import_lote2_e2e.py]]
 - [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_mcp.py]]

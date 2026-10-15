@@ -9,6 +9,39 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-15 — LOTE L: 386 EMPRESAS COMPLETAS + PANEL 📥 IMPORTAR + MAPA CON LAS DE LA BASE + PRECIOS EN VIVO — sw v272
+
+- 📦 **Qué pediste**: «integra esto, agrega las que tengan info completa solamente». Entran SOLO las **386 fichas
+  completas** del Excel (las 9 con aviso y las 3.773 filas sin ficha, NO). Paquete listo en
+  `data/import/lotes/2026-10-15/` (nada aplicado en producción todavía).
+- 🧹 **Reparación de formato (sin inventar nada)**: 386 de 386 fichas válidas (antes 29). 1.613 arreglos de forma
+  (enlaces con espacios, años como texto, tickers con espacio…), 6 datos quitados (5 cotizaciones incompletas + el
+  «BAC.BA» de Boeing, que es de Bank of America), 0 fichas rechazadas. Todo queda en `sanitize_log.json`.
+- 🧾 **Plan** (docs/expansion/LOTE_2026-10-15_PLAN.md): se crean **372**, se completan **14** que ya existían (Boeing,
+  Samsung, Ørsted…); vínculos **658 vivos** · 511 propuestos (esperan a una persona) · 2.031 pendientes (la otra
+  empresa aún no está) · 0 cuarentena; 4.398 eventos. Riesgo: ρ 1,2107 → 1,1996; si TSMC falla golpea a 318 → **348**
+  empresas; en el top-20 entra Eoptolink y sale AMAT. 39 vivos usan un peso «por defecto» (está marcado).
+- 📥 **Panel nuevo**: 🩺 → Diagnóstico → **📥 Importar empresas** (ver plan sin PIN; aplicar y deshacer con PIN).
+- 🗺️ **Mapa**: las empresas que solo están en la base salen en el mapa, la búsqueda y la ficha (al recargar).
+- 💹 **Precios**: las importadas que cotizan (183) reciben precio, capitalización e historia diaria, por tandas y sin
+  pasar de 15 pedidos por minuto a Yahoo.
+- 🔍 **Revisión** (18 hallazgos + 13 errores de la prueba de punta a punta, arreglados; tests/test_lotel_fixer.py y
+  tests/test_import_lote2_e2e.py): los pendientes que se conectan después siguen las MISMAS reglas (antes entraban todos
+  vivos); participaciones con el dueño correcto (antes podían quedar al revés y esas filas no se pueden corregir); sin
+  «Brookfield es dueña de sí misma»; margen operativo (no el bruto); avisos de año fiscal; el panel pide recargar.
+- ✅ **Qué hacer ahora (Fabrizio)**:
+  1. Railway → tu Postgres → **Backups → Create backup**.
+  2. En la app: **🩺 → Diagnóstico → 📥 Importar empresas → «Lote 2 — 386 empresas completas» → Ver plan** (no cambia
+     nada; mira las cifras) → **Aplicar…** → marca «Hice una copia de seguridad» → escribe el nombre de la base
+     (**railway**) → tu **PIN**. Tarda 10-60 s.
+  3. Cuando diga «Importado»: **recarga la página (F5)** para ver las empresas nuevas en el mapa.
+  4. Si algo no gusta: en el mismo panel, **Corridas → Deshacer** (PIN). Nada se borra.
+  5. Aparte: mira los 6 «¿duplicada?» al final del plan (Hitachi, Oncor, Rolls-Royce, Berkshire, CAST, MBDA).
+- Pendiente: recalibrar «escenario → dinero» después de aplicar (lo hace Claude); 2.031 pendientes esperan las fichas P2;
+  abrir el mapa con 1.339 empresas tarda ~1 s más (E3.4/E3.5).
+
+---
+
 # SESIÓN 2026-10-14 (c) — LOTE K: IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT (fundamentales y posición de mercado) — sw v271
 
 - 📥 **Importador (EXPANSION_5K E2 listo; falta el panel E2.7)**: ficha `khipus.company/1` validada en Python

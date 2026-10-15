@@ -38,8 +38,12 @@ tablas del importador de fichas khipus.company/1 (E2.3), APPEND-ONLY.
 - [[ontology.db.py]] — lo importa
 - [[ontology.models.py]] — lo importa
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_catalog_api_pg.py]]
+- [[tests.test_import_lote2_e2e.py]]
+- [[tests.test_import_panel.py]]
 - [[tests.test_import_roundtrip.py]]
+- [[tests.test_live_universe_db.py]]

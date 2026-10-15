@@ -1424,10 +1424,21 @@ def _import_file(sha):
 
 
 def _import_bundle_from_body(b):
-    """(paquete, file_sha) desde el cuerpo: `file_sha` (archivo subido) o fichas en línea (records/updates)."""
+    """(paquete, file_sha) desde el cuerpo: `file_sha` (archivo subido), `package` (un paquete del REPOSITORIO por su
+    NOMBRE de GET /import/packages; E2.7) o fichas en línea (records/updates)."""
     CI = _import_mod()
     sha = _str_arg(b, 'file_sha', 64)
-    if sha:
+    pkg = _str_arg(b, 'package', 160)
+    if pkg and (sha or b.get('records') is not None):
+        raise CI.ImportProblem('manda UNA sola fuente: package, file_sha o records',
+                               'send ONE source only: package, file_sha or records', 'ambiguous_source')
+    if pkg:
+        cached, sha, _meta = _import_package(pkg)
+        bundle = dict(cached)               # copia: approve_categories/batch del cuerpo no tocan la caché
+        bundle['records'], bundle['updates'] = list(cached['records']), list(cached['updates'])
+        bundle['approve_categories'] = list(cached.get('approve_categories') or [])
+        _pkg_release()                      # la copia vive lo que dura el pedido; la caché no retiene las fichas
+    elif sha:
         bundle = _import_file(sha)
         if bundle is None:
             raise CI.ImportProblem('archivo no encontrado: súbelo primero (POST /api/ontology/import/files)',
@@ -1470,16 +1481,18 @@ def _import_view_current():
     return view
 
 
-def _import_plan_for(bundle, sha, fresh=False, current=False):
+def _import_plan_for(bundle, sha, fresh=False, current=False, sanitize=False):
     """El plan del paquete sobre la generación VIGENTE (cacheado: mismo archivo + categorías + generación).
-    `current=True` (aplicar): la vista debe estar en la versión de la base (_import_view_current)."""
+    `current=True` (aplicar): la vista debe estar en la versión de la base (_import_view_current). `sanitize=True`
+    (cuerpo `sanitize: 1`, lo manda el panel para archivos SUBIDOS): pasa antes el saneador de FORMATO
+    (company_import.sanitize_batch, idempotente; plan y aplicar deben pedirlo igual o la huella no coincide → 409)."""
     from core.hotviews import hot
     CI = _import_mod()
     view = _import_view_current() if current else hot.graph()
     if view is None:
         raise CI.ImportProblem('grafo no disponible', 'graph unavailable', 'graph_unavailable')
     key = (sha or CI._sha(bundle['records'] + bundle['updates']), CI._sha(bundle.get('approve_categories') or []),
-           bundle.get('batch'), view.generation)
+           bundle.get('batch'), view.generation, bool(sanitize))
     with _IMPORT_LOCK:
         if not fresh and _IMPORT_PLAN_CACHE['key'] == key and _IMPORT_PLAN_CACHE['plan'] is not None:
             return _IMPORT_PLAN_CACHE['plan'], view
@@ -1487,11 +1500,11 @@ def _import_plan_for(bundle, sha, fresh=False, current=False):
         if ontology_available():
             try:
                 with session_scope() as s:
-                    pending = CI.pending_links(s)
+                    pending = CI.pending_links(s, limit=None)       # TODOS (antes: los 500 más nuevos)
             except Exception:  # noqa: BLE001 — sin pendientes el plan sale igual
                 pending = []
         p = CI.plan(bundle['records'], bundle['updates'], view=view, batch=bundle.get('batch'),
-                    approve_categories=bundle.get('approve_categories'), pending=pending)
+                    approve_categories=bundle.get('approve_categories'), pending=pending, sanitize=bool(sanitize))
         _IMPORT_PLAN_CACHE.update(key=key, plan=p, ts=time.time())
         return p, view
 
@@ -1519,7 +1532,8 @@ def _import_error(e):
     CI = _import_mod()
     if isinstance(e, CI.ImportProblem):
         code = 409 if e.code in ('plan_changed', 'graph_changed', 'graph_stale', 'later_runs', 'already_rolled_back', 'busy') \
-            else (404 if e.code in ('file_not_found', 'run_not_found') else (503 if e.code in ('graph_unavailable', 'import_tables_unavailable') else 400))
+            else (404 if e.code in ('file_not_found', 'run_not_found', 'package_not_found')
+                  else (503 if e.code in ('graph_unavailable', 'import_tables_unavailable') else 400))
         return jsonify({'error': str(e), 'error_en': e.en, 'code': e.code}), code
     from ontology.reconcile import ReconcileError
     if isinstance(e, ReconcileError):
@@ -1626,19 +1640,22 @@ def import_files():
 @_strict_operator_required
 @rate_limit(30, 600)
 def import_plan():
-    """Plan PURO (no escribe): {file_sha | records[, updates], approve_categories?, batch?, full?: 0|1, format?: json|md,
-    lang?: es|en, fresh?: 0|1}. Devuelve el resumen con `plan_sha` (`full=1`: con propiedades y vínculos)."""
+    """Plan PURO (no escribe): {file_sha | package | records[, updates], approve_categories?, batch?, full?: 0|1,
+    format?: json|md, lang?: es|en, fresh?: 0|1, sanitize?: 0|1, view?: 'panel'}. Devuelve el resumen con `plan_sha` (`full=1`: con
+    propiedades y vínculos; `view='panel'`: el resumen corto del panel 🩺 → 📥, _import_panel_summary)."""
     from flask import Response
     CI = _import_mod()
     b = _body()
     try:
         bundle, sha = _import_bundle_from_body(b)
-        p, _view = _import_plan_for(bundle, sha, fresh=bool(b.get('fresh')))
+        p, _view = _import_plan_for(bundle, sha, fresh=bool(b.get('fresh')), sanitize=bool(b.get('sanitize')))
     except Exception as e:  # noqa: BLE001
         return _import_error(e)
     if (b.get('format') or 'json') == 'md':
         lang = 'en' if (b.get('lang') or '').lower() == 'en' else 'es'
         return Response(CI.render_summary(p, lang=lang), mimetype='text/markdown; charset=utf-8')
+    if b.get('view') == 'panel':
+        return jsonify({'status': 'ok', 'file_sha': sha, 'plan': _import_panel_summary(p)})
     return jsonify({'status': 'ok', 'file_sha': sha, 'plan': _import_plan_summary(p, full=bool(b.get('full')))})
 
 
@@ -1647,9 +1664,9 @@ def import_plan():
 @_strict_operator_required
 @rate_limit(5, 600)
 def import_apply():
-    """Aplica el plan que la persona revisó: {file_sha | records, approve_categories?, batch?, confirm_db, expect:
-    {plan_sha}}. Se recalcula el plan sobre la generación vigente; otra huella → 409 plan_changed. UNA decisión
-    ontology.bulk_import; sin libro → 503."""
+    """Aplica el plan que la persona revisó: {file_sha | package | records, approve_categories?, batch?, confirm_db, expect:
+    {plan_sha}, sanitize?: 0|1}. Se recalcula el plan sobre la generación vigente; otra huella → 409 plan_changed. UNA
+    decisión ontology.bulk_import; sin libro → 503."""
     CI = _import_mod()
     b = _body()
     expect = b.get('expect') if isinstance(b.get('expect'), dict) else None
@@ -1665,7 +1682,7 @@ def import_apply():
     principal = _principal(_str_arg(b, 'actor', 80) or None)
     try:
         bundle, sha = _import_bundle_from_body(b)
-        p, view = _import_plan_for(bundle, sha, fresh=True, current=True)
+        p, view = _import_plan_for(bundle, sha, fresh=True, current=True, sanitize=bool(b.get('sanitize')))
         res = CI.apply_run(session_scope, p, principal, confirm_db=confirm_db, expect=expect, file_sha=sha, view=view)
     except _LedgerUnavailable:
         return _ledger_unavailable()
@@ -1674,7 +1691,9 @@ def import_apply():
     except Exception as e:  # noqa: BLE001
         return _import_error(e)
     _IMPORT_PLAN_CACHE.update(key=None, plan=None)
-    return jsonify({'status': 'ok', **res})
+    # objects_created cuenta también las FUENTES nuevas (Source); el panel muestra EMPRESAS: los conteos del plan que
+    # se aplicó (la huella coincidió, así que son exactamente estos)
+    return jsonify({'status': 'ok', **res, 'plan_counts': p['counts']})
 
 
 @ontology_bp.route('/import/rollback', methods=['POST'])
@@ -1720,3 +1739,252 @@ def import_runs():
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200], 'error_en': str(e)[:200]}), 503
     return jsonify({'runs': runs, 'pending_links': pending, 'policy': CI.policy()})
+
+
+# ── EXPANSION_5K E2.7: paquetes del REPOSITORIO para el panel 🩺 → 📥 Importar (engine/importer.js) ───────────────
+# `data/import/lotes/<AAAA-MM-DD>/bundle_*.json.gz` (los arma scripts/import_companies.py, p. ej. --lote2). El cliente
+# NUNCA manda una ruta: elige un NOMBRE ('<fecha>/<archivo>') de la LISTA BLANCA que arma el servidor con un patrón fijo
+# (sin enlaces simbólicos); cualquier otro texto → 404 package_not_found. Ver la lista y el plan de un paquete NO pide
+# PIN (lectura pura, como GET /reconcile/plan; el plan se cachea por generación del grafo); aplicar sigue en POST
+# /import/apply con {package} + PIN + confirm_db + expect.plan_sha (la misma decisión ontology.bulk_import) y deshacer
+# en POST /import/rollback por run_id. La huella del archivo (`sha256`) = la del contenido DESCOMPRIMIDO: la misma que
+# deja `import_companies.py --apply --server` al subir el .gz, así una corrida se reconoce venga de donde venga.
+import gzip as _gzip  # noqa: E402
+import os as _os  # noqa: E402
+import re as _re  # noqa: E402
+
+_REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+_PKG_ROOT = _os.path.join(_REPO_ROOT, 'data', 'import', 'lotes')
+_PKG_DIR_RX = _re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_PKG_FILE_RX = _re.compile(r'^bundle_[A-Za-z0-9][A-Za-z0-9_\-]{0,80}\.json\.gz$')
+_PKG_CACHE = {}                          # nombre → {'stat', 'sha', 'meta'}  (SOLO lo que muestra la lista: sin fichas)
+_PKG_BUNDLE = {}                         # LRU de 1: {'name', 'stat', 'bundle'}; se suelta tras armar el plan (_pkg_release)
+_PKG_LOCK = _threading.Lock()
+_PKG_MAX_BYTES = _IMPORT_UPLOAD_MAX_BYTES     # mismo tope que una subida (sin comprimir)
+_PKG_ORIGIN_KEYS = ('received', 'package', 'package_records', 'kept_records', 'excel', 'excel_rows', 'note_es', 'note_en')
+
+
+def _import_packages():
+    """{nombre: ruta} — la LISTA BLANCA: carpetas con fecha y archivos bundle_*.json.gz, sin enlaces simbólicos."""
+    out = {}
+    try:
+        dirs = sorted(_os.listdir(_PKG_ROOT))
+    except OSError:
+        return out
+    for d in dirs:
+        full = _os.path.join(_PKG_ROOT, d)
+        if not _PKG_DIR_RX.match(d) or _os.path.islink(full) or not _os.path.isdir(full):
+            continue
+        for f in sorted(_os.listdir(full)):
+            path = _os.path.join(full, f)
+            if _PKG_FILE_RX.match(f) and not _os.path.islink(path) and _os.path.isfile(path):
+                out[f'{d}/{f}'] = path
+    return out
+
+
+def _pkg_side_json(folder, fname):
+    """ORIGEN.json / sanitize_log.json de la MISMA carpeta (nombres fijos, nunca del cliente); None si falta o no es JSON."""
+    import json as _json
+    path = _os.path.join(folder, fname)
+    if _os.path.islink(path) or not _os.path.isfile(path):
+        return None
+    try:
+        with open(path, encoding='utf-8') as fh:
+            data = _json.load(fh)
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _num_es(n):
+    return f'{int(n):,}'.replace(',', '.')
+
+
+def _import_package_meta(name, path, bundle, sha, size):
+    """Lo que el panel muestra del paquete (sin fichas): título ES/EN, conteos, origen y resumen del saneador."""
+    folder, fname = _os.path.dirname(path), _os.path.basename(path)
+    day = name.split('/', 1)[0]
+    stem = fname[len('bundle_'):-len('.json.gz')]
+    m = _re.search(r'lote[_\-]?(\d+)', stem, _re.I)
+    n = len(bundle['records'])
+    complete = 'complet' in stem.lower()
+    label_es = f'Lote {m.group(1)}' if m else f'Lote del {day}'
+    label_en = f'Batch {m.group(1)}' if m else f'Batch of {day}'
+    origin = _pkg_side_json(folder, 'ORIGEN.json') or {}
+    slog = _pkg_side_json(folder, 'sanitize_log.json') or {}
+    summ = slog.get('summary') if isinstance(slog.get('summary'), dict) else None
+    plan_doc = f'docs/expansion/LOTE_{day}_PLAN.md'
+    return {
+        'name': name, 'date': day, 'file': fname, 'batch': bundle.get('batch'),
+        'title_es': f'{label_es} — {_num_es(n)} empresas' + (' completas' if complete else ''),
+        'title_en': f'{label_en} — {n:,} ' + ('complete companies' if complete else 'companies'),
+        'n_records': n, 'n_updates': len(bundle['updates']),
+        'n_approve_categories': len(bundle.get('approve_categories') or []),
+        'n_relations': sum(len(r.get('relations') or []) for r in bundle['records'] if isinstance(r, dict)),
+        'size_bytes': size, 'gz_bytes': _os.path.getsize(path), 'sha256': sha,
+        'origin': {k: origin[k] for k in _PKG_ORIGIN_KEYS if k in origin} | (
+            {'excluded': len(origin['excluded'])} if isinstance(origin.get('excluded'), list) else {}),
+        'sanitize': ({'records_in': slog.get('records_in'), 'records_changed': summ.get('records_changed'),
+                      'fields_repaired': summ.get('fields_repaired'), 'fields_dropped': summ.get('fields_dropped'),
+                      'rejected': len(summ.get('rejected') or []), 'by_rule': dict(summ.get('by_rule') or {})}
+                     if summ else None),
+        'plan_doc': plan_doc if _os.path.isfile(_os.path.join(_REPO_ROOT, plan_doc)) else None,
+    }
+
+
+def _pkg_release():
+    """Suelta el paquete parseado (8 MB de fichas ≈ 21 MB en memoria): la lista solo guarda su meta; volver a leerlo
+    cuesta ~0,2 s. Revisión del lote L: la caché retenía TODO paquete abierto mientras viviera el proceso."""
+    with _PKG_LOCK:
+        _PKG_BUNDLE.clear()
+
+
+def _import_package(name, with_bundle=True):
+    """(paquete, sha256, meta) del paquete `name` de la lista blanca o ImportProblem 404. La meta se cachea por
+    mtime+tamaño; el paquete parseado solo en un LRU de 1 (`with_bundle=False` → (None, sha, meta) sin retenerlo)."""
+    CI = _import_mod()
+    path = _import_packages().get(name) if isinstance(name, str) else None
+    if path is None:
+        raise CI.ImportProblem('no existe ese paquete (mira la lista de GET /api/ontology/import/packages)',
+                               'no such package (see the list from GET /api/ontology/import/packages)', 'package_not_found')
+    st = _os.stat(path)
+    key = (st.st_mtime_ns, st.st_size)
+    with _PKG_LOCK:
+        hit = _PKG_CACHE.get(name)
+        if hit is not None and hit['stat'] == key:
+            if not with_bundle:
+                return None, hit['sha'], hit['meta']
+            if _PKG_BUNDLE.get('name') == name and _PKG_BUNDLE.get('stat') == key:
+                return _PKG_BUNDLE['bundle'], hit['sha'], hit['meta']
+    try:
+        with _gzip.open(path, 'rb') as fh:
+            raw = fh.read(_PKG_MAX_BYTES + 1)
+    except (OSError, EOFError) as e:
+        raise CI.ImportProblem(f'paquete ilegible: {e}', f'unreadable package: {e}', 'bad_file') from e
+    if len(raw) > _PKG_MAX_BYTES:
+        raise CI.ImportProblem('paquete demasiado grande', 'package too large', 'package_too_big')
+    sha = _hashlib.sha256(raw).hexdigest()
+    try:
+        bundle = CI.parse_bundle(raw.decode('utf-8'), name=_os.path.basename(path)[:-3])
+    except (ValueError, UnicodeDecodeError) as e:
+        raise CI.ImportProblem(f'paquete ilegible: {str(e)[:160]}', f'unreadable package: {str(e)[:160]}', 'bad_file') from e
+    size = len(raw)
+    del raw
+    meta = _import_package_meta(name, path, bundle, sha, size)
+    with _PKG_LOCK:
+        _PKG_CACHE[name] = {'stat': key, 'sha': sha, 'meta': meta}
+        if with_bundle:
+            _PKG_BUNDLE.clear()
+            _PKG_BUNDLE.update(name=name, stat=key, bundle=bundle)
+    return (bundle if with_bundle else None), sha, meta
+
+
+_PANEL_REVIEW_KINDS = ('possible_duplicate', 'hint_mismatch', 'hint_contradicted', 'name_target_is_counterparty',
+                       'name_differs_from_hint')
+
+
+def _import_panel_summary(p):
+    """El plan en CORTO para el panel (sin fichas ni vínculos uno a uno): conteos, ¿qué cambia? (ρ, TSMC, top-20 que
+    entra/sale), fusiones, lo que conviene revisar, avisos, inválidas y categorías por aprobar. Los textos son
+    CÓDIGOS: el panel los traduce (ES/EN) y pinta los nombres de empresa como texto, nunca como HTML."""
+    from collections import Counter
+    wc = p.get('what_changes') or {}
+    if wc.get('available'):
+        b, a = wc.get('before') or {}, wc.get('after') or {}
+        tb = [x['id'] for x in b.get('chokepoints') or []]
+        ta = [x['id'] for x in a.get('chokepoints') or []]
+        keys = ('nodes', 'links', 'rho', 'damping_rho', 'tsmc_hit')
+        what = {'available': True, 'identical': bool(wc.get('identical')), 'before': {k: b.get(k) for k in keys},
+                'after': {k: a.get(k) for k in keys}, 'top_in': [x for x in ta if x not in tb],
+                'top_out': [x for x in tb if x not in ta], 'top_after': ta, 'added_nodes': wc.get('added_nodes'),
+                'added_links': wc.get('added_links'), 'calibration_stale': bool(wc.get('calibration_stale')),
+                'note_es': wc.get('note_es'), 'note_en': wc.get('note_en')}
+    else:
+        what = {'available': False, 'reason': str(wc.get('reason') or wc.get('error') or 'unavailable')[:200]}
+    items = p.get('items') or []
+    links_by_type, reasons = {}, Counter()
+    for it in items:
+        for lk in it.get('links') or []:
+            t = links_by_type.setdefault(lk.get('rel_type') or '?', {})
+            t[lk.get('route')] = t.get(lk.get('route'), 0) + 1
+            if lk.get('route') != 'live':
+                reasons[lk.get('reason') or '?'] += 1
+    review = []
+    for it in items:
+        for cf in it.get('conflicts') or []:
+            if cf.get('kind') in _PANEL_REVIEW_KINDS and len(review) < 40:
+                review.append({'record_id': it.get('record_id'), 'name': it.get('name'), 'action': it.get('action'),
+                               'id': it.get('id'), 'kind': cf.get('kind'), 'other': cf.get('id') or cf.get('hint'),
+                               'score': cf.get('score')})
+    return {
+        'plan_sha': p['plan_sha'], 'batch': p.get('batch'), 'generation': p.get('generation'),
+        'graph_version': p.get('graph_version'), 'graph_source': p.get('graph_source'), 'built_at': p.get('built_at'),
+        'build_ms': p.get('build_ms'), 'counts': p['counts'], 'what_changes': what,
+        'merges': [{'record_id': it.get('record_id'), 'name': it.get('name'), 'id': it.get('id'),
+                    'method': it.get('method'), 'score': it.get('score')} for it in items if it.get('action') == 'merge'][:60],
+        'conflicts': dict(Counter(cf.get('kind') for it in items for cf in it.get('conflicts') or [])),
+        'review': review,
+        'warnings': dict(Counter(w.get('code') for it in items for w in it.get('warnings') or [])),
+        'links_by_type': links_by_type, 'not_live_reasons': dict(reasons),
+        'invalid': [{'record_id': inv.get('record_id'), 'msg_es': ((inv.get('errors') or [{}])[0]).get('msg_es'),
+                     'msg_en': ((inv.get('errors') or [{}])[0]).get('msg_en')} for inv in (p.get('invalid') or [])[:20]],
+        'categories_to_approve': [{k: c.get(k) for k in ('id', 'label_es', 'label_en', 'sector', 'n')}
+                                  for c in (p.get('categories') or {}).get('to_approve') or []][:40],
+        'sanitize': p.get('sanitize'),
+    }
+
+
+def _import_runs_by_file():
+    """{file_sha: [corridas]} de import_runs (para marcar «ya aplicado»); {} si la tabla no está."""
+    CI = _import_mod()
+    try:
+        with session_scope() as s:
+            runs = CI.list_runs(s, limit=200)
+    except Exception:  # noqa: BLE001 — sin tablas del importador la lista sale igual
+        return {}
+    undone = {r['rolled_back_run'] for r in runs if r['kind'] == 'rollback' and r.get('rolled_back_run')}
+    out = {}
+    for r in runs:
+        if r['kind'] == 'apply' and r.get('file_sha'):
+            out.setdefault(r['file_sha'], []).append({
+                'run_id': r['run_id'], 'created_at': r.get('created_at'), 'decision_id': r.get('decision_id'),
+                'undone': r['id'] in undone, 'created': (r.get('summary') or {}).get('objects_created')})
+    return out
+
+
+@ontology_bp.route('/import/packages')
+@_require_db
+@rate_limit(60, 600)
+def import_packages():
+    """Paquetes del repositorio listos para importar (lectura, sin PIN): nombre, fecha, título ES/EN, conteos, origen,
+    resumen del saneador y si ya se aplicó (corridas con el mismo sha256)."""
+    out, errors = [], []
+    runs = _import_runs_by_file()
+    for name in _import_packages():
+        try:
+            _b, sha, meta = _import_package(name, with_bundle=False)     # solo la meta: no retiene las fichas
+        except Exception as e:  # noqa: BLE001 — un paquete roto no esconde a los demás
+            errors.append({'name': name, 'error': str(e)[:200], 'error_en': getattr(e, 'en', str(e))[:200]})
+            continue
+        mine = runs.get(sha) or []
+        out.append({**meta, 'runs': mine, 'applied': any(not r['undone'] for r in mine)})
+    out.sort(key=lambda m: (m['date'], m['name']), reverse=True)
+    return jsonify({'packages': out, 'errors': errors})
+
+
+@ontology_bp.route('/import/packages/plan')
+@_require_db
+@rate_limit(20, 600)
+def import_package_plan():
+    """Plan PURO de un paquete del repositorio, SIN PIN (no escribe nada): ?package=<nombre de la lista>. El mismo
+    cálculo y la misma huella (`plan_sha`) que POST /import/plan; el resumen corto del panel (_import_panel_summary).
+    Sin `fresh` (se cachea por generación del grafo: nadie sin PIN puede forzar recálculos)."""
+    name = (request.args.get('package') or '').strip()[:160]
+    try:
+        bundle, sha, meta = _import_package(name)
+        p, _view = _import_plan_for(dict(bundle), sha)
+    except Exception as e:  # noqa: BLE001
+        return _import_error(e)
+    finally:
+        _pkg_release()
+    return jsonify({'status': 'ok', 'package': meta, 'file_sha': sha, 'plan': _import_panel_summary(p)})

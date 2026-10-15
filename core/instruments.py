@@ -22,6 +22,14 @@ en Hong Kong. Este módulo:
     secundario. `classify` toma el tipo del listado primario y marca `multi_listed` si hay otro con símbolo.
     `LOT_2026_10_14` = qué se hizo con cada uno de los 19 símbolos revisados (y qué debe decidir Fabrizio).
 
+  · UNIVERSO ÚNICO (lote L, 2026-10-15): `universe()` recorre el grafo VIGENTE una sola vez (`_scan`: catálogo +
+    empresas importadas a Postgres; primario = `mkt`, o el listado `is_primary` de props.listings[], o
+    ids.yahoo_symbol si la ficha no declara listados; un símbolo de Yahoo una sola vez —el primer dueño gana y el
+    conflicto se lista—; símbolos imposibles fuera; listados «dado de baja» / `delisted_at` vencido marcados).
+    `live_symbols()` alimenta la capitalización/precio en vivo (core/live_caps) y los fundamentales en vivo
+    (core/live_fundamentals); `eod_symbols()` la historia diaria (core/prices_store); la siembra de `instruments`
+    usa el mismo recorrido. `phase_in()` mete los símbolos NUEVOS por tandas (el catálogo del repo entra siempre).
+
 Sin red, sin IA. Funciona sin base (las funciones puras); `seed` solo con DATABASE_URL.
 """
 import re
@@ -93,12 +101,36 @@ def major_ccy(ccy):
 
 
 _KIND_MAP = {'gdr': 'adr', 'a_share': 'equity', 'h_share': 'equity', 'dual_class': 'equity', 'preferred': 'equity'}
+# símbolo de Yahoo utilizable (mayúsculas): NVDA, 2330.TW, MAERSK-B.CO, BRK-B, ^IRX, JPYUSD=X — nunca espacios ni [ ]
+SYMBOL_RX = re.compile(r'^[A-Z0-9^][A-Z0-9.\-=&]{0,31}$')
+
+
+def primary_symbol(node):
+    """EL símbolo principal de una empresa del grafo: `mkt` (catálogo, o el que escribe el importador = el listado
+    principal); si no hay `mkt`, el listado con `is_primary` true de sus `listings` (propiedades de Postgres); si la
+    empresa no declara listados, su `ids.yahoo_symbol`. None si no cotiza. Nunca inventa: solo lee la ficha."""
+    mkt = str(node.get('mkt') or '').strip().upper()
+    if mkt:
+        return mkt
+    lst = node.get('listings') if isinstance(node.get('listings'), (list, tuple)) else []
+    for raw in lst:
+        if isinstance(raw, dict) and raw.get('is_primary') is True:
+            ys = str(raw.get('yahoo_symbol') or '').strip().upper()
+            if ys:
+                return ys
+    if not lst:
+        ids = node.get('ids') if isinstance(node.get('ids'), dict) else {}
+        ys = str(ids.get('yahoo_symbol') or '').strip().upper()
+        if ys:
+            return ys
+    return None
 
 
 def listings_of(node):
     """Los listados declarados en la ficha del catálogo (`listings`), normalizados: símbolo de Yahoo en mayúsculas,
-    `is_primary` = coincide con `mkt`. Lista vacía si la empresa no los declara (la mayoría, hoy)."""
-    mkt = str(node.get('mkt') or '').strip().upper()
+    `is_primary` = coincide con el símbolo principal (`primary_symbol`: el `mkt`; sin `mkt`, el que la ficha marca
+    `is_primary`). Lista vacía si la empresa no los declara (la mayoría del catálogo, hoy)."""
+    prim = primary_symbol(node)
     out = []
     for raw in node.get('listings') or []:
         if not isinstance(raw, dict):
@@ -106,11 +138,35 @@ def listings_of(node):
         ys = str(raw.get('yahoo_symbol') or '').strip().upper() or None
         kind = _KIND_MAP.get(str(raw.get('kind') or 'equity').lower(), str(raw.get('kind') or 'equity').lower())
         out.append({'symbol': str(raw.get('symbol') or (ys or '').split('.')[0]).upper(), 'mic': raw.get('mic'),
-                    'yahoo_symbol': ys, 'is_primary': bool(ys and ys == mkt), 'kind': kind,
+                    'yahoo_symbol': ys, 'is_primary': bool(ys and ys == prim), 'kind': kind,
                     'currency': raw.get('currency'), 'source_url': raw.get('source_url'), 'as_of': raw.get('as_of'),
                     'note': raw.get('note'), 'home': bool(raw.get('home')),
-                    'ordinary_per_depositary': raw.get('ordinary_per_depositary')})
+                    'ordinary_per_depositary': raw.get('ordinary_per_depositary'),
+                    'delisted_at': raw.get('delisted_at')})
     return out
+
+
+def listing_delisted(listing, today=None):
+    """¿Listado DADO DE BAJA? — nota «dado de baja» (catálogo, lote 2026-10-14) o `delisted_at` (ficha importada)
+    en una fecha ya pasada; una fecha parcial ('2025', '2025-06') cuenta desde su primer día. Una baja anunciada
+    para el futuro todavía cotiza."""
+    if not isinstance(listing, dict):
+        return False
+    if 'dado de baja' in str(listing.get('note') or '').lower():
+        return True
+    raw = str(listing.get('delisted_at') or '').strip()
+    if not raw:
+        return False
+    from datetime import date, datetime, timezone
+    today = today or datetime.now(timezone.utc).date()
+    m = re.match(r'^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?', raw)
+    if not m:
+        return True                    # algo dice que se dio de baja pero sin fecha legible: no se baja a diario
+    try:
+        d = date(int(m.group(1)), int(m.group(2) or 1), int(m.group(3) or 1))
+    except ValueError:
+        return True
+    return d <= today
 
 
 def declared_exchange(node, symbol):
@@ -184,49 +240,91 @@ def local_alternative(node):
     return None
 
 
-def from_catalog(nodes):
-    """Instrumentos primarios (uno por empresa cotizada; el `mkt` de hoy) — dicts listos para insertar."""
-    out, seen = [], set()
+def _scan(nodes):
+    """EL recorrido único del grafo (lote L, 2026-10-15) — lo usan la siembra de `instruments`, el universo en vivo y
+    la historia diaria, así nunca divergen. En el orden del grafo (catálogo primero, lo nuevo después por id):
+      · primarios: uno por SÍMBOLO (el primer dueño gana; otro nodo que declare el mismo símbolo es un conflicto);
+      · secundarios: listados declarados que no son el primario de nadie, una vez cada uno;
+      · inválidos: símbolos que Yahoo no puede pedir (espacios, corchetes, demasiado largos) → fuera, listados.
+    → (primarios [(nodo, símbolo, listado|None)], secundarios [(nodo, símbolo, listado)], conflictos, inválidos)."""
+    prim, sec, conflicts, invalid = [], [], [], []
+    owner = {}
     for n in nodes or []:
-        mkt = str(n.get('mkt') or '').strip().upper()
-        if not mkt or not n.get('id') or mkt in seen:
+        if not isinstance(n, dict) or not n.get('id'):
             continue
-        seen.add(mkt)
+        sym = primary_symbol(n)
+        if not sym:
+            continue
+        if not SYMBOL_RX.match(sym):
+            invalid.append({'company_id': str(n['id']), 'symbol': sym, 'role': 'primary'})
+            continue
+        if sym in owner:
+            if owner[sym] != n['id']:
+                conflicts.append({'symbol': sym, 'owner': owner[sym], 'other': str(n['id'])})
+            continue
+        owner[sym] = n['id']
+        lst = next((l for l in listings_of(n) if l['yahoo_symbol'] == sym), None)
+        prim.append((n, sym, lst))
+    seen = set()
+    for n in nodes or []:
+        if not isinstance(n, dict) or not n.get('id') or not primary_symbol(n):
+            continue
+        for l in secondary_listings(n):
+            ys = l['yahoo_symbol']
+            if ys in owner or ys in seen:
+                continue
+            if not SYMBOL_RX.match(ys):
+                invalid.append({'company_id': str(n['id']), 'symbol': ys, 'role': 'secondary'})
+                continue
+            seen.add(ys)
+            sec.append((n, ys, l))
+    return prim, sec, conflicts, invalid
+
+
+def _origin_source(n, sym):
+    """'import' para la cotización de una empresa que entró por el importador y no está en el catálogo del repo."""
+    base = baseline_symbols()
+    return 'import' if (n.get('imported') is True and base and sym not in base) else 'catalog'
+
+
+def from_catalog(nodes):
+    """Instrumentos primarios (uno por empresa cotizada; el `mkt` de hoy o, en una empresa importada sin `mkt`, su
+    listado principal) — dicts listos para insertar."""
+    out = []
+    for n, mkt, lst in _scan(nodes)[0]:
         exch, ccy, _sync = exchange_info(mkt)
         c = classify(n)
         note = {'catalog_ticker': str(n.get('ticker') or '')[:200]}
         sec = secondary_listings(n)
         if sec:
             note['secondaries'] = [l['yahoo_symbol'] for l in sec]
-        out.append({'id': mkt[:32], 'company_id': str(n['id'])[:120], 'ticker': mkt[:32], 'exchange': exch,
-                    'currency': ccy, 'kind': c['kind'], 'is_primary': True, 'review': c['review'],
-                    'note': note, 'source': 'catalog'})
+        if lst and lst.get('delisted_at'):
+            note['delisted_at'] = str(lst['delisted_at'])
+        out.append({'id': mkt[:32], 'company_id': str(n['id'])[:120], 'ticker': mkt[:32],
+                    'exchange': exch or (declared_exchange(n, mkt) if lst else None),
+                    # sufijo que la tabla SUFFIX no conoce (.BK, .SN…): la moneda DECLARADA en la ficha, nunca inventada
+                    'currency': ccy or (lst or {}).get('currency'), 'kind': c['kind'], 'is_primary': True,
+                    'review': c['review'], 'note': note, 'source': _origin_source(n, mkt)})
     return out
 
 
 def secondary_from_catalog(nodes):
-    """Instrumentos SECUNDARIOS (is_primary False) de las empresas que declaran `listings` — nunca el `mkt`, nunca
+    """Instrumentos SECUNDARIOS (is_primary False) de las empresas que declaran `listings` — nunca el primario, nunca
     un símbolo que ya sea primario de alguien; el precio de referencia sigue siendo el primario."""
-    prim = {str(n.get('mkt') or '').strip().upper() for n in nodes or [] if n.get('mkt')}
-    out, seen = [], set()
-    for n in nodes or []:
-        mkt = str(n.get('mkt') or '').strip().upper()
-        if not mkt or not n.get('id'):
-            continue
-        for l in secondary_listings(n):
-            ys = l['yahoo_symbol']
-            if ys in prim or ys in seen:
-                continue
-            seen.add(ys)
-            _e, ccy, _s = exchange_info(ys)
-            out.append({'id': ys[:32], 'company_id': str(n['id'])[:120], 'ticker': ys[:32],
-                        'exchange': declared_exchange(n, ys),
-                        'currency': ccy or l['currency'], 'kind': l['kind'] if l['kind'] in ('equity', 'adr', 'otc') else 'equity',
-                        'is_primary': False, 'review': None,
-                        'note': {k: v for k, v in (('primary', mkt), ('mic', l['mic']), ('home', l['home'] or None),
-                                                   ('note', l['note']), ('source_url', l['source_url']),
-                                                   ('as_of', l['as_of'])) if v},
-                        'source': 'catalog'})
+    out = []
+    for n, ys, l in _scan(nodes)[1]:
+        mkt = primary_symbol(n)
+        _e, ccy, _s = exchange_info(ys)
+        out.append({'id': ys[:32], 'company_id': str(n['id'])[:120], 'ticker': ys[:32],
+                    'exchange': declared_exchange(n, ys),
+                    'currency': ccy or l['currency'], 'kind': l['kind'] if l['kind'] in ('equity', 'adr', 'otc') else 'equity',
+                    'is_primary': False, 'review': None,
+                    'note': {k: v for k, v in (('primary', mkt), ('mic', l['mic']), ('home', l['home'] or None),
+                                               ('note', l['note']), ('source_url', l['source_url']),
+                                               ('as_of', l['as_of']),
+                                               ('delisted_at', str(l['delisted_at']) if l.get('delisted_at') else None))
+                             if v},
+                    'source': _origin_source(n, ys)})
     return out
 
 
@@ -254,6 +352,109 @@ def all_instruments(nodes=None):
     return prim + sec + reference_instruments(i['currency'] for i in prim + sec)
 
 
+# ── EL UNIVERSO DE COTIZACIONES (lote L, 2026-10-15) ─────────────────────────────────────────────────────────────
+# Hasta el lote L, la capitalización/precio en vivo (core/live_caps), los fundamentales en vivo (core/live_fundamentals,
+# que lee el mismo mapa) y la historia diaria (core/prices_store) se armaban cada uno a su manera sobre el catálogo
+# (~570 símbolos). Ahora los tres leen `universe()`: el grafo VIGENTE (catálogo + empresas importadas a Postgres, con
+# su listado principal en props.listings[] / mkt / ids.yahoo_symbol), un símbolo de Yahoo una sola vez, los listados
+# dados de baja fuera. La capitalización y las acciones en circulación salen SIEMPRE del perfil en vivo (Yahoo): la
+# ficha nunca trae cifras de mercado (el esquema las prohíbe) y aquí no se lee ninguna.
+# Los símbolos NUEVOS (los que el catálogo del repo no tiene) entran POR TANDAS (`phase_in`): el primer ciclo después
+# de importar 4.000 empresas no puede salir en ráfaga.
+_BASELINE = {'sha': None, 'set': frozenset()}
+
+
+def baseline_symbols():
+    """Símbolos que la app ya seguía ANTES de importar: los del catálogo del repo (data/grafo_v0.json: primarios y
+    listados declarados) + SPY/^IRX. Entran siempre, sin tandas. Vacío si el snapshot no se puede leer (entonces
+    `phase_in` no frena nada: mejor seguir como hoy que dejar el mapa sin precios)."""
+    try:
+        from core.hotviews.source import _snapshot_parsed
+        g, sha = _snapshot_parsed()
+    except Exception:  # noqa: BLE001
+        return frozenset()
+    if _BASELINE['sha'] != sha:
+        out = {s for s, _k, _c, _e in REFERENCE}
+        for n in g.get('nodes') or []:
+            p = primary_symbol(n)
+            if p:
+                out.add(p)
+            for l in listings_of(n):
+                if l['yahoo_symbol']:
+                    out.add(l['yahoo_symbol'])
+        _BASELINE.update(sha=sha, set=frozenset(out))
+    return _BASELINE['set']
+
+
+def universe(nodes=None, today=None):
+    """EL universo de cotizaciones del grafo vigente. → {
+         'primary':   [{symbol, company_id, kind, currency, origin, imported, delisted}]  (uno por símbolo; orden de
+                      prioridad: catálogo del repo → otros nodos de la base → importados, cada grupo en el orden del grafo),
+         'secondary': [ídem, role secundario] (listados declarados no primarios),
+         'conflicts': [{symbol, owner, other}]  (dos empresas con el mismo símbolo: gana la primera; la otra se lista),
+         'invalid':   [{company_id, symbol, role}],
+         'nodes': cuántos nodos se miraron}.
+    `origin` = 'catalog' si el símbolo ya estaba en el catálogo del repo (baseline), 'new' si no."""
+    nodes = catalog_nodes() if nodes is None else nodes
+    prim, sec, conflicts, invalid = _scan(nodes)
+    base = baseline_symbols()
+
+    def entry(n, sym, l, role, idx):
+        exch_ccy = exchange_info(sym)[1]
+        new = bool(base) and sym not in base
+        imported = n.get('imported') is True
+        return {'symbol': sym, 'company_id': str(n['id']), 'role': role,
+                'kind': (l or {}).get('kind') or classify(n)['kind'],
+                'currency': exch_ccy or (l or {}).get('currency'),
+                'origin': 'new' if new else 'catalog', 'imported': imported,
+                'delisted': listing_delisted(l, today) if l else False,
+                '_rank': (0 if not new else (2 if imported else 1), idx)}
+    P = [entry(n, s, l, 'primary', i) for i, (n, s, l) in enumerate(prim)]
+    S = [entry(n, s, l, 'secondary', i) for i, (n, s, l) in enumerate(sec)]
+    for lst in (P, S):
+        lst.sort(key=lambda e: e['_rank'])
+        for e in lst:
+            e.pop('_rank', None)
+    return {'primary': P, 'secondary': S, 'conflicts': conflicts, 'invalid': invalid, 'nodes': len(nodes or [])}
+
+
+def live_symbols(nodes=None, today=None):
+    """{company_id: símbolo} para lo EN VIVO (capitalización, precio, fundamentales): los primarios vigentes del
+    universo, uno por símbolo, en orden de prioridad (catálogo → base → importados)."""
+    u = universe(nodes, today)
+    return {e['company_id']: e['symbol'] for e in u['primary'] if not e['delisted']}
+
+
+def eod_symbols(nodes=None, today=None):
+    """Lo que la historia DIARIA baja (core/prices_store): {'equities': [símbolos en orden de prioridad: primarios y
+    luego secundarios, sin los dados de baja], 'currencies': {monedas mayores que piden un par FX}}."""
+    u = universe(nodes, today)
+    eq = [e['symbol'] for e in u['primary'] + u['secondary'] if not e['delisted']]
+    ccys = {major_ccy(e['currency'])[0] for e in u['primary'] + u['secondary'] if not e['delisted'] and e['currency']}
+    return {'equities': eq, 'currencies': ccys - {'USD'}}
+
+
+def phase_in(symbols, admitted, limit, baseline=None, offset=0):
+    """Tandas para los símbolos NUEVOS. `symbols` en orden de prioridad (sin repetidos); `admitted` = los nuevos que
+    ya entraron (en memoria, o con historia guardada); `limit` = cuántos nuevos pueden entrar en este ciclo; `offset`
+    rota la ventana (la historia diaria la mueve con el día: un símbolo que nunca trae datos no tapa a los demás).
+    Los del catálogo (`baseline`) y los ya admitidos entran SIEMPRE. Puro.
+    → (incluidos en este ciclo, nuevos admitidos ahora, nuevos que siguen esperando)."""
+    base = baseline_symbols() if baseline is None else baseline
+    syms = list(dict.fromkeys(symbols or []))
+    if not base:                      # sin catálogo legible no se frena nada (nunca dejar el mapa sin precios)
+        return syms, [], []
+    adm = set(admitted or ())
+    fresh = [s for s in syms if s not in base and s not in adm]
+    window = fresh
+    if fresh and offset:
+        k = int(offset) % len(fresh)
+        window = fresh[k:] + fresh[:k]
+    take = set(window[:max(0, int(limit or 0))])
+    inc = [s for s in syms if s in base or s in adm or s in take]
+    return inc, [s for s in fresh if s in take], [s for s in fresh if s not in take]
+
+
 def review_list(nodes=None):
     """Los casos que Fabrizio debe revisar (BRECHAS #9), en el orden: varios listados, luego OTC/ADR."""
     nodes = catalog_nodes() if nodes is None else nodes
@@ -261,6 +462,10 @@ def review_list(nodes=None):
     for n in nodes:
         mkt = str(n.get('mkt') or '').strip().upper()
         if not mkt:
+            continue
+        if _origin_source(n, mkt) == 'import':
+            # lote L: la cotización principal de una empresa IMPORTADA la eligió su ficha (con fuente); no es una
+            # duda del catálogo. Las fusionadas con el catálogo (su `mkt` es el de siempre) sí siguen en la lista.
             continue
         c = classify(n)
         if not c['review']:

@@ -45,6 +45,7 @@ MAX_GAP_DAYS = 12            # hueco máximo entre dos cierres guardados seguido
                              # uno mayor = la descarga faltó: la serie NO se da por completa (revisión batch E)
 SNAPSHOT_MAX_AGE_DAYS = 7    # la foto diaria solo usa un cierre/FX de hasta 7 días; más viejo → NULL (no inventar)
 DAILY_REPAIR_AFTER_DAYS = 25 # el diario re-baja un rango MAYOR (hasta 1 año) si lo último guardado es más viejo
+NEW_PER_DAILY_RUN = 500      # lote L: instrumentos NUEVOS sin historia que se suman por corrida diaria (≈ 5 min más)
 
 
 def _env_float(name, default, lo, hi):
@@ -439,23 +440,66 @@ def status():
 
 # ── corrida (diaria o relleno) ───────────────────────────────────────────────
 def _targets(session, symbols=None):
-    """(equities, fx): instrumentos a bajar. Siembra los que falten primero."""
+    """(equities, fx): instrumentos a bajar. Siembra los que falten primero (core/instruments.seed: EL universo).
+    Sin `symbols` (corrida diaria / relleno completo) solo baja lo que el universo VIGENTE pide
+    (core.instruments.eod_symbols: grafo de hoy, catálogo + importadas, sin listados dados de baja): una fila vieja
+    de la tabla —una importación deshecha, un símbolo corregido (HXSCL, SITT…)— ya no se baja cada día. Con
+    `symbols` (pedido explícito del operador) se baja lo pedido. Si el universo no se puede armar, como antes: toda
+    la tabla."""
     from sqlalchemy import text
 
     from core import instruments
     instruments.seed(session)
     rows = session.execute(text('SELECT id, kind, currency, note, is_primary FROM instruments ORDER BY id')).all()
     want = {str(x).upper() for x in symbols} if symbols else None
+    keep, keep_ccy, order = None, None, {}
+    if want is None:
+        try:
+            u = instruments.eod_symbols()
+            if u['equities']:
+                order = {sym: i for i, sym in enumerate(u['equities'])}
+                keep = set(order) | {s for s, _k, _c, _e in instruments.REFERENCE}
+                keep_ccy = set(u['currencies'])
+        except Exception as e:  # noqa: BLE001 — sin grafo legible: la tabla entera, como siempre
+            log.info('prices_store: universo no disponible (%s); se usa la tabla', type(e).__name__)
 
     def _baja(r):
         # secundario que el agregador marca «dado de baja» (listings[].note, lote 2026-10-14): la corrida diaria lo
         # salta (evita descargas fallidas de TOELY/AJINY/SMNEY); a pedido explícito (symbols) sí se intenta.
         return want is None and len(r) > 4 and r[4] is False and \
             'dado de baja' in str(((r[3] or {}).get('note') if isinstance(r[3], dict) else '') or '').lower()
-    eq = [r[0] for r in rows if r[1] != 'fx' and (want is None or r[0] in want) and not _baja(r)]
-    fx = [((r[3] or {}).get('ccy') or r[0][:3]) for r in rows if r[1] == 'fx' and (want is None or r[0] in want)]
+
+    def _ccy(r):
+        return ((r[3] or {}).get('ccy') if isinstance(r[3], dict) else None) or r[0][:3]
+    eq = [r[0] for r in rows if r[1] != 'fx' and (want is None or r[0] in want) and not _baja(r)
+          and (keep is None or r[0] in keep)]
+    fx = [_ccy(r) for r in rows if r[1] == 'fx' and (want is None or r[0] in want)
+          and (keep_ccy is None or _ccy(r) in keep_ccy)]
     first = [s for s in ('SPY', '^IRX') if s in eq]
-    return first + [s for s in eq if s not in first], fx
+    rest = [s for s in eq if s not in first]
+    if order:                          # prioridad del universo (catálogo → base → importados): importa para las tandas
+        rest.sort(key=lambda s: order.get(s, len(order)))
+    return first + rest, fx
+
+
+def _phase_daily(session, eq, now):
+    """Tandas de la corrida DIARIA: los símbolos del catálogo del repo y los nuevos que YA tienen historia guardada
+    entran siempre; de los nuevos sin historia, NEW_PER_DAILY_RUN por día (ventana que rota con la fecha: uno que
+    nunca trae datos no tapa a los demás). Pedido a pedido la pausa sigue siendo PRICES_REQ_INTERVAL_S.
+    → (equities de hoy, resumen)."""
+    from sqlalchemy import text
+
+    from core import instruments
+    base = instruments.baseline_symbols()
+    new = [x for x in eq if x not in base]
+    if not base or not new:
+        return eq, {'new': 0, 'admitted': 0, 'pending': 0, 'with_history': 0}
+    have = {r[0] for r in session.execute(text(
+        'SELECT DISTINCT instrument_id FROM prices_eod WHERE source = :s AND instrument_id = ANY(:ids)'),
+        {'s': SOURCE, 'ids': new}).all()}
+    inc, now_in, pending = instruments.phase_in(eq, have, NEW_PER_DAILY_RUN, baseline=base,
+                                                offset=now.date().toordinal() * NEW_PER_DAILY_RUN)
+    return inc, {'new': len(new), 'with_history': len(have), 'admitted': len(now_in), 'pending': len(pending)}
 
 
 def _coverage(session, instrument_id, table='prices_eod'):
@@ -532,11 +576,14 @@ def _run(state, *, rng='1mo', years=None, symbols=None, getter=None, sleep=time.
     from ontology.db import session_scope
     now = now or _now()
     interval = req_interval_s() if interval is None else interval
+    phase = None
     with session_scope() as s:
         eq, fx = _targets(s, symbols)
+        if years is None and not symbols:          # SOLO la corrida diaria va por tandas (el relleno es a pedido)
+            eq, phase = _phase_daily(s, eq, now)
     items = [(c, True) for c in fx] + [(e, False) for e in eq]
     state.update(total=len(items), done=0, ok=0, skipped=0, failed=0, empty=0, rows=0, adjustments=0, repaired=0,
-                 consecutive_fail=0, errors=[], current=None, stopped_reason=None)
+                 consecutive_fail=0, errors=[], current=None, stopped_reason=None, phase=phase)
     for sym, is_fx in items:
         if state.get('stop'):
             state['stopped_reason'] = 'stopped_by_operator'
@@ -728,7 +775,7 @@ def run_daily(now=None, getter=None, sleep=time.sleep, broker=True):
         else:
             _DAILY['paused_until'] = time.time() + SOURCE_PAUSE_S
         res = {k: state.get(k) for k in ('total', 'ok', 'failed', 'empty', 'rows', 'adjustments', 'repaired',
-                                         'stopped_reason')}
+                                         'stopped_reason', 'phase')}
         res['snapshot'] = snap
         res['errors'] = state.get('errors', [])[:5]
         _DAILY.update(last_result=res, last_finished=_now().isoformat())

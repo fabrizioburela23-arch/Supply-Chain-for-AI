@@ -24,4 +24,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET` | `/api/trade/history` | `trade_history` | [[server.py]] | [[engine.app_trade_panel.js]], [[engine.cockpit.js]], [[engine.toast.js]], 2 pruebas |
 | `POST` | `/api/trade/order` | `trade_order` | [[server.py]] | [[engine.app_trade_panel.js]], [[engine.crypto.js]], [[engine.trade.js]], 2 pruebas |
 | `GET` | `/api/trade/positions/detail` | `trade_positions_detail` | [[server.py]] | [[engine.app_trade_panel.js]], [[engine.cockpit.js]], [[engine.pfcommittee.js]], [[engine.voice.js]], 2 pruebas |
-| `GET` | `/api/trade/status` | `trade_status` | [[server.py]] | [[app.html]], 1 prueba |
+| `GET` | `/api/trade/status` | `trade_status` | [[server.py]] | [[app.html]], 2 pruebas |

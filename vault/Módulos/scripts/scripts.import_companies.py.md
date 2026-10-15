@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "scripts/import_companies.py"
 lenguaje: "python"
-lineas: 231
+lineas: 311
 aliases: ["scripts/import_companies.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # scripts/import_companies.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 231 líneas · `scripts/import_companies.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 311 líneas · `scripts/import_companies.py`
 
 ## Para qué sirve
 
@@ -18,9 +18,9 @@ terminal del importador de fichas khipus.company/1 (EXPANSION_5K E2.4).
 
 ## API pública
 
-- `main(argv=…)` _(línea 82)_
+- `main(argv=…)` _(línea 151)_
 
-**Internas** (empiezan con `_`): `_die`, `_http`, `_http_text`, `_upload`
+**Internas** (empiezan con `_`): `_die`, `_http`, `_http_text`, `_upload`, `_gz_text`, `_lote2`
 
 ## Depende de
 
@@ -30,6 +30,8 @@ terminal del importador de fichas khipus.company/1 (EXPANSION_5K E2.4).
 ## Lo usan
 
 _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
+
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Endpoints que llama
 
@@ -46,6 +48,8 @@ _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_import_lote2.py]]
+- [[tests.test_import_lote2_e2e.py]]
 - [[tests.test_lotek_fixer.py]]
 
 ## Mencionado en sesiones de trabajo

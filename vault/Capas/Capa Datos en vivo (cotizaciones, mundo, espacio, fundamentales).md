@@ -9,7 +9,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.776 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.886 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -23,18 +23,18 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[core.space.py]] — 640 líneas · SPACE MONITOR (pestaña 🚀 Espacio): /api/space2/\*.
 - [[core.world_feeds.py]] — 632 líneas · fuentes OFICIALES nuevas del World Monitor (2026-10-05).
 - [[engine.geo_coords.js]] — 632 líneas · Coordenadas geográficas para los globos 3D (Khipu Finance) Los nodos NO traen lat/long: solo `country` (EEUU, Japon, "Estados Unidos (HQ Denver, …
-- [[core.quotes.py]] — 463 líneas · cotización cruda compartida (server rutas + agentes de alertas).
+- [[core.quotes.py]] — 509 líneas · cotización cruda compartida (server rutas + agentes de alertas).
 - [[core.geosit.py]] — 433 líneas · Sala de Situación geopolítica: /api/geo/\*.
 - [[engine.termdata.js]] — 359 líneas · PANEL DE DATOS de la Terminal (feedback de Fabrizio: "te pedí que la terminal tuviera muchas más tablas" + "para muchas decía upstream 402 pero no …
 - [[core.gdelt_events.py]] — 307 líneas · conflicto / protestas / sanciones EN VIVO desde la base de EVENTOS de GDELT 2.0 (archivos crudos cada 15 minutos, públicos y sin clave).
 - [[engine.brief.js]] — 301 líneas · BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez al día, descartable), un overlay NEXUS resume: el mayor chokepoint, la …
 - [[core.country_geo.py]] — 222 líneas · coordenadas de referencia por PAÍS (la capital), para capas que solo dicen "qué país" (avisos de viaje del Departamento de Estado, cortes de …
 - [[core.providers.base.py]] — 201 líneas · Phase 1 · M3: el contrato de los proveedores.
+- [[core.live_caps.py]] — 191 líneas · capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[core.gpr.py]] — 186 líneas · Índice de RIESGO GEOPOLÍTICO (GPR) de Caldara & Iacoviello (Junta de la Reserva Federal), EN VIVO y gratuito: https://www.matteoiacoviello.com/gpr.htm
 - [[core.providers.market.py]] — 159 líneas · Phase 1 · M3: adapters de datos de mercado.
 - [[core.news_feed.py]] — 151 líneas · NOTICIAS DE TU CARTERA, con fecha y sin repetir lo viejo.
 - [[engine.live.js]] — 138 líneas · MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de insights: cuando llegan precios nuevos, invalida el NRS y re-dibuja …
-- [[core.live_caps.py]] — 127 líneas · capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[core.providers.coingecko.py]] — 123 líneas · adapter de cripto (CoinGecko API v3, tier gratuito).
 - [[core.live_fundamentals.py]] — 121 líneas · FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
 - [[core.live_facts.py]] — 93 líneas · DATOS EN VIVO para toda llamada de IA.
@@ -46,14 +46,14 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Interfaz (Khipus OS)]] | 25 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 22 |
-| usa a | [[Capa Infraestructura]] | 22 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 23 |
+| usa a | [[Capa Infraestructura]] | 23 |
 | la usa | [[Capa Infraestructura]] | 19 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
-| usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
+| usa a | [[Capa Ontología y grafo temporal]] | 8 |
 | la usa | [[Capa MCP y API]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |

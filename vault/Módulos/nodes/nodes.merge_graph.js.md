@@ -26,7 +26,7 @@ De nivel superior (globales del script): `UNVERIFIED_CONF`, `UNVERIFIED_QUALIFIE
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **20 de 99** (línea 1521), después de [[nodes.links_connect.js]] y antes de [[engine.app_main.js]].
+Se carga en [[app.html]] en la posición **20 de 100** (línea 1521), después de [[nodes.links_connect.js]] y antes de [[engine.catalog_sync.js]].
 
 ## Lo usan
 
@@ -38,6 +38,7 @@ Se carga en [[app.html]] en la posición **20 de 99** (línea 1521), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_app_split.py]]
+- [[tests.test_catalog_api_client.py]]
 - [[tests.test_merge_graph_alias.py]]
 - [[tests.test_repair_graph.py]]
 

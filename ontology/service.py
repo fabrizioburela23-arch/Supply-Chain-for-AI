@@ -233,7 +233,10 @@ def _dedup_link_payload(session, payload, source_id, target_id, valid_from=None)
     if valid_from is not None:
         q = q.where(LinkRecord.valid_from <= valid_from)      # el gemelo ya cubre esa fecha
     twins = session.scalars(q.order_by(LinkRecord.valid_from)).all()
-    twin = next((t for t in twins if _same_weight(t.weight, payload.get('weight'))), None)
+    proposal = props.get('status') in ('proposed', 'rejected')
+    # una PROPUESTA/RECHAZO no cubre a un vínculo vivo (misma regla que bulk_import._dedup_twin)
+    twin = next((t for t in twins if _same_weight(t.weight, payload.get('weight'))
+                 and (proposal or (t.properties or {}).get('status') not in ('proposed', 'rejected'))), None)
     if twin is not None:
         if not twin.event_id:              # fila heredada: se empareja YA con su evento (G5, revisión)
             cev = _creation_event_for(session, twin)

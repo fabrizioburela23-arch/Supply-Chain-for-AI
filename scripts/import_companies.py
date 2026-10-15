@@ -3,6 +3,10 @@
 
     # 0) Lote 1 (CSV de la investigación 2026-10-14) → paquete khipus.import/1 (fichas nivel A + países + categorías)
     python scripts/import_companies.py --lote1 --out lote1.json
+    # 0') Lote 2 (2026-10-15): las 386 fichas COMPLETAS → data/import/lotes/2026-10-15/bundle_lote2_completas.json.gz
+    #     (fichas saneadas: solo FORMATO) + sanitize_log.json (cada cambio). --check = ¿los archivos están al día?
+    #     --md = además el plan sobre el grafo de esta PC (sin DATABASE_URL: el catálogo) en Markdown simple.
+    python scripts/import_companies.py --lote2 [--check] [--md docs/expansion/LOTE_2026-10-15_PLAN.md]
 
     # 1) PLAN (no escribe nada): qué se crea/fusiona/actualiza/omite, categorías por aprobar, "¿qué cambia?" y plan_sha.
     #    Con DATABASE_URL usa el grafo de la base; sin ella, el catálogo (snapshot).
@@ -62,11 +66,18 @@ def _http_text(server, path, body, pin, timeout=600):
 
 
 def _upload(server, pin, path):
-    """Sube el archivo en trozos comprimidos; devuelve el sha256 del contenido."""
-    with open(path, 'rb') as fh:
-        content = fh.read()
-    sha = hashlib.sha256(content).hexdigest()
+    """Sube el archivo en trozos comprimidos; devuelve el sha256 del contenido. Un `.gz` se sube DESCOMPRIMIDO (con su
+    nombre sin `.gz`): el servidor lee JSON/JSONL y la huella es la del contenido."""
     name = os.path.basename(path)
+    if name.endswith('.gz'):
+        import gzip
+        with gzip.open(path, 'rb') as fh:
+            content = fh.read()
+        name = name[:-3]
+    else:
+        with open(path, 'rb') as fh:
+            content = fh.read()
+    sha = hashlib.sha256(content).hexdigest()
     parts = [content[i:i + CHUNK] for i in range(0, len(content), CHUNK)] or [b'']
     for i, part in enumerate(parts):
         data = base64.b64encode(zlib.compress(part, 6)).decode('ascii')
@@ -79,9 +90,70 @@ def _upload(server, pin, path):
     return sha
 
 
+def _gz_text(path):
+    import gzip
+    with gzip.open(path, 'rt', encoding='utf-8') as fh:
+        return fh.read()
+
+
+def _lote2(CI, a):
+    """--lote2 [--check] [--md]: arma el paquete saneado y el registro del lote 2026-10-15 (o comprueba que estén al
+    día); con --md, además el plan sobre el grafo de esta PC."""
+    import gzip
+    d = a.lote2 or CI.LOTE2_DIR
+    built = CI.build_lote_2026_10_15(d)
+    if built['missing']:
+        return _die(f'faltan {len(built["missing"])} fichas de la lista en {CI.LOTE2_FICHAS}: {built["missing"][:5]}', 1)
+    valid, invalid = CI.validate_batch(built['bundle']['records'])
+    bundle_txt, log_txt = CI.lote2_texts(built)
+    bpath, lpath = os.path.join(d, CI.LOTE2_BUNDLE), os.path.join(d, CI.LOTE2_LOG)
+    summ = built['log']['summary']
+    print(f'lote 2026-10-15: {built["kept"]} fichas completas · válidas tras sanear {len(valid)} · inválidas '
+          f'{len(invalid)} · reparadas {summ["fields_repaired"]} · quitadas {summ["fields_dropped"]} · rechazadas '
+          f'{len(summ["rejected"])}')
+    if a.check:
+        probs = []
+        if invalid:
+            probs.append(f'{len(invalid)} fichas no validan tras sanear: {[i.get("record_id") for i in invalid[:5]]}')
+        try:
+            if _gz_text(bpath) != bundle_txt:
+                probs.append(f'{CI.LOTE2_BUNDLE} no es el que se generaría hoy: corre --lote2 (sin --check)')
+        except FileNotFoundError:
+            probs.append(f'falta {CI.LOTE2_BUNDLE}: corre --lote2')
+        try:
+            with open(lpath, encoding='utf-8') as fh:
+                if fh.read() != log_txt:
+                    probs.append(f'{CI.LOTE2_LOG} no es el que se generaría hoy: corre --lote2 (sin --check)')
+        except FileNotFoundError:
+            probs.append(f'falta {CI.LOTE2_LOG}: corre --lote2')
+        for p in probs:
+            print('✗', p)
+        if not probs:
+            print('✓ paquete y registro del lote 2026-10-15 al día')
+        return 1 if probs else 0
+    if invalid:
+        return _die(f'{len(invalid)} fichas no validan tras sanear (no se escribe nada): '
+                    f'{[i.get("record_id") for i in invalid[:5]]}', 1)
+    with open(bpath, 'wb') as fh:
+        fh.write(gzip.compress(bundle_txt.encode('utf-8'), compresslevel=9, mtime=0))
+    with open(lpath, 'w', encoding='utf-8') as fh:
+        fh.write(log_txt)
+    print(f'escrito {os.path.relpath(bpath)} y {os.path.relpath(lpath)} · reglas: {summ["by_rule"]}')
+    if a.md:
+        p = CI.plan(built['bundle']['records'], [], batch=built['bundle']['batch'], what_changes=not a.no_what_changes)
+        md = CI.render_lote2_md(p, built, d)
+        with open(a.md, 'w', encoding='utf-8') as fh:
+            fh.write(md)
+        print(f'plan: {json.dumps(p["counts"], ensure_ascii=False)} · plan_sha {p["plan_sha"]} → {a.md}')
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--lote1', nargs='?', const='', default=None, help='adaptar el lote 2026-10-14 (CSV) → paquete JSON')
+    ap.add_argument('--lote2', nargs='?', const='', default=None,
+                    help='lote 2026-10-15: 386 fichas completas → paquete saneado + registro (carpeta opcional)')
+    ap.add_argument('--check', action='store_true', help='con --lote2: comprobar que los archivos están al día (no escribe)')
     ap.add_argument('--plan', default=None, help='paquete (.json) o fichas (.jsonl): calcular el plan')
     ap.add_argument('--apply', default=None, help='paquete a aplicar (exige --plan-sha y --confirm-db)')
     ap.add_argument('--rollback', default=None, help='run_id a deshacer')
@@ -100,6 +172,9 @@ def main(argv=None):
     a = ap.parse_args(argv)
 
     from ontology import company_import as CI
+
+    if a.lote2 is not None:
+        return _lote2(CI, a)
 
     if a.lote1 is not None:
         b = CI.adapt_lote_2026_10_14(a.lote1 or None)
@@ -131,10 +206,15 @@ def main(argv=None):
             with open(a.md, 'w', encoding='utf-8') as fh:
                 fh.write(md)
         wc = p.get('what_changes') or {}
+        b4, af = wc.get('before') or {}, wc.get('after') or {}
+        keys = ('nodes', 'links', 'rho', 'tsmc_hit')
+        what = {'before': {k: b4.get(k) for k in keys}, 'after': {k: af.get(k) for k in keys},
+                'added_links': wc.get('added_links')} if wc.get('available') else \
+            {k: wc.get(k) for k in ('reason', 'error') if k in wc}
         print(json.dumps({'server': a.server, 'file_sha': sha, 'plan_sha': p.get('plan_sha'), 'generation': p.get('generation'),
-                          'graph_key': p.get('graph_key'), 'counts': p.get('counts'), 'pending_resolved': p.get('pending_resolved'),
-                          'what_changes': {k: wc.get(k) for k in ('rho_before', 'rho_after', 'tsmc_before', 'tsmc_after',
-                                                                  'reason', 'error') if k in wc}},
+                          'graph_key': p.get('graph_key'), 'counts': p.get('counts'),
+                          'pending_resolved': len(p.get('pending_resolved') or []) if 'pending_resolved' in p else None,
+                          'what_changes': what},
                          ensure_ascii=False, indent=1, default=str))
         print(f'\nhuella del plan del servidor: {p.get("plan_sha")}  ← esta es la que exige --apply --server --plan-sha')
         return 0

@@ -305,7 +305,15 @@ def test_api_relleno_exige_pin_y_muestra_progreso(db, monkeypatch):
     st = c.get('/api/prices/status').get_json()
     assert st['db'] is True and 'rows' in st
     rv = c.get('/api/instruments/review').get_json()
-    assert rv['multi_listed'] == 21 and rv['otc_adr'] == 25   # lote K
+    # la ruta cuenta sobre el grafo VIGENTE (con el lote L aplicado en esta base: 33/23); el catálogo del repo, 21/25
+    from core import instruments
+    now = instruments.review_list()
+    assert (rv['multi_listed'], rv['otc_adr']) == (sum(r['review'] == 'multi_listed' for r in now),
+                                                   sum(r['review'] == 'otc_adr' for r in now))
+    import json as _json
+    snap = _json.load(open(os.path.join(ROOT, 'data', 'grafo_v0.json'), encoding='utf-8'))['nodes']
+    rs = instruments.review_list(snap)
+    assert sum(r['review'] == 'multi_listed' for r in rs) == 21 and sum(r['review'] == 'otc_adr' for r in rs) == 25  # lote K
     pin._reset_for_tests()
 
 

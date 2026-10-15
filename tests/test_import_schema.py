@@ -42,7 +42,7 @@ def _neg(mut):
 
 def test_artefacto_es_el_schema_del_repositorio():
     from core import governance as G
-    art = G.scan_repo()[('ontology.import_schema', '1.0.0')]
+    art = G.scan_repo()[('ontology.import_schema', '2.0.0')]
     assert art['params']['schema'] == CS.load_artifact_schema()
     assert art['params']['schema_id'] == 'khipus.company/1'
     assert 'ontology.import_schema' in G.load_manifest()['release']['artifacts']

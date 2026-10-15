@@ -6,7 +6,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 
 # Índice de la API
 
-260 rutas HTTP en 61 grupos + 34 herramientas MCP.
+262 rutas HTTP en 61 grupos + 34 herramientas MCP.
 
 | Grupo | Rutas | Definidas en |
 |---|---|---|
@@ -43,7 +43,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 | [[API matrix]] | 11 | [[matrix.api.py]] |
 | [[API mcp]] | 6 | [[mcp_server.api.py]] |
 | [[API news]] | 3 | [[core.portfolio_reports_api.py]], [[server.py]] |
-| [[API ontology]] | 39 | [[ontology.api.py]] |
+| [[API ontology]] | 41 | [[ontology.api.py]] |
 | [[API ops]] | 2 | [[core.ops_check.py]] |
 | [[API options]] | 1 | [[server.py]] |
 | [[API portfolio]] | 4 | [[server.py]] |

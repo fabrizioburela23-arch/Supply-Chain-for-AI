@@ -1,5 +1,5 @@
 """tests/test_import_governance.py — EXPANSION_5K E2.5: los artefactos del importador están en el registro de gobernanza
-(policy.import@1.0.0, ontology.import_schema@1.0.0, ledger.kinds@5.0.0 con ontology.import_rollback, ontology.shapes@7.0.0)
+(policy.import@1.1.0, ontology.import_schema@2.0.0 —lote L—, ledger.kinds@5.0.0 con ontology.import_rollback, ontology.shapes@7.0.0)
 y el código lee la política de ahí; nada cambia números del kernel (los dorados siguen iguales)."""
 import json
 import os
@@ -16,8 +16,8 @@ def test_manifest_al_dia_con_los_artefactos_nuevos():
     with open(os.path.join(ROOT, 'governance', 'manifest.json'), encoding='utf-8') as fh:
         man = json.load(fh)
     arts = man['release']['artifacts']
-    assert arts['policy.import']['semver'] == '1.0.0'
-    assert arts['ontology.import_schema']['semver'] == '1.0.0'
+    assert arts['policy.import']['semver'] == '1.1.0'
+    assert arts['ontology.import_schema']['semver'] == '2.0.0'
     assert arts['ledger.kinds']['semver'] >= '5.0.0'
     assert arts['ontology.shapes']['semver'] >= '7.0.0'
     for a in man['available']:

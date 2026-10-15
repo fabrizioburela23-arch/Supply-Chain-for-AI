@@ -34,11 +34,11 @@ Fase 4 del roadmap de ontología: lenguaje de comandos KHIPU, corto y componible
 - [[engine.temporal-graph.js]] — usa `__tkgSetDate`
 - [[engine.toast.js]] — usa `khipuActor`
 
-Se carga en [[app.html]] en la posición **50 de 99** (línea 3107), después de [[engine.maptime.js]] y antes de [[engine.guide.js]].
+Se carga en [[app.html]] en la posición **51 de 100** (línea 3108), después de [[engine.maptime.js]] y antes de [[engine.guide.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 50)
+- [[app.html]] — lo carga con `<script>` (posición 51)
 - [[engine.cockpit.js]] — usa `KHIPU`
 - [[engine.command_center.js]] — usa `KHIPU`
 

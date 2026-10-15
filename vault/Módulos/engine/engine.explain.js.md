@@ -24,11 +24,11 @@ EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversi
 
 - [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **78 de 99** (línea 3201), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
+Se carga en [[app.html]] en la posición **79 de 100** (línea 3202), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 78)
+- [[app.html]] — lo carga con `<script>` (posición 79)
 - [[app.html]] — usa `explainMetric`
 - [[engine.app_coordinator.js]] — usa `explainChip`
 - [[engine.app_main.js]] — usa `explainChip`, `explainMetric`
@@ -40,6 +40,7 @@ Se carga en [[app.html]] en la posición **78 de 99** (línea 3201), después de
 - [[engine.genui.js]] — usa `explainMetric`, `explainRegister`
 - [[engine.genui_charts.js]] — usa `explainRegister`
 - [[engine.governance.js]] — usa `explainChip`
+- [[engine.importer.js]] — usa `explainMetric`, `explainRegister`
 - [[engine.insights.js]] — usa `explainMetric`
 - [[engine.mcpconnect.js]] — usa `explainChip`, `explainRegister`
 - [[engine.oswindows.js]] — usa `explainMetric`, `explainRegister`
@@ -59,6 +60,8 @@ Se carga en [[app.html]] en la posición **78 de 99** (línea 3201), después de
 - [[tests.test_cierre_defectos.py]]
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_client_static.py]]
+- [[tests.test_import_panel_browser.py]]
+- [[tests.test_import_panel_static.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_options_greeks_totals.py]]
 - [[tests.test_repair_graph.py]]

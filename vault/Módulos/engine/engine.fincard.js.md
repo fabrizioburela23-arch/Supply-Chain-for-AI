@@ -32,11 +32,11 @@ DOSSIER FINANCIERO de una empresa (Etapa G, 2026-07-11) Estilo investingvisuals 
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 
-Se carga en [[app.html]] en la posición **76 de 99** (línea 3199), después de [[engine.localcharts.js]] y antes de [[engine.termdata.js]].
+Se carga en [[app.html]] en la posición **77 de 100** (línea 3200), después de [[engine.localcharts.js]] y antes de [[engine.termdata.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 76)
+- [[app.html]] — lo carga con `<script>` (posición 77)
 - [[engine.app_coordinator.js]] — usa `openFinCard`
 - [[engine.cockpit.js]] — usa `openFinCard`
 - [[engine.khipu_chat.js]] — usa `openFinCard`

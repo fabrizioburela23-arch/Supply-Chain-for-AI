@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L164"
+ruta: "docs/ESTADO.md#L197"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (i) — NEO4J RETIRADO (decisión #6 de Fabrizio) — sw v264
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 164 (23 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 197 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

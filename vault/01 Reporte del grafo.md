@@ -17,25 +17,25 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 244 |
-| Líneas de código | 144.524 |
+| Archivos de código (Python, JS, HTML) | 246 |
+| Líneas de código | 147.859 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 241 |
+| Archivos de prueba | 254 |
 | Documentos | 31 |
-| Rutas HTTP | 260 |
+| Rutas HTTP | 262 |
 | Grupos de API | 61 |
 | Herramientas MCP | 34 |
 | Variables de entorno | 158 |
-| Sesiones de trabajo | 109 |
-| Aristas `calls_endpoint` | 732 |
-| Aristas `defines_endpoint` | 294 |
-| Aristas `imports` | 2.250 |
-| Aristas `loads_script` | 91 |
-| Aristas `mentions_in_session` | 579 |
+| Sesiones de trabajo | 110 |
+| Aristas `calls_endpoint` | 763 |
+| Aristas `defines_endpoint` | 296 |
+| Aristas `imports` | 2.335 |
+| Aristas `loads_script` | 92 |
+| Aristas `mentions_in_session` | 581 |
 | Aristas `reads_env` | 226 |
-| Aristas `references_file` | 68 |
-| Aristas `tested_by` | 1.713 |
-| Aristas `uses_global` | 452 |
+| Aristas `references_file` | 69 |
+| Aristas `tested_by` | 1.823 |
+| Aristas `uses_global` | 461 |
 
 ## Nodos "dios" (más conectados)
 
@@ -43,20 +43,20 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
-| [[app.html]] | 118 | 26 | 92 | [[Capa Interfaz (Khipus OS)]] |
-| [[engine.app_main.js]] | 108 | 63 | 45 | [[Capa Interfaz (Khipus OS)]] |
+| [[app.html]] | 120 | 27 | 93 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.app_main.js]] | 111 | 65 | 46 | [[Capa Interfaz (Khipus OS)]] |
 | [[server.py]] | 98 | 31 | 67 | [[Capa Infraestructura]] |
 | [[ontology.db.py]] | 58 | 48 | 10 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 50 | 14 | 36 | [[Capa Interfaz (Khipus OS)]] |
-| [[nodes.nodes_seed.js]] | 43 | 42 | 1 | [[Capa Datos del catálogo]] |
+| [[nodes.nodes_seed.js]] | 44 | 43 | 1 | [[Capa Datos del catálogo]] |
 | [[core.__init__.py]] | 40 | 40 | 0 | [[Capa Infraestructura]] |
 | [[core.governance.py]] | 40 | 35 | 5 | [[Capa Infraestructura]] |
 | [[core.decisions.py]] | 38 | 31 | 7 | [[Capa Infraestructura]] |
 | [[core.http.py]] | 37 | 35 | 2 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |
 | [[engine.app_coordinator.js]] | 34 | 16 | 18 | [[Capa Interfaz (Khipus OS)]] |
+| [[ontology.api.py]] | 34 | 10 | 24 | [[Capa Ontología y grafo temporal]] |
 | [[core.khipu_chat.py]] | 33 | 6 | 27 | [[Capa Chat y agentes]] |
-| [[ontology.api.py]] | 33 | 9 | 24 | [[Capa Ontología y grafo temporal]] |
 | [[core.identity.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
 | [[engine.resolve.js]] | 32 | 20 | 12 | [[Capa Chat y agentes]] |
 | [[core.world.py]] | 31 | 21 | 10 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
@@ -97,7 +97,7 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
 _Ninguno._
 
-## Globales window.* que ningún otro archivo usa (26)
+## Globales window.* que ningún otro archivo usa (22)
 
 Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo" dice sí, la función sí trabaja (solo sobra la exportación); si dice no, es candidata a código muerto.
 
@@ -107,16 +107,12 @@ Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo"
 | `window.ASSISTANT_NAME` | [[engine.app_main.js]] | **no** | no |
 | `window.DESC_FILL` | [[nodes.meta_fill.js]] | sí | no |
 | `window.KhipuLiveCaps` | [[engine.app_main.js]] | **no** | no |
-| `window.KhipuLiveFund` | [[engine.app_main.js]] | **no** | no |
 | `window.KhipuVoiceAudio` | [[engine.voice.js]] | **no** | sí (solo pruebas) |
 | `window.META_CHINA` | [[nodes.nodes_china.js]] | sí | no |
 | `window.META_FILL` | [[nodes.meta_fill.js]] | sí | no |
 | `window.OntologyAlerts` | [[engine.app_main.js]] | sí | no |
 | `window._briefAutoAllowed` | [[engine.brief.js]] | **no** | sí (solo pruebas) |
 | `window._buildNrsDegree` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
-| `window._lblOn` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
-| `window._mapState` | [[engine.app_main.js]] | **no** | sí (solo pruebas) |
-| `window._resizeNodesByCap` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
 | `window._smGlobe` | [[engine.spacemonitor.js]] | **no** | no |
 | `window._wmGlobe` | [[engine.worldmonitor.js]] | **no** | no |
 | `window.applyVerifiedValuations` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
@@ -146,7 +142,7 @@ Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los s
 
 **Solo las llaman las pruebas** (36): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/governance/attribution`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/eval`, `GET /api/tensor/rank`, `GET /api/tensor/status`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
 
-## Llamadas a rutas que no existen (12)
+## Llamadas a rutas que no existen (14)
 
 Textos con forma de ruta (`/api/…`) en el código que no coinciden con ninguna ruta del servidor. Pueden ser restos de funciones retiradas o rutas armadas por partes.
 
@@ -154,6 +150,8 @@ Textos con forma de ruta (`/api/…`) en el código que no coinciden con ninguna
 |---|---|
 | [[core.replay.py]] | `/api/hot/scenario` |
 | [[core.replay.py]] | `/api/hot/scenario_pnl` |
+| [[engine.catalog_sync.js]] | `/api/hot/catalog` |
+| [[engine.catalog_sync.js]] | `/api/hot/catalog/detail` |
 | [[engine.genui.js]] | `/api/genui/block` |
 | [[engine.hotclient.js]] | `/api/hot/card/` |
 | [[engine.hotclient.js]] | `/api/hot/chokepoints` |

@@ -43,9 +43,10 @@ EL lint de los artefactos de gobernanza (docs/INFRA_OPERATIVA.md §5.2; pasos 9 
 - [[core.governance_flow.py]] — lo importa
 - [[scripts.build_governance.py]] — lo importa
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_governance.py]]
 - [[tests.test_governance_flow.py]]
+- [[tests.test_import_sanitize_schema.py]]

@@ -20,6 +20,12 @@ cabecera `X-Khipu-Graph-Version`. Leer NUNCA reconstruye: si la vista va atrasad
                               damping?, max_hops?, top?}
     POST /api/hot/scenario_pnl {shocks, positions:[{id|symbol, usd}], factors?, record?}  escenario → dinero con el κ
                               calibrado (kernel.calibration); calibración débil/ausente → sin cifra (batch I3)
+    GET  /api/hot/catalog[?offset=&limit=&gen=]      E3.1 (lote L): lo que el grafo de los LECTORES tiene y el catálogo
+                              estático del navegador (data/grafo_v0.json = nodes/*.js) NO: empresas solo en Postgres
+                              (importadas) y vínculos nuevos, en columnas compactas; ETag = generación; paginado
+                              (primero nodos, luego vínculos). engine/catalog_sync.js lo AÑADE al mapa (nunca pisa).
+    GET  /api/hot/catalog/detail?ids=a,b             textos (rol, suministra, foso, crecimiento…) de esas empresas
+                              nuevas y el texto de los vínculos nuevos que las tocan — a pedido (al abrir la ficha)
 """
 import math
 import time
@@ -573,3 +579,279 @@ def hot_quote():
                           'note': 'live view: each quote carries its own stamp (src, as_of, age_s)'}})
     r.headers['Cache-Control'] = 'no-store'
     return r
+
+
+# ── E3.1 (lote L, 2026-10-15): el catálogo del navegador se COMPLETA con lo que solo está en Postgres ────────────
+# El navegador arma NODES/LINKS con el catálogo estático (nodes/*.js; su exportación es data/grafo_v0.json): una
+# empresa que solo existe en la base (importada con el importador, IncorporarEmpresa) no salía en el mapa, la
+# búsqueda ni las listas. Esta ruta da la DIFERENCIA entre el grafo de los lectores (hot.graph(), la misma
+# generación que el MCP, el chat y el NRS del servidor) y ese catálogo: solo AÑADE — un nodo o vínculo que el
+# catálogo ya tiene nunca se repite ni se pisa (un vínculo es la clave (origen, destino, tipo), como en el merge).
+CATALOG_NODE_FIELDS = ('id', 'label', 'cat', 'sector', 'country', 'country_iso2', 'ticker', 'mkt', 'status', 'preipo',
+                       'margin', 'gflag')
+CATALOG_NAMES_PER_NODE = 3         # nombres alternativos por empresa para la búsqueda del navegador (KhipuResolve)
+CATALOG_LINK_FIELDS = ('source', 'target', 'w', 'type', 'conf', 'verified', 'since')
+CATALOG_PAGE_DEFAULT = 5000        # elementos (nodos + vínculos) por página: el lote de 386 cabe en una
+CATALOG_PAGE_CAP = 20000
+CATALOG_DETAIL_IDS_CAP = 100
+DETAIL_TEXT_FIELDS = ('role', 'role_en', 'supplies', 'supplies_en', 'moat', 'moat_en', 'growth', 'growth_en', 'desc',
+                      'desc_en', 'geo_risk', 'geo_risk_en', 'capex_2026', 'capex_2026_en', 'backlog_status',
+                      'backlog_status_en', 'legal_name', 'website', 'hq_city', 'founded', 'employees', 'verified')
+_STATIC_CAT = [None]               # (sha, ids, alias_keys, link_keys) del catálogo estático, una vez por archivo
+
+
+def _static_catalog():
+    """El catálogo estático que el navegador ya trae (ids canónicos, ids alias y claves de vínculo) — leído por
+    core/hotviews/source (la única que abre el archivo), una vez por versión."""
+    from core.hotviews import source
+    snap, sha = source._snapshot_parsed()
+    hit = _STATIC_CAT[0]
+    if hit is not None and hit[0] == sha:
+        return hit
+    ids = frozenset(n['id'] for n in snap.get('nodes') or [] if n.get('id'))
+    alias = frozenset((snap.get('node_id_alias') or {}).keys())
+    lkeys = frozenset((l.get('source'), l.get('target'), l.get('type') or 'supply') for l in snap.get('links') or [])
+    hit = (sha, ids, alias, lkeys)
+    _STATIC_CAT[0] = hit
+    return hit
+
+
+def _searchable(name):
+    """¿La búsqueda del navegador (engine/resolve.js `norm`: sin tildes, solo a-z0-9) puede usar este nombre? Uno en
+    otra escritura («(주)엘지화학», «LG화학») queda vacío o reducido a «lg» allí — una clave corta que robaría la
+    búsqueda de otras empresas —: no se manda (el MCP y el chat lo resuelven en el servidor). Hace falta que la
+    mayoría de sus letras sean latinas y que la forma normalizada tenga ≥ 4 caracteres."""
+    import re
+    import unicodedata
+    folded = ''.join(ch for ch in unicodedata.normalize('NFD', str(name or '').lower())
+                     if unicodedata.category(ch) != 'Mn')
+    letters = [ch for ch in folded if ch.isalnum()]
+    latin = [ch for ch in letters if ('a' <= ch <= 'z') or ('0' <= ch <= '9')]
+    normed = re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9\s]', ' ', folded)).strip()
+    return bool(letters) and len(latin) * 2 >= len(letters) and len(normed) >= 4
+
+
+def _gflag(growth):
+    """La señal del crecimiento que usa el NRS (core/world.nrs_terms: 🔴 manda sobre 🟡) — sin mandar el texto."""
+    g = str(growth or '').lower()
+    return 'r' if '🔴' in g else ('y' if '🟡' in g else None)
+
+
+def _num_or_none(x):
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return None
+    return v if math.isfinite(v) else None
+
+
+def _link_trust(l):
+    """conf/verified EFECTIVOS como los usa el kernel (matrix.engine.link_confidence): lo guardado manda; sin dato,
+    el texto curado decide (vocabulary.text_says_unverified, la gemela de nodes/merge_graph.js linkTrust)."""
+    from ontology import vocabulary as vocab
+    conf, ver = _num_or_none(l.get('conf')), l.get('verified')
+    if conf is None:
+        unv = vocab.text_says_unverified(l.get('rel') or '')
+        conf = vocab.UNVERIFIED_CONF if unv else 1.0
+        if ver is None:
+            ver = not unv
+    conf = max(0.0, min(1.0, conf))
+    if ver is None:
+        ver = conf >= 1
+    return conf, bool(ver)
+
+
+def _valuation_usd(n, min_conf):
+    """Valuación VERIFICADA de una privada (última ronda cerrada que trae la ficha, con fuente) en miles de millones de
+    USD — la que dimensiona el nodo como en nodes/private_valuations.js. Otra moneda o confianza baja → None (el
+    navegador no convierte: sin dato, el nodo sale con el tamaño mínimo fijo marcado «sin capitalización»)."""
+    val = n.get('valuation')
+    if not isinstance(val, dict) or str(val.get('currency') or 'USD').upper() != 'USD':
+        return None
+    v, c = _num_or_none(val.get('value')), _num_or_none(val.get('confidence'))
+    if v is None or v <= 0 or not str(val.get('source_url') or '').startswith('http'):
+        return None
+    if c is not None and c < min_conf:
+        return None
+    return {'usd_b': round(v / 1e9, 3), 'as_of': str(val.get('as_of') or ''), 'round': val.get('round'),
+            'source_url': val.get('source_url'), 'confidence': c}
+
+
+def _catalog_delta(v, st):
+    """La diferencia (UNA vez por generación y versión del catálogo; hot.cached)."""
+    from core import governance as gov
+    from ontology import vocabulary as vocab
+    t0 = time.perf_counter()
+    sha, ids, alias_keys, lkeys = st
+    try:
+        min_conf = float(gov.param('policy.import', 'live_min_confidence'))
+    except Exception:  # noqa: BLE001 — sin política: la regla de siempre del importador
+        min_conf = 0.5
+    nodes, delta_ids, skipped_alias, vals, names, name_owner = [], set(), [], {}, {}, {}
+    for n in v.nodes:
+        nid = n.get('id')
+        if not nid or nid in ids:
+            continue
+        if nid in alias_keys:          # el navegador ya lleva ese id a un nodo del catálogo: nunca un 2.º nodo
+            skipped_alias.append(nid)
+            continue
+        delta_ids.add(nid)
+        tk = n.get('ticker')
+        row = {'id': nid, 'label': str(n.get('label') or nid), 'cat': n.get('cat') or None,
+               'sector': n.get('sector') or None, 'country': n.get('country') or None,
+               'country_iso2': n.get('country_iso2') or None, 'ticker': tk if isinstance(tk, str) else '',
+               'mkt': (str(n.get('mkt')).strip() or None) if n.get('mkt') and not n.get('preipo') else None,
+               'status': n.get('status') or None, 'preipo': 1 if n.get('preipo') else 0,
+               'margin': _num_or_none(n.get('margin')), 'gflag': _gflag(n.get('growth'))}
+        nodes.append([row[k] for k in CATALOG_NODE_FIELDS])
+        val = _valuation_usd(n, min_conf)
+        if val is not None:
+            vals[nid] = val
+        label_l, kept = row['label'].strip().lower(), 0
+        for nm in [n.get('legal_name')] + list(n.get('aliases') or []):
+            nm = str(nm or '').strip()[:120]
+            key = nm.lower()
+            # «ABB Ltd» para «ABB»: la búsqueda ya la encuentra por la etiqueta (ahorra bytes, no cambia resultados)
+            if (not nm or key == label_l or key.startswith(label_l + ' ') or kept >= CATALOG_NAMES_PER_NODE
+                    or not _searchable(nm)):
+                continue
+            kept += 1
+            if key in name_owner and name_owner[key] != nid:
+                name_owner[key] = None          # dos empresas reclaman el nombre: no se resuelve por él
+            elif key not in name_owner:
+                name_owner[key] = nid
+                names[nm] = nid
+    names = {nm: i for nm, i in names.items() if name_owner.get(nm.lower()) == i}
+    links, reader_keys = [], set()
+    for l in v.links:
+        k = (l.get('source'), l.get('target'), l.get('type') or 'supply')
+        reader_keys.add(k)
+        if k in lkeys:
+            continue
+        conf, ver = _link_trust(l)
+        links.append([k[0], k[1], _num_or_none(l.get('w')), k[2], conf, ver, l.get('since') or None])
+    aliases = {}
+    for a in sorted(v.alias):
+        if a in alias_keys or a in ids or a in v.by_id:
+            continue
+        c = v.canonical(a)
+        if c in v.by_id and c != a:
+            aliases[a] = c
+    flow = set(vocab.flow_relation_types())
+    stats = {'skipped_alias_ids': skipped_alias[:25], 'skipped_alias_n': len(skipped_alias),
+             'catalog_nodes_missing_in_db': int((v.stats or {}).get('missing_from_db_n') or 0),
+             'catalog_links_missing_in_db': len(lkeys - reader_keys) if v.source == 'pg' else 0,
+             'flow_links': sum(1 for l in links if l[3] in flow), 'nonflow_links': sum(1 for l in links if l[3] not in flow),
+             'with_valuation': len(vals), 'build_ms': round((time.perf_counter() - t0) * 1000, 2)}
+    return {'nodes': nodes, 'links': links, 'delta_ids': frozenset(delta_ids), 'valuations': vals, 'names': names,
+            'aliases': aliases, 'flow_types': sorted(flow), 'stats': stats, 'sha': sha, 'lkeys': lkeys,
+            'base': {'snapshot_sha': sha[:16], 'catalog_nodes': len(ids), 'catalog_links': len(lkeys)}}
+
+
+def _catalog_view():
+    """(GraphView de los lectores, delta) o (None, respuesta de error)."""
+    from core.hotviews import hot
+    v = hot.graph(timeout=WARM_WAIT_S)
+    if v is None:
+        return None, _warming()
+    try:
+        st = _static_catalog()
+    except (OSError, ValueError):
+        return None, (jsonify({'error': 'no se pudo leer el catálogo estático', 'error_en': 'static catalog unreadable',
+                               'code': 'catalog_unavailable'}), 503)
+    return v, hot.cached(f'hot.catalog_delta:{st[0][:16]}', lambda vv: _catalog_delta(vv, st), view=v)
+
+
+@hot_bp.get('/catalog')
+@rate_limit(120, 60)
+def hot_catalog():
+    """Empresas y vínculos de la generación vigente que el catálogo estático del navegador NO trae. Columnas
+    (`node_fields`/`link_fields`); primero los nodos y después los vínculos (`offset`/`limit` cuentan los dos;
+    `next_offset` null = última página). `gen` = la generación de la primera página: si cambió entre páginas → 409
+    `generation_changed` (el cliente empieza de nuevo). Sin base (o base sin el catálogo) la diferencia es vacía."""
+    v, d = _catalog_view()
+    if v is None:
+        return d
+    off, bad = _int_arg('offset', 0, 10 ** 7)
+    if bad:
+        return bad
+    lim, bad = _int_arg('limit', 1, CATALOG_PAGE_CAP)
+    if bad:
+        return bad
+    off, lim = off or 0, lim or CATALOG_PAGE_DEFAULT
+    want_gen = (request.args.get('gen') or '').strip()[:80]
+    if want_gen and want_gen != str(v.generation):
+        return jsonify({'error': 'el grafo cambió entre páginas: vuelve a empezar', 'error_en': 'the graph changed '
+                        'between pages: start again', 'code': 'generation_changed', 'generation': v.generation}), 409
+    t0 = time.perf_counter()
+    nn, nl = len(d['nodes']), len(d['links'])
+    end = off + lim
+    page_nodes = d['nodes'][off:end] if off < nn else []
+    page_links = d['links'][max(0, off - nn):max(0, end - nn)]
+    pids = {r[0] for r in page_nodes}
+    data = {'generation': v.generation, 'graph_version': v.graph_version, 'source': v.source, 'fallback': v.fallback,
+            'base': d['base'], 'node_fields': list(CATALOG_NODE_FIELDS), 'nodes': page_nodes,
+            'link_fields': list(CATALOG_LINK_FIELDS), 'links': page_links,
+            'valuations': {i: x for i, x in d['valuations'].items() if i in pids},
+            'names': {nm: i for nm, i in d['names'].items() if i in pids},
+            'aliases': d['aliases'] if off == 0 else {}, 'flow_types': d['flow_types'],
+            'total_nodes': nn, 'total_links': nl, 'offset': off, 'limit': lim,
+            'next_offset': end if end < nn + nl else None, 'stats': d['stats'],
+            'compute_ms': round((time.perf_counter() - t0) * 1000, 3)}
+    resp = envelope('catalog', data, v.generation_obj, etag_extra=f"{d['sha'][:12]}.o{off}.l{lim}")
+    resp.headers['Cache-Control'] = 'no-cache'      # revalidar siempre con el ETag (304 si la generación es la misma)
+    return resp
+
+
+@hot_bp.get('/catalog/detail')
+@rate_limit(240, 60)
+def hot_catalog_detail():
+    """Los textos de las empresas NUEVAS pedidas (los del catálogo ya están en el navegador) y el texto (`rel`) de los
+    vínculos nuevos que tocan a CUALQUIERA de los ids pedidos — se piden al abrir la ficha, no al arrancar."""
+    v, d = _catalog_view()
+    if v is None:
+        return d
+    ids = _ids_arg(','.join(request.args.getlist('ids')), cap=CATALOG_DETAIL_IDS_CAP)
+    if not ids:
+        return _bad('ids', 'ids: lista de empresas separadas por coma', 'ids: comma-separated list of companies')
+    want = {}
+    for i in ids:
+        c = v.canonical(i)
+        want[i] = c if c in v.by_id else None
+    nodes = {}
+    for i, c in want.items():
+        if c is None or c not in d['delta_ids']:
+            continue
+        n = v.by_id[c]
+        out = {}
+        for k in DETAIL_TEXT_FIELDS:
+            x = n.get(k)
+            if x is None or x == '':
+                continue
+            out[k] = x if isinstance(x, (str, int, float, bool)) else str(x)
+        ls = n.get('listing')
+        if isinstance(ls, dict):
+            out['listing'] = {k: ls.get(k) for k in ('symbol', 'mic', 'yahoo_symbol', 'currency', 'kind') if ls.get(k)}
+        rm = n.get('research_meta')
+        if isinstance(rm, dict):
+            out['research'] = {k: rm.get(k) for k in ('batch', 'researched_at', 'tier') if rm.get(k)}
+        nodes[c] = out
+    targets = {c for c in want.values() if c}
+    rels = []
+    if targets:
+        for l in v.links:
+            s, t = l.get('source'), l.get('target')
+            if s not in targets and t not in targets:
+                continue
+            k = (s, t, l.get('type') or 'supply')
+            if k in d['lkeys']:
+                continue
+            rels.append([s, t, k[2], str(l.get('rel') or '')])
+    data = {'nodes': nodes, 'rels': rels, 'unknown_ids': [i for i, c in want.items() if c is None],
+            'catalog_ids': [i for i, c in want.items() if c is not None and c not in d['delta_ids']],
+            'generation': v.generation}
+    import hashlib
+    tag = hashlib.sha1('\x1f'.join(ids).encode('utf-8')).hexdigest()[:12]
+    resp = envelope('catalog', data, v.generation_obj, etag_extra=f"{d['sha'][:12]}.d{tag}")
+    resp.headers['Cache-Control'] = 'no-cache'
+    return resp
