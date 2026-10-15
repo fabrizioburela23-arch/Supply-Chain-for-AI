@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/khipu_chat.js"
 lenguaje: "javascript"
-lineas: 1436
+lineas: 1452
 aliases: ["engine/khipu_chat.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/khipu_chat.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 1.436 líneas · `engine/khipu_chat.js`
+> Módulo · capa [[Capa Chat y agentes]] · 1.452 líneas · `engine/khipu_chat.js`
 
 ## Para qué sirve
 
@@ -66,6 +66,7 @@ Se carga en [[app.html]] en la posición **90 de 100** (línea 3215), después d
 - [[tests.test_agents_registry.py]]
 - [[tests.test_chat_commands.py]]
 - [[tests.test_chat_portfolio_agent.py]]
+- [[tests.test_chat_portfolio_source_news.py]]
 - [[tests.test_cleanup_client.py]]
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_committee_os_ui.py]]

@@ -60,7 +60,7 @@ _Nada interno._
 
 ## Caché del service worker
 
-Versión de caché actual: `khipu-finance-v272` — se sube en CADA cambio de JS/HTML (regla de despliegue n.º 1 de CLAUDE.md).
+Versión de caché actual: `khipu-finance-v273` — se sube en CADA cambio de JS/HTML (regla de despliegue n.º 1 de CLAUDE.md).
 
 El array SHELL guarda **105** archivos para usarlos sin conexión (lista en texto para no saturar el grafo):
 

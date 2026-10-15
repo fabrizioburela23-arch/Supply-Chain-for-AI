@@ -968,6 +968,15 @@ def _guess_lang(text):
     return 'en' if en > es else 'es'
 
 
+# Noticia que el usuario CUENTA (reunión con Diego, 2026-10-15: «le pasamos una noticia como si la hubiéramos escuchado
+# y dijo que no la puede confirmar»): se busca, se dice si se confirmó y, si no, se analiza como HIPÓTESIS.
+USER_CLAIM_RX = re.compile(
+    r"\b(escuch[eé]|me (?:dijeron|contaron|enter[eé])|dicen que|se (?:dice|rumorea|comenta)|sali[oó] (?:la|una) noticia|"
+    r"acabo de (?:leer|ver|escuchar)|le[ií] que|vi (?:en|que)|parece que|seg[uú]n (?:un|una|el|la) (?:rumor|nota|fuente)|"
+    r"rumor(?:es)?|i (?:just )?(?:heard|read|saw)|heard that|word is|reportedly|rumou?rs?|news that|they say that)\b",
+    re.IGNORECASE)
+
+
 def validate_request(body):
     if not isinstance(body, dict):
         raise ChatValidationError('cuerpo JSON inválido', 'invalid JSON body')
@@ -1041,6 +1050,29 @@ def validate_request(body):
                 pos.append(row)
         if pos:
             ctx['portfolio'] = pos
+    if USER_CLAIM_RX.search(msg):
+        ctx['user_claim'] = True
+    pp = ctx_raw.get('practice_portfolios')
+    if isinstance(pp, list):
+        out_pp = []
+        for pf in pp[:5]:
+            if not isinstance(pf, dict):
+                continue
+            name = re.sub(r'[^\w .,:·()\-/+&áéíóúñüÁÉÍÓÚÑÜ]', '', str(pf.get('name') or ''))[:60].strip() or '—'
+            rows = []
+            for q in (pf.get('positions') or [])[:20]:
+                if not isinstance(q, dict):
+                    continue
+                sym = re.sub(r'[^A-Za-z0-9.\-^=/_]', '', str(q.get('symbol') or ''))[:20]
+                try:
+                    sh = float(q.get('shares'))
+                except (TypeError, ValueError):
+                    continue
+                if sym and math.isfinite(sh) and sh > 0:
+                    rows.append({'symbol': sym, 'shares': sh})
+            out_pp.append({'name': name, 'active': bool(pf.get('active')), 'positions': rows})
+        if out_pp:
+            ctx['practice_portfolios'] = out_pp
     # Khipus OS: preferencias de PRESENTACIÓN del usuario (kh_agent_prefs). Solo cambian el prompt
     # (tono y qué herramientas priorizar); nunca decisiones del comité ni órdenes.
     mode = str(ctx_raw.get('mode') or body.get('mode') or '').strip().lower()
@@ -1384,8 +1416,26 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
                    f'{rb["tool"]}({rb.get("args") or ""}) — si necesitas sus cifras, vuelve a llamar ESA herramienta con '
                    'esos argumentos (son los mismos datos que el usuario está mirando)')
     if context.get('portfolio'):
-        ctx.append('cartera del usuario (posiciones locales, acciones): ' +
+        ctx.append('MIS POSICIONES del usuario (fuente: «Mis posiciones» de la pestaña Mercado, guardadas en la app; NO son '
+                   'las carteras de práctica ni la cuenta del bróker), acciones: ' +
                    ', '.join(f'{p["symbol"]} {p["shares"]:g}' for p in context['portfolio']))
+    if context.get('practice_portfolios'):
+        ctx.append('CARTERAS DE PRÁCTICA del usuario (simuladas, pestaña Carteras; cada una es una lista aparte): ' + ' · '.join(
+            f'«{pf["name"]}»' + (' [activa]' if pf.get('active') else '') + ': ' +
+            (', '.join(f'{q["symbol"]} {q["shares"]:g}' for q in pf['positions']) or 'vacía')
+            for pf in context['practice_portfolios']))
+    if context.get('portfolio') or context.get('practice_portfolios'):
+        ctx.append('REGLA DE CARTERAS: cuando uses posiciones del usuario, di SIEMPRE de qué lista salen («Mis posiciones '
+                   '(Mercado)», «cartera de práctica “<nombre>”» o «cuenta del bróker»); son listas distintas. Si pregunta '
+                   'por una que no está en este contexto, dilo con esas palabras y ofrece abrirla.')
+    if context.get('user_claim'):
+        ctx.append('EL USUARIO CUENTA UNA NOTICIA QUE NADIE VERIFICÓ TODAVÍA. Haz esto: (1) búscala — get_news de las '
+                   'empresas mencionadas' + (' y web_search con la frase clave' if _web_available() else '') + '; '
+                   '(2) empieza diciendo si la CONFIRMASTE (fuente y fecha, [F#]) o que NO la encontraste en esas fuentes; '
+                   '(3) aunque no la confirmes, NO te quedes en «no puedo confirmar»: analízala como HIPÓTESIS («si fuera '
+                   'cierta…») con run_scenario (empresa concreta) o scenario_exposure (escenario en palabras) y di qué '
+                   'toca de las carteras del usuario, marcando todo como hipótesis; (4) nunca la presentes como hecho ni '
+                   'inventes cifras: las de impacto salen del motor.')
     if context.get('portfolio_notes'):
         # "Pregúntale a tu cartera" (core/portfolio_reports_api): reporte y consejos YA calculados
         ctx.append('INFORME DE LA CARTERA DEL USUARIO (datos verificados; úsalos para responder sobre SU cartera):\n'

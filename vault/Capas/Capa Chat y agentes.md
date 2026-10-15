@@ -9,13 +9,13 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 
 > El cerebro conversacional de Khipu, los agentes con su rol, el portero Jev y el lenguaje de comandos.
 
-**16 archivos · 11.308 líneas.** Volver al [[00 Mapa de Khipus]].
+**16 archivos · 11.374 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[core.khipu_chat.py]] — 3.642 líneas · EL cerebro conversacional de Khipu (texto).
+- [[core.khipu_chat.py]] — 3.692 líneas · EL cerebro conversacional de Khipu (texto).
 - [[engine.localcharts.js]] — 1.696 líneas · CANVAS: ROUTER DE INTENCIÓN + GRÁFICOS SIN IA (Etapa G 2026-07-11 · Etapa I 2026-07-12 · ROUTER 2026-10-02)
-- [[engine.khipu_chat.js]] — 1.436 líneas · EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Command Center (engine/command_center.js).
+- [[engine.khipu_chat.js]] — 1.452 líneas · EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Command Center (engine/command_center.js).
 - [[engine.app_canvas.js]] — 688 líneas · palette & helpers
 - [[core.agents_api.py]] — 448 líneas · PERFILES DE LOS AGENTES de Khipus OS (2026-10-06).
 - [[engine.command_center.js]] — 433 líneas · Khipu Command Center (Khipu Finance) UN SOLO Khipu: el botón original del header lo abre. NO hay orbe flotante. El panel (input + feed de resultados) …

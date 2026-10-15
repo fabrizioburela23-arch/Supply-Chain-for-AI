@@ -555,6 +555,22 @@
       });
       if (out.length) ctx.portfolio = { positions: out };
     } catch (e) {}
+    // carteras de práctica (kh_portfolios, simuladas): van con su NOMBRE para que Khipu diga de qué lista habla
+    // (Fabrizio 2026-10-15: «quiero que mencione la cartera de donde está sacando la info»)
+    try {
+      var pfs = JSON.parse(W.localStorage.getItem('kh_portfolios') || '[]'), act = W.localStorage.getItem('kh_pf_active');
+      var NB2 = W.NODE_BY_ID || {}, prac = [];
+      (Array.isArray(pfs) ? pfs : []).slice(0, 5).forEach(function (pf) {
+        if (!pf) return;
+        var ps = [];
+        (pf.positions || []).forEach(function (q) {
+          var n = q && NB2[q.nodeId];
+          if (n && +q.shares > 0 && ps.length < 20) ps.push({ symbol: String(n.mkt || n.id), shares: +q.shares });
+        });
+        prac.push({ name: String(pf.name || '').slice(0, 60), active: pf.id != null && String(pf.id) === String(act), positions: ps });
+      });
+      if (prac.length) ctx.practice_portfolios = prac;
+    } catch (e) {}
     // respuestas visuales (beta): el servidor solo manda `ui` (kblocks/1) si el navegador lo pide y dice qué sabe pintar
     try {
       var G = W.KhipuGenUI;
