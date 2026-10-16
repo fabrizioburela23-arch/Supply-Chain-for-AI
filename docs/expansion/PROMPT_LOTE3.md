@@ -35,7 +35,9 @@ PRIORIDAD 1 — VÍNCULOS (relations): de 3 a 10 verificables, de TODOS los tipo
   4 principal con 1-2 alternativas · 3 uno de pocos · 2 uno de varios · 1 marginal), sole_source, y si la fuente lo dice:
   share_of_customer_purchases, share_of_supplier_revenue, contract_value, volume con unidad, substitutability_months,
   supplier_facility / customer_facility (planta con share_of_flow_pct), component, product_affected, bom_share_pct, tier,
-  alternatives. En owns e invest pon el % de participación.
+  alternatives (cada una ≤ 160 caracteres: SOLO el nombre, sin frases). En owns e invest el % de participación va en
+  corporate (parent / subsidiaries / major_shareholders → pct), NUNCA dentro de relations: ahí no existe `stake_pct`
+  y se borra (el vínculo queda sin % y entra como PROPUESTO).
 - status (active, ended, announced, planned, rumored, disputed) + start/end; evidence con quote.
 - Prioriza criticidad ≥ 4, proveedor único y vínculos entre países.
 
@@ -44,7 +46,11 @@ PRIORIDAD 2 — EL RESTO DE LA FICHA:
   con UNA sola is_primary = true (la bolsa del país de la sede; ADR, GDR, CEDEAR, OTC y bolsas regionales alemanas nunca
   principales); other_names (nombre local, siglas, nombres anteriores).
 - market_position: puesto y/o cuota por mercado, con quién lo mide, región y período.
-- facilities con facility_id (fac-001…), capacidad con unidad, país y estado.
+- facilities con facility_id (fac-001…; el campo se llama `facility_id`, NO `id`), capacidad con unidad, país y estado;
+  sin campo `notes` (lo que quieras contar va en otra ficha o se omite).
+- classification.cat OBLIGATORIO (una categoría de data/categories.json; p. ej. motores de avión → aerospace_components).
+- evidence.published_at: si no sabes la fecha, OMITE el campo (nunca null).
+- Toda cotización en listings con su ticker (un GDR sin ticker se borra).
 - corporate: matriz, filiales y accionistas principales con %.
 - textos: qué hace, qué vende, ventaja, riesgo principal, crecimiento (es/en).
 - riesgos, regulación/sanciones y timeline con hechos fechados.
