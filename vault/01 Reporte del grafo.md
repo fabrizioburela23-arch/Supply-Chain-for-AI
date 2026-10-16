@@ -21,7 +21,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Líneas de código | 148.399 |
 | Archivos de datos del catálogo | 30 |
 | Archivos de prueba | 256 |
-| Documentos | 31 |
+| Documentos | 32 |
 | Rutas HTTP | 262 |
 | Grupos de API | 61 |
 | Herramientas MCP | 34 |
@@ -31,7 +31,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Aristas `defines_endpoint` | 296 |
 | Aristas `imports` | 2.339 |
 | Aristas `loads_script` | 93 |
-| Aristas `mentions_in_session` | 589 |
+| Aristas `mentions_in_session` | 588 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
 | Aristas `tested_by` | 1.838 |

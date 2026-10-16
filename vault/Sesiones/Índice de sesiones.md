@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 113 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
-- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]] — 1 archivos
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]] — 0 archivos
 - [[Sesión 2026-10-15 — b — REVISIÓN DE UN SOLO LUGAR - NADA SE PIERDE ENTRE DISPOSITIVOS]] — 3 archivos
 - [[Sesión 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274]] — 3 archivos
 - [[Sesión 2026-10-15 — LOTE L - 386 EMPRESAS COMPLETAS + PANEL IMPORTAR + MAPA CON LAS DE LA]] — 2 archivos

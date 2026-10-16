@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-05"
-ruta: "docs/ESTADO.md#L2514"
+ruta: "docs/ESTADO.md#L2518"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa 1 — Limpieza masiva: ✅ COMPLETA (2026-07-05, 4 batches publicados)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2514 (25 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2518 (25 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

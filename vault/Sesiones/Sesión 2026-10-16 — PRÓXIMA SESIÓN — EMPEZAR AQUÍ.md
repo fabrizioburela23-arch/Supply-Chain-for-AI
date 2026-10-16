@@ -8,15 +8,11 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (20 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (24 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
-Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo tocado (suite completa solo antes de publicar), mensajes cortos. 1. \*\*«IA concreta»\*\* (pedido: «la próxima semana invierto dinero real de varias personas; necesito cosas concretas»). Nada hecho aún (el workflow se cortó sin dejar cambios). Tres piezas, en este orden:
-
-## Archivos que menciona
-
-- [[brokerage.service.py]]
+\*\*Para ahorrar tokens: lee SOLO esta sección.\*\* Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero; buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`). Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo tocado (suite completa solo antes de publicar), mensajes cortos.
 
 ## Variables que menciona
 

@@ -1,0 +1,540 @@
+# CLAUDE.md — DETALLE (movido el 2026-10-16 para que CLAUDE.md sea corto)
+
+Este archivo NO se carga solo: CLAUDE.md apunta aquí. Nada se borró: es el texto original, palabra por palabra.
+
+## 1. Bitácora técnica por lote (infra operativa, pasos 1-26, Fase 2+, genUI, lotes J-K-L)
+
+**PASOS 1-4 HECHOS (2026-10-13)**: `events` es append-only DE VERDAD (disparador `kh_append_only`, `core/ledger_ddl.py`;
+nunca UPDATE/DELETE: una corrección es un evento nuevo); `graph_version` se toma AL CONFIRMAR (hooks before/after_commit
+en `core/hotviews/signals.py`, tablas `kh_versions`/`kh_tx_versions`, NOTIFY `khipu_graph` + sondeo 30 s) y reemplaza a
+`_graph_epoch` (borrado) como clave de caché — notas/noticias/simulaciones NO la mueven; Confirmar/RechazarVinculo emiten
+`LinkStatusChanged`; vistas rápidas v1 en `core/hotviews/` (GraphCore + Impact, mismo kernel `propagate_many`, paridad 0
+diferencias en 969 choques) con `/api/hot/status|impact/<id>|chokepoints|factors|scenario` (sobre con graph_version,
+generation, source, stale; ETag) y `/api/matrix/status|impact|metrics|factors|factor/fire` DELEGAN en ellas (impacto
+98 ms → 0,6 ms). Env: `HOTVIEWS` (on), `HOT_WAIT_S` (2), `HOTVIEWS_COALESCE_S` (1), `HOTVIEWS_LISTEN` (on).
+**PASOS 5, 6 y 8 (2026-10-13)**: IDENTIDAD — `core/identity.principal()` decide QUIÉN actúa: PIN válido = `op:fabrizio`
+(D1), token MCP = `mcp:<id>`, agentes `agent:<id>@<ver>` (solo del registro), reloj `system:<tarea>`, sin PIN `ui:anon`; el
+`actor` que manda el cliente es SOLO `declared_name` (etiqueta); `X-Khipu-Channel` (ui|voice|crypto|terminal|mcp…) se
+anota pero nunca autoriza; `require_operator` ESTRICTO en producción (sin TRADE_PIN → 403). LIBRO DE DECISIONES —
+`ontology/ledger_models.py` (decisions, decision_refs, decision_outcomes, decision_violations, decision_blobs,
+ledger_seals, ledger_meta; todas append-only) + `core/decisions.py` (`decision_scope` en la MISMA transacción del
+efecto; `record_rejection` en sesión propia que sobrevive al rollback; `approve`; texto personal solo como HMAC) +
+`core/ledger.py` (sellador cada 30 s con cadena de hashes sobre events/kh_tx_versions/decisions/broker_audit; sesión
+canónica UTC; columnas tardías SIEMPRE nulas o el verify fallaría) + `/api/ledger/status|decisions|decision/<id>|verify`.
+Toda acción de ontología deja UNA decisión (`ActionExecuted.decision_id`); sin libro → 503 `ledger_unavailable`.
+UN SOLO GRAFO — `core/hotviews/hot.graph()`: los 12 lectores del servidor (world, entities, screener, sim_agents,
+semantic, portfolio_ai, research/router|context, tensor, MCP, chat) leen la generación vigente (Postgres o snapshot);
+solo reconcile lee el catálogo a propósito. Desde Postgres se EXCLUYEN vínculos propuestos/rechazados y los hechos
+temporales migrados. Ψ del tensor = kernel restringido a FLUJO (sin socios/inversores) hasta el paso 12.
+**PASOS 7, 9, 10 y 13 (2026-10-13)**: ANCLA — `ledger_anchors` (1 fila/día UTC, tarea `ledger_anchor`), `GET
+/api/ledger/anchor` PÚBLICO (solo día/sello/hash) que smoke-mcp.yml guarda cada día como artefacto de Actions (D7);
+`verify` compara las últimas anclas con los sellos (`anchor_mismatch`); una ruptura registra `ledger.chain_break` y
+BLOQUEA SOLO DINERO REAL (`ledger.money_gate()`: brokerage preview/confirm de cuentas live + /api/trade/order|close de la
+casa en vivo → 423 `ledger_chain_broken`; papel nunca) hasta `POST /api/ledger/chain_ack` con PIN; sin base o con
+estado ilegible = no hay dinero real (falla cerrado); `check_lineage` detecta una base restaurada. GOBERNANZA —
+`governance/artifacts/*.json` (11 artefactos 1.0.0 con los valores de HOY: kernel.params, nrs.formula,
+policy.broker_risk|committee|numbers_guard|auto_apply|decide|gates, ledger.kinds, ontology.schema|shapes) +
+`governance/manifest.json` (los mantiene `scripts/build_governance.py`; `--check` en CI exige semver honesto y espejos
+con vocabulary.json/decisions.KINDS/IR) + tablas append-only `gov_artifacts`/`gov_releases` + `core/governance.py`
+(`param(aid, key)`, bootstrap 1.0.0 SIN ratificar en el primer arranque con base, `ratify` con PIN → decisión
+`governance.ratify`, refresco cada 60 s) + `/api/governance/active|status|ratify`. Editar un artefacto/TTL/vocabulario
+SIN subir versión = el import falla (CI lo atrapa). Env SOLO elige un release aprobado (D2: `GOV_RELEASE`,
+`KERNEL_PARAMS=<semver>`…); `FRAGILITY_CAP`, `IMPORT_BULK_WEIGHT_FACTOR`, `DECIDE_MIN_CONF`, `DECIDE_WAIT_S` y
+`COMMITTEE_MEMO_TTL_HOURS` ya NO cambian números (el 🩺 avisa). Paridad 0 diferencias
+(tests/test_governance_seed_parity.py + tests/golden/). Un cambio de release reconstruye las vistas rápidas. PUERTAS
+SHACL EN SOMBRA — `governance/shapes/*.ttl` (31 reglas) → `scripts/build_shapes.py` → `compiled.ir.json` →
+`core/gates/` (solo stdlib, p95 61-117 µs) en G1 apply_event, G2 execute_action, G-PROP propuestas de agentes
+(`proposed_actions.gate_report`), G-BULK importación y G8 decisiones; TODO solo avisa y queda en
+`decision_violations` (GateReport/1 ES/EN; sin decisión en curso → una `audit.gates` por transacción);
+`GET /api/ontology/gates`; `KHIPU_GATES=off` = solo emergencia. pySHACL/rdflib SOLO en requirements-dev.txt (CI:
+conformidad 0 diferencias en ≥1.000 focos). UN KERNEL EN EL CLIENTE — `engine/hotclient.js` (`window.KhipuHot`:
+`simulate`, `scenario`, `chokepoints`, `factors`, `rivals`, `stamp`; caché por generación + ETag, 8 s de tope,
+errores bilingües, demanda `'up'` = mensaje honesto SIN cifras hasta PROP-17); borrados computeDownstream,
+clientInsights/clientChokepoint, el 55 % fijo del X-Ray y el 4/0,85 de la sala de guerra; X-Ray, Cabina, livesim, voz
+(`run_live_simulation` con `engine_generation`), insights, brief, secondbrain y el Grafo Temporal muestran el MISMO
+número que /api/hot/impact (TSMC: 318 empresas ≥1 %). "Ganadores" = rivales poco golpeados con su % de DAÑO (nunca un
+% de ganancia). tests/test_no_client_engine.py lo vigila.
+**PASOS 12, 14, 15-17 y BLOQUE 2 (2026-10-13)**: VISTAS DERIVADAS (paso 14) — `core/hotviews/derived.py` + views
+card/quote/geo/alerts/account: `/api/hot/card/<id>` (NRS con sus 5 términos = la fórmula única, proveedores/clientes
+como PARES distintos de flujo, socios/inversores aparte, impacto, valuación privada verificada, estructura),
+`/api/hot/nrs` (lote), `/api/hot/geo`, `/api/hot/quote` (con sello de fuente/edad); MCP get_company, chat, voz
+(`_flow`, comparar), oswindows, agent_skills, World Monitor, Centinela/Guardián y el evaluador de alertas leen la
+ficha (NRS de todos 22 ms; Centinela 1.049 → 35 ms). KERNEL 2.0.0 (paso 12) — `governance/artifacts/kernel.params@2.0.0.json`
+(`"activation": "pin"`: NUNCA entra solo al release del repo): socios/inversores sin daño (#4), severidad de factores
+0-10 (#5), dirección 'up' con el piso, estrés severo que amplifica, ranking por Σ impacto, scenario_engine solo siembra y
+sim_agents toma los % del kernel. TODO es parámetro: con 1.0.0 (el vigente) los números son idénticos. Se activa con
+`POST /api/governance/activate {artifact, semver}` (PIN → decisión governance.activate de op:fabrizio; deshacer = activar
+la versión anterior) tras ver `GET /api/governance/preview` ("¿qué cambia?" sin tocar el kernel vivo); UI: 🩺 →
+Gobernanza (engine/governance.js: ¿Qué cambia? / Activar (PIN) / Ratificar (PIN)). Con 2.0.0: TSMC 318 → 254 empresas,
+ρ 1,21 → 0,91. UN CAMINO DE ÓRDENES (pasos 15-17) — `brokerage/alpaca.py` es el ÚNICO archivo que hace POST/DELETE a
+`/v2/orders|positions` (tests/test_order_single_path.py lo escanea); /api/trade/order|close → `brokerage.service.house_order|
+house_close` (cliente house, mismos run_checks con los límites de HOY — US$100.000 por orden, política `house_today`; cerrar
+o reducir una posición por cantidad no tiene ese tope: `house_reduce`), decisiones order.preview/confirm/submit
+(submit se escribe ANTES de llamar a Alpaca; sin libro → 503), approval.grant/deny, order.cancel; fallo tras enviar →
+`order_unknown_after_send` + 502 con el client_order_id. Dinero real de la casa = `BROKERAGE_LIVE_ENABLED=on` +
+"dinero real habilitado" en 👥 Clientes (si no → 403 live_not_enabled). Agente de trading: `trade.agent_signal` antes de
+actuar, sus órdenes por el mismo camino (source='agent', aprobación salvo papel), config como `policy.change`; tras un
+despliegue queda APAGADO con aviso (#14). Voz: `readback_sha` del resumen leído. Fills → `broker_fills` (append-only) +
+decision_outcomes (tarea cada 60 s). Puertas de órdenes: `governance/shapes/order.ttl` (62 reglas en total) + vista
+AccountRisk (Σw·Ψ) en SOMBRA; en producción corren cuando Fabrizio active ontology.shapes 3.0.0 + policy.gates 1.1.0
+con PIN. MEMORIA DE LOS NÚMEROS (bloque 2) — `ontology/history_models.py` (instruments, prices_eod, price_adjustments,
+fx_daily, metrics_eod, positions_eod; append-only salvo instruments) + `core/instruments.py` (empresa ≠ instrumento; el
+ticker de hoy es el principal; 16 multi-listados + 28 OTC/ADR en docs/REVISION_INSTRUMENTOS.md para que Fabrizio marque)
++ `core/prices_store.py` (carga diaria tras las 22:00 UTC en su hilo; splits/dividendos como factores, nunca reescritura;
+historia con huecos >12 días = incompleta; relleno de 5 años SOLO con PIN, reanudable, decisión data.backfill) +
+`/api/prices/*`, `/api/instruments/review` + 🩺 "📈 Historia de precios" (engine/pricehist.js). Riesgo: cierres
+ajustados alineados por fecha, FX diario por fecha, beta de Dimson para bolsas que cierran a otra hora; RSI de Wilder.
+`/v1/*` sigue con su cálculo (decisión #12 pendiente).
+**PASOS 18-21 Y BLOQUES 4-5 (2026-10-13)**: DECISIONES EN CADA SITIO — `core/decision_sites.py` (ayudantes: principal,
+huellas, citar política, `reserve_id`, trabajo después de la respuesta con `decisions.submit_async`): committee.run (en la
+MISMA transacción que el memo) + approval.grant/deny + puerta G5 (`governance/shapes/committee.ttl`, 7 reglas, sombra;
+corre cuando se active ontology.shapes 4.0.0), committee.portfolio_advice, policy.change (límites de clientes y de IA con
+valor anterior), research.job/research.run/claim.status (falsadores y calificaciones → decision_outcomes), proposal.create /
+proposal.auto_apply (D6: igual que hoy, policy.auto_apply 1.0.0), alert.rule (dueño en HMAC) y alert.fire (máx 1 cada
+10 min por alerta), chat.answer (async: [F#], fuentes con as_of, herramientas, modelo; texto solo como blob de 90 días),
+chat.route de Jev (decision_shadow.key = HMAC), mcp.tool_call (principal mcp:<id>, HMAC de argumentos, hash del resultado,
+solo el código de error), whatif.shock / whatif.factor_fire / insight.snapshot. Sin libro → la acción se deshace (503
+ledger_unavailable). AI_CALLS (paso 21) — `core/ai_calls.py`: UNA fila por pedido a la IA escrita SOLO desde core/ai.py
+(`_ai_complete_raw` y `_complete_single`, que usa research/llm.CoreProvider), en cola con hilo escritor (0,02 ms en el hilo
+del pedido); system/prompt/salida como blobs por hash; tabla append-only y SELLADA. CACHÉ DE PROMPT (L4-06): Claude
+`cache_control` en system ≥2.000 caracteres; ai_usage separa cache_read/cache_write con sus precios (`cache_price_for`).
+MOTOR DE CONTEXTO (bloque 4) — `core/context_engine.py`: UN detector de entidades (se reconstruye por graph_version; países
+y palabras comunes no son empresas), R(v|Q), empaquetado con presupuesto y tabla [F#]; lo usan chat, live_facts, semantic,
+research/context (fuentes una vez por job, noticias 10 min). Contrato MCP `mcp_server/contract.py`: `detail`
+(summary|standard|full) + `max_chars` (12.000 por defecto) en TODA herramienta, recorte marcado (`truncated`,
+`over_budget`; series de tiempo conservan lo más NUEVO); get_supply_chain Nvidia prof. 2: 112k → 10k caracteres.
+Operaciones nuevas `mcp_server/ops.py` (solo lectura): run_scenario, get_subgraph, get_exposure, find_similar_entities,
+calculate_correlation, get_history. LISTAS DE REVISIÓN (bloque 5) — `scripts/build_graph_review.py` →
+docs/REVISION_GRAFO.md + docs/revision_grafo.json (cada ítem con `mark: null` y las acciones que se aplicarían; NADA
+aplicado): 27 vínculos con fecha, 17 direcciones que el texto contradice (ratchet `text_direction` en audit_graph), escala de
+pesos (462 con peso 1), 58 verbos fuera del vocabulario + 12 márgenes, 200 vínculos pesados sin fecha. Puertas compiladas:
+69 reglas.
+**PASOS 22, 23, 25, 26 Y 11 (2026-10-13)**: G(t,κ) — `ontology/bitemporal.py` (`known_at` = ISO o versión del grafo;
+visible = versión ≤ κ, o recorded_at ≤ κ para eventos sin versión; `props_at` pliega en orden de REGISTRO) en
+/api/ontology/graph|graph/diff|objects/<id>, /api/hot/impact (`core/hotviews/views/asof.py`, LRU 16, 503 asof_busy) y MCP
+get_ontology_object; sin `known_at` el camino es el de siempre. GOBERNANZA COMPLETA — `core/governance_flow.py`
+(proponer con PIN solo lo de `governance/tunables.json`, regresión en hilo → decisión governance.validate, programar con
+effective_from / cancelar / deshacer, atribución), `core/governance_lint.py` (el MISMO lint que build_governance),
+`core/governance_shadow.py` (formas propuestas en sombra), /api/governance/propose|validate|validation|cancel|history|
+attribution; un MAYOR nuevo exige regresión (409 regression_required); una programada vencida se aplica antes de otra
+activación; env NUNCA enciende una versión `activation: pin`. GUARDIA — `core/ledger_guard.py`: disparadores en
+research_claims, committee_memos, broker_orders, proposed_actions, alerts, broker_clients, ai_settings que al COMMIT
+exigen decisión (GUC `khipus.decision_id` o fila en decisions/decision_outcomes con el mismo txid); modo de
+policy.guard (1.0.0 warn; 2.0.0 enforce con PIN); columnas de observación exentas. RETENCIÓN — `core/retention.py`
+(ledger.retention 1.0.0, D3): purga diaria del CUERPO de blobs vencidos que nada citó en la ventana (decision_blobs solo
+admite ese UPDATE, con una decisión retention.purge de la misma transacción); `verify_blobs` comprueba hashes.
+`ontology/checkpoints.py` apagado bajo 20.000 eventos. PUERTAS EN BLOQUEO — policy.gates 2.0.0 (PIN): G1/G2/G-PROP/G-BULK
+devuelven 422 (`GateViolation`, GateReport ES/EN); órdenes, comité y libro siguen en sombra; acciones con
+`extra='forbid'` (lista blanca: `dudosos`); reconcile exige `expect` con `plan_sha`.
+**PASO 24 (2026-10-13) — REPETIR DECISIONES**: `core/replay.py` `replay(decision_id)` (solo modo 'audit'): integridad
+(hashes, blobs PURGADOS se dicen, sello, linaje) → release de ENTONCES por hash (gov_artifacts) → G(t,κ) con la versión del
+grafo que se leyó → implementación RETENIDA (`core/impls.py`: IMPLS/STAMPS por versión; `module_view` = mismo código con los
+números de otro release sin tocar el módulo vivo; `governance.pinned(arts)` por hilo) → `identical | differs` (rutas de
+campo) `| not_replayable` (texto de IA nunca se re-pide: se verifican prompt/output_sha y el guardián; blob purgado; datos
+en vivo no guardados; anterior al paso 24). Repetibles: whatif.shock/factor_fire, committee.run (umbrales→tamaño, blob
+`replay_inputs`), order.preview/confirm (run_checks, blob `replay_inputs`), governance.validate y las PUERTAS de toda
+decisión (blob `gate_focus`). Salidas doradas `tests/golden/impl_*.json` (`scripts/build_impl_goldens.py --check`): si
+cambian, nace `@2` (nunca editar `@1`). Toda etiqueta `impl` nueva va a STAMPS (tests/test_impl_registry.py).
+`/api/ledger/replay/<id>` (sin PIN = resumen sin valores, 10/min, un grafo a la vez → 503 replay_busy) · `/why/<id>` ·
+`/audit`; MCP `replay_decision` (read); reloj `ledger_replay_sample` (1×/día UTC: 50 al azar + todas las de dinero →
+`audit.replay`; un 'differs' pone ⚖ Gobernanza del 🩺 en rojo). UI: 🩺 → 📋 Registro → ⚖ Auditoría (engine/audit.js,
+`openSistema('auditoria')`). Determinismo: ρ con `v0` fijo y factores en orden canónico (`_canonical_factors`).
+**FASE 2+ LOTE I (2026-10-13)**: rutas de escritura sin decisión = 0 (tests/test_cierre_infra.py; revocar tokens nunca
+depende del libro). `/api/trade/status` y `/api/diagnostics` sin PIN NO dicen papel/real (`mode_hidden`; UI 🔴 ante la
+duda). CSP sin 'unsafe-eval' y `connect-src` CERRADO (self, wss://ws.finnhub.io, *.elevenlabs.io, CDNs del SW): un host
+nuevo del navegador hay que añadirlo ahí (`CSP_REPORT_ONLY=true` = emergencia). Alias de voz ÚNICOS: `nodes/legal_names.js`
+(`VOICE_ALIASES`, `RESOLVE_STOPWORDS`) → snapshot → core/entities (`voice_alias` 80 < 85 de escritura). Precios de IA con
+vigencia (`core/ai_usage.PRICE_WINDOWS`). Riesgo: `core/risk_models.py` (EWMA, Ledoit-Wolf, covarianza por pares, Cornish-
+Fisher con `cf_valid`, VaR/CVaR a N días, Sharpe aritmético, ADV) + `policy.risk` (1.0.0 = números de hoy; 2.0.0 con PIN).
+Escenario → dinero: `core/scenario_pnl.py` + `kernel.calibration@*` (κ por versión del motor; con ajuste débil NO hay cifra)
++ `POST /api/hot/scenario_pnl` + `KhipuHot.pnlLine`. ⏱ del mapa = servidor (`/api/ontology/graph?as_of=&known_at=`).
+Módulos nuevos: `core/voice_api.py` (todo /api/voice/* y el prompt de voz), `core/trading_agent.py` (/api/trade/agent/*),
+`engine/trade.js` (`window._executeTradeOrder`, se carga ANTES de voice.js). Variables de modelo con `.strip()`.
+
+**CHAT CON INTERFAZ GENERATIVA — F1 (2026-10-13)**: `core/genui/` (solo stdlib) arma el sobre `ui` kblocks/1 con los
+resultados de herramientas que la respuesta YA usó — SIN IA ni E/S: `builders.py` (get_company → cifras + ficha;
+get_supply_chain → mini-grafo de FLUJO; rank_companies/market_movers → ranking/barras; get_world_events/get_news →
+línea de tiempo + mini-mapa; comité/pizarra/investigación → pros y contras + barras + aviso «información, no consejo»;
+get_risk_report → VaR/CVaR…; get_history → línea con LTTB (y varias = índice 100); run_scenario → cascada del kernel),
+`provenance.assert_from` (toda cifra EXISTE en el resultado citado o el bloque se descarta), `validate.py` (validador
+COMPILADO del esquema; jsonschema solo oráculo en CI, 0 diferencias en ≥1.000 mutaciones), `alt.py` (alt/spoken por
+plantilla, spoken sin cifras), `layout.py` (orden automático por intención; simple = 1 bloque principal, pro ≤ 4
+visuales), `rivals.py` (porte EXACTO de KhipuHot.rivals; run_scenario devuelve `least_hit_rivals` sobre TODOS los
+impactos). get_history y run_scenario entraron a MCP_READ_TOOLS. `GENUI` off|shadow|on; en shadow/on la decisión
+chat.answer lleva blob `ui_blocks` + `ui_sha` + `ui_inputs` (sin el mensaje) e impl `genui.build@1` (core/impls, dorada
+tests/golden/impl_genui.build@1.json; cambiar el armado = nace @2); el replay rehace el sobre (paso `ui_blocks`).
+🩺: tarjeta `genui` en /api/diagnostics (ms p95, KB, descartes, cifras sin fuente). Esquema corregido sin romper:
+Entity.id = id CANÓNICO (mayúsculas/espacios/&), `generation` = texto de la vista rápida. F2 (engine/genui*.js) pinta.
+**F2 CLIENTE + REVISIÓN (2026-10-14)**: `engine/genui.js` (`window.KhipuGenUI`: renderAnswer/update/renderBlock/pin/
+toTable/catalog; texto, cifras, ficha, aviso, acciones, fuentes, tabla, línea de tiempo) se carga ANTES de khipu_chat.js;
+`genui_charts.js` (línea, barras, velas, ranking, comparación, mini-grafo, cascada) y `genui_shapes.js` (formas, imagen,
+mini-mapa) NO van en app.html: genui.js los pide (`loadExtras`, mismo ?v=) con la bandera o al llegar el primer sobre
+(≤ 90 KB al abrir; los tres en el SHELL). Bandera del NAVEGADOR `kh_genui` (avatar → «Respuestas visuales (beta)») →
+`context.genui=1`; el servidor solo manda `ui` con `GENUI=on` Y esa bandera. Reglas: DOM seguro (innerHTML solo con
+KhipuChat.md), cifras SOLO del servidor con src+as_of (sin dato «—»), marcas `s/e` en UNIDADES UTF-16 en los dos lados,
+movimiento con tokens `--os-dur-*` (conteos nunca muestran «0» provisional; precios/P&L no cuentan), procedencia en
+`--os-ink-2` (AA ≥ 4,5), todo enlace por `U.linkify` (Enter/Espacio), menú ⋯ con menuitem + flechas y el foco vuelve
+al ⋯; 📌 = ventana `genui` (o la nativa: glance/supplychain/sim/compare). CARTERA DE LA CASCADA: el navegador manda
+`usd` por posición (valoración de KhipuHot.pnlLine); `khipu_chat._server_args` la PONE en run_scenario.positions y
+descarta lo que escriba el modelo (que ni ve el argumento); sin cartera → `no_positions`. «Preguntar sobre esto» manda
+`context.ref_block` (validado → línea en el prompt). El blob `ui_inputs` no guarda argumentos de texto libre
+(`genui._ARGS_SAFE`). Comparación: una fila con cifras a > 6 h entre sí no sale; si sale, con la hora MÁS VIEJA. 🩺
+`genui` juzga 24 h (errores / cifras sin fuente) y p95 solo con ≥ 20 muestras.
+**LOTE J (2026-10-14) — SERVIDOR A 5.000 + CHAT PROGRESIVO** (docs/expansion/EXPANSION_5K.md E0/E1 ✅ salvo E1.6;
+docs/CHAT_UI_GENERATIVA.md F3 ✅). ESCALA: `scripts/gen_synth_graph.py` (levanta el catálogo a N empresas; nunca escribe
+en data/) + `scripts/bench_scale.py` (banco sin base, imprime JSON) + `tests/test_scale_budget.py` (solo `KH_SCALE=1`;
+metas de la tabla 1 +20 %). KERNEL: `propagate_many` disperso (`_propagate_many_sparse`, bloques CSR de 2.048; denso solo
+si DT es denso) con 0 diferencias en impactos/saltos/orden (tests/test_scale_kernel.py guarda una COPIA del bucle denso;
+nunca regenerar doradas); `DENSE_MAX_NODES = 2000`: `MATRIX_ENGINE=dense` arriba de eso usa disperso y lo avisa
+`engine.dense_refused()` en 🩺 Gobernanza; `/api/matrix/parity` pide PIN y no arma el denso arriba del tope. TENSOR:
+nada denso N×N (`SparsePsi`, `SparseProfile`), Ψ = víctimas de la vista Impact si ya es solo flujo (`psi_source`; con
+1.0.0 una pasada de flujo, `_flow_psi`), Ψ por generación, Ψᵀc con math.fsum, empates por id (12 decimales); en
+suggest_links (IncorporarEmpresa) un grupo EMPATADO en el corte de N_PEERS entra entero con peso × lugares/tamaño
+(`_cut_with_ties`: el valor esperado del sorteo de antes, sin sesgo por id); `find_similar_entities` ordena igual que
+`peers`. VISTAS: derived guarda ≤ 2 generaciones CONTANDO la que se arma y nunca suelta la de los LECTORES; prewarm =
+tensor y luego NRS (un tensor roto no deja sin NRS); la ficha calcula SOLO su NRS si el vector no está y su ETag lleva
+la `fund_version` que usó; `content_sha` de la tarjeta a pedido. Constructor: una señal de una versión ya cubierta
+no reconstruye, un lector que llega DURANTE la construcción de su versión tampoco (`_unknown_requirement`);
+`with builder.coalesced('import'):` para lotes en varias transacciones; sobre con `rebuilding`; la espera tras una
+falla es interrumpible (`reset_backoff`, que también hace `registry.reset()` en pruebas). PAGINACIÓN:
+`/api/hot/factors?limit&offset&fields`, `/api/matrix/metrics?top=`, `/api/hot/nrs?ids=` ≤ 250 por GET (línea de
+pedido de gunicorn) y `KhipuHot.nrs` parte en 200. BÚSQUEDA: índice de prefijos + trigramas por generación en
+core/entities.py (`search_scores` = el puntaje del MCP; mismos resultados que el recorrido lineal). D-1: la propuesta
+`link_to` de IncorporarEmpresa = `status: proposed` + confianza 0 (ni lectores ni kernel la cuentan hasta
+ConfirmarVinculo) y la respuesta trae `link_id`. D-2/D-3: la puerta del lote recibe el contexto de G1 y acredita SOLO la
+fuente que se escribe (`source_id` del evento = la citada con más trust; `evidenced_by` queda en el vínculo); un
+registro SIN `source` usa `source_id` como extremo, no como fuente. CHAT F3: `_PROG` con `seq` (solo si hay
+provisionales: el JSON de siempre si no) y `?since=`; los bloques provisionales salen del MISMO `genui.build_core`, se
+publican al volver cada herramienta y se ENTREGAN solo al navegador que preguntó (`X-Khipu-Owner` en el POST y en el
+sondeo); mientras falte la herramienta PRINCIPAL de la intención (impacto → run_scenario…) lo de la pre-consulta espera
+(si la ronda termina sin ella, sale); 🩺 genui cuenta los parciales (`progressive`). Cliente: el motor vive en
+`engine/genui_progress.js` (`window.KhipuGenUIProgress`, PEREZOSO en `EXTRAS` de genui.js y en el SHELL, NUNCA en
+app.html); khipu_chat.js conserva `keyOf` (= `_ui_key`), el sondeo, el CSS y `KhipuChat._f3`; sin el motor cargado todo
+va como sin bandera. Acciones de bloques ya a la vista → `el._kcAct` (enlace tardío al onAction de la Cabina); un error
+tras los bloques los deja a la vista (`keepOnError`); fichas que el final agrupa en fila no parpadean (`reuse.has`);
+height() de cascada/línea/mini-grafo medido en Chromium (±6 %) y los contadores reservan el ancho final (CLS 0).
+Medido a 5k: Impact 105-137 ms, tensor 96-141 ms, ficha p50 0,4 ms, primera ficha 213-297 ms, búsqueda p50 2,1-2,6 ms,
+pico 177 MB. Pendiente: Impact a 20k (~630 ms; el bucle de orden/huella de core/hotviews/views/impact.py), E1.6.
+**LOTE K (2026-10-14) — IMPORTADOR DE EMPRESAS, PAÍSES ISO-2, CATEGORÍAS, CHAT (fundamentales y posición de mercado)**
+(EXPANSION_5K E2 ✅ salvo E2.7 el panel; E1.6 ✅; CHAT_UI_GENERATIVA F5.34 ✅). IMPORTADOR — ficha `khipus.company/1`
+(`data/import/company.schema.json` = artefacto `ontology.import_schema@1.0.0`; espejo Pydantic `ontology/company_schema.py`,
+JSON estricto, errores ES/EN) → `core/import_normalize.py` (países vía core/countries, MIC → sufijo Yahoo + moneda, fechas
+parciales → GENESIS nunca "ahora", `khipus_id_from` pliega Ø/Æ/ß/Ł) → `ontology/company_import.py`: `validate_batch`,
+`resolve_batch` (DELEGA en core/entities.resolve_ids cuando la vista es la vigente; índice propio solo de respaldo),
+`plan` PURO con `plan_sha` + `graph_key` + `kernel_what_changes` (mismo propagate_many sobre una copia: ρ, TSMC, top-20,
+calibración), `apply_run` (UNA decisión `ontology.bulk_import` en la MISMA transacción, candado de reconcile, 409
+`plan_changed|graph_changed|busy` —graph_changed también si la base avanzó sin reconstruir la vista—, `confirm_db`
+OBLIGATORIO = nombre exacto de la base), `rollback_run` (retracciones dirigidas, decisión `ontology.import_rollback`; volver
+a aplicar REVIVE la empresa retirada), `pending_links` (un pendiente se resuelve UNA vez y contra el mismo lote). Tablas
+append-only `import_files/import_runs/import_pending_links` (`ontology/import_models.py`; `graph_version_after` derivado
+de kh_tx_versions). Escritura rápida `bulk_import.write_events_fast` (executemany por bloques, valid_from/valid_to REALES
+= D-3, puertas G-BULK/G1 en bloque; 21.000 eventos en 11 s). Rutas `/api/ontology/import/files|plan|apply|rollback|runs`
+(PIN estricto, rate_limit, subida en trozos zlib ≤ 900 KB descomprimidos con tope → 413; `plan` = lectura, las otras con
+decisión; tests/test_cierre_infra.py). Terminal `scripts/import_companies.py` (`--lote1`, `--plan [--server URL --pin]`: la
+huella válida para `--apply --server` es LA DEL SERVIDOR; `--apply --server|--db --plan-sha --confirm-db`, `--rollback`,
+`--runs`). Puertas `governance/shapes/company.ttl` (14 reglas → 83 compiladas, sombra); artefactos `policy.import@1.0.0`
+(umbrales de nombre 85/60, tope de trozo), `ledger.kinds@5.0.0`, `ontology.shapes@7.0.0`. Adaptador del lote 1
+(`adapt_lote_2026_10_14`: CSV → fichas nivel A; certificados ADR/GDR/CEDEAR y bolsas regionales alemanas NUNCA
+principales —`_primary_rule`, aviso `primary_is_depositary`—; «(GDR)» fuera del nombre y a `other_names`; ISIN/FIGI del
+certificado solo en `listings[]`). Plan del lote 1 (nada aplicado; docs/expansion/LOTE_2026-10-14_PLAN.md): 4.174 fichas →
+4.135 crear · 39 fusionar · 934 actualizar · 0 omitir · 0 vínculos · 0 categorías por aprobar · ρ y top-20 idénticos.
+PAÍSES — `core/countries.py` (250 ISO-2 → {clave del catálogo, es, en, eu}; `iso2_of`, `catalog_key_of`, `label`,
+`iso2_of_props`; gemela `window.KhipuCountries` en engine/geo_coords.js GENERADA por `scripts/build_country_review.py --js`;
+paridad en tests/test_countries.py); el texto `country` NO se reescribe: `meta.country_iso2` derivado; vista geo, filtros,
+cartera (`portfolio_ai`: 130 → 47 grupos) y contexto agrupan por clave; `world.country_key` acepta ISO-2 ('US' → 'EEUU') y
+`_PLACE_EXTRA` cubre las abreviaturas de estados de EE.UU. ('Boulder, CO' → EEUU); NRS INTACTO (su tabla es gobernada:
+nrs.formula 1.1.0 con PIN si Fabrizio quiere); docs/REVISION_PAISES.md (generado, `--check`) para marcar. CATÁLOGO —
+8 símbolos corregidos + `listings[]` con fuente en nodes_seed.js (TEL 8035.T, Ajinomoto 2802.T, SiemensEnergy ENR.DE,
+TSMC 2330.TW secundario, SiTime SITM, QinetiQ QQ.L, Vulcan VUL.AX, Astroscale 186A.T) → `core/instruments.listings_of/
+secondary_listings/primary_conflicts` (sufijo `.IL`); los secundarios declarados resuelven como ticker BLANDO en
+core/entities (TOELY → TEL). Categorías con fuente ÚNICA `data/categories.json` (163 = 108 + 55; `merged`
+battery_components → battery_cells; etiquetas ES/EN; colores con ΔE ≥ 10 frente a todas, claro y oscuro) →
+`scripts/build_categories.py` (`--check`, `--css`) → `nodes/categories_extra.js` (GENERADO; CATS_NEW/CAT_TO_SECTOR sin
+pisar; `window.CAT_ALIASES`; en app.html tras nodes_seed.js, en el SHELL y en export_graph_v0.js) + `ontology/vocabulary.
+categories/resolve_category` + `/api/vocabulary.categories` (ETag con sha de categorías). docs/REVISION_INSTRUMENTOS.md
+§3 (generado): 7 símbolos que decide Fabrizio. RESOLVEDOR (E1.6) — `core/entities.resolve_ids(ids, name)`: lei 100 >
+isin/cik/qid 99 > figi 98 > yahoo_symbol 97 > ticker@MIC 96 > dominio (solo candidato) > nombre ≥ 85 (60-84 =
+possible_duplicate); ticker a secas NUNCA; `other_names`/`aliases` como alias («宁德时代»); identificador reclamado por dos
+= `ambiguous_id` (`identifier_conflicts()`); p50 ≤ 0,03 ms; MCP `search_companies` acepta lei/isin/cik/qid/yahoo_symbol/
+ticker+mic (también dentro de `query`). Impact vectorizado (`_order_and_stats`, guardia completa k ≤ 10000 → lexsort;
+GC apagado durante build): 20k 743 → ~455 ms, 5k ~100 ms, 937 ~20 ms, content_sha IDÉNTICO. CHAT — `get_fundamentals`
+(mcp_server/ops.py: anual company_data FMP→Yahoo→AV, trimestral Yahoo; → chart.bar ingresos + metric.tiles + barras de
+utilidad; intención `fundamentals` antes que `price`) y `rank_by_market` (E2.9: `market_position[]`/`facilities[]` de
+views/card.py en toda ficha y en MCP get_company; → ranking; sin datos «no tengo ese ranking») en MCP_READ_TOOLS;
+`strip_tool_names` saca nombres de herramientas de la prosa SIN tocar cifras (comas decimales); tiles que se ajustan al
+ancho (cifras compactas «$5,52 T», también en company.card); UNA cotización por empresa en pantalla (`KhipuOSWin.quote`,
+evento `khipu:hotquote`, tiles suscritos); acciones sin duplicar (`KhipuOSWin.actLabel`); barras compactas sin desborde
+(`genui_charts`, columna alta sin recorte). Revisión del lote (23 hallazgos) arreglada: tests/test_lotek_fixer.py.
+Pendiente: `comparison` de fundamentales; account.py y khipu_chat.py:688 filtran país por texto; demotar primarios viejos
+en producción exige PIN.
+**LOTE L (2026-10-15) — 386 EMPRESAS COMPLETAS, PANEL 📥 IMPORTAR, MAPA CON EMPRESAS DE LA BASE, PRECIOS EN VIVO PARA LAS
+IMPORTADAS** (pedido: «integra esto, agrega las que tengan info completa solamente»; EXPANSION_5K E2.7 ✅, E3.1 ✅). LOTE —
+SOLO las 386 fichas completas del Excel (395 − 9 con aviso; las 3.773 filas P2/P3 sin ficha NO): `data/import/lotes/
+2026-10-15/` (fichas_completas.jsonl.gz byte a byte + ORIGEN.json con sha, completas_record_ids.txt, fichas_excluidas.csv,
+bundle_lote2_completas.json.gz SANEADO + sanitize_log.json) que arma `scripts/import_companies.py --lote2 [--check] [--md
+docs/expansion/LOTE_2026-10-15_PLAN.md]` (determinista; `--check` en las pruebas). Esquema `ontology.import_schema@2.0.0`
+(MAYOR para el lint; toda ficha 1.0.0 sigue válida: años 1000-2099, largos, holding sin pct, `value_en` en sanciones,
+`yyyy-H1`, `counterparty.id_hint`…) + `policy.import@1.1.0` (solo AGREGA: owns sin dependency → `default_owns` 3/4/5 por
+el % que la ficha declara y vivo solo con ≥ 50 %; partner/invest sin dependency → peso 1; participación sin % → nunca
+viva). SANEADOR `core/import_normalize.sanitize_record` (puro, idempotente, SOLO formato; registro ruta/antes/después/
+regla; lo irreparable se quita SOLO ese campo; `listing_ticker_conflict`: un certificado sin ticker cuyo Yahoo no es de
+la ficha se quita —Boeing traía «BAC.BA»—): 386/386 validan (antes 29), 1.613 reparados, 6 quitados, 0 rechazadas. PLAN
+(catálogo de esta PC): 372 crear · 14 fusionar · vínculos 658 vivos / 511 propuestos / 2.031 pendientes / 0 cuarentena ·
+2.843 fuentes · 4.398 eventos · ρ 1,210718 → 1,199581 · TSMC 318 → 348 · top-20 entra Eoptolink, sale AMAT · vínculos
+3.142 → 3.753 (entradas de las matrices: `_nnz`, la MISMA medida antes y después) · `counts.links_default_weight` (vivos
+con peso de la política: owns 2, socio/inversor 37). IMPORTADOR — un PENDIENTE que se resuelve sigue las MISMAS reglas
+que un vínculo nuevo (`_route_resolved_pending`: rumor, nombre, sin %, confianza < 0,5, sin `verified`, owns sin % de
+control → PROPUESTO); participaciones guardan `this_role` (owned/owner: nunca al revés); `pending_links(limit=None)` y sin
+los de corridas DESHECHAS; contraparte del mismo lote por LEI/ISIN (`_batch_index`); nombre que apunta a la propia
+empresa ≠ ella (Brookfield Corporation ≠ BAM: sin lazo propio); una URL = una Source con el trust más alto
+(`_merge_source`); una PROPUESTA nunca cubre a un vínculo vivo (`bulk_import._dedup_twin` y `service._dedup_link_payload`);
+G-BULK suma todos los bloques (`_sum_gate`); vínculos terminados (valid_to) fuera del «¿qué cambia?»; `margin` = margen
+OPERATIVO de la ficha (nunca el bruto); `fiscal_year_label_start` = aviso (14 fichas japonesas rotulan con el año de
+inicio; el número no se toca). PANEL (E2.7) — `GET /api/ontology/import/packages` (sin PIN, lista blanca
+`data/import/lotes/<fecha>/bundle_*.json.gz`, sin enlaces; caché SOLO de meta, fichas en LRU de 1 soltado tras el plan:
+`_pkg_release`) + `GET /import/packages/plan?package=` (sin PIN, 20/10 min, resumen `_import_panel_summary`, misma huella)
++ `{package}` en POST plan/apply (400 `ambiguous_source`), `sanitize: 1`, `view: 'panel'`, `plan_counts`;
+`engine/importer.js` (`window.KhipuImporter`, PEREZOSO desde `_sysImporter()` de engine/app_main.js al abrir 🩺
+Diagnóstico; en el SHELL, nunca en app.html): ver plan → Aplicar (casilla de copia + nombre de la base + PIN por
+_tradeFetch + expect.plan_sha) → Deshacer; tras aplicar/deshacer pide RECARGAR (F5). MAPA (E3.1) — `GET /api/hot/catalog`
+(core/hotviews/api.py: SOLO lo que el grafo de los lectores tiene y el catálogo estático no; columnas, páginas, ETag =
+generación, 409 `generation_changed`) + `/api/hot/catalog/detail?ids=`; `engine/catalog_sync.js` (`window.
+KhipuCatalogSync`, justo después de nodes/merge_graph.js en app.html y SHELL) SOLO AÑADE (nodos `from_db`, vínculos,
+alias, nombres), un re-asentado, banda/contadores/_deg rehechos; la ficha de una importada dice «ficha importada (con
+fuente)» y «sin dato» (no «pre-ingresos»). PRECIOS — EL universo `core.instruments.universe()/live_symbols()/
+eod_symbols()` (catálogo + primarios importados; `primary_symbol`, `baseline_symbols`, `phase_in`) lo leen live_caps,
+live_fundamentals y prices_store; nuevos de a `NEW_PER_CYCLE` 120 (live_caps) / `NEW_PER_DAILY_RUN` 500 (historia); Yahoo
+≤ 15 pedidos/min (`core/quotes.YAHOO_BATCH_LIMITER`); tras un despliegue live_caps publica el CATÁLOGO primero;
+`/api/market/live_caps` trae `universe` y `cycle`; `prices_store._targets` = tabla ∩ universo (salta «dado de baja» y lo
+deshecho); el navegador NO pide en su ronda los `from_db` (llegan por live_caps). Sin variables de entorno nuevas.
+Pendiente: aplicar en producción (Fabrizio, PIN); 6 «¿duplicada?» del plan; volver a calibrar `kernel.calibration`; 2.031
+pendientes esperan las fichas P2; E3.4/E3.5 (mapa a 1.339 abre +1,2 s); `link.direction_text_suspect` con «Bank USA»
+(nueva versión de shapes); suffix .BK/.SN/.CA/.BA sin hora de bolsa (beta de Dimson).
+
+
+## 2. `engine/` en detalle (Khipus OS, Escritorio, módulos del navegador)
+
+- `engine/`: temporal-graph.js (~1,050 líneas, Grafo Temporal), khipu_lang.js
+  (parser de comandos), guide.js (Guía), voice.js (Khipu voz/ElevenLabs),
+  command_center.js (Khipu texto), graph3d.js (WebGL, ?webgl3d=1, carga perezosa), globe.js
+  (motor de globo unificado; reemplazó a geoglobe.js+planetarium.js, borrados
+  en Track A Fase 2), universe2d.js (camino sin WebGL, el default),
+  secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js, timeline3d.js
+  (Grafo Temporal en 3D: Z = fecha de inicio de la relación; modo "⬗ Tiempo 3D"
+  de la pestaña tkg; solo hechos con fecha; montaje perezoso, dibujo bajo demanda).
+  maptime.js (⏱ TIEMPO EN EL MAPA PRINCIPAL: slider de fecha + capa ⚡ Eventos;
+  window.KhipuMapTime, __tkgShow(vista); GRAPH ASOF mueve el mapa).
+  **KHIPUS OS v1 (2026-10-06) — LA interfaz** (spec y contratos: `docs/KHIPUS_OS.md`): la Cabina
+  evolucionada. Arranca SIEMPRE al cargar (salvo `sessionStorage kh_os_classic='1'` = "Vista clásica").
+  Tokens `--os-*` en `#bcp-ov` (claro = look del video, `body:not(.dark)`; oscuro = predeterminado).
+  Barra superior mínima (mascota+Khipus, paleta ⌘K, "Herramientas / Tools" con TODAS las pantallas, mascotas de
+  agentes, saldo de práctica 🧪/🔴 sin pedir PIN, ES/EN, ☾/☀, iniciales). ≥1100 px: chat en la columna
+  central (`#kd-center`) y ventanas en FLANCOS (desktop.js `kh_desk_flank`, `isCentered()`); <1100 px:
+  "solo chat" (`kd-solo`, `chatInCenter()`), ventanas encima. Esc NO cierra el OS. Ventanas nativas
+  (`engine/oswindows.js`, `BixbyCockpit.registerKind`): glance ("en una mirada"), conviction,
+  supplychain, agents. Mascotas y preferencias: `engine/mascot.js` (`KhipuMascot`, `KhipuAgentPrefs`,
+  `kh_agent_prefs` sincronizado; SOLO presentación, nunca decide dinero). Chat: progreso real
+  `GET /api/khipu/chat/progress/<req_id>`, respuesta con `agents_used`/`entities`/`cards`/`sources[].as_of`,
+  `context.mode` simple|pro; perfiles `GET /api/agents/profiles` (core/agents_api.py). Mapa: no se
+  calcula tapado (`window._ensureMapSettled()`). Escenas viejas con colores fijos llevan `kd-legacy-dark`.
+  **ESCRITORIO KHIPU (2026-10-04, K1)**: desktop.js (`window.KhipuDesk`): dentro
+  de la Cabina (cockpit.js) cada escena es una VENTANA (– ▢ ✕, arrastre,
+  redimensión, snap a mitades/cuartos, barra de tareas; móvil = hojas). UNA
+  sola puerta: `BixbyCockpit.stage(kind,arg,opts)` → `KhipuDesk.open`;
+  `render(s,kind,arg)` pinta en el cuerpo de la ventana. Adopción de paneles
+  (adoptInto) es POR VENTANA (`_adoptCtx`/`restoreAdopted(winId)`). Nuevas
+  escenas: añadir a KIND_META (ícono/título ES-EN) y, si adoptan un panel, a
+  adoptKinds; solo multi-instancia si pintan con `s.querySelector` (no ids
+  globales). Clases de botones kd-b-* ≠ estados kd-min/kd-max. kh_desk_mode=off
+  = Cabina clásica (no quitar: red de seguridad). Visión: será el ÚNICO interfaz.
+  REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
+  (desde el paso 13 SOLO estado visual: `frames()` = película salto a salto con el `hop` del servidor,
+  `baseline()`; NADA de propagación — las cifras salen de `window.KhipuHot`, engine/hotclient.js),
+  livesim.js (simulación en vivo sobre el mapa), layers.js (capas del mapa),
+  insights.js (tarjetas #an-insights), brief.js (brief matinal). Todos leen
+  window.NODES/LINKS/computeNRS/SECTORS9 y degradan sin DATABASE_URL.
+
+## 3. Phase 3, reparación, chat, voz, habilidades, limpieza (detalle de arquitectura)
+
+- **PHASE 3 (2026-09-30)** — ver docs/PHASE3.md, BROKERAGE.md, MCP.md, INVERSION_TERCEROS.md:
+  - `research/outcomes.py` (línea base de precio por claim → evaluación por
+    horizonte vs SPY, track record, Brier, confianza calibrada; `evaluate_due`
+    corre 1×/día desde core/live_caps) · `research/committee.py` +
+    `committee_api.py` (/api/committee/*: comité de inversión — convicción por
+    horizonte, tamaño por volatilidad objetivo, memo IA con guardián de cifras o
+    determinista; SIEMPRE aprobación humana) · UI `engine/committee.js`
+    (`KhipuCommittee.open(id)`, Mercado → 🏛 Comité, X-Ray, `NVDA COMITE`).
+    KHIPUS OS (2026-10-09): el overlay #cm-ov usa los tokens --os-* (mismos valores que cockpit.js, test) y
+    MASCOTAS por puesto (no hay personajes humanos: no reintroducir Valeria/Kenji/…); la sala nombra a los puestos por
+    mascota (`research/committee._mascot_voice`, `agent_skills.SEAT_MASCOT/WORKING`).
+    SALA DEL COMITÉ (2026-10-02): `research/deliberation.py` arma puestos + debate
+    con PLANTILLAS sobre claims/evidencia/X#/D1/R1/Q1 reales (sin IA extra);
+    en vivo vía progress.messages, guardado en memo.memo.transcript.
+    DEBATE CON IA (2026-10-02 b): `research/debate.py` — cada puesto razona con IA
+    + réplicas (guardián de cifras; S# al presidente; AgentRun por llamada); sin
+    claims el comité ENCARGA la investigación primero; key_conclusions en el memo.
+    PIZARRA (Comité → 📋, GET /api/committee/board, POST /board/refresh) +
+    herramienta get_conclusions_board (MCP/Khipu) + tarjeta en el brief matinal.
+    `research/analytics.py`: ratios/pares/técnico CALCULADOS como evidencia
+    'analysis'; agentes en paralelo (RESEARCH_PARALLEL); research/errors.py.
+    COMITÉ DE CARTERA (2026-10-03): core/portfolio_advisor.py + POST
+    /api/committee/portfolio + engine/pfcommittee.js (Comité → 💼 Mi cartera; perfil
+    kh_investor_profile). Consejo de IA, nunca órdenes.
+    REPORTES/NOTICIAS/PREGÚNTALE de la cartera: core/portfolio_report.py, core/news_feed.py,
+    core/portfolio_reports_api.py (/api/portfolio-report/*, /api/news/portfolio; dueño =
+    X-Khipu-Owner) + engine/pfreports.js.
+  - **GASTO DE IA**: `core/ai_usage.py` registra TODA llamada (core/ai.py check/record),
+    límites con PIN (/api/ai/usage, /api/ai/usage/limits), UI 🩺 → 💰 Gasto IA
+    (engine/aispend.js). Atribuir trabajo de fondo con `ai_context(feature, who)` /
+    `bind(fn)` para hilos. No crear llamadas a proveedores fuera de core/ai.py.
+  - **JEV / TypeSafe (2026-10-04)**: `core/decide.py` = ÚNICA puerta al modelo
+    de DECISIÓN Jev (POST api.typesafe.ai/v1/systemone; choice/score/noul con
+    probabilidades calibradas; no genera texto). Registra en 💰 Gasto IA
+    (proveedor 'typesafe'). MODO SOMBRA por defecto (DECIDE_SHADOW=on): decide
+    y se compara con lo que hizo el sistema (tabla decision_shadow,
+    GET /api/decide/shadow con PIN de operador); manda solo si DECIDE_CONTROL
+    lista la función. Primer uso: portero del chat (`chat_gate_*` en
+    khipu_chat.run_chat). Nunca decide dinero. Ver docs/JEV.md. AL MANDO (2026-10-06, `DECIDE_CONTROL=chat_gate`):
+    `decide.chat_plan` → local_fact = ficha SIN IA, needs_tools = ≤2 rondas, @agente local/fast/deep;
+    `out.router` dice quién decidió. Desde 2026-10-10: con clave y DECIDE_CONTROL vacío, chat_gate manda por defecto (off/none/0 lo apaga).
+  - `core/scenario_engine.py`: análisis estructural de escenarios (tema/actor/evento →
+    golpeados/ganadores/caminos) para la simulación por agentes.
+  - `brokerage/` (/api/brokerage/*): clientes con SU cuenta Alpaca (env / llaves
+    cifradas Fernet BROKERAGE_ENC_KEY / OAuth), papel por defecto, dinero real
+    = BROKERAGE_LIVE_ENABLED=on + client.live_enabled, controles previos
+    (risk.py), preview→confirm, cola de aprobación, auditoría append-only,
+    kill switch BROKERAGE_TRADING_ENABLED. UI `engine/clients.js`
+    (`KhipuClients.open()`, Mercado → 👥 Clientes con insignia de pendientes).
+  - `mcp_server/` (POST /mcp JSON-RPC, MCP 2025-06-18/2025-03-26; /api/mcp/*
+    tokens kmcp_ con scopes read|research|trade hasheados; OAuth 2.1+PKCE en
+    /oauth/* y /.well-known/*). UI `engine/mcpconnect.js` (🩺 → 🤖 Conectar IAs).
+  - `core/world.py` (/api/world/*: events GDELT/USGS/EONET + estrechos +
+    inestabilidad, exposure, brief, reference) + `engine/worldmonitor.js`
+    (`KhipuWorld`): la pestaña Geopolítica ES el World Monitor (un solo globo;
+    el alias geosituation.js se borró en la limpieza 2026-10-11).
+  - `core/celestrak.py` (2026-10-13): ÚNICO cliente de CelesTrak para /api/space/tle y el chat (copia por grupo, nunca
+    repite un grupo antes de 2 h — CelesTrak bloquea IPs insistentes —, última copia buena hasta 7 días, sin copia →
+    órbitas de REFERENCIA rotuladas). No volver a llamar a celestrak.org desde otro sitio.
+  - `core/space.py` (/api/space2/*: Launch Library 2 normalizado, caché con
+    presupuesto de 12 req/h, stale honesto) + `engine/spacemonitor.js`
+    (`KhipuSpace`): la pestaña Espacio ES el Space Monitor (globo + lanzamientos).
+  - `core/portfolio_ai.py` (/api/portfolio-ai/ask|propose|themes): asistente de
+    carteras (construcción determinista + explicación IA con guardián) dentro de
+    engine/portfolios.js; crea carteras SIMULADAS, nunca órdenes.
+  - engine/riskreport.js: pantalla guiada (mis posiciones / cartera rápida en
+    USD / ejemplo) y resultado en lenguaje simple; build_report acepta {symbol, usd}.
+  - **MISIÓN DE REPARACIÓN (2026-10-04, `REPAIR_LOG.md` + `docs/REPARACION_DIAGNOSTICO.md`)**:
+    reparación sin features ni gasto nuevo; cada arreglo = 1 commit + test que
+    fallaba antes (`tests/test_repair_*.py`). P0 investigación (R1-R6):
+    `core/ai.py` corta-circuito por proveedor (`provider_available`,
+    `circuit_open`, `ai_circuit_state`, `last_errors`; el 🩺 lo cierra con un ping)
+    + `_retry_transient` (429/5xx/red); `research/llm.py` espera y reintenta el
+    MISMO proveedor ante `AIBusyError` (nunca salta de proveedor por eso);
+    `research/runner.py` cola FIFO de jobs (`execute_job_async` encola; workers
+    `RESEARCH_JOB_CONCURRENCY`) + pool de agentes COMPARTIDO (`_AGENT_POOL`) +
+    `_recover_orphans` tras reinicio; estados de ResearchJob: queued/running/done/
+    **partial** (faltan analistas; `synthesis.coverage`; el siguiente pedido corre
+    solo lo que falta, `only_missing`)/**deferred** (presupuesto agotado;
+    `trigger.resume_after`; `resume_deferred` solo pedidos de personas, máx 3/día)/
+    failed. Todo consumidor nuevo de jobs DEBE tratar partial y deferred.
+    `core/scheduler.py` = ÚNICO reloj del servidor (registrar tareas en server.py;
+    nunca IA). `research/health.py` → `/api/research/health`, bloque `research`
+    en `/api/health`, tarjeta 🔬 del 🩺 y MCP `get_research_health`. Una sola
+    tabla de precios de IA (`core/ai_usage.PRICES`; `research.llm.estimate_cost`
+    delega). NO reintroducir: hilo por job, pool por job, `CLAUDE_RETRY_SLEEP_S`,
+    `_PRICE` en research, ni "skipped por presupuesto". P0 comité (C6-C10):
+    `validation_status`/`compute_sizing(validated=)` (sin ≥MIN_N calificaciones
+    por analista → tamaño a la MITAD y "no validado"), `quorum_check` (fundamental
+    + 3 de 4 o `decision_code='INSUFFICIENT_DATA'`, sin debate ni presidente IA),
+    `research/falsifiers.py` (reglas `{metric, op, threshold, by}`; estado de claim
+    `falsified`; `direction_errors` en agentes y presidente), conf-v2 en
+    `research/confidence.py` (`computed` y `khipus:*` no son fuentes independientes;
+    cifras de dinero sin fuente externa → tope 0.5), checkpoints en días hábiles NYSE
+    (`business_days_after`, etiquetas `interim_5b`/`final_20b`…) y
+    `core/live_caps._daily_outcomes` (marca el día solo si corrió bien; tarea
+    `research_outcomes_daily`). Columnas nuevas van en
+    `ontology/db._COLUMNAS_TARDIAS` (ALTER … IF NOT EXISTS), nunca a mano.
+    P1 grafo (G1-G4): `scripts/audit_graph.py` + `data/graph_audit_baseline.json`
+    (trinquete en tests/test_graph_audit.py: tras cambiar el catálogo, exportar y
+    `--write-baseline` si MEJORA). Ontología append-only de verdad: `links.event_id`
+    + `LinkCreated` idéntico vigente → `dedup_of` (no-op; `allow_duplicate` para
+    hechos con ventana) + `LinkRemoved` con `properties.retracts_event_id` =
+    retracción DIRIGIDA y RETROACTIVA (es una corrección: valid_from = el de la
+    creación). Acciones `RetractarVinculo` / `FusionarEntidad` (alias → retired +
+    merged_into; vínculos re-creados en el canónico con su fecha). Para "la
+    relación terminó" seguir usando RechazarVinculo/LinkRemoved con fecha.
+    `ontology/reconcile.py` (+ scripts/reconcile_v0_to_ontology.py, `/api/ontology/
+    reconcile/plan|apply|rollback`, panel 🩺 engine/reconcile.js): catálogo ↔
+    Postgres SOLO con eventos (canal `reconcile_v0:<run_id>`), aplicar = PIN +
+    nombre exacto de la base; direcciones/pesos/faltantes/sobrantes solo si
+    Fabrizio los marca; deshacer por corrida (de la más nueva a la más vieja).
+    `NODE_BY_ID[alias]` SIEMPRE lleva al canónico (merge_graph.js): quien
+    enumere NODE_BY_ID para listar nodos filtra `NODE_BY_ID[k].id === k`, y quien
+    busque grado/vínculos por id usa `window._canonId(id)`. Revisión G5/G5b: un
+    LinkCreated deduplicado SOLO "asciende" cuando su gemela se retracta con
+    `promote_dedups: true` (lo emite solo `rollback_run`), si es de otro canal y
+    no queda copia viva — misma regla en tablas y replay (`_promotion_choice`);
+    el replay mata una creación con una remoción no dirigida solo si se REGISTRÓ
+    antes. Reconcile: candado `pg_try_advisory_lock`, `expect` (plan revisado),
+    PIN configurado OBLIGATORIO (sin TRADE_PIN → 403). Columnas tardías: solo se
+    alteran si faltan (`lock_timeout`). P2: `core/world.source_down` (fuente con
+    404/403 seguidos en pausa 1 h), `core/ops_check.py` (`/api/ops/last_check`),
+    `scripts/smoke_mcp.py` (solo lectura), `core/logjson.py` (`LOG_JSON=on`).
+  - **Khipu chat (2026-10-01)**: `core/khipu_chat.py` (POST /api/khipu/chat):
+    cerebro con herramientas (bucle JSON, máx 5 rondas, ~45 s; reutiliza
+    mcp_server/tools.py — SOLO lectura, nunca órdenes) + `engine/khipu_chat.js`
+    (router compartido por la Cabina y command_center). Regla: SOLO atajos
+    explícitos (gramática KHIPU, demo, compra/venta con confirmación,
+    "gráfico:", nombres exactos de pantallas); toda pregunta va al cerebro.
+    NO reintroducir el router de regex sueltos ni el "fallback = gráfico".
+    Nunca mostrar texto crudo del modelo: si el paso JSON falla o trae restos
+    (`leaked()`), `synthesize()` hace que el agente redacte la respuesta en prosa.
+  - **VOZ PARA KHIPUS OS (2026-10-11)** — contrato v2 de 17 herramientas (antes 31): server.py `_bixby_client_tools`
+    (+ `_VOICE_TOOL_TIMEOUTS` = `VOICE_TOOL_TIMEOUT_S` de engine/voice.js, test), `VOICE_SCREENS` = ids de
+    `BixbyCockpit.screens()` con su nombre VISIBLE (test), `RETIRED_VOICE_TOOLS` (25) que cada sync SUELTA del agente
+    (`voice_agent.ensure_tools(retired_names)`, sin borrar recursos ni webhooks del dueño; el 🩺 avisa si siguen) y
+    voice.js conserva ALIAS para ellas. La pregunta hablada va al chat CENTRAL (`BixbyCockpit.chatVoice`); cada pantalla
+    se abre como ventana; `@cadena: …` invoca a una mascota. RECORRIDO DE UN MINUTO: guion ÚNICO `engine/tour_script.js`
+    (`window.KHIPU_TOUR`, JSON estricto; `core/tour.py`) — con la voz conectada lo NARRA el agente
+    (`run_guided_demo` start/next/stop, `BixbyCockpit.tour`), sin conversación suena con la MISMA voz del agente
+    (`GET /api/voice/tour/<lang>/<paso>`: solo frases del guion, caché) y sin voz queda escrito. Nunca reintroducir el
+    texto del recorrido dentro de cockpit.js ni "cuenta simulada" fija (puede ser dinero real).
+    BOTÓN DEL RECORRIDO (2026-10-12, "usa la voz antigua"): con la voz contratada (`BixbyVoice.isConfigured()` lee
+    `window.V8.Keys`, NO un `Keys` global que no existe) abre una sesión de SOLO ESCUCHAR (`BixbyVoice.narrateTour()`,
+    sin micrófono, `user_message` con el pedido, CONTEXT_UPDATE `listen_only:true`) y narra el AGENTE — la misma voz que
+    hablando; 🎙 en esa sesión = hablarle (`upgradeToMic`, mismo socket); vigía de 35 s y respaldo local (9 s/20 s).
+    NO mandar `user_activity` (ElevenLabs no deja hablar al agente ~2 s tras cada uno). Los clips son solo respaldo y
+    usan la voz REAL (`voice_agent.tour_voice`: variante del idioma + ajustes + modelo) con ETag/no-cache.
+    LA APP MARCA EL RITMO (2026-10-12 b, conversación real: el agente decía la frase 1 y terminaba su turno sin pedir
+    `next` → "solo dice el primer paso"): tras `start`, cuando la frase terminó de sonar, voice.js avanza la pantalla y le
+    manda la siguiente como `user_message` "[TOUR n/N] <frase>" (bucle `_driveTick`, máx. 2 envíos por paso, luego
+    respaldo local / pausa); si el agente llama `next` igual, una sola entrega por paso. Nunca volver a depender de que
+    el modelo encadene herramientas solo.
+  - **Habilidades por agente (2026-10-06)**: `research/agent_skills.py` — al hablarle a un agente (@cadena,
+    @tecnico…) responde DESDE SU ROL con su paquete en vivo (`skill_packet`: evidencia E# + extras S#: Cadena =
+    tensor/países/riesgo/eventos; Técnico = indicadores; Fundamental = estados/ratios/pares…) sin exigir
+    investigación previa ni base de datos; abre la ventana de su rol (acción `open_window` {kind, id}). Nunca
+    volver a "sin conclusiones → investigación general". `FOCUS`/`SKILLS` bilingües; SKILLS se repite en
+    oswindows.js (un test lo compara).
+  - **LIMPIEZA "sin cosas sueltas" (2026-10-11)** — no reintroducir copias:
+    - **Registro ÚNICO de agentes**: `engine/agents_registry.js` (`window.KHIPU_AGENTS`; JSON estricto entre
+      `KHIPU_AGENTS = ` y el `;`) = mascotas (nombre, rol, colores, `ink`, puestos), puestos (ícono, nombres,
+      `short_*`, `badge_*`, `call_*`, `desk`), palabras de mención (`@radar`, `@analista`, `@chain`… también en el
+      servidor) y herramienta → mascota. Python lo lee con `core/agents_registry.py`; mascot.js, khipu_chat.js,
+      committee.js, core/khipu_chat.py, research/agent_skills|deliberation|ask_agent|runner y core/agents_api
+      derivan de ahí. Se carga ANTES de mascot.js (app.html + SHELL); los arneses de node de los tests lo cargan
+      primero. Nueva mascota/puesto → SOLO ese archivo (tests/test_agents_registry.py).
+    - Diálogos: `KhipuToast.prompt({password})` y `window.khipuActor({ask})` (engine/toast.js) — ningún
+      `window.confirm/prompt/alert` en engine/ ni app.html (el PIN se pide OCULTO; tests/test_cleanup_dialogs.py,
+      tests/test_cleanup_client.py). Actor por defecto: 'usuario'.
+    - Investigación: `agent_runs.open_questions` (las preguntas abiertas ya NO van en `errors`; leer con
+      `research.models.open_questions_of/errors_of`); `permitted_tools` se DERIVA de `context.AGENT_NEEDS`; el
+      agente de noticias recibe el perfil en vivo; sin "skipped por presupuesto" por analista (el job se difiere).
+    - Tres productos, tres nombres: **Investigación con evidencia** (equipo de analistas, engine/research.js),
+      **Tesis rápida** (UNA respuesta de IA, `POST /api/thesis/quick`, antes /api/research/deep) y **Búsqueda
+      profunda** (pregunta libre, `/api/deep/analyze`).
+    - Borrados: `/api/ai/command` (sin llamadores), `engine/geosituation.js`, `run_agent`, `GEO_RISK`; graph3d.js e
+      hypergraph.js se descargan solo con `?webgl3d=1`. `/api/voice/voices` y `/api/diag/recent` piden PIN de operador.
+  - `core/pin.py`: EL verificador del PIN de operador (X-Trade-Pin) con bloqueo
+    por IP (último salto XFF) y global compartido — `require_pin` (trading) /
+    `require_operator` (escrituras de ontología). Nunca reimplementar.

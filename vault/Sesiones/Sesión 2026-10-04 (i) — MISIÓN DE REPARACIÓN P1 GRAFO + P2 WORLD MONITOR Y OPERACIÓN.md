@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1246"
+ruta: "docs/ESTADO.md#L1250"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (i) — MISIÓN DE REPARACIÓN · P1 GRAFO + P2 WORLD MONITOR Y OPERACIÓN (sw v210)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1246 (32 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1250 (32 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
