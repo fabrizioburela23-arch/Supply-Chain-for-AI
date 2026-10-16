@@ -129,5 +129,6 @@ _Además lo importan 15 pruebas (lista abajo)._
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2]]
 - [[Sesión 2026-10-03 — Cierre de Phase 3]]

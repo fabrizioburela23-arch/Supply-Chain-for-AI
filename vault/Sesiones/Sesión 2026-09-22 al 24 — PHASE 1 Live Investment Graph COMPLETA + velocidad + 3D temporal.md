@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-22"
-ruta: "docs/ESTADO.md#L2105"
+ruta: "docs/ESTADO.md#L2123"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-22 — PHASE 1 "Live Investment Graph" COMPLETA + velocidad + 3D temporal
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2105 (88 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2123 (88 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

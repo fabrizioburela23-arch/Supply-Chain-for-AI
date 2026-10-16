@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L1520"
+ruta: "docs/ESTADO.md#L1538"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-03 (d) — KHIPU YA NO FILTRA SU BORRADOR; EL AGENTE REDACTA SIEMPRE
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1520 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1538 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

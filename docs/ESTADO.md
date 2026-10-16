@@ -7,6 +7,24 @@ correcciones de arquitectura respecto al roadmap original (backend real =
 Flask/Python, no Node; `/v1/*` ya es la API pública monetizada; Neo4j Aura
 estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
+## ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
+
+Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
+tocado (suite completa solo antes de publicar), mensajes cortos.
+
+1. **«IA concreta»** (pedido: «la próxima semana invierto dinero real de varias personas; necesito cosas concretas»).
+   Nada hecho aún (el workflow se cortó sin dejar cambios). Tres piezas, en este orden:
+   a) Chat: «optimiza mi cartera» → respuesta en forma de PLAN (3-5 movimientos con USD, antes/después, qué vigilar),
+      no descripción. Información, no consejo; cifras solo de herramientas.
+   b) Botón «Preparar órdenes»: el plan → `brokerage.service.preview_order` por cliente (SOLO previews; confirmar con
+      PIN como siempre; 🧪/🔴).
+   c) Brief matinal: tarjeta «Qué cambió en tu cartera desde ayer y por qué» (precios + eventos del grafo).
+2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
+3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
+   borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).
+4. Luego: volver a calibrar `kernel.calibration` tras importar; E3.4/E3.5 (mapa rápido a 1.339); `comparison` de
+   fundamentales; 6 «¿duplicada?» del plan del lote 2.
+
 ---
 
 # SESIÓN 2026-10-15 b — REVISIÓN DE «UN SOLO LUGAR»: NADA SE PIERDE ENTRE DISPOSITIVOS — sw v275

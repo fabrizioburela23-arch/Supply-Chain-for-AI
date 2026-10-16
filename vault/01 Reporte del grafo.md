@@ -26,12 +26,12 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Grupos de API | 61 |
 | Herramientas MCP | 34 |
 | Variables de entorno | 158 |
-| Sesiones de trabajo | 112 |
+| Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 763 |
 | Aristas `defines_endpoint` | 296 |
 | Aristas `imports` | 2.339 |
 | Aristas `loads_script` | 93 |
-| Aristas `mentions_in_session` | 587 |
+| Aristas `mentions_in_session` | 589 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
 | Aristas `tested_by` | 1.838 |

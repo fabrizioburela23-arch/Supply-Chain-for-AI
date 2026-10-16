@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-15"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L30"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-15 b — REVISIÓN DE «UN SOLO LUGAR»: NADA SE PIERDE ENTRE DISPOSITIVOS — sw v275
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 30 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -20,4 +20,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[engine.sync.js]]
 - [[tests.test_one_portfolio_store.py]]
 
-← más antigua: [[Sesión 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274]]
+← más antigua: [[Sesión 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274]] · más nueva: [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]] →
