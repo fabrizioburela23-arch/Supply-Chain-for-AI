@@ -13,12 +13,13 @@ Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chi
 tocado (suite completa solo antes de publicar), mensajes cortos.
 
 1. **«IA concreta»** (pedido: «la próxima semana invierto dinero real de varias personas; necesito cosas concretas»).
-   Nada hecho aún (el workflow se cortó sin dejar cambios). Tres piezas, en este orden:
-   a) Chat: «optimiza mi cartera» → respuesta en forma de PLAN (3-5 movimientos con USD, antes/después, qué vigilar),
-      no descripción. Información, no consejo; cifras solo de herramientas.
-   b) Botón «Preparar órdenes»: el plan → `brokerage.service.preview_order` por cliente (SOLO previews; confirmar con
-      PIN como siempre; 🧪/🔴).
-   c) Brief matinal: tarjeta «Qué cambió en tu cartera desde ayer y por qué» (precios + eventos del grafo).
+   DECISIÓN DE FABRIZIO (2026-10-16): siguen siendo RECOMENDACIONES (información, no consejo; nunca órdenes ni
+   borradores de órdenes), solo que MÁS CONCRETAS. Nada hecho aún. Dos piezas, en este orden:
+   a) Chat: «optimiza mi cartera» (y preguntas parecidas) → recomendación en forma de PLAN: 3-5 movimientos con
+      empresa + comprar/vender/mantener + monto en USD o % de la cartera + el porqué en una línea; cartera antes/después
+      (concentración, riesgo); qué vigilar y cuándo revisar. Hoy describe la cartera y «no ayuda». Cifras solo de
+      herramientas (guardián); aviso «información, no consejo». NO botón «preparar órdenes».
+   b) Brief matinal: tarjeta «Qué cambió en tu cartera desde ayer y por qué» (precios + eventos del grafo).
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).
