@@ -51,3 +51,4 @@ tags: ["capa/dinero", "tipo/capa"]
 | la usa | [[Capa Voz]] | 2 |
 | usa a | [[Capa Investigación]] | 2 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 1 |
+| la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 1 |

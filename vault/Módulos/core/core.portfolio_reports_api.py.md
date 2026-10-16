@@ -54,7 +54,7 @@ _Además lo importan 2 pruebas (lista abajo)._
 
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
-| `POST` | `/api/news/portfolio` | `news_portfolio` | [[engine.app_main.js]], [[engine.pfreports.js]], [[engine.temporal-graph.js]] |
+| `POST` | `/api/news/portfolio` | `news_portfolio` | [[engine.app_main.js]], [[engine.brief.js]], [[engine.pfreports.js]], [[engine.temporal-graph.js]] |
 | `DELETE,GET` | `/api/portfolio-report/<rid>` | `one_report` | [[engine.pfcommittee.js]], [[engine.pfreports.js]], 2 pruebas |
 | `POST` | `/api/portfolio-report/ask` | `ask` | [[engine.pfcommittee.js]], [[engine.pfreports.js]], 2 pruebas |
 | `POST` | `/api/portfolio-report/generate` | `generate` | [[engine.pfcommittee.js]], [[engine.pfreports.js]], 2 pruebas |

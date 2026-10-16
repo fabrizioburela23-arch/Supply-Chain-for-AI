@@ -117,7 +117,7 @@ _Además lo importan 9 pruebas (lista abajo)._
 | `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | 2 pruebas |
 | `POST` | `/api/ontology/events` | `events_create` | 3 pruebas |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | 1 prueba |
-| `GET` | `/api/ontology/feed` | `global_feed_route` | [[engine.app_main.js]], [[engine.khipu_lang.js]], 1 prueba |
+| `GET` | `/api/ontology/feed` | `global_feed_route` | [[engine.app_main.js]], [[engine.brief.js]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | — |
 | `GET` | `/api/ontology/graph` | `graph` | [[engine.maptime.js]], 3 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[engine.khipu_lang.js]], 1 prueba |

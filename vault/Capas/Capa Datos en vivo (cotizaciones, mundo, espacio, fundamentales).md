@@ -9,7 +9,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.886 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.968 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -25,9 +25,9 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[engine.geo_coords.js]] — 632 líneas · Coordenadas geográficas para los globos 3D (Khipu Finance) Los nodos NO traen lat/long: solo `country` (EEUU, Japon, "Estados Unidos (HQ Denver, …
 - [[core.quotes.py]] — 509 líneas · cotización cruda compartida (server rutas + agentes de alertas).
 - [[core.geosit.py]] — 433 líneas · Sala de Situación geopolítica: /api/geo/\*.
+- [[engine.brief.js]] — 383 líneas · BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez al día, descartable), un overlay NEXUS resume: el mayor chokepoint, la …
 - [[engine.termdata.js]] — 359 líneas · PANEL DE DATOS de la Terminal (feedback de Fabrizio: "te pedí que la terminal tuviera muchas más tablas" + "para muchas decía upstream 402 pero no …
 - [[core.gdelt_events.py]] — 307 líneas · conflicto / protestas / sanciones EN VIVO desde la base de EVENTOS de GDELT 2.0 (archivos crudos cada 15 minutos, públicos y sin clave).
-- [[engine.brief.js]] — 301 líneas · BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez al día, descartable), un overlay NEXUS resume: el mayor chokepoint, la …
 - [[core.country_geo.py]] — 222 líneas · coordenadas de referencia por PAÍS (la capital), para capas que solo dicen "qué país" (avisos de viaje del Departamento de Estado, cortes de …
 - [[core.providers.base.py]] — 201 líneas · Phase 1 · M3: el contrato de los proveedores.
 - [[core.live_caps.py]] — 191 líneas · capitalización EN VIVO de TODAS las cotizadas del grafo.
@@ -52,8 +52,8 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
+| usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
-| usa a | [[Capa Ontología y grafo temporal]] | 8 |
 | la usa | [[Capa MCP y API]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |
@@ -63,5 +63,6 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | la usa | [[Capa Datos del catálogo]] | 2 |
 | la usa | [[Capa Voz]] | 2 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 2 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 1 |
 | usa a | [[Capa Investigación]] | 1 |
 | usa a | [[Capa Voz]] | 1 |

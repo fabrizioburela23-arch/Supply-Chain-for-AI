@@ -92,6 +92,8 @@
     factor: { ic: '◈', col: 'var(--os-ai,#B48CFF)', fill: 'var(--os-ai,#B48CFF)', tag: 'FACTOR ACTIVO', tag_en: 'ACTIVE FACTOR' },
     oport:  { ic: '↑', col: 'var(--os-good-ink,#2fbf5b)', fill: 'var(--os-good,#2fbf5b)', tag: 'OPORTUNIDAD', tag_en: 'OPPORTUNITY' },
     // lo que concluyeron los analistas = el agente Comité → su mascota (engine/mascot.js); 🏛 si no cargó
+    // qué cambió en TU cartera desde ayer (precio de hoy vs. cierre anterior) y por qué (grafo + noticias)
+    pf:     { ic: '💼', col: 'var(--os-accent,#4C8DF6)', fill: 'var(--os-accent,#4C8DF6)', tag: 'TU CARTERA DESDE AYER', tag_en: 'YOUR PORTFOLIO SINCE YESTERDAY' },
     concl:  { ic: '🏛', col: 'var(--os-accent,#4C8DF6)', fill: 'var(--os-accent,#4C8DF6)', tag: 'CONCLUSIONES', tag_en: 'CONCLUSIONS', mascot: 'comite' },
   };
 
@@ -165,6 +167,82 @@
         L('Vigílala.', 'Keep an eye on it.') };
   }
 
+  // ── «Qué cambió en tu cartera desde ayer y por qué» (2026-10-16, «IA concreta» b). SIN IA y sin cifras propias:
+  // el cambio sale de las cotizaciones que ya muestra la app (MKT.quotes: precio vs. cierre anterior, con su fuente y
+  // hora) × el valor de cada posición (KhipuHot.myPositions, la misma valoración de todo el resto); el porqué, de lo
+  // que entró al grafo en 2 días sobre esas empresas (/api/ontology/feed) y, si no hay, de sus noticias
+  // (/api/news/portfolio). Sin precio de ayer → esa posición no cuenta (y se dice). ──
+  function fmtUsd(v) {
+    var n = Math.abs(v), en = isEn();
+    return (v < 0 ? '−' : '+') + (n >= 1e6 ? (n / 1e6).toLocaleString(en ? 'en-US' : 'es-PE', { maximumFractionDigits: 2 }) + ' M'
+      : n.toLocaleString(en ? 'en-US' : 'es-PE', { maximumFractionDigits: n >= 100 ? 0 : 2 })) + ' USD';
+  }
+  function fmtPct(v) { return (v < 0 ? '−' : '+') + Math.abs(v).toLocaleString(isEn() ? 'en-US' : 'es-PE', { maximumFractionDigits: 2 }) + ' %'; }
+  function withTimeout(p, ms) { return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]); }
+  function pfMoves() {
+    var KH = window.KhipuHot, Q = (window.MKT && window.MKT.quotes) || {};
+    var mp = KH && typeof KH.myPositions === 'function' ? KH.myPositions() : null;
+    var pos = (mp && mp.positions) || [];
+    var rows = [], noPrev = 0;
+    pos.forEach(function (p) {
+      var q = Q[p.symbol], px = q ? (typeof window.quotePx === 'function' ? window.quotePx(q) : Number(q.close)) : 0;
+      var prev = q ? Number(q.prev) : 0;
+      if (!(px > 0) || !(prev > 0)) { noPrev++; return; }
+      var r = px / prev - 1, d = p.usd - p.usd / (1 + r);
+      rows.push({ id: p.id, symbol: p.symbol, usd: p.usd, pct: r * 100, d: d, src: q.src || '', as_of: q.as_of || '' });
+    });
+    return { rows: rows, noPrev: noPrev + ((mp && mp.no_price) || 0), n: pos.length + ((mp && mp.no_price) || 0) };
+  }
+  function pfWhy(movers) {
+    var ids = {}; movers.forEach(function (m) { ids[m.id] = m; });
+    var lang = isEn() ? 'en' : 'es';
+    var feedP = withTimeout(fetch('/api/ontology/feed?days=2&limit=80&lang=' + lang).then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; }), 6000);
+    var newsP = withTimeout(fetch('/api/news/portfolio', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days: 2, lang: lang, holdings: movers.map(function (m) { return { id: m.id, label: nm(m.id), symbol: m.symbol }; }) }) })
+      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }), 7000);
+    return Promise.all([feedP, newsP]).then(function (res) {
+      var why = {};
+      ((res[0] && res[0].feed) || []).forEach(function (e) {
+        (e.entities || []).forEach(function (id) {
+          if (ids[id] && !why[id]) why[id] = { title: e.title, src: L('grafo Khipus', 'Khipus graph'), at: e.recorded_at || e.at };
+        });
+      });
+      ((res[1] && res[1].items) || []).forEach(function (it) {
+        movers.forEach(function (m) {
+          if (!why[m.id] && (it.holdings || []).indexOf(nm(m.id)) >= 0) why[m.id] = { title: it.title, src: it.outlet || it.source || '', at: it.published_at, label: it.label };
+        });
+      });
+      return why;
+    });
+  }
+  function pfChangeCard() {
+    var mv;
+    try { mv = pfMoves(); } catch (e) { return Promise.resolve(null); }
+    if (!mv.n) return Promise.resolve(null);
+    if (!mv.rows.length) return Promise.resolve({ kind: 'pf', text: L('No tengo el cierre de ayer de tus posiciones todavía: el cambio desde ayer aparece cuando lleguen los precios.',
+      'I do not have yesterday’s close for your positions yet: the change since yesterday shows up when prices arrive.') });
+    var tot = 0, base = 0;
+    mv.rows.forEach(function (r) { tot += r.d; base += r.usd - r.d; });
+    var movers = mv.rows.slice().sort(function (a, b) { return Math.abs(b.d) - Math.abs(a.d); }).slice(0, 2);
+    var name = '';
+    try { name = window.KhipuPfStore ? String(window.KhipuPfStore.name() || '') : ''; } catch (e) { name = ''; }
+    return pfWhy(movers).then(function (why) {
+      var t = (name ? L('Tu cartera «', 'Your portfolio “') + esc(name) + L('»', '”') : L('Tu cartera', 'Your portfolio')) +
+        L(' cambió <b>', ' moved <b>') + esc(fmtUsd(tot)) + '</b> (' + esc(fmtPct(base > 0 ? tot / base * 100 : 0)) + ')' +
+        L(' desde el cierre anterior. ', ' since the previous close. ');
+      t += movers.map(function (m) {
+        var w = why[m.id];
+        return '<b>' + esc(nm(m.id)) + '</b> ' + esc(fmtPct(m.pct)) + ' (' + esc(fmtUsd(m.d)) + ')' +
+          (w ? ': ' + L('posible motivo — ', 'possible reason — ') + '«' + esc(String(w.title || '').slice(0, 140)) + '»' + (w.src ? ' (' + esc(w.src) + ')' : '')
+             : L(': sin hechos nuevos en el grafo ni noticias en 2 días.', ': no new graph facts or news in 2 days.'));
+      }).join(' · ');
+      if (mv.noPrev) t += ' <span class="lnk">' + mv.noPrev + L(' posición(es) sin precio de ayer no cuentan.', ' position(s) without yesterday’s price are not counted.') + '</span>';
+      var src = movers[0] && movers[0].src ? L(' Precios: ', ' Prices: ') + esc(movers[0].src) + (movers[0].as_of ? ' · ' + esc(String(movers[0].as_of).slice(0, 16).replace('T', ' ')) : '') + '.' : '';
+      return { kind: 'pf', node: movers[0] && movers[0].id, text: t + '<span class="lnk">' + src + '</span>' };
+    });
+  }
+
   function hhmm() {
     try { return new Date().toLocaleTimeString(isEn() ? 'en' : 'es', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
   }
@@ -177,6 +255,7 @@
     var chokeP = KH ? KH.chokepoints({ by: 'sum', limit: 1 }) : Promise.resolve({ ok: false, error: L('Motor de impacto no disponible.', 'Impact engine unavailable.') });
     var factP = KH ? KH.factors() : Promise.resolve({ ok: false });
     var boardP = conclusionsCard().catch(function () { return null; });
+    var pfP = pfChangeCard().catch(function () { return null; });
     var risk = null;
     try { risk = riskCard(); } catch (e) { risk = null; }
     return Promise.all([chokeP, factP]).then(function (res) {
@@ -198,9 +277,11 @@
       var src = top
         ? L('Fuente: motor único de Khipus (servidor) · ', 'Source: Khipus single engine (server) · ') + KH.stamp(cpR.view)
         : L('Cuello de botella no disponible: ', 'Chokepoint unavailable: ') + ((cpR && cpR.error) || '') + ' · ' + hhmm();
-      return boardP.then(function (cc) {
+      return Promise.all([boardP, pfP]).then(function (extra) {
+        var cc = extra[0], pf = extra[1];
         cards = cards.slice(0, 4);
         if (cc) cards.splice(1, 0, cc);
+        if (pf) cards.unshift(pf);          // lo TUYO primero: qué cambió en tu cartera desde ayer
         return { cards: cards.slice(0, 5), src: src };
       });
     });
@@ -265,6 +346,7 @@
   }
   window._briefClose = close;
   window._briefOpen = function () { open(true); };
+  window._briefPfCard = pfChangeCard;   // la tarjeta de tu cartera (también la usan las pruebas)
 
   // Khipus OS manda la pantalla: está abierto, o se abrirá al arrancar (siempre, salvo que el
   // usuario eligió "Vista clásica" en esta sesión: sessionStorage kh_os_classic='1').

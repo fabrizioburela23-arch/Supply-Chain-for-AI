@@ -63,7 +63,7 @@ tags: ["capa/ontologia", "tipo/capa"]
 | usa a | [[Capa Interfaz (Khipus OS)]] | 13 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | la usa | [[Capa Chat y agentes]] | 10 |
-| la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 8 |
+| la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |
 | la usa | [[Capa Comité]] | 6 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 4 |

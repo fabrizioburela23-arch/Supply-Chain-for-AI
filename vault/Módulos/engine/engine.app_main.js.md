@@ -83,7 +83,7 @@ Se carga en [[app.html]] en la posición **27 de 101** (línea 2682), después d
 - [[engine.app_scatter.js]] — usa `LANG`
 - [[engine.app_trade_panel.js]] — usa `LANG`, `MKT`, `activeTab`, `applyLang`, `esc`, `quotePx`, `renderMarket`, `savePos`
 - [[engine.audit.js]] — usa `BASE`, `LANG`
-- [[engine.brief.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `switchTab`
+- [[engine.brief.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `quotePx`, `switchTab`
 - [[engine.canvas-data.js]] — usa `BASE`
 - [[engine.catalog_sync.js]] — usa `KhipuLiveFund`, `LANG`, `LINKS`, `NODE_BY_ID`, `_canonId`, `_invalidateNRS`, `_lblOn`, `_liveTick` y 15 más
 - [[engine.clients.js]] — usa `LANG`

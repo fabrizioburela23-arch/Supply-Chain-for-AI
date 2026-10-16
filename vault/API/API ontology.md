@@ -29,7 +29,7 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | [[ontology.api.py]] | 2 pruebas |
 | `POST` | `/api/ontology/events` | `events_create` | [[ontology.api.py]] | 3 pruebas |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | [[ontology.api.py]] | 1 prueba |
-| `GET` | `/api/ontology/feed` | `global_feed_route` | [[ontology.api.py]] | [[engine.app_main.js]], [[engine.khipu_lang.js]], 1 prueba |
+| `GET` | `/api/ontology/feed` | `global_feed_route` | [[ontology.api.py]] | [[engine.app_main.js]], [[engine.brief.js]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | [[ontology.api.py]] | — |
 | `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] | [[engine.maptime.js]], 3 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 1 prueba |

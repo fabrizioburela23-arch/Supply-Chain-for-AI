@@ -216,7 +216,7 @@ _Además lo importan 74 pruebas (lista abajo)._
 | `GET` | `/api/market/providers` | `market_providers` | 2 pruebas |
 | `GET` | `/api/market/quote/<path:symbol>` | `market_quote` | 1 prueba |
 | `GET` | `/api/marketstack` | `marketstack_proxy` | [[engine.app_main.js]] |
-| `GET` | `/api/news/<ticker>` | `company_news` | [[engine.app_coordinator.js]], [[engine.app_main.js]], [[engine.fincard.js]], [[engine.pfreports.js]], [[engine.temporal-graph.js]], 1 prueba |
+| `GET` | `/api/news/<ticker>` | `company_news` | [[engine.app_coordinator.js]], [[engine.app_main.js]], [[engine.brief.js]], [[engine.fincard.js]], [[engine.pfreports.js]], [[engine.temporal-graph.js]], 1 prueba |
 | `GET` | `/api/news/gdelt/<company_name>` | `news_gdelt` | [[engine.app_coordinator.js]], [[engine.app_main.js]], [[engine.fincard.js]], [[engine.temporal-graph.js]], [[sim.scenario_builder.js]], 1 prueba |
 | `GET` | `/api/options/chain/<symbol>` | `options_chain` | [[engine.riskreport.js]], 1 prueba |
 | `POST` | `/api/portfolio-risk` | `api_portfolio_risk_internal` | [[engine.app_coordinator.js]] |

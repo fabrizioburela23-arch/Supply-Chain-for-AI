@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L1048"
+ruta: "docs/ESTADO.md#L1054"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (y) — NRS ACOTADO + BÚSQUEDA DEL MAPA (sw v232)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1048 (10 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1054 (10 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

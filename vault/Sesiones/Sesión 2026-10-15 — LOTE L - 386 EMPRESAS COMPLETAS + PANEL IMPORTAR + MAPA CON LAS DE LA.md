@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-15"
-ruta: "docs/ESTADO.md#L80"
+ruta: "docs/ESTADO.md#L86"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-15 — LOTE L: 386 EMPRESAS COMPLETAS + PANEL 📥 IMPORTAR + MAPA CON LAS DE LA BASE + PRECIOS EN VIVO — sw v272
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 80 (33 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 86 (33 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

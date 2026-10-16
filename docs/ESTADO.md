@@ -29,7 +29,13 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
       empresa + comprar/vender/mantener + monto en USD o % de la cartera + el porqué en una línea; cartera antes/después
       (concentración, riesgo); qué vigilar y cuándo revisar. Hoy describe la cartera y «no ayuda». Cifras solo de
       herramientas (guardián); aviso «información, no consejo». NO botón «preparar órdenes».
-   b) Brief matinal: tarjeta «Qué cambió en tu cartera desde ayer y por qué» (precios + eventos del grafo).
+   b) ✅ HECHO (2026-10-16, sw v277): engine/brief.js `pfChangeCard` (`window._briefPfCard`) — PRIMERA tarjeta del
+      brief: cuánto cambió tu cartera activa desde el cierre anterior (USD y %; MKT.quotes precio vs. prev × valor de
+      KhipuHot.myPositions), las 2 que más movieron y su «posible motivo» (lo que entró al grafo en 2 días,
+      /api/ontology/feed; si no, /api/news/portfolio), fuente del precio a la vista. Sin IA. tests/test_brief_portfolio_card.py.
+   c) Lote 3 tanda 1 (2026-10-16): data/import/lotes/2026-10-16/bundle_lote3_1.json.gz = 4 fichas válidas (Adobe, Alchip,
+      ACWA Power, ACM Research Shanghai); AECC Aviation Power fuera (sin classification.cat, facilities[].id).
+      PROMPT_LOTE3 corregido (el % de owns/invest va en corporate, no `relations[].stake_pct`). Aplicar = panel 📥 + PIN.
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).
