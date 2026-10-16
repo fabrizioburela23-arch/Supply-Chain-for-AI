@@ -1,0 +1,101 @@
+n,khipus_id_hint,nombre,pais_iso2,estado,sector,categoria,simbolo_yahoo,prioridad
+1,Adobe,Adobe,US,public,cloud_ia,aisoft,ADBE,P2
+2,AECCAviationPower,AECC Aviation Power,CN,public,defensa,NUEVA:aerospace_components,600893.SS,P2
+3,Alchip,Alchip,TW,public,diseno,asic_custom,3661.TW,P2
+4,ACWAPower,ACWA Power,SA,public,energia,power_ipp,2082.SR,P2
+5,ACMResearchShanghai,ACM Research Shanghai,CN,public,equipos,equip,688082.SS,P2
+6,ChinaSatcom,China Satcom,CN,public,espacio,satellite,601698.SS,P2
+7,ATS,AT&S,AT,public,fabricacion,substrates,ATS.VI,P2
+8,ASUS,ASUS,TW,public,infra,servers,2357.TW,P2
+9,AAON,AAON,US,public,inmobiliario,cooling_thermal,AAON,P2
+10,AirChinaCargo,Air China Cargo,CN,public,logistica,air_cargo,001391.SZ,P2
+11,AIA,AIA,HK,public,macro_credito,NUEVA:insurance,1299.HK,P2
+12,5NPlus,5N Plus,CA,public,materiales,NUEVA:specialty_metals,VNP.TO,P2
+13,Aptiv,Aptiv,IE,public,robotica,NUEVA:ev_components,APTV,P2
+14,Cerence,Cerence,US,public,cloud_ia,ai_auto,CRNC,P2
+15,AVICChengdu,AVIC Chengdu,CN,public,defensa,defense_prime,302132.SZ,P2
+16,AndesTechnology,Andes Technology,TW,public,diseno,NUEVA:semi_ip,6533.TW,P2
+17,AXIAEnergia,AXIA Energia (Eletrobras),BR,public,energia,NUEVA:utility_integrated,AXIA3.SA,P2
+18,AdtecPlasma,Adtec Plasma,JP,public,equipos,equip,6668.T,P2
+19,ChinaSpacesat,China Spacesat,CN,public,espacio,satellite,600118.SS,P2
+20,AVICJonhon,AVIC Jonhon,CN,public,fabricacion,NUEVA:connectors,002179.SZ,P2
+21,ATEN,ATEN,TW,public,infra,networking,6277.TW,P2
+22,ACS,ACS,ES,public,inmobiliario,dc_construction,ACS.MC,P2
+23,ArrowElectronics,Arrow Electronics,US,public,logistica,NUEVA:electronics_distribution,ARW,P2
+24,AIG,AIG,US,public,macro_credito,NUEVA:insurance,AIG,P2
+25,Alphamin,Alphamin,MU,public,materiales,NUEVA:mining_tin,AFM.V,P2
+26,AspenAerogels,Aspen Aerogels,US,public,robotica,NUEVA:ev_components,ASPN,P2
+27,E2ENetworks,E2E Networks,IN,public,cloud_ia,cloud,E2E.NS,P2
+28,AVICShenyang,AVIC Shenyang,CN,public,defensa,defense_prime,600760.SS,P2
+29,Arteris,Arteris,US,public,diseno,NUEVA:semi_ip,AIP,P2
+30,Acciona,Acciona,ES,public,energia,renewables_utility,ANA.MC,P2
+31,BeijingETownSemiconductor,Beijing E-Town Semiconductor,CN,public,equipos,equip,,P2
+32,Intellian,Intellian,KR,public,espacio,satellite,189300.KQ,P2
+33,AXT,AXT,US,public,fabricacion,NUEVA:compound_semi,AXTI,P2
+34,Accelink,Accelink,CN,public,infra,NUEVA:optical_transceivers,002281.SZ,P2
+35,AVC,AVC,TW,public,inmobiliario,cooling_thermal,3017.TW,P2
+36,Aurizon,Aurizon,AU,public,logistica,rail_freight,AZJ.AX,P2
+37,AXA,AXA,FR,public,macro_credito,NUEVA:insurance,CS.PA,P2
+38,Amrize,Amrize,CH,public,materiales,cement,AMRZ.SW,P2
+39,Basler,Basler,DE,public,robotica,NUEVA:industrial_automation,BSL.DE,P2
+40,IBM,IBM,US,public,cloud_ia,cloud,IBM,P2
+41,Aselsan,Aselsan,TR,public,defensa,NUEVA:defense_electronics,ASELS.IS,P2
+42,Canaan,Canaan,SG,public,diseno,asic_custom,CAN,P2
+43,AccionaEnergia,Acciona Energía,ES,public,energia,renewables_utility,ANE.MC,P2
+44,CUyemura,C. Uyemura,JP,public,equipos,chemicals,4966.T,P2
+45,MDASpace,MDA Space,CA,public,espacio,satellite,MDA.TO,P2
+46,Avary,Avary,CN,public,fabricacion,NUEVA:pcb,002938.SZ,P2
+47,AmericaMovil,América Móvil,MX,public,infra,NUEVA:telecom_operator,AMXB.MX,P2
+48,AppliedDigital,Applied Digital,US,public,inmobiliario,datacenter_operator,APLD,P2
+49,Avnet,Avnet,US,public,logistica,NUEVA:electronics_distribution,AVT,P2
+50,Amundi,Amundi,FR,public,macro_credito,asset_manager,AMUN.PA,P2
+51,Aurubis,Aurubis,DE,public,materiales,mining_copper,NDA.DE,P2
+52,BorgWarner,BorgWarner,US,public,robotica,NUEVA:ev_components,BWA,P2
+53,KodiakAI,Kodiak AI,US,public,cloud_ia,ai_auto,KDK,P2
+54,BharatElectronics,Bharat Electronics,IN,public,defensa,NUEVA:defense_electronics,BEL.NS,P2
+55,GlobalUnichip,Global Unichip,TW,public,diseno,asic_custom,3443.TW,P2
+56,AdaniEnergySolutions,Adani Energy Solutions,IN,public,energia,grid_transmission,ADANIENSOL.NS,P2
+57,Camtek,Camtek,IL,public,equipos,equip,CAMT.TA,P2
+58,SKYPerfectJSAT,SKY Perfect JSAT,JP,public,espacio,satellite,9412.T,P2
+59,Bizlink,Bizlink,TW,public,fabricacion,NUEVA:connectors,3665.TW,P2
+60,BTGroup,BT Group,GB,public,infra,NUEVA:telecom_operator,BT-A.L,P2
+61,CoreScientific,Core Scientific,US,public,inmobiliario,datacenter_operator,CORZ,P2
+62,Brambles,Brambles,AU,public,logistica,NUEVA:contract_logistics,BXB.AX,P2
+63,AresCapital,Ares Capital,US,public,macro_credito,private_credit,ARCC,P2
+64,CHALIECO,CHALIECO,CN,public,materiales,NUEVA:specialty_metals,601068.SS,P2
+65,ChargePoint,ChargePoint,US,public,robotica,NUEVA:ev_components,CHPT,P2
+66,MiniMax,MiniMax,CN,public,cloud_ia,ailab,0100.HK,P2
+67,CSG,CSG,CZ,public,defensa,NUEVA:munitions,CSG.AS,P2
+68,MetaX,MetaX,CN,public,diseno,fabless,688802.SS,P2
+69,AdaniEnterprises,Adani Enterprises,IN,public,energia,NUEVA:utility_integrated,ADANIENT.NS,P2
+70,ChromaATE,Chroma ATE,TW,public,equipos,equip,2360.TW,P2
+71,Space42,Space42,AE,public,espacio,satellite,SPACE42.AD,P2
+72,CRRCTimesElectric,CRRC Times Electric,CN,public,fabricacion,NUEVA:power_semis,688187.SS,P2
+73,Belden,Belden,US,public,infra,networking,BDC,P2
+74,Daikin,Daikin,JP,public,inmobiliario,cooling_thermal,6367.T,P2
+75,CJLogistics,CJ Logistics,KR,public,logistica,freight_forwarder,000120.KS,P2
+76,BNPParibas,BNP Paribas,FR,public,macro_credito,universal_bank,BNP.PA,P2
+77,Canmax,Canmax,CN,public,materiales,mining_lithium,300390.SZ,P2
+78,Chery,Chery,CN,public,robotica,NUEVA:auto_oem,9973.HK,P2
+79,PonyAi,Pony.ai,CN,public,cloud_ia,ai_auto,2026.HK,P2
+80,HAL,HAL,IN,public,defensa,defense_prime,HAL.NS,P2
+81,NordicSemiconductor,Nordic Semiconductor,NO,public,diseno,fabless,NOD.OL,P2
+82,AdaniGreen,Adani Green,IN,public,energia,renewables_utility,ADANIGREEN.NS,P2
+83,Comet,Comet,CH,public,equipos,equip,COTN.SW,P2
+84,Telesat,Telesat,CA,public,espacio,satellite,TSAT.TO,P2
+85,Daishinku,Daishinku,JP,public,fabricacion,NUEVA:passive_components,6962.T,P2
+86,BhartiAirtel,Bharti Airtel,IN,public,infra,NUEVA:telecom_operator,BHARTIARTL.NS,P2
+87,Hochtief,Hochtief,DE,public,inmobiliario,dc_construction,HOT.DE,P2
+88,CMES,CMES,CN,public,logistica,NUEVA:specialized_shipping,601872.SS,P2
+89,BankOfChina,Bank of China,CN,public,macro_credito,universal_bank,601988.SS,P2
+90,CerroVerde,Cerro Verde,PE,public,materiales,mining_copper,CVERDEC1.LM,P2
+91,DMGMori,DMG Mori,JP,public,robotica,NUEVA:industrial_automation,6141.T,P2
+92,SAKURAInternet,SAKURA Internet,JP,public,cloud_ia,cloud,3778.T,P2
+93,HEICO,HEICO,US,public,defensa,NUEVA:aerospace_components,HEI,P2
+94,Phison,Phison,TW,public,diseno,fabless,8299.TWO,P2
+95,AdaniPower,Adani Power,IN,public,energia,power_ipp,ADANIPOWER.NS,P2
+96,DAIHEN,DAIHEN,JP,public,equipos,equip,6622.T,P2
+97,ApexSpace,Apex Space,US,private,espacio,satellite,,P2
+98,DeltonTechnology,Delton Technology,CN,public,fabricacion,NUEVA:pcb,1989.HK,P2
+99,Ceragon,Ceragon,IL,public,infra,networking,CRNT,P2
+100,IREN,IREN,AU,public,inmobiliario,datacenter_operator,IREN,P2
