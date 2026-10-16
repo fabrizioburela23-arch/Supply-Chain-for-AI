@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-14"
-ruta: "docs/ESTADO.md#L142"
+ruta: "docs/ESTADO.md#L150"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-14 (b) — LOTE J: SERVIDOR A 5.000 + CHAT PROGRESIVO (F3) + revisión — sw v270
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 142 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 150 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

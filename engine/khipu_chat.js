@@ -559,6 +559,8 @@
       var PS = W.KhipuPfStore, pfName = '';
       try { pfName = PS ? String(PS.name() || '').slice(0, 60) : ''; } catch (e) {}
       if (out.length) { ctx.portfolio = { positions: out }; if (pfName) ctx.portfolio.name = pfName; }
+      // perfil del inversionista (Comité → 💼 Mi cartera): topes del plan de cartera del chat
+      try { var ip = W.KhipuProfile && W.KhipuProfile.get(); if (ip && ip.risk) ctx.investor_risk = String(ip.risk).slice(0, 12); } catch (e) {}
       try {
         var oth = PS ? PS.others().slice(0, 5).map(function (x) { return String(x).slice(0, 60); }) : [];
         if (oth.length) ctx.other_portfolios = oth;

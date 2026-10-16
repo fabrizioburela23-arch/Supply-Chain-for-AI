@@ -14,8 +14,15 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
 
 1. **«IA concreta»** (pedido: «la próxima semana invierto dinero real de varias personas; necesito cosas concretas»).
    DECISIÓN DE FABRIZIO (2026-10-16): siguen siendo RECOMENDACIONES (información, no consejo; nunca órdenes ni
-   borradores de órdenes), solo que MÁS CONCRETAS. Nada hecho aún. Dos piezas, en este orden:
-   a) Chat: «optimiza mi cartera» (y preguntas parecidas) → recomendación en forma de PLAN: 3-5 movimientos con
+   borradores de órdenes), solo que MÁS CONCRETAS. Dos piezas, en este orden:
+   a) ✅ HECHO (2026-10-16, sw v276): herramienta del chat `plan_portfolio` (core/khipu_chat.py) →
+      `core/portfolio_advisor.plan(analyze(...))`: 3-5 movimientos (vender todo/parte, comprar, mantener) con USD y
+      % antes→después + porqué; antes/después (posición mayor, top 3, posiciones efectivas, sector mayor, volatilidad
+      estimada con la matriz de correlación de precios reales); qué vigilar; revisar en 7/14/30 días según salud o si
+      algo se mueve > 10 % en un día; aviso «información, no consejo», `orders: None`. Posiciones Y perfil
+      (`context.investor_risk` = KhipuProfile) los pone el SERVIDOR (`_server_args`). tests/test_ia_concreta_plan.py.
+      Pendiente: bloque visual GenUI propio (hoy solo texto) y mascota en agents_registry.tool_agent.
+      Pedido original — Chat: «optimiza mi cartera» (y preguntas parecidas) → recomendación en forma de PLAN: 3-5 movimientos con
       empresa + comprar/vender/mantener + monto en USD o % de la cartera + el porqué en una línea; cartera antes/después
       (concentración, riesgo); qué vigilar y cuándo revisar. Hoy describe la cartera y «no ayuda». Cifras solo de
       herramientas (guardián); aviso «información, no consejo». NO botón «preparar órdenes».

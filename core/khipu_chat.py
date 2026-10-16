@@ -427,10 +427,19 @@ def _pf_name(v):
 
 def _server_args(name, args, context):
     """Copia de `args` sin lo que el modelo no puede elegir, más lo que pone el servidor. Nunca lanza."""
-    if name != 'run_scenario' or not isinstance(args, dict):
+    if name not in ('run_scenario', 'plan_portfolio') or not isinstance(args, dict):
         return args
     out = {k: v for k, v in args.items() if k not in _SERVER_ARGS}
     pf = (context or {}).get('portfolio') if isinstance(context, dict) else None
+    if name == 'plan_portfolio':
+        # plan de cartera: acciones (y valor en USD si el navegador lo trae) de la cartera ACTIVA; perfil del usuario
+        pos = [{'symbol': p['symbol'], 'shares': p['shares'], **({'usd': p['usd']} if isinstance(p.get('usd'), float) else {})}
+               for p in (pf or []) if isinstance(p, dict) and p.get('symbol')]
+        out['positions'] = pos[:60]
+        risk = (context or {}).get('investor_risk')
+        if risk:
+            out['risk'] = risk
+        return out
     pos = [{'symbol': p['symbol'], 'usd': p['usd']} for p in (pf or [])
            if isinstance(p, dict) and isinstance(p.get('usd'), float)]
     if pos:
@@ -619,6 +628,30 @@ def x_scenario_exposure(scenario):
                          'path': x['path'], 'country': x['country']} for x in a['impacts'][:15]],
             'watch': a['watch_en'], 'source': 'Khipus supply-chain graph (structural estimate, not prices)',
             'as_of': _now_iso()}
+
+
+@_extra('plan_portfolio', 'risk?:conservador|moderado|agresivo (only if the user says it; default = their saved profile)',
+        "CONCRETE PLAN for the USER'S active portfolio (the server fills in the positions; never pass them): 3-5 moves "
+        '(buy / sell part / sell all / hold) per company with the USD amount, weight before→after and a one-line why, '
+        'from the Khipus portfolio committee rules (real-price risk, profile caps, analysts\' conviction); portfolio '
+        'before/after (largest position, top 3, effective positions, top sector, estimated volatility); what to watch '
+        'and when to review. Use it for "optimize / improve / rebalance my portfolio", "what should I do with my '
+        'portfolio". It is information, not advice, and never an order.')
+def x_plan_portfolio(positions=None, risk=None, lang='es'):
+    from core import portfolio_advisor as pa
+    pos = [p for p in (positions or []) if isinstance(p, dict)][:pa.MAX_POSITIONS]
+    if not pos:
+        raise ToolFailure('the user has no listed positions in the active portfolio (or the app did not send them): '
+                          'tell them to add positions in Portfolios first')
+    prof = {'risk': risk} if risk in pa.PROFILES else None
+    a = pa.analyze(pos, profile=prof, lang=lang or 'es')
+    if not a.get('ok'):
+        raise ToolFailure(a.get('error') or 'could not analyze the portfolio')
+    out = pa.plan(a, lang=lang or 'es')
+    out.pop('profile', None)
+    out['profile'] = {k: a['profile'][k] for k in ('key', 'label', 'max_position', 'max_sector', 'target_vol')}
+    out['profile_saved'] = prof is not None
+    return out
 
 
 @_extra('market_movers', 'direction?:up|down, limit?:integer 1-20, sector?:string',
@@ -1033,6 +1066,8 @@ def validate_request(body):
                 ids.append(nid)
         if ids:
             ctx['recent_entities'] = ids
+    if ctx_raw.get('investor_risk') in ('conservador', 'moderado', 'agresivo'):
+        ctx['investor_risk'] = ctx_raw['investor_risk']
     pf = ctx_raw.get('portfolio')
     if isinstance(pf, dict) and isinstance(pf.get('positions'), list):
         pos = []
@@ -1188,6 +1223,11 @@ get_history(id_or_ticker, range). "¿qué pasa si cae / falla X?" con una empres
 get_fundamentals(id_or_ticker, period) (estados financieros por año o trimestre; NUNCA digas que no tienes la serie sin \
 llamarla). "¿cuál es la empresa más grande / líder / con más cuota en <mercado>?" → rank_by_market(market, metric) \
 (posición de mercado investigada; si no la tiene, dilo tal cual). \
+"optimiza / mejora / rebalancea mi cartera", "¿qué hago con mi cartera?" → plan_portfolio() SIN argumentos (las \
+posiciones y el perfil los pone el servidor) y responde con SU plan: 3-5 líneas numeradas «**<acción> <empresa>** — \
+<monto> USD (de <antes> % a <después> %): <porqué>», luego una línea antes → después (posición mayor, top 3, riesgo), \
+luego «Qué vigilar» (watch) y «Cuándo revisar» (review.text), y cierra con el aviso (notice). Copia las cifras tal cual \
+(no calcules), no agregues movimientos y no lo llames orden. \
 Preguntas conceptuales (qué es el VaR, cómo funciona HBM) → sin \
 herramientas. get_company ya entiende nombres y tickers: NO gastes una ronda en search_companies salvo \
 ambigüedad real.
@@ -1195,7 +1235,8 @@ ambigüedad real.
 RESPUESTA: primero la respuesta directa a lo preguntado (1-2 frases), luego el porqué (3-6 líneas, máx. una \
 lista). Cada cifra con su fuente y fecha en la misma frase, p. ej. «233,95 USD (Yahoo, hoy)». Nunca inventes \
 cifras ni datos: si no están, dilo. Usa el historial y lo que hay EN PANTALLA para resolver "ella / su / este". \
-Markdown ligero. Sin recomendaciones personalizadas de comprar/vender (sí riesgos, pros, contras, escenarios); \
+Markdown ligero. Sin recomendaciones personalizadas de comprar/vender (sí riesgos, pros, contras, escenarios) salvo \
+el plan de plan_portfolio, que es información y no consejo; \
 si piden operar, explica que la orden se prepara y confirma en el bróker de la app y ofrece la acción "broker". \
 Acciones de pantalla solo si ayudan (máx. 2) y sin anunciarlas. PROHIBIDO escribir nombres internos de herramientas \
 (get_company, get_history, run_scenario, get_fundamentals…) o el protocolo en la respuesta: la fuente se nombra como la \
@@ -1847,6 +1888,7 @@ def _src_name(src):
 _TOOL_HUMAN = {
     'get_company': ('Grafo Khipus', 'Khipus graph'), 'search_companies': ('Grafo Khipus', 'Khipus graph'),
     'get_supply_chain': ('Grafo Khipus', 'Khipus graph'), 'rank_companies': ('Grafo Khipus', 'Khipus graph'),
+    'plan_portfolio': ('comité de cartera de Khipus', 'Khipus portfolio committee'),
     'scenario_exposure': ('Grafo Khipus', 'Khipus graph'), 'get_subgraph': ('Grafo Khipus', 'Khipus graph'),
     'get_exposure': ('Grafo Khipus', 'Khipus graph'), 'find_similar_entities': ('Grafo Khipus', 'Khipus graph'),
     'get_ontology_object': ('Grafo Khipus', 'Khipus graph'),

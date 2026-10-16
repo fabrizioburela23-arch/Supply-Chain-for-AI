@@ -18,9 +18,9 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Qué | Cuántos |
 |---|---|
 | Archivos de código (Python, JS, HTML) | 247 |
-| Líneas de código | 148.399 |
+| Líneas de código | 148.616 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 256 |
+| Archivos de prueba | 257 |
 | Documentos | 31 |
 | Rutas HTTP | 262 |
 | Grupos de API | 61 |
@@ -29,12 +29,12 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 763 |
 | Aristas `defines_endpoint` | 296 |
-| Aristas `imports` | 2.339 |
+| Aristas `imports` | 2.342 |
 | Aristas `loads_script` | 93 |
-| Aristas `mentions_in_session` | 589 |
+| Aristas `mentions_in_session` | 591 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
-| Aristas `tested_by` | 1.838 |
+| Aristas `tested_by` | 1.840 |
 | Aristas `uses_global` | 462 |
 
 ## Nodos "dios" (más conectados)
@@ -54,9 +54,9 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[core.decisions.py]] | 38 | 31 | 7 | [[Capa Infraestructura]] |
 | [[core.http.py]] | 37 | 35 | 2 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |
+| [[core.khipu_chat.py]] | 34 | 6 | 28 | [[Capa Chat y agentes]] |
 | [[engine.app_coordinator.js]] | 34 | 16 | 18 | [[Capa Interfaz (Khipus OS)]] |
 | [[ontology.api.py]] | 34 | 10 | 24 | [[Capa Ontología y grafo temporal]] |
-| [[core.khipu_chat.py]] | 33 | 6 | 27 | [[Capa Chat y agentes]] |
 | [[engine.resolve.js]] | 33 | 21 | 12 | [[Capa Chat y agentes]] |
 | [[core.identity.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
 | [[core.world.py]] | 31 | 21 | 10 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |

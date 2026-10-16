@@ -313,6 +313,8 @@ def analyze(positions, profile=None, lang='es', risk_fn=None, board_fn=None, cas
                  'diversification_ratio': rep.get('diversification_ratio')},
         'performance': perf, 'positions': rows, 'sectors': sectors, 'actions': actions[:8],
         'diversifiers': diversifiers, 'correlated_pairs': [{'a': a, 'b': b, 'corr': v} for v, a, b in pairs[:5]],
+        # matriz de correlaciones de los precios reales (core/risk_report): la usa plan() para el riesgo «después»
+        'correlation': {'symbols': list(syms), 'matrix': mat},
         'excluded': excluded,
         'coverage': {'requested': n_req, 'analyzed': len(rows), 'researched': sum(1 for r in rows if r['conviction'] is not None),
                      'not_researched': [{'entity_id': r['entity_id'], 'label': r['label'], 'symbol': r['symbol']}
@@ -366,3 +368,174 @@ def explain(analysis, lang='es'):
             t += 'No urgent changes; check again when prices or research change.'
         t += ' This is automated advice: you decide.'
     return {'text': t, 'ai': False, 'model': None}
+
+
+# ── PLAN CONCRETO para el chat (2026-10-16, «IA concreta») ───────────────────────────────────────────────────────
+# Pedido de Fabrizio: «optimiza mi cartera» → 3-5 movimientos con empresa + comprar/vender/mantener + monto en USD
+# o % + el porqué en una línea; cartera antes/después (concentración, riesgo); qué vigilar y cuándo revisar.
+# SIGUEN SIENDO RECOMENDACIONES (información, no consejo): nunca órdenes ni borradores de órdenes. Todo sale de
+# analyze() (reglas fijas + precios reales); aquí solo se ordena, se completa con «mantener» y se mide el después.
+PLAN_MIN, PLAN_MAX = 3, 5
+REVIEW_DAYS = {'bad': 7, 'warn': 14, 'good': 30}
+REVIEW_MOVE_PCT = 10.0
+NOTICE_ES = ('Información, no consejo: es un plan calculado con reglas fijas y precios reales; no conoce toda tu '
+             'situación y puede equivocarse. Nada se ejecuta: tú decides.')
+NOTICE_EN = ('Information, not advice: a plan computed from fixed rules and real prices; it does not know your whole '
+             'situation and can be wrong. Nothing is executed: you decide.')
+_VERB = {  # kind de analyze() → (verbo, ES, EN)
+    'sell': ('sell', 'Vender todo', 'Sell all'),
+    'reduce': ('sell', 'Vender una parte', 'Sell part'),
+    'consolidate': ('sell', 'Vender una parte', 'Sell part'),
+    'add': ('buy', 'Comprar más', 'Buy more'),
+    'buy_new': ('buy', 'Comprar (nueva)', 'Buy (new)'),
+    'hold': ('hold', 'Mantener', 'Hold'),
+}
+
+
+def _shape(weights, sectors, vols, corr):
+    """weights {sym: % del total}; → concentración y volatilidad estimada (None si falta un dato)."""
+    ws = {k: v for k, v in weights.items() if v > 0.005}
+    inv = sum(ws.values())
+    if not ws or inv <= 0:
+        return {'largest_pct': 0.0, 'largest': None, 'top3_pct': 0.0, 'effective_positions': 0.0,
+                'max_sector_pct': 0.0, 'max_sector': None, 'cash_pct': round(max(0.0, 100 - inv), 2),
+                'vol_ann_pct': None, 'n_positions': 0}
+    order = sorted(ws.items(), key=lambda kv: -kv[1])
+    hhi = sum((v / inv) ** 2 for v in ws.values())
+    by_sec = {}
+    for k, v in ws.items():
+        by_sec[sectors.get(k) or '—'] = by_sec.get(sectors.get(k) or '—', 0.0) + v
+    sec, sec_w = max(by_sec.items(), key=lambda kv: kv[1])
+    vol = None
+    syms = corr.get('symbols') or []
+    mat = corr.get('matrix') or []
+    idx = {s: i for i, s in enumerate(syms)}
+    if all(k in idx and vols.get(k) is not None for k in ws):
+        var = 0.0
+        for a, wa in ws.items():
+            for b, wb in ws.items():
+                i, j = idx[a], idx[b]
+                rho = 1.0 if a == b else _f(mat[i][j] if i < len(mat) and j < len(mat[i]) else None)
+                if rho is None:
+                    var = None
+                    break
+                var += (wa / 100) * (wb / 100) * vols[a] * vols[b] * rho
+            if var is None:
+                break
+        vol = round(math.sqrt(var), 2) if var is not None and var >= 0 else None
+    return {'largest_pct': round(order[0][1], 2), 'largest': order[0][0],
+            'top3_pct': round(sum(v for _, v in order[:3]), 2),
+            'effective_positions': round(1 / hhi, 1) if hhi > 0 else 0.0,
+            'max_sector_pct': round(sec_w, 2), 'max_sector': sec, 'cash_pct': round(max(0.0, 100 - inv), 2),
+            'vol_ann_pct': vol, 'n_positions': len(ws)}
+
+
+def plan(analysis, lang='es', today=None):
+    """analyze() → plan de 3-5 movimientos con antes/después, qué vigilar y cuándo revisar. Puro (sin red ni IA)."""
+    es = not str(analysis.get('lang', lang)).startswith('en')
+    if not analysis.get('ok'):
+        return analysis
+    rows = analysis.get('positions') or []
+    P = analysis['profile']
+    total = float(analysis['kpis']['value_usd'] or 0)
+    cash = float(analysis['kpis'].get('cash_usd') or 0)
+    by_sym = {r['symbol']: r for r in rows}
+    moves = []
+    for a in (analysis.get('actions') or [])[:PLAN_MAX]:
+        verb, v_es, v_en = _VERB.get(a['kind'], ('hold', 'Mantener', 'Hold'))
+        moves.append({'n': 0, 'verb': verb, 'action': v_es if es else v_en, 'symbol': a['symbol'], 'label': a['label'],
+                      'entity_id': a['entity_id'], 'amount_usd': round(abs(a['delta_usd']), 2),
+                      'from_pct': a['from_pct'], 'to_pct': a['to_pct'],
+                      'change_pct': round(a['to_pct'] - a['from_pct'], 2),
+                      'why': a['why_es'] if es else a['why_en'], 'priority': a['priority'], 'rule': a['kind']})
+    touched = {m['symbol'] for m in moves}
+    for r in sorted(rows, key=lambda x: -x['weight_pct']):
+        if len(moves) >= PLAN_MIN:
+            break
+        if r['symbol'] in touched:
+            continue
+        c = r.get('conviction')
+        c_es = f", convicción de los analistas {c:+.0f}" if c is not None else ''
+        c_en = f", analysts' conviction {c:+.0f}" if c is not None else ''
+        moves.append({'n': 0, 'verb': 'hold', 'action': 'Mantener' if es else 'Hold', 'symbol': r['symbol'],
+                      'label': r['label'], 'entity_id': r['entity_id'], 'amount_usd': 0.0,
+                      'from_pct': r['weight_pct'], 'to_pct': r['weight_pct'], 'change_pct': 0.0,
+                      'why': (f"Pesa {r['weight_pct']:.1f} %, dentro del tope de {P['max_position']:.0f} % de tu perfil{c_es}."
+                              if es else
+                              f"It is {r['weight_pct']:.1f}%, within your profile's {P['max_position']:.0f}% cap{c_en}."),
+                      'priority': 4, 'rule': 'hold'})
+    for i, m in enumerate(moves, 1):
+        m['n'] = i
+    # antes / después (mismos pesos sobre el total = invertido + efectivo)
+    before_w = {r['symbol']: r['weight_pct'] for r in rows}
+    after_w = dict(before_w)
+    sectors = {r['symbol']: r.get('sector') for r in rows}
+    for d in analysis.get('diversifiers') or []:
+        sectors.setdefault(d['symbol'], d.get('sector'))
+    vols = {r['symbol']: (_f(r.get('vol_ann_pct'), None)) for r in rows}
+    for m in moves:
+        if m['verb'] != 'hold':
+            after_w[m['symbol']] = m['to_pct']
+    sells = round(sum(m['amount_usd'] for m in moves if m['verb'] == 'sell'), 2)
+    buys = round(sum(m['amount_usd'] for m in moves if m['verb'] == 'buy'), 2)
+    corr = analysis.get('correlation') or {}
+    before = _shape(before_w, sectors, vols, corr)
+    after = _shape(after_w, sectors, vols, corr)
+    if before['vol_ann_pct'] is None:
+        before['vol_ann_pct'] = analysis['kpis'].get('vol_ann_pct')
+    lab = {r['symbol']: r['label'] for r in rows}
+    lab.update({m['symbol']: m['label'] for m in moves})
+    for sh in (before, after):
+        sh['largest_label'] = lab.get(sh['largest'])
+        sh['max_sector_label'] = _sector_label(sh['max_sector'], 'es' if es else 'en') if sh['max_sector'] else None
+    vol_note = None
+    if after['vol_ann_pct'] is None:
+        vol_note = ('sin historia de precios de la compra nueva: el riesgo «después» no se puede estimar'
+                    if es else 'no price history for the new buy: the «after» risk cannot be estimated')
+    cash_after = round(cash + sells - buys, 2)
+    funding = None
+    if cash_after < 0:
+        funding = ({'short_usd': round(-cash_after, 2),
+                    'note': f"Las compras piden {round(-cash_after, 2)} USD más de lo que liberan las ventas y tu efectivo."}
+                   if es else {'short_usd': round(-cash_after, 2),
+                               'note': f"The buys need {round(-cash_after, 2)} USD more than the sales and your cash free up."})
+    # qué vigilar
+    watch = []
+    risky = max(rows, key=lambda r: r.get('risk_contrib_pct') or 0) if rows else None
+    if risky and (risky.get('risk_contrib_pct') or 0) > 0:
+        watch.append((f"{risky['label']}: aporta {risky['risk_contrib_pct']:.0f} % del riesgo y se mueve {risky['vol_ann_pct']:.0f} % al año."
+                      if es else
+                      f"{risky['label']}: drives {risky['risk_contrib_pct']:.0f}% of the risk and moves {risky['vol_ann_pct']:.0f}% a year."))
+    for cp in (analysis.get('correlated_pairs') or [])[:1]:
+        la, lb = lab.get(cp['a'], cp['a']), lab.get(cp['b'], cp['b'])
+        watch.append((f"{la} y {lb} se mueven casi igual (correlación {cp['corr']:.2f}): si una cae, la otra suele caer."
+                      if es else
+                      f"{la} and {lb} move almost alike (correlation {cp['corr']:.2f}): if one falls the other usually does."))
+    nr = (analysis.get('coverage') or {}).get('not_researched') or []
+    if nr:
+        names = ', '.join(x['label'] for x in nr[:3])
+        watch.append((f"Sin investigación de los analistas: {names}. Pide la investigación antes de decidir sobre ellas."
+                      if es else f"No analyst research yet: {names}. Ask for research before deciding on them."))
+    for x in (analysis.get('excluded') or [])[:2]:
+        watch.append((f"{x['symbol']} no entró en el plan: {x.get('reason')}." if es else
+                       f"{x['symbol']} is not in the plan: {x.get('reason_en') or x.get('reason')}."))
+    tone = analysis['health']['tone']
+    days = REVIEW_DAYS.get(tone, 14)
+    try:
+        from datetime import date, timedelta
+        d0 = today or datetime.now(timezone.utc).date()
+        review_on = (d0 + timedelta(days=days)).isoformat()
+    except Exception:  # noqa: BLE001
+        review_on = None
+    review = {'in_days': days, 'on': review_on, 'or_if_move_pct': REVIEW_MOVE_PCT,
+              'text': (f"Revisa el plan en {days} días ({review_on}) o antes si una posición se mueve más de "
+                       f"{REVIEW_MOVE_PCT:.0f} % en un día." if es else
+                       f"Review the plan in {days} days ({review_on}) or sooner if a position moves more than "
+                       f"{REVIEW_MOVE_PCT:.0f}% in one day.")}
+    return {'ok': True, 'kind': 'portfolio_plan', 'lang': 'es' if es else 'en', 'profile': P,
+            'health': analysis['health'], 'value_usd': total, 'cash_usd': cash,
+            'moves': moves, 'totals': {'sell_usd': sells, 'buy_usd': buys, 'cash_after_usd': cash_after},
+            'funding': funding, 'before': before, 'after': after, 'after_vol_note': vol_note,
+            'watch': watch[:4], 'review': review, 'excluded': analysis.get('excluded') or [],
+            'as_of': analysis.get('as_of'), 'source': analysis.get('source'),
+            'notice': NOTICE_ES if es else NOTICE_EN, 'is_advice': False, 'orders': None}

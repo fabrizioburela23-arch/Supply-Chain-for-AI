@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/khipu_chat.js"
 lenguaje: "javascript"
-lineas: 1448
+lineas: 1450
 aliases: ["engine/khipu_chat.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/khipu_chat.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 1.448 líneas · `engine/khipu_chat.js`
+> Módulo · capa [[Capa Chat y agentes]] · 1.450 líneas · `engine/khipu_chat.js`
 
 ## Para qué sirve
 
