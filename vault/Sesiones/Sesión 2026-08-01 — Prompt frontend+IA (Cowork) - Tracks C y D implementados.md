@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-08-01"
-ruta: "docs/ESTADO.md#L2339"
+ruta: "docs/ESTADO.md#L2342"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-08-01 — Prompt frontend+IA (Cowork): Tracks C y D implementados
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2339 (38 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2342 (38 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

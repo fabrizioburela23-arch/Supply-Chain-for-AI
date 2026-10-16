@@ -21,7 +21,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Líneas de código | 148.616 |
 | Archivos de datos del catálogo | 30 |
 | Archivos de prueba | 257 |
-| Documentos | 31 |
+| Documentos | 32 |
 | Rutas HTTP | 262 |
 | Grupos de API | 61 |
 | Herramientas MCP | 34 |
