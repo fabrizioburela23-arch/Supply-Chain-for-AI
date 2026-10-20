@@ -45,7 +45,7 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Infraestructura]] | 7 |
 | la usa | [[Capa Comité]] | 6 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 5 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 5 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 4 |
 | usa a | [[Capa MCP y API]] | 4 |

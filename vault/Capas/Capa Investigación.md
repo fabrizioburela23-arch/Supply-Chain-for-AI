@@ -47,9 +47,9 @@ tags: ["capa/investigacion", "tipo/capa"]
 | la usa | [[Capa Interfaz (Khipus OS)]] | 6 |
 | la usa | [[Capa Ontología y grafo temporal]] | 4 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 4 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
 | la usa | [[Capa MCP y API]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 1 |
 | la usa | [[Capa Voz]] | 1 |

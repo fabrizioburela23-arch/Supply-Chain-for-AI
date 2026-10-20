@@ -26,11 +26,11 @@ ESTADO VISUAL de la simulación (solo animación; SIN matemática de contagio) P
 - [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`
 
-Se carga en [[app.html]] en la posición **70 de 101** (línea 3195), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
+Se carga en [[app.html]] en la posición **71 de 102** (línea 3196), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 70)
+- [[app.html]] — lo carga con `<script>` (posición 71)
 - [[engine.compare.js]] — usa `KhipuState`
 - [[engine.livesim.js]] — usa `KhipuState`
 

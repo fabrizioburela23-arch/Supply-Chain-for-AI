@@ -29,11 +29,11 @@ CANVAS: ROUTER DE INTENCIÓN + GRÁFICOS SIN IA (Etapa G 2026-07-11 · Etapa I 2
 - [[engine.resolve.js]] — usa `KhipuResolve`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **77 de 101** (línea 3202), después de [[engine.nav4.js]] y antes de [[engine.fincard.js]].
+Se carga en [[app.html]] en la posición **78 de 102** (línea 3203), después de [[engine.nav4.js]] y antes de [[engine.fincard.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 77)
+- [[app.html]] — lo carga con `<script>` (posición 78)
 - [[engine.app_canvas.js]] — usa `KhipuLocalCharts`
 - [[engine.cockpit.js]] — usa `KhipuLocalCharts`
 

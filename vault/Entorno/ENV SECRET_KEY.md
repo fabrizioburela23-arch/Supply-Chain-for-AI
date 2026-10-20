@@ -23,6 +23,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## Pruebas que la fijan o nombran
 
+- [[tests.test_agent_signals_one_tap.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_catalog_api.py]]
 - [[tests.test_catalog_api_pg.py]]

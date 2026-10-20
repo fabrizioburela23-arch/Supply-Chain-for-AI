@@ -24,11 +24,11 @@ Coordenadas geográficas para los globos 3D (Khipu Finance) Los nodos NO traen l
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **41 de 101** (línea 3100), después de [[engine.secondbrain.js]] y antes de [[engine.globe.js]].
+Se carga en [[app.html]] en la posición **42 de 102** (línea 3101), después de [[engine.secondbrain.js]] y antes de [[engine.globe.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 41)
+- [[app.html]] — lo carga con `<script>` (posición 42)
 - [[engine.catalog_sync.js]] — usa `KhipuCountries`
 - [[engine.globe.js]] — usa `GeoCoords`
 - [[engine.graph3d.js]] — usa `GeoCoords`, `KhipuCountries`

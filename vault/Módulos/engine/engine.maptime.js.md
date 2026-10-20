@@ -29,11 +29,11 @@ EL TIEMPO DENTRO DEL MAPA PRINCIPAL (2026-09-25) Fabrizio: "el grafo temporal y 
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **51 de 101** (línea 3110), después de [[engine.timeline3d.js]] y antes de [[engine.khipu_lang.js]].
+Se carga en [[app.html]] en la posición **52 de 102** (línea 3111), después de [[engine.timeline3d.js]] y antes de [[engine.khipu_lang.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 51)
+- [[app.html]] — lo carga con `<script>` (posición 52)
 - [[engine.app_main.js]] — usa `KhipuMapTime`, `_mapTimePaint`
 - [[engine.khipu_lang.js]] — usa `KhipuMapTime`
 

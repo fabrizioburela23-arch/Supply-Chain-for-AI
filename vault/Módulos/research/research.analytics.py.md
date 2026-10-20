@@ -30,6 +30,7 @@ _Nada interno._
 
 ## Lo usan
 
+- [[core.trading_agent.py]] — lo importa
 - [[research.context.py]] — lo importa
 
 _Además lo importan 4 pruebas (lista abajo)._

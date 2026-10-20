@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_trading_agent_ledger.py"
 lenguaje: "python"
-lineas: 241
+lineas: 264
 aliases: ["tests/test_trading_agent_ledger.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_trading_agent_ledger.py
 
-> Prueba · capa [[Capa Pruebas]] · 241 líneas · `tests/test_trading_agent_ledger.py`
+> Prueba · capa [[Capa Pruebas]] · 264 líneas · `tests/test_trading_agent_ledger.py`
 
 ## Qué prueba
 
 INFRA_OPERATIVA paso 16 (BRECHAS G5-10, MAP D #12, #14): el agente de trading del servidor por EL camino único y con memoria.
 
-**8** funciones `test_…`.
+**9** funciones `test_…`.
 
 ## Cubre
 
@@ -32,7 +32,7 @@ INFRA_OPERATIVA paso 16 (BRECHAS G5-10, MAP D #12, #14): el agente de trading de
 
 ## Rutas HTTP que llama
 
-2 rutas, de los grupos: [[API trade]]
+3 rutas, de los grupos: [[API trade]]
 
 ## Variables de entorno que fija o nombra
 

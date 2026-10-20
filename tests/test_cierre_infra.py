@@ -87,6 +87,8 @@ CON_DECISION = {
     'POST /api/trade/agent/config': 'policy.change (trading_agent)',
     'POST /api/trade/agent/start': 'policy.change (trading_agent)',
     'POST /api/trade/agent/stop': 'policy.change (trading_agent)',
+    'POST /api/trade/agent/signals/<sid>/take': 'order.preview → order.confirm → order.submit (señal «1 toque»)',
+    'POST /api/trade/agent/signals/<sid>/dismiss': 'trade.agent_signal (descartada)',
     'POST /api/trade/close': 'order.preview → order.confirm → order.submit',
     'POST /api/trade/order': 'order.preview → order.confirm → order.submit',
     'POST /mcp': 'mcp.tool_call (async; órdenes: order.* sync)',

@@ -93,6 +93,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - [[core.khipu_chat.py]] — lo importa
 - [[core.portfolio_advisor.py]] — lo importa
 - [[core.replay.py]] — lo importa
+- [[core.trading_agent.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[research.ask_agent.py]] — lo importa
 - [[research.committee_api.py]] — lo importa

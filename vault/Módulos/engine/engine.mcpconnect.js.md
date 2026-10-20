@@ -28,11 +28,11 @@ tags: ["capa/mcp-api", "tipo/modulo"]
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **67 de 101** (línea 3177), después de [[engine.clients.js]] y antes de [[engine.insights.js]].
+Se carga en [[app.html]] en la posición **68 de 102** (línea 3178), después de [[engine.clients.js]] y antes de [[engine.insights.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 67)
+- [[app.html]] — lo carga con `<script>` (posición 68)
 - [[engine.app_main.js]] — usa `KhipuMCP`
 - [[engine.cockpit.js]] — usa `KhipuMCP`
 - [[engine.khipu_lang.js]] — usa `KhipuMCP`

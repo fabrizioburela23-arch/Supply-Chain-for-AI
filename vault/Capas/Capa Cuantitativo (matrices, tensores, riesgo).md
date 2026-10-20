@@ -51,7 +51,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | la usa | [[Capa MCP y API]] | 8 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 4 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 5 |
 | la usa | [[Capa Ontología y grafo temporal]] | 4 |
 | la usa | [[Capa Comité]] | 3 |
 | la usa | [[Capa Voz]] | 3 |

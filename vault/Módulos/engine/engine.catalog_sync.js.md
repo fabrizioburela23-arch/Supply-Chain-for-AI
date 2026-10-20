@@ -27,7 +27,7 @@ EXPANSION_5K E3.1 (lote L, 2026-10-15): el catálogo del navegador se COMPLETA c
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 - [[nodes.nodes_seed.js]] — usa `CATS`, `NODES`, `NODE_ID_ALIAS`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **21 de 101** (línea 1523), después de [[nodes.merge_graph.js]] y antes de [[engine.pfstore.js]].
+Se carga en [[app.html]] en la posición **21 de 102** (línea 1523), después de [[nodes.merge_graph.js]] y antes de [[engine.pfstore.js]].
 
 ## Lo usan
 

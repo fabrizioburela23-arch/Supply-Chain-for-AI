@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_cierre_infra.py"
 lenguaje: "python"
-lineas: 311
+lineas: 313
 aliases: ["tests/test_cierre_infra.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_cierre_infra.py
 
-> Prueba · capa [[Capa Pruebas]] · 311 líneas · `tests/test_cierre_infra.py`
+> Prueba · capa [[Capa Pruebas]] · 313 líneas · `tests/test_cierre_infra.py`
 
 ## Qué prueba
 

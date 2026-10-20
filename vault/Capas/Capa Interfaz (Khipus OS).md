@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 29
+archivos: 30
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,13 +9,13 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**29 archivos · 29.688 líneas.** Volver al [[00 Mapa de Khipus]].
+**30 archivos · 29.861 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[engine.cockpit.js]] — 5.037 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.app_main.js]] — 4.844 líneas · Global error reporter — shows uncaught JS errors on screen (no devtools needed)
-- [[app.html]] — 3.537 líneas
+- [[app.html]] — 3.538 líneas
 - [[engine.app_coordinator.js]] — 2.703 líneas · Khipu Core Coordinator
 - [[engine.oswindows.js]] — 1.646 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.genui.js]] — 1.435 líneas · RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja; NUNCA calcula cifras. DOM seguro, 17 tipos, acciones solo …
@@ -36,6 +36,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.genui_shapes.js]] — 237 líneas · FORMAS, IMÁGENES y MINI-MAPA de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §4.6 y §7.2).
 - [[engine.genui_progress.js]] — 198 líneas · RESPUESTAS VISUALES PROGRESIVAS (F3, docs/CHAT_UI_GENERATIVA.md §6): el motor del chat que pinta los bloques provisionales y hace ATERRIZAR la …
 - [[engine.pricehist.js]] — 189 líneas · 🩺 Sistema → «Historia de precios» (BRECHAS bloque 2: la memoria de los números). Muestra cuánta historia guarda Khipus (cierres diarios ajustados, …
+- [[engine.signals.js]] — 172 líneas · «1 TOQUE»: señales del agente de trading listas para aprobar (2026-10-20) El agente en modo MANUAL propone (servidor: core/trading_agent.py, GET …
 - [[engine.loading.js]] — 159 líneas · Sistema de animaciones de carga por NIVEL DE ESPERA. Pedido de Fabrizio (2026-07-14): "que todo lo que tarde tenga una animación de carga adecuada; …
 - [[engine.mascot.js]] — 136 líneas · MASCOTAS BURBUJA de Khipus OS (2026-10-06)
 - [[engine.layers.js]] — 132 líneas · SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "todo o nada": enciendes/apagas información como capas. Cada capa = un …
@@ -57,8 +58,8 @@ tags: ["capa/interfaz", "tipo/capa"]
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 14 |
 | usa a | [[Capa Ontología y grafo temporal]] | 14 |
 | la usa | [[Capa Ontología y grafo temporal]] | 13 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 13 |
 | usa a | [[Capa Infraestructura]] | 13 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 12 |
 | la usa | [[Capa Comité]] | 10 |
 | la usa | [[Capa Voz]] | 10 |
 | usa a | [[Capa Comité]] | 7 |

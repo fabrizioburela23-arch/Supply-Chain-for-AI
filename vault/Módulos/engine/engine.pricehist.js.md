@@ -27,11 +27,11 @@ tags: ["capa/interfaz", "tipo/modulo"]
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **84 de 101** (línea 3209), después de [[engine.audit.js]] y antes de [[nodes.crypto_intel.js]].
+Se carga en [[app.html]] en la posición **85 de 102** (línea 3210), después de [[engine.audit.js]] y antes de [[nodes.crypto_intel.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 84)
+- [[app.html]] — lo carga con `<script>` (posición 85)
 - [[engine.app_main.js]] — usa `KhipuPriceHistory`
 
 ## Endpoints que llama

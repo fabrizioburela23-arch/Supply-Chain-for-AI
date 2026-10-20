@@ -28,7 +28,7 @@ TRADING COMPARTIDO del navegador (lote I4, G5-07: salió TAL CUAL de engine/voic
 - [[engine.resolve.js]] — usa `KhipuResolve`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **38 de 101** (línea 3097), después de [[engine.orb.js]] y antes de [[engine.voice.js]].
+Se carga en [[app.html]] en la posición **38 de 102** (línea 3097), después de [[engine.orb.js]] y antes de [[engine.signals.js]].
 
 ## Lo usan
 

@@ -3,14 +3,14 @@ tipo: "pagina"
 capa: "Interfaz (Khipus OS)"
 ruta: "app.html"
 lenguaje: "html"
-lineas: 3537
+lineas: 3538
 aliases: ["app.html"]
 tags: ["capa/interfaz", "tipo/pagina"]
 ---
 
 # app.html
 
-> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.537 líneas · `app.html`
+> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.538 líneas · `app.html`
 
 ## Para qué sirve
 
@@ -75,69 +75,70 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 36. [[engine.resolve.js]] (línea 3095)
 37. [[engine.orb.js]] (línea 3096)
 38. [[engine.trade.js]] (línea 3097)
-39. [[engine.voice.js]] (línea 3098)
-40. [[engine.secondbrain.js]] (línea 3099)
-41. [[engine.geo_coords.js]] (línea 3100)
-42. [[engine.globe.js]] (línea 3101)
-43. [[engine.canvas-data.js]] (línea 3102)
-44. [[nodes.temporal_seed_facts.js]] (línea 3103)
-45. [[nodes.temporal_seed_facts2.js]] (línea 3104)
-46. [[nodes.ontology.js]] (línea 3105)
-47. [[nodes.ontology_facts.js]] (línea 3106)
-48. [[nodes.legal_names.js]] (línea 3107)
-49. [[engine.temporal-graph.js]] (línea 3108)
-50. [[engine.timeline3d.js]] (línea 3109)
-51. [[engine.maptime.js]] (línea 3110)
-52. [[engine.khipu_lang.js]] (línea 3111)
-53. [[engine.guide.js]] (línea 3112)
-54. [[engine.xray.js]] (línea 3113)
-55. [[engine.research.js]] (línea 3114)
-56. bloque `<script>` inline #3 (línea 3115, 52 líneas)
-57. [[engine.riskreport.js]] (línea 3167)
-58. [[engine.worldmonitor.js]] (línea 3168)
-59. [[engine.spacemonitor.js]] (línea 3169)
-60. [[engine.pickers.js]] (línea 3170)
-61. [[engine.committee.js]] (línea 3171)
-62. [[engine.aispend.js]] (línea 3172)
-63. [[engine.pfcommittee.js]] (línea 3173)
-64. [[engine.pfreports.js]] (línea 3174)
-65. [[engine.sync.js]] (línea 3175)
-66. [[engine.clients.js]] (línea 3176)
-67. [[engine.mcpconnect.js]] (línea 3177)
-68. bloque `<script>` inline #4 (línea 3178, 16 líneas)
-69. [[engine.insights.js]] (línea 3194)
-70. [[engine.statematrix.js]] (línea 3195)
-71. [[engine.livesim.js]] (línea 3196)
-72. [[engine.layers.js]] (línea 3197)
-73. [[engine.brief.js]] (línea 3198)
-74. [[engine.compare.js]] (línea 3199)
-75. [[engine.matrixview.js]] (línea 3200)
-76. [[engine.nav4.js]] (línea 3201)
-77. [[engine.localcharts.js]] (línea 3202)
-78. [[engine.fincard.js]] (línea 3203)
-79. [[engine.termdata.js]] (línea 3204)
-80. [[engine.explain.js]] (línea 3205)
-81. [[engine.reconcile.js]] (línea 3206)
-82. [[engine.governance.js]] (línea 3207)
-83. [[engine.audit.js]] (línea 3208)
-84. [[engine.pricehist.js]] (línea 3209)
-85. [[nodes.crypto_intel.js]] (línea 3210)
-86. [[nodes.crypto_intel2.js]] (línea 3211)
-87. [[engine.crypto.js]] (línea 3212)
-88. [[engine.portfolios.js]] (línea 3213)
-89. [[engine.genui.js]] (línea 3216)
-90. [[engine.oswindows.js]] (línea 3217)
-91. [[engine.khipu_chat.js]] (línea 3218)
-92. [[engine.desktop.js]] (línea 3219)
-93. [[engine.cockpit.js]] (línea 3220)
-94. [[engine.live.js]] (línea 3221)
-95. [[engine.command_center.js]] (línea 3222)
-96. [[sim.scenario_builder.js]] (línea 3223)
-97. [[engine.app_coordinator.js]] (línea 3225)
-98. [[engine.app_trade_panel.js]] (línea 3526)
-99. [[engine.app_preflight.js]] (línea 3529)
-100. [[engine.app_canvas.js]] (línea 3532)
-101. [[engine.app_scatter.js]] (línea 3534)
+39. [[engine.signals.js]] (línea 3098)
+40. [[engine.voice.js]] (línea 3099)
+41. [[engine.secondbrain.js]] (línea 3100)
+42. [[engine.geo_coords.js]] (línea 3101)
+43. [[engine.globe.js]] (línea 3102)
+44. [[engine.canvas-data.js]] (línea 3103)
+45. [[nodes.temporal_seed_facts.js]] (línea 3104)
+46. [[nodes.temporal_seed_facts2.js]] (línea 3105)
+47. [[nodes.ontology.js]] (línea 3106)
+48. [[nodes.ontology_facts.js]] (línea 3107)
+49. [[nodes.legal_names.js]] (línea 3108)
+50. [[engine.temporal-graph.js]] (línea 3109)
+51. [[engine.timeline3d.js]] (línea 3110)
+52. [[engine.maptime.js]] (línea 3111)
+53. [[engine.khipu_lang.js]] (línea 3112)
+54. [[engine.guide.js]] (línea 3113)
+55. [[engine.xray.js]] (línea 3114)
+56. [[engine.research.js]] (línea 3115)
+57. bloque `<script>` inline #3 (línea 3116, 52 líneas)
+58. [[engine.riskreport.js]] (línea 3168)
+59. [[engine.worldmonitor.js]] (línea 3169)
+60. [[engine.spacemonitor.js]] (línea 3170)
+61. [[engine.pickers.js]] (línea 3171)
+62. [[engine.committee.js]] (línea 3172)
+63. [[engine.aispend.js]] (línea 3173)
+64. [[engine.pfcommittee.js]] (línea 3174)
+65. [[engine.pfreports.js]] (línea 3175)
+66. [[engine.sync.js]] (línea 3176)
+67. [[engine.clients.js]] (línea 3177)
+68. [[engine.mcpconnect.js]] (línea 3178)
+69. bloque `<script>` inline #4 (línea 3179, 16 líneas)
+70. [[engine.insights.js]] (línea 3195)
+71. [[engine.statematrix.js]] (línea 3196)
+72. [[engine.livesim.js]] (línea 3197)
+73. [[engine.layers.js]] (línea 3198)
+74. [[engine.brief.js]] (línea 3199)
+75. [[engine.compare.js]] (línea 3200)
+76. [[engine.matrixview.js]] (línea 3201)
+77. [[engine.nav4.js]] (línea 3202)
+78. [[engine.localcharts.js]] (línea 3203)
+79. [[engine.fincard.js]] (línea 3204)
+80. [[engine.termdata.js]] (línea 3205)
+81. [[engine.explain.js]] (línea 3206)
+82. [[engine.reconcile.js]] (línea 3207)
+83. [[engine.governance.js]] (línea 3208)
+84. [[engine.audit.js]] (línea 3209)
+85. [[engine.pricehist.js]] (línea 3210)
+86. [[nodes.crypto_intel.js]] (línea 3211)
+87. [[nodes.crypto_intel2.js]] (línea 3212)
+88. [[engine.crypto.js]] (línea 3213)
+89. [[engine.portfolios.js]] (línea 3214)
+90. [[engine.genui.js]] (línea 3217)
+91. [[engine.oswindows.js]] (línea 3218)
+92. [[engine.khipu_chat.js]] (línea 3219)
+93. [[engine.desktop.js]] (línea 3220)
+94. [[engine.cockpit.js]] (línea 3221)
+95. [[engine.live.js]] (línea 3222)
+96. [[engine.command_center.js]] (línea 3223)
+97. [[sim.scenario_builder.js]] (línea 3224)
+98. [[engine.app_coordinator.js]] (línea 3226)
+99. [[engine.app_trade_panel.js]] (línea 3527)
+100. [[engine.app_preflight.js]] (línea 3530)
+101. [[engine.app_canvas.js]] (línea 3533)
+102. [[engine.app_scatter.js]] (línea 3535)
 
 ## Bloques `<script>` inline
 
@@ -145,8 +146,8 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 |---|---|---|---|---|
 | 1 | 1552 | 341 | 11 | Hard fallback: always dismiss \#boot after 3s even if main JS crashes |
 | 2 | 2967 | 119 | 4 | Lissajous spirograph — same math renders at any size |
-| 3 | 3115 | 52 | 3 | AVISO "SERVIDOR NO DISPONIBLE" (incidente 2026-09-29: Railway dejó de responder y la app mostraba EN SILENCIO la última versión guardada por el service worker … |
-| 4 | 3178 | 16 | 1 | Insignia en 👥 Clientes: propuestas (de agentes MCP o del comité) esperando aprobación humana. Nunca pide el PIN (pendingCount devuelve null sin PIN). |
+| 3 | 3116 | 52 | 3 | AVISO "SERVIDOR NO DISPONIBLE" (incidente 2026-09-29: Railway dejó de responder y la app mostraba EN SILENCIO la última versión guardada por el service worker … |
+| 4 | 3179 | 16 | 1 | Insignia en 👥 Clientes: propuestas (de agentes MCP o del comité) esperando aprobación humana. Nunca pide el PIN (pendingCount devuelve null sin PIN). |
 
 ## API pública (globales window.* que define)
 
@@ -190,6 +191,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[engine.pricehist.js]] — usa `_tradeFetch`
 - [[engine.reconcile.js]] — usa `_tradeFetch`
 - [[engine.secondbrain.js]] — usa `safeUrl`
+- [[engine.signals.js]] — usa `_tradeFetch`, `_tradePinStored`
 - [[engine.temporal-graph.js]] — usa `_tradeErrText`, `_tradeFetch`, `safeUrl`
 - [[engine.toast.js]] — usa `_tradeFetch`, `_tradeStatusInfo`
 - [[engine.trade.js]] — usa `_tradeErrText`, `_tradeFetch`, `_tradeOrderAmbiguous`, `_tradeOrderId`, `_tradeOrderIsDup`, `_tradeOrderSettle`

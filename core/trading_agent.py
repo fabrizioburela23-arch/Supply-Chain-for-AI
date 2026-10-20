@@ -66,6 +66,7 @@ _AGENT: dict = {
     'daily_pnl_pct': 0.0,
     'broker_error': None,      # último error de Alpaca (bilingüe) para diagnóstico
     'pending_close': {},       # símbolo (sin '/') → ts del último cierre enviado
+    'signals': {},             # «1 toque» (modo manual): id → señal propuesta que una PERSONA aprueba con su PIN
 }
 _AGENT_LOCK = threading.Lock()          # arranque/parada/config
 _AGENT_LOG_LOCK = threading.Lock()
@@ -177,13 +178,17 @@ def _agent_exec_block(account=None):
     return None
 
 
-def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> dict:
-    """Ask Claude to analyze one ticker and recommend action."""
+def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float, facts=None) -> dict:
+    """Ask Claude to analyze one ticker and recommend action. `facts` = contexto de Khipus (_agent_context:
+    técnico de cierres reales + convicción de los analistas); sin él, solo precio y tono como antes."""
     pct = ((price - prev) / prev * 100) if prev else 0
+    extra = ''.join(f'- {line}\n' for line in (facts or {}).get('lines') or [])
     prompt = (
         f"You are a quantitative trading analyst. Analyze {ticker}:\n"
         f"- Price: ${price:.2f} (prev close: ${prev:.2f}, change: {pct:+.2f}%)\n"
-        f"- News sentiment score: {sentiment:.2f} (range -10 to +10)\n\n"
+        f"- News sentiment score: {sentiment:.2f} (range -10 to +10)\n"
+        f"{extra}\n"
+        f"Weigh trend, momentum and the analysts' view; when signals conflict prefer hold. "
         f"Respond in JSON only, no markdown:\n"
         f'{{ "action": "buy"|"sell"|"hold", "confidence": 0-100, '
         f'"reason": "1-sentence reason", "size_pct": 1-5 }}'
@@ -293,6 +298,161 @@ def _alpaca_tradable(sym):
         return True
     _TRADABLE_CACHE[sym] = (time.time(), ok)
     return ok
+
+
+# ── Contexto de Khipus para cada decisión (2026-10-20, «perfecciona el trading») ─────────────────────────────────
+# Antes la IA veía solo precio de hoy + tono de noticias. Ahora también: técnico de CIERRES REALES de un año
+# (core/risk_report.fetch_history → research/analytics.technical_indicators: RSI de Wilder, medias 50/200, retorno
+# 1 mes, volatilidad 20 días, distancia al máximo) y la convicción de los analistas de Khipus (pizarra del comité).
+# Caché 30 min por ticker: el ciclo no se vuelve lento ni gasta más pedidos.
+_CTX_TTL_S = 1800
+_CTX_CACHE: dict = {}
+_BOARD_CACHE = {'ts': 0.0, 'by_sym': {}}
+_TONE_CACHE: dict = {}
+RSI_OVERBOUGHT = 75.0          # guarda: no se propone COMPRAR algo en sobrecompra extrema
+
+
+def _agent_board_by_symbol():
+    if time.time() - _BOARD_CACHE['ts'] < 600:
+        return _BOARD_CACHE['by_sym']
+    out = {}
+    try:
+        from ontology.db import ontology_available, session_scope
+        if ontology_available():
+            from core.semantic import _load_snapshot
+            from research.committee import board
+            snap = _load_snapshot()
+            with session_scope() as s:
+                items = board(s, limit=120).get('items') or []
+            for x in items:
+                n = snap['by_id'].get(x.get('entity_id')) or {}
+                sym = str(n.get('mkt') or '').upper()
+                if sym and x.get('overall_conviction') is not None:
+                    out[sym] = {'conviction': x['overall_conviction'], 'label': x.get('label')}
+    except Exception as e:  # noqa: BLE001
+        log.info('agente: pizarra no disponible (%s)', type(e).__name__)
+    _BOARD_CACHE.update(ts=time.time(), by_sym=out)
+    return out
+
+
+def _agent_context(ticker):
+    """→ {'tech': {...}|None, 'conviction': float|None, 'lines': [texto para la IA]}. Nunca lanza."""
+    e = _CTX_CACHE.get(ticker)
+    if e and time.time() - e[0] < _CTX_TTL_S:
+        return e[1]
+    tech = None
+    try:
+        from core.risk_report import fetch_history
+        from research.analytics import technical_indicators
+        hist, _cur = fetch_history(ticker, '1y')
+        series = sorted(hist.items()) if isinstance(hist, dict) else []
+        tech, _txt = technical_indicators(series)
+    except Exception as e:  # noqa: BLE001
+        log.info('agente: técnico de %s no disponible (%s)', ticker, type(e).__name__)
+    conv = (_agent_board_by_symbol().get(ticker) or {}).get('conviction')
+    lines = []
+    if tech:
+        if tech.get('rsi14') is not None:
+            lines.append(f"RSI(14, Wilder): {tech['rsi14']}")
+        if tech.get('trend'):
+            tr = {'alcista': 'up', 'bajista': 'down', 'mixta': 'mixed'}.get(tech['trend'], tech['trend'])
+            lines.append(f"Trend (50/200-day averages): {tr}")
+        if tech.get('ret_1m_pct') is not None:
+            lines.append(f"1-month return: {tech['ret_1m_pct']}%")
+        if tech.get('vol_20d_pct') is not None:
+            lines.append(f"20-day annualized volatility: {tech['vol_20d_pct']}%")
+        if tech.get('pct_from_52w_high') is not None:
+            lines.append(f"Distance from 52-week high: {tech['pct_from_52w_high']}%")
+    if conv is not None:
+        lines.append(f"Khipus analysts' conviction: {conv:+.0f} (range -100 to +100)")
+    out = {'tech': tech, 'conviction': conv, 'lines': lines}
+    _CTX_CACHE[ticker] = (time.time(), out)
+    return out
+
+
+def _agent_guard(action, facts):
+    """Regla FIJA sobre lo que diga la IA: motivo para no actuar, o None."""
+    rsi = ((facts or {}).get('tech') or {}).get('rsi14')
+    if action == 'buy' and rsi is not None and rsi >= RSI_OVERBOUGHT:
+        return f'RSI {rsi} ≥ {RSI_OVERBOUGHT:.0f}: sobrecompra, no se compra · overbought, no buy'
+    conv = (facts or {}).get('conviction')
+    if action == 'buy' and conv is not None and conv <= -35:
+        return f'analistas en contra (convicción {conv:+.0f}) · analysts against'
+    return None
+
+
+def _agent_tone(ticker):
+    """Tono de noticias GDELT con caché de 30 min (antes un pedido de hasta 6 s por ticker en CADA ciclo)."""
+    e = _TONE_CACHE.get(ticker)
+    if e and time.time() - e[0] < _CTX_TTL_S:
+        return e[1]
+    tone = 0.0
+    try:
+        gr = requests.get('https://api.gdeltproject.org/api/v2/doc/doc',
+                          params={'query': ticker, 'mode': 'tonechart', 'format': 'json', 'maxrecords': 5},
+                          timeout=6)
+        gdata = gr.json()
+        tones = [float(x.get('avgtone', 0) or 0) for x in (gdata.get('tonechart') or [])[:5]]
+        tone = sum(tones) / len(tones) if tones else 0.0
+    except Exception:  # noqa: BLE001
+        pass
+    _TONE_CACHE[ticker] = (time.time(), tone)
+    return tone
+
+
+# ── «1 TOQUE» (2026-10-20): en modo MANUAL cada señal accionable queda PROPUESTA con todo listo (lado, monto, precio
+# visto, stop, motivo, confianza). Una PERSONA la aprueba con su PIN (POST /api/trade/agent/signals/<id>/take) y sale
+# por EL camino único (brokerage.service.house_order, source='ui', igual que el panel). Vence a los 15 min y se
+# rechaza si el precio se movió más de 1,5 % en contra (salvo una salida por stop-loss: proteger nunca se frena).
+SIGNAL_TTL_S = 15 * 60
+SIGNAL_DRIFT_PCT = 1.5
+_SIGNALS_MAX = 40
+_SIGNALS_LOCK = threading.Lock()
+
+
+def _signals_prune(now=None):
+    now = now or time.time()
+    sig = _AGENT.setdefault('signals', {})
+    for k, v in list(sig.items()):
+        if v['status'] == 'pending' and now > v['expires_ts']:
+            v['status'] = 'expired'
+        if now - v['ts'] > 6 * 3600:
+            sig.pop(k, None)
+    while len(sig) > _SIGNALS_MAX:
+        sig.pop(next(iter(sig)))
+
+
+def _signal_add(ticker, side, *, notional=None, qty=None, price=0.0, confidence=0, reason='', kind='entry',
+                decision_id=None, facts=None):
+    """Propone una señal (una pendiente por símbolo y lado: la nueva reemplaza a la vieja). → la señal."""
+    now = time.time()
+    with _SIGNALS_LOCK:
+        _signals_prune(now)
+        sig = _AGENT.setdefault('signals', {})
+        for v in sig.values():
+            if v['status'] == 'pending' and v['ticker'] == ticker and v['side'] == side:
+                v['status'] = 'replaced'
+        sid = uuid.uuid4().hex[:16]
+        tech = (facts or {}).get('tech') or {}
+        sig[sid] = {
+            'id': sid, 'ts': now, 'created_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(now)),
+            'expires_ts': now + SIGNAL_TTL_S,
+            'expires_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(now + SIGNAL_TTL_S)),
+            'ticker': ticker, 'side': side, 'kind': kind,
+            'notional': round(float(notional), 2) if notional else None,
+            'qty': qty, 'price': round(float(price or 0), 4), 'price_src': 'finnhub',
+            'stop_loss_pct': _AGENT['stop_loss_pct'], 'confidence': int(confidence or 0), 'reason': str(reason)[:200],
+            'rsi14': tech.get('rsi14'), 'trend': tech.get('trend'), 'conviction': (facts or {}).get('conviction'),
+            'decision_id': decision_id, 'status': 'pending', 'paper': bool(_S._paper()),
+        }
+        return sig[sid]
+
+
+def _signals_view():
+    with _SIGNALS_LOCK:
+        _signals_prune()
+        items = sorted(_AGENT.get('signals', {}).values(), key=lambda v: -v['ts'])
+    return [{k: v for k, v in x.items() if k not in ('ts', 'expires_ts')} for x in items]
 
 
 def _agent_principal():
@@ -462,6 +622,32 @@ def _agent_stop_losses(positions, block):
     return touched
 
 
+def _agent_stop_signals(positions):
+    """Modo manual: una posición que pasó el stop NO se cierra sola; queda una señal de SALIDA (vender todo) para
+    aprobar con un toque. Devuelve los símbolos tocados (no se les propone otra cosa en este ciclo)."""
+    touched = set()
+    for sym, p in list(positions.items()):
+        try:
+            pl_pct = float(p.get('unrealized_plpc') or 0) * 100
+            qty = float(p.get('qty') or 0)
+            px = float(p.get('current_price') or 0)
+        except (TypeError, ValueError):
+            continue
+        if not qty or pl_pct > -_AGENT['stop_loss_pct']:
+            continue
+        touched.add(sym)
+        side = 'sell' if qty > 0 else 'buy'
+        pend = [v for v in _AGENT.get('signals', {}).values()
+                if v['status'] == 'pending' and v['ticker'] == sym and v['kind'] == 'stop']
+        if pend:
+            continue
+        _signal_add(str(sym), side, qty=float(_S._num_str(abs(qty))), price=px, confidence=100, kind='stop',
+                    reason=f'stop-loss {pl_pct:.1f}% (≤ -{_AGENT["stop_loss_pct"]}%)')
+        _agent_log({'ticker': sym, 'level': 'warn',
+                    'msg': f'🛑 Stop-loss {pl_pct:.1f}%: señal de salida lista para aprobar · exit signal ready'})
+    return touched
+
+
 def _agent_run_cycle():
     """One analysis + execution cycle for all tickers in universe."""
     account = _agent_get_account()
@@ -491,7 +677,7 @@ def _agent_run_cycle():
         _agent_log({'level': 'warn', 'msg': f'⏸ Órdenes en pausa · Orders paused — {block}'})
 
     positions = _agent_get_positions()
-    stopped = _agent_stop_losses(positions, block) if auto else set()
+    stopped = _agent_stop_losses(positions, block) if auto else _agent_stop_signals(positions)
     for sym in stopped:
         positions.pop(sym, None)
 
@@ -518,22 +704,14 @@ def _agent_run_cycle():
                 except (TypeError, ValueError):
                     price = 0.0
 
-        # lightweight GDELT sentiment
-        try:
-            gr = requests.get('https://api.gdeltproject.org/api/v2/doc/doc',
-                              params={'query': ticker, 'mode': 'tonechart', 'format': 'json', 'maxrecords': 5},
-                              timeout=6)
-            gdata = gr.json()
-            tones = [float(x.get('avgtone', 0) or 0) for x in (gdata.get('tonechart') or [])[:5]]
-            sentiment = sum(tones) / len(tones) if tones else 0.0
-        except Exception:  # noqa: BLE001
-            pass
-
         if price <= 0:
             continue
+        sentiment = _agent_tone(ticker)          # tono de noticias (GDELT, caché 30 min)
+        facts = _agent_context(ticker)           # técnico de cierres reales + convicción de los analistas
 
-        _raw = _agent_analyze(ticker, price, prev, sentiment)
+        _raw = _agent_analyze(ticker, price, prev, sentiment, facts=facts)
         action, confidence, reason, size_pct = _agent_clean_analysis(_raw)
+        guard = _agent_guard(action, facts)
         sig = (_agent_signal_ctx(ticker, action, {'action': action, 'confidence': confidence, 'reason': reason,
                                                   'size_pct': size_pct, 'sentiment': round(sentiment, 3),
                                                   'price': price, 'prev': prev, 'price_src': 'finnhub',
@@ -551,7 +729,12 @@ def _agent_run_cycle():
             'level': 'info',
         }
 
-        if auto and _S.ALPACA_KEY and action != 'hold' and confidence >= _AGENT.get('min_confidence', 65):
+        if guard and action != 'hold' and confidence >= _AGENT.get('min_confidence', 65):
+            entry['skipped'] = guard
+            if sig is not None:
+                sig.output['skipped'] = guard
+                _agent_record_signal(sig, 'noop')
+        elif auto and _S.ALPACA_KEY and action != 'hold' and confidence >= _AGENT.get('min_confidence', 65):
             # Endurecimientos (auditoría Track D): freno duro de órdenes por
             # ciclo, no acumular por encima del tope en el mismo ticker, y no
             # vender sin tenencia (evita shorts no intencionados con margen).
@@ -603,9 +786,46 @@ def _agent_run_cycle():
                 except Exception as e:  # noqa: BLE001 — rechazo de Alpaca o red: ERROR, no ejecutada
                     entry['exec_error'] = _S._diag_redact(e)[:160]
                     entry['level'] = 'error'
-        elif sig is not None:          # consejo (modo manual) o señal por debajo del umbral: queda en el libro
-            sig.output['executed'] = False
-            _agent_record_signal(sig, 'recorded')
+        elif action != 'hold':         # consejo (modo manual) o señal por debajo del umbral: queda en el libro
+            if sig is not None:
+                sig.output['executed'] = False
+            proposed = None
+            if (not auto and _S.ALPACA_KEY and confidence >= _AGENT.get('min_confidence', 65)
+                    and orders_this_cycle < _AGENT.get('max_orders_per_cycle', 3)):
+                existing = positions.get(ticker) or {}
+                try:
+                    existing_mv = abs(float(existing.get('market_value') or 0))
+                except (TypeError, ValueError):
+                    existing_mv = 0.0
+                if action == 'sell' and not existing:
+                    entry['skipped'] = 'sin tenencia — no se abre corto'
+                elif action == 'buy' and equity > 0 and existing_mv >= equity * _AGENT['max_pos_pct'] / 100:
+                    entry['skipped'] = f'posición ya en tope ({existing_mv / equity * 100:.1f}%)'
+                elif size_pct > 0 and equity > 0:
+                    if action == 'sell':
+                        try:
+                            qty = abs(float(existing.get('qty') or 0))
+                        except (TypeError, ValueError):
+                            qty = 0.0
+                        frac = min(1.0, (equity * size_pct / 100) / existing_mv) if existing_mv else 1.0
+                        q = float(_S._num_str(qty * frac)) if qty else 0.0
+                        proposed = {'qty': q} if q > 0 else None
+                    else:
+                        notional = max(1.0, min(equity * size_pct / 100, equity * _AGENT['max_pos_pct'] / 100,
+                                                _S.MAX_ORDER_USD,
+                                                max(1.0, equity * _AGENT['max_pos_pct'] / 100 - existing_mv)))
+                        proposed = {'notional': notional}
+            if proposed:
+                if sig is not None:
+                    sig.output['proposed'] = {k: (round(v, 2) if k == 'notional' else v) for k, v in proposed.items()}
+                did = _agent_record_signal(sig, 'recorded')
+                s1 = _signal_add(ticker, action, price=price, confidence=confidence, reason=reason,
+                                 decision_id=did or getattr(sig, 'id', None), facts=facts,
+                                 **proposed)
+                entry['signal_id'] = s1['id']
+                orders_this_cycle += 1
+            else:
+                _agent_record_signal(sig, 'recorded')
 
         _agent_log(entry)
 
@@ -785,6 +1005,7 @@ def agent_status():
         'broker_error': _AGENT.get('broker_error'),
         'notice': _AGENT.get('notice'),          # BRECHAS #14: apagado por una actualización (ES/EN)
         'log': recent,
+        'signals': _signals_view(),
     })
 
 
@@ -808,3 +1029,115 @@ def agent_config():
         _S._trade_audit('agent_config', {'outcome': 'updated', **{k: v for k, v in changes.items() if k != 'universe'},
                                       **({'universe_n': len(changes['universe'])} if 'universe' in changes else {})})
     return jsonify({'status': 'updated', 'notes': notes, **_agent_config_view()})
+
+
+# ── «1 toque»: señales del agente que aprueba una persona ─────────────────────────────────────────────────────────
+@trading_agent_bp.route('/api/trade/agent/signals', methods=['GET'])
+@rate_limit(limit=240, window=60)
+@_trade_auth
+def agent_signals():
+    return jsonify({'signals': _signals_view(), 'paper': _S._paper(), 'running': _AGENT['running'],
+                    'mode': _AGENT['mode'], 'ttl_s': SIGNAL_TTL_S, 'max_drift_pct': SIGNAL_DRIFT_PCT})
+
+
+def _signal_get(sid):
+    with _SIGNALS_LOCK:
+        _signals_prune()
+        return _AGENT.get('signals', {}).get(str(sid)[:32])
+
+
+@trading_agent_bp.route('/api/trade/agent/signals/<sid>/take', methods=['POST'])
+@rate_limit(limit=20, window=60)
+@_trade_auth
+def agent_signal_take(sid):
+    """La persona aprueba la señal (su PIN = su confirmación): misma validación que /api/trade/order y EL camino
+    único. 409 si venció, ya se usó o el precio se movió en contra más de SIGNAL_DRIFT_PCT."""
+    if not _S.ALPACA_KEY:
+        return _S._broker_missing_response()
+    sg = _signal_get(sid)
+    if sg is None:
+        return _S._bad('Señal no encontrada (quizá venció)', 'Signal not found (it may have expired)',
+                       code='signal_not_found', status=404)
+    if sg['status'] != 'pending':
+        return _S._bad(f"La señal ya no está pendiente ({sg['status']})", f"The signal is no longer pending "
+                       f"({sg['status']})", code='signal_' + sg['status'], status=409)
+    summary = {'symbol': sg['ticker'], 'side': sg['side'], 'signal_id': sg['id'], 'kind': sg['kind'],
+               'notional': sg.get('notional'), 'qty': sg.get('qty')}
+    if not _S._house_trading_enabled():
+        _S._trade_audit('agent_signal_take', dict(summary, outcome='blocked_kill_switch'))
+        return _S._trading_halted_response()
+    lb = _S._house_ledger_block()
+    if lb is not None:
+        _S._trade_audit('agent_signal_take', dict(summary, outcome='blocked_ledger_chain'))
+        return lb
+    now_px = None
+    if _S.FINNHUB and sg.get('price'):
+        data, err = _S._fetch_quote_raw(sg['ticker'], timeout=6)
+        if not err and isinstance(data, dict):
+            try:
+                now_px = float(data.get('c') or 0) or None
+            except (TypeError, ValueError):
+                now_px = None
+    if now_px and sg['kind'] != 'stop':
+        move = (now_px / sg['price'] - 1) * 100
+        against = move if sg['side'] == 'buy' else -move
+        if against > SIGNAL_DRIFT_PCT:
+            _S._trade_audit('agent_signal_take', dict(summary, outcome='rejected', reason='price_moved',
+                                                     now_px=now_px, signal_px=sg['price']))
+            return _S._bad(f"El precio se movió {move:+.2f} % desde la señal ({sg['price']} → {now_px}): ya no es la "
+                           f"misma oportunidad. Espera la próxima señal.",
+                           f"The price moved {move:+.2f}% since the signal ({sg['price']} → {now_px}): it is no longer "
+                           f"the same opportunity. Wait for the next signal.", code='price_moved', status=409)
+    with _SIGNALS_LOCK:
+        if sg['status'] != 'pending':
+            return _S._bad('La señal ya se está usando', 'The signal is already being used', code='signal_busy',
+                           status=409)
+        sg['status'] = 'taking'
+    channel = _S._identity_channel()
+    kw = dict(order_type='market', time_in_force='gtc' if '/' in sg['ticker'] else 'day',
+              client_order_id='kh-sig-' + sg['id'], source='ui', channel=channel, requested_by=_S._trade_actor(),
+              rationale=f"señal del agente ({sg['confidence']}): {sg['reason']}"[:300])
+    if sg.get('qty'):
+        kw.update(qty=sg['qty'], checks_mode='house_reduce' if sg['kind'] == 'stop' or sg['side'] == 'sell'
+                  else 'house_today')
+    else:
+        kw.update(notional=sg['notional'])
+    res = _S._house_call('house_order', sg['ticker'], sg['side'], **kw)
+    payload, st = _S._house_http(res)
+    with _SIGNALS_LOCK:
+        sg['status'] = 'taken' if st in (200, 202) else 'pending'
+        if st in (200, 202):
+            sg['order_id'] = payload.get('id')
+            sg['taken_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    _S._trade_audit('agent_signal_take', dict(summary, outcome='submitted' if st == 200 else
+                                             ('pending_approval' if st == 202 else 'rejected'), http_status=st,
+                                             now_px=now_px, alpaca_order_id=payload.get('id') if st == 200 else None,
+                                             decision_id=payload.get('decision_id')))
+    payload = dict(payload, signal_id=sg['id'], signal_px=sg['price'], now_px=now_px)
+    return jsonify(payload), st
+
+
+@trading_agent_bp.route('/api/trade/agent/signals/<sid>/dismiss', methods=['POST'])
+@rate_limit(limit=60, window=60)
+@_trade_auth
+def agent_signal_dismiss(sid):
+    """Descartar una señal: queda en el libro (trade.agent_signal, status noop) quién la descartó."""
+    sg = _signal_get(sid)
+    if sg is None or sg['status'] != 'pending':
+        return _S._bad('Señal no pendiente', 'Signal not pending', code='signal_not_pending', status=409)
+    try:
+        from ontology.db import ontology_available
+        if ontology_available():
+            from core import decisions, identity
+            from ontology.db import session_scope
+            ctx = decisions.DecisionCtx('trade.agent_signal', identity.current() or identity.principal_from_request(),
+                                        subject={'symbol': sg['ticker'], 'action': sg['side'], 'mode': 'manual'})
+            ctx.output = {'dismissed': True, 'signal_id': sg['id'], 'signal_decision_id': sg.get('decision_id')}
+            with session_scope() as s:
+                decisions.record(s, ctx, status='noop')
+    except Exception as e:  # noqa: BLE001
+        log.warning('agente: descarte no registrado (%s)', type(e).__name__)
+    with _SIGNALS_LOCK:
+        sg['status'] = 'dismissed'
+    _S._trade_audit('agent_signal_dismiss', {'signal_id': sg['id'], 'symbol': sg['ticker'], 'side': sg['side']})
+    return jsonify({'status': 'dismissed', 'signal_id': sg['id']})

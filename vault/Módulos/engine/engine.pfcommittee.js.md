@@ -33,11 +33,11 @@ tags: ["capa/comite", "tipo/modulo"]
 - [[engine.sync.js]] — usa `KhipuSync`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **63 de 101** (línea 3173), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
+Se carga en [[app.html]] en la posición **64 de 102** (línea 3174), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 63)
+- [[app.html]] — lo carga con `<script>` (posición 64)
 - [[engine.committee.js]] — usa `KhipuPortfolioCommittee`
 - [[engine.khipu_chat.js]] — usa `KhipuPortfolioCommittee`, `KhipuProfile`
 - [[engine.localcharts.js]] — usa `KhipuPortfolioCommittee`

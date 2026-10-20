@@ -31,7 +31,7 @@ De nivel superior (globales del script): `LINKS_SPACEX`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **17 de 101** (línea 1519), después de [[nodes.private_valuations.js]] y antes de [[nodes.links_expand.js]].
+Se carga en [[app.html]] en la posición **17 de 102** (línea 1519), después de [[nodes.private_valuations.js]] y antes de [[nodes.links_expand.js]].
 
 ## Lo usan
 

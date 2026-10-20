@@ -27,11 +27,11 @@ Professional Trade Panel
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **98 de 101** (línea 3526), después de [[engine.app_coordinator.js]] y antes de [[engine.app_preflight.js]].
+Se carga en [[app.html]] en la posición **99 de 102** (línea 3527), después de [[engine.app_coordinator.js]] y antes de [[engine.app_preflight.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 98)
+- [[app.html]] — lo carga con `<script>` (posición 99)
 - [[app.html]] — usa `_tpRefreshAgentStatus`, `_tpRefreshBlotter`, `_tpRefreshPositions`, `closeTradePanelFn`, `setTradePanelQtyPct`, `setTradePanelSide`, `submitTradePanelOrder`, `toggleTradingAgent` y 1 más
 - [[engine.app_coordinator.js]] — usa `openTradeModal`
 - [[engine.app_main.js]] — usa `openTradeModal`

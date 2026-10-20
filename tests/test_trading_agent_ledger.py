@@ -239,3 +239,26 @@ def test_fills_are_append_only_and_land_as_outcomes(alpaca):
         with session_scope() as s:
             s.execute(text("UPDATE broker_fills SET cum_qty = 99 WHERE alpaca_order_id = :a"), {'a': o['id']})
     assert 'append-only' in str(ei.value)
+
+
+def test_manual_signal_one_tap_leaves_signal_and_order_decisions(agent, alpaca, monkeypatch):
+    """«1 toque» con libro: la señal propuesta queda como trade.agent_signal 'recorded' y al aprobarla con el PIN la
+    orden sale por el camino único (source='ui', principal del operador) con su client_order_id kh-sig-…."""
+    monkeypatch.setitem(agent, 'mode', 'manual')
+    monkeypatch.setitem(agent, 'universe', ['QCOM'])
+    monkeypatch.setitem(agent, 'signals', {})
+    monkeypatch.setattr(server._trading_agent, '_agent_context', lambda t: {'tech': None, 'conviction': None, 'lines': []})
+    monkeypatch.setattr(server._trading_agent, '_agent_tone', lambda t: 0.0)
+    server._agent_run_cycle()
+    assert not alpaca.posts()
+    sig = _signals('QCOM')[-1]
+    assert sig['status'] == 'recorded' and sig['output']['proposed']['notional'] > 0
+    (s,) = [x for x in server._AGENT['signals'].values() if x['status'] == 'pending']
+    assert s['decision_id'] == sig['id']
+    c = server.app.test_client()
+    r = c.post(f"/api/trade/agent/signals/{s['id']}/take", data='{}',
+               headers={'Content-Type': 'application/json', 'X-Trade-Pin': PIN})
+    assert r.status_code == 200, r.get_json()
+    assert alpaca.posts()[-1][3]['client_order_id'] == 'kh-sig-' + s['id']
+    rows = _q("SELECT kind FROM decisions WHERE kind LIKE 'order.%' AND subject::text LIKE '%QCOM%'")
+    assert {'order.preview', 'order.submit'} <= {x['kind'] for x in rows}

@@ -36,6 +36,15 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    c) Lote 3 tanda 1 (2026-10-16): data/import/lotes/2026-10-16/bundle_lote3_1.json.gz = 4 fichas válidas (Adobe, Alchip,
       ACWA Power, ACM Research Shanghai); AECC Aviation Power fuera (sin classification.cat, facilities[].id).
       PROMPT_LOTE3 corregido (el % de owns/invest va en corporate, no `relations[].stake_pct`). Aplicar = panel 📥 + PIN.
+1b. ✅ **TRADING «1 TOQUE» (2026-10-20, sw v278)**: core/trading_agent.py — el agente ve técnico de cierres reales
+   (RSI Wilder, medias 50/200, retorno 1 mes, vol 20 d, distancia al máximo) + convicción de los analistas (`_agent_context`,
+   caché 30 min) y una guarda fija (`_agent_guard`: no compra con RSI ≥ 75 ni con analistas ≤ −35). En MODO MANUAL cada
+   señal accionable queda PROPUESTA (`_AGENT['signals']`, vence 15 min) y los stop-loss se vuelven señales de salida;
+   `GET /api/trade/agent/signals`, `POST …/signals/<id>/take` (PIN; house_order source='ui', client_order_id kh-sig-…;
+   409 si venció, ya se usó o el precio se movió > 1,5 % en contra, salvo salidas por stop) y `…/dismiss` (decisión
+   trade.agent_signal noop). Cliente engine/signals.js (`window.KhipuSignals`): tarjetas flotantes 🧪/🔴, papel = 1 toque,
+   real = 1 toque + KhipuToast.confirmOrder; aviso del navegador opcional. AUTO con dinero real sigue PROHIBIDO.
+   tests/test_agent_signals_one_tap.py + test_trading_agent_ledger (con base). Scalping: NO (precios cada ~15 s, IA en segundos).
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).

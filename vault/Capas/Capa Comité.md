@@ -35,8 +35,8 @@ tags: ["capa/comite", "tipo/capa"]
 | la usa | [[Capa Infraestructura]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 6 |
 | usa a | [[Capa Ontología y grafo temporal]] | 6 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 4 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
 | la usa | [[Capa Investigación]] | 3 |
 | la usa | [[Capa MCP y API]] | 3 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |

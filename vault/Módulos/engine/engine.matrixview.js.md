@@ -25,11 +25,11 @@ LAS 9 MATRICES dentro de la app (pestaña Análisis) Calcula en el navegador las
 - [[engine.app_main.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`, `sectorName`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **75 de 101** (línea 3200), después de [[engine.compare.js]] y antes de [[engine.nav4.js]].
+Se carga en [[app.html]] en la posición **76 de 102** (línea 3201), después de [[engine.compare.js]] y antes de [[engine.nav4.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 75)
+- [[app.html]] — lo carga con `<script>` (posición 76)
 - [[engine.app_main.js]] — usa `renderMatrixView`
 
 ## Pruebas que lo cubren

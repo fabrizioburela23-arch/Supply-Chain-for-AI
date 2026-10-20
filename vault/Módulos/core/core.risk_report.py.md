@@ -48,6 +48,7 @@ REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_report.py]] — lo importa
 - [[core.prices_api.py]] — lo importa
+- [[core.trading_agent.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[research.committee.py]] — lo importa
