@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/api.py"
 lenguaje: "python"
-lineas: 1990
+lineas: 2007
 aliases: ["ontology/api.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/api.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.990 líneas · `ontology/api.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 2.007 líneas · `ontology/api.py`
 
 ## Para qué sirve
 
@@ -58,9 +58,10 @@ API REST de la ontología: /api/ontology/\*
 - `import_plan()` — Plan PURO (no escribe): {file_sha | package | records[, updates], approve_categories?, batch?, full?: 0|1, format?: json|md, lang?: es|en, … _(línea 1642)_
 - `import_apply()` — Aplica el plan que la persona revisó: {file_sha | package | records, approve_categories?, batch?, confirm_db, expect: {plan_sha}, … _(línea 1666)_
 - `import_rollback()` — Deshace una corrida: {run_id, confirm_db}. Decisión ontology.import_rollback; de la más nueva a la más vieja. _(línea 1703)_
-- `import_runs()` — Corridas aplicadas/deshechas (las más nuevas primero) y cuántos vínculos esperan su contraparte. _(línea 1730)_
-- `import_packages()` — Paquetes del repositorio listos para importar (lectura, sin PIN): nombre, fecha, título ES/EN, conteos, origen, resumen del saneador y si … _(línea 1958)_
-- `import_package_plan()` — Plan PURO de un paquete del repositorio, SIN PIN (no escribe nada): ?package=&lt;nombre de la lista>. El mismo cálculo y la misma huella … _(línea 1978)_
+- `links_review()` — Cola de revisión de vínculos PROPUESTOS por importancia (ontology/link_review). Solo lectura: confirmar o rechazar = POST … _(línea 1730)_
+- `import_runs()` — Corridas aplicadas/deshechas (las más nuevas primero) y cuántos vínculos esperan su contraparte. _(línea 1747)_
+- `import_packages()` — Paquetes del repositorio listos para importar (lectura, sin PIN): nombre, fecha, título ES/EN, conteos, origen, resumen del saneador y si … _(línea 1975)_
+- `import_package_plan()` — Plan PURO de un paquete del repositorio, SIN PIN (no escribe nada): ?package=&lt;nombre de la lista>. El mismo cálculo y la misma huella … _(línea 1995)_
 
 **Internas** (empiezan con `_`): `_unavailable`, `_body`, `_BadArg`, `_int_arg`, `_bad_arg`, `_gate_violation`, `_ledger_unavailable`, `_principal`, `_require_db`, `_obj_to_dict`, `_mark_genesis`, `_link_to_dict`, `_event_to_dict`, `_known_bad`, `_action_event_to_dict`, `_proposal_to_dict`, `_cycle_bg`, `_try_start_cycle`, `_bulk_import_apply`, `_invest_bg`, `_claim_proposal`, `_cycle_may_auto_apply`, `_proposal_actor_and_id`, `_alert_to_dict`, `_recon_plan`, `_strict_operator`, `_strict_operator_required`, `_str_arg`, `_import_mod`, `_import_file`, `_import_bundle_from_body`, `_import_view_current`, `_import_plan_for`, `_import_plan_summary`, `_import_error`, `_import_packages`, `_pkg_side_json`, `_num_es`, `_import_package_meta`, `_pkg_release`, `_import_package`, `_import_panel_summary`, `_import_runs_by_file`
 
@@ -83,6 +84,7 @@ API REST de la ontología: /api/ontology/\*
 - [[ontology.db.py]] — importa `ontology_available`, `session_scope`
 - [[ontology.import_models.py]] — importa `import_models`
 - [[ontology.ingest_news.py]] — importa `ingest_news_for`, `news_for_object`
+- [[ontology.link_review.py]] — importa `queue`
 - [[ontology.models.py]] — importa `Alert`, `Event`, `LinkRecord`, `ObjectRecord`, `ProposedAction`
 - [[ontology.provenance.py]] — importa `SOURCE_TYPE`, `provenance_for_object`, `source_to_dict`
 - [[ontology.reconcile.py]] — importa `ReconcileError`, `reconcile`
@@ -101,8 +103,8 @@ _Además lo importan 9 pruebas (lista abajo)._
 
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
-| `GET` | `/api/ontology/actions` | `actions_list` | [[engine.app_main.js]], 1 prueba |
-| `POST` | `/api/ontology/actions/<action_type>` | `actions_execute` | [[engine.khipu_lang.js]], [[engine.temporal-graph.js]], 5 pruebas |
+| `GET` | `/api/ontology/actions` | `actions_list` | [[engine.app_main.js]], [[engine.importer.js]], 1 prueba |
+| `POST` | `/api/ontology/actions/<action_type>` | `actions_execute` | [[engine.importer.js]], [[engine.khipu_lang.js]], [[engine.temporal-graph.js]], 5 pruebas |
 | `GET` | `/api/ontology/agents/brief` | `agents_brief` | 2 pruebas |
 | `POST` | `/api/ontology/agents/cycle` | `agents_cycle` | [[engine.live.js]], 2 pruebas |
 | `POST` | `/api/ontology/agents/investigar` | `agents_investigar` | [[engine.app_main.js]], 2 pruebas |
@@ -129,6 +131,7 @@ _Además lo importan 9 pruebas (lista abajo)._
 | `POST` | `/api/ontology/import/rollback` | `import_rollback` | [[engine.importer.js]], [[scripts.import_companies.py]], 4 pruebas |
 | `GET` | `/api/ontology/import/runs` | `import_runs` | [[engine.importer.js]], [[scripts.import_companies.py]], 3 pruebas |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[engine.app_main.js]], [[engine.temporal-graph.js]], 4 pruebas |
+| `GET` | `/api/ontology/links/review` | `links_review` | [[engine.importer.js]], 1 prueba |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/history` | `objects_history` | [[engine.fincard.js]], 1 prueba |
@@ -165,6 +168,7 @@ Grupos: [[API ontology]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
+- [[tests.test_link_review.py]]
 - [[tests.test_lotek_fixer.py]]
 - [[tests.test_lotel_fixer.py]]
 - [[tests.test_maptime_asof.py]]

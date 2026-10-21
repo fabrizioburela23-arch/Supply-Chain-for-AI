@@ -177,7 +177,7 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[security_audit.py]] — lo importa
 - [[security_audit.py]] — lo nombra por su ruta
 
-_Además lo importan 75 pruebas (lista abajo)._
+_Además lo importan 76 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -333,6 +333,7 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_ledger_anchor.py]]
 - [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_link_review.py]]
 - [[tests.test_live_caps.py]]
 - [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_matrix.py]]

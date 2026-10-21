@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L245"
+ruta: "docs/ESTADO.md#L254"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (l) — APP.HTML PARTIDO SIN CAMBIAR NADA (G5-06) — sw v267
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 245 (26 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 254 (26 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

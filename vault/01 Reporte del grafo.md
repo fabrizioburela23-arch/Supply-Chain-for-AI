@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 250 |
-| Líneas de código | 149.833 |
+| Archivos de código (Python, JS, HTML) | 251 |
+| Líneas de código | 150.025 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 260 |
+| Archivos de prueba | 261 |
 | Documentos | 32 |
-| Rutas HTTP | 265 |
+| Rutas HTTP | 266 |
 | Grupos de API | 61 |
 | Herramientas MCP | 34 |
 | Variables de entorno | 158 |
 | Sesiones de trabajo | 113 |
-| Aristas `calls_endpoint` | 777 |
-| Aristas `defines_endpoint` | 299 |
-| Aristas `imports` | 2.357 |
+| Aristas `calls_endpoint` | 781 |
+| Aristas `defines_endpoint` | 300 |
+| Aristas `imports` | 2.362 |
 | Aristas `loads_script` | 95 |
-| Aristas `mentions_in_session` | 601 |
+| Aristas `mentions_in_session` | 602 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
-| Aristas `tested_by` | 1.852 |
+| Aristas `tested_by` | 1.856 |
 | Aristas `uses_global` | 468 |
 
 ## Nodos "dios" (más conectados)
@@ -54,13 +54,13 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[core.decisions.py]] | 38 | 31 | 7 | [[Capa Infraestructura]] |
 | [[core.http.py]] | 37 | 35 | 2 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |
+| [[ontology.api.py]] | 36 | 11 | 25 | [[Capa Ontología y grafo temporal]] |
 | [[engine.app_coordinator.js]] | 35 | 16 | 19 | [[Capa Interfaz (Khipus OS)]] |
-| [[ontology.api.py]] | 35 | 11 | 24 | [[Capa Ontología y grafo temporal]] |
 | [[core.khipu_chat.py]] | 34 | 6 | 28 | [[Capa Chat y agentes]] |
 | [[engine.resolve.js]] | 33 | 21 | 12 | [[Capa Chat y agentes]] |
 | [[core.identity.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
+| [[ontology.models.py]] | 32 | 28 | 4 | [[Capa Ontología y grafo temporal]] |
 | [[core.world.py]] | 31 | 21 | 10 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
-| [[ontology.models.py]] | 31 | 27 | 4 | [[Capa Ontología y grafo temporal]] |
 | [[engine.toast.js]] | 30 | 27 | 3 | [[Capa Interfaz (Khipus OS)]] |
 | [[engine.voice.js]] | 30 | 4 | 26 | [[Capa Voz]] |
 

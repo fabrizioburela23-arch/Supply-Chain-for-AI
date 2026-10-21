@@ -74,6 +74,15 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    ✅ Fabrizio APLICÓ el lote 3. LOTE 4 (P2 completo, 2026-10-21): `bundle_lote4_p2.json.gz` = las 336 fichas NUEVAS de
    `khipus_entrega_P2_completo.zip` (633; las 297 del lote 3 llegaron idénticas). 336/336 válidas; plan local 335 crear ·
    1 completar (PetroChina). Pendiente: aplicarlo (Fabrizio).
+1g. ✅ **COLA DE REVISIÓN DE VÍNCULOS (2026-10-21, sw v284)**: `ontology/link_review.py` + `GET /api/ontology/links/review`
+   (solo lectura; prioridad = flujo × criticidad × confianza declarada × grado de los extremos) → 🩺 → 📥 Importar →
+   «🔗 Vínculos por revisar (N)» con ✓/✕ (= ConfirmarVinculo/RechazarVinculo, PIN, decisión en el libro), buscador y «Ver más».
+   Base de prueba con el lote 4: 236 propuestos (187 por fuente débil).
+   RECALIBRAR κ: NO se puede hacer válido hoy — producción corre **kernel.params 2.0.0** (Fabrizio lo activó) y la
+   calibración 1.0.0 es para 1.0.0 (→ kernel_mismatch, sin cifra); y `fit_inputs` nunca deja 'ok' un ajuste con el
+   grafo de HOY para episodios viejos (look-ahead; el grafo histórico no existe antes de 2026-09). Camino honesto:
+   calibración PROSPECTIVA (guardar predicciones ahora y medir contra eventos reales futuros), o episodios posteriores
+   a que el grafo empezó a registrarse.
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).

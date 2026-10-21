@@ -32,6 +32,11 @@
       pkg_meta: '{date} · {links} vínculos investigados',
       pkg_excluded: '{n} fichas no entran (incompletas)', pkg_broken: 'Paquete que no se pudo leer: {name} ({err})',
       see_plan: 'Ver plan', hide_plan: 'Ocultar plan', apply: 'Aplicar…', retry: 'Reintentar',
+      rv_sec: 'Vínculos por revisar', rv_none: 'No hay vínculos propuestos esperando revisión. ✓',
+      rv_hint: 'Vínculos que el importador dejó como PROPUESTA (rumor, fuente débil, confianza baja…). Hasta que los confirmes, el motor no los cuenta. Ordenados por importancia: confirma solo si la fuente lo respalda.',
+      rv_confirm: '✓ Confirmar', rv_reject: '✕ Rechazar', rv_more: 'Ver más', rv_conf: 'confianza declarada {c}',
+      rv_crit: 'criticidad {c}/6', rv_src: 'fuente', rv_ok: 'Confirmado: ya cuenta en el motor.', rv_no: 'Rechazado.',
+      rv_search: 'Buscar empresa o producto…', rv_count: '{n} en total',
       plan_loading: 'Calculando el plan sobre el grafo de hoy… (no cambia nada)',
       sec_enter: 'Qué entra', sec_change: '¿Qué cambia en el grafo?', sec_merge: 'Se fusionan con una que ya existe',
       sec_review: 'Para revisar', sec_why: '¿Por qué no todos los vínculos quedan vivos?', sec_types: 'Vínculos por tipo',
@@ -141,6 +146,11 @@
       pkg_meta: '{date} · {links} researched links',
       pkg_excluded: '{n} records do not enter (incomplete)', pkg_broken: 'Package that could not be read: {name} ({err})',
       see_plan: 'See plan', hide_plan: 'Hide plan', apply: 'Apply…', retry: 'Retry',
+      rv_sec: 'Links to review', rv_none: 'No proposed links waiting for review. ✓',
+      rv_hint: 'Links the importer left as a PROPOSAL (rumor, weak source, low confidence…). Until you confirm them, the engine does not count them. Sorted by importance: confirm only if the source backs it.',
+      rv_confirm: '✓ Confirm', rv_reject: '✕ Reject', rv_more: 'Show more', rv_conf: 'declared confidence {c}',
+      rv_crit: 'criticality {c}/6', rv_src: 'source', rv_ok: 'Confirmed: it now counts in the engine.', rv_no: 'Rejected.',
+      rv_search: 'Search company or product…', rv_count: '{n} in total',
       plan_loading: 'Computing the plan on today\'s graph… (changes nothing)',
       sec_enter: 'What enters', sec_change: 'What changes in the graph?', sec_merge: 'Merged into one that already exists',
       sec_review: 'To review', sec_why: 'Why are not all links live?', sec_types: 'Links by type',
@@ -370,6 +380,7 @@
   var S = {
     box: null, packages: null, pkgErr: null, plans: {}, open: null, runs: null, pending: null, policy: null,
     busy: false, msg: null, progress: null, timer: null, files: {}, details: {},
+    rv: null, rvLimit: 15, rvQ: '', rvBusy: {}, rvMsg: null,
   };
   function keyOf(src) { return src.kind === 'package' ? 'p:' + src.name : 'f:' + src.sha; }
   function srcTitle(src) {
@@ -426,10 +437,62 @@
     var res = await getJSON('/api/ontology/import/runs?limit=20');
     if (res.ok) { S.runs = res.d.runs || []; S.pending = res.d.pending_links; S.policy = res.d.policy || null; }
   }
+  async function loadReview() {
+    var res = await getJSON('/api/ontology/links/review?limit=' + S.rvLimit + '&lang=' + (en() ? 'en' : 'es') +
+      (S.rvQ ? '&q=' + encodeURIComponent(S.rvQ) : ''));
+    S.rv = res.ok ? res.d : null;
+  }
   async function load() {
     render();
-    await Promise.all([loadPackages(), loadRuns()]);
+    await Promise.all([loadPackages(), loadRuns(), loadReview()]);
     render();
+  }
+  // ══ cola de revisión de vínculos PROPUESTOS (ontology/link_review): ✓ / ✕ = la Acción auditada de siempre (PIN) ══
+  async function resolveLink(it, ok) {
+    if (S.rvBusy[it.link_id]) return;
+    S.rvBusy[it.link_id] = 1; render();
+    var who = await actor();
+    var res = await pinPost('/api/ontology/actions/' + (ok ? 'ConfirmarVinculo' : 'RechazarVinculo'),
+      { link_id: it.link_id, actor: who || 'usuario' }, 30000);
+    delete S.rvBusy[it.link_id];
+    S.rvMsg = res.ok ? { kind: 'ok', text: (ok ? t('rv_ok') : t('rv_no')) + ' ' + it.source.label + ' → ' + it.target.label }
+      : { kind: 'err', text: errLine(res) + (serverText(res.d) ? ' · ' + serverText(res.d) : '') };
+    if (res.ok) await loadReview();
+    render();
+  }
+  function renderReview(card) {
+    var R = S.rv;
+    if (!R) return;
+    var kids = [h('div', { class: 'kim-mut' }, t('rv_hint'))];
+    var inp = h('input', { type: 'search', class: 'kim-file', placeholder: t('rv_search'), value: S.rvQ, 'data-kim-f': 'rvq',
+      style: 'display:block;width:100%;box-sizing:border-box;margin:8px 0;padding:8px 10px;border-radius:10px;border:1px solid var(--os-surface-2,#2A2B35);background:var(--os-bg,#0E0F14);color:var(--os-ink,#F2F2F5);font:inherit' });
+    var qt = null;
+    inp.addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(async function () { S.rvQ = inp.value.trim(); await loadReview(); render(); }, 400); });
+    kids.push(inp);
+    if (S.rvMsg) kids.push(h('div', { class: 'kim-msg ' + S.rvMsg.kind }, S.rvMsg.text));
+    if (!R.items || !R.items.length) kids.push(h('div', { class: 'kim-mut' }, t('rv_none')));
+    (R.items || []).forEach(function (it) {
+      var meta = [it.rel_type, it.product, it.criticality ? t('rv_crit', { c: it.criticality }) : null,
+        it.declared_confidence != null ? t('rv_conf', { c: it.declared_confidence }) : null].filter(Boolean).join(' · ');
+      var srcs = (it.sources || []).filter(function (x) { return x && /^https?:\/\//.test(x.url || ''); }).slice(0, 2).map(function (x) {
+        return h('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer', style: 'margin-right:10px' }, '🔗 ' + (x.name || t('rv_src')) + (x.kind ? ' (' + x.kind + ')' : ''));
+      });
+      var busy = !!S.rvBusy[it.link_id];
+      kids.push(h('div', { class: 'kim-run', style: 'display:block;padding:10px 0;border-top:1px solid var(--os-surface-2,#2A2B35)' }, [
+        h('div', null, [h('b', null, it.source.label), ' → ', h('b', null, it.target.label)]),
+        it.label ? h('div', { class: 'kim-mut' }, it.label) : null,
+        h('div', { class: 'kim-mut' }, meta),
+        h('div', { class: 'kim-mut' }, '⚑ ' + it.reason_text),
+        srcs.length ? h('div', { class: 'kim-mut' }, srcs) : null,
+        h('div', { class: 'kim-acts' }, [
+          btn(t('rv_confirm'), function () { resolveLink(it, true); }, 'pri', { disabled: busy ? true : null }),
+          btn(t('rv_reject'), function () { resolveLink(it, false); }, 'bad', { disabled: busy ? true : null })]),
+      ]));
+    });
+    if (R.matching > (R.items || []).length) {
+      kids.push(h('div', { class: 'kim-acts' }, [btn(t('rv_more'), async function () { S.rvLimit += 15; await loadReview(); render(); })]));
+    }
+    add(card, h('div', { class: 'kim-in' }, det('review', '🔗 ' + t('rv_sec') + ' (' + fmtInt(R.total || 0) + ')', kids)));
   }
   async function loadPlan(src) {
     var k = keyOf(src);
@@ -892,7 +955,7 @@
       h('div', { class: 'kim-mut kim-in' }, t('sub')),
     ]);
     renderPackages(card);
-    if (!S.pkgErr) { renderUpload(card); renderRuns(card); }
+    if (!S.pkgErr) { renderReview(card); renderUpload(card); renderRuns(card); }
     renderMsg(card);
     box.appendChild(card);
     if (focusKey) {

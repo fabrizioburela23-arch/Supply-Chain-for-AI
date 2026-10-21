@@ -54,6 +54,7 @@ esquema SQLAlchemy de la ontología.
 - [[ontology.import_models.py]] — lo importa
 - [[ontology.ingest_news.py]] — lo importa
 - [[ontology.ledger_models.py]] — lo importa
+- [[ontology.link_review.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 - [[ontology.service.py]] — lo importa

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/importer.js"
 lenguaje: "javascript"
-lineas: 935
+lineas: 998
 aliases: ["engine/importer.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/importer.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 935 líneas · `engine/importer.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 998 líneas · `engine/importer.js`
 
 ## Para qué sirve
 
@@ -34,9 +34,12 @@ EXPANSION_5K E2.7 · 🩺 Sistema → Diagnóstico → «📥 Importar empresas�
 
 ## Endpoints que llama
 
+- `GET /api/ontology/actions` → [[ontology.api.py]] ([[API ontology]])
 - `GET /api/ontology/import/packages/plan` → [[ontology.api.py]] ([[API ontology]])
 - `GET /api/ontology/import/packages` → [[ontology.api.py]] ([[API ontology]])
 - `GET /api/ontology/import/runs` → [[ontology.api.py]] ([[API ontology]])
+- `GET /api/ontology/links/review` → [[ontology.api.py]] ([[API ontology]])
+- `POST /api/ontology/actions/<action_type>` → [[ontology.api.py]] ([[API ontology]])
 - `POST /api/ontology/import/apply` → [[ontology.api.py]] ([[API ontology]])
 - `POST /api/ontology/import/files` → [[ontology.api.py]] ([[API ontology]])
 - `POST /api/ontology/import/plan` → [[ontology.api.py]] ([[API ontology]])
@@ -46,4 +49,5 @@ EXPANSION_5K E2.7 · 🩺 Sistema → Diagnóstico → «📥 Importar empresas�
 
 - [[tests.test_import_panel_browser.py]]
 - [[tests.test_import_panel_static.py]]
+- [[tests.test_link_review.py]]
 - [[tests.test_lotel_fixer.py]]

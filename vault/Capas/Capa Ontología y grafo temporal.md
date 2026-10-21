@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Ontología y grafo temporal"
-archivos: 36
+archivos: 37
 tags: ["capa/ontologia", "tipo/capa"]
 ---
 
@@ -9,12 +9,12 @@ tags: ["capa/ontologia", "tipo/capa"]
 
 > La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa.
 
-**36 archivos · 18.968 líneas.** Volver al [[00 Mapa de Khipus]].
+**37 archivos · 19.097 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[ontology.company_import.py]] — 2.699 líneas · importador de fichas khipus.company/1 (docs/expansion/EXPANSION_5K.md, bloque E2).
-- [[ontology.api.py]] — 1.990 líneas · API REST de la ontología: /api/ontology/\*
+- [[ontology.api.py]] — 2.007 líneas · API REST de la ontología: /api/ontology/\*
 - [[engine.temporal-graph.js]] — 1.466 líneas · Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline …
 - [[ontology.agents.py]] — 1.039 líneas · Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta sin aprobación humana (salvo lo que el usuario marque como …
 - [[ontology.actions.py]] — 906 líneas · Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usuario deja de solo mirar: registra tesis, anotaciones, correcciones y …
@@ -43,6 +43,7 @@ tags: ["capa/ontologia", "tipo/capa"]
 - [[ontology.ingest_news.py]] — 205 líneas · Phase 1 · M4: las noticias entran al grafo.
 - [[ontology.models.py]] — 201 líneas · esquema SQLAlchemy de la ontología.
 - [[ontology.history_models.py]] — 125 líneas · LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2: L3-01, L2-12, L3-14, L3-13).
+- [[ontology.link_review.py]] — 112 líneas · COLA DE REVISIÓN de vínculos PROPUESTOS (2026-10-21, tras importar los lotes 2-4).
 - [[scripts.reconcile_v0_to_ontology.py]] — 104 líneas · G3: reconciliar el catálogo (data/grafo_v0.json) con la ontología en Postgres SIN borrar nada.
 - [[ontology.import_models.py]] — 94 líneas · tablas del importador de fichas khipus.company/1 (E2.3), APPEND-ONLY.
 - [[ontology.governance_models.py]] — 62 líneas · REGISTRO DE GOBERNANZA (docs/INFRA_OPERATIVA.md §5.1; paso 9 del plan).

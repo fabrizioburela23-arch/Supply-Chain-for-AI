@@ -1724,6 +1724,23 @@ def import_rollback():
     return jsonify({'status': 'ok', **res})
 
 
+@ontology_bp.route('/links/review')
+@_require_db
+@rate_limit(120, 600)
+def links_review():
+    """Cola de revisión de vínculos PROPUESTOS por importancia (ontology/link_review). Solo lectura: confirmar o
+    rechazar = POST /actions/ConfirmarVinculo | RechazarVinculo (PIN)."""
+    from ontology.link_review import queue
+    try:
+        limit = _int_arg('limit', 30, 1, 200)
+        offset = _int_arg('offset', 0, 0, 100000)
+    except _BadArg as e:
+        return _bad_arg(str(e))
+    lang = 'en' if str(request.args.get('lang') or 'es').startswith('en') else 'es'
+    with session_scope() as s:
+        return jsonify(queue(s, limit=limit, offset=offset, q=(request.args.get('q') or '')[:80], lang=lang))
+
+
 @ontology_bp.route('/import/runs')
 @_require_db
 @rate_limit(60, 600)

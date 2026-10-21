@@ -64,6 +64,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - [[ontology.api.py]] — lo importa
 - [[ontology.bitemporal.py]] — lo importa
 - [[ontology.company_import.py]] — lo importa
+- [[ontology.link_review.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.service.py]] — lo importa
 - [[research.context.py]] — lo importa

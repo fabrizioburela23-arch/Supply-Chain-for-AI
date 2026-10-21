@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L1067"
+ruta: "docs/ESTADO.md#L1076"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (aa) — FUNDAMENTALES EN VIVO DE TODO EL GRAFO (sw v234)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1067 (14 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1076 (14 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

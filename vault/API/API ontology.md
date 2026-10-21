@@ -1,20 +1,20 @@
 ---
 tipo: "api"
 capa: "Ontología y grafo temporal"
-rutas: 41
+rutas: 42
 tags: ["capa/ontologia", "tipo/api"]
 ---
 
 # API ontology
 
-> 41 rutas · definidas en [[ontology.api.py]] · prefijo `/api/ontology`
+> 42 rutas · definidas en [[ontology.api.py]] · prefijo `/api/ontology`
 
 Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/ontology/actions` | `actions_list` | [[ontology.api.py]] | [[engine.app_main.js]], 1 prueba |
-| `POST` | `/api/ontology/actions/<action_type>` | `actions_execute` | [[ontology.api.py]] | [[engine.khipu_lang.js]], [[engine.temporal-graph.js]], 5 pruebas |
+| `GET` | `/api/ontology/actions` | `actions_list` | [[ontology.api.py]] | [[engine.app_main.js]], [[engine.importer.js]], 1 prueba |
+| `POST` | `/api/ontology/actions/<action_type>` | `actions_execute` | [[ontology.api.py]] | [[engine.importer.js]], [[engine.khipu_lang.js]], [[engine.temporal-graph.js]], 5 pruebas |
 | `GET` | `/api/ontology/agents/brief` | `agents_brief` | [[ontology.api.py]] | 2 pruebas |
 | `POST` | `/api/ontology/agents/cycle` | `agents_cycle` | [[ontology.api.py]] | [[engine.live.js]], 2 pruebas |
 | `POST` | `/api/ontology/agents/investigar` | `agents_investigar` | [[ontology.api.py]] | [[engine.app_main.js]], 2 pruebas |
@@ -41,6 +41,7 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `POST` | `/api/ontology/import/rollback` | `import_rollback` | [[ontology.api.py]] | [[engine.importer.js]], [[scripts.import_companies.py]], 4 pruebas |
 | `GET` | `/api/ontology/import/runs` | `import_runs` | [[ontology.api.py]] | [[engine.importer.js]], [[scripts.import_companies.py]], 3 pruebas |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[ontology.api.py]] | [[engine.app_main.js]], [[engine.temporal-graph.js]], 4 pruebas |
+| `GET` | `/api/ontology/links/review` | `links_review` | [[ontology.api.py]] | [[engine.importer.js]], 1 prueba |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[ontology.api.py]] | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[ontology.api.py]] | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/history` | `objects_history` | [[ontology.api.py]] | [[engine.fincard.js]], 1 prueba |

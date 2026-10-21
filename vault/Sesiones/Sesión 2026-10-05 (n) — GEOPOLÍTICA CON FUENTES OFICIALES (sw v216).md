@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L1225"
+ruta: "docs/ESTADO.md#L1234"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (n) — GEOPOLÍTICA CON FUENTES OFICIALES (sw v216)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1225 (23 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1234 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
