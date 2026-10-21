@@ -27,7 +27,7 @@ tags: ["capa/interfaz", "tipo/modulo"]
 - [[engine.explain.js]] — usa `explainChip`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **83 de 103** (línea 3208), después de [[engine.reconcile.js]] y antes de [[engine.audit.js]].
+Se carga en [[app.html]] en la posición **83 de 103** (línea 3235), después de [[engine.reconcile.js]] y antes de [[engine.audit.js]].
 
 ## Lo usan
 

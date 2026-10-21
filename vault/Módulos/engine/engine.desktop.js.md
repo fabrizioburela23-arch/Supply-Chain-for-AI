@@ -25,7 +25,7 @@ ESCRITORIO KHIPU (K1, 2026-10-04)
 - [[engine.app_main.js]] — usa `LANG`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **93 de 103** (línea 3220), después de [[engine.khipu_chat.js]] y antes de [[engine.simreport.js]].
+Se carga en [[app.html]] en la posición **93 de 103** (línea 3247), después de [[engine.khipu_chat.js]] y antes de [[engine.simreport.js]].
 
 ## Lo usan
 

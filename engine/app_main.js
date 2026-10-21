@@ -50,9 +50,15 @@ function countryColor(k){
   return document.body.classList.contains('dark')?co.cd:co.c;
 }
 
+// memo por categoría y tema (2026-10-21, «se tranca» en el celular): getComputedStyle en CADA llamada era el
+// segundo mayor gasto al abrir la app (miles de nodos del mapa)
+var _catColorMemo = {};
 function catColor(cat){
   if (!CATS[cat]) return '#888';
-  return getComputedStyle(document.documentElement).getPropertyValue(CATS[cat].cssVar).trim() || '#888';
+  var k = cat + (document.body && document.body.classList.contains('dark') ? '|d' : '|l');
+  var v = _catColorMemo[k];
+  if (v === undefined) v = _catColorMemo[k] = getComputedStyle(document.documentElement).getPropertyValue(CATS[cat].cssVar).trim();
+  return v || '#888';
 }
 
 // ── Macro-sectores NEXUS (Etapa 4): 40 categorías → 9 colores vivos ──────────
@@ -684,10 +690,10 @@ function _mapFirstSettleAsync(){
   _mapPost(step);
 }
 function _ensureMapSettled(force){
+  if(!force && _mapCovered()) return false;   /* primero lo barato: tapado no mide (medir fuerza maquetación: celular) */
   let r;
   try { r = svg.node().getBoundingClientRect(); } catch(e){ return false; }
   if(!r.width||!r.height) return false;   /* oculto (ventana minimizada / pestaña cerrada): no re-centrar en 0×0 */
-  if(!force && _mapCovered()) return false;
   if(_liveTick) return _mapLaidOnce;       /* arrastrando: la física ya corre en vivo */
   const sized = (r.width!==W || r.height!==H);
   if(_mapLaidOnce && !sized && !_mapReheat) return true;   /* nada cambió: cero trabajo */

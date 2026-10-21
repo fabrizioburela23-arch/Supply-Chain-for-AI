@@ -26,7 +26,7 @@ tags: ["capa/interfaz", "tipo/modulo"]
 - [[engine.app_main.js]] — usa `LANG`, `NODE_BY_ID`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **39 de 103** (línea 3098), después de [[engine.trade.js]] y antes de [[engine.voice.js]].
+Se carga en [[app.html]] en la posición **39 de 103** (línea 3125), después de [[engine.trade.js]] y antes de [[engine.voice.js]].
 
 ## Lo usan
 

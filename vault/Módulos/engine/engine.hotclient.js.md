@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **31 de 103** (línea 3090), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
+Se carga en [[app.html]] en la posición **31 de 103** (línea 3117), después de [[engine.toast.js]] y antes de [[engine.agents_registry.js]].
 
 ## Lo usan
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/app_main.js"
 lenguaje: "javascript"
-lineas: 4844
+lineas: 4850
 aliases: ["engine/app_main.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/app_main.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.844 líneas · `engine/app_main.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.850 líneas · `engine/app_main.js`
 
 ## Para qué sirve
 
@@ -20,7 +20,7 @@ Global error reporter — shows uncaught JS errors on screen (no devtools needed
 
 `window.APP_NAME`, `window.ASSISTANT_NAME`, `window.CATS`, `window.CAT_TO_SECTOR`, `window.DataLayer`, `window.KhipuLive`, `window.KhipuLiveCaps`, `window.KhipuLiveFund`, `window.LANG`, `window.LINKS`, `window.NODES`, `window.NODE_BY_ID`, `window.NODE_META`, `window.NRS_FLOW_TYPES`, `window.OntologyAlerts`, `window.SECTORS9`, `window.V8detail`, `window.V8feed`, `window.__khOsGaveUp`, `window._appVersion`, `window._buildNrsDegree`, `window._canonId`, `window._ensureMapSettled`, `window._injectGraphContext`, `window._invalidateNRS`, `window._khipuLoaderDismiss`, `window._khipuLoaderFallback`, `window._lblOn`, `window._liveLoading`, `window._liveRecolorByImpact`, `window._liveResetColors`, `window._liveSelectedNode`, `window._liveTintLinks`, `window._mapLayers`, `window._mapState`, `window._resizeNodesByCap`, `window._selectedNode`, `window._showUpdatePill`, `window._tickerWarnings`, `window._toggleColorMode`, `window._updPending`, `window.addToPortfolio`, `window.applyVerifiedValuations`, `window.clearStressBtn`, `window.closePropuestas`, `window.closeSistema`, `window.computeNRS`, `window.computeNRSBreakdown`, `window.esc`, `window.fillLiveMcap`, `window.fillLiveMeta`, `window.goMap`, `window.jumpTo`, `window.lanzarInvestigacion`, `window.liveCapDot`, `window.loadLiveQuotes`, `window.loadStockChart`, `window.openDiagnostics`, `window.openPropuestas`, `window.openRegistro`, `window.openSistema`, `window.posCancel`, `window.posDel`, `window.posEdit`, `window.posSave`, `window.quoteAge`, `window.quoteAgoText`, `window.quoteExchange`, `window.quoteIsLive`, `window.quotePx`, `window.quoteSrcChip`, `window.quoteSrcName`, `window.refreshStyles`, `window.runAgentes`, `window.sectorName`, `window.setChartMode`, `window.settleGraph`, `window.stressBtn`
 
-De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`, `I18N`, `LBL_MAX`, `LINK_TYPE_COLORS`, `LIVE_BATCH`, `LT_ORDER`, `MAP_FIRST_ALPHA`, `MAP_POS_KEY`, `MKT`, `SERVER_MODE`, `STRESS_DEAD_PCT`, `USER_PORTFOLIOS`, `V8`, `W`, `_NRS_GEO`, `_NRS_GEO_ALIAS`, `_afterQuotesMerged`, `_alphaDecay`, `_bcCache`, `_capResizeT`, `_chargeStr`, `_chartModes`, `_deselect`, `_filterCache`, `_lblMinR`, `_ldrSet`, `_liveTick`, `_loaderBar`, `_loaderText`, `_mapBootWaiting`, `_mapCkOpen`, `_mapCkSeen`, `_mapClassicBoot`, `_mapCovered`, `_mapFirstRecipe`, `_mapFirstSettleAsync`, `_mapFitPending`, `_mapFlyPending`, `_mapHint`, `_mapHintEl`, `_mapLaidNow`, `_mapLaidOnce`, `_mapOsExpected`, `_mapPosSave`, `_mapPosSaveSoon`, `_mapPosSaveT`, `_mapPosSeed`, `_mapPost`, `_mapReheat`, `_mapSeeded`, `_mapSettleJob`, `_mapSig`, `_mergeLiveQuote`, `_mergeResult`, `_mixHex`, `_mkPfLabel`, `_nodeCount`, `_nrsCache`, `_nrsCountry`, `_nrsDegree`, `_nrsTerms`, `_paintGraph`, `_persistQuotes`, `_processMktData`, `_recalcLblMin`, `_refreshStylesCore`, `_resizeT`, `_resolveId`, `_selectNode`, `_showEventsAlert`, `_stockCache`, `activateStress`, `activeTab`, `applyLang`, `applyView`, `backdropEl`, `bandEl`, `bfsPath` y 100 más
+De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`, `I18N`, `LBL_MAX`, `LINK_TYPE_COLORS`, `LIVE_BATCH`, `LT_ORDER`, `MAP_FIRST_ALPHA`, `MAP_POS_KEY`, `MKT`, `SERVER_MODE`, `STRESS_DEAD_PCT`, `USER_PORTFOLIOS`, `V8`, `W`, `_NRS_GEO`, `_NRS_GEO_ALIAS`, `_afterQuotesMerged`, `_alphaDecay`, `_bcCache`, `_capResizeT`, `_catColorMemo`, `_chargeStr`, `_chartModes`, `_deselect`, `_filterCache`, `_lblMinR`, `_ldrSet`, `_liveTick`, `_loaderBar`, `_loaderText`, `_mapBootWaiting`, `_mapCkOpen`, `_mapCkSeen`, `_mapClassicBoot`, `_mapCovered`, `_mapFirstRecipe`, `_mapFirstSettleAsync`, `_mapFitPending`, `_mapFlyPending`, `_mapHint`, `_mapHintEl`, `_mapLaidNow`, `_mapLaidOnce`, `_mapOsExpected`, `_mapPosSave`, `_mapPosSaveSoon`, `_mapPosSaveT`, `_mapPosSeed`, `_mapPost`, `_mapReheat`, `_mapSeeded`, `_mapSettleJob`, `_mapSig`, `_mergeLiveQuote`, `_mergeResult`, `_mixHex`, `_mkPfLabel`, `_nodeCount`, `_nrsCache`, `_nrsCountry`, `_nrsDegree`, `_nrsTerms`, `_paintGraph`, `_persistQuotes`, `_processMktData`, `_recalcLblMin`, `_refreshStylesCore`, `_resizeT`, `_resolveId`, `_selectNode`, `_showEventsAlert`, `_stockCache`, `activateStress`, `activeTab`, `applyLang`, `applyView`, `backdropEl`, `bandEl` y 101 más
 
 ## Depende de
 
@@ -70,7 +70,7 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.importer.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **27 de 103** (línea 2682), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **27 de 103** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 

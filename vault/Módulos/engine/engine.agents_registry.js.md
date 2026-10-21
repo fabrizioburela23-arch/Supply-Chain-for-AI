@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **32 de 103** (línea 3091), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
+Se carga en [[app.html]] en la posición **32 de 103** (línea 3118), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
 
 ## Lo usan
 

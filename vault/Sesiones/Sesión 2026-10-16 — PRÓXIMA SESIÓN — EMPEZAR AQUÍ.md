@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (52 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (57 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -16,6 +16,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 ## Archivos que menciona
 
+- [[app.html]]
 - [[core.khipu_chat.py]]
 - [[core.portfolio_advisor.py]]
 - [[core.sim_report.py]]

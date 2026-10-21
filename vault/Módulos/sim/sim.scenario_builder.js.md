@@ -28,7 +28,7 @@ De nivel superior (globales del script): `HISTORICAL_PRECEDENTS`, `STRUCTURAL_BA
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 
-Se carga en [[app.html]] en la posición **98 de 103** (línea 3225), después de [[engine.command_center.js]] y antes de [[engine.app_coordinator.js]].
+Se carga en [[app.html]] en la posición **98 de 103** (línea 3252), después de [[engine.command_center.js]] y antes de [[engine.app_coordinator.js]].
 
 ## Lo usan
 

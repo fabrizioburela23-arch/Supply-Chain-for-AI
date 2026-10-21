@@ -3,14 +3,14 @@ tipo: "pagina"
 capa: "Interfaz (Khipus OS)"
 ruta: "app.html"
 lenguaje: "html"
-lineas: 3539
+lineas: 3566
 aliases: ["app.html"]
 tags: ["capa/interfaz", "tipo/pagina"]
 ---
 
 # app.html
 
-> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.539 líneas · `app.html`
+> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.566 líneas · `app.html`
 
 ## Para qué sirve
 
@@ -38,117 +38,117 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 ## Orden de carga de scripts
 
 1. `vendor/d3.min.js` — externo/vendor (línea 10)
-2. [[nodes.nodes_seed.js]] (línea 1504)
-3. [[nodes.categories_extra.js]] (línea 1505)
-4. [[nodes.nodes_expand.js]] (línea 1506)
-5. [[nodes.nodes_expand2.js]] (línea 1507)
-6. [[nodes.nodes_spacex.js]] (línea 1508)
-7. [[nodes.nodes_expand3.js]] (línea 1509)
-8. [[nodes.nodes_nuclear.js]] (línea 1510)
-9. [[nodes.nodes_expand4.js]] (línea 1511)
-10. [[nodes.nodes_expand5.js]] (línea 1512)
-11. [[nodes.meta_fill.js]] (línea 1513)
-12. [[nodes.nodes_china.js]] (línea 1514)
-13. [[nodes.nodes_multicapa.js]] (línea 1515)
-14. [[nodes.preipo_intel.js]] (línea 1516)
-15. [[nodes.listing_status.js]] (línea 1517)
-16. [[nodes.private_valuations.js]] (línea 1518)
-17. [[nodes.links_all.js]] (línea 1519)
-18. [[nodes.links_expand.js]] (línea 1520)
-19. [[nodes.links_connect.js]] (línea 1521)
-20. [[nodes.merge_graph.js]] (línea 1522)
-21. [[engine.catalog_sync.js]] (línea 1523)
-22. `vendor/three.min.js` — externo/vendor (línea 1524)
-23. `vendor/chart.umd.min.js` — externo/vendor (línea 1525)
-24. `vendor/satellite.min.js` — externo/vendor (línea 1526)
-25. bloque `<script>` inline #1 (línea 1552, 341 líneas)
-26. [[engine.pfstore.js]] (línea 2681)
-27. [[engine.app_main.js]] (línea 2682)
-28. bloque `<script>` inline #2 (línea 2967, 119 líneas)
-29. [[engine.loading.js]] (línea 3088)
-30. [[engine.toast.js]] (línea 3089)
-31. [[engine.hotclient.js]] (línea 3090)
-32. [[engine.agents_registry.js]] (línea 3091)
-33. [[engine.tour_script.js]] (línea 3092)
-34. [[engine.mascot.js]] (línea 3093)
-35. [[engine.universe2d.js]] (línea 3094)
-36. [[engine.resolve.js]] (línea 3095)
-37. [[engine.orb.js]] (línea 3096)
-38. [[engine.trade.js]] (línea 3097)
-39. [[engine.signals.js]] (línea 3098)
-40. [[engine.voice.js]] (línea 3099)
-41. [[engine.secondbrain.js]] (línea 3100)
-42. [[engine.geo_coords.js]] (línea 3101)
-43. [[engine.globe.js]] (línea 3102)
-44. [[engine.canvas-data.js]] (línea 3103)
-45. [[nodes.temporal_seed_facts.js]] (línea 3104)
-46. [[nodes.temporal_seed_facts2.js]] (línea 3105)
-47. [[nodes.ontology.js]] (línea 3106)
-48. [[nodes.ontology_facts.js]] (línea 3107)
-49. [[nodes.legal_names.js]] (línea 3108)
-50. [[engine.temporal-graph.js]] (línea 3109)
-51. [[engine.timeline3d.js]] (línea 3110)
-52. [[engine.maptime.js]] (línea 3111)
-53. [[engine.khipu_lang.js]] (línea 3112)
-54. [[engine.guide.js]] (línea 3113)
-55. [[engine.xray.js]] (línea 3114)
-56. [[engine.research.js]] (línea 3115)
-57. bloque `<script>` inline #3 (línea 3116, 52 líneas)
-58. [[engine.riskreport.js]] (línea 3168)
-59. [[engine.worldmonitor.js]] (línea 3169)
-60. [[engine.spacemonitor.js]] (línea 3170)
-61. [[engine.pickers.js]] (línea 3171)
-62. [[engine.committee.js]] (línea 3172)
-63. [[engine.aispend.js]] (línea 3173)
-64. [[engine.pfcommittee.js]] (línea 3174)
-65. [[engine.pfreports.js]] (línea 3175)
-66. [[engine.sync.js]] (línea 3176)
-67. [[engine.clients.js]] (línea 3177)
-68. [[engine.mcpconnect.js]] (línea 3178)
-69. bloque `<script>` inline #4 (línea 3179, 16 líneas)
-70. [[engine.insights.js]] (línea 3195)
-71. [[engine.statematrix.js]] (línea 3196)
-72. [[engine.livesim.js]] (línea 3197)
-73. [[engine.layers.js]] (línea 3198)
-74. [[engine.brief.js]] (línea 3199)
-75. [[engine.compare.js]] (línea 3200)
-76. [[engine.matrixview.js]] (línea 3201)
-77. [[engine.nav4.js]] (línea 3202)
-78. [[engine.localcharts.js]] (línea 3203)
-79. [[engine.fincard.js]] (línea 3204)
-80. [[engine.termdata.js]] (línea 3205)
-81. [[engine.explain.js]] (línea 3206)
-82. [[engine.reconcile.js]] (línea 3207)
-83. [[engine.governance.js]] (línea 3208)
-84. [[engine.audit.js]] (línea 3209)
-85. [[engine.pricehist.js]] (línea 3210)
-86. [[nodes.crypto_intel.js]] (línea 3211)
-87. [[nodes.crypto_intel2.js]] (línea 3212)
-88. [[engine.crypto.js]] (línea 3213)
-89. [[engine.portfolios.js]] (línea 3214)
-90. [[engine.genui.js]] (línea 3217)
-91. [[engine.oswindows.js]] (línea 3218)
-92. [[engine.khipu_chat.js]] (línea 3219)
-93. [[engine.desktop.js]] (línea 3220)
-94. [[engine.simreport.js]] (línea 3221)
-95. [[engine.cockpit.js]] (línea 3222)
-96. [[engine.live.js]] (línea 3223)
-97. [[engine.command_center.js]] (línea 3224)
-98. [[sim.scenario_builder.js]] (línea 3225)
-99. [[engine.app_coordinator.js]] (línea 3227)
-100. [[engine.app_trade_panel.js]] (línea 3528)
-101. [[engine.app_preflight.js]] (línea 3531)
-102. [[engine.app_canvas.js]] (línea 3534)
-103. [[engine.app_scatter.js]] (línea 3536)
+2. [[nodes.nodes_seed.js]] (línea 1508)
+3. [[nodes.categories_extra.js]] (línea 1509)
+4. [[nodes.nodes_expand.js]] (línea 1510)
+5. [[nodes.nodes_expand2.js]] (línea 1511)
+6. [[nodes.nodes_spacex.js]] (línea 1512)
+7. [[nodes.nodes_expand3.js]] (línea 1513)
+8. [[nodes.nodes_nuclear.js]] (línea 1514)
+9. [[nodes.nodes_expand4.js]] (línea 1515)
+10. [[nodes.nodes_expand5.js]] (línea 1516)
+11. [[nodes.meta_fill.js]] (línea 1517)
+12. [[nodes.nodes_china.js]] (línea 1518)
+13. [[nodes.nodes_multicapa.js]] (línea 1519)
+14. [[nodes.preipo_intel.js]] (línea 1520)
+15. [[nodes.listing_status.js]] (línea 1521)
+16. [[nodes.private_valuations.js]] (línea 1522)
+17. [[nodes.links_all.js]] (línea 1523)
+18. [[nodes.links_expand.js]] (línea 1524)
+19. [[nodes.links_connect.js]] (línea 1525)
+20. [[nodes.merge_graph.js]] (línea 1526)
+21. [[engine.catalog_sync.js]] (línea 1527)
+22. `vendor/three.min.js` — externo/vendor (línea 1528)
+23. `vendor/chart.umd.min.js` — externo/vendor (línea 1529)
+24. `vendor/satellite.min.js` — externo/vendor (línea 1530)
+25. bloque `<script>` inline #1 (línea 1556, 341 líneas)
+26. [[engine.pfstore.js]] (línea 2685)
+27. [[engine.app_main.js]] (línea 2686)
+28. bloque `<script>` inline #2 (línea 2980, 133 líneas)
+29. [[engine.loading.js]] (línea 3115)
+30. [[engine.toast.js]] (línea 3116)
+31. [[engine.hotclient.js]] (línea 3117)
+32. [[engine.agents_registry.js]] (línea 3118)
+33. [[engine.tour_script.js]] (línea 3119)
+34. [[engine.mascot.js]] (línea 3120)
+35. [[engine.universe2d.js]] (línea 3121)
+36. [[engine.resolve.js]] (línea 3122)
+37. [[engine.orb.js]] (línea 3123)
+38. [[engine.trade.js]] (línea 3124)
+39. [[engine.signals.js]] (línea 3125)
+40. [[engine.voice.js]] (línea 3126)
+41. [[engine.secondbrain.js]] (línea 3127)
+42. [[engine.geo_coords.js]] (línea 3128)
+43. [[engine.globe.js]] (línea 3129)
+44. [[engine.canvas-data.js]] (línea 3130)
+45. [[nodes.temporal_seed_facts.js]] (línea 3131)
+46. [[nodes.temporal_seed_facts2.js]] (línea 3132)
+47. [[nodes.ontology.js]] (línea 3133)
+48. [[nodes.ontology_facts.js]] (línea 3134)
+49. [[nodes.legal_names.js]] (línea 3135)
+50. [[engine.temporal-graph.js]] (línea 3136)
+51. [[engine.timeline3d.js]] (línea 3137)
+52. [[engine.maptime.js]] (línea 3138)
+53. [[engine.khipu_lang.js]] (línea 3139)
+54. [[engine.guide.js]] (línea 3140)
+55. [[engine.xray.js]] (línea 3141)
+56. [[engine.research.js]] (línea 3142)
+57. bloque `<script>` inline #3 (línea 3143, 52 líneas)
+58. [[engine.riskreport.js]] (línea 3195)
+59. [[engine.worldmonitor.js]] (línea 3196)
+60. [[engine.spacemonitor.js]] (línea 3197)
+61. [[engine.pickers.js]] (línea 3198)
+62. [[engine.committee.js]] (línea 3199)
+63. [[engine.aispend.js]] (línea 3200)
+64. [[engine.pfcommittee.js]] (línea 3201)
+65. [[engine.pfreports.js]] (línea 3202)
+66. [[engine.sync.js]] (línea 3203)
+67. [[engine.clients.js]] (línea 3204)
+68. [[engine.mcpconnect.js]] (línea 3205)
+69. bloque `<script>` inline #4 (línea 3206, 16 líneas)
+70. [[engine.insights.js]] (línea 3222)
+71. [[engine.statematrix.js]] (línea 3223)
+72. [[engine.livesim.js]] (línea 3224)
+73. [[engine.layers.js]] (línea 3225)
+74. [[engine.brief.js]] (línea 3226)
+75. [[engine.compare.js]] (línea 3227)
+76. [[engine.matrixview.js]] (línea 3228)
+77. [[engine.nav4.js]] (línea 3229)
+78. [[engine.localcharts.js]] (línea 3230)
+79. [[engine.fincard.js]] (línea 3231)
+80. [[engine.termdata.js]] (línea 3232)
+81. [[engine.explain.js]] (línea 3233)
+82. [[engine.reconcile.js]] (línea 3234)
+83. [[engine.governance.js]] (línea 3235)
+84. [[engine.audit.js]] (línea 3236)
+85. [[engine.pricehist.js]] (línea 3237)
+86. [[nodes.crypto_intel.js]] (línea 3238)
+87. [[nodes.crypto_intel2.js]] (línea 3239)
+88. [[engine.crypto.js]] (línea 3240)
+89. [[engine.portfolios.js]] (línea 3241)
+90. [[engine.genui.js]] (línea 3244)
+91. [[engine.oswindows.js]] (línea 3245)
+92. [[engine.khipu_chat.js]] (línea 3246)
+93. [[engine.desktop.js]] (línea 3247)
+94. [[engine.simreport.js]] (línea 3248)
+95. [[engine.cockpit.js]] (línea 3249)
+96. [[engine.live.js]] (línea 3250)
+97. [[engine.command_center.js]] (línea 3251)
+98. [[sim.scenario_builder.js]] (línea 3252)
+99. [[engine.app_coordinator.js]] (línea 3254)
+100. [[engine.app_trade_panel.js]] (línea 3555)
+101. [[engine.app_preflight.js]] (línea 3558)
+102. [[engine.app_canvas.js]] (línea 3561)
+103. [[engine.app_scatter.js]] (línea 3563)
 
 ## Bloques `<script>` inline
 
 | # | Línea | Líneas | Funciones | Cabecera |
 |---|---|---|---|---|
-| 1 | 1552 | 341 | 11 | Hard fallback: always dismiss \#boot after 3s even if main JS crashes |
-| 2 | 2967 | 119 | 4 | Lissajous spirograph — same math renders at any size |
-| 3 | 3116 | 52 | 3 | AVISO "SERVIDOR NO DISPONIBLE" (incidente 2026-09-29: Railway dejó de responder y la app mostraba EN SILENCIO la última versión guardada por el service worker … |
-| 4 | 3179 | 16 | 1 | Insignia en 👥 Clientes: propuestas (de agentes MCP o del comité) esperando aprobación humana. Nunca pide el PIN (pendingCount devuelve null sin PIN). |
+| 1 | 1556 | 341 | 11 | Hard fallback: always dismiss \#boot after 3s even if main JS crashes |
+| 2 | 2980 | 133 | 4 | Lissajous spirograph — same math renders at any size |
+| 3 | 3143 | 52 | 3 | AVISO "SERVIDOR NO DISPONIBLE" (incidente 2026-09-29: Railway dejó de responder y la app mostraba EN SILENCIO la última versión guardada por el service worker … |
+| 4 | 3206 | 16 | 1 | Insignia en 👥 Clientes: propuestas (de agentes MCP o del comité) esperando aprobación humana. Nunca pide el PIN (pendingCount devuelve null sin PIN). |
 
 ## API pública (globales window.* que define)
 
@@ -229,6 +229,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-10-13 (m) — app.html PARTIDO + 2 arreglos visibles — sw v268]]
 - [[Sesión 2026-10-13 (l) — APP.HTML PARTIDO SIN CAMBIAR NADA (G5-06) — sw v267]]
 - [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]]
@@ -240,6 +241,5 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[Sesión 2026-10-05 (bb) — SIMULACIÓN IA SIMPLE CON DATOS EN VIVO (sw v235)]]
 - [[Sesión 2026-10-05 (aa) — FUNDAMENTALES EN VIVO DE TODO EL GRAFO (sw v234)]]
 - [[Sesión 2026-10-05 (y) — NRS ACOTADO + BÚSQUEDA DEL MAPA (sw v232)]]
-- [[Sesión 2026-10-05 (x) — CIFRAS VIEJAS - VERIFICADAS - EN VIVO (sw v231)]]
 
-_…y 16 sesiones más antiguas._
+_…y 17 sesiones más antiguas._

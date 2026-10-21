@@ -1218,6 +1218,10 @@ footer .disc{line-height:1.4}
   animation:gridDrift 26s linear infinite;
 }
 @keyframes gridDrift{from{background-position:0 0,0 0,0 0,0 0}to{background-position:0 0,34px 34px,34px 34px,0 0}}
+/* CELULAR (2026-10-21, «se tranca»): el fondo animado del mapa repinta TODO el mapa en cada cuadro; tapado por
+   Khipus OS o en pantalla chica no se ve y solo gastaba batería */
+body:has(#bcp-ov.show) #graph-wrap, body:has(#bcp-ov.show) .risk-ring-critical{animation-play-state:paused}
+@media (max-width:900px){#graph-wrap{animation:none}}
 .dark .graph-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(120% 100% at 50% 50%, transparent 58%, rgba(0,0,0,.45));}
 .dark #graph{position:relative;z-index:1}
@@ -2116,7 +2120,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <!-- GDELT Global News -->
       <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="mkt-tablewrap" style="padding:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
             <div class="mkt-sec-head" style="margin:0">📰 Noticias Globales (GDELT)</div>
             <div style="display:flex;gap:6px;align-items:center">
               <input id="gdelt-query" placeholder="Empresa o tema…" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);font-size:11px;width:140px">
@@ -2960,6 +2964,15 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
   .kt-cmd{padding:0 10px}
   #term-cmd-hint{display:none}
 }
+/* CELULAR (2026-10-21, «se ve pequeño / que se adapte mejor»): las rejillas de 2 columnas escritas en línea (Mercado,
+   War-Room de Simulación…) pasan a UNA columna; campos de texto a 16 px (el teléfono no hace zoom al tocarlos y se
+   leen bien). */
+@media (max-width:700px){
+  [style*="grid-template-columns:1fr 1fr"],[style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns:1fr 230px"]{grid-template-columns:1fr!important}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}
+  #gdelt-query{width:100%!important;flex:1 1 160px}
+}
 
 </style>
 
@@ -2980,14 +2993,18 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
   let phase = 0, speed = 1;
   const targets = [];  // {canvas, ctx, size}
 
+  // TELÉFONO (2026-10-21, «se tranca»): shadowBlur en 6 curvas a 60 fps era lo que MÁS gastaba al abrir la app en un
+  // celular. En pantallas chicas o con «reducir movimiento»: sin difuminado, menos puntos y ~20 fps.
+  const LITE = (window.matchMedia && (matchMedia('(max-width: 900px)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches))
+    || (navigator.hardwareConcurrency || 8) <= 4;
   function drawOrb(o) {
     const {ctx, size} = o;
     const cx = size/2, cy = size/2;
     const small = size < 40;
     // el detalle escala con el tamaño: no gastar 2400 puntos en un orbe de 64px
-    const pts   = small ? 600 : size < 110 ? 1100 : 2400;
+    const pts   = LITE ? (small ? 200 : 500) : small ? 600 : size < 110 ? 1100 : 2400;
     const lw    = small ? 0.4 : 0.75;
-    const blur  = small ? 3   : size < 110 ? 6 : 9;
+    const blur  = LITE ? 0 : small ? 3   : size < 110 ? 6 : 9;
 
     ctx.clearRect(0, 0, size, size);
 
@@ -3015,7 +3032,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
     g.addColorStop(0.25,'rgba(140,230,255,0.85)');
     g.addColorStop(0.6, 'rgba(90,130,255,0.35)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.shadowBlur  = small?12:32;
+    ctx.shadowBlur  = LITE ? 0 : small?12:32;
     ctx.shadowColor = '#00ccff';
     ctx.fillStyle   = g;
     ctx.beginPath();
@@ -3024,11 +3041,21 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
     ctx.shadowBlur=0;
   }
 
-  function loop(){
-    phase += 0.003*speed;
-    // solo dibujar orbes VISIBLES (el de 200px oculto o la cabina cerrada no gastan CPU)
-    for (let k=0;k<targets.length;k++){ const o=targets[k]; if(o.canvas.offsetParent!==null) drawOrb(o); }
+  let last = 0;
+  function loop(ts){
     requestAnimationFrame(loop);
+    if (LITE && ts && ts - last < 50) return;          // ~20 fps en teléfono
+    phase += 0.003*speed*(LITE && last ? Math.min(4,(ts-last)/16.7) : 1);
+    last = ts || 0;
+    // solo dibujar orbes VISIBLES: ni ocultos ni TAPADOS por Khipus OS (#bcp-ov abierto tapa a los de la vista clásica)
+    const ov = document.getElementById('bcp-ov');
+    const osOpen = !!(ov && ov.classList.contains('show'));
+    for (let k=0;k<targets.length;k++){
+      const o=targets[k];
+      if(osOpen && !ov.contains(o.canvas)) continue;   // primero lo barato: tapado por Khipus OS
+      if(o.canvas.offsetParent===null) continue;
+      drawOrb(o);
+    }
   }
 
   function register(id,size){
@@ -3038,7 +3065,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
     c.width=size; c.height=size;
     const ctx=c.getContext('2d');
     targets.push({canvas:c,ctx,size});
-    if(targets.length===1) loop();
+    if(targets.length===1) requestAnimationFrame(loop);
   }
 
   function init(){

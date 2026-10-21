@@ -25,7 +25,7 @@ Enriquecimiento de Canvas IA con datos en vivo (Khipu) Detecta empresas/tickers 
 - [[engine.app_main.js]] — usa `BASE`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **44 de 103** (línea 3103), después de [[engine.globe.js]] y antes de [[nodes.temporal_seed_facts.js]].
+Se carga en [[app.html]] en la posición **44 de 103** (línea 3130), después de [[engine.globe.js]] y antes de [[nodes.temporal_seed_facts.js]].
 
 ## Lo usan
 

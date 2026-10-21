@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **26 de 103** (línea 2681), después de [[engine.catalog_sync.js]] y antes de [[engine.app_main.js]].
+Se carga en [[app.html]] en la posición **26 de 103** (línea 2685), después de [[engine.catalog_sync.js]] y antes de [[engine.app_main.js]].
 
 ## Lo usan
 

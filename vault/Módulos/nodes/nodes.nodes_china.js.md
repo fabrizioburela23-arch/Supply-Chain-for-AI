@@ -32,7 +32,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
 
-Se carga en [[app.html]] en la posición **12 de 103** (línea 1514), después de [[nodes.meta_fill.js]] y antes de [[nodes.nodes_multicapa.js]].
+Se carga en [[app.html]] en la posición **12 de 103** (línea 1518), después de [[nodes.meta_fill.js]] y antes de [[nodes.nodes_multicapa.js]].
 
 ## Lo usan
 

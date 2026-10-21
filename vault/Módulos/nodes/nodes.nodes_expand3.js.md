@@ -30,7 +30,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **7 de 103** (línea 1509), después de [[nodes.nodes_spacex.js]] y antes de [[nodes.nodes_nuclear.js]].
+Se carga en [[app.html]] en la posición **7 de 103** (línea 1513), después de [[nodes.nodes_spacex.js]] y antes de [[nodes.nodes_nuclear.js]].
 
 ## Lo usan
 

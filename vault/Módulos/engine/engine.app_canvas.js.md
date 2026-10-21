@@ -27,7 +27,7 @@ palette & helpers
 - [[engine.localcharts.js]] — usa `KhipuLocalCharts`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **102 de 103** (línea 3534), después de [[engine.app_preflight.js]] y antes de [[engine.app_scatter.js]].
+Se carga en [[app.html]] en la posición **102 de 103** (línea 3561), después de [[engine.app_preflight.js]] y antes de [[engine.app_scatter.js]].
 
 ## Lo usan
 

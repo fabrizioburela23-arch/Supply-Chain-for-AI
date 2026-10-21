@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-06"
-ruta: "docs/ESTADO.md#L818"
+ruta: "docs/ESTADO.md#L823"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-06 (v) — MARCA, TOOLS E «INVOCAR» (sw v249) + GEMINI 3.8 CON RESPALDOS
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 818 (15 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 823 (15 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

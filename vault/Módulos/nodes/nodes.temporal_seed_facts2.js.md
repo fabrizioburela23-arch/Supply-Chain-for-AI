@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **46 de 103** (línea 3105), después de [[nodes.temporal_seed_facts.js]] y antes de [[nodes.ontology.js]].
+Se carga en [[app.html]] en la posición **46 de 103** (línea 3132), después de [[nodes.temporal_seed_facts.js]] y antes de [[nodes.ontology.js]].
 
 ## Lo usan
 

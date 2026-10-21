@@ -44,7 +44,7 @@ De nivel superior (globales del script): `_DS_SRC`, `_TERM_ICON`, `_TERM_SEED`, 
 - [[engine.graph3d.js]] — lo nombra por su ruta
 - [[engine.hypergraph.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **99 de 103** (línea 3227), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
+Se carga en [[app.html]] en la posición **99 de 103** (línea 3254), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
 
 ## Lo usan
 

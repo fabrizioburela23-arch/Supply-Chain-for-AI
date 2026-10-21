@@ -51,6 +51,11 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    titular y metodología. `engine/simreport.js` (`window.KhipuSimReport`) lo pinta en la Cabina y en la pestaña Simulación
    (debajo del War-Room), con 🖨 PDF y 📋 copiar. tests/test_sim_report.py. Pendiente: rango moderado/severo del kernel y
    P&L calibrado (scenario_pnl) cuando kernel.calibration esté al día.
+1d. ✅ **CELULAR MÁS LIVIANO (2026-10-21, sw v280)**: medido con Chromium (Pixel 7, CPU ×4): en reposo 8,3 s → 3,0 s de
+   trabajo cada 10 s. Orbe del app.html: no dibuja si Khipus OS lo tapa; en pantallas ≤ 900 px / ≤ 4 núcleos / «reducir
+   movimiento» sin shadowBlur, menos puntos y ~20 fps. `catColor` memorizado por tema. `_ensureMapSettled` mira «tapado»
+   antes de medir. Fondo animado del mapa pausado con el OS abierto y apagado en celular. CSS ≤ 700 px: rejillas de 2
+   columnas en línea → 1, campos a 16 px. Pendiente: arranque (~2,8 s de scripts con CPU ×4; 103 scripts).
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).
