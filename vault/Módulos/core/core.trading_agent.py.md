@@ -52,13 +52,13 @@ _Además lo importan 1 pruebas (lista abajo)._
 
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
-| `POST` | `/api/trade/agent/config` | `agent_config` | 2 pruebas |
+| `POST` | `/api/trade/agent/config` | `agent_config` | [[engine.signals.js]], 2 pruebas |
 | `GET` | `/api/trade/agent/signals` | `agent_signals` | [[engine.signals.js]], 1 prueba |
 | `POST` | `/api/trade/agent/signals/<sid>/dismiss` | `agent_signal_dismiss` | [[engine.signals.js]], 1 prueba |
 | `POST` | `/api/trade/agent/signals/<sid>/take` | `agent_signal_take` | [[engine.signals.js]], 2 pruebas |
-| `POST` | `/api/trade/agent/start` | `agent_start` | [[engine.app_trade_panel.js]], 3 pruebas |
-| `GET` | `/api/trade/agent/status` | `agent_status` | [[engine.app_trade_panel.js]], 3 pruebas |
-| `POST` | `/api/trade/agent/stop` | `agent_stop` | [[engine.app_trade_panel.js]], 2 pruebas |
+| `POST` | `/api/trade/agent/start` | `agent_start` | [[engine.app_trade_panel.js]], [[engine.signals.js]], 3 pruebas |
+| `GET` | `/api/trade/agent/status` | `agent_status` | [[engine.app_trade_panel.js]], [[engine.signals.js]], 3 pruebas |
+| `POST` | `/api/trade/agent/stop` | `agent_stop` | [[engine.app_trade_panel.js]], [[engine.signals.js]], 2 pruebas |
 
 Grupos: [[API trade]]
 

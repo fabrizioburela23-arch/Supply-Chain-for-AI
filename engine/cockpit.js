@@ -799,7 +799,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       { g: 'explore', id: 'crypto', ic: '💠', es: 'Cripto', en: 'Crypto', k: 'cripto crypto bitcoin ethereum', run: function () { stage('crypto'); } },
       { g: 'explore', id: 'tkg', ic: '⏱', es: 'Grafo temporal', en: 'Temporal graph', k: 'grafo temporal historia tiempo timeline', run: function () { stage('tkg'); } },
       { g: 'invest', id: 'portfolios', ic: '💼', es: 'Carteras de práctica', en: 'Practice portfolios', k: 'carteras portafolio simuladas practica portfolios paper', run: function () { stage('portfolios'); }, ok: function () { return !!W.KhipuPortfolios; } },
-      { g: 'invest', id: 'broker', ic: '💳', es: 'Mi cuenta (bróker)', en: 'My account (broker)', k: 'cuenta broker bróker invertir comprar vender alpaca account invest buy sell posiciones', run: function () { stage('broker'); } },
+      { g: 'invest', id: 'broker', ic: '💳', es: 'Mi cuenta (bróker)', en: 'My account (broker)', k: 'cuenta broker bróker invertir comprar vender alpaca account invest buy sell posiciones agente trading bot señales senales toque agent signals', run: function () { stage('broker'); } },
       { g: 'invest', id: 'committee', ic: '🏛', es: 'Comité de inversión', en: 'Investment committee', k: 'comite committee veredicto memo pizarra board', run: function () { W.KhipuCommittee.open(); }, ok: function () { return !!(W.KhipuCommittee && W.KhipuCommittee.open); } },
       { g: 'invest', id: 'risk', ic: '🛡', es: 'Riesgo de cartera', en: 'Portfolio risk', k: 'riesgo var risk cartera griegas vega', run: function () { W.KhipuRisk.open({ tab: 'var' }); }, ok: function () { return !!(W.KhipuRisk && W.KhipuRisk.open); } },
       { g: 'invest', id: 'clients', ic: '👥', es: 'Clientes', en: 'Clients', k: 'clientes clients aprobaciones approvals', run: function () { W.KhipuClients.open(); }, ok: function () { return !!(W.KhipuClients && W.KhipuClients.open); } },
@@ -3213,6 +3213,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
         '<div id="bcp-bk-confirm"></div>' +
         '<div id="bcp-bk-acct"><div class="bcp-loading">' + tb('loading') + '</div></div>' +
         '<div id="bcp-bk-report"></div>' +
+        // agente de trading (engine/signals.js): encender/apagar, modo manual «1 toque», acciones a vigilar
+        '<div id="bcp-bk-agent" style="margin-top:18px"></div>' +
         // CAPA PROACTIVA: consejos de Khipu (Opus 4.8), "sugiere y tú decides".
         '<div style="margin-top:18px">' +
           '<button type="button" id="bcp-bk-advbtn" class="bcp-back pri" style="padding:6px 16px 6px 7px;font-size:13px;font-weight:700">' + _mascot('khipu', 22) + ' ' + (en ? 'Khipu advice' : 'Consejos de Khipu') + '</button>' +
@@ -3240,6 +3242,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     // no-interactivo: si falta el PIN, loadBroker pinta el formulario inline
     // (jamás el prompt() del navegador al solo ABRIR el escenario)
     loadBroker(false, false);
+    try { if (window.KhipuSignals && window.KhipuSignals.agentBox) window.KhipuSignals.agentBox(s.querySelector('#bcp-bk-agent')); } catch (e) {}
+    if (arg.agent) { try { s.querySelector('#bcp-bk-agent').scrollIntoView({ block: 'start' }); } catch (e) {} }
   }
 
   // Diálogo pop-up de confirmación abierto (engine/toast.js) para _pendingOrder

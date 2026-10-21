@@ -167,6 +167,80 @@
     setTimeout(poll, 4000);
   }
 
-  W.KhipuSignals = { poll: poll, render: render, take: take, dismiss: dismiss, _card: card };
+  // ── Panel del AGENTE dentro de Khipus OS (ventana «Mi cuenta (bróker)»; antes solo en la vista clásica) ──
+  // Mismos endpoints que el panel clásico: /api/trade/agent/status|start|stop (PIN por _tradeFetch). AUTO solo se
+  // ofrece si el servidor dice auto_allowed (cuenta de papel); con dinero real el servidor lo rechaza igual.
+  var IV = [5, 15, 30, 60, 240];
+  function agentBox(el) {
+    if (!el || typeof W._tradeFetch !== 'function') return;
+    el.innerHTML = '<div class="bcp-loading">' + esc(L('Cargando el agente…', 'Loading the agent…')) + '</div>';
+    W._tradeFetch('/api/trade/agent/status', {}, false).then(function (r) {
+      if (r.status === 401 || r.status === 403) { el.innerHTML = '<div class="ksa-m">' + esc(L('Ingresa tu PIN (arriba) para ver y manejar el agente.', 'Enter your PIN (above) to see and run the agent.')) + '</div>'; return null; }
+      return r.json();
+    }).then(function (d) { if (d) paintAgent(el, d); })
+      .catch(function () { el.innerHTML = '<div class="ksa-m">' + esc(L('No se pudo leer el agente.', 'Could not read the agent.')) + '</div>'; });
+  }
+  function paintAgent(el, d) {
+    var on = !!d.running, live = d.paper === false;
+    var pend = (d.signals || []).filter(function (s) { return s.status === 'pending'; }).length;
+    var css = '<style>.ksa{background:var(--os-surface,#17181F);border-radius:16px;padding:14px 16px;font-size:13.5px}' +
+      '.ksa h4{margin:0 0 8px;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ksa-m{font-size:12.5px;color:var(--os-ink-2,#A6A8B5)}' +
+      '.ksa .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}' +
+      '.ksa label{display:block;font-size:11.5px;font-weight:700;color:var(--os-ink-2,#A6A8B5);margin-bottom:3px}' +
+      '.ksa input,.ksa select{width:100%;box-sizing:border-box;font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--os-surface-2,#2A2B35);background:var(--os-bg,#0E0F14);color:var(--os-ink,#F2F2F5)}' +
+      '.ksa .b{font:inherit;font-weight:800;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}' +
+      '.ksa .st{background:#15803d;color:#fff}.ksa .sp{background:#b91c1c;color:#fff}.ksa .pill{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}' +
+      '.ksa .log{margin-top:10px;font-size:12px;color:var(--os-ink-2,#A6A8B5);max-height:150px;overflow:auto}</style>';
+    var h = css + '<div class="ksa"><h4>🤖 ' + esc(L('Agente de trading', 'Trading agent')) +
+      '<span class="pill" style="background:' + (on ? '#15803d' : 'var(--os-surface-2,#2A2B35)') + ';color:#fff">' + esc(on ? L('ENCENDIDO', 'ON') : L('APAGADO', 'OFF')) + '</span>' +
+      '<span class="pill" style="background:' + (live ? '#7f1d1d' : 'var(--os-surface-2,#2A2B35)') + ';color:#fff">' + esc(live ? L('🔴 DINERO REAL', '🔴 REAL MONEY') : L('🧪 PAPEL', '🧪 PAPER')) + '</span></h4>' +
+      '<div class="ksa-m">' + esc(L('Modo manual: el agente propone y tú apruebas cada señal con un toque (tarjeta flotante). Automático: solo en papel.',
+        'Manual mode: the agent proposes and you approve each signal with one tap (floating card). Automatic: paper only.')) + '</div>' +
+      (d.notice ? '<div class="ksa-m" style="color:var(--os-warn-ink,#F2C46D);margin-top:6px">⚠ ' + esc(isEn() ? d.notice.en : d.notice.es) + '</div>' : '') +
+      (d.broker_error ? '<div class="ksa-m" style="color:var(--os-bad-ink,#F47C7C);margin-top:6px">⚠ ' + esc(d.broker_error) + '</div>' : '') +
+      '<div class="g">' +
+      '<div><label>' + esc(L('Modo', 'Mode')) + '</label><select data-k="mode"><option value="manual">' + esc(L('Manual (1 toque)', 'Manual (1 tap)')) + '</option>' +
+        (d.auto_allowed ? '<option value="auto"' + (d.mode === 'auto' ? ' selected' : '') + '>' + esc(L('Automático (papel)', 'Automatic (paper)')) + '</option>' : '') + '</select></div>' +
+      '<div><label>' + esc(L('Revisar cada', 'Check every')) + '</label><select data-k="interval_min">' + IV.map(function (m) { return '<option value="' + m + '"' + (+d.interval_min === m ? ' selected' : '') + '>' + m + ' min</option>'; }).join('') + '</select></div>' +
+      '<div><label>' + esc(L('Máx. por posición %', 'Max per position %')) + '</label><input data-k="max_pos_pct" type="number" inputmode="decimal" step="0.5" value="' + esc(d.max_pos_pct) + '"></div>' +
+      '<div><label>Stop-loss %</label><input data-k="stop_loss_pct" type="number" inputmode="decimal" step="0.5" value="' + esc(d.stop_loss_pct) + '"></div>' +
+      '<div><label>' + esc(L('Confianza mínima', 'Min confidence')) + '</label><input data-k="min_confidence" type="number" inputmode="numeric" step="5" value="' + esc(d.min_confidence) + '"></div>' +
+      '<div><label>' + esc(L('Pérdida diaria máx. %', 'Max daily loss %')) + '</label><input data-k="max_daily_loss_pct" type="number" inputmode="decimal" step="0.5" value="' + esc(d.max_daily_loss_pct) + '"></div>' +
+      '</div><div><label style="font-size:11.5px;font-weight:700;color:var(--os-ink-2,#A6A8B5)">' + esc(L('Acciones a vigilar (tickers de EE.UU., separados por coma)', 'Stocks to watch (US tickers, comma separated)')) + '</label>' +
+      '<input data-k="universe" value="' + esc((d.universe || []).join(', ')) + '" style="width:100%;box-sizing:border-box;font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--os-surface-2,#2A2B35);background:var(--os-bg,#0E0F14);color:var(--os-ink,#F2F2F5)"></div>' +
+      '<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">' +
+      (on ? '<button type="button" class="b sp" data-a="stop">■ ' + esc(L('Detener', 'Stop')) + '</button>'
+          : '<button type="button" class="b st" data-a="start">▶ ' + esc(L('Iniciar', 'Start')) + '</button>') +
+      '<span class="ksa-m">' + esc((d.last_run ? L('Última revisión: ', 'Last check: ') + d.last_run : L('Aún no revisó', 'Not run yet')) + ' · ' + pend + L(' señal(es) esperando', ' signal(s) waiting')) + '</span></div>' +
+      '<div class="ksa-m" data-msg style="margin-top:6px"></div>';
+    var log = (d.log || []).slice(-6).reverse();
+    if (log.length) h += '<div class="log">' + log.map(function (e) {
+      return esc((e.ts || '') + ' · ' + (e.ticker ? e.ticker + ' ' : '') + (e.action ? e.action.toUpperCase() + ' ' + (e.confidence != null ? e.confidence + '/100 ' : '') : '') + (e.msg || e.reason || '') + (e.skipped ? ' — ' + e.skipped : ''));
+    }).join('<br>') + '</div>';
+    el.innerHTML = h + '</div>';
+    var msg = el.querySelector('[data-msg]');
+    el.querySelectorAll('button[data-a]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var start = b.getAttribute('data-a') === 'start', body = {};
+        if (start) {
+          el.querySelectorAll('[data-k]').forEach(function (x) {
+            var k = x.getAttribute('data-k');
+            body[k] = k === 'universe' ? String(x.value || '').split(/[\s,;]+/).map(function (t) { return t.trim().toUpperCase(); }).filter(Boolean)
+              : (k === 'mode' ? x.value : +x.value);
+          });
+        }
+        b.disabled = true; msg.textContent = L('Enviando…', 'Sending…');
+        W._tradeFetch('/api/trade/agent/' + (start ? 'start' : 'stop'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, true)
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (x) {
+            if (!x.ok) { msg.textContent = '⚠ ' + ((isEn() ? x.j.error_en : x.j.error) || x.j.error || 'error'); b.disabled = false; return; }
+            setTimeout(function () { agentBox(el); }, 600);
+          })
+          .catch(function (e) { msg.textContent = '⚠ ' + String(e && e.message || e); b.disabled = false; });
+      });
+    });
+  }
+
+  W.KhipuSignals = { poll: poll, render: render, take: take, dismiss: dismiss, agentBox: agentBox, _card: card };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

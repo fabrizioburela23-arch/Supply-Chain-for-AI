@@ -128,3 +128,15 @@ def test_client_card_is_bilingual_and_shows_the_money_badge():
         assert es in src and en in src
     assert '/api/trade/agent/signals/' in src and 'confirmOrder' in src and '_tradeFetch' in src
     assert 'window.confirm' not in src
+
+
+def test_agent_panel_lives_in_the_os_broker_window():
+    """«¿Dónde está el trading?» (2026-10-21): el agente se maneja desde Khipus OS (ventana «Mi cuenta (bróker)»), no
+    solo desde la vista clásica; la búsqueda ⌘K lo encuentra por «agente»."""
+    sig = open(os.path.join(ROOT, 'engine', 'signals.js'), encoding='utf-8').read()
+    for es, en in (('Agente de trading', 'Trading agent'), ('Iniciar', 'Start'), ('Detener', 'Stop'),
+                   ('Acciones a vigilar', 'Stocks to watch'), ('Automático (papel)', 'Automatic (paper)')):
+        assert es in sig and en in sig
+    assert "'/api/trade/agent/' + (start ? 'start' : 'stop')" in sig and 'd.auto_allowed' in sig
+    cp = open(os.path.join(ROOT, 'engine', 'cockpit.js'), encoding='utf-8').read()
+    assert 'bcp-bk-agent' in cp and 'KhipuSignals.agentBox' in cp and 'agente trading bot' in cp

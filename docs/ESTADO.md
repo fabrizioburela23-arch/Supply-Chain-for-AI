@@ -45,6 +45,8 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    trade.agent_signal noop). Cliente engine/signals.js (`window.KhipuSignals`): tarjetas flotantes 🧪/🔴, papel = 1 toque,
    real = 1 toque + KhipuToast.confirmOrder; aviso del navegador opcional. AUTO con dinero real sigue PROHIBIDO.
    tests/test_agent_signals_one_tap.py + test_trading_agent_ledger (con base). Scalping: NO (precios cada ~15 s, IA en segundos).
+   2026-10-21 (sw v281): el panel del agente vive TAMBIÉN en Khipus OS → «Mi cuenta (bróker)» (`KhipuSignals.agentBox`;
+   ⌘K «agente»); antes solo en la vista clásica (Mercado → Operar).
 1c. ✅ **INFORME DE ESCENARIO (2026-10-21, sw v279)**: `core/sim_report.py` (sin IA) suma a /api/sim/agents `report`:
    filas con ticker/sector/país + capitalización y movimiento de hoy EN VIVO (live_caps) + valor en juego (cap × %), cifras
    clave, por sector/país, TU CARTERA (el navegador manda `positions` de KhipuHot.myPositions; monto × % estimado, rotulado),

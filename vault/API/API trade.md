@@ -14,13 +14,13 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
 | `GET` | `/api/trade/account` | `trade_account` | [[server.py]] | [[engine.app_trade_panel.js]], [[engine.trade.js]], 1 prueba |
-| `POST` | `/api/trade/agent/config` | `agent_config` | [[core.trading_agent.py]] | 2 pruebas |
+| `POST` | `/api/trade/agent/config` | `agent_config` | [[core.trading_agent.py]] | [[engine.signals.js]], 2 pruebas |
 | `GET` | `/api/trade/agent/signals` | `agent_signals` | [[core.trading_agent.py]] | [[engine.signals.js]], 1 prueba |
 | `POST` | `/api/trade/agent/signals/<sid>/dismiss` | `agent_signal_dismiss` | [[core.trading_agent.py]] | [[engine.signals.js]], 1 prueba |
 | `POST` | `/api/trade/agent/signals/<sid>/take` | `agent_signal_take` | [[core.trading_agent.py]] | [[engine.signals.js]], 2 pruebas |
-| `POST` | `/api/trade/agent/start` | `agent_start` | [[core.trading_agent.py]] | [[engine.app_trade_panel.js]], 3 pruebas |
-| `GET` | `/api/trade/agent/status` | `agent_status` | [[core.trading_agent.py]] | [[engine.app_trade_panel.js]], 3 pruebas |
-| `POST` | `/api/trade/agent/stop` | `agent_stop` | [[core.trading_agent.py]] | [[engine.app_trade_panel.js]], 2 pruebas |
+| `POST` | `/api/trade/agent/start` | `agent_start` | [[core.trading_agent.py]] | [[engine.app_trade_panel.js]], [[engine.signals.js]], 3 pruebas |
+| `GET` | `/api/trade/agent/status` | `agent_status` | [[core.trading_agent.py]] | [[engine.app_trade_panel.js]], [[engine.signals.js]], 3 pruebas |
+| `POST` | `/api/trade/agent/stop` | `agent_stop` | [[core.trading_agent.py]] | [[engine.app_trade_panel.js]], [[engine.signals.js]], 2 pruebas |
 | `POST` | `/api/trade/close` | `trade_close` | [[server.py]] | [[engine.cockpit.js]], 2 pruebas |
 | `GET` | `/api/trade/crypto/assets` | `trade_crypto_assets` | [[server.py]] | [[engine.crypto.js]], [[engine.trade.js]] |
 | `GET` | `/api/trade/diag` | `trade_diag` | [[server.py]] | — |

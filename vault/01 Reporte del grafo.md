@@ -18,7 +18,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Qué | Cuántos |
 |---|---|
 | Archivos de código (Python, JS, HTML) | 250 |
-| Líneas de código | 149.706 |
+| Líneas de código | 149.784 |
 | Archivos de datos del catálogo | 30 |
 | Archivos de prueba | 260 |
 | Documentos | 32 |
@@ -27,15 +27,15 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Herramientas MCP | 34 |
 | Variables de entorno | 158 |
 | Sesiones de trabajo | 113 |
-| Aristas `calls_endpoint` | 773 |
+| Aristas `calls_endpoint` | 777 |
 | Aristas `defines_endpoint` | 299 |
 | Aristas `imports` | 2.355 |
 | Aristas `loads_script` | 95 |
 | Aristas `mentions_in_session` | 600 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
-| Aristas `tested_by` | 1.850 |
-| Aristas `uses_global` | 467 |
+| Aristas `tested_by` | 1.851 |
+| Aristas `uses_global` | 468 |
 
 ## Nodos "dios" (más conectados)
 
@@ -47,7 +47,7 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[engine.app_main.js]] | 113 | 66 | 47 | [[Capa Interfaz (Khipus OS)]] |
 | [[server.py]] | 99 | 31 | 68 | [[Capa Infraestructura]] |
 | [[ontology.db.py]] | 58 | 48 | 10 | [[Capa Ontología y grafo temporal]] |
-| [[engine.cockpit.js]] | 51 | 14 | 37 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.cockpit.js]] | 52 | 14 | 38 | [[Capa Interfaz (Khipus OS)]] |
 | [[nodes.nodes_seed.js]] | 44 | 43 | 1 | [[Capa Datos del catálogo]] |
 | [[core.governance.py]] | 41 | 36 | 5 | [[Capa Infraestructura]] |
 | [[core.__init__.py]] | 40 | 40 | 0 | [[Capa Infraestructura]] |
@@ -141,7 +141,7 @@ Posible código muerto: ni la pantalla, ni el servidor, ni las pruebas, ni los s
 | `GET` | `/api/trade/diag` | `trade_diag` | [[server.py]] |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | [[server.py]] |
 
-**Solo las llaman las pruebas** (36): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/governance/attribution`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/eval`, `GET /api/tensor/rank`, `GET /api/tensor/status`, `POST /api/tensor/suggest`, `POST /api/trade/agent/config`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
+**Solo las llaman las pruebas** (35): `GET /api/ai/debug`, `GET /api/brokerage/audit`, `GET /api/diag/recent`, `GET /api/governance/active`, `GET /api/governance/attribution`, `GET /api/instruments/review`, `GET /api/khipu/tools`, `GET /api/ledger/chain`, `POST /api/ledger/chain_ack`, `GET /api/ledger/decision/<decision_id>`, `GET /api/ledger/decisions`, `GET /api/ledger/status`, `GET /api/ledger/verify`, `GET /api/market/providers`, `GET /api/market/quote/<path:symbol>`, `GET /api/matrix/metrics`, `GET /api/matrix/parity`, `GET /api/ontology/agents/brief`, `POST /api/ontology/bulk/import`, `POST /api/ontology/events`, `GET /api/ontology/events/<event_id>`, `GET /api/ontology/search`, `GET /api/ontology/sources`, `POST /api/ops/check`, `GET /api/ops/last_check`, `GET /api/tensor/eval`, `GET /api/tensor/rank`, `GET /api/tensor/status`, `POST /api/tensor/suggest`, `GET /api/vocabulary`, `POST /api/voice/adopt`, `GET /api/voice/agent-diag`, `POST /api/voice/agent-tune`, `GET,POST /api/voice/sync-agent`, `GET /api/voice/voices`
 
 ## Llamadas a rutas que no existen (14)
 

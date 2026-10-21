@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 5048
+lineas: 5052
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.048 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.052 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -49,6 +49,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
+- [[engine.signals.js]] — usa `KhipuSignals`
 - [[engine.simreport.js]] — usa `KhipuSimReport`
 - [[engine.temporal-graph.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.toast.js]] — usa `KhipuToast`
@@ -98,6 +99,7 @@ Se carga en [[app.html]] en la posición **95 de 103** (línea 3249), después d
 
 ## Pruebas que lo cubren
 
+- [[tests.test_agent_signals_one_tap.py]]
 - [[tests.test_cleanup_client.py]]
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_cleanup_modules_theme_i18n.py]]

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/signals.js"
 lenguaje: "javascript"
-lineas: 172
+lineas: 246
 aliases: ["engine/signals.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/signals.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 172 líneas · `engine/signals.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 246 líneas · `engine/signals.js`
 
 ## Para qué sirve
 
@@ -31,12 +31,17 @@ Se carga en [[app.html]] en la posición **39 de 103** (línea 3125), después d
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 39)
+- [[engine.cockpit.js]] — usa `KhipuSignals`
 
 ## Endpoints que llama
 
 - `GET /api/trade/agent/signals` → [[core.trading_agent.py]] ([[API trade]])
+- `GET /api/trade/agent/status` → [[core.trading_agent.py]] ([[API trade]])
+- `POST /api/trade/agent/config` → [[core.trading_agent.py]] ([[API trade]])
 - `POST /api/trade/agent/signals/<sid>/dismiss` → [[core.trading_agent.py]] ([[API trade]])
 - `POST /api/trade/agent/signals/<sid>/take` → [[core.trading_agent.py]] ([[API trade]])
+- `POST /api/trade/agent/start` → [[core.trading_agent.py]] ([[API trade]])
+- `POST /api/trade/agent/stop` → [[core.trading_agent.py]] ([[API trade]])
 
 ## Pruebas que lo cubren
 
