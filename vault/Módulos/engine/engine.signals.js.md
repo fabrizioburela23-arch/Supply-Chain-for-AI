@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/signals.js"
 lenguaje: "javascript"
-lineas: 246
+lineas: 249
 aliases: ["engine/signals.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/signals.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 246 líneas · `engine/signals.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 249 líneas · `engine/signals.js`
 
 ## Para qué sirve
 

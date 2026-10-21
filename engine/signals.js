@@ -194,8 +194,11 @@
     var h = css + '<div class="ksa"><h4>🤖 ' + esc(L('Agente de trading', 'Trading agent')) +
       '<span class="pill" style="background:' + (on ? '#15803d' : 'var(--os-surface-2,#2A2B35)') + ';color:#fff">' + esc(on ? L('ENCENDIDO', 'ON') : L('APAGADO', 'OFF')) + '</span>' +
       '<span class="pill" style="background:' + (live ? '#7f1d1d' : 'var(--os-surface-2,#2A2B35)') + ';color:#fff">' + esc(live ? L('🔴 DINERO REAL', '🔴 REAL MONEY') : L('🧪 PAPEL', '🧪 PAPER')) + '</span></h4>' +
-      '<div class="ksa-m">' + esc(L('Modo manual: el agente propone y tú apruebas cada señal con un toque (tarjeta flotante). Automático: solo en papel.',
-        'Manual mode: the agent proposes and you approve each signal with one tap (floating card). Automatic: paper only.')) + '</div>' +
+      '<ol class="ksa-m" style="margin:4px 0 0;padding-left:18px;line-height:1.6">' +
+        '<li>' + esc(L('Elige qué acciones vigilar y cada cuánto, y toca ▶ Iniciar.', 'Pick which stocks to watch and how often, then tap ▶ Start.')) + '</li>' +
+        '<li>' + esc(L('El agente analiza precio, tendencia, RSI y lo que opinan los analistas de Khipus.', 'The agent analyzes price, trend, RSI and what the Khipus analysts think.')) + '</li>' +
+        '<li>' + esc(L('Si ve una oportunidad, aparece una tarjeta abajo a la derecha: «Comprar 500 USD de NVDA». Tú la apruebas con un toque o la descartas. Nada se compra solo.',
+          'If it sees an opportunity, a card appears at the bottom right: "Buy 500 USD of NVDA". You approve it with one tap or dismiss it. Nothing is bought on its own.')) + '</li></ol>' +
       (d.notice ? '<div class="ksa-m" style="color:var(--os-warn-ink,#F2C46D);margin-top:6px">⚠ ' + esc(isEn() ? d.notice.en : d.notice.es) + '</div>' : '') +
       (d.broker_error ? '<div class="ksa-m" style="color:var(--os-bad-ink,#F47C7C);margin-top:6px">⚠ ' + esc(d.broker_error) + '</div>' : '') +
       '<div class="g">' +

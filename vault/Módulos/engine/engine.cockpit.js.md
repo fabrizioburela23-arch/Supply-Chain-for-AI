@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 5052
+lineas: 5053
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.052 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.053 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 

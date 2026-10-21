@@ -3212,9 +3212,10 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       '<div class="bcp-inner" style="max-width:980px">' +
         '<div id="bcp-bk-confirm"></div>' +
         '<div id="bcp-bk-acct"><div class="bcp-loading">' + tb('loading') + '</div></div>' +
-        '<div id="bcp-bk-report"></div>' +
-        // agente de trading (engine/signals.js): encender/apagar, modo manual «1 toque», acciones a vigilar
+        // agente de trading (engine/signals.js): encender/apagar, modo manual «1 toque», acciones a vigilar —
+        // ARRIBA, justo bajo el saldo (2026-10-21: «¿dónde está el trading?»)
         '<div id="bcp-bk-agent" style="margin-top:18px"></div>' +
+        '<div id="bcp-bk-report"></div>' +
         // CAPA PROACTIVA: consejos de Khipu (Opus 4.8), "sugiere y tú decides".
         '<div style="margin-top:18px">' +
           '<button type="button" id="bcp-bk-advbtn" class="bcp-back pri" style="padding:6px 16px 6px 7px;font-size:13px;font-weight:700">' + _mascot('khipu', 22) + ' ' + (en ? 'Khipu advice' : 'Consejos de Khipu') + '</button>' +

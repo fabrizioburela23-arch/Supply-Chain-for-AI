@@ -7,7 +7,7 @@ tags: ["tipo/inicio"]
 
 Bienvenido. Esta bóveda es un **mapa vivo del código de Khipus Finance AI**: cada archivo, ruta de la API, variable de entorno y sesión de trabajo es una nota, y los enlaces entre notas son las conexiones reales del código. La genera `scripts/build_vault.py` sin IA, leyendo el repositorio.
 
-**250 archivos de código (149.784 líneas) · 265 rutas HTTP · 34 herramientas MCP · 158 variables de entorno · 113 sesiones de trabajo.**
+**250 archivos de código (149.788 líneas) · 265 rutas HTTP · 34 herramientas MCP · 158 variables de entorno · 113 sesiones de trabajo.**
 
 Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Reporte del grafo]].
 
@@ -23,7 +23,7 @@ Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Repo
 
 | Capa | Archivos | Líneas | De qué trata |
 |---|---|---|---|
-| [[Capa Interfaz (Khipus OS)]] | 31 | 30.229 | Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos. |
+| [[Capa Interfaz (Khipus OS)]] | 31 | 30.233 | Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos. |
 | [[Capa Chat y agentes]] | 16 | 11.439 | El cerebro conversacional de Khipu, los agentes con su rol, el portero Jev y el lenguaje de comandos. |
 | [[Capa Investigación]] | 21 | 5.264 | El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud. |
 | [[Capa Comité]] | 8 | 6.895 | El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera. |
