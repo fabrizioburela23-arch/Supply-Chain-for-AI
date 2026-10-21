@@ -348,6 +348,9 @@ def is_khipus_id(s):
 #   listing_currency_from_yahoo     sufijo de Yahoo → moneda (core/instruments.SUFFIX; GBp → GBP); sin sufijo
 #                                   conocido y sin certificado: la moneda de la bolsa (currency_of_mic)
 #   listing_kind_home_exchange      sin `kind` y la bolsa es la del país de la sede → equity / a_share / h_share / otc
+#   relation_id_from_position       un vínculo SIN relation_id (es solo la etiqueta interna del vínculo dentro de la
+#                                   ficha) recibe "rel-NNN" por su posición, sin chocar con los ids que ya trae
+#                                   (lote P2, 2026-10-21: 92 vínculos completos se perdían solo por eso)
 #   drop_forbidden_live_field       un dato EN VIVO (price, market_cap…) se quita: lo trae el servidor
 #   drop_unknown_field / drop_invalid  lo que sigue sin cumplir el esquema se quita: el campo opcional o el elemento de
 #                                   lista MÁS PEQUEÑO que lo contiene
@@ -357,8 +360,8 @@ SANITIZE_RULES = ('url_trim', 'url_percent_encode', 'fiscal_year_text_to_int', '
                   'period_fy_split_end', 'ticker_space_to_dash', 'counterparty_id_to_hint', 'listing_mic_from_yahoo',
                   'listing_ticker_from_yahoo', 'listing_ticker_conflict', 'listing_yahoo_from_ticker_mic',
                   'listing_currency_from_yahoo',
-                  'listing_kind_home_exchange', 'drop_forbidden_live_field', 'drop_unknown_field', 'drop_invalid',
-                  'reject')
+                  'listing_kind_home_exchange', 'relation_id_from_position', 'drop_forbidden_live_field',
+                  'drop_unknown_field', 'drop_invalid', 'reject')
 _URL_KEYS = ('source_url', 'website', 'ir_url')
 _URL_LIST_KEYS = ('sources_consulted', 'rss_urls')
 _URL_FMT = re.compile(r'^https?://[^\s/]+\.[^\s]+$')
@@ -793,6 +796,18 @@ def sanitize_record(rec):
                      ', '.join(sorted(own)) + ') / certificate without ticker whose Yahoo symbol matches no ticker '
                      'of the record'))
         del lst[i]
+    rels = out.get('relations') if isinstance(out.get('relations'), list) else []
+    taken = {str(r.get('relation_id')) for r in rels if isinstance(r, dict) and r.get('relation_id')}
+    for i, r in enumerate(rels):
+        if isinstance(r, dict) and not r.get('relation_id'):
+            n, rid = i + 1, None
+            while rid is None or rid in taken:
+                rid = f'rel-{n:03d}'
+                n += 1
+            taken.add(rid)
+            _log(log, _p_key(_p_idx('relations', i), 'relation_id'), 'relation_id_from_position', 'set',
+                 r.get('relation_id'), rid)
+            r['relation_id'] = rid
     _drop_invalid(out, log)
     return out, log
 

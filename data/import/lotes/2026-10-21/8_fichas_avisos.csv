@@ -1,0 +1,140 @@
+record_id,nombre,tier,n_vinculos,aviso
+fb-2026-ai21-labs,AI21 Labs,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-ant-group,Ant Group,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-applied-intuition,Applied Intuition,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-clickhouse,ClickHouse,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-deepl,DeepL,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-fireworks-ai,Fireworks AI,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-gatik,Gatik,B,8,algun vinculo cita Wikipedia: revisar
+fb-2026-github,GitHub,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-harvey,Harvey,B,9,algun vinculo cita Wikipedia: revisar
+fb-2026-huawei-cloud,Huawei Cloud,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-isomorphic-labs,Isomorphic Labs,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-jio-platforms,Jio Platforms,B,9,algun vinculo cita Wikipedia: revisar
+fb-2026-lg-ai-research,LG AI Research,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-may-mobility,May Mobility,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-mercor,Mercor,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-midjourney,Midjourney,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-momenta,Momenta,B,7,algun vinculo cita Wikipedia: revisar
+fb-2026-moonshot-ai,Moonshot AI,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-motional,Motional,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-openevidence,OpenEvidence,B,9,algun vinculo cita Wikipedia: revisar
+fb-2026-preferred-networks,Preferred Networks,B,8,algun vinculo cita Wikipedia: revisar
+fb-2026-replit,Replit,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-safe-superintelligence-ssi,Safe Superintelligence (SSI),B,8,algun vinculo cita Wikipedia: revisar
+fb-2026-sarvam-ai,Sarvam AI,B,7,algun vinculo cita Wikipedia: revisar
+fb-2026-sensetime,SenseTime,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-softbank-corp,SoftBank Corp.,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-stepfun,StepFun,B,10,algun vinculo cita Wikipedia: revisar
+fb-2026-surge-ai,Surge AI,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-synthesia,Synthesia,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-technology-innovation-institute-tii,Technology Innovation Institute (TII),B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-tencent-cloud,Tencent Cloud,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-thinking-machines-lab,Thinking Machines Lab,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-torc-robotics,Torc Robotics,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-vultr,Vultr,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-weights-biases,Weights & Biases,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-zhuoyu-technology-dji-automotive,Zhuoyu Technology (DJI Automotive),B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-tcs,TCS,B,10,algun vinculo cita Wikipedia: revisar
+fb-2026-tencent,Tencent,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-weride,WeRide,B,7,algun vinculo cita Wikipedia: revisar
+fb-2026-iflytek,iFLYTEK,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-axelera-ai,Axelera AI,B,9,algun vinculo cita Wikipedia: revisar
+fb-2026-imagination-technologies,Imagination Technologies,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-metax,MetaX,B,7,algun vinculo cita Wikipedia: revisar
+fb-2026-global-unichip,Global Unichip,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-stmicroelectronics,STMicroelectronics,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-socionext,Socionext,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-valens-semiconductor,Valens Semiconductor,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-absolics,Absolics,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-bosch-semiconductors,Bosch Semiconductors,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-bourns,Bourns,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-cea-leti,CEA-Leti,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-circuit-foil-luxembourg,Circuit Foil Luxembourg,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-fujian-jinhua-jhicc,Fujian Jinhua (JHICC),A,3,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-hua-hong-group,Hua Hong Group,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-itri,ITRI,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-micron-memory-japan,Micron Memory Japan,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-pxw-pengxinwei,PXW (Pengxinwei),A,2,SIN identificador fuerte: NO importar hasta resolver (excluida del JSONL) | tier A: menos de 3 vinculos verificables
+fb-2026-radiall,Radiall,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-rubycon,Rubycon,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-sk-hynix-semiconductor-china,SK hynix Semiconductor (China),A,2,tier A: menos de 3 vinculos verificables
+fb-2026-wurth-elektronik,Würth Elektronik,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-weidmuller,Weidmüller,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-siemon,Siemon,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-silicon-box,Silicon Box,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-skywater-technology,SkyWater Technology,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-tdk-electronics,TDK Electronics,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-axt,AXT,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-crrc-times-electric,CRRC Times Electric,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-delton-technology,Delton Technology,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-at-s,AT&S,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-gold-circuit,Gold Circuit,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-fuji-electric,Fuji Electric,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-iqe,IQE,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-innoscience,InnoScience,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-kingboard-laminates,Kingboard Laminates,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-kinsus,Kinsus,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-landmark-optoelectronics,LandMark Optoelectronics,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-luxshare,Luxshare,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-macronix,Macronix,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-nan-ya-pcb,Nan Ya PCB,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-nichicon,Nichicon,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-skc,SKC,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-shengyi-technology,Shengyi Technology,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-victory-giant,Victory Giant,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-tcl-technology,TCL Technology,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-toppan,Toppan,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-taiyo-yuden,Taiyo Yuden,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-busch-group,Busch Group,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-guowang-optics,GuoWang Optics,B,4,SIN identificador fuerte: NO importar hasta resolver (excluida del JSONL)
+fb-2026-canon-anelva,Canon Anelva,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-grinm-group,GRINM Group,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-ciomp-changchun-institute-of-optics-fine-mechanics-and-physics,"CIOMP (Changchun Institute of Optics, Fine Mechanics and Physics)",B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-hermes-microvision,Hermes Microvision,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-kanto-chemical,Kanto Chemical,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-heraeus,Heraeus,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-leybold,Leybold,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-momentive-technologies,Momentive Technologies,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-nts-group,NTS Group,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-pall-corporation,Pall Corporation,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-siom-shanghai-institute-of-optics-and-fine-mechanics,SIOM (Shanghai Institute of Optics and Fine Mechanics),A,2,tier A: menos de 3 vinculos verificables
+fb-2026-sicarrier,SiCarrier,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-sumitomo-heavy-industries-ion-technology-smit,Sumitomo Heavy Industries Ion Technology (SMIT),A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-trumpf-huttinger,TRUMPF Hüttinger,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-thermo-fisher-scientific,Thermo Fisher Scientific,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-u-precision,U-Precision,B,5,SIN identificador fuerte: NO importar hasta resolver (excluida del JSONL)
+fb-2026-watlow,Watlow,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-zygo,Zygo,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-c-uyemura,C. Uyemura,A,3,tier A: menos de 3 vinculos verificables
+fb-2026-chroma-ate,Chroma ATE,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-daihen,DAIHEN,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-dinglong,Dinglong,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-dongjin-semichem,Dongjin Semichem,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-element-solutions,Element Solutions,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-kulicke-soffa,Kulicke & Soffa,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-leeno,LEENO,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-optorun,Optorun,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-toyo-tanso,Toyo Tanso,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-wonik-ips,Wonik IPS,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-wonik-qnc,Wonik QnC,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-tri-chemical,Tri Chemical,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-toyo-gosei,Toyo Gosei,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-aggreko,Aggreko,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-anord-mardix,Anord Mardix,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-arelion,Arelion,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-exa-infrastructure,EXA Infrastructure,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-edgecore-networks,Edgecore Networks,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-giga-computing,Giga Computing,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-global-marine,Global Marine,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-nettrix,Nettrix,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-occ-corporation,OCC Corporation,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-orange-marine,Orange Marine,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-sparkle,Sparkle,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-tdk-lambda,TDK-Lambda,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-telxius,Telxius,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-v-tal,V.tal,B,5,algun vinculo cita Wikipedia: revisar
+fb-2026-vast-data,VAST Data,B,7,algun vinculo cita Wikipedia: revisar
+fb-2026-viettel,Viettel,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-tuc,TUC,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-brooks-automation,Brooks Automation,A,2,tier A: menos de 3 vinculos verificables

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1376"
+ruta: "docs/ESTADO.md#L1382"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (g) — KHIPU COMO ASISTENTE: ANALISTAS EN EL CHAT, PROMPT, MEMORIA, TIEMPOS (sw v196)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1376 (35 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1382 (35 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/import_normalize.py"
 lenguaje: "python"
-lineas: 807
+lineas: 822
 aliases: ["core/import_normalize.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/import_normalize.py
 
-> Módulo · capa [[Capa Infraestructura]] · 807 líneas · `core/import_normalize.py`
+> Módulo · capa [[Capa Infraestructura]] · 822 líneas · `core/import_normalize.py`
 
 ## Para qué sirve
 
@@ -35,9 +35,9 @@ normalización de la ficha khipus.company/1 a la convención interna (E2.2).
 - `ascii_fold(s)` _(línea 301)_
 - `khipus_id_from(name)` — 'LG Energy Solution' → 'LGEnergySolution'; '3M' → 'Co3M'; 'Ørsted' → 'Orsted' (Ø/Æ/ß/Ł no se descomponen con NFKD: tabla propia); '宁德时代' → … _(línea 310)_
 - `is_khipus_id(s)` _(línea 327)_
-- `encode_url(url)` — Repara el FORMATO de un enlace: quita espacios de los extremos y codifica los espacios internos y los corchetes de la ruta/consulta (%20, … _(línea 393)_
-- `sanitize_record(rec)` — Ficha (dict) → (ficha_saneada, registro). PURA (copia profunda; la entrada no se toca), DETERMINISTA e IDEMPOTENTE (sanitize(sanitize(x)) … _(línea 766)_
-- `sanitize_summary(logs)` — {regla: n} de uno o varios registros (lista de entradas o lista de listas). _(línea 800)_
+- `encode_url(url)` — Repara el FORMATO de un enlace: quita espacios de los extremos y codifica los espacios internos y los corchetes de la ruta/consulta (%20, … _(línea 396)_
+- `sanitize_record(rec)` — Ficha (dict) → (ficha_saneada, registro). PURA (copia profunda; la entrada no se toca), DETERMINISTA e IDEMPOTENTE (sanitize(sanitize(x)) … _(línea 769)_
+- `sanitize_summary(logs)` — {regla: n} de uno o varios registros (lista de entradas o lista de listas). _(línea 815)_
 
 **Internas** (empiezan con `_`): `_countries_mod`, `_p_key`, `_p_idx`, `_log`, `_fiscal_year_of`, `_period_fixed`, `_ticker_fixed`, `_suffix_mics`, `_yahoo_suffix`, `_currency_of_suffix`, `_declared_tickers`, `_sanitize_listing`, `_sanitize_counterparty`, `_repair`, `_field_info`, `_inner_model`, `_drop_target`, `_orig_paths`, `_drop_order_key`, `_drop_invalid`
 

@@ -62,6 +62,12 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    máx. 5 %/posición, stop 5 %, confianza ≥ 70, pérdida diaria 2 %, universo NVDA, AMD, AVGO, TSM, MU. A las 2 semanas
    (~2026-11-04): comparar su rendimiento con SPY en el mismo período antes de pensar en dinero real. Tras cada despliegue
    queda APAGADO (hay que volver a darle ▶ Iniciar).
+1f. 📦 **LOTE 3 (P2) LISTO PARA APLICAR (2026-10-21)**: `data/import/lotes/2026-10-21/bundle_lote3_p2.json.gz` = 297 fichas de
+   `khipus_entrega_P2.zip` + ACWA Power (tanda 1; la carpeta 2026-10-16 se retiró: Adobe/Alchip/ACM usan la ficha P2).
+   298/298 válidas; regla nueva del saneador `relation_id_from_position` (95 vínculos sin etiqueta interna). Plan local:
+   295 crear · 3 completar (Tencent, STMicro, Xanadu) · vínculos 244 vivos / 298 propuestos / 954 pendientes · TSMC 318 → 355.
+   docs/expansion/LOTE_2026-10-21_PLAN.md. Aplicar = Fabrizio (copia + panel 📥 + PIN). Revisar a mano: Eviden, Anord Mardix,
+   Kingston, Hisense Broadband, Walsin Technology, VAST Data, Sparkle, VSMC.
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).

@@ -1,0 +1,301 @@
+nombre,record_id,khipus_id_hint,sector,pais_iso2,fusionar_con_existente,tiene_ficha
+Hisense Broadband,fb-2026-hisense-broadband,HisenseBroadband,infra,CN,False,si
+Huakun Zhenyu,fb-2026-huakun-zhenyu,HuakunZhenyu,infra,CN,False,si
+Hyve Solutions,fb-2026-hyve-solutions,HyveSolutions,infra,US,False,si
+IEM,fb-2026-iem,IEM,infra,,False,si
+Ingrasys,fb-2026-ingrasys,Ingrasys,infra,TW,False,si
+Kingston Technology,fb-2026-kingston-technology,KingstonTechnology,infra,US,False,si
+Nettrix,fb-2026-nettrix,Nettrix,infra,CN,False,si
+OCC Corporation,fb-2026-occ-corporation,OCCCorporation,infra,JP,False,si
+Orange Marine,fb-2026-orange-marine,OrangeMarine,infra,FR,False,si
+ProEnergy,fb-2026-proenergy,ProEnergy,infra,US,False,si
+AI21 Labs,fb-2026-ai21-labs,AI21Labs,cloud_ia,IL,False,si
+AMI Labs (Advanced Machine Intelligence),fb-2026-ami-labs-advanced-machine-intelligence,AMILabs,cloud_ia,FR,False,si
+Abridge,fb-2026-abridge,Abridge,cloud_ia,US,False,si
+Ant Group,fb-2026-ant-group,AntGroup,cloud_ia,CN,False,si
+Applied Intuition,fb-2026-applied-intuition,AppliedIntuition,cloud_ia,US,False,si
+Baseten,fb-2026-baseten,Baseten,cloud_ia,US,False,si
+Black Forest Labs,fb-2026-black-forest-labs,BlackForestLabs,cloud_ia,DE,False,si
+China Telecom Cloud (Tianyi Cloud),fb-2026-china-telecom-cloud-tianyi-cloud,ChinaTelecomCloud,cloud_ia,CN,False,si
+ClickHouse,fb-2026-clickhouse,ClickHouse,cloud_ia,US,False,si
+Core42,fb-2026-core42,Core42,cloud_ia,AE,False,si
+Beijing E-Town Semiconductor,fb-2026-beijing-e-town-semiconductor,BeijingETownSemiconductor,equipos,CN,False,si
+Brooks Automation,fb-2026-brooks-automation,BrooksAutomation,equipos,US,False,si
+Brooks Instrument,fb-2026-brooks-instrument,BrooksInstrument,equipos,US,False,si
+CETC 48th Research Institute,fb-2026-cetc-48th-research-institute,CETC48thResearchInstitute,equipos,CN,False,si
+Osaka Organic Chemical,fb-2026-osaka-organic-chemical,OsakaOrganicChemical,equipos,JP,False,si
+Oxide,fb-2026-oxide,Oxide,equipos,JP,False,si
+Krutrim,fb-2026-krutrim,Krutrim,cloud_ia,IN,False,si
+LG AI Research,fb-2026-lg-ai-research,LGAIResearch,cloud_ia,KR,False,si
+Lovable,fb-2026-lovable,Lovable,cloud_ia,SE,False,si
+May Mobility,fb-2026-may-mobility,MayMobility,cloud_ia,,False,si
+Mercor,fb-2026-mercor,Mercor,cloud_ia,US,False,si
+Midjourney,fb-2026-midjourney,Midjourney,cloud_ia,US,False,si
+Momenta,fb-2026-momenta,Momenta,cloud_ia,CN,False,si
+Moonshot AI,fb-2026-moonshot-ai,MoonshotAI,cloud_ia,CN,False,si
+Motional,fb-2026-motional,Motional,cloud_ia,US,False,si
+Neolix,fb-2026-neolix,Neolix,cloud_ia,CN,False,si
+Leybold,fb-2026-leybold,Leybold,equipos,DE,False,si
+Momentive Technologies,fb-2026-momentive-technologies,MomentiveTechnologies,equipos,US,False,si
+Morita Chemical Industries,fb-2026-morita-chemical-industries,MoritaChemicalIndustries,equipos,JP,False,si
+NTS Group,fb-2026-nts-group,NTSGroup,equipos,NL,False,si
+Nissin Ion Equipment,fb-2026-nissin-ion-equipment,NissinIonEquipment,equipos,JP,False,si
+Pall Corporation,fb-2026-pall-corporation,PallCorporation,equipos,US,False,si
+Physik Instrumente (PI),fb-2026-physik-instrumente-pi,PhysikInstrumente,equipos,DE,False,si
+Prodrive Technologies,fb-2026-prodrive-technologies,ProdriveTechnologies,equipos,NL,False,si
+RSLaser,fb-2026-rslaser,RSLaser,equipos,CN,False,si
+SIOM (Shanghai Institute of Optics and Fine Mechanics),fb-2026-siom-shanghai-institute-of-optics-and-fine-mechanics,SIOM,equipos,CN,False,si
+Alchip,fb-2026-alchip,Alchip,diseno,TW,False,si
+Andes Technology,fb-2026-andes-technology,AndesTechnology,diseno,TW,False,si
+Arteris,fb-2026-arteris,Arteris,diseno,US,False,si
+Canaan,fb-2026-canaan,Canaan,diseno,SG,False,si
+Global Unichip,fb-2026-global-unichip,GlobalUnichip,diseno,TW,False,si
+Nordic Semiconductor,fb-2026-nordic-semiconductor,NordicSemiconductor,diseno,NO,False,si
+Phison,fb-2026-phison,Phison,diseno,TW,False,si
+Realtek,fb-2026-realtek,Realtek,diseno,TW,False,si
+STMicroelectronics,fb-2026-stmicroelectronics,STMicroelectronics,diseno,NL,True,si
+Silvaco,fb-2026-silvaco,Silvaco,diseno,US,False,si
+Coilcraft,fb-2026-coilcraft,Coilcraft,fabricacion,US,False,si
+ESMC,fb-2026-esmc,ESMC,fabricacion,DE,False,si
+Fujian Jinhua (JHICC),fb-2026-fujian-jinhua-jhicc,FujianJinhua,fabricacion,CN,False,si
+Glenair,fb-2026-glenair,Glenair,fabricacion,US,False,si
+Hua Hong Group,fb-2026-hua-hong-group,HuaHongGroup,fabricacion,CN,False,si
+ITRI,fb-2026-itri,ITRI,fabricacion,TW,False,si
+JASM,fb-2026-jasm,JASM,fabricacion,JP,False,si
+KYOCERA AVX,fb-2026-kyocera-avx,KYOCERAAVX,fabricacion,US,False,si
+Leviton,fb-2026-leviton,Leviton,fabricacion,US,False,si
+Micron Memory Japan,fb-2026-micron-memory-japan,MicronMemoryJapan,fabricacion,JP,False,si
+OpenEvidence,fb-2026-openevidence,OpenEvidence,cloud_ia,US,False,si
+Oxa,fb-2026-oxa,Oxa,cloud_ia,GB,False,si
+Preferred Networks,fb-2026-preferred-networks,PreferredNetworks,cloud_ia,JP,False,si
+Replit,fb-2026-replit,Replit,cloud_ia,US,False,si
+Safe Superintelligence (SSI),fb-2026-safe-superintelligence-ssi,SafeSuperintelligence,cloud_ia,US,False,si
+Sarvam AI,fb-2026-sarvam-ai,SarvamAI,cloud_ia,IN,False,si
+SenseTime,fb-2026-sensetime,SenseTime,cloud_ia,HK,False,si
+Sierra,fb-2026-sierra,Sierra,cloud_ia,US,False,si
+SoftBank Corp.,fb-2026-softbank-corp,SoftBankCorp,cloud_ia,,False,si
+StepFun,fb-2026-stepfun,StepFun,cloud_ia,CN,False,si
+"CIOMP (Changchun Institute of Optics, Fine Mechanics and Physics)",fb-2026-ciomp-changchun-institute-of-optics-fine-mechanics-and-physics,CIOMP,equipos,CN,False,si
+Canon Anelva,fb-2026-canon-anelva,CanonAnelva,equipos,JP,False,si
+Eswin Material,fb-2026-eswin-material,EswinMaterial,equipos,CN,False,si
+GRINM Group,fb-2026-grinm-group,GRINMGroup,equipos,CN,False,si
+GuoWang Optics,fb-2026-guowang-optics,GuoWangOptics,equipos,CN,False,no
+Heraeus,fb-2026-heraeus,Heraeus,equipos,DE,False,si
+Hermes Microvision,fb-2026-hermes-microvision,HermesMicrovision,equipos,TW,False,si
+Inpria,fb-2026-inpria,Inpria,equipos,US,False,si
+Kanto Chemical,fb-2026-kanto-chemical,KantoChemical,equipos,JP,False,si
+Kashiyama Industries,fb-2026-kashiyama-industries,KashiyamaIndustries,equipos,JP,False,si
+AT&S,fb-2026-at-s,ATS,fabricacion,AT,False,si
+AVIC Jonhon,fb-2026-avic-jonhon,AVICJonhon,fabricacion,CN,False,si
+AXT,fb-2026-axt,AXT,fabricacion,US,False,si
+Avary,fb-2026-avary,Avary,fabricacion,CN,False,si
+Bizlink,fb-2026-bizlink,Bizlink,fabricacion,TW,False,si
+CRRC Times Electric,fb-2026-crrc-times-electric,CRRCTimesElectric,fabricacion,CN,False,si
+Daishinku,fb-2026-daishinku,Daishinku,fabricacion,JP,False,si
+Delton Technology,fb-2026-delton-technology,DeltonTechnology,fabricacion,CN,False,si
+Doosan,fb-2026-doosan,Doosan,fabricacion,KR,False,si
+Faratronic,fb-2026-faratronic,Faratronic,fabricacion,CN,False,si
+StarPower,fb-2026-starpower,StarPower,fabricacion,CN,False,si
+TCL Technology,fb-2026-tcl-technology,TCLTechnology,fabricacion,CN,False,si
+TDK,fb-2026-tdk,TDK,fabricacion,JP,False,si
+TTM Technologies,fb-2026-ttm-technologies,TTMTechnologies,fabricacion,US,False,si
+TUC,fb-2026-tuc,TUC,fabricacion,TW,False,si
+Taiyo Yuden,fb-2026-taiyo-yuden,TaiyoYuden,fabricacion,JP,False,si
+Tongfu Microelectronics,fb-2026-tongfu-microelectronics,TongfuMicroelectronics,fabricacion,CN,False,si
+Toppan,fb-2026-toppan,Toppan,fabricacion,JP,False,si
+Vanguard International,fb-2026-vanguard-international,VanguardInternational,fabricacion,TW,False,si
+Victory Giant,fb-2026-victory-giant,VictoryGiant,fabricacion,CN,False,si
+TCS,fb-2026-tcs,TCS,cloud_ia,IN,False,si
+Tencent,fb-2026-tencent,Tencent,cloud_ia,CN,True,si
+WeRide,fb-2026-weride,WeRide,cloud_ia,CN,False,si
+iFLYTEK,fb-2026-iflytek,IFLYTEK,cloud_ia,CN,False,si
+Alphawave Semi,fb-2026-alphawave-semi,AlphawaveSemi,diseno,,False,si
+Arm China,fb-2026-arm-china,ArmChina,diseno,CN,False,si
+Axelera AI,fb-2026-axelera-ai,AxeleraAI,diseno,NL,False,si
+Celestial AI,fb-2026-celestial-ai,CelestialAI,diseno,US,False,si
+FuriosaAI,fb-2026-furiosaai,FuriosaAI,diseno,KR,False,si
+Imagination Technologies,fb-2026-imagination-technologies,ImaginationTechnologies,diseno,GB,False,si
+Flex,fb-2026-flex,Flex,fabricacion,SG,False,si
+Fuji Electric,fb-2026-fuji-electric,FujiElectric,fabricacion,JP,False,si
+Gold Circuit,fb-2026-gold-circuit,GoldCircuit,fabricacion,TW,False,si
+Huatian Technology,fb-2026-huatian-technology,HuatianTechnology,fabricacion,CN,False,si
+IQE,fb-2026-iqe,IQE,fabricacion,GB,False,si
+ISU Petasys,fb-2026-isu-petasys,ISUPetasys,fabricacion,KR,False,si
+InnoScience,fb-2026-innoscience,InnoScience,fabricacion,CN,False,si
+Kingboard Laminates,fb-2026-kingboard-laminates,KingboardLaminates,fabricacion,HK,False,si
+Kinsus,fb-2026-kinsus,Kinsus,fabricacion,TW,False,si
+LandMark Optoelectronics,fb-2026-landmark-optoelectronics,LandMarkOptoelectronics,fabricacion,TW,False,si
+WUS Printed Circuit,fb-2026-wus-printed-circuit,WUSPrintedCircuit,fabricacion,CN,False,si
+Walsin Technology,fb-2026-walsin-technology,WalsinTechnology,fabricacion,TW,False,si
+STATS ChipPAC,fb-2026-stats-chippac,STATSChipPAC,fabricacion,SG,False,si
+VSMC,fb-2026-vsmc,VSMC,fabricacion,SG,False,si
+AMIES Technology,fb-2026-amies-technology,AMIESTechnology,equipos,CN,False,si
+Siemon,fb-2026-siemon,Siemon,fabricacion,US,False,si
+Silicon Box,fb-2026-silicon-box,SiliconBox,fabricacion,SG,False,si
+SkyWater Technology,fb-2026-skywater-technology,SkyWaterTechnology,fabricacion,US,False,si
+Solidigm,fb-2026-solidigm,Solidigm,fabricacion,US,False,si
+Sumitomo Wiring Systems,fb-2026-sumitomo-wiring-systems,SumitomoWiringSystems,fabricacion,JP,False,si
+TDK Electronics,fb-2026-tdk-electronics,TDKElectronics,fabricacion,DE,False,si
+Toshiba,fb-2026-toshiba,Toshiba,fabricacion,JP,False,si
+Weidmüller,fb-2026-weidmuller,Weidmuller,fabricacion,DE,False,si
+Würth Elektronik,fb-2026-wurth-elektronik,WurthElektronik,fabricacion,DE,False,si
+XMC (Wuhan Xinxin),fb-2026-xmc-wuhan-xinxin,XMC,fabricacion,CN,False,si
+Socionext,fb-2026-socionext,Socionext,diseno,JP,False,si
+Valens Semiconductor,fb-2026-valens-semiconductor,ValensSemiconductor,diseno,IL,False,si
+VeriSilicon,fb-2026-verisilicon,VeriSilicon,diseno,CN,False,si
+Xanadu,fb-2026-xanadu,xanadu-quantum,diseno,CA,True,si
+eMemory,fb-2026-ememory,EMemory,diseno,TW,False,si
+Absolics,fb-2026-absolics,Absolics,fabricacion,US,False,si
+Bosch Semiconductors,fb-2026-bosch-semiconductors,BoschSemiconductors,fabricacion,DE,False,si
+Bourns,fb-2026-bourns,Bourns,fabricacion,,False,si
+CEA-Leti,fb-2026-cea-leti,CEALeti,fabricacion,FR,False,si
+Circuit Foil Luxembourg,fb-2026-circuit-foil-luxembourg,CircuitFoilLuxembourg,fabricacion,,False,si
+Kunlunxin,fb-2026-kunlunxin,Kunlunxin,diseno,CN,False,si
+Lightmatter,fb-2026-lightmatter,Lightmatter,diseno,US,False,si
+MetaX,fb-2026-metax,MetaX,diseno,CN,False,si
+NTT Innovative Devices,fb-2026-ntt-innovative-devices,NTTInnovativeDevices,diseno,JP,False,si
+Phytium,fb-2026-phytium,Phytium,diseno,CN,False,si
+Rebellions,fb-2026-rebellions,Rebellions,diseno,KR,False,si
+SiFive,fb-2026-sifive,SiFive,diseno,US,False,si
+SiPearl,fb-2026-sipearl,SiPearl,diseno,FR,False,si
+T-Head,fb-2026-t-head,THead,diseno,CN,False,si
+UniVista (Hejian Industrial Software),fb-2026-univista-hejian-industrial-software,UniVista,diseno,CN,False,si
+TOCALO,fb-2026-tocalo,TOCALO,equipos,JP,False,si
+Techwing,fb-2026-techwing,Techwing,equipos,KR,False,si
+Toyo Gosei,fb-2026-toyo-gosei,ToyoGosei,equipos,JP,False,si
+Toyo Tanso,fb-2026-toyo-tanso,ToyoTanso,equipos,JP,False,si
+Tri Chemical,fb-2026-tri-chemical,TriChemical,equipos,JP,False,si
+ULVAC,fb-2026-ulvac,ULVAC,equipos,JP,False,si
+Ushio,fb-2026-ushio,Ushio,equipos,JP,False,si
+WinWay,fb-2026-winway,WinWay,equipos,TW,False,si
+Wonik IPS,fb-2026-wonik-ips,WonikIPS,equipos,KR,False,si
+Wonik QnC,fb-2026-wonik-qnc,WonikQnC,equipos,KR,False,si
+Rehlko,fb-2026-rehlko,Rehlko,infra,US,False,si
+S.B. Submarine Systems,fb-2026-s-b-submarine-systems,SBSubmarineSystems,infra,CN,False,si
+Solar Turbines,fb-2026-solar-turbines,SolarTurbines,infra,US,False,si
+Source Photonics,fb-2026-source-photonics,SourcePhotonics,infra,US,False,si
+Sparkle,fb-2026-sparkle,Sparkle,infra,IT,False,si
+TDK-Lambda,fb-2026-tdk-lambda,TDKLambda,infra,JP,False,si
+Telxius,fb-2026-telxius,Telxius,infra,ES,False,si
+V.tal,fb-2026-v-tal,VTal,infra,BR,False,si
+VAST Data,fb-2026-vast-data,VASTData,infra,US,False,si
+Viettel,fb-2026-viettel,Viettel,infra,VN,False,si
+Materion,fb-2026-materion,Materion,equipos,US,False,si
+Mycronic,fb-2026-mycronic,Mycronic,equipos,SE,False,si
+NGK Insulators,fb-2026-ngk-insulators,NGKInsulators,equipos,JP,False,si
+NSIG,fb-2026-nsig,NSIG,equipos,CN,False,si
+Nova,fb-2026-nova,Nova,equipos,IL,False,si
+Ohara,fb-2026-ohara,Ohara,equipos,JP,False,si
+Optorun,fb-2026-optorun,Optorun,equipos,JP,False,si
+Organo,fb-2026-organo,Organo,equipos,JP,False,si
+Shin-Etsu Quartz Products,fb-2026-shin-etsu-quartz-products,ShinEtsuQuartzProducts,equipos,JP,False,si
+SiCarrier,fb-2026-sicarrier,SiCarrier,equipos,CN,False,si
+Sumitomo Heavy Industries Ion Technology (SMIT),fb-2026-sumitomo-heavy-industries-ion-technology-smit,SumitomoHeavyIndustriesIonTechnology,equipos,JP,False,si
+TRUMPF Hüttinger,fb-2026-trumpf-huttinger,TRUMPFHuttinger,equipos,DE,False,si
+Thermo Fisher Scientific,fb-2026-thermo-fisher-scientific,ThermoFisherScientific,equipos,US,False,si
+Tosoh Quartz,fb-2026-tosoh-quartz,TosohQuartz,equipos,JP,False,si
+U-Precision,fb-2026-u-precision,UPrecision,equipos,CN,False,no
+Watlow,fb-2026-watlow,Watlow,equipos,US,False,si
+Zygo,fb-2026-zygo,Zygo,equipos,US,False,si
+ACM Research Shanghai,fb-2026-acm-research-shanghai,ACMResearchShanghai,equipos,CN,False,si
+Luxshare,fb-2026-luxshare,Luxshare,fabricacion,CN,False,si
+Macronix,fb-2026-macronix,Macronix,fabricacion,TW,False,si
+Nan Ya PCB,fb-2026-nan-ya-pcb,NanYaPCB,fabricacion,TW,False,si
+Nichicon,fb-2026-nichicon,Nichicon,fabricacion,JP,False,si
+SIMMTECH,fb-2026-simmtech,SIMMTECH,fabricacion,KR,False,si
+SJ Semiconductor,fb-2026-sj-semiconductor,SJSemiconductor,fabricacion,CN,False,si
+SKC,fb-2026-skc,SKC,fabricacion,KR,False,si
+Sanan Optoelectronics,fb-2026-sanan-optoelectronics,SananOptoelectronics,fabricacion,CN,False,si
+Shengyi Technology,fb-2026-shengyi-technology,ShengyiTechnology,fabricacion,CN,False,si
+Shennan Circuit,fb-2026-shennan-circuit,ShennanCircuit,fabricacion,CN,False,si
+Fuji Corp,fb-2026-fuji-corp,FujiCorp,equipos,JP,False,si
+Hamamatsu,fb-2026-hamamatsu,Hamamatsu,equipos,JP,False,si
+Han's CNC,fb-2026-han-s-cnc,HanSCNC,equipos,CN,False,si
+Hansol Chemical,fb-2026-hansol-chemical,HansolChemical,equipos,KR,False,si
+Hon Precision,fb-2026-hon-precision,HonPrecision,equipos,TW,False,si
+Horiba,fb-2026-horiba,Horiba,equipos,JP,False,si
+Hwatsing,fb-2026-hwatsing,Hwatsing,equipos,CN,False,si
+INFICON,fb-2026-inficon,INFICON,equipos,CH,False,si
+JEOL,fb-2026-jeol,JEOL,equipos,JP,False,si
+JTEC,fb-2026-jtec,JTEC,equipos,JP,False,si
+Japan Pure Chemical,fb-2026-japan-pure-chemical,JapanPureChemical,equipos,JP,False,si
+Jingsheng,fb-2026-jingsheng,Jingsheng,equipos,CN,False,si
+Kingsemi,fb-2026-kingsemi,Kingsemi,equipos,CN,False,si
+Kinik,fb-2026-kinik,Kinik,equipos,TW,False,si
+Konfoong,fb-2026-konfoong,Konfoong,equipos,CN,False,si
+Kulicke & Soffa,fb-2026-kulicke-soffa,KulickeSoffa,equipos,SG,False,si
+Kurita Water,fb-2026-kurita-water,KuritaWater,equipos,JP,False,si
+LEENO,fb-2026-leeno,LEENO,equipos,KR,False,si
+LINTEC,fb-2026-lintec,LINTEC,equipos,JP,False,si
+MPI Corporation,fb-2026-mpi-corporation,MPICorporation,equipos,TW,False,si
+Yoke Technology,fb-2026-yoke-technology,YokeTechnology,equipos,CN,False,si
+Aggreko,fb-2026-aggreko,Aggreko,infra,GB,False,si
+Anord Mardix,fb-2026-anord-mardix,AnordMardix,infra,,False,si
+Arelion,fb-2026-arelion,Arelion,infra,SE,False,si
+EXA Infrastructure,fb-2026-exa-infrastructure,EXAInfrastructure,infra,GB,False,si
+Edgecore Networks,fb-2026-edgecore-networks,EdgecoreNetworks,infra,TW,False,si
+Eviden,fb-2026-eviden,Eviden,infra,FR,False,si
+Giga Computing,fb-2026-giga-computing,GigaComputing,infra,TW,False,si
+Global Marine,fb-2026-global-marine,GlobalMarine,infra,GB,False,si
+H3C,fb-2026-h3c,H3C,infra,CN,False,si
+Adobe,fb-2026-adobe,Adobe,cloud_ia,US,False,si
+Cerence,fb-2026-cerence,Cerence,cloud_ia,US,False,si
+E2E Networks,fb-2026-e2e-networks,E2ENetworks,cloud_ia,IN,False,si
+IBM,fb-2026-ibm,IBM,cloud_ia,US,False,si
+Kodiak AI,fb-2026-kodiak-ai,KodiakAI,cloud_ia,US,False,si
+MiniMax,fb-2026-minimax,MiniMax,cloud_ia,CN,False,si
+Pony.ai,fb-2026-pony-ai,PonyAi,cloud_ia,CN,False,si
+SAKURA Internet,fb-2026-sakura-internet,SAKURAInternet,cloud_ia,JP,False,si
+SAP,fb-2026-sap,SAP,cloud_ia,DE,False,si
+ServiceNow,fb-2026-servicenow,ServiceNow,cloud_ia,US,False,si
+Piotech,fb-2026-piotech,Piotech,equipos,CN,False,si
+Rorze,fb-2026-rorze,Rorze,equipos,JP,False,si
+SGL Carbon,fb-2026-sgl-carbon,SGLCarbon,equipos,DE,False,si
+SK Inc,fb-2026-sk-inc,SKInc,equipos,KR,False,si
+SUSS MicroTec,fb-2026-suss-microtec,SUSSMicroTec,equipos,DE,False,si
+Sino-American Silicon,fb-2026-sino-american-silicon,SinoAmericanSilicon,equipos,TW,False,si
+Sinocera,fb-2026-sinocera,Sinocera,equipos,CN,False,si
+Skyverse,fb-2026-skyverse,Skyverse,equipos,CN,False,si
+Soulbrain,fb-2026-soulbrain,Soulbrain,equipos,KR,False,si
+Sumitomo Heavy,fb-2026-sumitomo-heavy,SumitomoHeavy,equipos,JP,False,si
+Surge AI,fb-2026-surge-ai,SurgeAI,cloud_ia,US,False,si
+Synthesia,fb-2026-synthesia,Synthesia,cloud_ia,GB,False,si
+Technology Innovation Institute (TII),fb-2026-technology-innovation-institute-tii,TechnologyInnovationInstitute,cloud_ia,AE,False,si
+Tencent Cloud,fb-2026-tencent-cloud,TencentCloud,cloud_ia,CN,False,si
+Thinking Machines Lab,fb-2026-thinking-machines-lab,ThinkingMachinesLab,cloud_ia,US,False,si
+Torc Robotics,fb-2026-torc-robotics,TorcRobotics,cloud_ia,,False,si
+Upstage,fb-2026-upstage,Upstage,cloud_ia,KR,False,si
+Vultr,fb-2026-vultr,Vultr,cloud_ia,US,False,si
+Weights & Biases,fb-2026-weights-biases,WeightsBiases,cloud_ia,US,False,si
+Zhuoyu Technology (DJI Automotive),fb-2026-zhuoyu-technology-dji-automotive,ZhuoyuTechnology,cloud_ia,CN,False,si
+Adtec Plasma,fb-2026-adtec-plasma,AdtecPlasma,equipos,JP,False,si
+C. Uyemura,fb-2026-c-uyemura,CUyemura,equipos,JP,False,si
+Camtek,fb-2026-camtek,Camtek,equipos,IL,False,si
+Chroma ATE,fb-2026-chroma-ate,ChromaATE,equipos,TW,False,si
+Comet,fb-2026-comet,Comet,equipos,CH,False,si
+DAIHEN,fb-2026-daihen,DAIHEN,equipos,JP,False,si
+Dinglong,fb-2026-dinglong,Dinglong,equipos,CN,False,si
+Dongjin Semichem,fb-2026-dongjin-semichem,DongjinSemichem,equipos,KR,False,si
+Element Solutions,fb-2026-element-solutions,ElementSolutions,equipos,US,False,si
+Ferrotec,fb-2026-ferrotec,Ferrotec,equipos,JP,False,si
+DeepL,fb-2026-deepl,DeepL,cloud_ia,DE,False,si
+DiDi Autonomous Driving,fb-2026-didi-autonomous-driving,DiDiAutonomousDriving,cloud_ia,,False,si
+Fireworks AI,fb-2026-fireworks-ai,FireworksAI,cloud_ia,US,False,si
+Fivetran,fb-2026-fivetran,Fivetran,cloud_ia,US,False,si
+Gatik,fb-2026-gatik,Gatik,cloud_ia,,False,si
+GitHub,fb-2026-github,GitHub,cloud_ia,US,False,si
+Harvey,fb-2026-harvey,Harvey,cloud_ia,US,False,si
+Huawei Cloud,fb-2026-huawei-cloud,HuaweiCloud,cloud_ia,CN,False,si
+Isomorphic Labs,fb-2026-isomorphic-labs,IsomorphicLabs,cloud_ia,GB,False,si
+Jio Platforms,fb-2026-jio-platforms,JioPlatforms,cloud_ia,IN,False,si
+Busch Group,fb-2026-busch-group,BuschGroup,equipos,DE,False,si
+PXW (Pengxinwei),fb-2026-pxw-pengxinwei,PXW,fabricacion,CN,False,no
+Radiall,fb-2026-radiall,Radiall,fabricacion,FR,False,si
+Rosenberger,fb-2026-rosenberger,Rosenberger,fabricacion,DE,False,si
+Rubycon,fb-2026-rubycon,Rubycon,fabricacion,JP,False,si
+SENKO Advanced Components,fb-2026-senko-advanced-components,SENKOAdvancedComponents,fabricacion,,False,si
+SK hynix Semiconductor (China),fb-2026-sk-hynix-semiconductor-china,SKHynixSemiconductor,fabricacion,CN,False,si
+SMART Photonics,fb-2026-smart-photonics,SMARTPhotonics,fabricacion,NL,False,si
+SMIC North (SMNC),fb-2026-smic-north-smnc,SMICNorth,fabricacion,CN,False,si
+Samsung (China) Semiconductor,fb-2026-samsung-china-semiconductor,SamsungSemiconductor,fabricacion,CN,False,si
+Shanghai Huali Microelectronics (HLMC),fb-2026-shanghai-huali-microelectronics-hlmc,ShanghaiHualiMicroelectronics,fabricacion,CN,False,si

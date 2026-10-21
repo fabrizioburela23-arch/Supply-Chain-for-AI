@@ -9,7 +9,7 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**48 archivos · 27.510 líneas.** Volver al [[00 Mapa de Khipus]].
+**48 archivos · 27.525 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
@@ -24,8 +24,8 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.prices_store.py]] — 945 líneas · LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, §20.1 #1-#3).
 - [[core.decisions.py]] — 902 líneas · EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan).
 - [[core.numbers.py]] — 869 líneas · guardián de CIFRAS (anti-alucinación numérica).
+- [[core.import_normalize.py]] — 822 líneas · normalización de la ficha khipus.company/1 a la convención interna (E2.2).
 - [[core.decision_sites.py]] — 816 líneas · decisiones del COMITÉ, la INVESTIGACIÓN, las PROPUESTAS y las ALERTAS (docs/INFRA_OPERATIVA.md §2.5; pasos 18 y 19 del plan).
-- [[core.import_normalize.py]] — 807 líneas · normalización de la ficha khipus.company/1 a la convención interna (E2.2).
 - [[core.context_engine.py]] — 797 líneas · EL motor de contexto (ARQUITECTURA_V2 §13; BRECHAS bloque 4: L4-01, L4-05, L4-10).
 - [[core.ledger.py]] — 729 líneas · sellado y verificación del libro (docs/INFRA_OPERATIVA.md §2.8; paso 6 del plan).
 - [[core.ai_usage.py]] — 686 líneas · CONTROL DE GASTO DE IA (registro, límites y reporte).
