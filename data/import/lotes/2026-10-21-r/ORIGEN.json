@@ -1,0 +1,18 @@
+{
+ "schema": "khipus.lote-origin/1",
+ "batch": "lote-2026-10-21-r-lote5",
+ "received": "2026-10-21",
+ "package": "khipus_entrega_R.zip",
+ "package_file": "2_fichas_R_nivelB.jsonl",
+ "package_file_sha256": "55e4969a59a169290555f3543b3126d94d8364c1d1be4bbb5dd7cb7fb6f8b93d",
+ "package_records": 585,
+ "kept_records": 585,
+ "excluded_by_provider": 14,
+ "tiers": {
+  "B": 503,
+  "A": 82
+ },
+ "declared_links": 2313,
+ "note_es": "Lote 5 (R): 585 fichas nuevas (r_01..r_40 y r_51..r_70). Sin listas de sanciones consultadas. Revisar a mano: INOX Air Products, Minmetals RE/China Rare Earth, Shenghe, I-PEX, Taalas, SwaySure, Changchun UP Optotech, Silex, Liquid, Maersk-GPA (2007), PANYNJ (2009).",
+ "note_en": "Batch 5 (R): 585 new records. Sanctions lists not checked."
+}

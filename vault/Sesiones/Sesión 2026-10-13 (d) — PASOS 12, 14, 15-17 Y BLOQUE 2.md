@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L474"
+ruta: "docs/ESTADO.md#L478"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (d) — PASOS 12, 14, 15-17 Y BLOQUE 2 (kernel 2.0.0 con PIN, fichas rápidas, un camino de órdenes, historia de precios) — sw v261
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 474 (37 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 478 (37 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

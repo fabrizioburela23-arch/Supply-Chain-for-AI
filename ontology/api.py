@@ -1772,7 +1772,7 @@ import re as _re  # noqa: E402
 
 _REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 _PKG_ROOT = _os.path.join(_REPO_ROOT, 'data', 'import', 'lotes')
-_PKG_DIR_RX = _re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_PKG_DIR_RX = _re.compile(r'^\d{4}-\d{2}-\d{2}(-[a-z0-9]{1,12})?$')   # fecha (+ sufijo si llegan 2 entregas el mismo día)
 _PKG_FILE_RX = _re.compile(r'^bundle_[A-Za-z0-9][A-Za-z0-9_\-]{0,80}\.json\.gz$')
 _PKG_CACHE = {}                          # nombre → {'stat', 'sha', 'meta'}  (SOLO lo que muestra la lista: sin fichas)
 _PKG_BUNDLE = {}                         # LRU de 1: {'name', 'stat', 'bundle'}; se suelta tras armar el plan (_pkg_release)

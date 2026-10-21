@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-15"
-ruta: "docs/ESTADO.md#L94"
+ruta: "docs/ESTADO.md#L98"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-15 b — REVISIÓN DE «UN SOLO LUGAR»: NADA SE PIERDE ENTRE DISPOSITIVOS — sw v275
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 94 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 98 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

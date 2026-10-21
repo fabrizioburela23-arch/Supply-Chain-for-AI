@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-02"
-ruta: "docs/ESTADO.md#L1736"
+ruta: "docs/ESTADO.md#L1740"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-02 — SALA DEL COMITÉ: PUESTOS + DEBATE EN VIVO (sw v175)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1736 (19 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1740 (19 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

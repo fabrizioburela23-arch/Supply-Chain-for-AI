@@ -1,0 +1,600 @@
+record_id,nombre,tier,n_vinculos,aviso
+fb-2026-x-square-robot,X Square Robot Technology Co.,B,6,algun vinculo cita Wikipedia
+fb-2026-deep-robotics,DEEP Robotics,B,4,algun vinculo cita Wikipedia
+fb-2026-fieldai,FieldAI,B,8,
+fb-2026-agile-robots,Agile Robots SE,B,3,algun vinculo cita Wikipedia
+fb-2026-midea-group,"Midea Group Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-swisslog,Swisslog Holding AG,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-comau,Comau S.p.A.,B,3,algun vinculo cita Wikipedia
+fb-2026-schunk,SCHUNK SE & Co. KG,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-maxon,maxon international ag,B,4,algun vinculo cita Wikipedia
+fb-2026-mujin,"Mujin, Inc.",B,5,
+fb-2026-exotec,EXOTEC,B,5,algun vinculo cita Wikipedia
+fb-2026-hai-robotics,Hai Robotics,B,6,
+fb-2026-hikrobot,杭州海康机器人股份有限公司,B,3,
+fb-2026-knapp,KNAPP AG,B,5,
+fb-2026-ssi-schafer,SSI SCHÄFER GMBH & CO KG,B,4,algun vinculo cita Wikipedia
+fb-2026-dematic,DEMATIC CORP.,B,3,algun vinculo cita Wikipedia
+fb-2026-vanderlande,Vanderlande Industries B.V.,B,3,
+fb-2026-ocado-group,OCADO GROUP PLC,B,6,algun vinculo cita Wikipedia
+fb-2026-woven-by-toyota,"Woven by Toyota, Inc.",B,4,algun vinculo cita Wikipedia
+fb-2026-beckhoff-automation,Beckhoff Automation GmbH & Co. KG,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-phoenix-contact,Phoenix Contact GmbH & Co. KG,B,3,algun vinculo cita Wikipedia
+fb-2026-sew-eurodrive,SEW-EURODRIVE GmbH & Co KG,B,4,algun vinculo cita Wikipedia
+fb-2026-harting,HARTING Technology Group,B,3,algun vinculo cita Wikipedia
+fb-2026-wago,WAGO GmbH & Co. KG,B,3,algun vinculo cita Wikipedia
+fb-2026-endress-hauser,Endress+Hauser AG,B,4,algun vinculo cita Wikipedia
+fb-2026-mahle,MAHLE GmbH,B,5,algun vinculo cita Wikipedia
+fb-2026-china-changan-automobile-group,"China Changan Automobile Group Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-baic-group,"Beijing Automotive Group Co., Ltd.",B,6,algun vinculo cita Wikipedia
+fb-2026-zeekr,ZEEKR Intelligent Technology Holding Limited,B,6,algun vinculo cita Wikipedia
+fb-2026-vinfast,VinFast Auto Ltd.,B,3,
+fb-2026-mahindra-mahindra,Mahindra and Mahindra Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-suzuki-motor,Suzuki Motor Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-milrem-robotics,Milrem Robotics,B,6,
+fb-2026-aecc-aviation-power,"AECC Aviation Power Co., Ltd. (中国航发动力股份有限公司)",B,7,
+fb-2026-aselsan,ASELSAN Elektronik Sanayi ve Ticaret Anonim Sirketi,B,7,algun vinculo cita Wikipedia
+fb-2026-avic-chengdu,AVIC Chengdu Aircraft Company Limited (中航成飞),B,4,
+fb-2026-avic-shenyang,AVIC Shenyang Aircraft Company Limited (中航沈飞股份有限公司),B,4,
+fb-2026-bharat-electronics,Bharat Electronics Limited,B,6,algun vinculo cita Wikipedia
+fb-2026-csg,CSG N.V.,B,7,algun vinculo cita Wikipedia
+fb-2026-hanwha-systems,"Hanwha Systems Co., Ltd.",B,4,
+fb-2026-heico,HEICO Corporation,B,5,
+fb-2026-hensoldt,HENSOLDT AG,B,5,algun vinculo cita Wikipedia
+fb-2026-hal,HINDUSTAN AERONAUTICS LIMITED,B,6,algun vinculo cita Wikipedia
+fb-2026-honeywell-aerospace,Honeywell Aerospace Inc.,B,4,algun vinculo cita Wikipedia
+fb-2026-kongsberg,KONGSBERG GRUPPEN ASA,B,5,algun vinculo cita Wikipedia
+fb-2026-leonardo,LEONARDO - SOCIETA' PER AZIONI,B,7,algun vinculo cita Wikipedia
+fb-2026-lig-nex1,"LIG NEX1 CO., LTD",B,4,
+fb-2026-mtu-aero-engines,MTU Aero Engines AG,B,3,
+fb-2026-st-engineering,Singapore Technologies Engineering Ltd,B,3,algun vinculo cita Wikipedia
+fb-2026-textron,Textron Inc.,B,6,algun vinculo cita Wikipedia
+fb-2026-transdigm,TransDigm Group Incorporated,B,6,algun vinculo cita Wikipedia
+fb-2026-woodward,"Woodward, Inc.",B,7,
+fb-2026-kai,"Korea Aerospace Industries, Ltd.",B,6,algun vinculo cita Wikipedia
+fb-2026-renk,RENK Group AG,B,5,algun vinculo cita Wikipedia
+fb-2026-tkms,TKMS AG & Co. KGaA,B,7,algun vinculo cita Wikipedia
+fb-2026-olin,Olin Corporation,B,3,
+fb-2026-hanwha-corp,Hanwha Corporation,B,4,
+fb-2026-indra,"Indra Sistemas, S.A.",B,4,algun vinculo cita Wikipedia
+fb-2026-hanwha-ocean,"Hanwha Ocean Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-samsung-heavy,"Samsung Heavy Industries Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-hyundai-rotem,Hyundai Rotem Company,B,3,algun vinculo cita Wikipedia
+fb-2026-rept-battero,"REPT BATTERO Energy Co., Ltd.",B,4,
+fb-2026-asahi-kasei,Asahi Kasei Corporation,B,4,
+fb-2026-do-fluoride,"多氟多新材料股份有限公司 (Duofuduo New Materials Co., Ltd.)",B,3,
+fb-2026-ecopro-materials,"EcoPro Materials Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-ecopro,"Ecopro Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-hanwha-solutions,Hanwha Solutions Corporation,B,3,
+fb-2026-ronbay,"Ningbo Ronbay New Energy Technology Co., Ltd. (宁波容百新能源科技股份有限公司)",B,4,algun vinculo cita Wikipedia
+fb-2026-shanshan,"Ningbo Shanshan Co., Ltd. (宁波杉杉股份有限公司)",B,5,
+fb-2026-putailai,"上海璞泰来新能源科技集团股份有限公司 (Shanghai Putailai New Energy Technology Group Co., Ltd.)",B,3,
+fb-2026-capchem,"Shenzhen Capchem Technology Co., Ltd.",A,2,tier A: menos de 3 vinculos verificables
+fb-2026-xtc-new-energy,"XTC New Energy Materials(Xiamen) Co.,Ltd.",B,5,
+fb-2026-estone-materials,"Anhui Estone Materials Technology Co.,Ltd",B,6,
+fb-2026-daejoo-electronic-materials,"Daejoo Electronic Materials Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-de-nora,Industrie De Nora S.p.A.,B,3,
+fb-2026-kureha,Kureha Corporation,B,4,
+fb-2026-dynanonic,"Shenzhen Dynanonic Co., Ltd",B,3,
+fb-2026-xiangtan-electrochemical,Xiangtan Electrochemical Scientific Ltd.,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-enphase,"Enphase Energy, Inc.",B,3,
+fb-2026-canadian-solar,Canadian Solar Inc.,B,4,algun vinculo cita Wikipedia
+fb-2026-adani-enterprises,Adani Enterprises Limited,B,6,algun vinculo cita Wikipedia
+fb-2026-acciona,"Acciona, S.A.",B,4,algun vinculo cita Wikipedia
+fb-2026-larsen-toubro,Larsen & Toubro Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-mastec,"MasTec, Inc.",B,4,algun vinculo cita Wikipedia
+fb-2026-powerchina,"Power Construction Corporation of China, Ltd",B,3,algun vinculo cita Wikipedia
+fb-2026-cadeler,Cadeler A/S,B,3,
+fb-2026-china-nuclear-engineering,China Nuclear Engineering Corporation Limited,B,4,
+fb-2026-chiyoda,Chiyoda Corporation,B,7,algun vinculo cita Wikipedia
+fb-2026-deme,Deme Group NV,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-jgc,JGC Holdings Corporation,B,4,
+fb-2026-kepco-e-c,"KEPCO Engineering & Construction Company, Inc.",B,6,algun vinculo cita Wikipedia
+fb-2026-adani-energy-solutions,Adani Energy Solutions Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-axia-energia-eletrobras,AXIA Energia S.A.,B,4,algun vinculo cita Wikipedia
+fb-2026-elia-group,Elia Group SA/NV,B,4,algun vinculo cita Wikipedia
+fb-2026-ntpc,NTPC Limited,B,7,algun vinculo cita Wikipedia
+fb-2026-power-grid-india,Power Grid Corporation of India Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-tenaga-nasional,Tenaga Nasional Berhad,B,5,algun vinculo cita Wikipedia
+fb-2026-fervo-energy,Fervo Energy Company,B,7,algun vinculo cita Wikipedia
+fb-2026-redeia,"Redeia Corporación, S.A.",B,3,algun vinculo cita Wikipedia
+fb-2026-dongfang-electric,Dongfang Electric Corporation Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-eve-energy,"EVE Energy Co., Ltd.",B,7,algun vinculo cita Wikipedia
+fb-2026-hubbell,Hubbell Incorporated,B,4,
+fb-2026-hyosung-heavy-industries,Hyosung Heavy Industries Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-ls-electric,"LS ELECTRIC Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-nari-technology,"NARI Technology Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-shanghai-electric,Shanghai Electric Group Company Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-tbea,"TBEA Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-advanced-energy-solution,"Advanced Energy Solution Holding Co., Ltd.",B,4,
+fb-2026-easpring,"Beijing Easpring Material Technology Co., Ltd.",B,5,
+fb-2026-calb,"CALB Group Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-cenergy,Cenergy Holdings SA,B,6,
+fb-2026-enersys,EnerSys,B,3,algun vinculo cita Wikipedia
+fb-2026-china-xd-electric,"China XD Electric Co., Ltd",B,5,
+fb-2026-fortune-electric,Fortune Electric Co Ltd,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-ginlong-solis,"Ginlong Technologies Co., Ltd.",B,3,
+fb-2026-gotion,"Gotion High-Tech Co.,Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-gs-yuasa,GS Yuasa Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-pinggao-electric,"Henan Pinggao Electric Co.,Ltd.",B,5,
+fb-2026-lotte-energy-materials,Lotte Energy Materials Corp.,B,4,
+fb-2026-ls-corp,LS Corp.,B,3,algun vinculo cita Wikipedia
+fb-2026-orient-cable,"Ningbo Orient Wires & Cables Co., Ltd.",B,3,
+fb-2026-sunwoda,"Sunwoda Electronic Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-xj-electric,"XJ Electric Co., Ltd.",B,3,
+fb-2026-landis-gyr,Landis+Gyr Group AG,B,5,algun vinculo cita Wikipedia
+fb-2026-panasonic,Panasonic Holdings Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-samsung-sdi,"Samsung SDI Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-sk-ie-technology,"SK IE Technology Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-gail,GAIL (India) Limited,B,7,algun vinculo cita Wikipedia
+fb-2026-snam,Snam S.p.A.,B,5,algun vinculo cita Wikipedia
+fb-2026-tokyo-gas,"Tokyo Gas Co., Ltd.",B,4,
+fb-2026-harbin-electric,Harbin Electric Company Limited,B,3,
+fb-2026-huaming-power,"Huaming Power Equipment Co., Ltd.",B,4,
+fb-2026-ming-yang,Ming Yang Smart Energy Group Limited,B,3,
+fb-2026-posco-future-m,"POSCO Future M Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-j-power,"Electric Power Development Co., Ltd.",B,6,algun vinculo cita Wikipedia
+fb-2026-acwa-power,ACWA POWER Company,B,4,algun vinculo cita Wikipedia
+fb-2026-edp,"EDP, S.A.",B,4,algun vinculo cita Wikipedia
+fb-2026-enbw,EnBW Energie Baden-Württemberg AG,B,5,algun vinculo cita Wikipedia
+fb-2026-canadian-natural,Canadian Natural Resources Limited,B,4,
+fb-2026-cheniere-energy-partners,"Cheniere Energy Partners, L.P.",B,6,
+fb-2026-enbridge,Enbridge Inc.,B,5,algun vinculo cita Wikipedia
+fb-2026-inpex,INPEX CORPORATION,B,7,algun vinculo cita Wikipedia
+fb-2026-oneok,"ONEOK, Inc.",B,3,algun vinculo cita Wikipedia
+fb-2026-expand-energy,Expand Energy Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-coal-india,Coal India Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-ongc,Oil and Natural Gas Corporation Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-novatek,PAO Novatek,B,5,algun vinculo cita Wikipedia
+fb-2026-china-national-uranium,"China National Uranium Co., Ltd.",B,6,
+fb-2026-china-shenhua,China Shenhua Energy Company Limited,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-reliance-industries,Reliance Industries Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-sk-innovation,"SK Innovation Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-tc-energy,TC Energy Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-standard-nuclear,"Standard Nuclear, Inc.",A,2,tier A: menos de 3 vinculos verificables
+fb-2026-adani-green,Adani Green Energy Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-adani-power,Adani Power Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-cez,"CEZ, a. s.",B,3,algun vinculo cita Wikipedia
+fb-2026-china-resources-power,China Resources Power Holdings Company Limited,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-three-gorges-renewables,"China Three Gorges Renewables (Group) Co.,Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-datang-international,"Datang International Power Generation Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-edp-renovaveis,"EDP Renovaveis, S.A.",B,3,algun vinculo cita Wikipedia
+fb-2026-fortum,Fortum Oyj,B,5,algun vinculo cita Wikipedia
+fb-2026-gulf-energy,Gulf Energy Development Public Company Limited,B,7,algun vinculo cita Wikipedia
+fb-2026-huadian-new-energy,"Huadian New Energy Group Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-huaneng-lancang,Huaneng Lancang River Hydropower Inc.,B,4,
+fb-2026-huaneng-power,"Huaneng Power International, Inc.",B,3,algun vinculo cita Wikipedia
+fb-2026-sdic-power,"SDIC Power Holdings Co., Ltd.",A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-tata-power,The Tata Power Company Limited,B,7,algun vinculo cita Wikipedia
+fb-2026-acciona-energia,"Corporación Acciona Energías Renovables, S.A.",B,3,algun vinculo cita Wikipedia
+fb-2026-capital-power,Capital Power Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-ormat,"Ormat Technologies, Inc.",B,6,algun vinculo cita Wikipedia
+fb-2026-ja-solar,"JA Solar Technology Co., Ltd.",B,6,
+fb-2026-tcl-zhonghuan,"TCL Zhonghuan Renewable Energy Technology Co.,Ltd.",B,4,
+fb-2026-xinyi-solar,Xinyi Solar Holdings Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-gurit,Gurit Holding AG,B,4,
+fb-2026-kalpataru,Kalpataru Projects International Limited,B,3,
+fb-2026-terrestrial-energy,Terrestrial Energy Inc.,B,6,algun vinculo cita Wikipedia
+fb-2026-aleees,"Advanced Lithium Electrochemistry (Cayman) Co., Ltd.",B,3,
+fb-2026-w-scope,W-SCOPE Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-kec-international,KEC International Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-soltec,"Soltec Power Holdings, S.A.",B,3,
+fb-2026-pgn,PT Perusahaan Gas Negara Tbk,B,5,algun vinculo cita Wikipedia
+fb-2026-dongsung-finetec,"Dongsung FineTec Co., Ltd. (동성화인텍)",B,5,
+fb-2026-nikkiso,"Nikkiso Co., Ltd.",B,4,
+fb-2026-qingdao-gaoce,"青岛高测科技股份有限公司 (Qingdao Gaoce Technology Co., Ltd)",B,3,
+fb-2026-shanghai-electric-wind-power,"上海电气风电集团股份有限公司 (Shanghai Electric Wind Power Group Co., Ltd.)",B,3,algun vinculo cita Wikipedia
+fb-2026-metron,杨凌美畅新材料股份有限公司 (Yangling Metron New Material Inc.),B,3,
+fb-2026-fluxys-belgium,Fluxys Belgium SA,B,6,algun vinculo cita Wikipedia
+fb-2026-nextdecade,NextDecade Corporation,B,4,
+fb-2026-pylontech,"上海派能能源科技股份有限公司 (Pylon Technologies Co., Ltd.)",B,4,
+fb-2026-silex-systems,Silex Systems Limited,B,3,
+fb-2026-china-satcom,"中国卫通集团股份有限公司 (China Satellite Communications Co., Ltd.)",B,4,algun vinculo cita Wikipedia
+fb-2026-eutelsat,EUTELSAT COMMUNICATIONS,B,8,algun vinculo cita Wikipedia
+fb-2026-mda-space,MDA Space Ltd.,B,4,
+fb-2026-telesat,Telesat Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-intellian,"Intellian Technologies, Inc.",B,3,
+fb-2026-nhk-spring,"日本発條株式会社 (NHK SPRING CO.,LTD.)",B,4,algun vinculo cita Wikipedia
+fb-2026-asus,華碩電腦股份有限公司 (ASUSTEK COMPUTER INCORPORATION),B,6,algun vinculo cita Wikipedia
+fb-2026-sugon,"Dawning Information Industry Co., Ltd. (中科曙光)",B,3,algun vinculo cita Wikipedia
+fb-2026-china-spacesat,"China Spacesat Co.,Ltd. (中国东方红卫星股份有限公司)",B,3,algun vinculo cita Wikipedia
+fb-2026-everpure-pure-storage,"Everpure, Inc.",B,5,algun vinculo cita Wikipedia
+fb-2026-dycom,"Dycom Industries, Inc.",B,3,
+fb-2026-netapp,"NetApp, Inc.",B,5,
+fb-2026-forgent-power-solutions,"Forgent Power Solutions, Inc.",B,5,
+fb-2026-innio,INNIO N.V.,B,3,
+fb-2026-legrand,LEGRAND,B,3,
+fb-2026-delta-electronics-thailand,Delta Electronics (Thailand) Public Company Limited,B,4,
+fb-2026-gigabyte,"Giga-Byte Technology Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-inventec,Inventec Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-lite-on,Lite-On Technology Corporation,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-king-slide,"King Slide Works Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-belden,Belden Inc.,B,4,
+fb-2026-america-movil,"América Móvil, S.A.B. de C.V.",B,4,
+fb-2026-sanmina,Sanmina Corporation,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-charter,"Charter Communications, Inc.",B,3,
+fb-2026-vicor,Vicor Corporation,B,5,
+fb-2026-bharti-airtel,Bharti Airtel Limited,B,4,
+fb-2026-indus-towers,Indus Towers Limited,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-bt-group,BT Group plc,B,3,
+fb-2026-china-unicom,China Unicom (Hong Kong) Limited,B,3,
+fb-2026-unisplendour,Unisplendour Corporation Limited,B,4,
+fb-2026-kddi,KDDI Corporation,B,6,algun vinculo cita Wikipedia
+fb-2026-orange,Orange S.A.,B,4,algun vinculo cita Wikipedia
+fb-2026-stc,Saudi Telecom Company,B,5,algun vinculo cita Wikipedia
+fb-2026-singtel,Singapore Telecommunications Limited,B,6,algun vinculo cita Wikipedia
+fb-2026-sk-telecom,"SK Telecom Co., Ltd.",B,3,
+fb-2026-kt,KT Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-telefonica,"Telefónica, S.A.",B,6,algun vinculo cita Wikipedia
+fb-2026-vodafone,Vodafone Group Public Limited Company,B,5,algun vinculo cita Wikipedia
+fb-2026-wartsila,Wärtsilä Oyj Abp,B,5,algun vinculo cita Wikipedia
+fb-2026-tata-communications,Tata Communications Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-verisign,"VeriSign, Inc.",B,3,algun vinculo cita Wikipedia
+fb-2026-cogent,"Cogent Communications Holdings, Inc.",B,4,vinculos de baja confianza/rumored/disputed: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-solaris-energy,"Solaris Energy Infrastructure, Inc.",B,4,
+fb-2026-zte,ZTE Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-accelink,"Accelink Technologies Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-ruijie-networks,"Ruijie Networks Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-tfc-optical,"Suzhou TFC Optical Communication Co., Ltd.",B,6,
+fb-2026-aten,"Aten International Co., Ltd",B,4,
+fb-2026-wangsu,"Wangsu Science & Technology Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-yuanjie-semiconductor,"Yuanjie Semiconductor Technology Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-ceragon,Ceragon Networks Ltd.,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-daikin,"Daikin Industries, Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-aaon,"AAON, Inc.",A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-terawulf,TeraWulf Inc.,B,5,algun vinculo cita Wikipedia
+fb-2026-acs,"ACS, Actividades de Construcción y Servicios, S.A.",B,4,algun vinculo cita Wikipedia
+fb-2026-hochtief,HOCHTIEF Aktiengesellschaft,B,5,algun vinculo cita Wikipedia
+fb-2026-samsung-c-t,Samsung C&T Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-united-integrated-services,"United Integrated Services Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-avc,"Asia Vital Components Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-nidec-chaun-choung,Nidec Chaun-Choung Technology Corporation,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-iren,IREN Limited,B,3,
+fb-2026-core-scientific,"Core Scientific, Inc.",B,3,
+fb-2026-infratil,Infratil Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-sinnet,"Beijing Sinnet Technology Co., Ltd.",B,3,
+fb-2026-sunevision,SUNeVision Holdings Ltd.,B,3,
+fb-2026-ntt-dc-reit,NTT DC REIT,B,5,
+fb-2026-cathay-pacific,Cathay Pacific Airways Limited,B,4,
+fb-2026-lufthansa,Deutsche Lufthansa Aktiengesellschaft,B,3,algun vinculo cita Wikipedia
+fb-2026-china-airlines,"China Airlines, Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-korean-air,"Korean Air Lines Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-landstar,"Landstar System, Inc.",B,4,
+fb-2026-arrow-electronics,"Arrow Electronics, Inc.",B,4,
+fb-2026-avnet,"Avnet, Inc.",B,4,
+fb-2026-fedex-freight,"FedEx Freight Holding Company, Inc.",B,6,
+fb-2026-hyundai-glovis,"현대글로비스 주식회사 (Hyundai Glovis Co., Ltd.)",B,5,algun vinculo cita Wikipedia
+fb-2026-sf-express,"S.F. Holding Co., Ltd. (顺丰控股股份有限公司)",B,5,
+fb-2026-air-china-cargo,"中国国际货运航空股份有限公司 (Air China Cargo Co., Ltd.)",B,5,
+fb-2026-gxo,"GXO Logistics, Inc.",B,4,
+fb-2026-eastern-air-logistics,"东方航空物流股份有限公司 (Eastern Air Logistics Co., Ltd.)",B,6,
+fb-2026-jd-logistics,"JD Logistics, Inc. (京东物流股份有限公司)",B,5,
+fb-2026-sinotrans,Sinotrans Limited,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-lineage,"Lineage, Inc.",B,5,algun vinculo cita Wikipedia
+fb-2026-crrc,CRRC Corporation Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-wabtec,Westinghouse Air Brake Technologies Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-kalmar,Kalmar Oyj,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-brambles,Brambles Limited,A,4,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-daqin-railway,"Daqin Railway Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-nippon-express,"Nippon Express Holdings, Inc.",B,3,algun vinculo cita Wikipedia
+fb-2026-knight-swift,Knight-Swift Transportation Holdings Inc.,B,3,algun vinculo cita Wikipedia
+fb-2026-aurizon,Aurizon Holdings Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-ictsi,"International Container Terminal Services, Inc.",B,5,algun vinculo cita Wikipedia
+fb-2026-k-line,"Kawasaki Kisen Kaisha, Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-ooil,Orient Overseas (International) Limited,B,6,algun vinculo cita Wikipedia
+fb-2026-clarksons,Clarkson PLC,B,4,
+fb-2026-wt-microelectronics,"WT Microelectronics Co., Ltd.",B,4,
+fb-2026-cmes,"China Merchants Energy Shipping Co., Ltd.",B,5,
+fb-2026-cosco-shipping-energy,"COSCO SHIPPING Energy Transportation Co., Ltd.",B,6,
+fb-2026-cosco-shipping-development,"COSCO SHIPPING Development Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-cosco-specialized-carriers,"COSCO SHIPPING Specialized Carriers Co.,Ltd.",B,3,
+fb-2026-gmexico-transportes,"GMéxico Transportes, S.A.B. de C.V.",B,3,algun vinculo cita Wikipedia
+fb-2026-misc,MISC Berhad,B,3,algun vinculo cita Wikipedia
+fb-2026-hhla,Hamburger Hafen und Logistik Aktiengesellschaft,B,4,algun vinculo cita Wikipedia
+fb-2026-westports,Westports Holdings Berhad,B,3,
+fb-2026-qingdao-port,"Qingdao Port International Co., Ltd.",B,3,
+fb-2026-scorpio-tankers,Scorpio Tankers Inc.,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-star-bulk,Star Bulk Carriers Corp.,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-cj-logistics,CJ Logistics Corporation,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-pacific-basin,Pacific Basin Shipping Limited,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-sovcomflot,PAO Sovcomflot,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-full-truck-alliance,Full Truck Alliance Co. Ltd.,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-hub-group,"Hub Group, Inc.",B,6,algun vinculo cita Wikipedia
+fb-2026-kln,KLN Logistics Group Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-navigator-gas,Navigator Holdings Ltd.,B,6,algun vinculo cita Wikipedia
+fb-2026-greenbrier,"The Greenbrier Companies, Inc.",B,3,algun vinculo cita Wikipedia
+fb-2026-hutchison-port-trust,Hutchison Port Holdings Trust,B,3,algun vinculo cita Wikipedia
+fb-2026-piraeus-port,Piraeus Port Authority S.A.,B,3,algun vinculo cita Wikipedia
+fb-2026-tianjin-port,"Tianjin Port Co., Ltd.",A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored/disputed: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-santander,"Banco Santander, S.A.",B,5,algun vinculo cita Wikipedia
+fb-2026-bank-of-china,Bank of China Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-hsbc,HSBC Holdings plc,B,4,algun vinculo cita Wikipedia
+fb-2026-royal-bank-of-canada,Royal Bank of Canada,B,4,algun vinculo cita Wikipedia
+fb-2026-bnp-paribas,BNP Paribas,B,5,algun vinculo cita Wikipedia
+fb-2026-deutsche-bank,Deutsche Bank Aktiengesellschaft,B,4,algun vinculo cita Wikipedia
+fb-2026-societe-generale,Société Générale S.A.,B,5,algun vinculo cita Wikipedia
+fb-2026-standard-chartered,Standard Chartered PLC,B,4,algun vinculo cita Wikipedia
+fb-2026-state-bank-of-india,State Bank of India,B,6,algun vinculo cita Wikipedia
+fb-2026-td-bank,The Toronto-Dominion Bank,B,4,algun vinculo cita Wikipedia
+fb-2026-unicredit,UniCredit S.p.A.,B,5,algun vinculo cita Wikipedia
+fb-2026-amundi,Amundi SA,B,7,algun vinculo cita Wikipedia
+fb-2026-ares-capital,Ares Capital Corporation,B,4,
+fb-2026-brookfield-corporation,Brookfield Corporation,B,5,
+fb-2026-citic-securities,中信证券股份有限公司 (CITIC Securities Company Limited),B,5,algun vinculo cita Wikipedia
+fb-2026-deutsche-borse,Deutsche Börse Aktiengesellschaft,B,6,algun vinculo cita Wikipedia
+fb-2026-eqt,EQT AB,B,4,algun vinculo cita Wikipedia
+fb-2026-hkex,Hong Kong Exchanges and Clearing Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-oaktree,"Brookfield Oaktree Holdings, LLC",B,5,
+fb-2026-sprott,Sprott Inc.,B,6,
+fb-2026-citic-limited,CITIC Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-brookfield-infrastructure-corp,Brookfield Infrastructure Corporation,B,6,
+fb-2026-aia,AIA Group Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-aig,"American International Group, Inc.",B,5,algun vinculo cita Wikipedia
+fb-2026-generali,Assicurazioni Generali S.p.A.,B,7,algun vinculo cita Wikipedia
+fb-2026-axa,AXA SA,B,4,algun vinculo cita Wikipedia
+fb-2026-china-life,China Life Insurance Company Limited,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-chubb,Chubb Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-lic,Life Insurance Corporation of India,B,5,algun vinculo cita Wikipedia
+fb-2026-metlife,"MetLife, Inc.",B,4,algun vinculo cita Wikipedia
+fb-2026-picc-group,The People's Insurance Company (Group) of China Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-prudential-financial,"Prudential Financial, Inc.",B,4,algun vinculo cita Wikipedia
+fb-2026-talanx,Talanx AG,B,5,algun vinculo cita Wikipedia
+fb-2026-tokio-marine,"Tokio Marine Holdings, Inc.",B,4,algun vinculo cita Wikipedia
+fb-2026-wtw,Willis Towers Watson Public Limited Company,B,4,algun vinculo cita Wikipedia
+fb-2026-zurich,Zurich Insurance Group AG,B,5,algun vinculo cita Wikipedia
+fb-2026-coface,Coface SA,B,3,algun vinculo cita Wikipedia
+fb-2026-brookfield-infrastructure,Brookfield Infrastructure Partners L.P.,B,4,algun vinculo cita Wikipedia
+fb-2026-power-finance-corp,Power Finance Corporation Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-amrize,Amrize AG,B,4,
+fb-2026-imerys,Imerys S.A.,B,3,vinculos de baja confianza/rumored/disputed: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-ultratech-cement,UltraTech Cement Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-thyssenkrupp,thyssenkrupp AG,B,5,algun vinculo cita Wikipedia
+fb-2026-grace-fabric,"Grace Fabric Technology Co.,Ltd.",B,7,
+fb-2026-johnson-matthey,Johnson Matthey Plc,B,3,algun vinculo cita Wikipedia
+fb-2026-syensqo,Syensqo,B,3,algun vinculo cita Wikipedia
+fb-2026-5n-plus,5N Plus Inc.,B,3,algun vinculo cita Wikipedia
+fb-2026-mitsubishi-chemical,Mitsubishi Chemical Group Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-nan-ya-plastics,Nan Ya Plastics Corporation,B,4,
+fb-2026-qinghai-salt-lake,"Qinghai Salt Lake Industry Co.,Ltd",B,5,
+fb-2026-sunresin,"Sunresin New Materials Co., Ltd.",B,4,
+fb-2026-canmax,"Canmax Technologies Co., Ltd.",B,4,
+fb-2026-feilihua-quartz,"Hubei Feilihua Quartz Glass Co.,Ltd",B,7,
+fb-2026-teijin,Teijin Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-tokai-carbon,"Tokai Carbon Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-denka,Denka Company Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-neo-performance-materials,Neo Performance Materials Inc.,B,3,
+fb-2026-mersen,Mersen,B,4,algun vinculo cita Wikipedia
+fb-2026-guangwei-composites,"Weihai Guangwei Composites Co., Ltd.",B,4,
+fb-2026-ztt,"Jiangsu Zhongtian Technology Co., Ltd.",B,4,
+fb-2026-fangda-carbon,"Fangda Carbon New Material Technology Co., Ltd.",B,4,
+fb-2026-zhong-ke-san-huan,"Beijing Zhong Ke San Huan High-Tech Co., Ltd.",B,5,
+fb-2026-xinte-energy,"Xinte Energy Co., Ltd.",B,3,
+fb-2026-mitsubishi-corp,Mitsubishi Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-mitsui-co,"Mitsui & Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-komatsu,Komatsu Ltd.,B,3,algun vinculo cita Wikipedia
+fb-2026-hangzhou-oxygen,杭氧集团股份有限公司,B,4,
+fb-2026-china-tungsten,中钨高新材料股份有限公司,B,4,
+fb-2026-fresnillo,Fresnillo plc,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-hindalco,Hindalco Industries Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-jiangxi-copper,Jiangxi Copper Company Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-south32,South32 Limited,B,4,algun vinculo cita Wikipedia
+fb-2026-xiamen-tungsten,厦门钨业股份有限公司,B,4,
+fb-2026-aurubis,Aurubis AG,B,3,algun vinculo cita Wikipedia
+fb-2026-cleveland-cliffs,Cleveland-Cliffs Inc.,B,4,algun vinculo cita Wikipedia
+fb-2026-dowa,"DOWA HOLDINGS CO., LTD.",B,4,algun vinculo cita Wikipedia
+fb-2026-en-group,En+ Group International public joint-stock company,B,4,algun vinculo cita Wikipedia
+fb-2026-hbis,HBIS Company Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-hyundai-steel,Hyundai Steel Company,B,4,algun vinculo cita Wikipedia
+fb-2026-china-minmetals-rare-earth,"China Rare Earth Resources and Technology Co., Ltd.",B,3,vinculos de baja confianza/rumored/disputed: entran como propuesta
+fb-2026-jfe-holdings,"JFE Holdings, Inc.",B,4,algun vinculo cita Wikipedia
+fb-2026-lygend,"Lygend Resources & Technology Co., Ltd.",B,6,
+fb-2026-mitsubishi-materials,Mitsubishi Materials Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-shenghe-resources,"Shenghe Resources Holding Co., Ltd",B,6,algun vinculo cita Wikipedia
+fb-2026-sinomine,"Sinomine Resource Group Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-harita-nickel,PT Trimegah Bangun Persada Tbk,B,4,algun vinculo cita Wikipedia
+fb-2026-voestalpine,voestalpine AG,B,3,algun vinculo cita Wikipedia
+fb-2026-xinyuan-germanium,云南临沧鑫圆锗业股份有限公司,B,5,
+fb-2026-alphamin,Alphamin Resources Corp.,B,4,
+fb-2026-ferroglobe,Ferroglobe PLC,B,3,
+fb-2026-lithium-argentina,Lithium Argentina AG,B,4,
+fb-2026-malaysia-smelting,Malaysia Smelting Corporation Berhad,B,3,
+fb-2026-nickel-asia,Nickel Asia Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-kazmunaygas,JSC National Company KazMunayGas,B,5,algun vinculo cita Wikipedia
+fb-2026-jac-group,"Anhui Jianghuai Automobile Group Co., Ltd.",B,5,algun vinculo cita Wikipedia
+fb-2026-toho-titanium,"Toho Titanium Co., Ltd.",A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-agilent-technologies,"Agilent Technologies, Inc.",B,3,algun vinculo cita Wikipedia
+fb-2026-i-pex,I-PEX Inc.,B,5,algun vinculo cita Wikipedia
+fb-2026-ls-marine-solution,"LS Marine Solution Co., Ltd.",B,4,algun vinculo cita Wikipedia
+fb-2026-globant,Globant S.A.,B,5,algun vinculo cita Wikipedia
+fb-2026-blg-logistics,Bremer Lagerhaus-Gesellschaft -Aktiengesellschaft von 1877-,B,5,algun vinculo cita Wikipedia
+fb-2026-primarius-technologies,"Primarius Technologies Co., Ltd.",B,5,
+fb-2026-thaicom,Thaicom Public Company Limited,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-ireda,Indian Renewable Energy Development Agency Limited,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-asfat,ASFAT A.Ş.,B,3,algun vinculo cita Wikipedia
+fb-2026-alba,Aluminium Bahrain B.S.C.,B,5,algun vinculo cita Wikipedia
+fb-2026-bruker,Bruker Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-semi-conductor-laboratory-scl,Semi-Conductor Laboratory,B,3,algun vinculo cita Wikipedia
+fb-2026-totvs,TOTVS S.A.,B,4,algun vinculo cita Wikipedia
+fb-2026-blaize,"Blaize Holdings, Inc.",B,3,
+fb-2026-spacecom,Space Communication Ltd.,B,3,algun vinculo cita Wikipedia
+fb-2026-ceer,Ceer Motors,B,5,algun vinculo cita Wikipedia
+fb-2026-bridgepoint,Bridgepoint Group plc,B,4,algun vinculo cita Wikipedia
+fb-2026-stm,Savunma Teknolojileri Mühendislik ve Ticaret A.Ş.,B,4,algun vinculo cita Wikipedia
+fb-2026-koncar,KONČAR - Elektroindustrija d.d. za proizvodnju i usluge,B,4,
+fb-2026-icl-group,ICL Group Ltd.,B,4,algun vinculo cita Wikipedia
+fb-2026-renishaw,Renishaw plc,B,4,algun vinculo cita Wikipedia
+fb-2026-fondazione-bruno-kessler-fbk,Fondazione Bruno Kessler,B,4,
+fb-2026-cosel,"COSEL Co., Ltd.",B,4,
+fb-2026-fpt-corporation,FPT Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-asyad-group,Asyad Group,B,3,
+fb-2026-hyperaccel,HyperAccel Inc.,B,4,
+fb-2026-nilesat,The Egyptian Satellite Company (NILESAT),B,4,algun vinculo cita Wikipedia
+fb-2026-kepler-robotics,"Shanghai Kepler Robot Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-antin-infrastructure-partners,Antin Infrastructure Partners SA,B,5,algun vinculo cita Wikipedia
+fb-2026-corscale,Corscale Data Centers,B,3,
+fb-2026-havelsan,Havelsan A.Ş.,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-finnish-minerals-group,Suomen Malmijalostus Oy,B,4,
+fb-2026-empresa-minera-huanuni,Empresa Minera Huanuni,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-kyosan-electric,"Kyosan Electric Manufacturing Co., Ltd.",B,6,
+fb-2026-ceitec,Centro Nacional de Tecnologia Eletrônica Avançada S.A.,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-yangtze-river-computing,Wuhan Yangtze Computing Technologies Company,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-cloudwalk-technology,"CloudWalk Technology Co., Ltd.",B,3,algun vinculo cita Wikipedia
+fb-2026-rail-cargo-group,Rail Cargo Austria Aktiengesellschaft,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-positron-ai,Positron AI,B,5,
+fb-2026-innospace,Innospace,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-leju-robotics,Leju Robotics Technology Co.,B,6,algun vinculo cita Wikipedia
+fb-2026-saudi-data-and-ai-authority-sdaia,Saudi Data and AI Authority,B,4,algun vinculo cita Wikipedia
+fb-2026-paix-data-centres,PAIX Data Centres,B,3,
+fb-2026-aoi,Arab Organization for Industrialization,B,8,algun vinculo cita Wikipedia
+fb-2026-y-tec,YPF Tecnología S.A.,B,3,algun vinculo cita Wikipedia
+fb-2026-enami,Empresa Nacional de Minería,B,3,algun vinculo cita Wikipedia
+fb-2026-shimadzu,Shimadzu Corporation,B,4,
+fb-2026-hanking-electronics,Hanking Electronics (Liaoning) Co Ltd,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-xiangjiang-kunpeng,湖南湘江鲲鹏信息科技有限责任公司,B,3,
+fb-2026-4paradigm,"Beijing Fourth Paradigm Technology Co., Ltd.",B,4,
+fb-2026-ethiopian-cargo-logistics-services,Ethiopian Airlines Group,B,4,algun vinculo cita Wikipedia
+fb-2026-taalas,Taalas,B,5,
+fb-2026-space-norway,Space Norway AS,B,5,algun vinculo cita Wikipedia
+fb-2026-astribot,星尘智能（深圳）人工智能科技股份有限公司,B,5,
+fb-2026-emirates-investment-authority,Emirates Investment Authority,B,6,algun vinculo cita Wikipedia
+fb-2026-n-one-datacenters,N+ONE Datacenters,B,3,
+fb-2026-pindad,PT Pindad (Persero),B,5,algun vinculo cita Wikipedia
+fb-2026-swissgrid,Swissgrid AG,B,4,algun vinculo cita Wikipedia
+fb-2026-comibol,Corporación Minera de Bolivia,B,4,algun vinculo cita Wikipedia
+fb-2026-avantor,"Avantor, Inc.",B,5,algun vinculo cita Wikipedia
+fb-2026-ht-micron,HT Micron Semicondutores S.A.,B,3,
+fb-2026-everllence,Everllence SE,B,4,algun vinculo cita Wikipedia
+fb-2026-ionos,IONOS Group SE,B,6,algun vinculo cita Wikipedia
+fb-2026-port-authority-of-new-york-and-new-jersey,The Port Authority of New York and New Jersey,B,3,algun vinculo cita Wikipedia
+fb-2026-fractile,FRACTILE LTD,B,3,
+fb-2026-nigcomsat,Nigerian Communications Satellite Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-booster-robotics,Booster Robotics,B,8,
+fb-2026-oman-investment-authority,Oman Investment Authority,B,3,algun vinculo cita Wikipedia
+fb-2026-winthrop-technologies,Winthrop Technologies Limited,A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored/disputed: entran como propuesta
+fb-2026-pt-pal,PT PAL Indonesia (Persero),B,5,algun vinculo cita Wikipedia
+fb-2026-fingrid,Fingrid Oyj,A,4,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored/disputed: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-empresa-metalurgica-vinto,Empresa Metalúrgica Vinto,B,4,
+fb-2026-pragmatic-semiconductor,Pragmatic Semiconductor,B,5,algun vinculo cita Wikipedia
+fb-2026-lighton,LightOn SA,B,5,algun vinculo cita Wikipedia
+fb-2026-mumtalakat,Bahrain Mumtalakat Holding Company B.S.C. (c),B,5,algun vinculo cita Wikipedia
+fb-2026-azercosmos,Azercosmos OJSC,B,5,algun vinculo cita Wikipedia
+fb-2026-georgia-ports-authority,Georgia Ports Authority,B,5,algun vinculo cita Wikipedia
+fb-2026-mobilint,"Mobilint, Inc.",B,3,
+fb-2026-engineai,EngineAI,B,4,
+fb-2026-collen-construction,Collen Construction,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-shenzhou-kuntai,Shenzhou Kuntai (神州鲲泰),A,2,tier A: menos de 3 vinculos verificables
+fb-2026-pof,Pakistan Ordnance Factories,B,4,algun vinculo cita Wikipedia
+fb-2026-pse-polskie-sieci-elektroenergetyczne,Polskie Sieci Elektroenergetyczne S.A.,B,5,
+fb-2026-komir,Korea Mine Rehabilitation and Mineral Resources Corporation,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-qsil,QSIL GmbH Quarzschmelze Ilmenau,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-silex-microsystems,Silex Microsystems AB,B,3,
+fb-2026-mainone,Main One Cable Company Ltd.,B,3,
+fb-2026-appen,Appen Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-china-logistics-group,"China Logistics Group Co., Ltd.",B,6,algun vinculo cita Wikipedia
+fb-2026-deepx,"DEEPX Co., Ltd.",B,5,
+fb-2026-arsat,Empresa Argentina de Soluciones Satelitales S.A.,B,3,algun vinculo cita Wikipedia
+fb-2026-denel,Denel SOC Ltd,B,4,algun vinculo cita Wikipedia
+fb-2026-pej-polskie-elektrownie-jadrowe,Polskie Elektrownie Jądrowe sp. z o.o.,B,4,algun vinculo cita Wikipedia
+fb-2026-irel,IREL (India) Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-gcx,Global Cloud Xchange,B,5,algun vinculo cita Wikipedia
+fb-2026-ai-singapore,AI Singapore (AISG),B,5,
+fb-2026-dornan-engineering,Dornan Group (Dornan Engineering),B,3,
+fb-2026-changchun-up-optotech,"长春奥普光电技术股份有限公司 (Changchun UP Optotech Co., Ltd.)",B,3,vinculos de baja confianza/rumored/disputed: entran como propuesta
+fb-2026-zhuhai-access-semiconductor,"珠海越亚半导体股份有限公司 (Zhuhai ACCESS Semiconductor Co., Ltd.)",B,4,
+fb-2026-robotera,"北京星动纪元科技股份有限公司 (Beijing Robotera Technology Co., Ltd.)",B,7,
+fb-2026-turkiye-wealth-fund,Türkiye Varlık Fonu A.Ş.,B,7,algun vinculo cita Wikipedia
+fb-2026-changi-airport-group,Changi Airport Group (Singapore) Pte Ltd,B,5,algun vinculo cita Wikipedia
+fb-2026-vastai-technologies,Vastai Technologies Inc.,B,4,
+fb-2026-turksat,Türksat Uydu Haberleşme Kablo TV ve İşletme A.Ş.,B,5,algun vinculo cita Wikipedia
+fb-2026-the-bot-company,The Bot Company,B,6,
+fb-2026-nz-super-fund,Guardians of New Zealand Superannuation,B,5,algun vinculo cita Wikipedia
+fb-2026-lpi-group,LPI Group,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-imbel,Indústria de Material Bélico do Brasil,B,4,algun vinculo cita Wikipedia
+fb-2026-energoatom,АТ «НАЕК «Енергоатом»,B,4,algun vinculo cita Wikipedia
+fb-2026-erdenes-mongol,Erdenes Mongol LLC,B,6,algun vinculo cita Wikipedia
+fb-2026-hayashi-pure-chemical,"林純薬工業株式会社 (Hayashi Pure Chemical Ind., Ltd.)",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-utac,UTAC Holdings Ltd.,B,4,algun vinculo cita Wikipedia
+fb-2026-hawaiki-submarine-cable,Hawaiki Submarine Cable,B,6,algun vinculo cita Wikipedia
+fb-2026-maritaca-ai,Maritaca AI,B,4,
+fb-2026-mawani,Saudi Ports Authority,B,3,algun vinculo cita Wikipedia
+fb-2026-x-epic,芯华章科技股份有限公司,B,4,
+fb-2026-abe-agencia-boliviana-espacial,Agencia Boliviana Espacial,B,3,algun vinculo cita Wikipedia
+fb-2026-dyna-robotics,DYNA Robotics Inc.,B,6,
+fb-2026-alaska-permanent-fund,Alaska Permanent Fund Corporation,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-arup,Arup Group Limited,B,3,algun vinculo cita Wikipedia
+fb-2026-fadea,Fábrica Argentina de Aviones S.A.,B,3,algun vinculo cita Wikipedia
+fb-2026-western-area-power-administration,Western Area Power Administration,B,3,algun vinculo cita Wikipedia
+fb-2026-inalum,PT Indonesia Asahan Aluminium (Persero),B,3,algun vinculo cita Wikipedia
+fb-2026-bw-digital,BW Digital,B,3,algun vinculo cita Wikipedia
+fb-2026-widelabs,WideLabs,B,5,
+fb-2026-saudi-arabia-railways,Saudi Arabia Railways,B,4,algun vinculo cita Wikipedia
+fb-2026-es-hailsat,Es'hailSat Qatar Satellite Company,B,4,algun vinculo cita Wikipedia
+fb-2026-cbrt,Central Bank of the Republic of Türkiye,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-asperitas,Asperitas,A,4,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored/disputed: entran como propuesta
+fb-2026-indumil,Industria Militar de Colombia (INDUMIL),B,4,algun vinculo cita Wikipedia
+fb-2026-new-york-power-authority,Power Authority of the State of New York,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-leuven-instruments,"Jiangsu Leuven Instruments Co., Ltd",A,2,tier A: menos de 3 vinculos verificables
+fb-2026-tampnet,Tampnet AS,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-magalu-cloud,MAGALU CLOUD LTDA.,A,3,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored/disputed: entran como propuesta
+fb-2026-etihad-rail,Etihad Rail,B,6,algun vinculo cita Wikipedia
+fb-2026-hermeus,Hermeus Corporation,B,5,
+fb-2026-franka-robotics,Franka Robotics GmbH,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-minera-san-cristobal,Minera San Cristóbal S.A.,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-santee-cooper,South Carolina Public Service Authority,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-s2c,S2C Limited,B,4,
+fb-2026-moses-lake-industries,"Moses Lake Industries, Inc.",B,4,
+fb-2026-dcx-liquid-cooling-systems,DCX Liquid Cooling Systems,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-central-bank-of-the-uae,Central Bank of the United Arab Emirates,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-swaysure,"Shenzhen SwaySure Technology Co., Ltd. (深圳市昇维旭技术有限公司)",A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored/disputed: entran como propuesta
+fb-2026-liquid-intelligent-technologies,Liquid Intelligent Technologies,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-ytl-ai-cloud,YTL AI Cloud,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-japan-freight-railway-company,Japan Freight Railway Company,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-xscape-photonics,"Xscape Photonics, Inc.",B,4,
+fb-2026-k2-space,K2 Space,B,7,
+fb-2026-humanoid-skl-robotics,SKL Robotics Ltd,B,5,
+fb-2026-bank-indonesia,Bank Indonesia,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-usystems,USystems Ltd,B,3,
+fb-2026-vannevar-labs,"Vannevar Labs, Inc.",A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored/disputed: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-lcra-lower-colorado-river-authority,Lower Colorado River Authority,B,3,algun vinculo cita Wikipedia
+fb-2026-simcoa,Simcoa Operations Pty Ltd,B,3,
+fb-2026-xlight,xLight,B,4,
+fb-2026-tower-partners-semiconductor-tpsco,"Tower Partners Semiconductor Co., Ltd.",A,2,tier A: menos de 3 vinculos verificables
+fb-2026-ellalink,EllaLink Ireland Limited,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-firmus-technologies,Firmus Technologies,B,5,
+fb-2026-eastern-pacific-shipping,Eastern Pacific Shipping Pte. Ltd.,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-sicoya,Sicoya GmbH,B,3,
+fb-2026-muon-space,Muon Space,B,3,
+fb-2026-mobile-industrial-robots-mir,Mobile Industrial Robots A/S,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-sveriges-riksbank,Sveriges Riksbank,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-saildrone,"Saildrone, Inc.",B,9,algun vinculo cita Wikipedia
+fb-2026-ryan-companies,Ryan Companies,B,5,algun vinculo cita Wikipedia
+fb-2026-energy-northwest,Energy Northwest,B,5,
+fb-2026-inox-air-products,INOX AIR PRODUCTS LIMITED,B,5,algun vinculo cita Wikipedia
+fb-2026-substrate,Substrate,B,3,
+fb-2026-angola-cables,Angola Cables,B,5,algun vinculo cita Wikipedia
+fb-2026-xaira-therapeutics,Xaira Therapeutics,B,7,
+fb-2026-kmtc-line,"Korea Marine Transport Co., Ltd.",A,1,tier A: menos de 3 vinculos verificables
+fb-2026-hyperlight,HyperLight Corporation,B,6,
+fb-2026-cesiumastro,"CesiumAstro, Inc.",B,6,algun vinculo cita Wikipedia
+fb-2026-quicktron,"Wuxi Quicktron Intelligent Technology Co., Ltd.",B,5,
+fb-2026-deutsche-bundesbank,Deutsche Bundesbank,B,3,algun vinculo cita Wikipedia
+fb-2026-bollinger-shipyards,"Bollinger Shipyards, L.L.C.",B,4,algun vinculo cita Wikipedia
+fb-2026-bc-hydro,British Columbia Hydro and Power Authority,B,4,algun vinculo cita Wikipedia
+fb-2026-covalent-lithium,Covalent Lithium Pty Ltd,B,3,
+fb-2026-kmwe,KMWE Precision B.V.,B,3,
+fb-2026-polar-semiconductor,"Polar Semiconductor, LLC",B,5,
+fb-2026-wiocc,West Indian Ocean Cable Company Limited,B,6,algun vinculo cita Wikipedia
+fb-2026-viettel-idc,ViettelIDC,EXCLUIDA,0,sin identificador fuerte
+fb-2026-tohoku-electric-power,TohokuElectricPower,EXCLUIDA,0,nivel A exige ≥1 vínculo
+fb-2026-cig,CIG,EXCLUIDA,0,nivel A exige ≥1 vínculo
+fb-2026-hamburg-port-authority,HamburgPortAuthority,EXCLUIDA,0,nivel A exige ≥1 vínculo
+fb-2026-cleanarc-data-centers,CleanArcDataCenters,EXCLUIDA,0,sin identificador fuerte
+fb-2026-yuliangsheng,Yuliangsheng,EXCLUIDA,0,sin identificador fuerte
+fb-2026-pensun-technology,PensunTechnology,EXCLUIDA,0,sin identificador fuerte
+fb-2026-amedac-advanced-manufacturing-eda,Amedac,EXCLUIDA,0,sin identificador fuerte
+fb-2026-mentee-robotics,MenteeRobotics,EXCLUIDA,0,sin identificador fuerte
+fb-2026-litiomx,LitioMx,EXCLUIDA,0,sin identificador fuerte
+fb-2026-sien-qingdao,SiEn,EXCLUIDA,0,sin identificador fuerte
+fb-2026-neo-space-group,NeoSpaceGroup,EXCLUIDA,0,sin identificador fuerte
+fb-2026-japan-semiconductor,JapanSemiconductor,EXCLUIDA,0,sin identificador fuerte
+fb-2026-ixafrica-data-centre,IXAfricaDataCentre,EXCLUIDA,0,sin identificador fuerte

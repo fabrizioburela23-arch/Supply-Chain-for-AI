@@ -83,6 +83,10 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    grafo de HOY para episodios viejos (look-ahead; el grafo histórico no existe antes de 2026-09). Camino honesto:
    calibración PROSPECTIVA (guardar predicciones ahora y medir contra eventos reales futuros), o episodios posteriores
    a que el grafo empezó a registrarse.
+1h. 📦 **LOTE 5 (R) LISTO (2026-10-21)**: Fabrizio aplicó el lote 4. `data/import/lotes/2026-10-21-r/bundle_lote5_r.json.gz` = 585
+   fichas nuevas de `khipus_entrega_R.zip` (585/585 válidas; plan local 584 crear · 1 completar Eutelsat/OneWeb). Carpetas
+   de lotes aceptan sufijo (`AAAA-MM-DD-x`, _PKG_DIR_RX) para 2 entregas el mismo día. Los bundles de lotes YA aplicados
+   salen del panel (sus fichas quedan en la carpeta). docs/expansion/LOTE_2026-10-21-r_PLAN.md. Sin listas de sanciones.
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).
