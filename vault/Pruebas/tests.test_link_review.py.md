@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_link_review.py"
 lenguaje: "python"
-lineas: 51
+lineas: 53
 aliases: ["tests/test_link_review.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_link_review.py
 
-> Prueba · capa [[Capa Pruebas]] · 51 líneas · `tests/test_link_review.py`
+> Prueba · capa [[Capa Pruebas]] · 53 líneas · `tests/test_link_review.py`
 
 ## Qué prueba
 
@@ -22,6 +22,7 @@ Cola de revisión de vínculos PROPUESTOS (2026-10-21): ontology/link_review ord
 
 - [[engine.importer.js]]
 - [[ontology.api.py]]
+- [[ontology.db.py]]
 - [[ontology.link_review.py]]
 - [[server.py]]
 

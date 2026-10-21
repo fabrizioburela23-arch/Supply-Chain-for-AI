@@ -108,7 +108,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 99 pruebas (lista abajo)._
+_Además lo importan 100 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -170,6 +170,7 @@ _Además lo importan 99 pruebas (lista abajo)._
 - [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
+- [[tests.test_link_review.py]]
 - [[tests.test_live_universe_db.py]]
 - [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_lotek_fixer.py]]

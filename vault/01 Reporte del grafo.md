@@ -29,12 +29,12 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 781 |
 | Aristas `defines_endpoint` | 300 |
-| Aristas `imports` | 2.362 |
+| Aristas `imports` | 2.363 |
 | Aristas `loads_script` | 95 |
 | Aristas `mentions_in_session` | 602 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
-| Aristas `tested_by` | 1.856 |
+| Aristas `tested_by` | 1.857 |
 | Aristas `uses_global` | 468 |
 
 ## Nodos "dios" (más conectados)

@@ -32,6 +32,8 @@ def test_every_import_reason_has_bilingual_text():
 @pytest.mark.skipif(not os.getenv('DATABASE_URL'), reason='requiere DATABASE_URL')
 def test_queue_lists_only_proposed_and_route_is_read_only():
     os.environ.setdefault('SECRET_KEY', 'test')
+    from ontology.db import init_schema
+    assert init_schema(retries=1)          # en CI otra prueba puede haber dejado la base sin tablas
     import server
     c = server.app.test_client()
     r = c.get('/api/ontology/links/review?limit=5')
