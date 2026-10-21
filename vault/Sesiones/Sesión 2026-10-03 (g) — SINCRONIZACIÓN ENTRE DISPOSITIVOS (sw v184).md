@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L1544"
+ruta: "docs/ESTADO.md#L1548"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-03 (g) — SINCRONIZACIÓN ENTRE DISPOSITIVOS (sw v184)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1544 (11 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1548 (11 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

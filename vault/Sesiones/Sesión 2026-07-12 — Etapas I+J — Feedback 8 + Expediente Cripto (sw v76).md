@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-12"
-ruta: "docs/ESTADO.md#L2948"
+ruta: "docs/ESTADO.md#L2952"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapas I+J — Feedback 8 + Expediente Cripto (2026-07-12, sw v76)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2948 (59 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2952 (59 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

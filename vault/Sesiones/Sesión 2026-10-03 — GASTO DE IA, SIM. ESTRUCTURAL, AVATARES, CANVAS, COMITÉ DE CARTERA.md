@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L1624"
+ruta: "docs/ESTADO.md#L1628"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-03 — GASTO DE IA, SIM. ESTRUCTURAL, AVATARES, CANVAS, COMITÉ DE CARTERA (sw v181)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1624 (43 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1628 (43 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

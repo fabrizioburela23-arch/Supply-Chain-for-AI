@@ -58,6 +58,10 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    movimiento» sin shadowBlur, menos puntos y ~20 fps. `catColor` memorizado por tema. `_ensureMapSettled` mira «tapado»
    antes de medir. Fondo animado del mapa pausado con el OS abierto y apagado en celular. CSS ≤ 700 px: rejillas de 2
    columnas en línea → 1, campos a 16 px. Pendiente: arranque (~2,8 s de scripts con CPU ×4; 103 scripts).
+1e. 🧪 **PRUEBA EN PAPEL EN CURSO (desde 2026-10-21)**: Fabrizio encendió el agente en Automático (papel), cada 60 min,
+   máx. 5 %/posición, stop 5 %, confianza ≥ 70, pérdida diaria 2 %, universo NVDA, AMD, AVGO, TSM, MU. A las 2 semanas
+   (~2026-11-04): comparar su rendimiento con SPY en el mismo período antes de pensar en dinero real. Tras cada despliegue
+   queda APAGADO (hay que volver a darle ▶ Iniciar).
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).

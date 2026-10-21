@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-29"
-ruta: "docs/ESTADO.md#L1798"
+ruta: "docs/ESTADO.md#L1802"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-29 (día) — REPORTE DE RIESGO: VaR + VEGA/KAPPA (sw v164)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1798 (22 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1802 (22 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
