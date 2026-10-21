@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-13"
-ruta: "docs/ESTADO.md#L3121"
+ruta: "docs/ESTADO.md#L3124"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa N — CAUSA RAÍZ del "3D no da" ENCONTRADA Y CORREGIDA (2026-07-13, sw v84)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 3121 (34 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 3124 (34 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

@@ -299,3 +299,383 @@ SMART Photonics,fb-2026-smart-photonics,SMARTPhotonics,fabricacion,NL,False,si
 SMIC North (SMNC),fb-2026-smic-north-smnc,SMICNorth,fabricacion,CN,False,si
 Samsung (China) Semiconductor,fb-2026-samsung-china-semiconductor,SamsungSemiconductor,fabricacion,CN,False,si
 Shanghai Huali Microelectronics (HLMC),fb-2026-shanghai-huali-microelectronics-hlmc,ShanghaiHualiMicroelectronics,fabricacion,CN,False,si
+Encore Wire,fb-2026-encore-wire,EncoreWire,energia,US,False,si
+StarPlus Energy,fb-2026-starplus-energy,StarPlusEnergy,energia,US,False,no
+Neoen,fb-2026-neoen,Neoen,energia,FR,False,si
+Zenobe,fb-2026-zenobe,Zenobe,energia,GB,False,si
+Rongke Power,fb-2026-rongke-power,RongkePower,energia,CN,False,no
+East Penn Manufacturing,fb-2026-east-penn-manufacturing,EastPennManufacturing,energia,US,False,si
+Clarios,fb-2026-clarios,Clarios,energia,US,False,si
+Saft,fb-2026-saft,Saft,energia,FR,False,si
+Celgard,fb-2026-celgard,Celgard,energia,US,False,si
+ENTEK,fb-2026-entek,ENTEK,energia,US,False,si
+Kleiner Perkins,fb-2026-kleiner-perkins,KleinerPerkins,macro_credito,US,False,si
+Accel,fb-2026-accel,Accel,macro_credito,US,False,si
+Index Ventures,fb-2026-index-ventures,IndexVentures,macro_credito,GB,False,si
+Khosla Ventures,fb-2026-khosla-ventures,KhoslaVentures,macro_credito,US,False,si
+Menlo Ventures,fb-2026-menlo-ventures,MenloVentures,macro_credito,US,False,si
+In-Q-Tel,fb-2026-in-q-tel,InQTel,macro_credito,US,False,si
+Intel Capital,fb-2026-intel-capital,IntelCapital,macro_credito,US,False,si
+Hillhouse,fb-2026-hillhouse,Hillhouse,macro_credito,SG,False,si
+Breakthrough Energy Ventures,fb-2026-breakthrough-energy-ventures,BreakthroughEnergyVentures,macro_credito,US,False,si
+General Atlantic,fb-2026-general-atlantic,GeneralAtlantic,macro_credito,US,False,si
+Hassana,fb-2026-hassana,Hassana,macro_credito,SA,False,si
+Aramco Ventures,fb-2026-aramco-ventures,AramcoVentures,macro_credito,SA,False,no
+SIDF,fb-2026-sidf,SIDF,macro_credito,SA,False,si
+Bank of Korea,fb-2026-bank-of-korea,BankOfKorea,macro_credito,KR,False,si
+Bank of Canada,fb-2026-bank-of-canada,BankOfCanada,macro_credito,CA,False,si
+Reserve Bank of Australia,fb-2026-reserve-bank-of-australia,ReserveBankOfAustralia,macro_credito,AU,False,si
+Banco Central do Brasil,fb-2026-banco-central-do-brasil,BancoCentralDoBrasil,macro_credito,BR,False,si
+Banco de México,fb-2026-banco-de-mexico,BancoDeMexico,macro_credito,MX,False,si
+Saudi Central Bank,fb-2026-saudi-central-bank,SaudiCentralBank,macro_credito,SA,False,si
+Monetary Authority of Singapore,fb-2026-monetary-authority-of-singapore,MonetaryAuthorityOfSingapore,macro_credito,SG,False,si
+Rack Centre,fb-2026-rack-centre,RackCentre,inmobiliario,NG,False,no
+Ark Data Centres,fb-2026-ark-data-centres,ArkDataCentres,inmobiliario,GB,False,si
+Echelon Data Centres,fb-2026-echelon-data-centres,EchelonDataCentres,inmobiliario,IE,False,no
+JE Dunn Construction,fb-2026-je-dunn-construction,JEDunnConstruction,inmobiliario,US,False,si
+Gilbane,fb-2026-gilbane,Gilbane,inmobiliario,US,False,si
+HITT Contracting,fb-2026-hitt-contracting,HITTContracting,inmobiliario,US,False,si
+Panattoni,fb-2026-panattoni,Panattoni,inmobiliario,US,False,si
+Mace,fb-2026-mace,Mace,inmobiliario,GB,False,si
+Logicor,fb-2026-logicor,Logicor,inmobiliario,,False,si
+Link Logistics Real Estate,fb-2026-link-logistics-real-estate,LinkLogisticsRealEstate,inmobiliario,US,False,si
+Hong Kong Monetary Authority,fb-2026-hong-kong-monetary-authority,HongKongMonetaryAuthority,macro_credito,HK,False,si
+Central Bank of the Republic of China (Taiwan),fb-2026-central-bank-of-the-republic-of-china-taiwan,CentralBankOfTheRepublicOfChina,macro_credito,TW,False,si
+Norges Bank,fb-2026-norges-bank,NorgesBank,macro_credito,NO,False,si
+APG,fb-2026-apg,APG,macro_credito,NL,False,si
+CalSTRS,fb-2026-calstrs,CalSTRS,macro_credito,US,False,si
+Ontario Teachers',fb-2026-ontario-teachers,OntarioTeachers,macro_credito,CA,False,si
+OMERS,fb-2026-omers,OMERS,macro_credito,CA,False,si
+PSP Investments,fb-2026-psp-investments,PSPInvestments,macro_credito,CA,False,si
+AustralianSuper,fb-2026-australiansuper,AustralianSuper,macro_credito,AU,False,si
+Norinchukin Bank,fb-2026-norinchukin-bank,NorinchukinBank,macro_credito,JP,False,si
+Tanaka Kikinzoku,fb-2026-tanaka-kikinzoku,TanakaKikinzoku,materiales,JP,False,si
+Collahuasi,fb-2026-collahuasi,Collahuasi,materiales,CL,False,si
+Antamina,fb-2026-antamina,Antamina,materiales,PE,False,si
+Less Common Metals,fb-2026-less-common-metals,LessCommonMetals,materiales,GB,False,si
+Carester,fb-2026-carester,Carester,materiales,FR,False,si
+YLB,fb-2026-ylb,YLB,materiales,BO,False,si
+Kazakhmys,fb-2026-kazakhmys,Kazakhmys,materiales,KZ,False,si
+KAZ Minerals,fb-2026-kaz-minerals,KAZMinerals,materiales,GB,False,si
+Taniobis,fb-2026-taniobis,Taniobis,materiales,DE,False,si
+Plansee Group,fb-2026-plansee-group,PlanseeGroup,materiales,AT,False,si
+Jiangsu Huapeng Transformer,fb-2026-jiangsu-huapeng-transformer,JiangsuHuapengTransformer,energia,CN,False,no
+Guangdong Energy Group,fb-2026-guangdong-energy-group,GuangdongEnergyGroup,energia,CN,False,si
+Inner Mongolia Power Group,fb-2026-inner-mongolia-power-group,InnerMongoliaPowerGroup,energia,CN,False,si
+CNPC (China National Petroleum Corporation),fb-2026-cnpc-china-national-petroleum-corporation,CNPC,energia,CN,False,si
+NR Electric,fb-2026-nr-electric,NRElectric,energia,CN,False,no
+Energy Singularity,fb-2026-energy-singularity,EnergySingularity,energia,CN,False,si
+Rosenergoatom,fb-2026-rosenergoatom,Rosenergoatom,energia,RU,False,no
+Atomenergomash,fb-2026-atomenergomash,Atomenergomash,energia,RU,False,no
+Inter RAO,fb-2026-inter-rao,InterRAO,energia,RU,False,si
+RusHydro,fb-2026-rushydro,RusHydro,energia,RU,False,si
+China Electronics Technology Group (CETC),fb-2026-china-electronics-technology-group-cetc,ChinaElectronicsTechnologyGroup,defensa,CN,False,no
+Epirus,fb-2026-epirus,Epirus,defensa,US,False,si
+Castelion,fb-2026-castelion,Castelion,defensa,US,False,si
+Hadrian,fb-2026-hadrian,Hadrian,defensa,US,False,si
+Neros,fb-2026-neros,Neros,defensa,US,False,si
+Ursa Major,fb-2026-ursa-major,UrsaMajor,defensa,US,False,si
+X-Bow Systems,fb-2026-x-bow-systems,XBowSystems,defensa,US,False,si
+Day & Zimmermann,fb-2026-day-zimmermann,DayZimmermann,defensa,US,False,si
+Persistent Systems,fb-2026-persistent-systems,PersistentSystems,defensa,US,False,no
+Divergent,fb-2026-divergent,Divergent,defensa,US,False,si
+Flexport,fb-2026-flexport,Flexport,logistica,US,False,si
+Yusen Logistics,fb-2026-yusen-logistics,YusenLogistics,logistica,JP,False,no
+Kintetsu World Express,fb-2026-kintetsu-world-express,KintetsuWorldExpress,logistica,JP,False,si
+Cainiao,fb-2026-cainiao,Cainiao,logistica,CN,False,si
+Indian Railways,fb-2026-indian-railways,IndianRailways,logistica,IN,False,si
+Dong Fang International Container,fb-2026-dong-fang-international-container,DongFangInternationalContainer,logistica,,False,si
+Florens,fb-2026-florens,Florens,logistica,,False,no
+China Merchants Group,fb-2026-china-merchants-group,ChinaMerchantsGroup,logistica,HK,False,si
+DLA Strategic Materials,fb-2026-dla-strategic-materials,DLAStrategicMaterials,macro_credito,US,False,si
+Investment Corporation of Dubai,fb-2026-investment-corporation-of-dubai,InvestmentCorporationOfDubai,macro_credito,AE,False,si
+Stream Data Centers,fb-2026-stream-data-centers,StreamDataCenters,inmobiliario,US,False,si
+DataVolt,fb-2026-datavolt,DataVolt,inmobiliario,SA,False,si
+Gulf Data Hub,fb-2026-gulf-data-hub,GulfDataHub,inmobiliario,SA,False,si
+Mercury Engineering,fb-2026-mercury-engineering,MercuryEngineering,inmobiliario,IE,False,no
+John Sisk & Son,fb-2026-john-sisk-son,JohnSiskSon,inmobiliario,IE,False,si
+Iceotope,fb-2026-iceotope,Iceotope,inmobiliario,GB,False,si
+Submer,fb-2026-submer,Submer,inmobiliario,ES,False,si
+Green Revolution Cooling,fb-2026-green-revolution-cooling,GreenRevolutionCooling,inmobiliario,US,False,si
+Kirby Group Engineering,fb-2026-kirby-group-engineering,KirbyGroupEngineering,inmobiliario,IE,False,no
+Open Access Data Centres,fb-2026-open-access-data-centres,OpenAccessDataCentres,inmobiliario,MU,False,no
+Ansaldo Energia,fb-2026-ansaldo-energia,AnsaldoEnergia,energia,IT,False,si
+Trench Group,fb-2026-trench-group,TrenchGroup,energia,,False,no
+Proxima Fusion,fb-2026-proxima-fusion,ProximaFusion,energia,DE,False,no
+ITER Organization,fb-2026-iter-organization,ITEROrganization,energia,FR,False,si
+Kyoto Fusioneering,fb-2026-kyoto-fusioneering,KyotoFusioneering,energia,JP,False,si
+Bonneville Power Administration,fb-2026-bonneville-power-administration,BonnevillePowerAdministration,energia,US,False,si
+Salt River Project,fb-2026-salt-river-project,SaltRiverProject,energia,US,False,si
+MISO (Midcontinent ISO),fb-2026-miso-midcontinent-iso,MISO,energia,US,False,si
+CAISO,fb-2026-caiso,CAISO,energia,US,False,si
+Invenergy,fb-2026-invenergy,Invenergy,energia,,False,si
+AFL,fb-2026-afl,AFL,materiales,,False,si
+Futong Group,fb-2026-futong-group,FutongGroup,materiales,CN,False,no
+Yacimientos de Litio Bolivianos,fb-2026-yacimientos-de-litio-bolivianos,YacimientosDeLitioBolivianos,materiales,BO,False,si
+Metalkol,fb-2026-metalkol,Metalkol,materiales,CD,False,no
+Orbia,fb-2026-orbia,Orbia,materiales,MX,False,si
+Cerro Verde,fb-2026-cerro-verde,CerroVerde,materiales,PE,False,si
+Minsur,fb-2026-minsur,Minsur,materiales,PE,False,si
+Vale Base Metals,fb-2026-vale-base-metals,ValeBaseMetals,materiales,,False,si
+Galbot,fb-2026-galbot,Galbot,robotica,CN,False,si
+Galaxea AI,fb-2026-galaxea-ai,GalaxeaAI,robotica,CN,False,si
+LS MnM,fb-2026-ls-mnm,LSMnM,materiales,KR,False,si
+Hancock Prospecting,fb-2026-hancock-prospecting,HancockProspecting,materiales,AU,False,si
+Proterial,fb-2026-proterial,Proterial,materiales,JP,False,si
+Almalyk MMC,fb-2026-almalyk-mmc,AlmalykMMC,materiales,UZ,False,si
+JOGMEC,fb-2026-jogmec,JOGMEC,materiales,JP,False,si
+Oyu Tolgoi,fb-2026-oyu-tolgoi,OyuTolgoi,materiales,MN,False,si
+East Hope Group,fb-2026-east-hope-group,EastHopeGroup,materiales,CN,False,si
+Global Advanced Metals,fb-2026-global-advanced-metals,GlobalAdvancedMetals,materiales,,False,si
+Sinochem Holdings,fb-2026-sinochem-holdings,SinochemHoldings,materiales,CN,False,si
+MIND ID,fb-2026-mind-id,MINDID,materiales,ID,False,si
+BlueOval SK,fb-2026-blueoval-sk,BlueOvalSK,energia,US,False,no
+Lyten,fb-2026-lyten,Lyten,energia,US,False,si
+HyperStrong,fb-2026-hyperstrong,HyperStrong,energia,CN,False,si
+Prime Planet Energy & Solutions,fb-2026-prime-planet-energy-solutions,PrimePlanetEnergySolutions,energia,JP,False,no
+Indonesia Battery Corporation,fb-2026-indonesia-battery-corporation,IndonesiaBatteryCorporation,energia,ID,False,no
+Molicel,fb-2026-molicel,Molicel,energia,TW,False,si
+Sunwoda EVB,fb-2026-sunwoda-evb,SunwodaEVB,energia,CN,False,si
+Lishen,fb-2026-lishen,Lishen,energia,CN,False,si
+PowerCo,fb-2026-powerco,PowerCo,energia,DE,False,si
+Ducab,fb-2026-ducab,Ducab,energia,AE,False,si
+Africa Global Logistics,fb-2026-africa-global-logistics,AfricaGlobalLogistics,logistica,FR,False,si
+CXIC Group,fb-2026-cxic-group,CXICGroup,logistica,CN,False,no
+Port of Antwerp-Bruges,fb-2026-port-of-antwerp-bruges,PortOfAntwerpBruges,logistica,BE,False,si
+SSA Marine,fb-2026-ssa-marine,SSAMarine,logistica,US,False,si
+Ports America,fb-2026-ports-america,PortsAmerica,logistica,US,False,si
+Tanger Med,fb-2026-tanger-med,TangerMed,logistica,MA,False,si
+Pacific International Lines,fb-2026-pacific-international-lines,PacificInternationalLines,logistica,SG,False,si
+X-Press Feeders,fb-2026-x-press-feeders,XPressFeeders,logistica,SG,False,si
+Grimaldi Group,fb-2026-grimaldi-group,GrimaldiGroup,logistica,IT,False,si
+Busan Port Authority,fb-2026-busan-port-authority,BusanPortAuthority,logistica,KR,False,si
+Vacuumschmelze,fb-2026-vacuumschmelze,Vacuumschmelze,materiales,DE,False,si
+KoBold Metals,fb-2026-kobold-metals,KoBoldMetals,materiales,US,False,si
+Matheson Tri-Gas,fb-2026-matheson-tri-gas,MathesonTriGas,materiales,US,False,si
+Vianode,fb-2026-vianode,Vianode,materiales,NO,False,si
+Eti Maden,fb-2026-eti-maden,EtiMaden,materiales,TR,False,si
+LKAB,fb-2026-lkab,LKAB,materiales,SE,False,si
+Indium Corporation,fb-2026-indium-corporation,IndiumCorporation,materiales,,False,si
+Novelis,fb-2026-novelis,Novelis,materiales,US,False,si
+Manara Minerals,fb-2026-manara-minerals,ManaraMinerals,materiales,SA,False,si
+Taishan Fiberglass,fb-2026-taishan-fiberglass,TaishanFiberglass,materiales,CN,False,si
+Taiwan International Ports Corporation,fb-2026-taiwan-international-ports-corporation,TaiwanInternationalPortsCorporation,logistica,TW,False,si
+Jawaharlal Nehru Port Authority,fb-2026-jawaharlal-nehru-port-authority,JawaharlalNehruPortAuthority,logistica,IN,False,si
+GEODIS,fb-2026-geodis,GEODIS,logistica,FR,False,si
+Kazakhstan Temir Zholy,fb-2026-kazakhstan-temir-zholy,KazakhstanTemirZholy,logistica,KZ,False,si
+MRS Logística,fb-2026-mrs-logistica,MRSLogistica,logistica,BR,False,si
+Dedicated Freight Corridor Corporation of India,fb-2026-dedicated-freight-corridor-corporation-of-india,DedicatedFreightCorridorCorporationOfIndia,logistica,IN,False,si
+DACHSER,fb-2026-dachser,DACHSER,logistica,DE,False,si
+Rhenus Group,fb-2026-rhenus-group,RhenusGroup,logistica,DE,False,si
+Nippon Cargo Airlines,fb-2026-nippon-cargo-airlines,NipponCargoAirlines,logistica,JP,False,si
+Taoyuan International Airport Corporation,fb-2026-taoyuan-international-airport-corporation,TaoyuanInternationalAirportCorporation,logistica,TW,False,si
+SP Group,fb-2026-sp-group,SPGroup,energia,SG,False,si
+Elsewedy Electric,fb-2026-elsewedy-electric,ElsewedyElectric,energia,EG,False,si
+Telespazio,fb-2026-telespazio,Telespazio,espacio,IT,False,si
+Tesat-Spacecom,fb-2026-tesat-spacecom,TesatSpacecom,espacio,DE,False,si
+Astranis,fb-2026-astranis,Astranis,espacio,US,False,si
+Apex Space,fb-2026-apex-space,ApexSpace,espacio,US,False,si
+SSC,fb-2026-ssc,SSC,espacio,SE,False,si
+SKY Perfect JSAT,fb-2026-sky-perfect-jsat,SKYPerfectJSAT,espacio,JP,False,si
+RSCC,fb-2026-rscc,RSCC,espacio,RU,False,no
+Galactic Energy,fb-2026-galactic-energy,GalacticEnergy,espacio,CN,False,si
+Japan Post Bank,fb-2026-japan-post-bank,JapanPostBank,macro_credito,JP,False,si
+Sinosure,fb-2026-sinosure,Sinosure,macro_credito,CN,False,si
+Development Bank of Japan,fb-2026-development-bank-of-japan,DevelopmentBankOfJapan,macro_credito,JP,False,si
+NEXI,fb-2026-nexi,NEXI,macro_credito,JP,False,si
+KfW IPEX-Bank,fb-2026-kfw-ipex-bank,KfWIPEXBank,macro_credito,DE,False,si
+EBRD,fb-2026-ebrd,EBRD,macro_credito,GB,False,si
+AIIB,fb-2026-aiib,AIIB,macro_credito,CN,False,si
+Asian Development Bank,fb-2026-asian-development-bank,AsianDevelopmentBank,macro_credito,PH,False,si
+IFC,fb-2026-ifc,IFC,macro_credito,US,False,si
+IDB,fb-2026-idb,IDB,macro_credito,US,False,si
+Amprion,fb-2026-amprion,Amprion,energia,DE,False,si
+50Hertz,fb-2026-50hertz,50Hertz,energia,DE,False,si
+NESO (National Energy System Operator),fb-2026-neso-national-energy-system-operator,NESO,energia,GB,False,si
+Statnett,fb-2026-statnett,Statnett,energia,NO,False,si
+Energinet,fb-2026-energinet,Energinet,energia,DK,False,si
+Svenska kraftnät,fb-2026-svenska-kraftnat,SvenskaKraftnat,energia,SE,False,si
+EDF Energy,fb-2026-edf-energy,EDFEnergy,energia,GB,False,si
+Arabelle Solutions,fb-2026-arabelle-solutions,ArabelleSolutions,energia,,False,si
+EPH (Energetický a průmyslový holding),fb-2026-eph-energeticky-a-prumyslovy-holding,EPH,energia,,False,si
+Axpo,fb-2026-axpo,Axpo,energia,CH,False,si
+MSM Group,fb-2026-msm-group,MSMGroup,defensa,SK,False,si
+FN Herstal,fb-2026-fn-herstal,FNHerstal,defensa,BE,False,si
+ELT Group,fb-2026-elt-group,ELTGroup,defensa,IT,False,si
+PGZ,fb-2026-pgz,PGZ,defensa,PL,False,si
+WB Group,fb-2026-wb-group,WBGroup,defensa,PL,False,si
+Ukrainian Defense Industry,fb-2026-ukrainian-defense-industry,UkrainianDefenseIndustry,defensa,UA,False,si
+Roketsan,fb-2026-roketsan,Roketsan,defensa,TR,False,si
+TUSAŞ,fb-2026-tusas,TUSAS,defensa,TR,False,si
+MKE,fb-2026-mke,MKE,defensa,TR,False,si
+Uralvagonzavod,fb-2026-uralvagonzavod,Uralvagonzavod,defensa,RU,False,si
+CPC,fb-2026-cpc,CPC,inmobiliario,US,False,si
+Danfoss,fb-2026-danfoss,Danfoss,inmobiliario,DK,False,si
+Exyte,fb-2026-exyte,Exyte,inmobiliario,DE,False,si
+Black & Veatch,fb-2026-black-veatch,BlackVeatch,inmobiliario,US,False,si
+Clayco,fb-2026-clayco,Clayco,inmobiliario,US,False,si
+McCarthy Building Companies,fb-2026-mccarthy-building-companies,McCarthyBuildingCompanies,inmobiliario,US,False,si
+Rosendin,fb-2026-rosendin,Rosendin,inmobiliario,US,False,si
+Cupertino Electric,fb-2026-cupertino-electric,CupertinoElectric,inmobiliario,US,False,si
+Kiewit,fb-2026-kiewit,Kiewit,inmobiliario,US,False,si
+Burns & McDonnell,fb-2026-burns-mcdonnell,BurnsMcDonnell,inmobiliario,US,False,si
+Bpifrance,fb-2026-bpifrance,Bpifrance,macro_credito,FR,False,si
+Cassa Depositi e Prestiti,fb-2026-cassa-depositi-e-prestiti,CassaDepositiEPrestiti,macro_credito,IT,False,si
+KEXIM,fb-2026-kexim,KEXIM,macro_credito,KR,False,si
+US EXIM,fb-2026-us-exim,USEXIM,macro_credito,US,False,si
+DFC,fb-2026-dfc,DFC,macro_credito,US,False,si
+Office of Strategic Capital,fb-2026-office-of-strategic-capital,OfficeOfStrategicCapital,macro_credito,US,False,si
+REC Limited,fb-2026-rec-limited,RECLimited,macro_credito,IN,False,si
+Lightspeed Venture Partners,fb-2026-lightspeed-venture-partners,LightspeedVenturePartners,macro_credito,US,False,si
+Coatue,fb-2026-coatue,Coatue,macro_credito,US,False,si
+General Catalyst,fb-2026-general-catalyst,GeneralCatalyst,macro_credito,US,False,si
+Actis,fb-2026-actis,Actis,macro_credito,GB,False,si
+Bain Capital,fb-2026-bain-capital,BainCapital,macro_credito,US,False,si
+I Squared Capital,fb-2026-i-squared-capital,ISquaredCapital,macro_credito,US,False,si
+Energy Capital Partners,fb-2026-energy-capital-partners,EnergyCapitalPartners,macro_credito,US,False,si
+Copenhagen Infrastructure Partners,fb-2026-copenhagen-infrastructure-partners,CopenhagenInfrastructurePartners,macro_credito,DK,False,si
+IFM Investors,fb-2026-ifm-investors,IFMInvestors,macro_credito,AU,False,si
+Ardian,fb-2026-ardian,Ardian,macro_credito,FR,False,si
+Magnetar,fb-2026-magnetar,Magnetar,macro_credito,US,False,si
+MBK Partners,fb-2026-mbk-partners,MBKPartners,macro_credito,KR,False,si
+Nyrstar,fb-2026-nyrstar,Nyrstar,materiales,NL,False,si
+Arabsat,fb-2026-arabsat,Arabsat,espacio,SA,False,si
+Isar Aerospace,fb-2026-isar-aerospace,IsarAerospace,espacio,DE,False,si
+Sodern,fb-2026-sodern,Sodern,espacio,FR,False,si
+Genesat,fb-2026-genesat,Genesat,espacio,CN,False,no
+SAST,fb-2026-sast,SAST,espacio,CN,False,no
+CGWIC,fb-2026-cgwic,CGWIC,espacio,CN,False,si
+CASET,fb-2026-caset,CASET,espacio,CN,False,no
+GalaxySpace,fb-2026-galaxyspace,GalaxySpace,espacio,CN,False,no
+Chang Guang Satellite,fb-2026-chang-guang-satellite,ChangGuangSatellite,espacio,CN,False,no
+AsiaSat,fb-2026-asiasat,AsiaSat,espacio,HK,False,si
+Port of Los Angeles,fb-2026-port-of-los-angeles,PortOfLosAngeles,logistica,US,False,si
+Lufthansa Cargo,fb-2026-lufthansa-cargo,LufthansaCargo,logistica,DE,False,si
+Turkish Cargo,fb-2026-turkish-cargo,TurkishCargo,logistica,TR,False,si
+Swissport,fb-2026-swissport,Swissport,logistica,CH,False,si
+Worldwide Flight Services,fb-2026-worldwide-flight-services,WorldwideFlightServices,logistica,FR,False,si
+dnata,fb-2026-dnata,Dnata,logistica,AE,False,si
+Hactl,fb-2026-hactl,Hactl,logistica,HK,False,si
+Incheon International Airport Corporation,fb-2026-incheon-international-airport-corporation,IncheonInternationalAirportCorporation,logistica,KR,False,si
+Port of Long Beach,fb-2026-port-of-long-beach,PortOfLongBeach,logistica,US,False,si
+Santos Port Authority,fb-2026-santos-port-authority,SantosPortAuthority,logistica,BR,False,no
+SVOLT,fb-2026-svolt,SVOLT,energia,CN,False,si
+Redwood Materials,fb-2026-redwood-materials,RedwoodMaterials,energia,US,False,si
+Last Energy,fb-2026-last-energy,LastEnergy,energia,US,False,si
+Aalo Atomics,fb-2026-aalo-atomics,AaloAtomics,energia,US,False,si
+Superior Essex,fb-2026-superior-essex,SuperiorEssex,energia,US,False,si
+HiNa Battery,fb-2026-hina-battery,HiNaBattery,energia,CN,False,si
+WeLion,fb-2026-welion,WeLion,energia,CN,False,si
+Group14 Technologies,fb-2026-group14-technologies,Group14Technologies,energia,US,False,si
+Sila Nanotechnologies,fb-2026-sila-nanotechnologies,SilaNanotechnologies,energia,US,False,si
+Guotai-Huarong,fb-2026-guotai-huarong,GuotaiHuarong,energia,CN,False,no
+i-Space (Interstellar Glory),fb-2026-i-space-interstellar-glory,ISpace,espacio,CN,False,no
+Space Pioneer,fb-2026-space-pioneer,SpacePioneer,espacio,CN,False,no
+CAS Space,fb-2026-cas-space,CASSpace,espacio,CN,False,no
+ExPace,fb-2026-expace,ExPace,espacio,CN,False,no
+PLD Space,fb-2026-pld-space,PLDSpace,espacio,ES,False,si
+Skyroot Aerospace,fb-2026-skyroot-aerospace,SkyrootAerospace,espacio,IN,False,si
+NSIL,fb-2026-nsil,NSIL,espacio,IN,False,si
+Intelsat,fb-2026-intelsat,Intelsat,espacio,US,False,si
+Inmarsat,fb-2026-inmarsat,Inmarsat,espacio,GB,False,si
+Space42,fb-2026-space42,Space42,espacio,AE,False,si
+Lunate,fb-2026-lunate,Lunate,macro_credito,AE,False,no
+Khazanah Nasional,fb-2026-khazanah-nasional,KhazanahNasional,macro_credito,MY,False,si
+Future Fund,fb-2026-future-fund,FutureFund,macro_credito,AU,False,si
+Korea Investment Corporation,fb-2026-korea-investment-corporation,KoreaInvestmentCorporation,macro_credito,KR,False,si
+Silk Road Fund,fb-2026-silk-road-fund,SilkRoadFund,macro_credito,CN,False,si
+Shenzhen Capital Group,fb-2026-shenzhen-capital-group,ShenzhenCapitalGroup,macro_credito,CN,False,si
+Hefei Construction Investment,fb-2026-hefei-construction-investment,HefeiConstructionInvestment,macro_credito,CN,False,no
+Samruk-Kazyna,fb-2026-samruk-kazyna,SamrukKazyna,macro_credito,KZ,False,si
+NIIF,fb-2026-niif,NIIF,macro_credito,IN,False,si
+National Wealth Fund,fb-2026-national-wealth-fund,NationalWealthFund,macro_credito,GB,False,si
+United Engine Corporation,fb-2026-united-engine-corporation,UnitedEngineCorporation,defensa,RU,False,si
+CSGC,fb-2026-csgc,CSGC,defensa,CN,False,si
+SAMI,fb-2026-sami,SAMI,defensa,SA,False,si
+Tata Advanced Systems,fb-2026-tata-advanced-systems,TataAdvancedSystems,defensa,IN,False,si
+BrahMos Aerospace,fb-2026-brahmos-aerospace,BrahMosAerospace,defensa,IN,False,si
+Munitions India,fb-2026-munitions-india,MunitionsIndia,defensa,IN,False,si
+Poongsan,fb-2026-poongsan,Poongsan,defensa,KR,False,si
+ASC,fb-2026-asc,ASC,defensa,AU,False,si
+CBC,fb-2026-cbc,CBC,defensa,BR,False,si
+PetroChina,fb-2026-petrochina,PetroChina,energia,CN,True,si
+ProLogium,fb-2026-prologium,ProLogium,energia,TW,False,si
+ACC (Automotive Cells Company),fb-2026-acc-automotive-cells-company,ACC,energia,FR,False,si
+AESC,fb-2026-aesc,AESC,energia,JP,False,si
+Ascend Elements,fb-2026-ascend-elements,AscendElements,energia,US,False,si
+Agratas,fb-2026-agratas,Agratas,energia,IN,False,si
+COBCO,fb-2026-cobco,COBCO,energia,MA,False,si
+FlexGen,fb-2026-flexgen,FlexGen,energia,US,False,si
+Sila,fb-2026-sila,Sila,energia,US,False,si
+Cirba Solutions,fb-2026-cirba-solutions,CirbaSolutions,energia,US,False,si
+Li-Cycle,fb-2026-li-cycle,LiCycle,energia,CA,False,si
+Peraton,fb-2026-peraton,Peraton,defensa,US,False,si
+Tekever,fb-2026-tekever,Tekever,defensa,PT,False,si
+Stark,fb-2026-stark,Stark,defensa,DE,False,si
+Auterion,fb-2026-auterion,Auterion,defensa,US,False,si
+Destinus,fb-2026-destinus,Destinus,defensa,NL,False,si
+Fire Point,fb-2026-fire-point,FirePoint,defensa,UA,False,si
+Rohde & Schwarz,fb-2026-rohde-schwarz,RohdeSchwarz,defensa,DE,False,si
+Patria,fb-2026-patria,Patria,defensa,FI,False,si
+Navantia,fb-2026-navantia,Navantia,defensa,ES,False,si
+Damen,fb-2026-damen,Damen,defensa,NL,False,si
+CNES,fb-2026-cnes,CNES,espacio,FR,False,si
+JAXA,fb-2026-jaxa,JAXA,espacio,JP,False,si
+CNSA,fb-2026-cnsa,CNSA,espacio,CN,False,si
+Roscosmos,fb-2026-roscosmos,Roscosmos,espacio,RU,False,si
+ISS Reshetnev,fb-2026-iss-reshetnev,ISSReshetnev,espacio,RU,False,no
+Blue Canyon Technologies,fb-2026-blue-canyon-technologies,BlueCanyonTechnologies,espacio,US,False,si
+Millennium Space Systems,fb-2026-millennium-space-systems,MillenniumSpaceSystems,espacio,US,False,si
+VoltaGrid,fb-2026-voltagrid,VoltaGrid,infra,US,False,no
+Zhongtian Technology Submarine Cable,fb-2026-zhongtian-technology-submarine-cable,ZhongtianTechnologySubmarineCable,infra,CN,False,no
+ZT Systems,fb-2026-zt-systems,ZTSystems,infra,US,False,si
+atNorth,fb-2026-atnorth,AtNorth,inmobiliario,,False,si
+Colt DCS,fb-2026-colt-dcs,ColtDCS,inmobiliario,GB,False,si
+Start Campus,fb-2026-start-campus,StartCampus,inmobiliario,PT,False,si
+Elea Data Centers,fb-2026-elea-data-centers,EleaDataCenters,inmobiliario,BR,False,si
+BDx Data Centers,fb-2026-bdx-data-centers,BDxDataCenters,inmobiliario,,False,si
+Bridge Data Centres,fb-2026-bridge-data-centres,BridgeDataCentres,inmobiliario,,False,si
+IDC Frontier,fb-2026-idc-frontier,IDCFrontier,inmobiliario,JP,False,si
+Motivair,fb-2026-motivair,Motivair,inmobiliario,US,False,si
+Rittal,fb-2026-rittal,Rittal,inmobiliario,DE,False,si
+Stäubli,fb-2026-staubli,Staubli,inmobiliario,CH,False,si
+Mapletree Investments,fb-2026-mapletree-investments,MapletreeInvestments,inmobiliario,SG,False,si
+center3,fb-2026-center3,Center3,inmobiliario,SA,False,si
+Applied Digital,fb-2026-applied-digital,AppliedDigital,inmobiliario,US,False,si
+Flexential,fb-2026-flexential,Flexential,inmobiliario,US,False,si
+Prime Data Centers,fb-2026-prime-data-centers,PrimeDataCenters,inmobiliario,US,False,si
+Tract,fb-2026-tract,Tract,inmobiliario,US,False,si
+Sabey Data Centers,fb-2026-sabey-data-centers,SabeyDataCenters,inmobiliario,US,False,si
+EdgeCore Digital Infrastructure,fb-2026-edgecore-digital-infrastructure,EdgeCoreDigitalInfrastructure,inmobiliario,US,False,si
+Lancium,fb-2026-lancium,Lancium,inmobiliario,US,False,si
+Virtus Data Centres,fb-2026-virtus-data-centres,VirtusDataCentres,inmobiliario,GB,False,si
+MU Ionic Solutions,fb-2026-mu-ionic-solutions,MUIonicSolutions,energia,JP,False,no
+BASF Shanshan,fb-2026-basf-shanshan,BASFShanshan,energia,CN,False,si
+Nichia,fb-2026-nichia,Nichia,energia,JP,False,si
+Holtec International,fb-2026-holtec-international,HoltecInternational,energia,US,False,si
+Virginia Transformer,fb-2026-virginia-transformer,VirginiaTransformer,energia,US,False,si
+SGB-SMIT,fb-2026-sgb-smit,SGBSMIT,energia,DE,False,si
+Prolec GE,fb-2026-prolec-ge,ProlecGE,energia,MX,False,si
+China Datang Corporation,fb-2026-china-datang-corporation,ChinaDatangCorporation,energia,CN,False,si
+China Huadian Corporation,fb-2026-china-huadian-corporation,ChinaHuadianCorporation,energia,CN,False,si
+China Fusion Energy Co.,fb-2026-china-fusion-energy-co,ChinaFusionEnergyCo,energia,CN,False,no
+Kuwait Petroleum Corporation,fb-2026-kuwait-petroleum-corporation,KuwaitPetroleumCorporation,energia,KW,False,si
+Masdar,fb-2026-masdar,Masdar,energia,AE,False,si
+ENEC (Emirates Nuclear Energy Company),fb-2026-enec-emirates-nuclear-energy-company,ENEC,energia,AE,False,si
+TAQA,fb-2026-taqa,TAQA,energia,AE,False,no
+XRG,fb-2026-xrg,XRG,energia,AE,False,si
+"CPC Corporation, Taiwan",fb-2026-cpc-corporation-taiwan,CPCCorporationTaiwan,energia,TW,False,si
+PLN,fb-2026-pln,PLN,energia,ID,False,si
+Pertamina,fb-2026-pertamina,Pertamina,energia,ID,False,si
+EVN (Vietnam Electricity),fb-2026-evn-vietnam-electricity,EVN,energia,VN,False,si
+NPCIL,fb-2026-npcil,NPCIL,energia,IN,False,si
+LS Power,fb-2026-ls-power,LSPower,energia,,False,si
+General Matter,fb-2026-general-matter,GeneralMatter,energia,US,False,si
+Global Laser Enrichment,fb-2026-global-laser-enrichment,GlobalLaserEnrichment,energia,,False,si
+TRISO-X,fb-2026-triso-x,TRISOX,energia,,False,si
+S&C Electric,fb-2026-s-c-electric,SCElectric,energia,US,False,si
+Bruce Power,fb-2026-bruce-power,BrucePower,energia,CA,False,si
+Pemex,fb-2026-pemex,Pemex,energia,MX,False,si
+YPF,fb-2026-ypf,YPF,energia,AR,False,si
+Eskom,fb-2026-eskom,Eskom,energia,ZA,False,si
+NIOC (National Iranian Oil Company),fb-2026-nioc-national-iranian-oil-company,NIOC,energia,IR,False,si

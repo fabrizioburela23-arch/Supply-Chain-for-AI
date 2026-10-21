@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1448"
+ruta: "docs/ESTADO.md#L1451"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (d) — ESCRITORIO: ORDEN AUTOMÁTICO + 📌 FIJAR A LOS COSTADOS (sw v189)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1448 (17 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1451 (17 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

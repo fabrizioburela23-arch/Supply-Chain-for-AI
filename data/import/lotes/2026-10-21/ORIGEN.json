@@ -2,24 +2,28 @@
  "schema": "khipus.lote-origin/1",
  "batch": "lote-2026-10-21-p2",
  "received": "2026-10-21",
- "package": "khipus_entrega_P2.zip",
+ "package": "khipus_entrega_P2.zip + khipus_entrega_P2_completo.zip",
  "package_file": "2_fichas_P2_nivelB.jsonl",
- "package_file_sha256": "c8febb689b1a9023888443952a4d277f31384e6dd03fea44d5c5a43622464b78",
- "package_records": 297,
- "kept_records": 298,
- "excluded": [
-  "fb-2026-pxw-pengxinwei",
-  "fb-2026-guowang-optics",
-  "fb-2026-u-precision"
- ],
+ "package_file_sha256": "4bf801ee718dd6042047aa40bdf5009100f6308614761834da63f0f00d2c5817",
+ "package_records": 633,
+ "kept_records": 634,
+ "excluded": 47,
  "tiers": {
-  "B": 236,
-  "A": 61
+  "B": 517,
+  "A": 116
  },
- "declared_links": 1231,
+ "declared_links": 2517,
  "plus": [
   "fb-2026-acwapower"
  ],
- "note_es": "Lote 3 (P2): 297 fichas investigadas + ACWA Power de la tanda 1 del lote 3. Adobe, Alchip y ACM Research Shanghai usan la ficha de P2 (más nueva). 3 excluidas por el proveedor (sin identificador fuerte). Revisar a mano: Eviden, Anord Mardix, Kingston, Hisense Broadband, Walsin Technology, VAST Data, Sparkle, VSMC.",
- "note_en": "Batch 3 (P2): 297 researched records + ACWA Power from batch 3 run 1. Adobe, Alchip and ACM Research Shanghai use the P2 record (newer). 3 excluded by the provider (no strong identifier). Review by hand: Eviden, Anord Mardix, Kingston, Hisense Broadband, Walsin Technology, VAST Data, Sparkle, VSMC."
+ "note_es": "Entrega P2 completa (633 fichas). Lote 3 = las primeras 297 + ACWA Power (ya aplicado por Fabrizio). Lote 4 = las 336 nuevas (las 297 repetidas venían idénticas). 47 excluidas por el proveedor (sin identificador fuerte). Revisar a mano: RBA, Eviden, Anord Mardix, Kingston, Hisense Broadband, atNorth, Lunate-MGX, LCM-USAR, Carester, VAC-Energy Fuels, Almalyk, Silk Road, Shenzhen Capital Group.",
+ "note_en": "Full P2 delivery (633 records). Batch 3 = the first 297 + ACWA Power (already applied). Batch 4 = the 336 new ones (the 297 repeats were identical). 47 excluded by the provider (no strong identifier).",
+ "lote3": {
+  "bundle": "(retirado del panel: ya aplicado el 2026-10-21; sus fichas siguen en fichas_P2_nivelB.jsonl.gz, git las guarda)",
+  "records": 298
+ },
+ "lote4": {
+  "bundle": "bundle_lote4_p2.json.gz",
+  "records": 336
+ }
 }

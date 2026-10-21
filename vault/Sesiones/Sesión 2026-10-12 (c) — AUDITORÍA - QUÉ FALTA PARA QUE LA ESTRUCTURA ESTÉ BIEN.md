@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L597"
+ruta: "docs/ESTADO.md#L600"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 (c) — AUDITORÍA: QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN (docs/BRECHAS_V2.md)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 597 (16 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 600 (16 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

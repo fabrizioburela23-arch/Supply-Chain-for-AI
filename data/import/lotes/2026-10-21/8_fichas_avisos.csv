@@ -1,72 +1,73 @@
 record_id,nombre,tier,n_vinculos,aviso
-fb-2026-ai21-labs,AI21 Labs,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-ant-group,Ant Group,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-applied-intuition,Applied Intuition,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-clickhouse,ClickHouse,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-deepl,DeepL,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-fireworks-ai,Fireworks AI,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-gatik,Gatik,B,8,algun vinculo cita Wikipedia: revisar
-fb-2026-github,GitHub,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-harvey,Harvey,B,9,algun vinculo cita Wikipedia: revisar
-fb-2026-huawei-cloud,Huawei Cloud,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-isomorphic-labs,Isomorphic Labs,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-jio-platforms,Jio Platforms,B,9,algun vinculo cita Wikipedia: revisar
-fb-2026-lg-ai-research,LG AI Research,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-may-mobility,May Mobility,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-mercor,Mercor,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-midjourney,Midjourney,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
-fb-2026-momenta,Momenta,B,7,algun vinculo cita Wikipedia: revisar
-fb-2026-moonshot-ai,Moonshot AI,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-motional,Motional,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-openevidence,OpenEvidence,B,9,algun vinculo cita Wikipedia: revisar
-fb-2026-preferred-networks,Preferred Networks,B,8,algun vinculo cita Wikipedia: revisar
-fb-2026-replit,Replit,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-safe-superintelligence-ssi,Safe Superintelligence (SSI),B,8,algun vinculo cita Wikipedia: revisar
-fb-2026-sarvam-ai,Sarvam AI,B,7,algun vinculo cita Wikipedia: revisar
-fb-2026-sensetime,SenseTime,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-softbank-corp,SoftBank Corp.,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-stepfun,StepFun,B,10,algun vinculo cita Wikipedia: revisar
-fb-2026-surge-ai,Surge AI,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-synthesia,Synthesia,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-technology-innovation-institute-tii,Technology Innovation Institute (TII),B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-tencent-cloud,Tencent Cloud,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-thinking-machines-lab,Thinking Machines Lab,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-torc-robotics,Torc Robotics,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-vultr,Vultr,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-ai21-labs,AI21 Labs,B,6,algun vinculo cita Wikipedia
+fb-2026-ant-group,Ant Group,B,4,algun vinculo cita Wikipedia
+fb-2026-applied-intuition,Applied Intuition,B,6,algun vinculo cita Wikipedia
+fb-2026-clickhouse,ClickHouse,B,6,algun vinculo cita Wikipedia
+fb-2026-deepl,DeepL,B,5,algun vinculo cita Wikipedia
+fb-2026-fireworks-ai,Fireworks AI,B,5,algun vinculo cita Wikipedia
+fb-2026-gatik,Gatik,B,8,algun vinculo cita Wikipedia
+fb-2026-github,GitHub,B,6,algun vinculo cita Wikipedia
+fb-2026-harvey,Harvey,B,9,algun vinculo cita Wikipedia
+fb-2026-huawei-cloud,Huawei Cloud,B,3,algun vinculo cita Wikipedia
+fb-2026-isomorphic-labs,Isomorphic Labs,B,5,algun vinculo cita Wikipedia
+fb-2026-jio-platforms,Jio Platforms,B,9,algun vinculo cita Wikipedia
+fb-2026-lg-ai-research,LG AI Research,B,4,algun vinculo cita Wikipedia
+fb-2026-may-mobility,May Mobility,B,6,algun vinculo cita Wikipedia
+fb-2026-mercor,Mercor,B,5,algun vinculo cita Wikipedia
+fb-2026-midjourney,Midjourney,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-momenta,Momenta,B,7,algun vinculo cita Wikipedia
+fb-2026-moonshot-ai,Moonshot AI,B,5,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-motional,Motional,B,5,algun vinculo cita Wikipedia
+fb-2026-openevidence,OpenEvidence,B,9,algun vinculo cita Wikipedia
+fb-2026-preferred-networks,Preferred Networks,B,8,algun vinculo cita Wikipedia
+fb-2026-replit,Replit,B,6,algun vinculo cita Wikipedia
+fb-2026-safe-superintelligence-ssi,Safe Superintelligence (SSI),B,8,algun vinculo cita Wikipedia
+fb-2026-sarvam-ai,Sarvam AI,B,7,algun vinculo cita Wikipedia
+fb-2026-sensetime,SenseTime,B,6,algun vinculo cita Wikipedia
+fb-2026-softbank-corp,SoftBank Corp.,B,3,algun vinculo cita Wikipedia
+fb-2026-stepfun,StepFun,B,10,algun vinculo cita Wikipedia
+fb-2026-surge-ai,Surge AI,B,4,algun vinculo cita Wikipedia
+fb-2026-synthesia,Synthesia,B,6,algun vinculo cita Wikipedia
+fb-2026-technology-innovation-institute-tii,Technology Innovation Institute (TII),B,5,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-tencent-cloud,Tencent Cloud,B,3,algun vinculo cita Wikipedia
+fb-2026-thinking-machines-lab,Thinking Machines Lab,B,3,algun vinculo cita Wikipedia
+fb-2026-torc-robotics,Torc Robotics,B,5,algun vinculo cita Wikipedia
+fb-2026-vultr,Vultr,B,3,algun vinculo cita Wikipedia
 fb-2026-weights-biases,Weights & Biases,A,1,tier A: menos de 3 vinculos verificables
-fb-2026-zhuoyu-technology-dji-automotive,Zhuoyu Technology (DJI Automotive),B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-tcs,TCS,B,10,algun vinculo cita Wikipedia: revisar
-fb-2026-tencent,Tencent,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-weride,WeRide,B,7,algun vinculo cita Wikipedia: revisar
-fb-2026-iflytek,iFLYTEK,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-axelera-ai,Axelera AI,B,9,algun vinculo cita Wikipedia: revisar
-fb-2026-imagination-technologies,Imagination Technologies,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-metax,MetaX,B,7,algun vinculo cita Wikipedia: revisar
-fb-2026-global-unichip,Global Unichip,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-stmicroelectronics,STMicroelectronics,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-socionext,Socionext,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-valens-semiconductor,Valens Semiconductor,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-zhuoyu-technology-dji-automotive,Zhuoyu Technology (DJI Automotive),B,6,algun vinculo cita Wikipedia
+fb-2026-tcs,TCS,B,10,algun vinculo cita Wikipedia
+fb-2026-tencent,Tencent,B,5,algun vinculo cita Wikipedia
+fb-2026-weride,WeRide,B,7,algun vinculo cita Wikipedia
+fb-2026-iflytek,iFLYTEK,B,3,algun vinculo cita Wikipedia
+fb-2026-axelera-ai,Axelera AI,B,9,algun vinculo cita Wikipedia
+fb-2026-imagination-technologies,Imagination Technologies,B,5,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-metax,MetaX,B,7,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-global-unichip,Global Unichip,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-stmicroelectronics,STMicroelectronics,B,3,algun vinculo cita Wikipedia
+fb-2026-socionext,Socionext,B,6,algun vinculo cita Wikipedia
+fb-2026-valens-semiconductor,Valens Semiconductor,B,3,algun vinculo cita Wikipedia
 fb-2026-absolics,Absolics,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-bosch-semiconductors,Bosch Semiconductors,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-bourns,Bourns,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-cea-leti,CEA-Leti,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-circuit-foil-luxembourg,Circuit Foil Luxembourg,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-fujian-jinhua-jhicc,Fujian Jinhua (JHICC),A,3,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-bosch-semiconductors,Bosch Semiconductors,B,3,algun vinculo cita Wikipedia
+fb-2026-bourns,Bourns,B,3,algun vinculo cita Wikipedia
+fb-2026-cea-leti,CEA-Leti,B,4,algun vinculo cita Wikipedia
+fb-2026-circuit-foil-luxembourg,Circuit Foil Luxembourg,B,3,algun vinculo cita Wikipedia
+fb-2026-fujian-jinhua-jhicc,Fujian Jinhua (JHICC),A,3,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
 fb-2026-hua-hong-group,Hua Hong Group,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-itri,ITRI,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-micron-memory-japan,Micron Memory Japan,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-pxw-pengxinwei,PXW (Pengxinwei),A,2,SIN identificador fuerte: NO importar hasta resolver (excluida del JSONL) | tier A: menos de 3 vinculos verificables
-fb-2026-radiall,Radiall,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-rubycon,Rubycon,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-itri,ITRI,B,3,algun vinculo cita Wikipedia
+fb-2026-micron-memory-japan,Micron Memory Japan,B,3,algun vinculo cita Wikipedia
+fb-2026-pxw-pengxinwei,PXW (Pengxinwei),A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-radiall,Radiall,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-rubycon,Rubycon,B,3,algun vinculo cita Wikipedia
 fb-2026-sk-hynix-semiconductor-china,SK hynix Semiconductor (China),A,2,tier A: menos de 3 vinculos verificables
 fb-2026-wurth-elektronik,Würth Elektronik,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-xmc-wuhan-xinxin,XMC (Wuhan Xinxin),B,3,vinculos de baja confianza/rumored: entran como propuesta
 fb-2026-weidmuller,Weidmüller,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-siemon,Siemon,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-siemon,Siemon,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
 fb-2026-silicon-box,Silicon Box,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-skywater-technology,SkyWater Technology,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-tdk-electronics,TDK Electronics,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-axt,AXT,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-crrc-times-electric,CRRC Times Electric,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-crrc-times-electric,CRRC Times Electric,B,3,algun vinculo cita Wikipedia
 fb-2026-delton-technology,Delton Technology,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-at-s,AT&S,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-gold-circuit,Gold Circuit,A,2,tier A: menos de 3 vinculos verificables
@@ -76,65 +77,368 @@ fb-2026-innoscience,InnoScience,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-kingboard-laminates,Kingboard Laminates,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-kinsus,Kinsus,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-landmark-optoelectronics,LandMark Optoelectronics,A,1,tier A: menos de 3 vinculos verificables
-fb-2026-luxshare,Luxshare,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-macronix,Macronix,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-luxshare,Luxshare,B,4,algun vinculo cita Wikipedia
+fb-2026-macronix,Macronix,A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
 fb-2026-nan-ya-pcb,Nan Ya PCB,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-nichicon,Nichicon,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-nichicon,Nichicon,A,1,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
 fb-2026-skc,SKC,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-shengyi-technology,Shengyi Technology,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-victory-giant,Victory Giant,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-tcl-technology,TCL Technology,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-toppan,Toppan,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-taiyo-yuden,Taiyo Yuden,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
-fb-2026-busch-group,Busch Group,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
-fb-2026-guowang-optics,GuoWang Optics,B,4,SIN identificador fuerte: NO importar hasta resolver (excluida del JSONL)
-fb-2026-canon-anelva,Canon Anelva,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-grinm-group,GRINM Group,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-ciomp-changchun-institute-of-optics-fine-mechanics-and-physics,"CIOMP (Changchun Institute of Optics, Fine Mechanics and Physics)",B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-taiyo-yuden,Taiyo Yuden,A,1,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-busch-group,Busch Group,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-guowang-optics,GuoWang Optics,B,4,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-eswin-material,Eswin Material,B,6,vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-canon-anelva,Canon Anelva,B,3,algun vinculo cita Wikipedia
+fb-2026-grinm-group,GRINM Group,B,5,algun vinculo cita Wikipedia
+fb-2026-ciomp-changchun-institute-of-optics-fine-mechanics-and-physics,"CIOMP (Changchun Institute of Optics, Fine Mechanics and Physics)",B,3,algun vinculo cita Wikipedia
 fb-2026-hermes-microvision,Hermes Microvision,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-kanto-chemical,Kanto Chemical,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-heraeus,Heraeus,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-kanto-chemical,Kanto Chemical,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-heraeus,Heraeus,B,6,algun vinculo cita Wikipedia
 fb-2026-leybold,Leybold,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-momentive-technologies,Momentive Technologies,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-momentive-technologies,Momentive Technologies,A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta
 fb-2026-nts-group,NTS Group,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-pall-corporation,Pall Corporation,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-pall-corporation,Pall Corporation,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-physik-instrumente-pi,Physik Instrumente (PI),B,4,vinculos de baja confianza/rumored: entran como propuesta
 fb-2026-siom-shanghai-institute-of-optics-and-fine-mechanics,SIOM (Shanghai Institute of Optics and Fine Mechanics),A,2,tier A: menos de 3 vinculos verificables
 fb-2026-sicarrier,SiCarrier,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-sumitomo-heavy-industries-ion-technology-smit,Sumitomo Heavy Industries Ion Technology (SMIT),A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-sumitomo-heavy-industries-ion-technology-smit,Sumitomo Heavy Industries Ion Technology (SMIT),A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
 fb-2026-trumpf-huttinger,TRUMPF Hüttinger,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-thermo-fisher-scientific,Thermo Fisher Scientific,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-u-precision,U-Precision,B,5,SIN identificador fuerte: NO importar hasta resolver (excluida del JSONL)
-fb-2026-watlow,Watlow,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
+fb-2026-thermo-fisher-scientific,Thermo Fisher Scientific,B,4,algun vinculo cita Wikipedia
+fb-2026-u-precision,U-Precision,B,5,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-watlow,Watlow,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
 fb-2026-zygo,Zygo,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-c-uyemura,C. Uyemura,A,3,tier A: menos de 3 vinculos verificables
+fb-2026-c-uyemura,C. Uyemura,A,3,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta
 fb-2026-chroma-ate,Chroma ATE,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-daihen,DAIHEN,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-dinglong,Dinglong,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-dinglong,Dinglong,A,1,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta
 fb-2026-dongjin-semichem,Dongjin Semichem,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-element-solutions,Element Solutions,A,1,tier A: menos de 3 vinculos verificables
 fb-2026-kulicke-soffa,Kulicke & Soffa,A,1,tier A: menos de 3 vinculos verificables
-fb-2026-leeno,LEENO,B,4,algun vinculo cita Wikipedia: revisar
+fb-2026-leeno,LEENO,B,4,algun vinculo cita Wikipedia
 fb-2026-optorun,Optorun,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-toyo-tanso,Toyo Tanso,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-wonik-ips,Wonik IPS,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-wonik-qnc,Wonik QnC,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-tri-chemical,Tri Chemical,A,2,tier A: menos de 3 vinculos verificables
 fb-2026-toyo-gosei,Toyo Gosei,A,1,tier A: menos de 3 vinculos verificables
-fb-2026-aggreko,Aggreko,B,3,algun vinculo cita Wikipedia: revisar
+fb-2026-aggreko,Aggreko,B,3,algun vinculo cita Wikipedia
 fb-2026-anord-mardix,Anord Mardix,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-arelion,Arelion,B,6,algun vinculo cita Wikipedia: revisar
-fb-2026-exa-infrastructure,EXA Infrastructure,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-edgecore-networks,Edgecore Networks,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-giga-computing,Giga Computing,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-global-marine,Global Marine,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-nettrix,Nettrix,A,2,tier A: menos de 3 vinculos verificables
-fb-2026-occ-corporation,OCC Corporation,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-orange-marine,Orange Marine,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-sparkle,Sparkle,B,3,algun vinculo cita Wikipedia: revisar
-fb-2026-tdk-lambda,TDK-Lambda,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia: revisar
-fb-2026-telxius,Telxius,B,4,algun vinculo cita Wikipedia: revisar
-fb-2026-v-tal,V.tal,B,5,algun vinculo cita Wikipedia: revisar
-fb-2026-vast-data,VAST Data,B,7,algun vinculo cita Wikipedia: revisar
-fb-2026-viettel,Viettel,B,6,algun vinculo cita Wikipedia: revisar
+fb-2026-arelion,Arelion,B,6,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-exa-infrastructure,EXA Infrastructure,B,3,algun vinculo cita Wikipedia
+fb-2026-edgecore-networks,Edgecore Networks,B,4,algun vinculo cita Wikipedia
+fb-2026-giga-computing,Giga Computing,B,4,algun vinculo cita Wikipedia
+fb-2026-global-marine,Global Marine,B,5,algun vinculo cita Wikipedia
+fb-2026-iem,IEM,B,4,vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-kingston-technology,Kingston Technology,B,4,vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-nettrix,Nettrix,A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-occ-corporation,OCC Corporation,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-orange-marine,Orange Marine,B,3,algun vinculo cita Wikipedia
+fb-2026-sparkle,Sparkle,B,3,algun vinculo cita Wikipedia
+fb-2026-tdk-lambda,TDK-Lambda,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-telxius,Telxius,B,4,algun vinculo cita Wikipedia
+fb-2026-v-tal,V.tal,B,5,algun vinculo cita Wikipedia
+fb-2026-vast-data,VAST Data,B,7,algun vinculo cita Wikipedia
+fb-2026-viettel,Viettel,B,6,algun vinculo cita Wikipedia
 fb-2026-tuc,TUC,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-stats-chippac,STATS ChipPAC,B,5,vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-vsmc,VSMC,B,7,vinculos de baja confianza/rumored: entran como propuesta
 fb-2026-brooks-automation,Brooks Automation,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-china-electronics-technology-group-cetc,China Electronics Technology Group (CETC),B,6,EXCLUIDA: duplicado de fb-2026-cetc (ya en P1) | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-hadrian,Hadrian,B,5,algun vinculo cita Wikipedia
+fb-2026-x-bow-systems,X-Bow Systems,B,5,algun vinculo cita Wikipedia
+fb-2026-day-zimmermann,Day & Zimmermann,B,4,algun vinculo cita Wikipedia
+fb-2026-persistent-systems,Persistent Systems,B,5,EXCLUIDA: dominio puesto de memoria por el agente (no verificado)
+fb-2026-divergent,Divergent,B,6,algun vinculo cita Wikipedia
+fb-2026-stark,Stark,B,5,algun vinculo cita Wikipedia
+fb-2026-auterion,Auterion,B,5,algun vinculo cita Wikipedia
+fb-2026-destinus,Destinus,B,6,algun vinculo cita Wikipedia
+fb-2026-fire-point,Fire Point,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-rohde-schwarz,Rohde & Schwarz,B,4,algun vinculo cita Wikipedia
+fb-2026-navantia,Navantia,B,4,algun vinculo cita Wikipedia
+fb-2026-damen,Damen,B,5,algun vinculo cita Wikipedia
+fb-2026-fn-herstal,FN Herstal,B,5,algun vinculo cita Wikipedia
+fb-2026-pgz,PGZ,B,3,algun vinculo cita Wikipedia
+fb-2026-wb-group,WB Group,B,5,algun vinculo cita Wikipedia
+fb-2026-ukrainian-defense-industry,Ukrainian Defense Industry,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-roketsan,Roketsan,B,5,algun vinculo cita Wikipedia
+fb-2026-tusas,TUSAŞ,B,5,algun vinculo cita Wikipedia
+fb-2026-mke,MKE,B,3,algun vinculo cita Wikipedia
+fb-2026-uralvagonzavod,Uralvagonzavod,B,3,algun vinculo cita Wikipedia
+fb-2026-united-engine-corporation,United Engine Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-csgc,CSGC,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-sami,SAMI,B,5,algun vinculo cita Wikipedia
+fb-2026-tata-advanced-systems,Tata Advanced Systems,B,5,algun vinculo cita Wikipedia
+fb-2026-brahmos-aerospace,BrahMos Aerospace,B,4,algun vinculo cita Wikipedia
+fb-2026-munitions-india,Munitions India,B,3,algun vinculo cita Wikipedia
+fb-2026-poongsan,Poongsan,B,3,algun vinculo cita Wikipedia
+fb-2026-asc,ASC,B,4,algun vinculo cita Wikipedia
+fb-2026-cbc,CBC,B,5,algun vinculo cita Wikipedia
+fb-2026-petrochina,PetroChina,B,3,algun vinculo cita Wikipedia
+fb-2026-svolt,SVOLT,B,5,algun vinculo cita Wikipedia
+fb-2026-redwood-materials,Redwood Materials,B,6,algun vinculo cita Wikipedia
+fb-2026-last-energy,Last Energy,B,5,algun vinculo cita Wikipedia
+fb-2026-superior-essex,Superior Essex,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-welion,WeLion,B,7,algun vinculo cita Wikipedia
+fb-2026-group14-technologies,Group14 Technologies,B,4,algun vinculo cita Wikipedia
+fb-2026-sila-nanotechnologies,Sila Nanotechnologies,B,4,algun vinculo cita Wikipedia
+fb-2026-guotai-huarong,Guotai-Huarong,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-flexgen,FlexGen,B,3,algun vinculo cita Wikipedia
+fb-2026-blueoval-sk,BlueOval SK,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-hyperstrong,HyperStrong,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-prime-planet-energy-solutions,Prime Planet Energy & Solutions,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-indonesia-battery-corporation,Indonesia Battery Corporation,B,4,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-molicel,Molicel,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-sunwoda-evb,Sunwoda EVB,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-lishen,Lishen,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-encore-wire,Encore Wire,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-starplus-energy,StarPlus Energy,B,3,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-neoen,Neoen,B,3,algun vinculo cita Wikipedia
+fb-2026-rongke-power,Rongke Power,B,3,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-saft,Saft,B,3,algun vinculo cita Wikipedia
+fb-2026-mu-ionic-solutions,MU Ionic Solutions,B,4,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-basf-shanshan,BASF Shanshan,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-nichia,Nichia,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-holtec-international,Holtec International,B,4,algun vinculo cita Wikipedia
+fb-2026-sgb-smit,SGB-SMIT,B,4,algun vinculo cita Wikipedia
+fb-2026-prolec-ge,Prolec GE,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-china-datang-corporation,China Datang Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-china-huadian-corporation,China Huadian Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-china-fusion-energy-co,China Fusion Energy Co.,B,4,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-jiangsu-huapeng-transformer,Jiangsu Huapeng Transformer,A,0,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-guangdong-energy-group,Guangdong Energy Group,B,4,algun vinculo cita Wikipedia
+fb-2026-inner-mongolia-power-group,Inner Mongolia Power Group,A,2,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-cnpc-china-national-petroleum-corporation,CNPC (China National Petroleum Corporation),B,4,algun vinculo cita Wikipedia
+fb-2026-nr-electric,NR Electric,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-rosenergoatom,Rosenergoatom,B,3,EXCLUIDA: sin identificador fuerte (no se inventó) | algun vinculo cita Wikipedia
+fb-2026-atomenergomash,Atomenergomash,B,5,EXCLUIDA: sin identificador fuerte (no se inventó) | algun vinculo cita Wikipedia
+fb-2026-inter-rao,Inter RAO,B,3,algun vinculo cita Wikipedia
+fb-2026-rushydro,RusHydro,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-amprion,Amprion,B,5,algun vinculo cita Wikipedia
+fb-2026-50hertz,50Hertz,B,5,algun vinculo cita Wikipedia
+fb-2026-neso-national-energy-system-operator,NESO (National Energy System Operator),A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-statnett,Statnett,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-energinet,Energinet,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-svenska-kraftnat,Svenska kraftnät,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-edf-energy,EDF Energy,B,5,algun vinculo cita Wikipedia
+fb-2026-arabelle-solutions,Arabelle Solutions,B,4,algun vinculo cita Wikipedia
+fb-2026-eph-energeticky-a-prumyslovy-holding,EPH (Energetický a průmyslový holding),B,6,algun vinculo cita Wikipedia
+fb-2026-axpo,Axpo,B,8,algun vinculo cita Wikipedia
+fb-2026-ansaldo-energia,Ansaldo Energia,B,3,algun vinculo cita Wikipedia
+fb-2026-trench-group,Trench Group,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-proxima-fusion,Proxima Fusion,B,7,EXCLUIDA: sin identificador fuerte (no se inventó) | algun vinculo cita Wikipedia
+fb-2026-iter-organization,ITER Organization,B,3,algun vinculo cita Wikipedia
+fb-2026-bonneville-power-administration,Bonneville Power Administration,B,3,algun vinculo cita Wikipedia
+fb-2026-salt-river-project,Salt River Project,B,3,algun vinculo cita Wikipedia
+fb-2026-miso-midcontinent-iso,MISO (Midcontinent ISO),A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-caiso,CAISO,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-invenergy,Invenergy,B,6,algun vinculo cita Wikipedia
+fb-2026-ls-power,LS Power,B,3,algun vinculo cita Wikipedia
+fb-2026-general-matter,General Matter,B,3,algun vinculo cita Wikipedia
+fb-2026-triso-x,TRISO-X,B,3,algun vinculo cita Wikipedia
+fb-2026-s-c-electric,S&C Electric,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-bruce-power,Bruce Power,B,4,algun vinculo cita Wikipedia
+fb-2026-pemex,Pemex,B,3,algun vinculo cita Wikipedia
+fb-2026-ypf,YPF,B,3,algun vinculo cita Wikipedia
+fb-2026-eskom,Eskom,B,3,algun vinculo cita Wikipedia
+fb-2026-nioc-national-iranian-oil-company,NIOC (National Iranian Oil Company),B,4,algun vinculo cita Wikipedia
+fb-2026-kuwait-petroleum-corporation,Kuwait Petroleum Corporation,B,8,algun vinculo cita Wikipedia
+fb-2026-masdar,Masdar,B,8,algun vinculo cita Wikipedia
+fb-2026-enec-emirates-nuclear-energy-company,ENEC (Emirates Nuclear Energy Company),B,5,algun vinculo cita Wikipedia
+fb-2026-taqa,TAQA,B,4,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-cpc-corporation-taiwan,"CPC Corporation, Taiwan",B,3,algun vinculo cita Wikipedia
+fb-2026-pln,PLN,B,4,algun vinculo cita Wikipedia
+fb-2026-pertamina,Pertamina,B,7,algun vinculo cita Wikipedia
+fb-2026-npcil,NPCIL,B,4,algun vinculo cita Wikipedia
+fb-2026-sp-group,SP Group,B,5,algun vinculo cita Wikipedia
+fb-2026-elsewedy-electric,Elsewedy Electric,B,4,algun vinculo cita Wikipedia
+fb-2026-telespazio,Telespazio,B,5,algun vinculo cita Wikipedia
+fb-2026-tesat-spacecom,Tesat-Spacecom,B,4,algun vinculo cita Wikipedia
+fb-2026-astranis,Astranis,B,10,algun vinculo cita Wikipedia
+fb-2026-apex-space,Apex Space,B,6,vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-ssc,SSC,B,5,algun vinculo cita Wikipedia
+fb-2026-sky-perfect-jsat,SKY Perfect JSAT,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-rscc,RSCC,B,5,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-galactic-energy,Galactic Energy,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-i-space-interstellar-glory,i-Space (Interstellar Glory),A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-space-pioneer,Space Pioneer,A,1,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-cas-space,CAS Space,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-expace,ExPace,A,1,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-intelsat,Intelsat,B,3,algun vinculo cita Wikipedia
+fb-2026-inmarsat,Inmarsat,B,6,algun vinculo cita Wikipedia
+fb-2026-skyroot-aerospace,Skyroot Aerospace,B,3,algun vinculo cita Wikipedia
+fb-2026-nsil,NSIL,B,4,algun vinculo cita Wikipedia
+fb-2026-pld-space,PLD Space,B,5,algun vinculo cita Wikipedia
+fb-2026-arabsat,Arabsat,B,3,algun vinculo cita Wikipedia
+fb-2026-isar-aerospace,Isar Aerospace,B,9,algun vinculo cita Wikipedia
+fb-2026-sodern,Sodern,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-genesat,Genesat,B,3,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-sast,SAST,B,3,EXCLUIDA: sin identificador fuerte (no se inventó) | algun vinculo cita Wikipedia
+fb-2026-caset,CASET,B,3,EXCLUIDA: sin identificador fuerte (no se inventó) | algun vinculo cita Wikipedia
+fb-2026-galaxyspace,GalaxySpace,B,4,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-chang-guang-satellite,Chang Guang Satellite,B,3,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-asiasat,AsiaSat,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-cnes,CNES,B,4,algun vinculo cita Wikipedia
+fb-2026-jaxa,JAXA,B,4,algun vinculo cita Wikipedia
+fb-2026-cnsa,CNSA,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-roscosmos,Roscosmos,B,4,algun vinculo cita Wikipedia
+fb-2026-iss-reshetnev,ISS Reshetnev,B,3,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-voltagrid,VoltaGrid,B,6,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-zhongtian-technology-submarine-cable,Zhongtian Technology Submarine Cable,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-gulf-data-hub,Gulf Data Hub,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-mercury-engineering,Mercury Engineering,A,0,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-john-sisk-son,John Sisk & Son,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-kirby-group-engineering,Kirby Group Engineering,A,0,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-open-access-data-centres,Open Access Data Centres,A,1,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-rack-centre,Rack Centre,B,3,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-echelon-data-centres,Echelon Data Centres,A,2,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-je-dunn-construction,JE Dunn Construction,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-gilbane,Gilbane,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-panattoni,Panattoni,B,3,algun vinculo cita Wikipedia
+fb-2026-mace,Mace,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-logicor,Logicor,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-link-logistics-real-estate,Link Logistics Real Estate,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-mapletree-investments,Mapletree Investments,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-applied-digital,Applied Digital,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-flexential,Flexential,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-prime-data-centers,Prime Data Centers,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-tract,Tract,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-sabey-data-centers,Sabey Data Centers,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-edgecore-digital-infrastructure,EdgeCore Digital Infrastructure,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-lancium,Lancium,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-virtus-data-centres,Virtus Data Centres,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-bdx-data-centers,BDx Data Centers,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-bridge-data-centres,Bridge Data Centres,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-idc-frontier,IDC Frontier,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-motivair,Motivair,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-rittal,Rittal,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-staubli,Stäubli,B,3,algun vinculo cita Wikipedia
+fb-2026-danfoss,Danfoss,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-exyte,Exyte,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-black-veatch,Black & Veatch,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-rosendin,Rosendin,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-cupertino-electric,Cupertino Electric,B,3,vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-kiewit,Kiewit,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-burns-mcdonnell,Burns & McDonnell,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-cxic-group,CXIC Group,A,0,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables
+fb-2026-port-of-antwerp-bruges,Port of Antwerp-Bruges,B,3,algun vinculo cita Wikipedia
+fb-2026-tanger-med,Tanger Med,B,3,algun vinculo cita Wikipedia
+fb-2026-pacific-international-lines,Pacific International Lines,B,4,algun vinculo cita Wikipedia
+fb-2026-x-press-feeders,X-Press Feeders,B,3,algun vinculo cita Wikipedia
+fb-2026-grimaldi-group,Grimaldi Group,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-busan-port-authority,Busan Port Authority,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-taiwan-international-ports-corporation,Taiwan International Ports Corporation,B,3,algun vinculo cita Wikipedia
+fb-2026-geodis,GEODIS,B,5,algun vinculo cita Wikipedia
+fb-2026-kazakhstan-temir-zholy,Kazakhstan Temir Zholy,B,3,algun vinculo cita Wikipedia
+fb-2026-mrs-logistica,MRS Logística,B,5,algun vinculo cita Wikipedia
+fb-2026-dachser,DACHSER,B,5,algun vinculo cita Wikipedia
+fb-2026-rhenus-group,Rhenus Group,B,5,algun vinculo cita Wikipedia
+fb-2026-nippon-cargo-airlines,Nippon Cargo Airlines,B,3,algun vinculo cita Wikipedia
+fb-2026-taoyuan-international-airport-corporation,Taoyuan International Airport Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-lufthansa-cargo,Lufthansa Cargo,B,4,algun vinculo cita Wikipedia
+fb-2026-turkish-cargo,Turkish Cargo,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-swissport,Swissport,B,7,algun vinculo cita Wikipedia
+fb-2026-worldwide-flight-services,Worldwide Flight Services,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-dnata,dnata,B,4,algun vinculo cita Wikipedia
+fb-2026-hactl,Hactl,B,5,algun vinculo cita Wikipedia
+fb-2026-incheon-international-airport-corporation,Incheon International Airport Corporation,B,5,algun vinculo cita Wikipedia
+fb-2026-port-of-long-beach,Port of Long Beach,B,4,algun vinculo cita Wikipedia
+fb-2026-santos-port-authority,Santos Port Authority,B,6,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-flexport,Flexport,B,5,algun vinculo cita Wikipedia
+fb-2026-yusen-logistics,Yusen Logistics,B,5,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-kintetsu-world-express,Kintetsu World Express,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-indian-railways,Indian Railways,B,4,algun vinculo cita Wikipedia
+fb-2026-dong-fang-international-container,Dong Fang International Container,A,5,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-florens,Florens,B,3,EXCLUIDA: sin identificador fuerte (no se inventó) | algun vinculo cita Wikipedia
+fb-2026-china-merchants-group,China Merchants Group,B,5,algun vinculo cita Wikipedia
+fb-2026-investment-corporation-of-dubai,Investment Corporation of Dubai,B,7,algun vinculo cita Wikipedia
+fb-2026-lunate,Lunate,B,3,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-khazanah-nasional,Khazanah Nasional,B,3,algun vinculo cita Wikipedia
+fb-2026-future-fund,Future Fund,B,3,algun vinculo cita Wikipedia
+fb-2026-korea-investment-corporation,Korea Investment Corporation,B,4,algun vinculo cita Wikipedia
+fb-2026-silk-road-fund,Silk Road Fund,B,9,algun vinculo cita Wikipedia
+fb-2026-shenzhen-capital-group,Shenzhen Capital Group,B,4,algun vinculo cita Wikipedia
+fb-2026-hefei-construction-investment,Hefei Construction Investment,B,3,EXCLUIDA: sin identificador fuerte (no se inventó)
+fb-2026-samruk-kazyna,Samruk-Kazyna,B,8,algun vinculo cita Wikipedia
+fb-2026-niif,NIIF,B,5,algun vinculo cita Wikipedia
+fb-2026-bank-of-korea,Bank of Korea,B,3,algun vinculo cita Wikipedia
+fb-2026-bank-of-canada,Bank of Canada,B,4,algun vinculo cita Wikipedia
+fb-2026-reserve-bank-of-australia,Reserve Bank of Australia,B,4,algun vinculo cita Wikipedia
+fb-2026-banco-central-do-brasil,Banco Central do Brasil,B,3,algun vinculo cita Wikipedia
+fb-2026-banco-de-mexico,Banco de México,B,3,algun vinculo cita Wikipedia
+fb-2026-saudi-central-bank,Saudi Central Bank,B,3,algun vinculo cita Wikipedia
+fb-2026-monetary-authority-of-singapore,Monetary Authority of Singapore,B,4,algun vinculo cita Wikipedia
+fb-2026-aramco-ventures,Aramco Ventures,B,4,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-sidf,SIDF,A,4,tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-hong-kong-monetary-authority,Hong Kong Monetary Authority,B,4,algun vinculo cita Wikipedia
+fb-2026-central-bank-of-the-republic-of-china-taiwan,Central Bank of the Republic of China (Taiwan),B,3,algun vinculo cita Wikipedia
+fb-2026-norges-bank,Norges Bank,B,3,algun vinculo cita Wikipedia
+fb-2026-apg,APG,B,5,algun vinculo cita Wikipedia
+fb-2026-calstrs,CalSTRS,B,4,algun vinculo cita Wikipedia
+fb-2026-ontario-teachers,Ontario Teachers',B,6,algun vinculo cita Wikipedia
+fb-2026-omers,OMERS,B,5,algun vinculo cita Wikipedia
+fb-2026-psp-investments,PSP Investments,B,6,algun vinculo cita Wikipedia
+fb-2026-australiansuper,AustralianSuper,B,6,algun vinculo cita Wikipedia
+fb-2026-japan-post-bank,Japan Post Bank,B,3,algun vinculo cita Wikipedia
+fb-2026-sinosure,Sinosure,B,5,algun vinculo cita Wikipedia
+fb-2026-development-bank-of-japan,Development Bank of Japan,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-nexi,NEXI,B,3,algun vinculo cita Wikipedia
+fb-2026-kfw-ipex-bank,KfW IPEX-Bank,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-ebrd,EBRD,B,4,algun vinculo cita Wikipedia
+fb-2026-aiib,AIIB,B,5,algun vinculo cita Wikipedia
+fb-2026-asian-development-bank,Asian Development Bank,B,6,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-ifc,IFC,B,6,algun vinculo cita Wikipedia
+fb-2026-idb,IDB,B,4,algun vinculo cita Wikipedia
+fb-2026-bpifrance,Bpifrance,B,6,algun vinculo cita Wikipedia
+fb-2026-cassa-depositi-e-prestiti,Cassa Depositi e Prestiti,B,8,algun vinculo cita Wikipedia
+fb-2026-kexim,KEXIM,B,4,algun vinculo cita Wikipedia
+fb-2026-us-exim,US EXIM,B,4,algun vinculo cita Wikipedia
+fb-2026-dfc,DFC,B,4,algun vinculo cita Wikipedia
+fb-2026-rec-limited,REC Limited,B,5,algun vinculo cita Wikipedia
+fb-2026-lightspeed-venture-partners,Lightspeed Venture Partners,B,4,algun vinculo cita Wikipedia
+fb-2026-general-catalyst,General Catalyst,B,6,algun vinculo cita Wikipedia
+fb-2026-kleiner-perkins,Kleiner Perkins,B,6,algun vinculo cita Wikipedia
+fb-2026-accel,Accel,B,3,algun vinculo cita Wikipedia
+fb-2026-index-ventures,Index Ventures,B,3,algun vinculo cita Wikipedia
+fb-2026-khosla-ventures,Khosla Ventures,B,6,algun vinculo cita Wikipedia
+fb-2026-menlo-ventures,Menlo Ventures,B,3,algun vinculo cita Wikipedia
+fb-2026-in-q-tel,In-Q-Tel,B,5,algun vinculo cita Wikipedia
+fb-2026-intel-capital,Intel Capital,B,5,algun vinculo cita Wikipedia
+fb-2026-hillhouse,Hillhouse,B,6,algun vinculo cita Wikipedia
+fb-2026-breakthrough-energy-ventures,Breakthrough Energy Ventures,B,6,algun vinculo cita Wikipedia
+fb-2026-general-atlantic,General Atlantic,B,4,algun vinculo cita Wikipedia
+fb-2026-actis,Actis,B,4,algun vinculo cita Wikipedia
+fb-2026-bain-capital,Bain Capital,B,3,algun vinculo cita Wikipedia
+fb-2026-i-squared-capital,I Squared Capital,B,3,algun vinculo cita Wikipedia
+fb-2026-energy-capital-partners,Energy Capital Partners,B,3,algun vinculo cita Wikipedia
+fb-2026-copenhagen-infrastructure-partners,Copenhagen Infrastructure Partners,B,4,algun vinculo cita Wikipedia
+fb-2026-ifm-investors,IFM Investors,B,4,algun vinculo cita Wikipedia
+fb-2026-ardian,Ardian,B,3,algun vinculo cita Wikipedia
+fb-2026-magnetar,Magnetar,B,3,algun vinculo cita Wikipedia
+fb-2026-mbk-partners,MBK Partners,B,4,algun vinculo cita Wikipedia
+fb-2026-tanaka-kikinzoku,Tanaka Kikinzoku,B,4,algun vinculo cita Wikipedia
+fb-2026-collahuasi,Collahuasi,B,3,algun vinculo cita Wikipedia
+fb-2026-antamina,Antamina,B,4,algun vinculo cita Wikipedia
+fb-2026-kazakhmys,Kazakhmys,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-kaz-minerals,KAZ Minerals,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-ylb,YLB,B,3,algun vinculo cita Wikipedia
+fb-2026-ls-mnm,LS MnM,B,3,algun vinculo cita Wikipedia
+fb-2026-hancock-prospecting,Hancock Prospecting,B,5,algun vinculo cita Wikipedia
+fb-2026-jogmec,JOGMEC,B,3,algun vinculo cita Wikipedia
+fb-2026-oyu-tolgoi,Oyu Tolgoi,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-east-hope-group,East Hope Group,A,1,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-global-advanced-metals,Global Advanced Metals,A,1,tier A: menos de 3 vinculos verificables
+fb-2026-sinochem-holdings,Sinochem Holdings,B,3,algun vinculo cita Wikipedia
+fb-2026-mind-id,MIND ID,B,8,algun vinculo cita Wikipedia
+fb-2026-matheson-tri-gas,Matheson Tri-Gas,B,4,algun vinculo cita Wikipedia
+fb-2026-eti-maden,Eti Maden,B,3,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-lkab,LKAB,B,5,algun vinculo cita Wikipedia
+fb-2026-novelis,Novelis,B,10,algun vinculo cita Wikipedia
+fb-2026-indium-corporation,Indium Corporation,A,2,tier A: menos de 3 vinculos verificables
+fb-2026-orbia,Orbia,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-minsur,Minsur,A,2,tier A: menos de 3 vinculos verificables | algun vinculo cita Wikipedia
+fb-2026-metalkol,Metalkol,B,4,EXCLUIDA: sin identificador fuerte (no se inventó) | vinculos de baja confianza/rumored: entran como propuesta
+fb-2026-vale-base-metals,Vale Base Metals,B,5,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-yacimientos-de-litio-bolivianos,Yacimientos de Litio Bolivianos,B,4,vinculos de baja confianza/rumored: entran como propuesta | algun vinculo cita Wikipedia
+fb-2026-futong-group,Futong Group,A,1,EXCLUIDA: sin identificador fuerte (no se inventó) | tier A: menos de 3 vinculos verificables | vinculos de baja confianza/rumored: entran como propuesta

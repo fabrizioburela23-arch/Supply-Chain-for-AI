@@ -71,6 +71,9 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    295 crear · 3 completar (Tencent, STMicro, Xanadu) · vínculos 244 vivos / 298 propuestos / 954 pendientes · TSMC 318 → 355.
    docs/expansion/LOTE_2026-10-21_PLAN.md. Aplicar = Fabrizio (copia + panel 📥 + PIN). Revisar a mano: Eviden, Anord Mardix,
    Kingston, Hisense Broadband, Walsin Technology, VAST Data, Sparkle, VSMC.
+   ✅ Fabrizio APLICÓ el lote 3. LOTE 4 (P2 completo, 2026-10-21): `bundle_lote4_p2.json.gz` = las 336 fichas NUEVAS de
+   `khipus_entrega_P2_completo.zip` (633; las 297 del lote 3 llegaron idénticas). 336/336 válidas; plan local 335 crear ·
+   1 completar (PetroChina). Pendiente: aplicarlo (Fabrizio).
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).
