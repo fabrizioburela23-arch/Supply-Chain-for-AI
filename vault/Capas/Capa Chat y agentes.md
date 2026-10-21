@@ -43,7 +43,7 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 9 |
 | usa a | [[Capa Investigación]] | 9 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
-| la usa | [[Capa Infraestructura]] | 7 |
+| la usa | [[Capa Infraestructura]] | 8 |
 | la usa | [[Capa Comité]] | 6 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 5 |

@@ -38,6 +38,7 @@ capitalización EN VIVO de TODAS las cotizadas del grafo.
 - [[core.live_fundamentals.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
+- [[core.sim_report.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[research.health.py]] — lo importa

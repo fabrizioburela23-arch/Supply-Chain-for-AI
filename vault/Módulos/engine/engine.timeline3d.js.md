@@ -27,7 +27,7 @@ El Grafo Temporal en 3D, donde la PROFUNDIDAD ES EL TIEMPO.
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **51 de 102** (línea 3110), después de [[engine.temporal-graph.js]] y antes de [[engine.maptime.js]].
+Se carga en [[app.html]] en la posición **51 de 103** (línea 3110), después de [[engine.temporal-graph.js]] y antes de [[engine.maptime.js]].
 
 ## Lo usan
 

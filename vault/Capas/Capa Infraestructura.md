@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 47
+archivos: 48
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,13 +9,13 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**47 archivos · 27.298 líneas.** Volver al [[00 Mapa de Khipus]].
+**48 archivos · 27.510 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 4.945 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[server.py]] — 4.951 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 - [[scripts.build_vault.py]] — 3.492 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 - [[core.replay.py]] — 1.473 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
 - [[core.ai.py]] — 1.196 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
@@ -47,6 +47,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.celestrak.py]] — 255 líneas · satélites reales (CelesTrak) para el Space Monitor y el texto de Khipu.
 - [[core.identity.py]] — 227 líneas · QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del plan).
 - [[scripts.build_governance.py]] — 226 líneas · mantiene governance/manifest.json (docs/INFRA_OPERATIVA.md §5.1-§5.3; paso 9).
+- [[core.sim_report.py]] — 206 líneas · INFORME de la simulación de escenarios (2026-10-21, «que parezca un producto»).
 - [[core.governance_preview.py]] — 191 líneas · "¿qué cambia para mí?" de una versión de artefacto ANTES de activarla (paso 12; pieza mínima del flujo de gobernanza §5.3 de docs/INFRA_OPERATIVA.md).
 - [[core.http.py]] — 189 líneas · llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology y matrix).
 - [[security_audit.py]] — 182 líneas · Khipu Finance (Fase 2H)
@@ -76,12 +77,12 @@ Variables de entorno: [[Índice de variables de entorno]].
 | la usa | [[Capa MCP y API]] | 23 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 23 |
 | la usa | [[Capa Comité]] | 22 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 19 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 20 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 11 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 12 |
+| usa a | [[Capa Chat y agentes]] | 8 |
 | la usa | [[Capa Voz]] | 7 |
-| usa a | [[Capa Chat y agentes]] | 7 |
 | usa a | [[Capa Investigación]] | 7 |
 | usa a | [[Capa Comité]] | 6 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 6 |

@@ -91,6 +91,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[core.risk_report.py]] — lo importa
 - [[core.scenario_engine.py]] — lo importa
 - [[core.scenario_pnl.py]] — lo importa
+- [[core.sim_report.py]] — lo importa
 - [[core.world.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[matrix.engine.py]] — lo importa

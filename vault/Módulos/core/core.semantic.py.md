@@ -37,6 +37,7 @@ CAPA 2 (PRECONSCIENTE): el grafo semántico activo.
 - [[core.portfolio_advisor.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
 - [[core.sim_agents.py]] — lo importa
+- [[core.sim_report.py]] — lo importa
 - [[core.trading_agent.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[server.py]] — lo importa

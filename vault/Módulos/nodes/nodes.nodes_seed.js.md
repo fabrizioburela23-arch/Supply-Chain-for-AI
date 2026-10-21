@@ -32,7 +32,7 @@ De nivel superior (globales del script): `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `C
 
 - [[engine.geo_coords.js]] — usa `GeoCoords`, `KhipuCountries`
 
-Se carga en [[app.html]] en la posición **2 de 102** (línea 1504) y antes de [[nodes.categories_extra.js]].
+Se carga en [[app.html]] en la posición **2 de 103** (línea 1504) y antes de [[nodes.categories_extra.js]].
 
 ## Lo usan
 

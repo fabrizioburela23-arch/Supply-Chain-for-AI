@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (46 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (52 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,12 +18,15 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 - [[core.khipu_chat.py]]
 - [[core.portfolio_advisor.py]]
+- [[core.sim_report.py]]
 - [[core.trading_agent.py]]
 - [[engine.brief.js]]
 - [[engine.signals.js]]
+- [[engine.simreport.js]]
 - [[tests.test_agent_signals_one_tap.py]]
 - [[tests.test_brief_portfolio_card.py]]
 - [[tests.test_ia_concreta_plan.py]]
+- [[tests.test_sim_report.py]]
 
 ## Variables que menciona
 

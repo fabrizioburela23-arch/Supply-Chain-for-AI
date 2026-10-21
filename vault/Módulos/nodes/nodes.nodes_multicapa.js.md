@@ -34,7 +34,7 @@ De nivel superior (globales del script): `META_MULTICAPA`, `_MC_C2S`, `_MC_S9`
 
 - [[nodes.nodes_seed.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **13 de 102** (línea 1515), después de [[nodes.nodes_china.js]] y antes de [[nodes.preipo_intel.js]].
+Se carga en [[app.html]] en la posición **13 de 103** (línea 1515), después de [[nodes.nodes_china.js]] y antes de [[nodes.preipo_intel.js]].
 
 ## Lo usan
 

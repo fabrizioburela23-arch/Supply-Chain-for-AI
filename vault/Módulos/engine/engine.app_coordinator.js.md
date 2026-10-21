@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/app_coordinator.js"
 lenguaje: "javascript"
-lineas: 2703
+lineas: 2718
 aliases: ["engine/app_coordinator.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/app_coordinator.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 2.703 líneas · `engine/app_coordinator.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 2.718 líneas · `engine/app_coordinator.js`
 
 ## Para qué sirve
 
@@ -34,6 +34,7 @@ De nivel superior (globales del script): `_DS_SRC`, `_TERM_ICON`, `_TERM_SEED`, 
 - [[engine.hypergraph.js]] — usa `TemporalHypergraph`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.secondbrain.js]] — usa `SecondBrain`
+- [[engine.simreport.js]] — usa `KhipuSimReport`
 - [[engine.spacemonitor.js]] — usa `KhipuSpace`
 - [[engine.termdata.js]] — usa `TermData`
 - [[engine.toast.js]] — usa `KhipuToast`
@@ -43,11 +44,11 @@ De nivel superior (globales del script): `_DS_SRC`, `_TERM_ICON`, `_TERM_SEED`, 
 - [[engine.graph3d.js]] — lo nombra por su ruta
 - [[engine.hypergraph.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **98 de 102** (línea 3226), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
+Se carga en [[app.html]] en la posición **99 de 103** (línea 3227), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 98)
+- [[app.html]] — lo carga con `<script>` (posición 99)
 - [[app.html]] — usa `_dossierAddCompare`, `_dossierAutocomplete`, `_dossierLoad`, `_dossierToWarRoom`, `_go3D`, `_termCat`, `_termClearAll`, `_termFilter` y 2 más
 - [[engine.app_main.js]] — usa `_dossierRedrawIfNeeded`, `_dossierRelabel`, `_termRefreshPrices`, `initGdelt`, `initSimTab`, `initSpaceTab`, `initTerminalTab`, `renderNrsTop10`
 - [[engine.app_preflight.js]] — usa `initSimTab`

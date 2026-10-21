@@ -3698,6 +3698,11 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
      público (voice.js) comparten la MISMA promesa. ══ */
   function fetchAgentSim(scenario, seeds, lang) {
     var body = { scenario: scenario, seeds: seeds || [], lang: lang || ckLang() };
+    // tu cartera (valor en USD de cada posición, la misma valoración de toda la app) → «tu cartera en este escenario»
+    try {
+      var mp = window.KhipuHot && typeof window.KhipuHot.myPositions === 'function' ? window.KhipuHot.myPositions() : null;
+      if (mp && mp.positions && mp.positions.length) body.positions = mp.positions.slice(0, 60);
+    } catch (e) {}
     try {
       return fetch((window.BASE || '') + '/api/sim/agents', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -3855,6 +3860,12 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       if (!body) return;   // salieron de la escena
       if (!d || d.ok === false) {
         body.innerHTML = '<div class="bcp-loading err">⚠ ' + esc((d && d.error) || (en ? 'Simulation failed' : 'La simulación falló')) + '</div>';
+        return;
+      }
+      if (window.KhipuSimReport && d.report) {      // informe completo (engine/simreport.js)
+        d.scenario = d.scenario || scen;
+        body.innerHTML = window.KhipuSimReport.render(d, en);
+        window.KhipuSimReport.bind(body, d, en, function (id) { stage('xray', id); });
         return;
       }
       body.innerHTML = renderAgentSim(d, en);

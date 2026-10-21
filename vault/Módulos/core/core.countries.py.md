@@ -38,6 +38,7 @@ UNA tabla de países: ISO-2 ↔ clave del catálogo ↔ nombre ES/EN ↔ región
 
 - [[core.context_engine.py]] — lo importa
 - [[core.import_normalize.py]] — lo importa
+- [[core.sim_report.py]] — lo importa
 - [[core.world.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[scripts.build_country_review.py]] — lo importa

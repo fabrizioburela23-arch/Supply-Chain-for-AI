@@ -26,11 +26,11 @@ MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de 
 - [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `_appVersion`, `_showUpdatePill`
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **95 de 102** (línea 3222), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
+Se carga en [[app.html]] en la posición **96 de 103** (línea 3223), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 95)
+- [[app.html]] — lo carga con `<script>` (posición 96)
 - [[engine.voice.js]] — usa `KhipuLive`
 - [[engine.xray.js]] — usa `KhipuLive`
 

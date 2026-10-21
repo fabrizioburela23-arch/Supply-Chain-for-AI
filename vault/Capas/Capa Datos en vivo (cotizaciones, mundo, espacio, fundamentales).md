@@ -48,7 +48,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | usa a | [[Capa Interfaz (Khipus OS)]] | 25 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 23 |
 | usa a | [[Capa Infraestructura]] | 23 |
-| la usa | [[Capa Infraestructura]] | 19 |
+| la usa | [[Capa Infraestructura]] | 20 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |

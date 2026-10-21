@@ -3382,6 +3382,12 @@ def sim_agents_route():
         if not isinstance(out, dict):
             raise ValueError('sim_agents.run devolvió un tipo inesperado')
         out.setdefault('ok', True)
+        if out.get('ok') and out.get('impacts'):     # informe completo (2026-10-21): cifras en vivo, sectores, tu cartera
+            try:
+                from core import sim_report
+                out['report'] = sim_report.build(out, lang, positions=body.get('positions'))
+            except Exception as e:  # noqa: BLE001 — el informe nunca rompe la simulación
+                log.warning('sim_report: %s', type(e).__name__)
         try:                                # lote I1: whatif.agent_sim en la cola del libro (0 ms al usuario)
             from core import decision_sites
             decision_sites.agent_sim(scenario, seeds, lang, out)

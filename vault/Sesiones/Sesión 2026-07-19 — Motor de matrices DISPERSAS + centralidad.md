@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-19"
-ruta: "docs/ESTADO.md#L2395"
+ruta: "docs/ESTADO.md#L2401"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-07-19 — Motor de matrices DISPERSAS + centralidad (rama `feature/sparse-matrix-centrality`, NO desplegada)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2395 (60 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2401 (60 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

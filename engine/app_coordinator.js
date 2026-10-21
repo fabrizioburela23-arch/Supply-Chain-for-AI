@@ -536,7 +536,11 @@ async function _runAgentSimTab(text, presetId, output, status) {
 
     const r = await fetch((typeof BASE !== 'undefined' ? BASE : '') + '/api/sim/agents', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenario: text, seeds, lang: en ? 'en' : 'es' }),
+      body: JSON.stringify(Object.assign({ scenario: text, seeds, lang: en ? 'en' : 'es' }, (() => {
+        // tu cartera (valor en USD por posición) → «tu cartera en este escenario» del informe completo
+        try { const mp = window.KhipuHot && window.KhipuHot.myPositions ? window.KhipuHot.myPositions() : null;
+          return mp && mp.positions && mp.positions.length ? { positions: mp.positions.slice(0, 60) } : {}; } catch (e) { return {}; }
+      })())),
     });
     const d = await r.json().catch(() => null);
     if (d && d.ok && d.no_seeds) {
@@ -576,6 +580,17 @@ async function _runAgentSimTab(text, presetId, output, status) {
       impactSource: 'agents',
       debate: { rounds: d.rounds || [], impacts: d.impacts || [], model: d.model || '' },
     });
+    // informe completo (engine/simreport.js): cifras clave, tu cartera, sectores, tabla con datos en vivo, metodología
+    try {
+      const rep = document.getElementById('wr-report');
+      if (rep && window.KhipuSimReport && d.report) {
+        d.scenario = d.scenario || text;
+        rep.style.whiteSpace = 'normal';
+        rep.innerHTML = window.KhipuSimReport.render(d, en);
+        window.KhipuSimReport.bind(rep, d, en, id => { try { if (window._surface) window._surface('xray', id); } catch (e) {} });
+        if (rep.parentElement) rep.parentElement.open = true;
+      }
+    } catch (e) {}
     _simSetStatus(status, en ? '✅ Agent simulation ready' : '✅ Simulación por agentes lista', 'green');
     return true;
   } catch (e) {

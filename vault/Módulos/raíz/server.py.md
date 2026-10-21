@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "server.py"
 lenguaje: "python"
-lineas: 4945
+lineas: 4951
 aliases: ["server.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # server.py
 
-> Módulo · capa [[Capa Infraestructura]] · 4.945 líneas · `server.py`
+> Módulo · capa [[Capa Infraestructura]] · 4.951 líneas · `server.py`
 
 ## Para qué sirve
 
@@ -56,47 +56,47 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - `ai_usage_report()` _(línea 3325)_
 - `ai_usage_limits()` _(línea 3342)_
 - `sim_agents_route()` _(línea 3365)_
-- `earnings(ticker)` _(línea 3399)_
-- `fundamentals(ticker)` _(línea 3420)_
-- `insiders(ticker)` _(línea 3504)_
-- `ai_analyze()` _(línea 3523)_
-- `canvas_generate()` _(línea 3606)_
-- `marketstack_proxy()` _(línea 3719)_
-- `ipo_calendar()` — IPO calendar from Finnhub — last 90 days + next 30 days _(línea 3736)_
-- `space_launches()` — Próximos lanzamientos espaciales, mapeados a nodos de Khipu. Blindado para la demo: timeout corto + respaldo vacío si Launch Library está … _(línea 3758)_
-- `space_tle()` — Satélites reales por constelación (CelesTrak). Muestrea para rendimiento pero reporta los conteos REALES (con `as_of`; `stale` = copia de … _(línea 3811)_
-- `news_gdelt(company_name)` _(línea 3862)_
-- `dossier(ticker)` — Dossier de 5-6 años para la pestaña Análisis (app.html `_dossierRenderPanels`): ingresos, dilución, FCF, valuación, balance, márgenes, … _(línea 3915)_
-- `market_live_caps()` — Capitalización + precio EN VIVO de TODAS las cotizadas del grafo (lote Yahoo, caché 15 min, refresco en segundo plano). El cliente pisa con … _(línea 3940)_
-- `market_live_fundamentals()` — Fundamentales EN VIVO (margen, crecimiento, ingresos 12 m, empleados) de todas las cotizadas, refrescados por tandas en segundo plano … _(línea 3950)_
-- `company_live(ticker)` — Perfil EN VIVO de cualquier empresa cotizada (pedido 2026-09-28: "que la info se actualice en vivo"): precio y % del día, capitalización en … _(línea 3959)_
-- `company_valuation_news(name)` — Valuación de una PRIVADA según los titulares recientes (GDELT): la cifra citada, medio, fecha y si es ronda cerrada o negociación. Pedido … _(línea 3981)_
-- `company_research(ticker)` — Descarga el 10-K/20-F más reciente de SEC EDGAR y Claude lo sintetiza. _(línea 4039)_
-- `grafo_estado()` _(línea 4102)_
-- `deep_analyze()` — Arranca una investigación profunda (Capa 4). Una a la vez por worker. _(línea 4210)_
-- `client_diag()` _(línea 4259)_
-- `client_diag_recent()` _(línea 4278)_
-- `deep_status()` _(línea 4299)_
-- `portfolio_risk_report()` — REPORTE DE RIESGO (VaR/CVaR/volatilidad/beta/correlaciones/contribución) con precios diarios REALES de 1 año. Body: {positions:[{symbol, … _(línea 4363)_
-- `portfolio_vega_report()` — REPORTE VEGA (Kappa) de opciones: griegas Black-Scholes con volatilidad implícita EN VIVO del contrato. Body: {options:[{symbol, kind, … _(línea 4385)_
-- `options_chain(symbol)` — Vencimientos y strikes disponibles del subyacente (selectores de la UI). _(línea 4403)_
-- `api_portfolio_risk_internal()` — VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser). _(línea 4415)_
-- `generate_khipu_key(user_id, tier=…)` _(línea 4435)_
-- `validate_khipu_key(key)` _(línea 4440)_
-- `khipu_auth(min_tier=…)` _(línea 4449)_
-- `api_issue_key()` — Issue a Khipu Finance API key. Body: {user_id, tier}. Tiers: free/starter/pro/business/enterprise. _(línea 4471)_
-- `api_docs()` _(línea 4491)_
-- `api_nodes()` _(línea 4513)_
-- `api_node_live(node_id)` _(línea 4519)_
-- `api_portfolio_risk()` — VaR + CVaR del portfolio del cliente (Alpha Vantage históricos). Contrato público INTOCABLE — mismo cálculo compartido en … _(línea 4532)_
-- `quotes_live()` — Lote de cotizaciones en vivo. Body: {"tickers": ["NVDA","TSM","7203.T",…]} (máx 150 por petición; el cliente recorre TODO el catálogo en … _(línea 4548)_
-- `macro_fred()` — Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS Returns last 30 data points per series. _(línea 4580)_
-- `investors_13f(ticker)` — Top institutional holders from SEC EDGAR 13F filings. Cached 24h. _(línea 4615)_
-- `trade_flows()` — UN Comtrade public preview API — bilateral semiconductor trade. ?reporter=USA&partner=CHN&product=8542 (optional filters) HS codes: 8541 … _(línea 4668)_
-- `trade_history()` _(línea 4740)_
-- `portfolio_comment()` — Comentario CAUTO de Khipu sobre el portafolio (papel). Recibe un resumen AGREGADO y anónimo desde el cliente (sin datos personales: solo … _(línea 4753)_
-- `portfolio_advice()` — CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un resumen ANÓNIMO de la cartera (papel) + candidatos del universo, … _(línea 4837)_
-- `trade_positions_detail()` _(línea 4916)_
+- `earnings(ticker)` _(línea 3405)_
+- `fundamentals(ticker)` _(línea 3426)_
+- `insiders(ticker)` _(línea 3510)_
+- `ai_analyze()` _(línea 3529)_
+- `canvas_generate()` _(línea 3612)_
+- `marketstack_proxy()` _(línea 3725)_
+- `ipo_calendar()` — IPO calendar from Finnhub — last 90 days + next 30 days _(línea 3742)_
+- `space_launches()` — Próximos lanzamientos espaciales, mapeados a nodos de Khipu. Blindado para la demo: timeout corto + respaldo vacío si Launch Library está … _(línea 3764)_
+- `space_tle()` — Satélites reales por constelación (CelesTrak). Muestrea para rendimiento pero reporta los conteos REALES (con `as_of`; `stale` = copia de … _(línea 3817)_
+- `news_gdelt(company_name)` _(línea 3868)_
+- `dossier(ticker)` — Dossier de 5-6 años para la pestaña Análisis (app.html `_dossierRenderPanels`): ingresos, dilución, FCF, valuación, balance, márgenes, … _(línea 3921)_
+- `market_live_caps()` — Capitalización + precio EN VIVO de TODAS las cotizadas del grafo (lote Yahoo, caché 15 min, refresco en segundo plano). El cliente pisa con … _(línea 3946)_
+- `market_live_fundamentals()` — Fundamentales EN VIVO (margen, crecimiento, ingresos 12 m, empleados) de todas las cotizadas, refrescados por tandas en segundo plano … _(línea 3956)_
+- `company_live(ticker)` — Perfil EN VIVO de cualquier empresa cotizada (pedido 2026-09-28: "que la info se actualice en vivo"): precio y % del día, capitalización en … _(línea 3965)_
+- `company_valuation_news(name)` — Valuación de una PRIVADA según los titulares recientes (GDELT): la cifra citada, medio, fecha y si es ronda cerrada o negociación. Pedido … _(línea 3987)_
+- `company_research(ticker)` — Descarga el 10-K/20-F más reciente de SEC EDGAR y Claude lo sintetiza. _(línea 4045)_
+- `grafo_estado()` _(línea 4108)_
+- `deep_analyze()` — Arranca una investigación profunda (Capa 4). Una a la vez por worker. _(línea 4216)_
+- `client_diag()` _(línea 4265)_
+- `client_diag_recent()` _(línea 4284)_
+- `deep_status()` _(línea 4305)_
+- `portfolio_risk_report()` — REPORTE DE RIESGO (VaR/CVaR/volatilidad/beta/correlaciones/contribución) con precios diarios REALES de 1 año. Body: {positions:[{symbol, … _(línea 4369)_
+- `portfolio_vega_report()` — REPORTE VEGA (Kappa) de opciones: griegas Black-Scholes con volatilidad implícita EN VIVO del contrato. Body: {options:[{symbol, kind, … _(línea 4391)_
+- `options_chain(symbol)` — Vencimientos y strikes disponibles del subyacente (selectores de la UI). _(línea 4409)_
+- `api_portfolio_risk_internal()` — VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser). _(línea 4421)_
+- `generate_khipu_key(user_id, tier=…)` _(línea 4441)_
+- `validate_khipu_key(key)` _(línea 4446)_
+- `khipu_auth(min_tier=…)` _(línea 4455)_
+- `api_issue_key()` — Issue a Khipu Finance API key. Body: {user_id, tier}. Tiers: free/starter/pro/business/enterprise. _(línea 4477)_
+- `api_docs()` _(línea 4497)_
+- `api_nodes()` _(línea 4519)_
+- `api_node_live(node_id)` _(línea 4525)_
+- `api_portfolio_risk()` — VaR + CVaR del portfolio del cliente (Alpha Vantage históricos). Contrato público INTOCABLE — mismo cálculo compartido en … _(línea 4538)_
+- `quotes_live()` — Lote de cotizaciones en vivo. Body: {"tickers": ["NVDA","TSM","7203.T",…]} (máx 150 por petición; el cliente recorre TODO el catálogo en … _(línea 4554)_
+- `macro_fred()` — Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS Returns last 30 data points per series. _(línea 4586)_
+- `investors_13f(ticker)` — Top institutional holders from SEC EDGAR 13F filings. Cached 24h. _(línea 4621)_
+- `trade_flows()` — UN Comtrade public preview API — bilateral semiconductor trade. ?reporter=USA&partner=CHN&product=8542 (optional filters) HS codes: 8541 … _(línea 4674)_
+- `trade_history()` _(línea 4746)_
+- `portfolio_comment()` — Comentario CAUTO de Khipu sobre el portafolio (papel). Recibe un resumen AGREGADO y anónimo desde el cliente (sin datos personales: solo … _(línea 4759)_
+- `portfolio_advice()` — CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un resumen ANÓNIMO de la cartera (papel) + candidatos del universo, … _(línea 4843)_
+- `trade_positions_detail()` _(línea 4922)_
 
 **Internas** (empiezan con `_`): `_response_status`, `_degraded`, `_cacheable_response`, `_neg_cache_key`, `_with_negative_cache`, `_cache_cached_ok_only`, `_ai_route_now`, `_ai_models_now`, `_clean_env`, `_norm_alpaca_base`, `_add_security_headers`, `_add_cors_for_public_api`, `_add_graph_version_header`, `_log_request`, `_redact_secrets_in_json`, `_secret_values_for_scan`, `_sw_version`, `_versioned_app_html`, `_js_cache_headers`, `_json_error`, `_research_brief`, `_diag_redact`, `_diag_card`, `_diag_model_name`, `_diag_ai_route`, `_diag_claude`, `_ai_error_fix`, `_ai_error_hint`, `_diag_gemini`, `_diag_nvidia`, `_diag_elevenlabs`, `_db_error_fix`, `_db_error_hint`, `_diag_ontologia`, `_diag_gobernanza`, `_diag_g3_bullets`, `_diag_hot_views`, `_diag_grafo`, `_diag_alpaca`, `_diag_finnhub`, `_diag_fmp`, `_diag_yahoo`, `_diag_research_fix`, `_security_warnings`, `_diag_view`, `_same_origin_request`, `_ws_forbidden`, `_ws_sig`, `_quote_raw_compat`, `_alpaca_hdrs`, `_trade_symbol`, `_paper`, `_account_is_live`, `_house_trading_enabled`, `_house_ledger_block`, `_trading_halted_response`, `_broker_missing_response`, `_trade_actor`, `_trade_audit`, `_alpaca_json` y 23 más
 
@@ -147,6 +147,7 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[core.screener.py]] — importa `screen_growth`
 - [[core.semantic.py]] — importa `build_context`, `extract_companies`, `resolve_ids`
 - [[core.sim_agents.py]] — importa `sim_agents`
+- [[core.sim_report.py]] — importa `sim_report`
 - [[core.space.py]] — importa `(dinámico: core.space)`
 - [[core.trading_agent.py]] — importa `_AGENT`, `_AGENT_RESTORE`, `_AgentOrderError`, `_TRADABLE_CACHE`, `_agent_order`, `_agent_run_cycle`, `_agent_universe`, `trading_agent`
 - [[core.voice_agent.py]] — importa `voice_agent`
@@ -373,6 +374,7 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_security.py]]
 - [[tests.test_server_smoke.py]]
+- [[tests.test_sim_report.py]]
 - [[tests.test_space_satellites.py]]
 - [[tests.test_trading_agent_ledger.py]]
 - [[tests.test_voice_agent_split.py]]

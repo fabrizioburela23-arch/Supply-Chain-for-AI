@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 5037
+lineas: 5048
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.037 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.048 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -49,6 +49,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
+- [[engine.simreport.js]] — usa `KhipuSimReport`
 - [[engine.temporal-graph.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[engine.trade.js]] — usa `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
@@ -56,11 +57,11 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **94 de 102** (línea 3221), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **95 de 103** (línea 3222), después de [[engine.simreport.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 94)
+- [[app.html]] — lo carga con `<script>` (posición 95)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.app_main.js]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
@@ -118,6 +119,7 @@ Se carga en [[app.html]] en la posición **94 de 102** (línea 3221), después d
 - [[tests.test_overnight_ui_small_panels.py]]
 - [[tests.test_overnight_ui_xray_research.py]]
 - [[tests.test_scenario_pnl_browser.py]]
+- [[tests.test_sim_report.py]]
 - [[tests.test_space_satellites.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_os_server.py]]

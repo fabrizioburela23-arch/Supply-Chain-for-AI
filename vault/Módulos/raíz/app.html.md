@@ -3,14 +3,14 @@ tipo: "pagina"
 capa: "Interfaz (Khipus OS)"
 ruta: "app.html"
 lenguaje: "html"
-lineas: 3538
+lineas: 3539
 aliases: ["app.html"]
 tags: ["capa/interfaz", "tipo/pagina"]
 ---
 
 # app.html
 
-> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.538 líneas · `app.html`
+> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.539 líneas · `app.html`
 
 ## Para qué sirve
 
@@ -130,15 +130,16 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 91. [[engine.oswindows.js]] (línea 3218)
 92. [[engine.khipu_chat.js]] (línea 3219)
 93. [[engine.desktop.js]] (línea 3220)
-94. [[engine.cockpit.js]] (línea 3221)
-95. [[engine.live.js]] (línea 3222)
-96. [[engine.command_center.js]] (línea 3223)
-97. [[sim.scenario_builder.js]] (línea 3224)
-98. [[engine.app_coordinator.js]] (línea 3226)
-99. [[engine.app_trade_panel.js]] (línea 3527)
-100. [[engine.app_preflight.js]] (línea 3530)
-101. [[engine.app_canvas.js]] (línea 3533)
-102. [[engine.app_scatter.js]] (línea 3535)
+94. [[engine.simreport.js]] (línea 3221)
+95. [[engine.cockpit.js]] (línea 3222)
+96. [[engine.live.js]] (línea 3223)
+97. [[engine.command_center.js]] (línea 3224)
+98. [[sim.scenario_builder.js]] (línea 3225)
+99. [[engine.app_coordinator.js]] (línea 3227)
+100. [[engine.app_trade_panel.js]] (línea 3528)
+101. [[engine.app_preflight.js]] (línea 3531)
+102. [[engine.app_canvas.js]] (línea 3534)
+103. [[engine.app_scatter.js]] (línea 3536)
 
 ## Bloques `<script>` inline
 
@@ -223,6 +224,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[tests.test_khipus_os_shell.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_one_portfolio_store.py]]
+- [[tests.test_sim_report.py]]
 - [[tests.test_voice_tour.py]]
 
 ## Mencionado en sesiones de trabajo

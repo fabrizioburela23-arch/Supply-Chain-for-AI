@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **19 de 102** (línea 1521), después de [[nodes.links_expand.js]] y antes de [[nodes.merge_graph.js]].
+Se carga en [[app.html]] en la posición **19 de 103** (línea 1521), después de [[nodes.links_expand.js]] y antes de [[nodes.merge_graph.js]].
 
 ## Lo usan
 

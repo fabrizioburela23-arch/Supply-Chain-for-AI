@@ -45,6 +45,12 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    trade.agent_signal noop). Cliente engine/signals.js (`window.KhipuSignals`): tarjetas flotantes 🧪/🔴, papel = 1 toque,
    real = 1 toque + KhipuToast.confirmOrder; aviso del navegador opcional. AUTO con dinero real sigue PROHIBIDO.
    tests/test_agent_signals_one_tap.py + test_trading_agent_ledger (con base). Scalping: NO (precios cada ~15 s, IA en segundos).
+1c. ✅ **INFORME DE ESCENARIO (2026-10-21, sw v279)**: `core/sim_report.py` (sin IA) suma a /api/sim/agents `report`:
+   filas con ticker/sector/país + capitalización y movimiento de hoy EN VIVO (live_caps) + valor en juego (cap × %), cifras
+   clave, por sector/país, TU CARTERA (el navegador manda `positions` de KhipuHot.myPositions; monto × % estimado, rotulado),
+   titular y metodología. `engine/simreport.js` (`window.KhipuSimReport`) lo pinta en la Cabina y en la pestaña Simulación
+   (debajo del War-Room), con 🖨 PDF y 📋 copiar. tests/test_sim_report.py. Pendiente: rango moderado/severo del kernel y
+   P&L calibrado (scenario_pnl) cuando kernel.calibration esté al día.
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).

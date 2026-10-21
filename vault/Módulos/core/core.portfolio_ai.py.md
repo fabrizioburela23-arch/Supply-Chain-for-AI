@@ -61,6 +61,7 @@ ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
 ## Lo usan
 
 - [[core.portfolio_advisor.py]] — lo importa
+- [[core.sim_report.py]] — lo importa
 - [[server.py]] — lo importa
 
 _Además lo importan 6 pruebas (lista abajo)._

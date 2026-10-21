@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 30
+archivos: 31
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,14 +9,14 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**30 archivos · 29.861 líneas.** Volver al [[00 Mapa de Khipus]].
+**31 archivos · 30.118 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[engine.cockpit.js]] — 5.037 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
+- [[engine.cockpit.js]] — 5.048 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.app_main.js]] — 4.844 líneas · Global error reporter — shows uncaught JS errors on screen (no devtools needed)
-- [[app.html]] — 3.538 líneas
-- [[engine.app_coordinator.js]] — 2.703 líneas · Khipu Core Coordinator
+- [[app.html]] — 3.539 líneas
+- [[engine.app_coordinator.js]] — 2.718 líneas · Khipu Core Coordinator
 - [[engine.oswindows.js]] — 1.646 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.genui.js]] — 1.435 líneas · RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja; NUNCA calcula cifras. DOM seguro, 17 tipos, acciones solo …
 - [[engine.graph3d.js]] — 1.227 líneas · Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos como esferas en el espacio, con tamaño por market cap, links de …
@@ -34,6 +34,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.app_scatter.js]] — 281 líneas · KHIPU FINANCE — Scatter 3D Semántico con Medidores Botón 📊: posiciona empresas en ejes semánticos + panel de medidores interactivo
 - [[engine.guide.js]] — 271 líneas · pestaña "❓ Guía": explica la app en lenguaje simple. Sin jerga técnica. Expone window.initGuiaTab (mismo patrón que initTKGTab). Actualizada …
 - [[engine.genui_shapes.js]] — 237 líneas · FORMAS, IMÁGENES y MINI-MAPA de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §4.6 y §7.2).
+- [[engine.simreport.js]] — 230 líneas · INFORME DE ESCENARIO (2026-10-21, «que parezca un producto») Pinta la salida de POST /api/sim/agents (core/sim_agents + core/sim_report) como un …
 - [[engine.genui_progress.js]] — 198 líneas · RESPUESTAS VISUALES PROGRESIVAS (F3, docs/CHAT_UI_GENERATIVA.md §6): el motor del chat que pinta los bloques provisionales y hace ATERRIZAR la …
 - [[engine.pricehist.js]] — 189 líneas · 🩺 Sistema → «Historia de precios» (BRECHAS bloque 2: la memoria de los números). Muestra cuánta historia guarda Khipus (cierres diarios ajustados, …
 - [[engine.signals.js]] — 172 líneas · «1 TOQUE»: señales del agente de trading listas para aprobar (2026-10-20) El agente en modo MANUAL propone (servidor: core/trading_agent.py, GET …

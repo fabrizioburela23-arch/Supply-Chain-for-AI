@@ -82,6 +82,17 @@
     "engine/app_canvas.js": "b910533e8bf8c61c9c22ec17421aa1e3ff1a3d38a3921368e69b1674a9c4deb3",
     "engine/app_scatter.js": "103fbb53a73acf71ac28e2c90ec8ec7cd18334b508b164f7bc257d6ffbe8e1b9"
    }
+  },
+  {
+   "cache": "khipu-finance-v279",
+   "sha256": {
+    "engine/app_main.js": "01f67b102b413463415a3f24a771d2e116253aa627564a247efce693722d6bcf",
+    "engine/app_coordinator.js": "144a0be19a79187a9a4d48452dcb877f8871acf5c9bef802e988f7d12b3d7221",
+    "engine/app_trade_panel.js": "7a76ad787d3d40e42719ede44adbe2434d0f570a54a33982e7212e47f1eb6c8b",
+    "engine/app_preflight.js": "ba6b1b8bfdbe22e6b09258a435bdc3fc37e94ed96985ecb3c2dbbe7b4819536e",
+    "engine/app_canvas.js": "b910533e8bf8c61c9c22ec17421aa1e3ff1a3d38a3921368e69b1674a9c4deb3",
+    "engine/app_scatter.js": "103fbb53a73acf71ac28e2c90ec8ec7cd18334b508b164f7bc257d6ffbe8e1b9"
+   }
   }
  ]
 }
