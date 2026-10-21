@@ -52,8 +52,8 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
 | la usa | [[Capa MCP y API]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |

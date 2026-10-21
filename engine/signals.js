@@ -214,13 +214,16 @@
       '<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">' +
       (on ? '<button type="button" class="b sp" data-a="stop">■ ' + esc(L('Detener', 'Stop')) + '</button>'
           : '<button type="button" class="b st" data-a="start">▶ ' + esc(L('Iniciar', 'Start')) + '</button>') +
-      '<span class="ksa-m">' + esc((d.last_run ? L('Última revisión: ', 'Last check: ') + d.last_run : L('Aún no revisó', 'Not run yet')) + ' · ' + pend + L(' señal(es) esperando', ' signal(s) waiting')) + '</span></div>' +
+      '<span class="ksa-m">' + esc((d.last_run ? L('Última revisión: ', 'Last check: ') + d.last_run + ' (UTC)' : on ? L('Revisando por primera vez…', 'Checking for the first time…') : L('Aún no revisó', 'Not run yet')) + ' · ' + pend + L(' señal(es) esperando', ' signal(s) waiting')) + '</span></div>' +
       '<div class="ksa-m" data-msg style="margin-top:6px"></div>';
     var log = (d.log || []).slice(-6).reverse();
     if (log.length) h += '<div class="log">' + log.map(function (e) {
       return esc((e.ts || '') + ' · ' + (e.ticker ? e.ticker + ' ' : '') + (e.action ? e.action.toUpperCase() + ' ' + (e.confidence != null ? e.confidence + '/100 ' : '') : '') + (e.msg || e.reason || '') + (e.skipped ? ' — ' + e.skipped : ''));
     }).join('<br>') + '</div>';
     el.innerHTML = h + '</div>';
+    // encendido: se refresca solo cada 30 s mientras la ventana siga abierta (se ve qué está revisando)
+    clearTimeout(el._ksaT);
+    if (on) el._ksaT = setTimeout(function () { if (document.body.contains(el) && !document.hidden) agentBox(el); }, 30000);
     var msg = el.querySelector('[data-msg]');
     el.querySelectorAll('button[data-a]').forEach(function (b) {
       b.addEventListener('click', function () {

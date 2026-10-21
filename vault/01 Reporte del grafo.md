@@ -18,7 +18,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Qué | Cuántos |
 |---|---|
 | Archivos de código (Python, JS, HTML) | 250 |
-| Líneas de código | 149.803 |
+| Líneas de código | 149.833 |
 | Archivos de datos del catálogo | 30 |
 | Archivos de prueba | 260 |
 | Documentos | 32 |
@@ -29,12 +29,12 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 777 |
 | Aristas `defines_endpoint` | 299 |
-| Aristas `imports` | 2.355 |
+| Aristas `imports` | 2.357 |
 | Aristas `loads_script` | 95 |
-| Aristas `mentions_in_session` | 600 |
+| Aristas `mentions_in_session` | 601 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 69 |
-| Aristas `tested_by` | 1.851 |
+| Aristas `tested_by` | 1.852 |
 | Aristas `uses_global` | 468 |
 
 ## Nodos "dios" (más conectados)

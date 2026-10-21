@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-30"
-ruta: "docs/ESTADO.md#L1740"
+ruta: "docs/ESTADO.md#L1743"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-30 — MONITORES, RIESGO FÁCIL, ASISTENTE, CEREBRO DE KHIPU (sw v174)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1740 (30 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1743 (30 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

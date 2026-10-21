@@ -140,3 +140,21 @@ def test_agent_panel_lives_in_the_os_broker_window():
     assert "'/api/trade/agent/' + (start ? 'start' : 'stop')" in sig and 'd.auto_allowed' in sig
     cp = open(os.path.join(ROOT, 'engine', 'cockpit.js'), encoding='utf-8').read()
     assert 'bcp-bk-agent' in cp and 'KhipuSignals.agentBox' in cp and 'agente trading bot' in cp
+
+
+def test_without_finnhub_the_agent_uses_the_app_quote_cascade_and_says_when_no_price(manual, monkeypatch):
+    """«No empieza el agente» (2026-10-21): sin Finnhub (sin clave o con su límite agotado) saltaba TODAS las acciones
+    en silencio. Ahora usa la cascada de precios de la app (Finnhub → Yahoo) y, si no hay precio, lo deja escrito."""
+    from core import quotes
+    monkeypatch.setattr(server, 'FINNHUB', '')
+    monkeypatch.setattr(quotes, 'fetch_quotes_live', lambda t, **k: {'quotes': {'AMD': {'close': 100.0, 'prev': 99.0,
+                                                                                    'live': 100.0, 'src': 'yahoo'}}})
+    server._agent_run_cycle()
+    (s,) = _pending()
+    assert s['ticker'] == 'AMD' and s['price'] == 100.0
+    msgs = [e.get('msg') or '' for e in server._AGENT['log']]
+    assert any('Revisando 1 acciones' in m for m in msgs) and any('Revisión terminada: 1 con precio' in m for m in msgs)
+    monkeypatch.setitem(server._AGENT, 'signals', {})
+    monkeypatch.setattr(quotes, 'fetch_quotes_live', lambda t, **k: {'quotes': {}})
+    server._agent_run_cycle()
+    assert not _pending() and any('Sin precio ahora' in (e.get('msg') or '') and 'AMD' in e['msg'] for e in server._AGENT['log'])

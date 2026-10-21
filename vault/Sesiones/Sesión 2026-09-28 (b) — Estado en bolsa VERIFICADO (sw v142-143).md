@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-28"
-ruta: "docs/ESTADO.md#L1978"
+ruta: "docs/ESTADO.md#L1981"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-28 (b) — Estado en bolsa VERIFICADO (sw v142-143)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1978 (72 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1981 (72 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

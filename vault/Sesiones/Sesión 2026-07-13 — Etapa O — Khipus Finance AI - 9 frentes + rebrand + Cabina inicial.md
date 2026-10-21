@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-13"
-ruta: "docs/ESTADO.md#L3152"
+ruta: "docs/ESTADO.md#L3155"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa O — Khipus Finance AI: 9 frentes + rebrand + Cabina inicial (2026-07-13, sw v85)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 3152 (42 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 3155 (42 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

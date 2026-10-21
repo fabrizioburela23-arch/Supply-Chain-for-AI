@@ -50,6 +50,7 @@ cotización cruda compartida (server rutas + agentes de alertas).
 - [[core.portfolio_report.py]] — lo importa
 - [[core.providers.market.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
+- [[core.trading_agent.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
 - [[research.context.py]] — lo importa
@@ -57,7 +58,7 @@ cotización cruda compartida (server rutas + agentes de alertas).
 - herramienta MCP `get_exposure` → [[API herramientas MCP]]
 - herramienta MCP `project_portfolio` → [[API herramientas MCP]]
 
-_Además lo importan 9 pruebas (lista abajo)._
+_Además lo importan 10 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -65,6 +66,7 @@ _Además lo importan 9 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_agent_signals_one_tap.py]]
 - [[tests.test_company_data.py]]
 - [[tests.test_live_caps.py]]
 - [[tests.test_live_universe.py]]
@@ -78,5 +80,6 @@ _Además lo importan 9 pruebas (lista abajo)._
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-09-29 (noche) — TODO EN VIVO + AUDITORÍA DE DATOS FALSOS (sw v161)]]
 - [[Sesión 2026-09-28 (b) — Estado en bolsa VERIFICADO (sw v142-143)]]

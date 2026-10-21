@@ -47,6 +47,9 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    tests/test_agent_signals_one_tap.py + test_trading_agent_ledger (con base). Scalping: NO (precios cada ~15 s, IA en segundos).
    2026-10-21 (sw v281): el panel del agente vive TAMBIÉN en Khipus OS → «Mi cuenta (bróker)» (`KhipuSignals.agentBox`;
    ⌘K «agente»); antes solo en la vista clásica (Mercado → Operar).
+   2026-10-21 b (sw v283, «no empieza el agente»): sin precio de Finnhub (sin clave / 429) saltaba TODO en silencio →
+   respaldo `core.quotes.fetch_quotes_live` (Finnhub → Yahoo) y log «🔎 Revisando…», «⚠ Sin precio…», «✓ Revisión terminada»;
+   el panel se refresca cada 30 s encendido.
 1c. ✅ **INFORME DE ESCENARIO (2026-10-21, sw v279)**: `core/sim_report.py` (sin IA) suma a /api/sim/agents `report`:
    filas con ticker/sector/país + capitalización y movimiento de hoy EN VIVO (live_caps) + valor en juego (cap × %), cifras
    clave, por sector/país, TU CARTERA (el navegador manda `positions` de KhipuHot.myPositions; monto × % estimado, rotulado),

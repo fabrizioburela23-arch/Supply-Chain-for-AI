@@ -691,10 +691,15 @@ def _agent_run_cycle():
 
     universe, _skipped = _agent_universe(_AGENT['universe'])
     orders_this_cycle = 0
+    _AGENT['last_start'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    _agent_log({'level': 'info', 'msg': f'🔎 Revisando {len(universe or [])} acciones · Checking {len(universe or [])} stocks'})
+    live = {}          # respaldo: la MISMA cascada de precios de la app (Finnhub → Yahoo), pedida una vez por ciclo
+    no_price, seen = [], 0
     for ticker in universe or []:
         if not _AGENT['running']:
             break
         price, prev, sentiment = 0.0, 0.0, 0.0
+        price_src = 'finnhub'
         if _S.FINNHUB:
             data, err = _S._fetch_quote_raw(ticker, timeout=8)
             if not err and isinstance(data, dict):
@@ -703,9 +708,27 @@ def _agent_run_cycle():
                     prev = float(data.get('pc') or 0)
                 except (TypeError, ValueError):
                     price = 0.0
-
         if price <= 0:
+            # 2026-10-21 («no empieza el agente»): sin Finnhub (sin clave o con su límite agotado) el agente saltaba
+            # TODAS las acciones sin decir nada. Ahora prueba la cascada de la app y, si tampoco hay precio, lo anota.
+            if not live:
+                try:
+                    from core.quotes import fetch_quotes_live
+                    live = (fetch_quotes_live(list(universe or [])) or {}).get('quotes') or {'_': None}
+                except Exception as e:  # noqa: BLE001
+                    log.info('agente: cascada de precios no disponible (%s)', type(e).__name__)
+                    live = {'_': None}
+            q = live.get(ticker) or {}
+            try:
+                price = float(q.get('live') or q.get('close') or 0)
+                prev = float(q.get('prev') or 0)
+                price_src = q.get('src') or 'yahoo'
+            except (TypeError, ValueError):
+                price = 0.0
+        if price <= 0:
+            no_price.append(ticker)
             continue
+        seen += 1
         sentiment = _agent_tone(ticker)          # tono de noticias (GDELT, caché 30 min)
         facts = _agent_context(ticker)           # técnico de cierres reales + convicción de los analistas
 
@@ -714,7 +737,7 @@ def _agent_run_cycle():
         guard = _agent_guard(action, facts)
         sig = (_agent_signal_ctx(ticker, action, {'action': action, 'confidence': confidence, 'reason': reason,
                                                   'size_pct': size_pct, 'sentiment': round(sentiment, 3),
-                                                  'price': price, 'prev': prev, 'price_src': 'finnhub',
+                                                  'price': price, 'prev': prev, 'price_src': price_src,
                                                   'model': (_raw or {}).get('_model') if isinstance(_raw, dict)
                                                   else None})
                if action != 'hold' else None)
@@ -829,6 +852,10 @@ def _agent_run_cycle():
 
         _agent_log(entry)
 
+    if no_price:
+        _agent_log({'level': 'warn', 'msg': f'⚠ Sin precio ahora (ni Finnhub ni Yahoo): {", ".join(no_price)} · No price now'})
+    _agent_log({'level': 'info', 'msg': f'✓ Revisión terminada: {seen} con precio, {orders_this_cycle} acción(es) · '
+                                        f'Check done: {seen} priced, {orders_this_cycle} action(s)'})
     _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
 
