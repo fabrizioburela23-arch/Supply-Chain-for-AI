@@ -63,6 +63,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[research.health.py]] — lo importa
 - [[research.llm.py]] — lo importa
 - [[research.runner.py]] — lo importa
+- [[scripts.research_batch.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 

@@ -89,3 +89,4 @@ Variables de entorno: [[Índice de variables de entorno]].
 | usa a | [[Capa MCP y API]] | 4 |
 | la usa | [[Capa Datos del catálogo]] | 2 |
 | usa a | [[Capa Voz]] | 2 |
+| la usa | [[Capa Otros]] | 1 |

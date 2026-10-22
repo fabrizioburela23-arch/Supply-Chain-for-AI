@@ -63,6 +63,7 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 10 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
 | la usa | [[Capa Voz]] | 3 |
+| la usa | [[Capa Otros]] | 2 |
 | usa a | [[Capa Infraestructura]] | 2 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 2 |
 | la usa | [[Capa MCP y API]] | 1 |

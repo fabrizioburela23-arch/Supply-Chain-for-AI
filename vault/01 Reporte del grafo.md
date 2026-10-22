@@ -17,10 +17,10 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 251 |
-| Líneas de código | 150.373 |
+| Archivos de código (Python, JS, HTML) | 252 |
+| Líneas de código | 150.709 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 263 |
+| Archivos de prueba | 264 |
 | Documentos | 32 |
 | Rutas HTTP | 266 |
 | Grupos de API | 61 |
@@ -29,12 +29,12 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 781 |
 | Aristas `defines_endpoint` | 300 |
-| Aristas `imports` | 2.370 |
+| Aristas `imports` | 2.372 |
 | Aristas `loads_script` | 95 |
 | Aristas `mentions_in_session` | 602 |
 | Aristas `reads_env` | 226 |
-| Aristas `references_file` | 69 |
-| Aristas `tested_by` | 1.864 |
+| Aristas `references_file` | 71 |
+| Aristas `tested_by` | 1.865 |
 | Aristas `uses_global` | 468 |
 
 ## Nodos "dios" (más conectados)
@@ -180,8 +180,8 @@ Regla de CLAUDE.md: todo archivo JS nuevo va también al array SHELL de `sw.js`.
 
 _Ninguno._
 
-## Archivos en la capa "Otros" (0)
+## Archivos en la capa "Otros" (1)
 
 Faltan en la tabla de capas (`REGLAS_CAPA` en `scripts/build_vault.py`).
 
-_Ninguno: todo tiene capa._
+[[scripts.research_batch.py]]

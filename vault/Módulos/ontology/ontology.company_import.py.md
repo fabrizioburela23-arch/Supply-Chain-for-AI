@@ -76,6 +76,7 @@ importador de fichas khipus.company/1 (docs/expansion/EXPANSION_5K.md, bloque E2
 - [[core.import_normalize.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 - [[scripts.import_companies.py]] — lo importa
+- [[scripts.research_batch.py]] — lo importa
 
 _Además lo importan 15 pruebas (lista abajo)._
 

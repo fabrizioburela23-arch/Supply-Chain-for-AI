@@ -49,6 +49,7 @@ _Nada interno._
 - [[scripts.build_instrument_review.py]] — lo nombra por su ruta
 - [[scripts.ingest_multicapa.py]] — lo nombra por su ruta
 - [[scripts.migrate_v0_to_ontology.py]] — lo nombra por su ruta
+- [[scripts.research_batch.py]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 

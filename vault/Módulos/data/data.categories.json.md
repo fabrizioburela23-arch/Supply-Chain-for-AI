@@ -33,6 +33,7 @@ _Nada interno._
 
 - [[ontology.vocabulary.py]] — lo nombra por su ruta
 - [[scripts.build_categories.py]] — lo nombra por su ruta
+- [[scripts.research_batch.py]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 
