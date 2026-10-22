@@ -1,0 +1,18 @@
+{
+ "schema": "khipus.lote-origin/1",
+ "batch": "lote-2026-10-22-lote6",
+ "received": "2026-10-22",
+ "package": "khipus_entrega_S.zip",
+ "package_file": "2_fichas_S_nivelB.jsonl",
+ "package_file_sha256": "3e1d61814b9bb56267d906703660aa275da72753cd49804fe21ea74125d43fab",
+ "package_records": 498,
+ "kept_records": 498,
+ "excluded_by_provider": 2,
+ "tiers": {
+  "B": 387,
+  "A": 111
+ },
+ "declared_links": 1921,
+ "note_es": "Lote 6 (S): 498 fichas nuevas, casi todas privadas/filiales poco conocidas (más apoyo en Wikipedia). Sin listas de sanciones consultadas. Revisar a mano: Silk Way West (fusionar con Silk_Way_West), CanSemi y ASRock Rack (cotizan), Cornell Dubilier (filial de Knowles), APR Energy, AQ Compute, Augment Code, ImageSat, Decart, Mileway, Quinbrook, Orbex (cesó 2026-02), Periodic Labs y Factory.",
+ "note_en": "Batch 6 (S): 498 new records, mostly little-known private companies/subsidiaries. Sanctions lists not checked."
+}

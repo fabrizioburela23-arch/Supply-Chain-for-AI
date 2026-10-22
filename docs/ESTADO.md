@@ -87,6 +87,10 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    fichas nuevas de `khipus_entrega_R.zip` (585/585 válidas; plan local 584 crear · 1 completar Eutelsat/OneWeb). Carpetas
    de lotes aceptan sufijo (`AAAA-MM-DD-x`, _PKG_DIR_RX) para 2 entregas el mismo día. Los bundles de lotes YA aplicados
    salen del panel (sus fichas quedan en la carpeta). docs/expansion/LOTE_2026-10-21-r_PLAN.md. Sin listas de sanciones.
+1i. 📦 **LOTE 6 (S) LISTO (2026-10-22)**: `data/import/lotes/2026-10-22/bundle_lote6_s.json.gz` = 498 fichas de
+   `khipus_entrega_S.zip` (498/498 válidas; plan local 497 crear · 1 completar ITC Holdings). Producción ≈1.970 empresas
+   (969 + lotes 2-4) → ≈3.050 con los lotes 5 y 6. ⚠ Railway NO desplegó desde 2026-10-21 ~04:50 UTC aunque el CI quedó
+   verde (80d8592): Fabrizio debe mirar Deployments / Redeploy. docs/expansion/LOTE_2026-10-22_PLAN.md.
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).
