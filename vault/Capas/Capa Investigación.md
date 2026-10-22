@@ -9,12 +9,12 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 > El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud.
 
-**21 archivos · 5.264 líneas.** Volver al [[00 Mapa de Khipus]].
+**21 archivos · 5.395 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[research.runner.py]] — 1.057 líneas · ejecución de un ResearchJob (vertical slice → general).
-- [[research.context.py]] — 715 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
+- [[research.context.py]] — 846 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
 - [[engine.research.js]] — 591 líneas · PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
 - [[research.models.py]] — 404 líneas · tablas de la capa DERIVED CLAIMS (Phase 2).
 - [[research.api.py]] — 324 líneas · blueprint /api/research/\* (Phase 2).
