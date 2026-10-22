@@ -11,7 +11,7 @@ se le devuelven los errores a la IA una vez para que la corrija. Se puede cortar
     set ANTHROPIC_API_KEY=sk-ant-...         (PowerShell: $env:ANTHROPIC_API_KEY="sk-ant-...")
     python scripts/research_batch.py --limit 3
     # 2) el resto, con tope de gasto
-    python scripts/research_batch.py --budget-usd 150 --workers 4
+    python scripts/research_batch.py --budget-usd 150 --workers 4      (modelo: Sonnet 5.5; --model claude-opus-5-5 = más fino y el doble de caro)
 
 La clave tiene que ser de la organización que tiene los créditos (platform.claude.com → API keys). Salida:
 data/import/lotes/api/fichas_api.jsonl (+ rechazadas_api.jsonl y costo_api.json).
@@ -272,7 +272,7 @@ def main(argv=None):
     ap.add_argument('--limit', type=int, default=0, help='máximo de empresas en esta corrida (0 = todas)')
     ap.add_argument('--budget-usd', type=float, default=20.0, help='tope de gasto ACUMULADO (costo_api.json)')
     ap.add_argument('--workers', type=int, default=3)
-    ap.add_argument('--model', default='claude-opus-5-5', choices=sorted(PRICES))
+    ap.add_argument('--model', default='claude-sonnet-5-5', choices=sorted(PRICES))
     ap.add_argument('--effort', default='medium', choices=('low', 'medium', 'high', 'xhigh', 'max'))
     ap.add_argument('--max-searches', type=int, default=8)
     ap.add_argument('--max-fetches', type=int, default=6)
