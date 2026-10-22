@@ -9,16 +9,16 @@ tags: ["capa/otros", "tipo/capa"]
 
 > Archivos que la tabla de capas todavía no clasifica (se reportan para asignarles capa).
 
-**1 archivos · 336 líneas.** Volver al [[00 Mapa de Khipus]].
+**1 archivos · 418 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[scripts.research_batch.py]] — 336 líneas · investiga empresas con la API de Claude (búsqueda web) y escribe fichas khipus.company/1.
+- [[scripts.research_batch.py]] — 418 líneas · investiga empresas con la API de Claude (búsqueda web) y escribe fichas khipus.company/1.
 
 ## Conexiones con otras capas
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Datos del catálogo]] | 2 |
+| usa a | [[Capa Ontología y grafo temporal]] | 2 |
 | usa a | [[Capa Infraestructura]] | 1 |
-| usa a | [[Capa Ontología y grafo temporal]] | 1 |

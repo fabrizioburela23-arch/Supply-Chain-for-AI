@@ -1,0 +1,2405 @@
+khipus_id,nombre,pais,cotiza,vinculos,origen
+AAON,AAON,US,AAON,0,lote
+adva,ADVA Optical Networking (Adtran Networks),Alemania,ADV.DE,0,catalogo
+AIA,AIA,HK,1299.HK,0,lote
+ATS,AT&S,AT,ATS.VI,0,lote
+ATEN,ATEN,TW,6277.TW,0,lote
+AXA,AXA,FR,CS.PA,0,lote
+AXT,AXT,US,AXTI,0,lote
+AccionaEnergia,Acciona Energía,ES,ANE.MC,0,lote
+AdaniEnergySolutions,Adani Energy Solutions,IN,ADANIENSOL.NS,0,lote
+AdaniGreen,Adani Green,IN,ADANIGREEN.NS,0,lote
+AdaniPower,Adani Power,IN,ADANIPOWER.NS,0,lote
+Adobe,Adobe,US,ADBE,0,lote
+AdtecPlasma,Adtec Plasma,JP,6668.T,0,lote
+AirWater,Air Water,Japon,4088.T,0,catalogo
+Aleees,Aleees,TW,5227.TWO,0,lote
+Alphamin,Alphamin,MU,AFM.V,0,lote
+Alzchem,Alzchem,DE,ACT0.DE,0,lote
+Americold Realty Trust,Americold Realty Trust,Estados Unidos,COLD,0,catalogo
+AmericaMovil,América Móvil,MX,AMXB.MX,0,lote
+AngloAmerican,Anglo American,ReinoUnido,AAL.L,0,catalogo
+AntinInfrastructurePartners,Antin,FR,ANTIN.PA,0,lote
+Antofagasta,Antofagasta,ReinoUnido,ANTO.L,0,catalogo
+ApolloGlobal,Apollo Global,EEUU,APO,0,catalogo
+AresCapital,Ares Capital,US,ARCC,0,lote
+AresManagement,Ares Management,EEUU,ARES,0,catalogo
+ArrowElectronics,Arrow Electronics,US,ARW,0,lote
+Aselsan,Aselsan,TR,ASELS.IS,0,lote
+Asetek,Asetek,"Dinamarca (HQ, como Asetek A/S)",ASTK.CO,0,catalogo
+astroscale,Astroscale,Japón,5034.T,0,catalogo
+Aurizon,Aurizon,AU,AZJ.AX,0,lote
+Aurubis,Aurubis,DE,NDA.DE,0,lote
+Avantor,Avantor,US,AVTR,0,lote
+Avnet,Avnet,US,AVT,0,lote
+BLGLogistics,BLG Logistics,DE,BLH.F,0,lote
+BNPParibas,BNP Paribas,FR,BNP.PA,0,lote
+BallardPower,Ballard Power,Canadá,BLDP,0,catalogo
+BankOfAmerica,Bank of America,EEUU,BAC,0,catalogo
+BankOfChina,Bank of China,CN,601988.SS,0,lote
+Barclays,Barclays,ReinoUnido,BARC.L,0,catalogo
+Belden,Belden,US,BDC,0,lote
+BharatElectronics,Bharat Electronics,IN,BEL.NS,0,lote
+Brambles,Brambles,AU,BXB.AX,0,lote
+Bruker,Bruker,US,BRKR,0,lote
+CUyemura,C. Uyemura,JP,4966.T,0,lote
+CBRE Group,CBRE Group,"Estados Unidos (Dallas, TX; sede financiera global en Nueva York desde ene-2025)",CBRE,0,catalogo
+CEZ,CEZ,CZ,CEZ.PR,0,lote
+CITICSecurities,CITIC Securities,CN,600030.SS,0,lote
+CJLogistics,CJ Logistics,KR,000120.KS,0,lote
+CMEGroup,CME Group,EEUU,CME,0,catalogo
+CMES,CMES,CN,601872.SS,0,lote
+CNOOC,CNOOC,China,0883.HK,0,catalogo
+CONCOR,CONCOR,India,CONCOR.NS,0,catalogo
+COSCOShippingDevelopment,COSCO SHIPPING Development,CN,601866.SS,0,lote
+COSCOShippingEnergy,COSCO SHIPPING Energy,CN,600026.SS,0,lote
+COSCOSpecializedCarriers,COSCO Specialized Carriers,CN,600428.SS,0,lote
+CRRC,CRRC,CN,601766.SS,0,lote
+CRRCTimesElectric,CRRC Times Electric,CN,688187.SS,0,lote
+Camtek,Camtek,IL,CAMT.TA,0,lote
+CanSemi,CanSemi,CN,301660.SZ,0,lote
+CanadianNational,Canadian National,"Canadá (Montreal, Quebec)",CNI,0,catalogo
+CapitalPower,Capital Power,CA,CPX.TO,0,lote
+Carrier Global,Carrier Global,"Estados Unidos (Palm Beach Gardens, Florida)",CARR,0,catalogo
+CenturyAluminum,Century Aluminum,EEUU,CENX,0,catalogo
+Ceragon,Ceragon,IL,CRNT,0,lote
+ChangchunUPOptotech,Changchun UP Optotech,CN,002338.SZ,0,lote
+ChihongZnGe,Chihong Zn&Ge,CN,600497.SS,0,lote
+ChinaHongqiao,China Hongqiao,CN,1378.HK,0,lote
+ChinaLife,China Life,CN,601628.SS,0,lote
+ChinaMerchantsPort,China Merchants Port,China (Hong Kong/Shenzhen),0144.HK,0,catalogo
+ChinaResourcesPower,China Resources Power,HK,0836.HK,0,lote
+ChinaUnicom,China Unicom,HK,0762.HK,0,lote
+ChromaATE,Chroma ATE,TW,2360.TW,0,lote
+Chubb,Chubb,CH,CB,0,lote
+Citigroup,Citigroup,EEUU,C,0,catalogo
+Clarksons,Clarksons,GB,CKN.L,0,lote
+ClevelandCliffs,Cleveland-Cliffs,US,CLF,0,lote
+Coface,Coface,FR,COFA.PA,0,lote
+Cogent,Cogent,US,CCOI,0,lote
+Colliers,Colliers,"Canadá (Toronto, Ontario)",CIGI,0,catalogo
+Comet,Comet,CH,COTN.SW,0,lote
+Cosel,Cosel,JP,6905.T,0,lote
+Cushman & Wakefield,Cushman & Wakefield,"Estados Unidos (Chicago, IL; herencia UK vía DTZ)",CWK,0,catalogo
+Daikin,Daikin,JP,6367.T,0,lote
+Daishinku,Daishinku (KDS),JP,6962.T,0,lote
+DaqinRailway,Daqin Railway,CN,601006.SS,0,lote
+DeltonTechnology,Delton Technology,CN,001389.SZ,0,lote
+Denka,Denka,JP,4061.T,0,lote
+DeutscheBank,Deutsche Bank,DE,DBK.DE,0,lote
+DeutscheBorse,Deutsche Börse,DE,DB1.DE,0,lote
+Dinglong,Dinglong,CN,300054.SZ,0,lote
+Dowa,Dowa,JP,5714.T,0,lote
+Dynanonic,Dynanonic,CN,300769.SZ,0,lote
+EON,EON,Alemania,EOAN.DE,0,catalogo
+EVEEnergy,EVE Energy,CN,300014.SZ,0,lote
+EasternAirLogistics,Eastern Air Logistics,CN,601156.SS,0,lote
+ElementSolutions,Element Solutions,US,ESI,0,lote
+EliaGroup,Elia Group,BE,ELI.BR,0,lote
+EliteMaterial,Elite Material,TW,2383.TW,0,lote
+ElsewedyElectric,Elsewedy Electric,EG,SWDY.CA,0,lote
+Enel,Enel,Europa,ENEL.MI,0,catalogo
+EnerSys,EnerSys,US,ENS,0,lote
+enflame,Enflame Technology,China,688801.SS,0,catalogo
+Engie,Engie,Francia,ENGI.PA,0,catalogo
+Eni,Eni,Europa,ENI.MI,0,catalogo
+Eramet,Eramet,Francia,ERA.PA,0,catalogo
+Everpure,Everpure,US,P,0,lote
+ExpandEnergy,Expand Energy,US,EXE,0,lote
+FICO,FICO,US,FICO,0,lote
+FangdaCarbon,Fangda Carbon,CN,600516.SS,0,lote
+Faratronic,Faratronic,CN,600563.SS,0,lote
+FirstQuantumMinerals,First Quantum Minerals,Canadá,FM.TO,0,catalogo
+FlatGlassGroup,Flat Glass,CN,601865.SS,0,lote
+FluxysBelgium,Fluxys Belgium,BE,FLUX.BR,0,lote
+ForgentPowerSolutions,Forgent Power Solutions,US,FPS,0,lote
+Fortum,Fortum,FI,FORTUM.HE,0,lote
+FujiCorp,Fuji Corp,JP,6134.T,0,lote
+FujiElectric,Fuji Electric,JP,6504.T,0,lote
+FullTruckAlliance,Full Truck Alliance,CN,YMM,0,lote
+FurukawaElectric,Furukawa Electric,Japon,5801.T,0,catalogo
+GCLTechnology,GCL Technology,HK,3800.HK,0,lote
+GXO,GXO,US,GXO,0,lote
+QingdaoGaoce,Gaoce Technology,CN,688556.SS,0,lote
+GeneralFusion,General Fusion,Canadá,GFUZ,0,catalogo
+Generali,Generali,IT,G.MI,0,lote
+Ginlong,Ginlong (Solis),CN,300763.SZ,0,lote
+Globant,Globant,LU,GLOB,0,lote
+GoldmanSachs,Goldman Sachs,EEUU,GS,0,catalogo
+GrafTech,GrafTech,US,EAF,0,lote
+GraphiteOne,Graphite One,Canadá,GPH.V,0,catalogo
+Greenbrier,Greenbrier,US,GBX,0,lote
+GuangweiComposites,Guangwei Composites,CN,300699.SZ,0,lote
+GulfEnergy,Gulf Energy,TH,GULF.BK,0,lote
+Gurit,Gurit,CH,GURN.SW,0,lote
+HBIS,HBIS,CN,000709.SZ,0,lote
+HHLA,HHLA,DE,HHFA.DE,0,lote
+HKEX,HKEX,HK,0388.HK,0,lote
+HSBC,HSBC,GB,HSBA.L,0,lote
+Hamamatsu,Hamamatsu,JP,6965.T,0,lote
+HangzhouOxygen,Hangyang,CN,002430.SZ,0,lote
+HanwhaSystems,Hanwha Systems,KR,272210.KS,0,lote
+HarbinElectric,Harbin Electric,CN,1133.HK,0,lote
+HaritaNickel,Harita Nickel,ID,NCKL.JK,0,lote
+HarmonicDriveSystems,Harmonic Drive Systems,JP,6324.T,0,lote
+HeidelbergMaterials,Heidelberg Materials,Alemania,HEI.DE,0,catalogo
+HindustanZinc,Hindustan Zinc,India,HINDZINC.NS,0,catalogo
+Hongfa,Hongfa,CN,600885.SS,0,lote
+Horiba,Horiba,JP,6856.T,0,lote
+HoshineSilicon,Hoshine Silicon,CN,603260.SS,0,lote
+HuamingPower,Huaming Power,CN,002270.SZ,0,lote
+HuatianTechnology,Huatian Technology,CN,002185.SZ,0,lote
+HuayouCobalt,Huayou Cobalt,CN,603799.SS,0,lote
+Hubbell,Hubbell,US,HUBB,0,lote
+HutchisonPortTrust,Hutchison Port Trust,SG,NS8U.SI,0,lote
+HyosungHeavyIndustries,Hyosung Heavy Industries,KR,298040.KS,0,lote
+HyperStrong,HyperStrong,CN,688411,0,lote
+HyundaiGlovis,Hyundai Glovis,KR,086280.KS,0,lote
+HyundaiSteel,Hyundai Steel,KR,004020.KS,0,lote
+ICE,ICE,EEUU,ICE,0,catalogo
+ICLGroup,ICL,IL,ICL.TA,0,lote
+ICTSI,ICTSI,PH,ICT.PS,0,lote
+IGO,IGO,Australia,IGO.AX,0,catalogo
+INNIO,INNIO,DE,INIO,0,lote
+IONOS,IONOS,DE,IOS.DE,0,lote
+IQE,IQE,GB,IQE.L,0,lote
+IREN,IREN,AU,IREN,0,lote
+Iberdrola,Iberdrola,Europa,IBE.MC,0,catalogo
+Imerys,Imerys,FR,NK.PA,0,lote
+InnoScience,InnoScience,CN,2577.HK,0,lote
+Inpex,Inpex,JP,1605.T,0,lote
+IvanhoeMines,Ivanhoe Mines,Canadá,IVN.TO,0,catalogo
+JPOWER,J-POWER,JP,9513.T,0,lote
+JDLogistics,JD Logistics,CN,2618.HK,0,lote
+JFEHoldings,JFE Holdings,JP,5411.T,0,lote
+JLL,JLL,"Estados Unidos (Chicago, IL; origen histórico Jones Lang Wootton, Londres, S.XVIII)",JLL,0,catalogo
+JPMorgan,JPMorgan,EEUU,JPM,0,catalogo
+JTEC,JTEC,JP,3446.T,0,lote
+JapanPostBank,Japan Post Bank,JP,7182.T,0,lote
+JapanSteelWorks,Japan Steel Works,JP,5631.T,0,lote
+JiangxiCopper,Jiangxi Copper,CN,600362.SS,0,lote
+Johnson Controls,Johnson Controls,"Irlanda (Cork) / operaciones principales en EE.UU. (Milwaukee, WI)",JCI,0,catalogo
+JohnsonMatthey,Johnson Matthey,GB,JMAT.L,0,lote
+KLine,K Line,JP,9107.T,0,lote
+KAI,KAI,KR,047810.KS,0,lote
+KDDI,KDDI,JP,9433.T,0,lote
+KLN,KLN,HK,0636.HK,0,lote
+KT,KT,KR,030200.KS,0,lote
+Kalmar,Kalmar,FI,KALMAR.HE,0,lote
+Kalpataru,Kalpataru,IN,KALPATPOWR.BO,0,lote
+KansaiElectric,Kansai Electric,Japon,9503.T,0,catalogo
+Kazatomprom,Kazatomprom,Kazajistán,KAP.L,0,catalogo
+KeppelDCREIT,Keppel DC REIT,Singapur,AJBU.SI,0,catalogo
+kyec,King Yuan Electronics (KYEC),Taiwán,2449.TW,0,catalogo
+KnightSwift,Knight-Swift,US,KNX,0,lote
+KokusaiElectric,Kokusai Electric,JP,6525.T,0,lote
+Komatsu,Komatsu,JP,6301.T,0,lote
+KoreaZinc,Korea Zinc,KR,010130.KS,0,lote
+KoreanAir,Korean Air,KR,003490.KS,0,lote
+KulickeSoffa,Kulicke & Soffa,SG,KLIC,0,lote
+Kureha,Kureha,JP,4023.T,0,lote
+KuritaWater,Kurita Water,JP,6370.T,0,lote
+KyosanElectric,Kyosan Electric,JP,6742.T,0,lote
+LIC,LIC,IN,LICI.NS,0,lote
+LIGNex1,LIG Nex1,KR,079550.KS,0,lote
+LINTEC,LINTEC,JP,7966.T,0,lote
+LONGi,LONGi,CN,601012.SS,0,lote
+LSElectric,LS Electric,KR,010120.KS,0,lote
+LSMarineSolution,LS Marine Solution,KR,060370.KQ,0,lote
+LSEG,LSEG,ReinoUnido,LSEG.L,0,catalogo
+LandisGyr,Landis+Gyr,CH,LAND.SW,0,lote
+Landstar,Landstar,US,LSTR,0,lote
+Legrand,Legrand,FR,LR.PA,0,lote
+Lineage,Lineage,US,LINE,0,lote
+LiteOn,Lite-On,TW,2301.TW,0,lote
+LithiumAmericas,Lithium Americas,Canadá,LAC,0,catalogo
+LithiumArgentina,Lithium Argentina,CH,LAR,0,lote
+Lukoil,Lukoil,Russia,LKOH.ME,0,catalogo
+MISC,MISC,MY,3816.KL,0,lote
+MPICorporation,MPI Corporation,TW,6223.TWO,0,lote
+MUFG,MUFG,Japon,8306.T,0,catalogo
+Macquarie,Macquarie,Australia,MQG.AX,0,catalogo
+Macronix,Macronix,TW,2337.TW,0,lote
+MalaysiaSmelting,Malaysia Smelting,MY,5916.KL,0,lote
+MartinMarietta,Martin Marietta,EEUU,MLM,0,catalogo
+MasTec,MasTec,US,MTZ,0,lote
+Meeza,Meeza,Catar,MEZA.QA,0,catalogo
+Mersen,Mersen,FR,MRN.PA,0,lote
+MetLife,MetLife,US,MET,0,lote
+Metron,Metron,CN,300861.SZ,0,lote
+MicronicsJapan,Micronics Japan (MJC),JP,6871.T,0,lote
+MineralResources,Mineral Resources,Australia,MIN.AX,0,catalogo
+MiniMax,MiniMax,CN,0100.HK,0,lote
+Minsur,Minsur,PE,MINSURI1,0,lote
+Miraial,Miraial,JP,4238.T,0,lote
+MitsubishiCorp,Mitsubishi Corp,JP,8058.T,0,lote
+MitsubishiMaterials,Mitsubishi Materials,JP,5711.T,0,lote
+MitsuiCo,Mitsui & Co,JP,8031.T,0,lote
+MitsuiKinzoku,Mitsui Kinzoku,JP,5706.T,0,lote
+Mizuho,Mizuho,Japon,8411.T,0,catalogo
+momentus,Momentus,Estados Unidos,MNTS,0,catalogo
+MorganStanley,Morgan Stanley,EEUU,MS,0,catalogo
+MunichRe,Munich Re,DE,MUV2.DE,0,lote
+Murata,Murata,JP,6981.T,0,lote
+NGKInsulators,NGK Insulators,JP,5333.T,0,lote
+NHKSpring,NHK Spring,JP,5991.T,0,lote
+NTPC,NTPC,IN,NTPC.NS,0,lote
+NTTDCREIT,NTT DC REIT,SG,NTDU.SI,0,lote
+NavigatorGas,Navigator Gas,GB,NVGS,0,lote
+NelASA,Nel ASA,Europa,NEL.OL,0,catalogo
+NetApp,NetApp,US,NTAP,0,lote
+Newmark Group,Newmark Group,"Estados Unidos (Nueva York, NY)",NMRK,0,catalogo
+Nexans,Nexans,Francia,NEX.PA,0,catalogo
+NextSourceMaterials,NextSource Materials,Canadá,NEXT.TO,0,catalogo
+Nichicon,Nichicon,JP,6996.T,0,lote
+NickelAsia,Nickel Asia,PH,NIKL.PS,0,lote
+NickelIndustries,Nickel Industries,Australia,NIC.AX,0,catalogo
+Nikkiso,Nikkiso,JP,6376.T,0,lote
+NipponChemiCon,Nippon Chemi-Con,JP,6997.T,0,lote
+NipponExpress,Nippon Express,JP,9147.T,0,lote
+Nittobo,Nittobo,JP,3110.T,0,lote
+NorskHydro,Norsk Hydro,Europa,NHY.OL,0,catalogo
+Nova,Nova,IL,NVMI.TA,0,lote
+Novatek,Novatek,RU,NVTK.ME,0,lote
+OCIHoldings,OCI Holdings,Corea,010060.KS,0,catalogo
+ONEOK,ONEOK,US,OKE,0,lote
+ONGC,ONGC,IN,ONGC.NS,0,lote
+OcadoGroup,Ocado,GB,OCDO.L,0,lote
+Odfjell,Odfjell,NO,ODF.OL,0,lote
+Olin,Olin,US,OLN,0,lote
+Optorun,Optorun,JP,6235.T,0,lote
+Orange,Orange,FR,ORA.PA,0,lote
+Orbia,Orbia,MX,ORBIA.MX,0,lote
+Ormat,Ormat,US,ORA,0,lote
+Orsted,Orsted,Europa,ORSTED.CO,0,catalogo
+OsakaOrganicChemical,Osaka Organic Chemical,JP,4187.T,0,lote
+Oxide,Oxide,JP,6521.T,0,lote
+PICCGroup,PICC,CN,601319.SS,0,lote
+PacificBasin,Pacific Basin,HK,2343.HK,0,lote
+PangangVTi,Pangang V&Ti,CN,000629.SZ,0,lote
+ParkSystems,Park Systems,KR,140860.KQ,0,lote
+PingAn,Ping An,CN,601318.SS,0,lote
+PiraeusPort,Piraeus Port,GR,PPA.AT,0,lote
+Poongsan,Poongsan,KR,103140.KS,0,lote
+PowerChina,PowerChina,CN,601669.SS,0,lote
+PrudentialFinancial,Prudential Financial,US,PRU,0,lote
+Pylontech,Pylontech,CN,688063.SS,0,lote
+qinetiq,QinetiQ,Reino Unido,QQ.L,0,catalogo
+QingdaoPort,Qingdao Port,CN,601298.SS,0,lote
+Redeia,Redeia,ES,RED.MC,0,lote
+Renishaw,Renishaw,GB,RSW.L,0,lote
+Riber,Riber,FR,ALRIB.PA,0,lote
+RoyalBankOfCanada,Royal Bank of Canada,CA,RY.TO,0,lote
+RuijieNetworks,Ruijie Networks,CN,301165.SZ,0,lote
+RusHydro,RusHydro,RU,HYDR,0,lote
+SAP,SAP,DE,SAP.DE,0,lote
+SDICPower,SDIC Power,CN,600886.SS,0,lote
+SFExpress,SF Express,CN,002352.SZ,0,lote
+SGLCarbon,SGL Carbon,DE,SGL.DE,0,lote
+SJSemiconductor,SJ Semiconductor,CN,688820.SS,0,lote
+SKYPerfectJSAT,SKY Perfect JSAT,JP,9412,0,lote
+SMBC,SMBC,Japon,8316.T,0,catalogo
+SSE,SSE,ReinoUnido,SSE.L,0,catalogo
+SUSSMicroTec,SUSS MicroTec,DE,SMHN.DE,0,lote
+SamsungHeavy,Samsung Heavy,KR,010140.KS,0,lote
+SananOptoelectronics,Sanan Optoelectronics,CN,600703.SS,0,lote
+Santander,Santander,ES,SAN.MC,0,lote
+ScorpioTankers,Scorpio Tankers,MC,STNG,0,lote
+ServiceNow,ServiceNow,US,NOW,0,lote
+ShengyiTechnology,Shengyi Technology,CN,600183.SS,0,lote
+ShennanCircuit,Shennan Circuit,CN,002916.SZ,0,lote
+Shimadzu,Shimadzu,JP,7701.T,0,lote
+SibanyeStillwater,Sibanye-Stillwater,South Africa,SBSW,0,catalogo
+Sify,Sify,India,SIFY,0,catalogo
+Sinopec,Sinopec,China,0386.HK,0,catalogo
+Snam,Snam,IT,SRG.MI,0,lote
+SocieteGenerale,Société Générale,FR,GLE.PA,0,lote
+SolarisEnergy,Solaris Energy,US,SEI,0,lote
+Soltec,Soltec,ES,SOL.MC,0,lote
+South32,South32,AU,S32.AX,0,lote
+Sovcomflot,Sovcomflot,RU,FLOT.ME,0,lote
+Spacecom,Spacecom,IL,SCC.TA,0,lote
+SriTrang,Sri Trang,TH,STA.BK,0,lote
+StandardChartered,Standard Chartered,GB,STAN.L,0,lote
+StandardLithium,Standard Lithium,Canadá,SLI,0,catalogo
+StandardNuclear,Standard Nuclear,US,STDN,0,lote
+StarBulk,Star Bulk,GR,SBLK,0,lote
+StateBankOfIndia,State Bank of India,IN,SBIN.NS,0,lote
+StateStreet,State Street,EEUU,STT,0,catalogo
+SteelDynamics,Steel Dynamics,EEUU,STLD,0,catalogo
+StoltNielsen,Stolt-Nielsen,GB,SNI.OL,0,lote
+Sugon,Sugon,CN,603019.SS,0,lote
+SumitomoBakelite,Sumitomo Bakelite,JP,4203.T,0,lote
+Sungrow,Sungrow,CN,300274.SZ,0,lote
+Sunresin,Sunresin,CN,300487.SZ,0,lote
+symbotic,Symbotic,Estados Unidos,SYM,0,catalogo
+TRowePrice,T. Rowe Price,EEUU,TROW,0,catalogo
+TDBank,TD Bank,CA,TD.TO,0,lote
+TEConnectivity,TE Connectivity,IE,TEL,0,lote
+TFCOptical,TFC Optical,CN,300394.SZ,0,lote
+TOCALO,TOCALO,JP,3433.T,0,lote
+TTMTechnologies,TTM Technologies,US,TTMI,0,lote
+TUC,TUC,TW,6274.TWO,0,lote
+TaiyoHoldings,Taiyo Holdings,JP,4626.T,0,lote
+TaiyoYuden,Taiyo Yuden,JP,6976.T,0,lote
+TataCommunications,Tata Communications,IN,TATACOMM.NS,0,lote
+TataPower,Tata Power,IN,TATAPOWER.NS,0,lote
+Teijin,Teijin,JP,3401.T,0,lote
+Telefonica,Telefónica,ES,TEF.MC,0,lote
+TenagaNasional,Tenaga Nasional,MY,5347.KL,0,lote
+Terna,Terna,Europa,TRN.MI,0,catalogo
+TerrestrialEnergy,Terrestrial Energy,US,IMSR,0,lote
+Textron,Textron,US,TXT,0,lote
+ThermoFisherScientific,Thermo Fisher,US,TMO,0,lote
+TianjinPort,Tianjin Port,CN,600717.SS,0,lote
+TianqiLithium,Tianqi Lithium,China,9696.HK,0,catalogo
+TokioMarine,Tokio Marine,JP,8766.T,0,lote
+TokyoGas,Tokyo Gas,JP,9531.T,0,lote
+TokyoSeimitsu,Tokyo Seimitsu (ACCRETECH),JP,7729.T,0,lote
+ToyoGosei,Toyo Gosei,JP,4970.T,0,lote
+ToyoTanso,Toyo Tanso,JP,5310.T,0,lote
+TriChemical,Tri Chemical,JP,4369.T,0,lote
+TrinaSolar,Trina Solar,CN,688599.SS,0,lote
+ULVAC,ULVAC,JP,6728.T,0,lote
+UPS,UPS,Estados Unidos,UPS,0,catalogo
+UltraTechCement,UltraTech Cement,IN,ULTRACEMCO.NS,0,lote
+UniCredit,UniCredit,IT,UCG.MI,0,lote
+UnionTool,Union Tool,JP,6278.T,0,lote
+Uniper,Uniper,Alemania,UN01.DE,0,catalogo
+Ushio,Ushio,JP,6925.T,0,lote
+ValterraPlatinum,Valterra Platinum,ZA,VAL.JO,0,lote
+VanguardInternational,Vanguard International,TW,5347.TWO,0,lote
+VeriSign,VeriSign,US,VRSN,0,lote
+VeriSilicon,VeriSilicon,CN,688521.SS,0,lote
+VinFast,VinFast,VN,VFS,0,lote
+vital-metals,Vital Metals,Australia,VML.AX,0,catalogo
+voyager-technologies,Voyager Technologies,Estados Unidos,VOYG,0,catalogo
+WTMicroelectronics,WT Microelectronics,TW,3036.TW,0,lote
+WTW,WTW,GB,WTW,0,lote
+WUSPrintedCircuit,WUS Printed Circuit,CN,002463.SZ,0,lote
+Wabtec,Wabtec,US,WAB,0,lote
+Wangsu,Wangsu,CN,300017.SZ,0,lote
+WellsFargo,Wells Fargo,EEUU,WFC,0,catalogo
+Westports,Westports,MY,5246.KL,0,lote
+XiamenTungsten,Xiamen Tungsten,CN,600549.SS,0,lote
+XiangtanElectrochemical,Xiangtan Electrochemical,CN,002125.SZ,0,lote
+XinyuanGermanium,Xinyuan Germanium,CN,002428.SZ,0,lote
+YPF,YPF,AR,YPFD,0,lote
+YuanjieSemiconductor,Yuanjie Semiconductor,CN,688498.SS,0,lote
+YunnanTin,Yunnan Tin,CN,000960.SZ,0,lote
+ZTE,ZTE,CN,000063.SZ,0,lote
+ZhipuAI,Zhipu AI (GLM),China,2513.HK,0,catalogo
+ZhongKeSanHuan,Zhong Ke San Huan,CN,000970.SZ,0,lote
+ZijinMining,Zijin Mining,China,2899.HK,0,catalogo
+Zurich,Zurich,CH,ZURN.SW,0,lote
+ispace,ispace,Japón,9348.T,0,catalogo
+nVent Electric,nVent Electric,"Reino Unido (sede corporativa en Londres) / operaciones principales en EE.UU. (Minneapolis, Minnesota)",NVT,0,catalogo
+ACS,ACS,ES,ACS.MC,1,lote
+AECOM,AECOM,"Estados Unidos (Dallas, Texas)",ACM,1,catalogo
+AIG,AIG,US,AIG,1,lote
+ASRockRack,ASRock Rack,TW,7711.TW,1,lote
+AVICChengdu,AVIC Chengdu,CN,302132.SZ,1,lote
+AVICJonhon,AVIC Jonhon,CN,002179.SZ,1,lote
+AVICShenyang,AVIC Shenyang,CN,600760.SS,1,lote
+AXIAEnergia,AXIA Energia,BR,AXIA3.SA,1,lote
+Accelink,Accelink,CN,002281.SZ,1,lote
+Acciona,Acciona,ES,ANA.MC,1,lote
+AdaniEnterprises,Adani Enterprises,IN,ADANIENT.NS,1,lote
+AdaniPorts,Adani Ports,India,ADANIPORTS.NS,1,catalogo
+AeroVironment,AeroVironment,EEUU,AVAV,1,catalogo
+AirChinaCargo,Air China Cargo,CN,001391.SZ,1,lote
+Albemarle,Albemarle Corporation,EEUU,ALB,1,catalogo
+Amrize,Amrize,CH,AMRZ.SW,1,lote
+Aon,Aon,IE,AON,1,lote
+AppliedDigital,Applied Digital,US,APLD,1,lote
+Array_Technologies,Array Technologies,EEUU,ARRY,1,catalogo
+AsahiKasei,Asahi Kasei,JP,3407.T,1,lote
+AuroraInnovation,Aurora Innovation,EEUU,AUR,1,catalogo
+AustralianStrategicMaterials,Australian Strategic Materials,Australia,ASM.AX,1,catalogo
+babcock-international,Babcock International,Reino Unido,BAB.L,1,catalogo
+Baidu,Baidu,China,BIDU,1,catalogo
+Baosteel,Baosteel,CN,600019.SS,1,lote
+BhartiAirtel,Bharti Airtel,IN,BHARTIARTL.NS,1,lote
+biren,Biren Technology,China,6082.HK,1,catalogo
+Bizlink,Bizlink,TW,3665.TW,1,lote
+BlueOwl,Blue Owl,EEUU,OWL,1,catalogo
+Boliden,Boliden,Europa,BOL.ST,1,catalogo
+BossEnergy,Boss Energy,Australia,BOE.AX,1,catalogo
+BrainChip,BrainChip Holdings,Australia,BRN.AX,1,catalogo
+Bridgepoint,Bridgepoint,GB,BPT.L,1,lote
+BrookfieldInfrastructure,Brookfield Infrastructure,CA,BIP,1,lote
+BurckhardtCompression,Burckhardt Compression,CH,BCHN.SW,1,lote
+CGNPower,CGN Power,China,1816.HK,1,catalogo
+CITICLimited,CITIC Limited,HK,0267.HK,1,lote
+CLPGroup,CLP Group,China,0002.HK,1,catalogo
+CMOC,CMOC,China,3993.HK,1,catalogo
+CNGR,CNGR,CN,300919.SZ,1,lote
+COSCOShippingPorts,COSCO Shipping Ports,China (matriz COSCO Shipping Group en Shanghái),1199.HK,1,catalogo
+CPKC,CPKC,"Canadá (Calgary, Alberta)",CP,1,catalogo
+CSG,CSG,CZ,CSG.AS,1,lote
+Calix,Calix,EEUU,CALX,1,catalogo
+CanadianNatural,Canadian Natural,CA,CNQ.TO,1,lote
+Canmax,Canmax,CN,300390.SZ,1,lote
+Carlyle,Carlyle,EEUU,CG,1,catalogo
+Cellnex,Cellnex,ES,CLNX.MC,1,lote
+Cemex,Cemex,RestoMundo,CX,1,catalogo
+Charter,Charter,US,CHTR,1,lote
+ChinaConstructionBank,China Construction Bank,CN,601939.SS,1,lote
+ChinaJushi,China Jushi,CN,600176.SS,1,lote
+ChinaLongyuan,China Longyuan,CN,0916.HK,1,lote
+ChinaMinmetalsRareEarth,China Minmetals Rare Earth,CN,000831.SZ,1,lote
+ChinaNuclearEngineering,China Nuclear Engineering,CN,601611.SS,1,lote
+ChinaSatcom,China Satcom,CN,601698.SS,1,lote
+ChinaShenhua,China Shenhua,CN,601088.SS,1,lote
+ChinaSpacesat,China Spacesat,CN,600118.SS,1,lote
+ChinaTungsten,China Tungsten,CN,000657.SZ,1,lote
+ChinaXDElectric,China XD Electric,CN,601179.SS,1,lote
+CloudWalkTechnology,CloudWalk,CN,688327.SS,1,lote
+CoalIndia,Coal India,IN,COALINDIA.NS,1,lote
+Comfort Systems USA,Comfort Systems USA,Estados Unidos,FIX,1,catalogo
+crowncastle,Crown Castle,Estados Unidos,CCI,1,catalogo
+DAIHEN,DAIHEN,JP,6622.T,1,lote
+DHL_Group,DHL Group,Alemania,DHL.DE,1,catalogo
+DaejooElectronicMaterials,Daejoo Electronic Materials,KR,078600.KQ,1,lote
+Daifuku,Daifuku,JP,6383.T,1,lote
+dassault-aviation,Dassault Aviation,Francia,AM.PA,1,catalogo
+DatangInternational,Datang International,CN,601991.SS,1,lote
+DeNora,De Nora,IT,DNR.MI,1,lote
+DeltaElectronicsThailand,Delta Electronics Thailand,TH,DELTA-R.BK,1,lote
+DenisonMines,Denison Mines,Canadá,DNN,1,catalogo
+DigiCo_REIT,DigiCo REIT,Australia,DGT.AX,1,catalogo
+DongfangElectric,Dongfang Electric,CN,600875.SS,1,lote
+DuPont_Electronics,DuPont Electronics,EEUU,Q,1,catalogo
+E2ENetworks,E2E Networks,IN,E2E.NS,1,lote
+EDP,EDP,PT,EDP.LS,1,lote
+EDPRenovaveis,EDP Renovaveis,ES,EDPR.LS,1,lote
+EMCOR Group,EMCOR Group,Estados Unidos,EME,1,catalogo
+EQT,EQT,SE,EQT.ST,1,lote
+elbit-systems,Elbit Systems,Israel,ESLT,1,catalogo
+EnGroup,En+ Group,RU,ENPG.ME,1,lote
+EnBW,EnBW,DE,EBK.DE,1,lote
+Enbridge,Enbridge,CA,ENB.TO,1,lote
+EnergyTransfer,Energy Transfer,EEUU,ET,1,catalogo
+Entergy,Entergy,EEUU,ETR,1,catalogo
+Equinor,Equinor,Europa,EQNR,1,catalogo
+Ericsson,Ericsson,Europa,ERIC,1,catalogo
+EvergreenMarine,Evergreen Marine,Taiwan,2603.TW,1,catalogo
+Exelon,Exelon,EEUU,EXC,1,catalogo
+f5,F5 Inc,Estados Unidos,FFIV,1,catalogo
+FedEx,FedEx,Estados Unidos,FDX,1,catalogo
+Ferrotec,Ferrotec,JP,6890.T,1,lote
+FirstEnergy,FirstEnergy,EEUU,FE,1,catalogo
+Flex,Flex,US,FLEX,1,lote
+FluenceEnergy,Fluence Energy,EEUU,FLNC,1,catalogo
+FortuneElectric,Fortune Electric,TW,1519.TW,1,lote
+FreeportMcMoRan,Freeport-McMoRan,EEUU,FCX,1,catalogo
+Fresnillo,Fresnillo,MX,FRES.MX,1,lote
+Fujikura,Fujikura,Japon,5803.T,1,catalogo
+FusoChemical,Fuso Chemical,JP,4368.T,1,lote
+gds,GDS Holdings,China,GDS,1,catalogo
+GSYuasa,GS Yuasa,JP,6674.T,1,lote
+GlobalUnichip,GUC,TW,3443.TW,1,lote
+GenDigital,Gen Digital (Norton/Avast),EEUU,GEN,1,catalogo
+GigaDevice,GigaDevice,China,603986.SS,1,catalogo
+Gigabyte,Gigabyte,TW,2376.TW,1,lote
+GlobalAtomic,Global Atomic Corporation,Canadá,GLO.TO,1,catalogo
+Globalstar,Globalstar,EEUU,GSAT,1,catalogo
+GoldCircuit,Gold Circuit,TW,2368.TW,1,lote
+Goldwind,Goldwind,CN,002202.SZ,1,lote
+Gotion,Gotion,CN,002074.SZ,1,lote
+HEICO,HEICO,US,HEI,1,lote
+HuntingtonIngalls,HII,US,HII,1,lote
+HannoverRe,Hannover Re,DE,HNR1.DE,1,lote
+hanwha-aerospace,Hanwha Aerospace,Corea del Sur,012450.KS,1,catalogo
+HanwhaOcean,Hanwha Ocean,KR,042660.KS,1,lote
+HanwhaSolutions,Hanwha Solutions,KR,009830.KS,1,lote
+Hensoldt,Hensoldt,DE,HAG.DE,1,lote
+HermesMicrovision,Hermes Microvision (HMI),TW,3658.TWO,1,lote
+Hindalco,Hindalco,IN,HINDALCO.NS,1,lote
+Holcim,Holcim,Europa,HOLN.SW,1,catalogo
+HoneywellAerospace,Honeywell Aerospace,US,HONA,1,lote
+HorizonRobotics,Horizon Robotics,China,9660.HK,1,catalogo
+HuaHong,Hua Hong Semiconductor,China,1347.HK,1,catalogo
+HuadianNewEnergy,Huadian New Energy,CN,600930.SS,1,lote
+HuanengLancang,Huaneng Lancang,CN,600025.SS,1,lote
+HuanengPower,Huaneng Power,CN,600011.SS,1,lote
+Hygon,Hygon Information,China,688041.SS,1,catalogo
+IBM,IBM,US,IBM,1,lote
+Implats,Implats,ZA,IMP.JO,1,lote
+Indra,Indra,ES,IDR.MC,1,lote
+IndusTowers,Indus Towers,IN,INDUSTOWER.NS,1,lote
+infleqtion,Infleqtion,Estados Unidos,INFQ,1,catalogo
+Infratil,Infratil,NZ,IFT.NZ,1,lote
+Innoviz,Innoviz Technologies,Israel,INVZ,1,catalogo
+IntuitiveMachines,Intuitive Machines,EEUU,LUNR,1,catalogo
+Inventec,Inventec,TW,2356.TW,1,lote
+JBHunt,J.B. Hunt,Estados Unidos,JBHT,1,catalogo
+JEOL,JEOL,JP,6951.T,1,lote
+Jacobs Engineering,Jacobs Engineering,"Estados Unidos (Dallas, Texas)",J,1,catalogo
+Joby_Aviation,Joby Aviation,EEUU,JOBY,1,catalogo
+KECInternational,KEC International,IN,KEC.NS,1,lote
+KGHM,KGHM,Poland,KGH.WA,1,catalogo
+KingSlide,King Slide,TW,2059.TW,1,lote
+Kingboard,Kingboard,HK,0148.HK,1,lote
+KingboardLaminates,Kingboard Laminates,HK,1888.HK,1,lote
+Kingsemi,Kingsemi,CN,688037.SS,1,lote
+Kinik,Kinik,TW,1560.TW,1,lote
+Kinsus,Kinsus,TW,3189.TW,1,lote
+LEM,LEM,CH,LEHN.SW,1,lote
+LandMarkOptoelectronics,LandMark Optoelectronics,TW,3081.TWO,1,lote
+LarsenToubro,Larsen & Toubro,IN,LT.NS,1,lote
+HisenseBroadband,Ligent (Hisense Broadband),CN,9856.HK,1,lote
+LiontownResources,Liontown Resources,Australia,LTR.AX,1,catalogo
+LondonMetric Property,LondonMetric Property,Reino Unido,LMP.L,1,catalogo
+loongson,Loongson Technology,China,688047.SS,1,catalogo
+Luxshare,Luxshare,CN,002475.SZ,1,lote
+MP_Materials,MP Materials,EEUU,MP,1,catalogo
+MTUAeroEngines,MTU Aero Engines,DE,MTX.DE,1,lote
+MetaX,MetaX,CN,688802.SS,1,lote
+MideaGroup,Midea Group,CN,000333.SZ,1,lote
+Mindspace Business Parks REIT,Mindspace Business Parks REIT,India,MINDSPACE.NS,1,catalogo
+moorethreads,Moore Threads,China,688795.SS,1,catalogo
+Morningstar,Morningstar,EEUU,MORN,1,catalogo
+Munters Group,Munters Group,Suecia (Kista/Estocolmo),MTRS.ST,1,catalogo
+NRGEnergy,NRG Energy,EEUU,NRG,1,catalogo
+NanYaPlastics,Nan Ya Plastics,TW,1303.TW,1,lote
+NASDAQ,Nasdaq Exchange,EEUU,NDAQ,1,catalogo
+NationalGrid,National Grid,ReinoUnido,NG.L,1,catalogo
+NeoPerformanceMaterials,Neo Performance Materials,CA,NEO.TO,1,lote
+Calix_Net,NetScout Systems,EEUU,NTCT,1,catalogo
+NexGenEnergy,NexGen Energy,Canadá,NXE,1,catalogo
+NexTracker,NexTracker,EEUU,NXT,1,catalogo
+NextDecade,NextDecade,US,NEXT,1,lote
+NidecChaunChoung,Nidec Chaun-Choung,TW,6230.TW,1,lote
+NingboZhoushanPort,Ningbo Zhoushan Port,CN,601018.SS,1,lote
+NipponSteel,Nippon Steel,Japon,5401.T,1,catalogo
+Nokia,Nokia,Europa,NOK,1,catalogo
+NomuraMicroScience,Nomura Micro Science,JP,6254.T,1,lote
+Nornickel,Nornickel,Russia,GMKN.ME,1,catalogo
+northern-data,Northern Data Group,Alemania,NB2.DE,1,catalogo
+Novonix,Novonix,Australia,NVX.AX,1,catalogo
+NuScale,NuScale Power,EEUU,SMR,1,catalogo
+OOIL,OOIL,HK,0316.HK,1,lote
+Occidental,Occidental,EEUU,OXY,1,catalogo
+OldDominion,Old Dominion,US,ODFL,1,lote
+Organo,Organo,JP,6368.T,1,lote
+PIAdvancedMaterials,PI Advanced Materials,KR,178920.KS,1,lote
+POSCO,POSCO,Corea,PKX,1,catalogo
+PaladinEnergy,Paladin Energy,Australia,PDN.AX,1,catalogo
+Parsons,Parsons Corporation,EEUU,PSN,1,catalogo
+PetroChina,PetroChina,CN,601857.SS,1,lote
+PfeifferVacuum,Pfeiffer Vacuum,DE,PFV.DE,1,lote
+PixelWorks,Pixelworks,EEUU,PXLW,1,catalogo
+PlugPower,Plug Power,EEUU,PLUG,1,catalogo
+PonyAi,Pony.ai,CN,2026.HK,1,lote
+PowerFinanceCorp,Power Finance Corp,IN,PFC.NS,1,lote
+PowerchipSemi,Powerchip Semiconductor,Taiwan,6770.TW,1,catalogo
+Prysmian,Prysmian,Europa,PRY.MI,1,catalogo
+PSEG,Public Service Enterprise Group (PSEG),EEUU,PEG,1,catalogo
+Quanta Services,Quanta Services,Estados Unidos,PWR,1,catalogo
+RENK,RENK,DE,R3NK.DE,1,lote
+RWE,RWE,Alemania,RWE.DE,1,catalogo
+resonac-holdings,Resonac Holdings,Japón,4004.T,1,catalogo
+Rexford Industrial Realty,Rexford Industrial Realty,Estados Unidos,REXR,1,catalogo
+RioTinto,Rio Tinto,United Kingdom / Australia,RIO,1,catalogo
+Rorze,Rorze,JP,6323.T,1,lote
+Rumo,Rumo,Brasil,RAIL3.SA,1,catalogo
+Rusal,Rusal,Russia,0486.HK,1,catalogo
+SAIC,SAIC Motor,China,600104.SS,1,catalogo
+SAKURAInternet,SAKURA Internet,JP,3778.T,1,lote
+sba,SBA Communications,Estados Unidos,SBAC,1,catalogo
+SKC,SKC,KR,011790.KS,1,lote
+SLB,SLB,US,SLB,1,lote
+SMA_Solar,SMA Solar Technology,Europa,S92.DE,1,catalogo
+SSAB,SSAB,Europa,SSAB-B.ST,1,catalogo
+STEngineering,ST Engineering,SG,S63.SI,1,lote
+STMicroelectronics,STMicroelectronics,NL,STMMI.MI,1,lote
+SUNeVision,SUNeVision,HK,1686.HK,1,lote
+SamsungElectroMechanics,Samsung Electro-Mechanics,KR,009150.KS,1,lote
+Sanmina,Sanmina,US,SANM,1,lote
+SaudiAramco,Saudi Aramco,RestoMundo,2222.SR,1,catalogo
+Sempra,Sempra,EEUU,SRE,1,catalogo
+ShanghaiElectric,Shanghai Electric,CN,601727.SS,1,lote
+ShanghaiElectricWindPower,Shanghai Electric Wind Power,CN,688660.SS,1,lote
+Shell,Shell,GB,SHEL.L,1,lote
+ShengheResources,Shenghe Resources,CN,600392.SS,1,lote
+Siemens,Siemens,DE,SIE.DE,1,lote
+SilexMicrosystems,Silex,SE,SILEX.ST,1,lote
+Silvaco,Silvaco,US,SVCO,1,lote
+Singtel,Singtel,SG,Z74.SI,1,lote
+Sinnet,Sinnet,CN,300383.SZ,1,lote
+SinoAmericanSilicon,Sino-American Silicon (SAS),TW,5483.TWO,1,lote
+Sinomine,Sinomine,CN,002738.SZ,1,lote
+Skyverse,Skyverse,CN,688361.SS,1,lote
+SoftBankCorp,SoftBank Corp.,JP,9434.T,1,lote
+Soulbrain,Soulbrain,KR,357780.KQ,1,lote
+StarPower,StarPower,CN,603290.SS,1,lote
+Sterling Infrastructure,Sterling Infrastructure,Estados Unidos,STRL,1,catalogo
+SumitomoHeavy,Sumitomo Heavy,JP,6302.T,1,lote
+SumitomoMetalMining,Sumitomo Metal Mining,JP,5713.T,1,lote
+SuzukiMotor,Suzuki Motor,JP,7269.T,1,lote
+SwissRe,Swiss Re,CH,SREN.SW,1,lote
+Syensqo,Syensqo,BE,SYENS.BR,1,lote
+SyrahResources,Syrah Resources,Australia,SYR.AX,1,catalogo
+TBEA,TBEA,CN,600089.SS,1,lote
+TCEnergy,TC Energy,CA,TRP.TO,1,lote
+TCLTechnology,TCL Technology,CN,000100.SZ,1,lote
+TCS,TCS,IN,TCS.NS,1,lote
+TEPCO,TEPCO,Japon,9501.T,1,catalogo
+THK,THK,JP,6481.T,1,lote
+TKMS,TKMS,DE,TKMS.DE,1,lote
+TOWA,TOWA,JP,6315.T,1,lote
+Talanx,Talanx,DE,TLX.DE,1,lote
+TalenEnergy,Talen Energy,EEUU,TLN,1,catalogo
+TalonMetals,Talon Metals,Canadá,TLO.TO,1,catalogo
+Telesat,Telesat,CA,TSAT.TO,1,lote
+TeraWulf,TeraWulf,US,WULF,1,lote
+ThreeGorgesRenewables,Three Gorges Renewables,CN,600905.SS,1,lote
+TokaiCarbon,Tokai Carbon,JP,5301.T,1,lote
+Tokuyama,Tokuyama,Japon,4043.T,1,catalogo
+TongfuMicroelectronics,Tongfu Microelectronics,CN,002156.SZ,1,lote
+Tongwei,Tongwei,CN,600438.SS,1,lote
+Trane Technologies,Trane Technologies,"Irlanda (Swords) / operaciones principales en EE.UU. (Davidson, NC)",TT,1,catalogo
+UBS,UBS,CH,UBSG.SW,1,lote
+ubtech-robotics,UBTech Robotics,China,9880.HK,1,catalogo
+UcoreRareMetals,Ucore Rare Metals,Canadá,UCU.V,1,catalogo
+Unisplendour,Unisplendour,CN,000938.SZ,1,lote
+UrEnergy,Ur-Energy,EEUU,URG,1,catalogo
+VNET,VNET,China,VNET,1,catalogo
+VSMPOAVISMA,VSMPO-AVISMA,RU,VSMO.ME,1,lote
+Veeva,Veeva Systems,EEUU,VEEV,1,catalogo
+vicarious-surgical,Vicarious Surgical,Estados Unidos,RBOT,1,catalogo
+VictoryGiant,Victory Giant,CN,300476.SZ,1,lote
+VirtuFinancial,Virtu Financial,EEUU,VIRT,1,catalogo
+Vodafone,Vodafone,GB,VOD.L,1,lote
+VulcanEnergy,Vulcan Energy,Australia / Germany,VUL.AX,1,catalogo
+WalleniusWilhelmsen,Wallenius Wilhelmsen,NO,WAWI.OL,1,lote
+WalsinTechnology,Walsin Technology,TW,2492.TW,1,lote
+WillSemi,Will Semiconductor (OmniVision),China,603501.SS,1,catalogo
+WonikQnC,Wonik QnC,KR,074600.KQ,1,lote
+Woodside,Woodside,Australia,WDS,1,catalogo
+XPO,XPO,Estados Unidos,XPO,1,catalogo
+XcelEnergy,Xcel Energy,EEUU,XEL,1,catalogo
+XinteEnergy,Xinte Energy,CN,1799.HK,1,lote
+XinyiSolar,Xinyi Solar,CN,0968.HK,1,lote
+Yaskawa,Yaskawa Electric,Japon,6506.T,1,catalogo
+ZTT,ZTT,CN,600522.SS,1,lote
+IFLYTEK,iFLYTEK,CN,002230.SZ,1,lote
+Stc,stc,SA,7010.SR,1,lote
+Voestalpine,voestalpine,AT,VOE.VI,1,lote
+ABB,ABB,CH,ABBN.SW,2,lote
+ACWAPower,ACWA Power,SA,2082.SR,2,lote
+AGC,AGC,Japon,5201.T,2,catalogo
+ASMPT,ASMPT,SG,0522.HK,2,lote
+ASUS,ASUS,TW,2357.TW,2,lote
+AVC,AVC,TW,3017.TW,2,lote
+adeka-corporation,Adeka Corporation,Japón,4401.T,2,catalogo
+AdvancedEnergy,Advanced Energy Industries,EEUU,AEIS,2,catalogo
+Aehr_Test,Aehr Test Systems,EEUU,AEHR,2,catalogo
+AgriculturalBankOfChina,Agricultural Bank of China,CN,601288.SS,2,lote
+AirProducts,Air Products and Chemicals,Estados Unidos,APD,2,catalogo
+Akamai,Akamai Technologies,EEUU,AKAM,2,catalogo
+Alcoa,Alcoa,EEUU,AA,2,catalogo
+AlleghenyTech,Allegheny Technologies,EEUU,ATI,2,catalogo
+AEP,American Electric Power (AEP),EEUU,AEP,2,catalogo
+americantower,American Tower,Estados Unidos,AMT,2,catalogo
+AnalogDevices,Analog Devices,US,ADI,2,lote
+AnhuiConch,Anhui Conch,China,0914.HK,2,catalogo
+arafura-resources,Arafura Resources,Australia,ARU.AX,2,catalogo
+Axcelis,Axcelis Technologies,EEUU,ACLS,2,catalogo
+AxonEnterprise,Axon Enterprise,EEUU,AXON,2,catalogo
+Azenta,Azenta (Brooks Automation),EEUU,AZTA,2,catalogo
+BAESystems,BAE Systems,Europa,BA.L,2,catalogo
+BASF,BASF,Alemania,BAS.DE,2,catalogo
+BHP,BHP,Australia,BHP,2,catalogo
+BTGroup,BT Group,GB,BT-A.L,2,lote
+BWXTechnologies,BWXT,US,BWXT,2,lote
+BlackRock,BlackRock,EEUU,BLK,2,catalogo
+Blackstone,Blackstone,EEUU,BX,2,catalogo
+Blaize,Blaize,US,BZAI,2,lote
+BloomEnergy,Bloom Energy,EEUU,BE,2,catalogo
+Booz_Allen,Booz Allen Hamilton,EEUU,BAH,2,catalogo
+Butterfly,Butterfly Network,EEUU,BFLY,2,catalogo
+CHRobinson,C.H. Robinson,Estados Unidos,CHRW,2,catalogo
+C3AI,C3.ai,EEUU,AI,2,catalogo
+CACI,CACI International,EEUU,CACI,2,catalogo
+CBOE,CBOE Global Markets,EEUU,CBOE,2,catalogo
+CKHutchison,CK Hutchison,HK,0001.HK,2,lote
+CRH,CRH,Europa,CRH,2,catalogo
+CSXCorp,CSX,"Estados Unidos (Jacksonville, Florida)",CSX,2,catalogo
+Cadeler,Cadeler,DK,CADLR.OL,2,lote
+CanadianSolar,Canadian Solar,CA,CSIQ,2,lote
+Canon,Canon,Japon,CAJPY,2,catalogo
+Capchem,Capchem,CN,300037.SZ,2,lote
+Caterpillar,Caterpillar,US,CAT,2,lote
+Chalco,Chalco,China,2600.HK,2,catalogo
+Chevron,Chevron,EEUU,CVX,2,catalogo
+ChinaAirlines,China Airlines,TW,2610.TW,2,lote
+chipbond,Chipbond Technology,Taiwán,6147.TWO,2,catalogo
+Cloudflare,Cloudflare,EEUU,NET,2,catalogo
+Cognex,Cognex Corporation,EEUU,CGNX,2,catalogo
+CoreScientific,Core Scientific,US,CORZ,2,lote
+CurtissWright,Curtiss-Wright,US,CW,2,lote
+DEME,DEME,BE,DEME.BR,2,lote
+DongjinSemichem,Dongjin Semichem,KR,005290.KQ,2,lote
+Ecopro,Ecopro,KR,086520.KQ,2,lote
+EcoproMaterials,Ecopro Materials,KR,450080.KS,2,lote
+Elastic,Elastic N.V.,EEUU,ESTC,2,catalogo
+ElevraLithium,Elevra Lithium,Australia,ELV.AX,2,catalogo
+Elkem,Elkem,Europa,ELK.OL,2,catalogo
+Empyrean,Empyrean Technology,China,301269.SZ,2,catalogo
+Enphase,Enphase,US,ENPH,2,lote
+Eutelsat,Eutelsat / OneWeb,Europa,ETL.PA,2,catalogo
+Expeditors,Expeditors,Estados Unidos,EXPD,2,catalogo
+ExtremeNetworks,Extreme Networks,EEUU,EXTR,2,catalogo
+Fanuc,Fanuc,Japon,6954.T,2,catalogo
+Fastly,Fastly,EEUU,FSLY,2,catalogo
+FedExFreight,FedEx Freight,US,FDXF,2,lote
+Ferroglobe,Ferroglobe,GB,GSM,2,lote
+FervoEnergy,Fervo Energy,US,FRVO,2,lote
+Firefly,Firefly Aerospace,EEUU,FLY,2,catalogo
+FujitsuHPC,Fugaku / Fujitsu,Japon,6702.T,2,catalogo
+fujimi-incorporated,Fujimi Incorporated,Japón,5384.T,2,catalogo
+GTT,GTT,FR,GTT.PA,2,lote
+Gazprom,Gazprom,Russia,GAZP.ME,2,catalogo
+general-dynamics,General Dynamics,Estados Unidos,GD,2,catalogo
+Goodman Group,Goodman Group,Australia,GMG.AX,2,catalogo
+HAL,HAL,IN,HAL.NS,2,lote
+HDHyundaiElectric,HD Hyundai Electric,KR,267260.KS,2,lote
+HDHyundaiHeavy,HD Hyundai Heavy Industries,KR,329180.KS,2,lote
+HMM,HMM,Corea del Sur,011200.KS,2,catalogo
+HPSP,HPSP,KR,403870.KQ,2,lote
+Halliburton,Halliburton,US,HAL,2,lote
+HanSCNC,Han's CNC,CN,301200.SZ,2,lote
+HanwhaCorp,Hanwha Corp,KR,000880.KS,2,lote
+HawkEye360,HawkEye 360,EEUU,HAWK,2,catalogo
+Hesai,Hesai Technology,China,HSAI,2,catalogo
+Hochtief,Hochtief,DE,HOT.DE,2,lote
+HonPrecision,Hon Precision,TW,7769.TW,2,lote
+Hoya,Hoya,Japon,HOCPY,2,catalogo
+HyundaiRotem,Hyundai Rotem,KR,064350.KS,2,lote
+ICBC,ICBC,CN,1398.HK,2,lote
+INFICON,INFICON,CH,IFCN.SW,2,lote
+ISUPetasys,ISU Petasys,KR,007660.KS,2,lote
+IlukaResources,Iluka Resources,Australia,ILU.AX,2,catalogo
+Insilico,Insilico Medicine,China,3696.HK,2,catalogo
+InsydeSoftware,Insyde Software,TW,6231.TWO,2,lote
+Intellian,Intellian,KR,189300.KQ,2,lote
+InterRAO,Inter RAO,RU,IRAO,2,lote
+Iridium,Iridium Communications,EEUU,IRDM,2,catalogo
+IronMountain,Iron Mountain,EEUU,IRM,2,catalogo
+JASolar,JA Solar,CN,002459.SZ,2,lote
+jcet,JCET Group,China,600584.SS,2,catalogo
+JGC,JGC,JP,1963.T,2,lote
+JLMag,JL Mag,CN,300748.SZ,2,lote
+JapanPureChemical,Japan Pure Chemical,JP,4973.T,2,lote
+JinkoSolar,Jinko Solar,CN,688223.SS,2,lote
+KEPCO,KEPCO,Corea,KEP,2,catalogo
+KKR,KKR,EEUU,KKR,2,catalogo
+karman-space-defense,Karman Space & Defense,Estados Unidos,KRMN,2,catalogo
+Keysight,Keysight Technologies,EEUU,KEYS,2,catalogo
+KinderMorgan,Kinder Morgan,EEUU,KMI,2,catalogo
+Komax,Komax,CH,KOMN.SW,2,lote
+Kongsberg,Kongsberg,NO,KOG.OL,2,lote
+KuehneNagel,Kuehne+Nagel,Suiza,KNIN.SW,2,catalogo
+kyocera-corporation,Kyocera Corporation,Japón,6971.T,2,catalogo
+Lasertec,Lasertec,JP,6920.T,2,lote
+Leidos,Leidos Holdings,EEUU,LDOS,2,catalogo
+LiCycle,Li-Cycle,CA,LICYF,2,lote
+Lightelligence,Lightelligence,EEUU,1879.HK,2,catalogo
+Lufthansa,Lufthansa,DE,LHA.DE,2,lote
+Lynas,Lynas Rare Earths,Australia,LYC.AX,2,catalogo
+MDASpace,MDA Space,CA,MDA.TO,2,lote
+MKSInstruments,MKS,US,MKSI,2,lote
+MOL,MOL,Japon,9104.T,2,catalogo
+MSCI,MSCI,EEUU,MSCI,2,catalogo
+MahindraMahindra,Mahindra & Mahindra,IN,500520.BO,2,lote
+MapletreeIndustrialTrust,Mapletree Industrial Trust,Singapur,ME8U.SI,2,catalogo
+MarshMcLennan,Marsh,US,MRSH,2,lote
+Materion,Materion,US,MTRN,2,lote
+Mercury_Systems,Mercury Systems,EEUU,MRCY,2,catalogo
+Microchip_Tech,Microchip Technology,EEUU,MCHP,2,catalogo
+MingYang,Ming Yang,CN,601615.SS,2,lote
+MitsubishiChemical,Mitsubishi Chemical,JP,4188.T,2,lote
+mitsubishi-gas-chemical,Mitsubishi Gas Chemical,Japón,4182.T,2,catalogo
+MitsubishiHeavy,Mitsubishi Heavy Industries,JP,7011.T,2,lote
+MitsuiChemicals,Mitsui Chemicals,Japon,MITUY,2,catalogo
+Mobileye,Mobileye Global,Israel,MBLY,2,catalogo
+Modine,Modine Manufacturing,EEUU,MOD,2,catalogo
+Momenta,Momenta,CN,6880.HK,2,lote
+MongoDB,MongoDB,EEUU,MDB,2,catalogo
+Mycronic,Mycronic,SE,MYCR.ST,2,lote
+NARITechnology,NARI Technology,CN,600406.SS,2,lote
+NKT,NKT,DK,NKT.CO,2,lote
+NTT,NTT,JP,9432.T,2,lote
+Nakilat,Nakilat,Catar,QGTS.QA,2,catalogo
+NanYaPCB,Nan Ya PCB,TW,8046.TW,2,lote
+Nikon,Nikon,Japon,NINOY,2,catalogo
+NipponElectricGlass,Nippon Electric Glass,Japon,5214.T,2,catalogo
+NipponSanso,Nippon Sanso,Japon,4091.T,2,catalogo
+nitto-denko,Nitto Denko,Japón,6988.T,2,catalogo
+NorfolkSouthern,Norfolk Southern,"Estados Unidos (Atlanta, Georgia)",NSC,2,catalogo
+Oaktree,Oaktree,US,OAK-PB,2,lote
+Ohara,Ohara,JP,5218.T,2,lote
+OntoInnovation,Onto Innovation,EEUU,ONTO,2,catalogo
+OrientCable,Orient Cable,CN,603606.SS,2,lote
+PDF_Solutions,PDF Solutions,EEUU,PDFS,2,catalogo
+PGECorp,PG&E,EEUU,PCG,2,catalogo
+PGN,PGN,ID,PGAS.JK,2,lote
+Coherus_Bio,POET Technologies,EEUU,POET,2,catalogo
+PPLCorp,PPL Corporation,EEUU,PPL,2,catalogo
+PTTimah,PT Timah,ID,TINS.JK,2,lote
+PTValeIndonesia,PT Vale Indonesia,Indonesia,INCO.JK,2,catalogo
+Panasonic,Panasonic,JP,6752.T,2,lote
+Pasqal,Pasqal,Francia,PSQL,2,catalogo
+Petrobras,Petrobras,RestoMundo,PBR,2,catalogo
+Photronics,Photronics,EEUU,PLAB,2,catalogo
+PilbaraMinerals,Pilbara Minerals,Australia,PLS.AX,2,catalogo
+PinggaoElectric,Pinggao Electric,CN,600312.SS,2,lote
+PowerGridIndia,Power Grid India,IN,POWERGRID.NS,2,lote
+Prologis,Prologis,"Estados Unidos (San Francisco, CA)",PLD,2,catalogo
+Putailai,Putailai,CN,603659.SS,2,lote
+RECLimited,REC,IN,RECLTD.NS,2,lote
+REPTBattero,REPT Battero,CN,0666.HK,2,lote
+Realtek,Realtek,TW,2379.TW,2,lote
+Recursion,Recursion Pharmaceuticals,EEUU,RXRX,2,catalogo
+Redwire,Redwire Space,EEUU,RDW,2,catalogo
+RelianceIndustries,Reliance Industries,IN,RELIANCE.NS,2,lote
+Repsol,Repsol,Europa,REP.MC,2,catalogo
+Rheinmetall,Rheinmetall,Europa,RHM.DE,2,catalogo
+Rohm,Rohm Semiconductor,Japon,6963.T,2,catalogo
+SES,SES S.A.,Europa,SESG.PA,2,catalogo
+SKInnovation,SK Innovation,KR,096770.KS,2,lote
+SKTelecom,SK Telecom,KR,017670.KS,2,lote
+SQM,SQM,RestoMundo,SQM,2,catalogo
+Salesforce,Salesforce,EEUU,CRM,2,catalogo
+Samsara,Samsara,EEUU,IOT,2,catalogo
+SamsungCT,Samsung C&T,KR,028260.KS,2,lote
+Satellogic,Satellogic,EEUU,SATL,2,catalogo
+Segro,Segro,Reino Unido,SGRO.L,2,catalogo
+Sensata,Sensata Technologies,EEUU,ST,2,catalogo
+SenseTime,SenseTime,HK,0020.HK,2,lote
+SentinelOne,SentinelOne,EEUU,S,2,catalogo
+SiTime,SiTime Corporation,EEUU,SITM,2,catalogo
+sidus-space,Sidus Space,Estados Unidos,SIDU,2,catalogo
+SigmaLithium,Sigma Lithium,EEUU,SGML,2,catalogo
+SilexSystems,Silex Systems,AU,SLX.AX,2,lote
+Silicom,Silicom Ltd,Israel,SILC,2,catalogo
+SiliconMotion,Silicon Motion,Taiwan,SIMO,2,catalogo
+Sinocera,Sinocera,CN,300285.SZ,2,lote
+Sinotrans,Sinotrans,CN,601598.SS,2,lote
+Skyworks,Skyworks Solutions,EEUU,SWKS,2,catalogo
+Socionext,Socionext,JP,6526.T,2,lote
+SoftBank,SoftBank Group,Japon,9984.T,2,catalogo
+SpireGlobal,Spire Global,EEUU,SPIR,2,catalogo
+stella-chemifa,Stella Chemifa,Japón,4109.T,2,catalogo
+sumitomo-chemical,Sumitomo Chemical,Japón,4005.T,2,catalogo
+SumitomoElectric,Sumitomo Electric,Japon,5802.T,2,catalogo
+TCLZhonghuan,TCL Zhonghuan,CN,002129.SZ,2,lote
+TDK,TDK,JP,6762.T,2,lote
+TataSteel,Tata Steel,India,TATASTEEL.NS,2,catalogo
+Technoprobe,Technoprobe,IT,TPRO.MI,2,lote
+TeckResources,Teck Resources,Canadá,TECK,2,catalogo
+Tencent,Tencent,China,TCEHY,2,catalogo
+Toppan,Toppan,JP,7911.T,2,lote
+TorayIndustries,Toray Industries,Japon,3402.T,2,catalogo
+tosoh-corporation,Tosoh Corporation,Japón,4042.T,2,catalogo
+TotalEnergies,TotalEnergies,Francia,TTE,2,catalogo
+TransDigm,TransDigm,US,TDG,2,lote
+Transneft,Transneft,RU,TRNFP.ME,2,lote
+Ultra_Clean,Ultra Clean Holdings,EEUU,UCTT,2,catalogo
+UnitedIntegratedServices,United Integrated Services,TW,2404.TW,2,lote
+ValensSemiconductor,Valens,IL,VLN,2,lote
+Veeco,Veeco Instruments,EEUU,VECO,2,catalogo
+VentureGlobalLNG,Venture Global LNG,EEUU,VG,2,catalogo
+Veracyte,Veracyte,EEUU,VCYT,2,catalogo
+Viasat,ViaSat,EEUU,VSAT,2,catalogo
+Viavi,Viavi Solutions,EEUU,VIAV,2,catalogo
+Vicor,Vicor,US,VICR,2,lote
+Vistra,Vistra,EEUU,VST,2,catalogo
+VulcanMaterials,Vulcan Materials,EEUU,VMC,2,catalogo
+WSCOPE,W-SCOPE,JP,6619.T,2,lote
+WanHai,Wan Hai,Taiwan,2615.TW,2,catalogo
+WeRide,WeRide,CN,0800.HK,2,lote
+WilliamsCompanies,Williams Companies,EEUU,WMB,2,catalogo
+Winbond,Winbond Electronics,Taiwan,2344.TW,2,catalogo
+wingtech,Wingtech Technology,China,600745.SS,2,catalogo
+Wistron,Wistron Corporation,Taiwan,3231.TW,2,catalogo
+WonikIPS,Wonik IPS,KR,240810.KQ,2,lote
+Wartsila,Wärtsilä,FI,WRT1V.HE,2,lote
+X_Fab,X-FAB Silicon Foundries,Europa,XFAB.PA,2,catalogo
+xanadu-quantum,Xanadu,Canadá,XNDU,2,catalogo
+Yageo,Yageo,TW,2327.TW,2,lote
+YangMing,Yang Ming,Taiwan,2609.TW,2,catalogo
+ZIM,ZIM,Israel,ZIM,2,catalogo
+Zebra_Technologies,Zebra Technologies,EEUU,ZBRA,2,catalogo
+Zscaler,Zscaler,EEUU,ZS,2,catalogo
+Thyssenkrupp,thyssenkrupp,DE,TKA.DE,2,lote
+abl-space-systems,ABL Space Systems,Estados Unidos,,0,catalogo
+AssociatedBritishPorts,ABP,GB,,0,lote
+AsianDevelopmentBank,ADB,PH,,0,lote
+ADIA,ADIA,United Arab Emirates,,0,catalogo
+AEMO,AEMO,AU,,0,lote
+AISingapore,AI Singapore,SG,,0,lote
+AIIB,AIIB,CN,,0,lote
+AIMCo,AIMCo,CA,,0,lote
+AIMSDataCentre,AIMS,MY,,0,lote
+AMILabs,AMI Labs,FR,,0,lote
+AP7,AP7,SE,,0,lote
+APL,APL,SG,,0,lote
+APREnergy,APR Energy,US,,0,lote
+AQCompute,AQ Compute,NO,,0,lote
+ARXRobotics,ARX Robotics,DE,,0,lote
+ASC,ASC,AU,,0,lote
+ASFAT,ASFAT,TR,,0,lote
+ATP,ATP,DK,,0,lote
+AVIC,AVIC,CN,,0,lote
+AaloAtomics,Aalo Atomics,US,,0,lote
+Abracon,Abracon,US,,0,lote
+Accel,Accel,US,,0,lote
+Accelsius,Accelsius,US,,0,lote
+AdaniDefenceAerospace,Adani Defence & Aerospace,IN,,0,lote
+Afreximbank,Afreximbank,EG,,0,lote
+AfricaDataCentres,Africa Data Centres,"Sudáfrica (sede operativa) — operaciones en Sudáfrica, Nigeria y Kenia",,0,catalogo
+AgilentTechnologies,Agilent,US,,0,lote
+AgnikulCosmos,Agnikul,IN,,0,lote
+Akeana,Akeana,US,,0,lote
+AlaskaPermanentFund,Alaska Permanent Fund,US,,0,lote
+Alba,Alba,BH,,0,lote
+alice-bob-quantum,Alice & Bob,Francia,,0,catalogo
+AlmalykMMC,Almalyk MMC,UZ,,0,lote
+AlmazAntey,Almaz-Antey,RU,,0,lote
+Alpiq,Alpiq,CH,,0,lote
+AltimeterCapital,Altimeter,US,,0,lote
+AmbienceHealthcare,Ambience Healthcare,US,,0,lote
+Ampleon,Ampleon,NL,,0,lote
+AngolaCables,Angola Cables,AO,,0,lote
+AnsaldoEnergia,Ansaldo Energia,IT,,0,lote
+ApexSpace,Apex,US,,0,lote
+Ardian,Ardian,FR,,0,lote
+Argotec,Argotec,IT,,0,lote
+ArkDataCentres,Ark Data Centres,GB,,0,lote
+ArkasLine,Arkas Line,TR,,0,lote
+Arup,Arup,GB,,0,lote
+AsburyCarbons,Asbury Advanced Materials,US,,0,lote
+AscendElements,Ascend Elements,US,,0,lote
+Asperitas,Asperitas,NL,,0,lote
+AssemblyAI,AssemblyAI,US,,0,lote
+Astribot,Astribot,CN,,0,lote
+AsyadGroup,Asyad,OM,,0,lote
+Atlas_Air,Atlas_Air,Estados Unidos,,0,catalogo
+atom-computing,Atom Computing,Estados Unidos,,0,catalogo
+Atomico,Atomico,GB,,0,lote
+AugmentCode,Augment Code,US,,0,lote
+AustralianRetirementTrust,Australian Retirement Trust,AU,,0,lote
+AustralianSuper,AustralianSuper,AU,,0,lote
+Auterion,Auterion,US,,0,lote
+AvalancheEnergy,Avalanche Energy,US,,0,lote
+Avibras,Avibras,BR,,0,lote
+Avicena,Avicena,US,,0,lote
+AxeleraAI,Axelera AI,NL,,0,lote
+Axpo,Axpo,CH,,0,lote
+BCHydro,BC Hydro,CA,,0,lote
+BCI,BCI,CA,,0,lote
+BIS,BIS,Switzerland (Basel),,0,catalogo
+BOE,BOE,ReinoUnido,,0,catalogo
+BOJ,BOJ,Japon,,0,catalogo
+BOK,BOK,Corea,,0,catalogo
+BonnevillePowerAdministration,BPA,US,,0,lote
+BainCapital,Bain Capital,US,,0,lote
+BaltimoreAircoil,Baltimore Aircoil,US,,0,lote
+BancoCentralDeChile,Banco Central de Chile,CL,,0,lote
+BancoCentralDoBrasil,Banco Central do Brasil,BR,,0,lote
+BancoDeMexico,Banco de México,MX,,0,lote
+BankIndonesia,Bank Indonesia,ID,,0,lote
+BankOfCanada,Bank of Canada,CA,,0,lote
+BankOfIsrael,Bank of Israel,IL,,0,lote
+BankOfKorea,Bank of Korea,KR,,0,lote
+BankOfRussia,Bank of Russia,RU,,0,lote
+BapcoEnergies,Bapco Energies,BH,,0,lote
+BeckGroup,Beck Group,US,,0,lote
+BeckhoffAutomation,Beckhoff,DE,,0,lote
+BergenEngines,Bergen Engines,NO,,0,lote
+Bioptimus,Bioptimus,FR,,0,lote
+Bitmain,Bitmain,CN,,0,lote
+BlackVeatch,Black & Veatch,US,,0,lote
+BloombergIndices,Bloomberg Indices,EEUU,,0,catalogo
+Blykalla,Blykalla,SE,,0,lote
+BoC,BoC,Canadá,,0,catalogo
+BoosterRobotics,Booster Robotics,CN,,0,lote
+BoschSemiconductors,Bosch Semiconductors,DE,,0,lote
+BostonMetal,Boston Metal,US,,0,lote
+Bourns,Bourns,US,,0,lote
+BrahMosAerospace,BrahMos,IN,,0,lote
+BreakthroughEnergyVentures,Breakthrough Energy Ventures,US,,0,lote
+BrightMachines,Bright Machines,US,,0,lote
+BrooksAutomation,Brooks Automation,US,,0,lote
+BrooksInstrument,Brooks Instrument,US,,0,lote
+BulkInfrastructure,Bulk Infrastructure,NO,,0,lote
+DeutscheBundesbank,Bundesbank,DE,,0,lote
+BurnsMcDonnell,Burns & McDonnell,US,,0,lote
+BusanPortAuthority,Busan Port Authority,KR,,0,lote
+CDTechnologies,C&D Technologies,US,,0,lote
+CAF,CAF,VE,,0,lote
+CAIInternational,CAI International,US,,0,lote
+CAISO,CAISO,US,,0,lote
+CBC,CBC,BR,,0,lote
+CentralBankOfTheRepublicOfChina,CBC Taiwan,TW,,0,lote
+CBCTaiwan,CBCTaiwan,Taiwan,,0,catalogo
+CBRT,CBRT,TR,,0,lote
+CentralBankOfTheUAE,CBUAE,AE,,0,lote
+CassaDepositiEPrestiti,CDP,IT,,0,lote
+CDPQ,CDPQ,Canadá,,0,catalogo
+CEALeti,CEA-Leti,FR,,0,lote
+CEFC,CEFC,AU,,0,lote
+CEITEC,CEITEC,BR,,0,lote
+CIC,CIC,China,,0,catalogo
+CopenhagenInfrastructurePartners,CIP,DK,,0,lote
+CNES,CNES,FR,,0,lote
+CNSA,CNSA,CN,,0,lote
+CPC,CPC,US,,0,lote
+CPPInvestments,CPPInvestments,Canadá,,0,catalogo
+CSGC,CSGC,CN,,0,lote
+CSIIndex,CSIIndex,China,,0,catalogo
+Cainiao,Cainiao,CN,,0,lote
+CalSTRS,CalSTRS,US,,0,lote
+CalumetElectronics,Calumet Electronics,US,,0,lote
+Camfil,Camfil,SE,,0,lote
+CanadaInfrastructureBank,Canada Infrastructure Bank,CA,,0,lote
+CapitalGroup,Capital Group,EEUU,,0,catalogo
+Carester,Carester,FR,,0,lote
+Cargolux,Cargolux,Luxemburgo,,0,catalogo
+Cartesia,Cartesia,US,,0,lote
+Castelion,Castelion,US,,0,lote
+ChaiDiscovery,Chai Discovery,US,,0,lote
+ChinaLogisticsGroup,China Logistics Group,CN,,0,lote
+ChinaRareEarthGroup,China Rare Earth Group,China,,0,catalogo
+ChipAgents,ChipAgents,US,,0,lote
+Cirion,Cirion,"Panamá/multi-país LatAm — operaciones en Argentina, Brasil, Chile, Colombia, México y Perú",,0,catalogo
+Clarios,Clarios,US,,0,lote
+Coatue,Coatue,US,,0,lote
+Codelco,Codelco,Chile,,0,catalogo
+Coilcraft,Coilcraft,US,,0,lote
+CollenConstruction,Collen,IE,,0,lote
+cologix,Cologix,"Estados Unidos (HQ Denver, CO)",,0,catalogo
+ColorChip,ColorChip,IL,,0,lote
+CommScopeHolding,CommScope Holding,EEUU,,0,catalogo
+CoolIT Systems,CoolIT Systems,"Canadá (Calgary, Alberta); manufactura también en China y Vietnam",,0,catalogo
+CoolerMaster,Cooler Master,TW,,0,lote
+CoorsTek,CoorsTek,US,,0,lote
+CopenhagenAtomics,Copenhagen Atomics,DK,,0,lote
+CornelisNetworks,Cornelis Networks,US,,0,lote
+CornellDubilier,Cornell Dubilier,US,,0,lote
+Corscale,Corscale,US,,0,lote
+CraneWorldwideLogistics,Crane Worldwide,US,,0,lote
+Crowley,Crowley,US,,0,lote
+CtrlS,CtrlS,India,,0,catalogo
+d-orbit,D-Orbit,Italia,,0,catalogo
+DACHSER,DACHSER,DE,,0,lote
+DASEnvironmentalExpert,DAS Environmental Expert,DE,,0,lote
+DevelopmentBankOfJapan,DBJ,JP,,0,lote
+DCXLiquidCoolingSystems,DCX,PL,,0,lote
+DEEPRobotics,DEEP Robotics,CN,,0,lote
+DFC,DFC,US,,0,lote
+DPWorld,DPWorld,Emiratos Árabes Unidos,,0,catalogo
+Danfoss,Danfoss,DK,,0,lote
+DataVolt,DataVolt,SA,,0,lote
+DayZimmermann,Day & Zimmermann,US,,0,lote
+DayOne,DayOne,"Hong Kong (sede) — operaciones en Hong Kong, Singapur, Malasia (Johor), Indonesia (Batam) y Japón (Tokio)",,0,catalogo
+DecaTechnologies,Deca,US,,0,lote
+DeepBlueAerospace,Deep Blue Aerospace,CN,,0,lote
+Deepgram,Deepgram,US,,0,lote
+DefactoTechnologies,Defacto,FR,,0,lote
+Demcon,Demcon,NL,,0,lote
+Denel,Denel,ZA,,0,lote
+DenglinTechnology,Denglin Technology,CN,,0,lote
+Destinus,Destinus,NL,,0,lote
+DhruvaSpace,Dhruva Space,IN,,0,lote
+DiDiAutonomousDriving,DiDi Autonomous Driving,CN,,0,lote
+DigitalEdge,Digital Edge,"Singapur (sede) — operaciones en Japón, Corea, India, Malasia, Indonesia, Filipinas",,0,catalogo
+DongFangInternationalContainer,Dong Fang International Container,HK,,0,lote
+DornanEngineering,Dornan Engineering,IE,,0,lote
+Dragoneer,Dragoneer,US,,0,lote
+DynaRobotics,Dyna Robotics,US,,0,lote
+EMarine,E-Marine,AE,,0,lote
+EBRD,EBRD,GB,,0,lote
+ECB,ECB,"Eurozone (HQ Frankfurt, Germany)",,0,catalogo
+ExportDevelopmentCanada,EDC,CA,,0,lote
+EDF,EDF,Francia,,0,catalogo
+EDGNEX,EDGNEX,"Emiratos Árabes Unidos (sede Dubái) — expansión a 13 países incl. EE.UU., España, Italia, Grecia, Turquía, Arabia Saudita",,0,catalogo
+EFFECTPhotonics,EFFECT Photonics,NL,,0,lote
+EGA,EGA,United Arab Emirates,,0,catalogo
+EGAT,EGAT,TH,,0,lote
+EnergyImpactPartners,EIP,US,,0,lote
+ELTGroup,ELT Group,IT,,0,lote
+ENAMI,ENAMI,CL,,0,lote
+ENTEK,ENTEK,US,,0,lote
+EPFMalaysia,EPF,MY,,0,lote
+EPFO,EPFO,IN,,0,lote
+EPH,EPH,CZ,,0,lote
+EVGroup,EV Group,AT,,0,lote
+Evapco,EVAPCO,US,,0,lote
+EVN,EVN,VN,,0,lote
+EastHopeGroup,East Hope Group,CN,,0,lote
+EasternPacificShipping,Eastern Pacific Shipping,SG,,0,lote
+EdgeCoreDigitalInfrastructure,EdgeCore,US,,0,lote
+EdgeCortix,EdgeCortix,JP,,0,lote
+EdgeUno,EdgeUno,US,,0,lote
+Efacec,Efacec,PT,,0,lote
+Efinix,Efinix,US,,0,lote
+EleaDataCenters,Elea,BR,,0,lote
+ElementlPower,Elementl,US,,0,lote
+Eliyan,Eliyan,US,,0,lote
+EllaLink,EllaLink,IE,,0,lote
+EmiratesInvestmentAuthority,Emirates Investment Authority,AE,,0,lote
+Emirates_SkyCargo,Emirates SkyCargo,Emiratos Árabes Unidos,,0,catalogo
+EnChargeAI,EnCharge AI,US,,0,lote
+EndressHauser,Endress+Hauser,CH,,0,lote
+Energinet,Energinet,DK,,0,lote
+EnergyNorthwest,Energy Northwest,US,,0,lote
+EnergySingularity,Energy Singularity,CN,,0,lote
+EngineAI,EngineAI,CN,,0,lote
+Epirus,Epirus,US,,0,lote
+ErdenesMongol,Erdenes Mongol,MN,,0,lote
+EsHailSat,Es'hailSat,QA,,0,lote
+Eskom,Eskom,ZA,,0,lote
+EssentialAI,Essential AI,US,,0,lote
+EthiopianCargoLogisticsServices,Ethiopian Cargo & Logistics,ET,,0,lote
+EurasianResourcesGroup,Eurasian Resources Group,Europa,,0,catalogo
+Evatec,Evatec,CH,,0,lote
+EvolutionaryScale,EvolutionaryScale,US,,0,lote
+ExcelitasTechnologies,Excelitas,US,,0,lote
+exolaunch,Exolaunch,Alemania,,0,catalogo
+Exotec,Exotec,FR,,0,lote
+Expedera,Expedera,US,,0,lote
+Extropic,Extropic,US,,0,lote
+Exyte,Exyte,DE,,0,lote
+FAULHABER,FAULHABER,DE,,0,lote
+FondazioneBrunoKessler,FBK,IT,,0,lote
+FNSS,FNSS,TR,,0,lote
+FPTCorporation,FPT,VN,,0,lote
+FTSERussell,FTSERussell,ReinoUnido,,0,catalogo
+Fabmatics,Fabmatics,DE,,0,lote
+Factory,Factory,US,,0,lote
+FederalReserve,Federal Reserve,EEUU,,0,catalogo
+Fidelity,Fidelity,EEUU,,0,catalogo
+FieldAI,FieldAI,US,,0,lote
+Fingrid,Fingrid,FI,,0,lote
+FinnishMineralsGroup,Finnish Minerals Group,FI,,0,lote
+FirePoint,Fire Point,UA,,0,lote
+FirmusTechnologies,Firmus,AU,,0,lote
+FirstLightFusion,First Light Fusion,GB,,0,lote
+FischerConnectors,Fischer Connectors,CH,,0,lote
+FitchRatings,Fitch Ratings,United States / United Kingdom (doble sede Nueva York–Londres),,0,catalogo
+Fivetran,Fivetran,US,,0,lote
+FlexGen,FlexGen,US,,0,lote
+Flexential,Flexential,US,,0,lote
+Flexport,Flexport,US,,0,lote
+FloridaSBA,Florida SBA,US,,0,lote
+Fluorsid,Fluorsid,IT,,0,lote
+FocusedEnergy,Focused Energy,DE,,0,lote
+formic,Formic,Estados Unidos,,0,catalogo
+FoundersFund,Founders Fund,EEUU,,0,catalogo
+Fractile,Fractile,GB,,0,lote
+FrankenburgTechnologies,Frankenburg,EE,,0,lote
+FraunhoferGesellschaft,Fraunhofer,DE,,0,lote
+FujianJinhua,Fujian Jinhua (JHICC),CN,,0,lote
+FutureFund,Future Fund,AU,,0,lote
+GWElectric,G&W Electric,US,,0,lote
+GDOTS,GD-OTS,US,,0,lote
+GEMU,GEMÜ,DE,,0,lote
+GEODIS,GEODIS,FR,,0,lote
+GIC_Singapore,GIC_Singapore,RestoMundo,,0,catalogo
+GTASemiconductor,GTA Semiconductor,CN,,0,lote
+GalaxeaAI,Galaxea AI,CN,,0,lote
+Gausium,Gausium,CN,,0,lote
+GaussFusion,Gauss Fusion,DE,,0,lote
+GeneralAtomics,General Atomics,US,,0,lote
+GeneralCatalyst,General Catalyst,US,,0,lote
+GeneralMatter,General Matter,US,,0,lote
+GenesisAI,Genesis AI,US,,0,lote
+GeorgiaPortsAuthority,Georgia Ports Authority,US,,0,lote
+GilmourSpace,Gilmour Space,AU,,0,lote
+Glenair,Glenair,US,,0,lote
+GlobalAdvancedMetals,Global Advanced Metals,US,,0,lote
+GraphitKropfmuhl,Graphit Kropfmühl,DE,,0,lote
+Greylock,Greylock,US,,0,lote
+GridControllerOfIndia,Grid-India,IN,,0,lote
+GrimaldiGroup,Grimaldi Group,IT,,0,lote
+Group14Technologies,Group14,US,,0,lote
+Grundfos,Grundfos,DK,,0,lote
+GulfDataHub,Gulf Data Hub,AE,,0,lote
+Gulftainer,Gulftainer,AE,,0,lote
+GuodianGaoke,Guodian Gaoke,CN,,0,lote
+HCompany,H Company,FR,,0,lote
+HARTING,HARTING,DE,,0,lote
+HDR Inc,HDR Inc,"Estados Unidos (Omaha, Nebraska)",,0,catalogo
+HOOPP,HOOPP,CA,,0,lote
+HancockProspecting,Hancock Prospecting,AU,,0,lote
+HankingElectronics,Hanking Electronics,CN,,0,lote
+HarmattanAI,Harmattan AI,FR,,0,lote
+Hassana,Hassana,SA,,0,lote
+Havelsan,Havelsan,TR,,0,lote
+HayashiPureChemical,Hayashi Pure Chemical,JP,,0,lote
+HeidelbergInstruments,Heidelberg Instruments,DE,,0,lote
+Heidenhain,Heidenhain,DE,,0,lote
+HeimdallPower,Heimdall Power,NO,,0,lote
+HelicalFusion,Helical Fusion,JP,,0,lote
+HellmannWorldwideLogistics,Hellmann,DE,,0,lote
+Hermeus,Hermeus,US,,0,lote
+HeyGen,HeyGen,US,,0,lote
+HiNaBattery,HiNa Battery,CN,,0,lote
+Hikrobot,Hikrobot,CN,,0,lote
+Hillhouse,Hillhouse,SG,,0,lote
+HippocraticAI,Hippocratic AI,US,,0,lote
+Holder Construction,Holder Construction,"Estados Unidos (Atlanta, Georgia)",,0,catalogo
+HongShan,HongShan,HK,,0,lote
+Humanoid,Humanoid,GB,,0,lote
+HumeAI,Hume AI,US,,0,lote
+HydroQuebec,Hydro-Québec,CA,,0,lote
+Hypertec,Hypertec,CA,,0,lote
+ISquaredCapital,I Squared Capital,US,,0,lote
+IPEX,I-PEX,JP,,0,lote
+ICONIQ,ICONIQ,US,,0,lote
+IFC,IFC,US,,0,lote
+IHSMarkit,IHSMarkit,United States / United Kingdom,,0,catalogo
+IMBEL,IMBEL,BR,,0,lote
+IMF,IMF,US,,0,lote
+INDUMIL,INDUMIL,CO,,0,lote
+IREDA,IREDA,IN,,0,lote
+IREL,IREL,IN,,0,lote
+InternationalResourcesHolding,IRH,AE,,0,lote
+ISDA,ISDA,"United States (membresía global, 75 países)",,0,catalogo
+ISONewEngland,ISO-NE,US,,0,lote
+ITRI,ITRI,TW,,0,lote
+Iceotope,Iceotope,GB,,0,lote
+Ideogram,Ideogram,CA,,0,lote
+impulse-space,Impulse Space,Estados Unidos,,0,catalogo
+InQTel,In-Q-Tel,US,,0,lote
+InceptioTechnology,Inceptio,CN,,0,lote
+IndexVentures,Index Ventures,GB,,0,lote
+IndiaEximBank,India Exim Bank,IN,,0,lote
+IndiumCorporation,Indium Corporation,US,,0,lote
+Ingeteam,Ingeteam,ES,,0,lote
+InnerMongoliaPowerGroup,Inner Mongolia Power Group,CN,,0,lote
+Innolume,Innolume,DE,,0,lote
+Innosilicon,Innosilicon,CN,,0,lote
+Innospace,Innospace,KR,,0,lote
+InsightPartners,Insight Partners,US,,0,lote
+IntegraTechnologies,Integra Technologies,US,,0,lote
+InterstellarTechnologies,Interstellar Technologies,JP,,0,lote
+InworldAI,Inworld,US,,0,lote
+IsarAerospace,Isar Aerospace,DE,,0,lote
+IsolaGroup,Isola,US,,0,lote
+iai-israel-aerospace,Israel Aerospace Industries,Israel,,0,catalogo
+IsraelElectricCorporation,Israel Electric Corporation,IL,,0,lote
+JACGroup,JAC Group,CN,,0,lote
+JawaharlalNehruPortAuthority,JNPA,IN,,0,lote
+JOGMEC,JOGMEC,JP,,0,lote
+JapanFreightRailwayCompany,JR Freight,JP,,0,lote
+JinchuanGroup,Jinchuan Group,China,,0,catalogo
+JohansonTechnology,Johanson Technology,US,,0,lote
+juniper,Juniper Networks,Estados Unidos,,0,catalogo
+KSURE,K-SURE,KR,,0,lote
+K2Space,K2 Space,US,,0,lote
+KAZMinerals,KAZ Minerals,GB,,0,lote
+KBRA,KBRA,EEUU,,0,catalogo
+KDDICableshipsSubseaEngineering,KDDI Cableships & Subsea Engineering,JP,,0,lote
+KEXIM,KEXIM,KR,,0,lote
+KoreaInvestmentCorporation,KIC,KR,,0,lote
+KIONetworks,KIONetworks,"México — operaciones en México, Centroamérica, Caribe, Colombia y España",,0,catalogo
+KMTCLine,KMTC,KR,,0,lote
+KMWE,KMWE,NL,,0,lote
+KNAPP,KNAPP,AT,,0,lote
+KOMIR,KOMIR,KR,,0,lote
+TacticalMissilesCorporation,KTRV,RU,,0,lote
+Kahramaa,Kahramaa,QA,,0,lote
+KalashnikovConcern,Kalashnikov Concern,RU,,0,lote
+Kandou,Kandou,CH,,0,lote
+KantoChemical,Kanto Chemical,JP,,0,lote
+KargoBot,KargoBot,CN,,0,lote
+KashiyamaIndustries,Kashiyama,JP,,0,lote
+KazMunayGas,KazMunayGas,KZ,,0,lote
+Kazakhmys,Kazakhmys,KZ,,0,lote
+KeenonRobotics,Keenon Robotics,CN,,0,lote
+KeplerRobotics,Kepler Robotics,CN,,0,lote
+KhazanahNasional,Khazanah,MY,,0,lote
+KhoslaVentures,Khosla Ventures,US,,0,lote
+Kiewit,Kiewit,US,,0,lote
+KingstonTechnology,Kingston,US,,0,lote
+Kinova,Kinova,CA,,0,lote
+KleinerPerkins,Kleiner Perkins,US,,0,lote
+KoBoldMetals,KoBold Metals,US,,0,lote
+KojundoChemicalLaboratory,Kojundo,JP,,0,lote
+Koncar,Končar,HR,,0,lote
+Krutrim,Krutrim,IN,,0,lote
+KurtJLeskerCompany,Kurt J. Lesker,US,,0,lote
+LCRA,LCRA,US,,0,lote
+LEMO,LEMO,CH,,0,lote
+LKAB,LKAB,SE,,0,lote
+LPIGroup,LPI Group,IE,,0,lote
+LSPower,LS Power,US,,0,lote
+LXPantos,LX Pantos,KR,,0,lote
+Labelbox,Labelbox,US,,0,lote
+Lancium,Lancium,US,,0,lote
+LastEnergy,Last Energy,US,,0,lote
+LegendCapital,Legend Capital,CN,,0,lote
+Legora,Legora,SE,,0,lote
+LejuRobotics,Leju Robotics,CN,,0,lote
+Lenze,Lenze,DE,,0,lote
+LessCommonMetals,Less Common Metals,GB,,0,lote
+LeuvenInstruments,Leuven Instruments,CN,,0,lote
+Leviton,Leviton,US,,0,lote
+Lightricks,Lightricks,IL,,0,lote
+LightspeedVenturePartners,Lightspeed,US,,0,lote
+LilacSolutions,Lilac Solutions,US,,0,lote
+LioniXInternational,LioniX,NL,,0,lote
+LiquidIntelligentTechnologies,Liquid,GB,,0,lote
+Lishen,Lishen,CN,,0,lote
+loft-orbital,Loft Orbital,Estados Unidos,,0,catalogo
+Lovable,Lovable,SE,,0,lote
+Lumai,Lumai,GB,,0,lote
+LuxCapital,Lux Capital,US,,0,lote
+MAHLE,MAHLE,DE,,0,lote
+MBKPartners,MBK Partners,KR,,0,lote
+MEASAT,MEASAT,MY,,0,lote
+MGX,MGX,United Arab Emirates,,0,catalogo
+MISO,MISO,US,,0,lote
+MKE,MKE,TR,,0,lote
+Mace,Mace,GB,,0,lote
+MagaluCloud,Magalu Cloud,BR,,0,lote
+Magnetar,Magnetar,US,,0,lote
+MarvelFusion,Marvel Fusion,DE,,0,lote
+MatX,MatX,US,,0,lote
+MattsonTechnology,Mattson Technology,US,,0,lote
+MenloVentures,Menlo Ventures,US,,0,lote
+MenziesAviation,Menzies Aviation,GB,,0,lote
+MindgroveTechnologies,Mindgrove,IN,,0,lote
+MineraSanCristobal,Minera San Cristóbal,BO,,0,lote
+Minersa,Minersa,ES,,0,lote
+MinoSpace,MinoSpace,CN,,0,lote
+Mobilint,Mobilint,KR,,0,lote
+ModelBest,ModelBest,CN,,0,lote
+MomentiveTechnologies,Momentive Technologies,US,,0,lote
+MonetaryAuthorityOfSingapore,Monetary Authority of Singapore,SG,,0,lote
+MoodysRatings,Moody's Ratings,EEUU,,0,catalogo
+MoonshotAI,Moonshot AI,CN,,0,lote
+Moonvalley,Moonvalley,CA,,0,lote
+MopaniCopperMines,Mopani,ZM,,0,lote
+MoritaChemicalIndustries,Morita Chemical,JP,,0,lote
+MorningstarDBRS,Morningstar DBRS,"Canada / United States (fundada en Toronto, hoy con oficinas en Nueva York, Chicago, Londres, Fráncfort, Madrid)",,0,catalogo
+MottCorporation,Mott,US,,0,lote
+Multibeam,Multibeam,US,,0,lote
+MuonSpace,Muon Space,US,,0,lote
+NONEDatacenters,N+ONE Datacenters,MA,,0,lote
+NBIM,NBIM,Europa,,0,catalogo
+NewDevelopmentBank,NDB,CN,,0,lote
+NESO,NESO,GB,,0,lote
+NIIF,NIIF,IN,,0,lote
+NIOA,NIOA,AU,,0,lote
+NIOC,NIOC,IR,,0,lote
+NNPC,NNPC,NG,,0,lote
+NYStateCommonRetirementFund,NY State Common Retirement Fund,US,,0,lote
+NYISO,NYISO,US,,0,lote
+NewYorkPowerAuthority,NYPA,US,,0,lote
+NZSuperFund,NZ Super Fund,NZ,,0,lote
+Nabiax,Nabiax,España,,0,catalogo
+nanoavionics,NanoAvionics,Lituania,,0,catalogo
+NationalWealthFund,National Wealth Fund,GB,,0,lote
+naval-group,Naval Group,Francia,,0,catalogo
+Navantia,Navantia,ES,,0,lote
+Neros,Neros,US,,0,lote
+Nettrix,Nettrix,CN,,0,lote
+NeuReality,NeuReality,IL,,0,lote
+Neuchips,Neuchips,TW,,0,lote
+neura-robotics,Neura Robotics,Alemania,,0,catalogo
+Nichia,Nichia,JP,,0,lote
+NikkeiInc,Nikkei Inc.,Japon,,0,catalogo
+NissinIonEquipment,Nissin Ion Equipment,JP,,0,lote
+NorgesBank,Norges Bank,NO,,0,lote
+NorinchukinBank,Norinchukin Bank,JP,,0,lote
+NousResearch,Nous Research,US,,0,lote
+NovatronFusion,Novatron,SE,,0,lote
+NovvaDataCenters,Novva,US,,0,lote
+NucleiSystemTechnology,Nuclei,CN,,0,lote
+NucleoelectricaArgentina,Nucleoeléctrica Argentina,AR,,0,lote
+OCPGroup,OCP Group,MA,,0,lote
+ODU,ODU,DE,,0,lote
+OmanInvestmentAuthority,OIA,OM,,0,lote
+OMERS,OMERS,CA,,0,lote
+ONS,ONS,BR,,0,lote
+OQ,OQ,OM,,0,lote
+OfficeOfStrategicCapital,OSC,US,,0,lote
+Okonite,Okonite,US,,0,lote
+OntarioTeachers,Ontario Teachers',CA,,0,lote
+OpenEvidence,OpenEvidence,US,,0,lote
+OpenStarTechnologies,OpenStar,NZ,,0,lote
+OpticMarineServices,Optic Marine Services,MY,,0,lote
+Orbex,Orbex,GB,,0,lote
+orbit-fab,Orbit Fab,Estados Unidos,,0,catalogo
+Orienspace,Orienspace,CN,,0,lote
+OsakaVacuum,Osaka Vacuum,JP,,0,lote
+Owkin,Owkin,FR,,0,lote
+PAIXDataCentres,PAIX,GH,,0,lote
+PBOC,PBOC,China,,0,catalogo
+PCCSE,PCC SE,DE,,0,lote
+PCCWGlobal,PCCW Global,HK,,0,lote
+PCLConstruction,PCL Construction,CA,,0,lote
+PDVSA,PDVSA,VE,,0,lote
+PEJ,PEJ,PL,,0,lote
+PGGM,PGGM,NL,,0,lote
+PhysikInstrumente,PI,DE,,0,lote
+PIF_SaudiArabia,PIF (Saudi Arabia),RestoMundo,,0,catalogo
+PIMCO,PIMCO,EEUU,,0,catalogo
+PSAInternational,PSAInternational,Singapur,,0,catalogo
+PSE,PSE,PL,,0,lote
+PSPInvestments,PSP Investments,CA,,0,lote
+PTPAL,PT PAL,ID,,0,lote
+PULS,PULS,DE,,0,lote
+pacific-fusion,Pacific Fusion,Estados Unidos,,0,catalogo
+PacificInternationalLines,Pacific International Lines,SG,,0,lote
+Panmnesia,Panmnesia,KR,,0,lote
+ParamountGroup,Paramount,AE,,0,lote
+PeakXVPartners,Peak XV,SG,,0,lote
+PeelPortsGroup,Peel Ports Group,GB,,0,lote
+Pemex,Pemex,MX,,0,lote
+Peraton,Peraton,US,,0,lote
+PerigeeAerospace,Perigee Aerospace,KR,,0,lote
+PeriodicLabs,Periodic Labs,US,,0,lote
+Perodua,Perodua,MY,,0,lote
+Petrovietnam,Petrovietnam,VN,,0,lote
+PhoenixContact,Phoenix Contact,DE,,0,lote
+PhoenixTailings,Phoenix Tailings,US,,0,lote
+PhysicsX,PhysicsX,GB,,0,lote
+Pika,Pika,US,,0,lote
+Pilz,Pilz,DE,,0,lote
+Pindad,Pindad,ID,,0,lote
+Pixxel,Pixxel,IN,,0,lote
+PlanseeGroup,Plansee Group,AT,,0,lote
+PlasmaTherm,Plasma-Therm,US,,0,lote
+Point2Technology,Point2,US,,0,lote
+PortAuthorityOfNewYorkAndNewJersey,Port Authority NY/NJ,US,,0,lote
+PragmaticSemiconductor,Pragmatic,GB,,0,lote
+PreferredNetworks,Preferred Networks,JP,,0,lote
+PrimariusTechnologies,Primarius,CN,,0,lote
+PrimeDataCenters,Prime Data Centers,US,,0,lote
+ProEnergy,ProEnergy,US,,0,lote
+ProLogium,ProLogium,TW,,0,lote
+QANT,Q.ANT,DE,,0,lote
+QCraft,QCraft,CN,,0,lote
+QIA,QIA,RestoMundo,,0,catalogo
+Qatar_Airways_Cargo,Qatar_Airways_Cargo,RestoMundo,,0,catalogo
+QimingVenturePartners,Qiming Venture Partners,CN,,0,lote
+Quantexa,Quantexa,GB,,0,lote
+QuantumSystems,Quantum Systems,DE,,0,lote
+QuinbrookInfrastructurePartners,Quinbrook,JE,,0,lote
+RM,R&M,CH,,0,lote
+RBA,RBA,Australia,,0,catalogo
+RBI,RBI,India,,0,catalogo
+Radiall,Radiall,FR,,0,lote
+RadiantIndustries,Radiant,US,,0,lote
+RadicalVentures,Radical Ventures,CA,,0,lote
+RailCargoGroup,Rail Cargo Group,AT,,0,lote
+Raith,Raith,DE,,0,lote
+Ranovus,Ranovus,CA,,0,lote
+RaxioGroup,Raxio Group,"Uganda (sede) — operaciones en Angola, Costa de Marfil, RD Congo, Etiopía, Mozambique, Tanzania y Uganda (7 países)",,0,catalogo
+RealtaFusion,Realta Fusion,US,,0,lote
+Rehlko,Rehlko,US,,0,lote
+MaschinenfabrikReinhausen,Reinhausen (MR),DE,,0,lote
+RekaAI,Reka AI,US,,0,lote
+RenaissanceFusion,Renaissance Fusion,FR,,0,lote
+ReserveBankOfAustralia,Reserve Bank of Australia,AU,,0,lote
+SverigesRiksbank,Riksbank,SE,,0,lote
+Rittal,Rittal,DE,,0,lote
+Robotera,Robotera,CN,,0,lote
+RohdeSchwarz,Rohde & Schwarz,DE,,0,lote
+Roketsan,Roketsan,TR,,0,lote
+RollsRoyceSMR,Rolls-Royce SMR,Reino Unido,,0,catalogo
+Rosenberger,Rosenberger,DE,,0,lote
+Rubycon,Rubycon,JP,,0,lote
+RyanCompanies,Ryan Companies,US,,0,lote
+SCElectric,S&C Electric,US,,0,lote
+SPGlobalRatings,S&P Global Ratings,EEUU,,0,catalogo
+S2C,S2C,CN,,0,lote
+SouthAfricanReserveBank,SARB,ZA,,0,lote
+SASInstitute,SAS,US,,0,lote
+SBSubmarineSystems,SBSS,CN,,0,lote
+SCHUNK,SCHUNK,DE,,0,lote
+SemiConductorLaboratory,SCL,IN,,0,lote
+SaudiDataAndAIAuthority,SDAIA,SA,,0,lote
+SEACOM,SEACOM,MU,,0,lote
+SEKOLogistics,SEKO Logistics,US,,0,lote
+SEWEURODRIVE,SEW-EURODRIVE,DE,,0,lote
+SFCompute,SF Compute,US,,0,lote
+SGBSMIT,SGB-SMIT,DE,,0,lote
+SHINETechnologies,SHINE,US,,0,lote
+SIAD,SIAD,IT,,0,lote
+SIDF,SIDF,SA,,0,lote
+SMARTPhotonics,SMART Photonics,NL,,0,lote
+SNB,SNB,Europa,,0,catalogo
+SOCAR,SOCAR,AZ,,0,lote
+SOMO,SOMO,IQ,,0,lote
+SPDJI,SPDJI,EEUU,,0,catalogo
+SPINNER,SPINNER,DE,,0,lote
+SPP,SPP,US,,0,lote
+SaltRiverProject,SRP,US,,0,lote
+SSC,SSC,SE,,0,lote
+SSISchafer,SSI Schäfer,DE,,0,lote
+STM,STM,TR,,0,lote
+STOXX,STOXX,Germany / Switzerland,,0,catalogo
+STULZ,STULZ,Alemania (Hamburgo),,0,catalogo
+SabeyDataCenters,Sabey Data Centers,US,,0,lote
+SalasOBrien,Salas O'Brien,US,,0,lote
+SanabilInvestments,Sanabil,SA,,0,lote
+sanctuary-ai,Sanctuary AI,Canadá,,0,catalogo
+SanteeCooper,Santee Cooper,US,,0,lote
+SargentLundy,Sargent & Lundy,US,,0,lote
+Saronic,Saronic,US,,0,lote
+SarvamAI,Sarvam AI,IN,,0,lote
+SaudiArabiaRailways,Saudi Arabia Railways,SA,,0,lote
+SaudiCentralBank,Saudi Central Bank (SAMA),SA,,0,lote
+ScalaDataCenters,Scala Data Centers,Brasil,,0,catalogo
+ScanGlobalLogistics,Scan Global Logistics,DK,,0,lote
+ScintilPhotonics,Scintil Photonics,FR,,0,lote
+SeabornNetworks,Seaborn,US,,0,lote
+Semidynamics,Semidynamics,ES,,0,lote
+SemikronDanfoss,Semikron Danfoss,DE,,0,lote
+Semilab,Semilab,HU,,0,lote
+SequoiaCapital,Sequoia Capital,EEUU,,0,catalogo
+Sesame,Sesame,US,,0,lote
+ShenzhenCapitalGroup,Shenzhen Capital Group,CN,,0,lote
+ShieldAI,Shield AI,EEUU,,0,catalogo
+SiCarrier,SiCarrier,CN,,0,lote
+SiFive,SiFive,US,,0,lote
+Sicoya,Sicoya,DE,,0,lote
+Siemon,Siemon,US,,0,lote
+Sierra,Sierra,US,,0,lote
+SilTerra,SilTerra,MY,,0,lote
+SiliconBox,Silicon Box,SG,,0,lote
+Silk_Way_West,Silk_Way_West,Azerbaiyán (Bakú),,0,catalogo
+SilverLake,Silver Lake,US,,0,lote
+SinochemHoldings,Sinochem Holdings,CN,,0,lote
+SinokorMerchantMarine,Sinokor,KR,,0,lote
+Sinosure,Sinosure,CN,,0,lote
+SixthStreet,Sixth Street,EEUU,,0,catalogo
+skild-ai,Skild AI,Estados Unidos,,0,catalogo
+SkyrootAerospace,Skyroot Aerospace,IN,,0,lote
+SlateAuto,Slate Auto,US,,0,lote
+SnorkelAI,Snorkel AI,US,,0,lote
+SnowyHydro,Snowy Hydro,AU,,0,lote
+Socomec,Socomec,FR,,0,lote
+Solactive,Solactive,Alemania,,0,catalogo
+Sonangol,Sonangol,AO,,0,lote
+Sonatrach,Sonatrach,Algeria,,0,catalogo
+Sophgo,Sophgo,CN,,0,lote
+SourcePhotonics,Source Photonics,US,,0,lote
+Sourcegraph,Sourcegraph,US,,0,lote
+SouthernCrossCables,Southern Cross Cables,AU,,0,lote
+SouthlandIndustries,Southland Industries,US,,0,lote
+space-forge,Space Forge,Reino Unido,,0,catalogo
+SpaceOne,Space One,JP,,0,lote
+Spacety,Spacety,CN,,0,lote
+SparkCapital,Spark Capital,US,,0,lote
+Sparkle,Sparkle,IT,,0,lote
+Speira,Speira,DE,,0,lote
+StackBlitz,StackBlitz (Bolt.new),US,,0,lote
+StandardBots,Standard Bots,US,,0,lote
+starfive,StarFive Technology,China,,0,catalogo
+starfish-space,Starfish Space,Estados Unidos,,0,catalogo
+Stark,Stark,DE,,0,lote
+StarshipTechnologies,Starship,US,,0,lote
+StartCampus,Start Campus,PT,,0,lote
+Statnett,Statnett,NO,,0,lote
+StepFun,StepFun,CN,,0,lote
+StructureTone,Structure Tone,US,,0,lote
+Submer,Submer,ES,,0,lote
+Substrate,Substrate,US,,0,lote
+SummitInterconnect,Summit Interconnect,US,,0,lote
+SuperiorGraphite,Superior Graphite,US,,0,lote
+SvenskaKraftnat,Svenska kraftnät,SE,,0,lote
+SwaySure,SwaySure,CN,,0,lote
+SweGaN,SweGaN,SE,,0,lote
+SwireShipping,Swire Shipping,SG,,0,lote
+T5DataCenters,T5 Data Centers,US,,0,lote
+TAETechnologies,TAE Technologies,EEUU,,0,catalogo
+TDKElectronics,TDK Electronics,DE,,0,lote
+TechnologyInnovationInstitute,TII,AE,,0,lote
+TOTVS,TOTVS,BR,,0,lote
+TrimetAluminium,TRIMET,DE,,0,lote
+TRSTexas,TRS Texas,US,,0,lote
+Tabnine,Tabnine,IL,,0,lote
+Tampnet,Tampnet,NO,,0,lote
+TanakaKikinzoku,Tanaka Kikinzoku,JP,,0,lote
+Tekever,Tekever,PT,,0,lote
+Telkomsat,Telkomsat,ID,,0,lote
+Tenaska,Tenaska,US,,0,lote
+Teramount,Teramount,IL,,0,lote
+terran-orbital,Terran Orbital,Estados Unidos,,0,catalogo
+Thaicom,Thaicom,TH,,0,lote
+Thaisarco,Thaisarco,TH,,0,lote
+TheBotCompany,The Bot Company,US,,0,lote
+TheExplorationCompany,The Exploration Company,DE,,0,lote
+TheQuartzCorp,The Quartz Corp,Europa,,0,catalogo
+TheaEnergy,Thea Energy,US,,0,lote
+ThomaBravo,Thoma Bravo,US,,0,lote
+Thorizon,Thorizon,NL,,0,lote
+ThriveCapital,Thrive Capital,EEUU,,0,catalogo
+TigerGlobal,Tiger Global,US,,0,lote
+Togg,Togg,TR,,0,lote
+TohoTitanium,Toho Titanium,JP,,0,lote
+tokamak-energy,Tokamak Energy,Reino Unido,,0,catalogo
+TollGroup,Toll Group,AU,,0,lote
+Toshiba,Toshiba,JP,,0,lote
+TracoPower,Traco Power,CH,,0,lote
+Tract,Tract,US,,0,lote
+true-anomaly,True Anomaly,Estados Unidos,,0,catalogo
+TrymaxSemiconductor,Trymax,NL,,0,lote
+UGMK,UGMK,RU,,0,lote
+UKExportFinance,UKEF,GB,,0,lote
+USTreasury,USTreasury,EEUU,,0,catalogo
+UTAC,UTAC,SG,,0,lote
+Udio,Udio,US,,0,lote
+UkrainianDefenseIndustry,Ukrainian Defense Industry,UA,,0,lote
+UniVista,UniVista,CN,,0,lote
+UrsaMajor,Ursa Major,US,,0,lote
+VTal,V.tal,BR,,0,lote
+Vacuumschmelze,VAC,DE,,0,lote
+VONARDENNE,VON ARDENNE,DE,,0,lote
+VSORA,VSORA,FR,,0,lote
+Vanguard,Vanguard,EEUU,,0,catalogo
+VannevarLabs,Vannevar Labs,US,,0,lote
+vast-space,Vast Space,Estados Unidos,,0,catalogo
+VastaiTechnologies,Vastai,CN,,0,lote
+Vattenfall,Vattenfall,Europa,,0,catalogo
+Auradine,Velaura AI,US,,0,lote
+Viettel,Viettel,VN,,0,lote
+VirtusDataCentres,Virtus,GB,,0,lote
+VitalMaterials,Vital Materials,CN,,0,lote
+WAGO,WAGO,DE,,0,lote
+WesternAreaPowerAdministration,WAPA,US,,0,lote
+WPT Industrial,WPT Industrial,Canadá (sede original Toronto) / activos en EE.UU.,,0,catalogo
+WashingtonStateInvestmentBoard,WSIB,US,,0,lote
+WalshGroup,Walsh Group,US,,0,lote
+WarburgPincus,Warburg Pincus,US,,0,lote
+Watlow,Watlow,US,,0,lote
+Weidmuller,Weidmüller,DE,,0,lote
+Wellington,Wellington,EEUU,,0,catalogo
+Westfalen,Westfalen,DE,,0,lote
+WinthropTechnologies,Winthrop,IE,,0,lote
+WorldBank,World Bank (IBRD),US,,0,lote
+WurthElektronik,Würth Elektronik,DE,,0,lote
+XSquareRobot,X Square Robot,CN,,0,lote
+XBowSystems,X-Bow Systems,US,,0,lote
+XEpic,X-Epic,CN,,0,lote
+XPressFeeders,X-Press Feeders,SG,,0,lote
+XMC,XMC,CN,,0,lote
+XairaTherapeutics,Xaira,US,,0,lote
+XcimerEnergy,Xcimer,US,,0,lote
+XiangjiangKunpeng,Xiangjiang Kunpeng,CN,,0,lote
+Xpeedic,Xpeedic,CN,,0,lote
+XscapePhotonics,Xscape Photonics,US,,0,lote
+YILPORTHolding,YILPORT,TR,,0,lote
+YLB,YLB,BO,,0,lote
+YacimientosDeLitioBolivianos,YLB,BO,,0,lote
+YondrGroup,Yondr Group,"Reino Unido (sede Londres) — operaciones en EE.UU., Canadá y Europa (Londres, Fráncfort, Ámsterdam)",,0,catalogo
+YouCom,You.com,US,,0,lote
+ZapEnergy,Zap Energy,EEUU,,0,catalogo
+zayo-group,Zayo Group,"Estados Unidos (HQ Boulder, CO)",,0,catalogo
+Zenobe,Zenobe,GB,,0,lote
+ZincFive,ZincFive,US,,0,lote
+ZutaCore,ZutaCore,US,,0,lote
+Center3,center3,SA,,0,lote
+IPronics,iPronics,ES,,0,lote
+IfmElectronic,ifm,DE,,0,lote
+Igus,igus,DE,,0,lote
+Maincubes,maincubes,DE,,0,lote
+N8n,n8n,DE,,0,lote
+ProteanTecs,proteanTecs,IL,,0,lote
+XLight,xLight,US,,0,lote
+ABB_Robotics,ABB Robotics,Europa,,1,catalogo
+ABE,ABE,BO,,1,lote
+AECC,AECC,CN,,1,lote
+AESC,AESC,JP,,1,lote
+AFL,AFL,US,,1,lote
+AI21Labs,AI21 Labs,IL,,1,lote
+AdvancedMicroFoundry,AMF,SG,,1,lote
+AMIESTechnology,AMIES Technology,CN,,1,lote
+AOI,AOI,EG,,1,lote
+APG,APG,NL,,1,lote
+ARSAT,ARSAT,AR,,1,lote
+Abridge,Abridge,US,,1,lote
+Absolics,Absolics,US,,1,lote
+Actis,Actis,GB,,1,lote
+Addepar,Addepar,EEUU,,1,catalogo
+Aerospacelab,Aerospacelab,BE,,1,lote
+AfricaGlobalLogistics,Africa Global Logistics,FR,,1,lote
+Aggreko,Aggreko,GB,,1,lote
+AgileRobots,Agile Robots,DE,,1,lote
+Agratas,Agratas,IN,,1,lote
+AirTrunk,AirTrunk,"Australia (sede Sídney) — operaciones en Australia, Japón, Hong Kong, Singapur y Malasia (Johor)",,1,catalogo
+Air_Charter_Service,Air_Charter_Service,Reino Unido (Kingston upon Thames),,1,catalogo
+Airedale,Airedale,GB,,1,lote
+AirportAuthorityHongKong,Airport Authority Hong Kong,HK,,1,lote
+Aivres,Aivres,US,,1,lote
+ambi-robotics,Ambi Robotics,Estados Unidos,,1,catalogo
+Amprion,Amprion,DE,,1,lote
+Anduril,Anduril Industries,EEUU,,1,catalogo
+AnordMardix,Anord Mardix,IE,,1,lote
+AntGroup,Ant Group,CN,,1,lote
+Anyscale,Anyscale,US,,1,lote
+ApolloGo,Apollo Go,CN,,1,lote
+Arelion,Arelion,SE,,1,lote
+ArmChina,Arm China,CN,,1,lote
+AsiaSat,AsiaSat,HK,,1,lote
+Astranis,Astranis,US,,1,lote
+AvantiCommunications,Avanti,GB,,1,lote
+BAICGroup,BAIC Group,CN,,1,lote
+BDxDataCenters,BDx,SG,,1,lote
+BNDES,BNDES,BR,,1,lote
+BWDigital,BW Digital,SG,,1,lote
+BayaSystems,Baya Systems,US,,1,lote
+Baykar,Baykar,TR,,1,lote
+berkshire-grey,Berkshire Grey,Estados Unidos,,1,catalogo
+BerkshireHathawayEnergy,Berkshire Hathaway Energy,EEUU,,1,catalogo
+BollingerShipyards,Bollinger Shipyards,US,,1,lote
+BoschRexroth,Bosch Rexroth,DE,,1,lote
+Boyd Thermal,Boyd Thermal,"Estados Unidos (manufactura global: México/Norteamérica, Asia, Europa)",,1,catalogo
+Bpifrance,Bpifrance,FR,,1,lote
+BridgeDataCentres,Bridge Data Centres,SG,,1,lote
+BuschGroup,Busch Group,DE,,1,lote
+CDC_DataCentres,CDC Data Centres,"Australia (sede Canberra) — operaciones en Canberra, Sídney, Melbourne (Australia) y Auckland (Nueva Zelanda)",,1,catalogo
+CETC48thResearchInstitute,CETC 48th Research Institute,CN,,1,lote
+CGSemi,CG Semi,IN,,1,lote
+CIOMP,CIOMP,CN,,1,lote
+CPV,CPV,US,,1,lote
+CalPERS,CalPERS,US,,1,lote
+Calpine,Calpine (Constellation Energy),EEUU,,1,catalogo
+CanonAnelva,Canon Anelva,JP,,1,lote
+CapitalG,CapitalG,US,,1,lote
+Carsem,Carsem,MY,,1,lote
+Cathay_Cargo,Cathay Cargo,Hong Kong (China),,1,catalogo
+Ceer,Ceer,SA,,1,lote
+CelestialAI,Celestial AI,US,,1,lote
+Celgard,Celgard,US,,1,lote
+ChinaChanganAutomobileGroup,Changan Group,CN,,1,lote
+Chapman_Freeborn,Chapman_Freeborn,Reino Unido,,1,catalogo
+chef-robotics,Chef Robotics,Estados Unidos,,1,catalogo
+Chilldyne,Chilldyne,US,,1,lote
+ChinaEximBank,China Exim Bank,CN,,1,lote
+ChinaSouthernPowerGrid,China Southern Power Grid,CN,,1,lote
+ChinaThreeGorgesCorporation,China Three Gorges,CN,,1,lote
+chindata,Chindata Group,"China / Singapur (holding, operaciones pan-asiáticas)",,1,catalogo
+Codasip,Codasip,DE,,1,lote
+ColtDCS,Colt DCS,GB,,1,lote
+Comau,Comau,IT,,1,lote
+Comilog,Comilog,GA,,1,lote
+CovalentLithium,Covalent Lithium,AU,,1,lote
+covariant,Covariant,Estados Unidos,,1,catalogo
+CupertinoElectric,Cupertino Electric,US,,1,lote
+DedicatedFreightCorridorCorporationOfIndia,DFCCIL,IN,,1,lote
+Damen,Damen,NL,,1,lote
+Data4,Data4,Francia,,1,catalogo
+DataBank,DataBank,EEUU,,1,catalogo
+Decart,Decart,IL,,1,lote
+DeepX,DeepX,KR,,1,lote
+Dematic,Dematic,US,,1,lote
+dexterity,Dexterity Inc,Estados Unidos,,1,catalogo
+DiehlDefence,Diehl Defence,DE,,1,lote
+Digantara,Digantara,IN,,1,lote
+DigitalBridge,DigitalBridge,US,,1,lote
+diligent-robotics,Diligent Robotics,Estados Unidos,,1,catalogo
+Ducab,Ducab,AE,,1,lote
+EXAInfrastructure,EXA Infrastructure,GB,,1,lote
+EastPennManufacturing,East Penn Manufacturing,US,,1,lote
+EdisonSPA,Edison,IT,,1,lote
+ElevenLabs,ElevenLabs,EEUU,,1,catalogo
+EncoreWire,Encore Wire,US,,1,lote
+Energetiq,Energetiq,US,,1,lote
+EnergyCapitalPartners,Energy Capital Partners,US,,1,lote
+EnergyX,EnergyX,US,,1,lote
+EnvisionEnergy,Envision,CN,,1,lote
+EtiMaden,Eti Maden,TR,,1,lote
+EtihadCargo,Etihad Cargo,AE,,1,lote
+Everllence,Everllence,DE,,1,lote
+Eviden,Eviden,FR,,1,lote
+Exxelia,Exxelia,FR,,1,lote
+FAdeA,FAdeA,AR,,1,lote
+FNHerstal,FN Herstal,BE,,1,lote
+Festo,Festo,DE,,1,lote
+FiberHomeMarine,FiberHome Marine,CN,,1,lote
+FireworksAI,Fireworks AI,US,,1,lote
+FormEnergy,Form Energy,EEUU,,1,catalogo
+Fortress,Fortress,"United States (mayoritariamente propiedad de Mubadala Capital, Emiratos Árabes Unidos, desde may-2024)",,1,catalogo
+fourier-intelligence,Fourier Intelligence,China,,1,catalogo
+FrankaRobotics,Franka Robotics,DE,,1,lote
+Fujikin,Fujikin,JP,,1,lote
+GCX,GCX,GB,,1,lote
+GEHitachiNuclear,GE Hitachi Nuclear Energy,EEUU,,1,catalogo
+GLP,GLP,Singapur (origen) / EE.UU. (Ares) / China (GLP China),,1,catalogo
+GMexicoTransportes,GMéxico Transportes,MX,,1,lote
+GreenRevolutionCooling,GRC,US,,1,lote
+GRINMGroup,GRINM Group,CN,,1,lote
+GV,GV,US,,1,lote
+GalacticEnergy,Galactic Energy,CN,,1,lote
+Geespace,Geespace,CN,,1,lote
+GeneralAtlantic,General Atlantic,US,,1,lote
+GhostRobotics,Ghost Robotics,US,,1,lote
+Gigaphoton,Gigaphoton,JP,,1,lote
+Gilbane,Gilbane,US,,1,lote
+GlobalMarine,Global Marine,GB,,1,lote
+GrAI_Matter,GrAI Matter Labs,Europa,,1,catalogo
+GreenMountain,Green Mountain,NO,,1,lote
+HCStarckTungsten,H.C. Starck Tungsten,DE,,1,lote
+H3C,H3C,CN,,1,lote
+HTMicron,HT Micron,BR,,1,lote
+Hactl,Hactl,HK,,1,lote
+Hadrian,Hadrian,US,,1,lote
+Hailo,Hailo Technologies,Israel,,1,catalogo
+Hebbia,Hebbia,US,,1,lote
+Heraeus,Heraeus,DE,,1,lote
+Hispasat,Hispasat,ES,,1,lote
+HitachiHighTech,Hitachi High-Tech,JP,,1,lote
+Hithium,Hithium,CN,,1,lote
+HoffmanConstruction,Hoffman,US,,1,lote
+HoltecInternational,Holtec,US,,1,lote
+HuakunZhenyu,Huakun Zhenyu,CN,,1,lote
+HughesNetwork,Hughes Network Systems,EEUU,,1,catalogo
+HutchisonPorts,Hutchison Ports,Hong Kong (China),,1,catalogo
+HyperAccel,HyperAccel,KR,,1,lote
+HyveSolutions,Hyve Solutions,US,,1,lote
+InvestmentCorporationOfDubai,ICD,AE,,1,lote
+IDB,IDB,US,,1,lote
+IDCFrontier,IDC Frontier,JP,,1,lote
+IFMInvestors,IFM Investors,AU,,1,lote
+INVAP,INVAP,AR,,1,lote
+ITCHoldings,ITCHoldings,EEUU,,1,catalogo
+ITEROrganization,ITER,FR,,1,lote
+IXM,IXM,CH,,1,lote
+ImageSatInternational,ImageSat International,IL,,1,lote
+ImerysGraphiteCarbon,Imerys Graphite & Carbon,CH,,1,lote
+InCoreSemiconductors,InCore,IN,,1,lote
+Inalum,Inalum,ID,,1,lote
+IncheonInternationalAirportCorporation,Incheon Airport Corporation,KR,,1,lote
+IndianRailways,Indian Railways,IN,,1,lote
+Inpria,Inpria,US,,1,lote
+IntelCapital,Intel Capital,US,,1,lote
+IntelIreland,Intel Ireland,IE,,1,lote
+Intrinsic,Intrinsic,US,,1,lote
+InvisibleTechnologies,Invisible Technologies,US,,1,lote
+JAXA,JAXA,JP,,1,lote
+JEDunnConstruction,JE Dunn,US,,1,lote
+JapanNuclearFuelLimited,JNFL,JP,,1,lote
+JaguarLandRover,Jaguar Land Rover,GB,,1,lote
+JetCool,JetCool,US,,1,lote
+JioDataCenters,Jio Data Centers,India,,1,catalogo
+JioPlatforms,Jio Platforms,IN,,1,lote
+KoreaDevelopmentBank,KDB,KR,,1,lote
+KELK,KELK,JP,,1,lote
+KIA,KIA,Kuwait,,1,catalogo
+KuwaitPetroleumCorporation,KPC,KW,,1,lote
+KazakhstanTemirZholy,KTZ,KZ,,1,lote
+KYOCERAAVX,KYOCERA AVX,US,,1,lote
+Kalitta_Air,Kalitta_Air,"Estados Unidos (Ypsilanti, Michigan; base en Willow Run Airport)",,1,catalogo
+KalyaniStrategicSystems,Kalyani Strategic Systems,IN,,1,lote
+Kavout,Kavout,EEUU,,1,catalogo
+Kazzinc,Kazzinc,KZ,,1,lote
+Kelvion,Kelvion,DE,,1,lote
+Kensho,Kensho Technologies (S&P),EEUU,,1,catalogo
+KeplerCommunications,Kepler Communications,CA,,1,lote
+Khrunichev,Khrunichev,RU,,1,lote
+KintetsuWorldExpress,Kintetsu World Express,JP,,1,lote
+Kineis,Kinéis,FR,,1,lote
+KutchCopper,Kutch Copper,IN,,1,lote
+KyotoFusioneering,Kyoto Fusioneering,JP,,1,lote
+Kyutai,Kyutai,FR,,1,lote
+LEAG,LEAG,DE,,1,lote
+LSMnM,LS MnM,KR,,1,lote
+LeafSpace,Leaf Space,IT,,1,lote
+Leybold,Leybold,DE,,1,lote
+Ligentec,Ligentec,CH,,1,lote
+lightning-ai,Lightning AI,"Estados Unidos (HQ San Francisco, CA)",,1,catalogo
+LinkLogisticsRealEstate,Link Logistics,US,,1,lote
+LiquidAI,Liquid AI,US,,1,lote
+Logicor,Logicor,GB,,1,lote
+LufthansaCargo,Lufthansa Cargo,DE,,1,lote
+LynkGlobal,Lynk Global,US,,1,lote
+Lyten,Lyten,US,,1,lote
+M12,M12,US,,1,lote
+MEANWELL,MEAN WELL,TW,,1,lote
+MaiaSpace,MaiaSpace,FR,,1,lote
+MapletreeInvestments,Mapletree,SG,,1,lote
+MathesonTriGas,Matheson,US,,1,lote
+Mawani,Mawani,SA,,1,lote
+Maximus_Air,Maximus_Air,Emiratos Árabes Unidos (Abu Dhabi),,1,catalogo
+MayMobility,May Mobility,US,,1,lote
+McCarthyBuildingCompanies,McCarthy Building Companies,US,,1,lote
+Mercuria,Mercuria,Europa,,1,catalogo
+MesserGroup,Messer Group,Alemania,,1,catalogo
+MetalorTechnologies,Metalor,CH,,1,lote
+MobileIndustrialRobots,MiR,DK,,1,lote
+MicroBT,MicroBT,CN,,1,lote
+MillenniumSpaceSystems,Millennium,US,,1,lote
+MilremRobotics,Milrem Robotics,EE,,1,lote
+Molex,Molex,US,,1,lote
+Molicel,Molicel,TW,,1,lote
+MoroHub,MoroHub,Emiratos Árabes Unidos,,1,catalogo
+MorrisonExpress,Morrison Express,TW,,1,lote
+Mortenson,Mortenson,"Estados Unidos (Minneapolis, Minnesota)",,1,catalogo
+Motivair,Motivair,US,,1,lote
+Mubadala,Mubadala,United Arab Emirates,,1,catalogo
+MubadalaEnergy,Mubadala Energy,AE,,1,lote
+Mujin,Mujin,JP,,1,lote
+Mumtalakat,Mumtalakat,BH,,1,lote
+MunitionsIndia,Munitions India,IN,,1,lote
+MurataPowerSolutions,Murata Power Solutions,US,,1,lote
+NipponCargoAirlines,NCA,JP,,1,lote
+NCSIST,NCSIST,TW,,1,lote
+NORINCO,NORINCO,CN,,1,lote
+NTSGroup,NTS Group,NL,,1,lote
+NTTInnovativeDevices,NTT Innovative Devices,JP,,1,lote
+NTTWorldEngineeringMarine,NTT WE Marine,JP,,1,lote
+NemaskaLithium,Nemaska Lithium,CA,,1,lote
+Neoen,Neoen,FR,,1,lote
+NewaysElectronics,Neways,NL,,1,lote
+NextSilicon,NextSilicon,IL,,1,lote
+NigComSat,NigComSat,NG,,1,lote
+NorthCDatacenters,NorthC,NL,,1,lote
+NxtraData,Nxtra Data,India,,1,catalogo
+Okmetic,Okmetic,FI,,1,lote
+OpenCosmos,Open Cosmos,GB,,1,lote
+OpenLight,OpenLight,US,,1,lote
+OrangeMarine,Orange Marine,FR,,1,lote
+Orano,Orano,Francia,,1,catalogo
+Orbcomm,Orbcomm,EEUU,,1,catalogo
+Orbotech,Orbotech,IL,,1,lote
+Ormazabal,Ormazabal,ES,,1,lote
+Oxa,Oxa,GB,,1,lote
+OyuTolgoi,Oyu Tolgoi,MN,,1,lote
+P3LogisticParks,P3,CZ,,1,lote
+PGZ,PGZ,PL,,1,lote
+PLDSpace,PLD Space,ES,,1,lote
+POF,POF,PK,,1,lote
+PallCorporation,Pall,US,,1,lote
+PanasonicIndustry,Panasonic Industry,JP,,1,lote
+PersimmonTechnologies,Persimmon Technologies,US,,1,lote
+Petronas,Petronas,Malaysia,,1,catalogo
+PhysicalIntelligence,Physical Intelligence (π),EEUU,,1,catalogo
+PillerPowerSystems,Piller Power Systems,DE,,1,lote
+PortOfAntwerpBruges,Port of Antwerp-Bruges,BE,,1,lote
+PortOfLongBeach,Port of Long Beach,US,,1,lote
+PortsAmerica,Ports America,US,,1,lote
+PositronAI,Positron AI,US,,1,lote
+PowerSecure,PowerSecure,US,,1,lote
+PrimeIntellect,Prime Intellect,US,,1,lote
+princeton-digital-group,Princeton Digital Group,Singapur (operaciones pan-asiáticas),,1,catalogo
+PriorLabs,Prior Labs,DE,,1,lote
+ProdriveTechnologies,Prodrive Technologies,NL,,1,lote
+ProlecGE,Prolec GE,MX,,1,lote
+Prophesee,Prophesee,Europa,,1,catalogo
+Proterial,Proterial,JP,,1,lote
+PulseElectronics,Pulse Electronics,US,,1,lote
+PureDataCentres,Pure Data Centres,"Reino Unido (sede Londres) — operaciones en Europa, Medio Oriente y Asia",,1,catalogo
+QSIL,QSIL,DE,,1,lote
+Quicktron,Quicktron,CN,,1,lote
+RECOM,RECOM,AT,,1,lote
+REEtec,REEtec,NO,,1,lote
+RocketFactoryAugsburg,RFA,DE,,1,lote
+RSLaser,RSLaser,CN,,1,lote
+Rain_Neuromorphics,Rain Neuromorphics,EEUU,,1,catalogo
+realtime-robotics,Realtime Robotics,Estados Unidos,,1,catalogo
+Rebellions,Rebellions,KR,,1,lote
+RedwoodMaterials,Redwood Materials,US,,1,lote
+Replit,Replit,US,,1,lote
+RhenusGroup,Rhenus,DE,,1,lote
+righthand-robotics,RightHand Robotics,Estados Unidos,,1,catalogo
+RioTintoAluminium,Rio Tinto Aluminium,United Kingdom/Australia,,1,catalogo
+Rosendin,Rosendin,US,,1,lote
+SAMI,SAMI,SA,,1,lote
+seeqc-quantum,SEEQC,Estados Unidos,,1,catalogo
+SIOM,SIOM,CN,,1,lote
+SKMaterials,SKMaterials,Corea,,1,catalogo
+SMEE,SMEE (Shanghai Micro Electronics),China,,1,catalogo
+SMICNorth,SMIC North (SMNC),CN,,1,lote
+SumitomoHeavyIndustriesIonTechnology,SMIT,JP,,1,lote
+SPTSTechnologies,SPTS,GB,,1,lote
+SafeSuperintelligence,SSI,US,,1,lote
+STATSChipPAC,STATS ChipPAC,SG,,1,lote
+STT_GDC,STT_GDC,Singapur,,1,catalogo
+Sanechips,Sanechips,CN,,1,lote
+ScoutMotors,Scout Motors,US,,1,lote
+SemiDrive,SemiDrive,CN,,1,lote
+ShanghaiHualiMicroelectronics,Shanghai Huali Microelectronics (HLMC),CN,,1,lote
+sierra-nevada-corporation,Sierra Nevada Corporation,Estados Unidos,,1,catalogo
+SierraSpace,Sierra Space,EEUU,,1,catalogo
+SilaNanotechnologies,Sila,US,,1,lote
+SilkWayWestAirlines,Silk Way West,AZ,,1,lote
+Simcoa,Simcoa,AU,,1,lote
+SiouxTechnologies,Sioux,NL,,1,lote
+JohnSiskSon,Sisk,IE,,1,lote
+SmartWires,Smart Wires,US,,1,lote
+Sodern,Sodern,FR,,1,lote
+SoftBankVisionFund,SoftBank Vision Fund,GB,,1,lote
+SolarTurbines,Solar Turbines,US,,1,lote
+SonySemiconductorSolutions,Sony Semiconductor Solutions,JP,,1,lote
+Southwire,Southwire,US,,1,lote
+Speechmatics,Speechmatics,GB,,1,lote
+SpiNNcloud,SpiNNcloud Systems,Europa,,1,catalogo
+Starline,Starline,US,,1,lote
+SumitomoWiringSystems,Sumitomo Wiring Systems,JP,,1,lote
+SunwodaEVB,Sunwoda EVB,CN,,1,lote
+SuperiorEssex,Superior Essex,US,,1,lote
+Swissgrid,Swissgrid,CH,,1,lote
+Swisslog,Swisslog,CH,,1,lote
+Sycamore,Sycamore Networks,EEUU,,1,catalogo
+Synthesia,Synthesia,GB,,1,lote
+Syntiant,Syntiant Corp,EEUU,,1,catalogo
+SyskaHennessy,Syska Hennessy,US,,1,lote
+TSystems,T-Systems,DE,,1,lote
+TDKLambda,TDK-Lambda,JP,,1,lote
+TowerPartnersSemiconductor,TPSCo,JP,,1,lote
+TRISOX,TRISO-X,US,,1,lote
+TRUMPFHuttinger,TRUMPF Hüttinger,DE,,1,lote
+TSMCNanjing,TSMC Nanjing,CN,,1,lote
+TVA,TVA,US,,1,lote
+TVO,TVO,FI,,1,lote
+Taalas,Taalas,CA,,1,lote
+Taipower,Taipower,TW,,1,lote
+TangerMed,Tanger Med,MA,,1,lote
+Taniobis,Taniobis,DE,,1,lote
+TankeBlue,TankeBlue,CN,,1,lote
+Telehouse,Telehouse,"Japón (sede operativa global, matriz KDDI)",,1,catalogo
+Telxius,Telxius,ES,,1,lote
+Temasek,Temasek,RestoMundo,,1,catalogo
+TencentCloud,Tencent Cloud,CN,,1,lote
+tensorwave,TensorWave,"Estados Unidos (HQ Las Vegas, NV)",,1,catalogo
+Teraco,Teraco,Sudáfrica,,1,catalogo
+textron-systems,Textron Systems,Estados Unidos,,1,catalogo
+TheNuclearCompany,The Nuclear Company,US,,1,lote
+ThinkingMachinesLab,Thinking Machines Lab,US,,1,lote
+ChinaTelecomCloud,Tianyi Cloud,CN,,1,lote
+TierPoint,TierPoint,US,,1,lote
+TosohQuartz,Tosoh Quartz,JP,,1,lote
+Transpower,Transpower,NZ,,1,lote
+Triara,Triara,MX,,1,lote
+TsingshanHoldingGroup,Tsingshan,CN,,1,lote
+TurkishCargo,Turkish Cargo,TR,,1,lote
+type-one-energy,Type One Energy,Estados Unidos,,1,catalogo
+UnitedEngineCorporation,UEC,RU,,1,lote
+unisoc,UNISOC,China,,1,catalogo
+USEXIM,US EXIM,US,,1,lote
+UnitedShipbuildingCorporation,USC,RU,,1,lote
+Usystems,USystems,GB,,1,lote
+Unseenlabs,Unseenlabs,FR,,1,lote
+Upstage,Upstage,KR,,1,lote
+Uralvagonzavod,Uralvagonzavod,RU,,1,lote
+Urenco,Urenco,ReinoUnido,,1,catalogo
+VASTData,VAST Data,US,,1,lote
+ValeBaseMetals,Vale Base Metals,CA,,1,lote
+Vanderlande,Vanderlande,NL,,1,lote
+varda-space-industries,Varda Space Industries,Estados Unidos,,1,catalogo
+VentanaMicroSystems,Ventana Micro Systems,US,,1,lote
+Verne,Verne,GB,,1,lote
+Vianode,Vianode,NO,,1,lote
+VirginiaTransformer,Virginia Transformer,US,,1,lote
+Volga_Dnepr,Volga_Dnepr,Rusia (Ulyanovsk / Moscú),,1,catalogo
+voltage-park,Voltage Park,"Estados Unidos (HQ San Francisco, CA)",,1,catalogo
+Vultr,Vultr,US,,1,lote
+WBGroup,WB Group,PL,,1,lote
+WorldwideFlightServices,WFS,FR,,1,lote
+WIOCC,WIOCC,MU,,1,lote
+waabi,Waabi,Canadá,,1,catalogo
+WaferTech,WaferTech,US,,1,lote
+WebWerks,Web Werks,IN,,1,lote
+WeightsBiases,Weights & Biases,US,,1,lote
+WestinghouseElectric,Westinghouse Electric Company,EEUU,,1,catalogo
+WovenByToyota,Woven by Toyota,JP,,1,lote
+XRG,XRG,AE,,1,lote
+XsightLabs,Xsight Labs,IL,,1,lote
+YTEC,Y-TEC,AR,,1,lote
+YPFB,YPFB,BO,,1,lote
+YangtzeRiverComputing,Yangtze River Computing,CN,,1,lote
+yotta-data-services,Yotta Data Services,India,,1,catalogo
+Zygo,Zygo,US,,1,lote
+AndreessenHorowitz,a16z,US,,1,lote
+Dnata,dnata,AE,,1,lote
+Maxon,maxon,CH,,1,lote
+XFusion,xFusion,CN,,1,lote
+01AI,01.AI (Yi Models),China,,2,catalogo
+50Hertz,50Hertz,DE,,2,lote
+ABP,ABP,NL,,2,lote
+ADNOC,ADNOC,United Arab Emirates,,2,catalogo
+APMTerminals,APMTerminals,Países Bajos (sede en La Haya),,2,catalogo
+Adept,Adept AI,EEUU,,2,catalogo
+agibot-zhiyuan,AgiBot (Zhiyuan Robotics),China,,2,catalogo
+Agility,Agility Robotics (Digit),EEUU,,2,catalogo
+AlephAlpha,Aleph Alpha,Europa,,2,catalogo
+AlignedDataCenters,Aligned Data Centers,"Estados Unidos — huella pan-americana (incl. Brasil, Chile, Colombia, México vía ODATA)",,2,catalogo
+Antonov_Airlines,Antonov_Airlines,"Ucrania (operativamente reubicada a Leipzig/Halle, Alemania, desde 2022)",,2,catalogo
+AppliedIntuition,Applied Intuition,US,,2,lote
+Arabsat,Arabsat,SA,,2,lote
+Ascenty,Ascenty,"Brasil — operaciones en Brasil, México y Chile",,2,catalogo
+Avangrid,Avangrid,US,,2,lote
+AvatrTechnology,Avatr,CN,,2,lote
+Avride,Avride,US,,2,lote
+AxiomSpace,Axiom Space,EEUU,,2,catalogo
+AyarLabs,Ayar Labs,EEUU,,2,catalogo
+Azercosmos,Azercosmos,AZ,,2,lote
+BASFShanshan,BASF Shanshan,CN,,2,lote
+BNSFRailway,BNSFRailway,"Estados Unidos (Fort Worth, Texas)",,2,catalogo
+BOTAS,BOTAŞ,TR,,2,lote
+Baseten,Baseten,US,,2,lote
+BenevolentAI,BenevolentAI,Europa,,2,catalogo
+BlueCanyonTechnologies,Blue Canyon,US,,2,lote
+BlueOrigin,Blue Origin,EEUU,,2,catalogo
+brewer-science,Brewer Science,Estados Unidos,,2,catalogo
+ByteDance,ByteDance,China,,2,catalogo
+CASIC,CASIC,CN,,2,lote
+CGN,CGN,CN,,2,lote
+CNNC,CNNC,CN,,2,lote
+COBCO,COBCO,MA,,2,lote
+COMIBOL,COMIBOL,BO,,2,lote
+CPCCorporationTaiwan,CPC,TW,,2,lote
+CaisseDesDepots,Caisse des Dépôts,FR,,2,lote
+CapellaSpace,Capella Space,EEUU,,2,catalogo
+Cepton,Cepton (Koito Mfg),EEUU,,2,catalogo
+CerroVerde,Cerro Verde,PE,,2,lote
+chang-chun-group,Chang Chun Group,Taiwán,,2,catalogo
+ChangiAirportGroup,Changi Airport Group,SG,,2,lote
+CharacterAI,Character.AI,EEUU,,2,catalogo
+ChinaBaowu,China Baowu,China,,2,catalogo
+ChinaDatangCorporation,China Datang,CN,,2,lote
+ChinaDevelopmentBank,China Development Bank,CN,,2,lote
+ChinaHuadianCorporation,China Huadian,CN,,2,lote
+ChinaHuanengGroup,China Huaneng,CN,,2,lote
+ChinaMerchantsGroup,China Merchants Group,HK,,2,lote
+ChinaStateRailway,China State Railway,China,,2,catalogo
+CircuitFoilLuxembourg,Circuit Foil Luxembourg,LU,,2,lote
+ClickHouse,ClickHouse,US,,2,lote
+colt,Colt Technology Services,Reino Unido,,2,catalogo
+CommonwealthFusion,Commonwealth Fusion Systems,EEUU,,2,catalogo
+CompassDatacenters,Compass Datacenters,"Estados Unidos (sede Dallas, TX) — operaciones también en Canadá e Israel",,2,catalogo
+Confluent,Confluent,EEUU,,2,catalogo
+ContextualAI,Contextual AI,US,,2,lote
+Corgan,Corgan,"Estados Unidos (Dallas, Texas)",,2,catalogo
+DBCargo,DBCargo,Alemania,,2,catalogo
+DHLGlobalForwarding,DHL Global Forwarding,DE,,2,lote
+DeepL,DeepL,DE,,2,lote
+Divergent,Divergent,US,,2,lote
+DongfengMotorCorporation,Dongfeng,CN,,2,lote
+DustPhotonics,DustPhotonics,IL,,2,lote
+EAEElektrik,EAE Elektrik,TR,,2,lote
+EDFEnergy,EDF Energy,GB,,2,lote
+EDGEGroup,EDGE,AE,,2,lote
+ERCOT,ERCOT,EEUU,,2,catalogo
+ESR_Group,ESR Group,Hong Kong / Singapur (sede dual),,2,catalogo
+EUROGATE,EUROGATE,DE,,2,lote
+EdgeImpulse,Edge Impulse,EEUU,,2,catalogo
+edgeconnex,EdgeConneX,"Estados Unidos (HQ Herndon, VA)",,2,catalogo
+EdgecoreNetworks,Edgecore Networks,TW,,2,lote
+Edgio,Edgio (ex-Limelight),EEUU,,2,catalogo
+Eletronuclear,Eletronuclear,BR,,2,lote
+Energoatom,Energoatom,UA,,2,lote
+Esperanto,Esperanto Technologies,EEUU,,2,catalogo
+Etched,Etched AI,EEUU,,2,catalogo
+EtihadRail,Etihad Rail,AE,,2,lote
+Eurenco,Eurenco,FR,,2,lote
+Exscientia,Exscientia,Europa,,2,catalogo
+FAWGroup,FAW,CN,,2,lote
+FCAB,FCAB,CL,,2,lote
+FlexLogix,Flex Logix Technologies,EEUU,,2,catalogo
+fluidstack,FluidStack,Reino Unido / Estados Unidos,,2,catalogo
+Fortis Construction,Fortis Construction,"Estados Unidos (Portland, Oregon)",,2,catalogo
+Gatik,Gatik,US,,2,lote
+GazpromSpaceSystems,Gazprom Space Systems,RU,,2,lote
+GeneseeWyoming,Genesee & Wyoming,US,,2,lote
+Glean,Glean,EEUU,,2,catalogo
+GoogleDeepMind,Google DeepMind,GB,,2,lote
+Graphcore,Graphcore,Europa,,2,catalogo
+GreenWaves,GreenWaves Technologies,Europa,,2,catalogo
+HITTContracting,HITT,US,,2,lote
+HPSInvestment,HPSInvestment,EEUU,,2,catalogo
+HabanaLabs,Habana Labs,IL,,2,lote
+HaiRobotics,Hai Robotics,CN,,2,lote
+HamLet,Ham-Let,IL,,2,lote
+Harvey,Harvey,US,,2,lote
+HashiCorp,HashiCorp,EEUU,,2,catalogo
+Helion,Helion Energy,EEUU,,2,catalogo
+helsing,Helsing,Alemania,,2,catalogo
+HemlockSemiconductor,Hemlock Semiconductor,EEUU,,2,catalogo
+Hensel Phelps,Hensel Phelps,"Estados Unidos (Greeley, Colorado)",,2,catalogo
+HuaHongGroup,Hua Hong Group,CN,,2,lote
+EmpresaMineraHuanuni,Huanuni,BO,,2,lote
+HuaweiCloud,Huawei Cloud,CN,,2,lote
+HuaweiDigitalPower,Huawei Digital Power,CN,,2,lote
+HuggingFace,Hugging Face,EEUU,,2,catalogo
+ICEYE,ICEYE,RestoEuropa,,2,catalogo
+IEM,IEM,US,,2,lote
+IMIP,IMIP,ID,,2,lote
+INOXAirProducts,INOX Air Products,IN,,2,lote
+ImaginationTechnologies,Imagination,GB,,2,lote
+Imbue,Imbue (ex-Generally Intelligent),EEUU,,2,catalogo
+IndoSpace,IndoSpace,IN,,2,lote
+InfiniteraNet,Infinera,EEUU,,2,catalogo
+Inflection,Inflection AI,EEUU,,2,catalogo
+Inmarsat,Inmarsat,GB,,2,lote
+Invenergy,Invenergy,US,,2,lote
+IsomorphicLabs,Isomorphic Labs,GB,,2,lote
+JERA,JERA,JP,,2,lote
+JapanInvestmentCorporation,JIC,JP,,2,lote
+KonkolaCopperMines,KCM,ZM,,2,lote
+KNDS,KNDS,NL,,2,lote
+KairosPower,Kairos Power,EEUU,,2,catalogo
+KamoaCopper,Kamoa Copper,CD,,2,lote
+KamotoCopperCompany,Kamoto Copper Company,CD,,2,lote
+KansanshiMining,Kansanshi,ZM,,2,lote
+KaoData,Kao Data,GB,,2,lote
+KaynesSemicon,Kaynes Semicon,IN,,2,lote
+KennecottUtahCopper,Kennecott,US,,2,lote
+KfWIPEXBank,KfW IPEX-Bank,DE,,2,lote
+Khazna,Khazna,Emiratos Árabes Unidos,,2,catalogo
+Kneron,Kneron,Taiwan,,2,catalogo
+LImadHolding,L'IMAD,AE,,2,lote
+LGAIResearch,LG AI Research,KR,,2,lote
+LambdaLabs,Lambda Labs,EEUU,,2,catalogo
+LandSpace,LandSpace,CN,,2,lote
+LangChain,LangChain,EEUU,,2,catalogo
+LightOn,LightOn,FR,,2,lote
+Lightera,Lightera,US,,2,lote
+LiquidStack,LiquidStack,"Estados Unidos (HQ y manufactura en Carrollton, Texas, desde 2024) — origen corporativo en Hong Kong (Allied Control Limited, 2012)",,2,catalogo
+Livent,Livent (Arcadium Lithium),EEUU,,2,catalogo
+locus-robotics,Locus Robotics,Estados Unidos,,2,catalogo
+LumaAI,Luma AI,US,,2,lote
+MBDA,MBDA,FR,,2,lote
+MEDLOG,MEDLOG,CH,,2,lote
+MRSLogistica,MRS Logística,BR,,2,lote
+MSMGroup,MSM Group,SK,,2,lote
+Magic,Magic,US,,2,lote
+ManaraMinerals,Manara Minerals,SA,,2,lote
+Maxar,Maxar Technologies,EEUU,,2,catalogo
+MediaLario,Media Lario,IT,,2,lote
+NipponMektron,Mektec (Nippon Mektron),JP,,2,lote
+Mercor,Mercor,US,,2,lote
+MicronMemoryJapan,Micron Memory Japan,JP,,2,lote
+Midjourney,Midjourney,US,,2,lote
+Mileway,Mileway,GB,,2,lote
+MineraEscondida,Minera Escondida,CL,,2,lote
+MurataMachinery,Murata Machinery,JP,,2,lote
+Mythic,Mythic AI,EEUU,,2,catalogo
+NEXI,NEXI,JP,,2,lote
+NPCIL,NPCIL,IN,,2,lote
+NPS,NPS,KR,,2,lote
+NSIL,NSIL,IN,,2,lote
+ntt-gdc,NTT Global Data Centers,Japón,,2,catalogo
+NationalDevelopmentFund,National Development Fund (Taiwan),TW,,2,lote
+NewportNewsShipbuilding,Newport News Shipbuilding,US,,2,lote
+Nilesat,Nilesat,EG,,2,lote
+NovaAndinoLitio,Novandino Litio,CL,,2,lote
+NoveonMagnetics,Noveon Magnetics,US,,2,lote
+nscale,Nscale,Reino Unido / Noruega,,2,catalogo
+NuFlareTechnology,NuFlare,JP,,2,lote
+Nuro,Nuro,EEUU,,2,catalogo
+Nyrstar,Nyrstar,NL,,2,lote
+OCCCorporation,OCC,JP,,2,lote
+ODATA,ODATA,"Brasil — operaciones en Brasil, Chile, Colombia y México",,2,catalogo
+ONE_Line,ONE_Line,Singapur (sede operativa) / Japón (sede legal),,2,catalogo
+PLN,PLN,ID,,2,lote
+PSN,PSN,ID,,2,lote
+Panattoni,Panattoni,US,,2,lote
+PathAI,PathAI,EEUU,,2,catalogo
+Patria,Patria,FI,,2,lote
+PatternEnergy,Pattern Energy,US,,2,lote
+Perplexity,Perplexity AI,EEUU,,2,catalogo
+Phytium,Phytium,CN,,2,lote
+Picosun,Picosun,FI,,2,lote
+PiedmontLithium,Piedmont Lithium,EEUU,,2,catalogo
+PortOfLosAngeles,Port of Los Angeles,US,,2,lote
+PortOfRotterdamAuthority,Port of Rotterdam Authority,NL,,2,lote
+PowerCo,PowerCo,DE,,2,lote
+Proton,Proton,MY,,2,lote
+Qodo,Qodo,IL,,2,lote
+QuEra,QuEra Computing,EEUU,,2,catalogo
+Quadric,Quadric,US,,2,lote
+rafael-advanced-defense,Rafael Advanced Defense Systems,Israel,,2,catalogo
+reflection-ai,Reflection AI,Estados Unidos,,2,catalogo
+RelatedDigital,Related Digital,US,,2,lote
+RelativitySpace,Relativity Space,EEUU,,2,catalogo
+Replicate,Replicate,US,,2,lote
+Richtek,Richtek Technology,Taiwan,,2,catalogo
+Rogo,Rogo,US,,2,lote
+RollsRoycePowerSystems,Rolls-Royce Power Systems (mtu),DE,,2,lote
+Runway,Runway ML,EEUU,,2,catalogo
+RussianRailways,Russian Railways,Rusia,,2,catalogo
+SumitomoElectricDeviceInnovations,SEDI,JP,,2,lote
+SEMES,SEMES,KR,,2,lote
+SICK,SICK,DE,,2,lote
+SKHynixSemiconductor,SK hynix China (Wuxi),CN,,2,lote
+SKKeyfoundry,SK keyfoundry,KR,,2,lote
+SPGroup,SP Group,SG,,2,lote
+stack-infra,STACK Infrastructure,Estados Unidos (HQ Denver/Kansas City) — propiedad de Blue Owl Capital,,2,catalogo
+SVOLT,SVOLT,CN,,2,lote
+Saft,Saft,FR,,2,lote
+Saildrone,Saildrone,US,,2,lote
+sakana-ai,Sakana AI,Japón,,2,catalogo
+SamsungSemiconductor,Samsung China Semiconductor (Xi'an),CN,,2,lote
+SchottAG,Schott AG,Alemania,,2,catalogo
+ShenzhouKuntai,Shenzhou Kuntai,CN,,2,lote
+ShinEtsuQuartzProducts,Shin-Etsu Quartz,JP,,2,lote
+Shinko_Electric,Shinko Electric Industries,Japon,,2,catalogo
+SiPearl,SiPearl,FR,,2,lote
+Sibelco,Sibelco,Europa,,2,catalogo
+SilkRoadFund,Silk Road Fund,CN,,2,lote
+SkyWaterTechnology,SkyWater,US,,2,lote
+skydio,Skydio,Estados Unidos,,2,catalogo
+Solidigm,Solidigm,US,,2,lote
+Space42,Space42,AE,,2,lote
+Speedata,Speedata,IL,,2,lote
+StabilityAI,Stability AI,EEUU,,2,catalogo
+StarlabSpace,Starlab Space,US,,2,lote
+Statkraft,Statkraft,NO,,2,lote
+StokSpace,Stoke Space,EEUU,,2,catalogo
+Stonepeak,Stonepeak,US,,2,lote
+Staubli,Stäubli,CH,,2,lote
+SumitomoElectricLightwave,Sumitomo Electric Lightwave,US,,2,lote
+Swissport,Swissport,CH,,2,lote
+Switch,Switch (Endeavor DC),EEUU,,2,catalogo
+THead,T-Head,CN,,2,lote
+TataAdvancedSystems,TASL,IN,,2,lote
+TEI,TEI,TR,,2,lote
+Tenex,TENEX,RU,,2,lote
+TaiwanInternationalPortsCorporation,TIPC,TW,,2,lote
+TRUMPFLasersystemsForSemiconductorManufacturing,TRUMPF EUV Lasers,DE,,2,lote
+TaishanFiberglass,Taishan Fiberglass,CN,,2,lote
+Telespazio,Telespazio,IT,,2,lote
+Tenstorrent,Tenstorrent,EEUU,,2,catalogo
+TerraPower,TerraPower,EEUU,,2,catalogo
+TesatSpacecom,Tesat,DE,,2,lote
+TerminalInvestmentLimited,TiL,CH,,2,lote
+Together_AI,Together AI,EEUU,,2,catalogo
+TorcRobotics,Torc Robotics,US,,2,lote
+TransGlobalProjects,TransGlobal Projects,Reino Unido (Kent),,2,catalogo
+ULA,ULA (United Launch Alliance),EEUU,,2,catalogo
+Umbra,Umbra Space,EEUU,,2,catalogo
+UraniumOne,Uranium One,Russia,,2,catalogo
+VDLETG,VDL ETG,NL,,2,lote
+Vedanta_Semi,Vedanta-Foxconn Semi,India,,2,catalogo
+Verint,Verint Systems,EEUU,,2,catalogo
+EmpresaMetalurgicaVinto,Vinto,BO,,2,lote
+VolcanoEngine,Volcano Engine,CN,,2,lote
+Waymo,Waymo (Alphabet),EEUU,,2,catalogo
+Wayve,Wayve,Europa,,2,catalogo
+WideLabs,WideLabs,BR,,2,lote
+Winchester,Winchester,US,,2,lote
+wing-alphabet,Wing (Alphabet),Estados Unidos,,2,catalogo
+YTLAICloud,YTL AI Cloud,MY,,2,lote
+Yazaki,Yazaki,JP,,2,lote
+ZFFriedrichshafen,ZF,DE,,2,lote
+ZTSystems,ZT Systems,US,,2,lote
+Zhaoxin,Zhaoxin,CN,,2,lote
+ZhuhaiAccessSemiconductor,Zhuhai Access Semiconductor,CN,,2,lote
+zipline,Zipline,Estados Unidos,,2,catalogo
+Zoox,Zoox (Amazon),EEUU,,2,catalogo
+Zyphra,Zyphra,US,,2,lote
+dMatrix,d-Matrix,EEUU,,2,catalogo
+deugro,deugro,Alemania (Frankfurt am Main),,2,catalogo
+Imec,imec,BE,,2,lote
+NLighten,nLighten,NL,,2,lote

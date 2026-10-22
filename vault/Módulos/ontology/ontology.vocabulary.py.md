@@ -70,6 +70,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - [[research.context.py]] — lo importa
 - [[scripts.build_governance.py]] — lo importa
 - [[scripts.build_shapes.py]] — lo importa
+- [[scripts.research_batch.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_supply_chain` → [[API herramientas MCP]]

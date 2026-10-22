@@ -82,3 +82,23 @@ def test_el_prompt_lleva_reglas_categorias_entidades_y_esquema():
                  'ESQUEMA company.schema.json', 'PLANTILLA'):
         assert frag in s, frag
     assert 'lote3_100_empresas.csv' not in s
+
+
+def test_engrosar_pide_vinculos_y_conserva_el_id_existente(tmp_path):
+    row = {'khipus_id': 'AAON', 'nombre': 'AAON', 'pais': 'US', 'cotiza': 'AAON', 'vinculos': '0'}
+    p = R.enrich_prompt(row, 0)
+    assert 'YA EXISTE' in p and 'khipus_id_hint "AAON"' in p and 'fb-2026-enr-aaon' in p and '6 a 15 vínculos' in p
+    cli = FakeClient([('end_turn', json.dumps(_good()))])
+    R.research_one(cli, _args(), 'SYS', row, 0, R.Spend('claude-sonnet-5-5', str(tmp_path / 'c.json')))
+    assert 'ENGROSAR' in cli.calls[0]['messages'][0]['content']
+
+
+def test_lista_de_engrosar_prioriza_las_que_cotizan(monkeypatch, tmp_path):
+    monkeypatch.setattr(R, 'OUT_DIR', str(tmp_path))
+    monkeypatch.setattr(R, 'ENR_CSV', str(tmp_path / 'e.csv'))
+    R.make_enrich_list()
+    import csv
+    rows = list(csv.DictReader(open(tmp_path / 'e.csv', encoding='utf-8')))
+    assert len(rows) > 500
+    first_unlisted = next(i for i, r in enumerate(rows) if not r['cotiza'])
+    assert all(r['cotiza'] for r in rows[:first_unlisted]) and all(int(r['vinculos']) <= 2 for r in rows)
