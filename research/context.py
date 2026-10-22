@@ -287,6 +287,127 @@ def _fmt_series(years, vals, unit='B'):
     return ', '.join(out)
 
 
+def _txt(d, *keys):
+    for k in keys:
+        v = d.get(k) if isinstance(d, dict) else None
+        if isinstance(v, dict):
+            v = v.get('value')
+        if v not in (None, '', []):
+            return v
+    return None
+
+
+def _first_url(items):
+    """La primera source_url de los elementos (o de sus datos anidados: los estados traen la fuente por cifra)."""
+    for it in items or []:
+        if not isinstance(it, dict):
+            continue
+        for d in [it] + [v for v in it.values() if isinstance(v, dict)]:
+            u = d.get('source_url')
+            if isinstance(u, str) and u.startswith('http'):
+                return u
+    return None
+
+
+def _money(v):
+    """621000000.0 → '621.0M' · 1.292e10 → '12.92B' (el mismo estilo que los estados de proveedor)."""
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    return f'{v / 1e9:.2f}B' if abs(v) >= 1e9 else (f'{v / 1e6:.1f}M' if abs(v) >= 1e6 else f'{v:g}')
+
+
+def _names(xs, n=4):
+    return ', '.join(str(x.get('name') if isinstance(x, dict) else x) for x in (xs or [])[:n] if x)
+
+
+def ficha_evidence(node):
+    """La FICHA INVESTIGADA de la empresa (lotes importados, khipus.company/1): riesgos, hitos, rondas y valuación,
+    estados reportados, posición de mercado, productos, personas clave — cada bloque con la URL de la fuente que trae
+    la ficha (la confiabilidad sale de esa URL). → [(título, texto, referencia, confiabilidad)]. Puro; nunca lanza.
+    Antes los analistas solo veían role/supplies/moat/growth: con una privada (HongShan) no tenían nada que citar y
+    devolvían 0 conclusiones aunque la ficha traía riesgos y línea de tiempo con fuente."""
+    out = []
+    lab = node.get('label') or node.get('id')
+
+    def block(kind_es, items, fmt, limit=6):
+        items = [x for x in (items or []) if isinstance(x, dict)][:limit]
+        lines = [ln for ln in (fmt(x) for x in items) if ln]
+        if lines:
+            url = _first_url(items)
+            out.append((f'{kind_es} de {lab} (ficha investigada)', ' · '.join(lines),
+                        url or f"khipus:ficha:{node.get('id')}", _reliability_for_url(url) if url else 0.5))
+
+    def asof(x):
+        return f" ({x['as_of']})" if x.get('as_of') else ''
+    extra = []
+    for k, lbl in (('geo_risk', 'riesgo geográfico'), ('founded', 'fundada'), ('hq_city', 'sede'),
+                   ('status', 'estado'), ('employees', 'empleados')):
+        v = node.get(k)
+        if v not in (None, '', []):
+            extra.append(f'{lbl}: {v}')
+    if extra:
+        out.append((f'Datos de identidad de {lab} (ficha)', ' · '.join(extra), f"khipus:ficha:{node.get('id')}", 0.5))
+    block('Riesgos documentados', node.get('risks'),
+          lambda x: (f"[{x.get('kind') or 'riesgo'}] {_txt(x, 'text_es', 'text_en')}{asof(x)}"
+                     if _txt(x, 'text_es', 'text_en') else None))
+    block('Hitos (línea de tiempo)', node.get('timeline'),
+          lambda x: (f"{x.get('date') or '?'}: {_txt(x, 'text_es', 'text_en')}" if _txt(x, 'text_es', 'text_en') else None),
+          limit=8)
+    block('Rondas de financiación', node.get('funding'),
+          lambda x: ' '.join(str(p) for p in (
+              x.get('date'), x.get('round'),
+              f"monto {_money(x['amount'])} {x.get('currency') or 'USD'}" if x.get('amount') is not None else None,
+              f"valuación post-money {_money(x['post_money_valuation'])} {x.get('currency') or 'USD'}"
+              if x.get('post_money_valuation') is not None else None,
+              ('inversores: ' + _names(x['lead_investors'])) if x.get('lead_investors') else None,
+              f"[{x['status']}]" if x.get('status') else None) if p))
+    fin = node.get('financials') if isinstance(node.get('financials'), dict) else {}
+    block('Estados financieros reportados', fin.get('annual'),
+          lambda x: f"FY{x.get('fiscal_year')}: " + ', '.join(
+              f"{lbl} {_txt(x, k) if k.endswith('_pct') else _money(_txt(x, k))}" + (f" {x[k]['currency']}" if isinstance(x.get(k), dict) and x[k].get('currency') else '')
+              for k, lbl in (('revenue', 'ingresos'), ('gross_margin_pct', 'margen bruto %'),
+                             ('operating_margin_pct', 'margen operativo %'), ('net_income', 'beneficio neto'),
+                             ('capex', 'capex'), ('r_and_d', 'I+D'), ('backlog', 'cartera de pedidos'))
+              if _txt(x, k) is not None),
+          limit=4)
+    block('Posición de mercado', node.get('market_position'),
+          lambda x: ' '.join(str(p) for p in (x.get('market'), x.get('region'), f"({x['metric']})" if x.get('metric') else None,
+                                               f"puesto {x['rank']}" if x.get('rank') is not None else None,
+                                               f"cuota {x['share_pct']} %" if x.get('share_pct') is not None else None,
+                                               x.get('period'), asof(x).strip() or None) if p))
+    block('Productos', node.get('products'),
+          lambda x: ' — '.join(str(p) for p in (x.get('name'), _txt(x, 'description_es', 'description', 'desc_es')) if p))
+    block('Personas clave', node.get('key_people'),
+          lambda x: f"{x.get('name')} ({x.get('role')}){asof(x)}" if x.get('name') else None)
+    return out
+
+
+def holdings_lines(entity_id, limit=15):
+    """Inversiones y alianzas de la empresa (invest / partner): NO son suministro (regla G4a) y por eso no entran en
+    la evidencia del grafo; para un fondo o un holding son lo central. → [texto] (vacío sin vista)."""
+    try:
+        from core.hotviews import hot
+        g = hot.graph()
+        snap = g.snapshot
+        nodes = get_index()['nodos']
+    except Exception:  # noqa: BLE001
+        return []
+    out = []
+    for l in snap.get('links') or []:
+        t = l.get('type') or 'supply'
+        if t not in ('invest', 'partner') or entity_id not in (l.get('source'), l.get('target')):
+            continue
+        other = l['target'] if l.get('source') == entity_id else l['source']
+        role = ('invierte en' if l.get('source') == entity_id else 'recibe inversión de') if t == 'invest' else 'socio de'
+        rel = str(l.get('rel') or '')[:90]
+        out.append(f"{role} {(nodes.get(other) or {}).get('label') or other}" + (f': {rel}' if rel else ''))
+        if len(out) >= limit:
+            break
+    return out
+
+
 def graph_version():
     """La generación del grafo que usa el armador de contexto (tests/test_ops_single_source.py)."""
     from core.hotviews import hot
@@ -412,6 +533,10 @@ class ContextBuilder:
                 parts.append('estado en bolsa verificado: ' + lst['note_es'])
             add('catalog', f"Ficha Khipus de {node.get('label')}", ' · '.join(parts),
                 reference=f'khipus:catalog:{entity_id}', reliability=0.5, source_kind='internal')
+            # la ficha INVESTIGADA (lotes importados): cada bloque con la URL de su fuente
+            for title, text, ref, rel in ficha_evidence(node):
+                add('catalog', title, text, reference=ref, reliability=rel,
+                    source_kind='secondary' if str(ref).startswith('http') else 'internal', max_chars=1200)
 
         # estados financieros anuales (dato de proveedor: alta confiabilidad)
         fin, prof = {}, {}
@@ -585,8 +710,8 @@ class ContextBuilder:
                     reference=it['url'], published_at=it.get('published_at'),
                     reliability=_reliability_for_url(it['url']))
 
-        # búsqueda web (solo DEEP, si hay clave)
-        if lim['web']:
+        # búsqueda web (DEEP; y en privadas también en STANDARD: no tienen estados ni perfil de mercado) si hay clave
+        if lim['web'] or (not mkt and depth != 'QUICK'):
             tools.append('web_search')
             try:
                 res = self.f['web'](f"{node.get('label')} {agent_type} outlook 2026", 5) or []
@@ -623,6 +748,12 @@ class ContextBuilder:
                 add('graph', f'Relaciones de suministro (proveedor → cliente) de {node.get("label")} en el grafo Khipus, '
                     'ordenadas por relevancia', ' | '.join(lines), reference=f'khipus:graph:{entity_id}', reliability=0.6,
                     source_kind='internal', max_chars=2200)
+
+            hold = holdings_lines(entity_id, limit=lim['max_nodes'])
+            if hold:
+                add('graph', f'Inversiones y alianzas de {node.get("label")} en el grafo Khipus (NO son relaciones de '
+                    'suministro)', ' | '.join(hold), reference=f'khipus:graph:{entity_id}:holdings', reliability=0.6,
+                    source_kind='internal', max_chars=1600)
 
         prior = self._prior_claims(entity_id, agent_type)
         return {
