@@ -427,7 +427,7 @@ def _pf_name(v):
 
 def _server_args(name, args, context):
     """Copia de `args` sin lo que el modelo no puede elegir, más lo que pone el servidor. Nunca lanza."""
-    if name not in ('run_scenario', 'plan_portfolio') or not isinstance(args, dict):
+    if name not in ('run_scenario', 'plan_portfolio', 'scenario_exposure') or not isinstance(args, dict):
         return args
     out = {k: v for k, v in args.items() if k not in _SERVER_ARGS}
     pf = (context or {}).get('portfolio') if isinstance(context, dict) else None
@@ -613,21 +613,95 @@ def _research_session():
         'STRUCTURAL ANALYSIS of a hypothetical scenario on the Khipus supply-chain graph: what is at stake (e.g. HBM, '
         'rare earths, Taiwan), who acts, which companies take the DIRECT hit, which could BENEFIT (substitutes), and '
         'who is hit through the chain (customers / suppliers) with the PATH of each impact and what to watch. Use it '
-        'for "what if…", "most exposed to…", "who loses if…", war/ban/tariff/shortage questions.')
-def x_scenario_exposure(scenario):
+        'for "what if…", "most exposed to…", "who loses if…", war/ban/tariff/shortage questions, and for an IPO / '
+        'funding round (it returns a bull and a bear case). With the 2.0 engine each impact has impact_pct (the '
+        'kernel %); if the user has a portfolio the server adds `portfolio` (never pass positions).')
+def x_scenario_exposure(scenario, positions=None):
     from core import scenario_engine, semantic
     snap = semantic._load_snapshot()
     a = scenario_engine.analyze(str(scenario or '')[:300], snap)
     if not a:
         raise ToolFailure('could not identify companies, product or country in that scenario; name at least one')
-    return {'theme': a['theme_en'] or a['theme_es'], 'actor': a['actor_en'], 'event': a['event'],
-            'mechanism': a['mechanism_en'],
-            'direct_hit': [snap['by_id'][i].get('label') for i in a['hit']],
-            'could_benefit': [snap['by_id'][i].get('label') for i in a['benefit']],
-            'impacts': [{'company': x['label'], 'id': x['id'], 'channel': x['channel'], 'severity': x['sev'],
-                         'path': x['path'], 'country': x['country']} for x in a['impacts'][:15]],
-            'watch': a['watch_en'], 'source': 'Khipus supply-chain graph (structural estimate, not prices)',
-            'as_of': _now_iso()}
+    eng = a.get('engine') or {}
+    kernel = str(eng.get('method') or '').startswith('propagate@1')
+
+    def row(x):
+        r = {'company': x['label'], 'id': x['id'], 'channel': x['channel'], 'path': x['path'], 'country': x['country']}
+        if kernel:                      # 2.0.0: la severidad ES el % del kernel único → se entrega como %
+            r['impact_pct'] = round(x['sev'] * 100, 1)
+        else:
+            r['severity'] = x['sev']    # 1.0.0: escala relativa −1…+1 (no es un %)
+        return r
+    out = {'theme': a['theme_en'] or a['theme_es'], 'actor': a['actor_en'], 'event': a['event'],
+           'mechanism': a['mechanism_en'],
+           'direct_hit': [snap['by_id'][i].get('label') for i in a['hit']],
+           'could_benefit': [snap['by_id'][i].get('label') for i in a['benefit']],
+           'impacts': [row(x) for x in a['impacts'][:15]],
+           'units': ('impact_pct = structural % from the Khipus kernel (same engine as the app; negative = hit, '
+                     'positive = gain). Quote these numbers; it is not a price forecast.' if kernel else
+                     'severity = relative structural scale −1…+1 (legacy engine), NOT a percentage: describe it as '
+                     'high/medium/low.'),
+           'engine': {'method': eng.get('method'), 'kernel_semver': scenario_engine._semver()},
+           'watch': a['watch_en'], 'source': 'Khipus supply-chain graph (structural estimate, not prices)',
+           'as_of': _now_iso()}
+    cases = a.get('cases') if kernel else None     # 1.0.0: sin % del kernel no hay casos con cifras
+    if cases:
+        out['cases'] = {k: {'label': cases[k]['label_en'], 'spend_change_assumed': cases[k]['magnitude'] *
+                            (1 if k == 'bull' else -1),
+                            'suppliers_hit_ge_1pct': cases[k]['n_affected'],
+                            'impacts': [{'company': x['label'], 'id': x['id'], 'impact_pct': x['impact_pct'],
+                                         'path': x['path'], 'listed': x['listed']} for x in cases[k]['impacts'][:10]]}
+                        for k in ('bull', 'bear')}
+        out['cases']['assumptions'] = cases['assumptions']['note_en']
+    pf = _scenario_portfolio(a, positions)
+    if pf:
+        out['portfolio'] = pf
+    return out
+
+
+def _scenario_portfolio(a, positions):
+    """Tus posiciones (las pone el SERVIDOR desde la cartera del navegador) × el % del escenario de cada empresa →
+    USD estimado por caso. Aritmética rotulada; None sin cartera. Nunca lanza."""
+    pos = [p for p in (positions or []) if isinstance(p, dict) and p.get('symbol') and isinstance(p.get('usd'), (int, float))]
+    if not pos:
+        return None
+    try:
+        from core.context_engine import canon
+        from core.hotviews import hot
+        from core.hotviews.views.account import _ticker_map
+        tm = hot.cached('account.ticker_map', _ticker_map, view=hot.graph()) or {}
+    except Exception:  # noqa: BLE001
+        tm, canon = {}, (lambda s: s)
+    kernel = str((a.get('engine') or {}).get('method') or '').startswith('propagate@1')
+    if not kernel:
+        return None
+    tables = {}
+    if a.get('cases'):
+        for k in ('bull', 'bear'):
+            tables[k] = {x['id']: x['impact_pct'] for x in a['cases'][k]['impacts']}
+    elif kernel:
+        tables['scenario'] = {x['id']: round(x['sev'] * 100, 2) for x in a.get('impacts') or []}
+    if not tables:
+        return None
+    total = sum(float(p['usd']) for p in pos)
+    res = {'total_usd': round(total, 2), 'cases': {}}
+    for k, tab in tables.items():
+        rows, est = [], 0.0
+        for p in pos[:60]:
+            sym = str(p['symbol']).strip().upper()
+            oid = tm.get(sym.replace('/', '')) or canon(sym)
+            pct = tab.get(oid)
+            if pct is None:
+                continue
+            e = round(float(p['usd']) * pct / 100.0, 2)
+            est += e
+            rows.append({'symbol': sym, 'usd': round(float(p['usd']), 2), 'impact_pct': pct, 'est_usd': e})
+        res['cases'][k] = {'positions_touched': sorted(rows, key=lambda r: r['est_usd']), 'est_usd': round(est, 2),
+                           'est_pct': round(100.0 * est / total, 2) if total else None}
+    res['n_untouched'] = len(pos) - max((len(c['positions_touched']) for c in res['cases'].values()), default=0)
+    res['note'] = ('est_usd = position value × that company\'s structural % in the scenario (simple arithmetic, the '
+                   'server computed it). Not a P&L forecast.')
+    return res
 
 
 @_extra('plan_portfolio', 'risk?:conservador|moderado|agresivo (only if the user says it; default = their saved profile)',
@@ -1219,6 +1293,14 @@ incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda ma�
 peores" → rank_companies o market_movers. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
 get_history(id_or_ticker, range). "¿qué pasa si cae / falla X?" con una empresa CONCRETA → run_scenario(shocks=[{{"id":"X"}}]) \
 (las cifras de impacto salen de ese motor; si la pregunta es un escenario descrito en palabras, scenario_exposure). \
+ESCENARIOS (scenario_exposure / run_scenario): NUNCA digas que no tienes un modelo cuantitativo: el motor de Khipus \
+ES ese modelo. Si el resultado trae impact_pct, cita esos % por empresa (con «estimación estructural del motor de \
+Khipus, no un pronóstico de precio») y ordena por ellos; si solo trae severity, di alto/medio/bajo. Si trae `cases` \
+(IPO, ronda: evento de financiación), arma DOS secciones —caso favorable y caso desfavorable— con sus % y el supuesto \
+(`cases.assumptions`); una empresa no va como «afectada» y «beneficiada» a la vez fuera de esos dos casos. Si trae \
+`portfolio`, abre con «En tu cartera»: est_usd y est_pct de cada caso, tal cual (no recalcules). Cifras de mercado \
+(precio, capitalización, márgenes) SOLO de get_company o del bloque DATOS EN VIVO; una cifra que no está en ningún \
+resultado (cuotas de mercado, backlogs, montos de inversión) no se escribe, o se dice «sin dato verificado». \
 "ganancias / ingresos / utilidad / márgenes / resultados de X" (también "en un gráfico") → \
 get_fundamentals(id_or_ticker, period) (estados financieros por año o trimestre; NUNCA digas que no tienes la serie sin \
 llamarla). "¿cuál es la empresa más grande / líder / con más cuota en <mercado>?" → rank_by_market(market, metric) \
@@ -2275,6 +2357,15 @@ def _note_web(res, args, ctx):
 def _note_scenario(res, args, ctx):
     hit = [x for x in res.get('direct_hit') or [] if x][:3]
     ben = [x for x in res.get('could_benefit') or [] if x][:2]
+    cases = res.get('cases') if isinstance(res.get('cases'), dict) else None
+    if cases:
+        bear = [x for x in (cases.get('bear') or {}).get('impacts') or [] if isinstance(x, dict)][:2]
+        if bear:
+            def build_c(lang):
+                es = lang == 'es'
+                items = ', '.join(f"{x['company']} {_pct(x['impact_pct'], lang, 1, True)}" for x in bear)
+                return ('Caso desfavorable (motor de Khipus): ' if es else 'Bear case (Khipus engine): ') + items
+            return build_c('es'), build_c('en'), res.get('source'), res.get('as_of')
     if not hit and not ben:
         return None
 

@@ -43,7 +43,7 @@ CAPA 2 (PRECONSCIENTE): el grafo semántico activo.
 - [[server.py]] — lo importa
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -51,6 +51,7 @@ _Además lo importan 5 pruebas (lista abajo)._
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_context_engine.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_scenario_capital.py]]
 - [[tests.test_scenario_kernel.py]]
 
 ## Mencionado en sesiones de trabajo

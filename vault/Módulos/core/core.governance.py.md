@@ -109,7 +109,7 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 31 pruebas (lista abajo)._
+_Además lo importan 32 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -146,6 +146,7 @@ _Además lo importan 31 pruebas (lista abajo)._
 - [[tests.test_scale_kernel.py]]
 - [[tests.test_scale_search_d1d2.py]]
 - [[tests.test_scale_tensor.py]]
+- [[tests.test_scenario_capital.py]]
 - [[tests.test_scenario_kernel.py]]
 - [[tests.test_scenario_pnl.py]]
 

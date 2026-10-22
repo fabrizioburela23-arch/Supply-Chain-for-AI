@@ -9,7 +9,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 > Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones.
 
-**24 archivos · 10.419 líneas.** Volver al [[00 Mapa de Khipus]].
+**24 archivos · 10.533 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -19,7 +19,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 - [[matrix.tensor.py]] — 846 líneas · ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
 - [[core.risk_report.py]] — 753 líneas · REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
 - [[core.sim_agents.py]] — 706 líneas · Motor de simulación POR AGENTES (interno).
-- [[core.scenario_engine.py]] — 548 líneas · ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
+- [[core.scenario_engine.py]] — 662 líneas · ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
 - [[engine.hotclient.js]] — 485 líneas · EL cliente de las vistas rápidas del servidor (window.KhipuHot) INFRA_OPERATIVA §4.6-§4.7 (paso 13, 2026-10-13): en el navegador NO queda ningún …
 - [[engine.livesim.js]] — 445 líneas · SIMULACIÓN EN VIVO v3 (abierta, no cerrada) Constructor de escenarios: eliges el TIPO de golpe (corte↓, demanda↑, precio, sanción) y el OBJETIVO …
 - [[scripts.calibrate_kernel.py]] — 355 líneas · calibra κ (escenario → dinero) con episodios reales (BRECHAS L2-13 / PROP-16; batch I3).

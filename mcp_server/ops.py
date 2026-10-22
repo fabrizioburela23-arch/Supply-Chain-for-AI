@@ -104,6 +104,18 @@ def t_run_scenario(ctx, shocks=None, scenario=None, factors='active', top=25, po
                 if oid in core.idx:
                     x0[core.idx[oid]] = 1.0
                     used.append({'id': oid, 'label': core.label(oid), 'magnitude': 1.0})
+    if not used and about and about.get('event') == 'capital' and (a or {}).get('cases'):
+        # IPO / ronda: nadie deja de suministrar → no hay choque de oferta; los dos casos aguas arriba del motor
+        cs = a['cases']
+        return {'shocks': [], 'seeded_by': seeded_by, 'scenario': about, 'factors': factors,
+                'cases': {k: {'label': cs[k]['label_en'], 'spend_change_assumed': cs[k]['magnitude'] * (1 if k == 'bull' else -1),
+                              'suppliers_hit_ge_1pct': cs[k]['n_affected'], 'method': cs[k]['method'],
+                              'impacts': [{'id': x['id'], 'label': x['label'], 'impact_pct': x['impact_pct'],
+                                           'path': x['path']} for x in cs[k]['impacts'][:int(top)]]}
+                          for k in ('bull', 'bear')},
+                'assumptions': cs['assumptions']['note_en'], 'kernel': _kernel(v), **_gen_meta(v),
+                'uncertainty': STRUCTURAL_NOTE, 'source': 'Khipus supply-chain graph + kernel.params (governance release)',
+                'as_of': _now_iso()}
     if not used:
         raise ToolError('no company of the scenario exists in the graph — name at least one (search_companies)',
                         code='not_found', data={'unknown_ids': unknown[:20]})

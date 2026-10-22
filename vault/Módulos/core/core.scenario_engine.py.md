@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "core/scenario_engine.py"
 lenguaje: "python"
-lineas: 548
+lineas: 662
 aliases: ["core/scenario_engine.py"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # core/scenario_engine.py
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 548 líneas · `core/scenario_engine.py`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 662 líneas · `core/scenario_engine.py`
 
 ## Para qué sirve
 
@@ -19,10 +19,11 @@ ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
 ## API pública
 
 - `country_key(raw)` _(línea 109)_
-- `detect(scenario)` — {'themes':[...], 'actor':key|None, 'actor_es','actor_en', 'event':str, 'disrupted':key|None} _(línea 181)_
-- `text_search(scenario, snap, limit=…)` — Productores por búsqueda en las fichas del grafo cuando no hay tema conocido. _(línea 198)_
-- `kernel_mode()` — kernel.params.scenario_mode: 1.0.0 'legacy' (la BFS propia de abajo: 2 saltos, ×0,7/×0,45, se CONSERVA solo para que 1.0.0 dé los números … _(línea 223)_
-- `analyze(scenario, snap, named_ids=…, lang=…)` — Análisis estructural. Devuelve dict con seeds, hit, benefit, impacts (severidad con signo, camino, canal), summary, watch, timeline y meta. _(línea 256)_
+- `detect(scenario)` — {'themes':[...], 'actor':key|None, 'actor_es','actor_en', 'event':str, 'disrupted':key|None} _(línea 187)_
+- `text_search(scenario, snap, limit=…)` — Productores por búsqueda en las fichas del grafo cuando no hay tema conocido. _(línea 204)_
+- `kernel_mode()` — kernel.params.scenario_mode: 1.0.0 'legacy' (la BFS propia de abajo: 2 saltos, ×0,7/×0,45, se CONSERVA solo para que 1.0.0 dé los números … _(línea 229)_
+- `analyze(scenario, snap, named_ids=…, lang=…)` — Análisis estructural. Devuelve dict con seeds, hit, benefit, impacts (severidad con signo, camino, canal), summary, watch, timeline y meta. _(línea 262)_
+- `capital_cases(snap, seeds)` — IPO / ronda de `seeds` → {'bull': {...}, 'bear': {...}, 'assumptions'}: cada caso con sus impactos sobre los PROVEEDORES (aguas arriba: más … _(línea 494)_
 
 **Internas** (empiezan con `_`): `_plain`, `_in_actor`, `_disrupted`, `_deg_of`, `_w`, `_rel`, `_flow_adj`, `_kernel_propagate`, `_semver`, `_path_back`
 
@@ -40,11 +41,12 @@ ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
 - [[mcp_server.ops.py]] — lo importa
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_ai_usage.py]]
+- [[tests.test_scenario_capital.py]]
 - [[tests.test_scenario_kernel.py]]
 
 ## Mencionado en sesiones de trabajo

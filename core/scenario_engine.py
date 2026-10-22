@@ -140,6 +140,10 @@ def _in_actor(node, actor):
 
 # ── tipo de evento ──────────────────────────────────────────────────────────
 EVENTS = [
+    # financiación (IPO, ronda, emisión): NO corta el suministro, mueve el GASTO de la empresa → dos casos (capital_cases)
+    ('capital', r'\bipo\b|sal(?:e|ir|ida|dr[ií]a)\s+a\s+bolsa|oferta p[uú]blica|empieza a cotizar|'
+                r'goes? public|going public|public listing|listing on|ronda de (?:financiaci|inversi)|funding round|'
+                r'levanta(?:r)? capital|raises? (?:capital|funding|\$)|recauda'),
     ('export_ban', r'proh[ií]b\w*\s+(?:la\s+|las\s+|el\s+)?export|export(?:ation)?\s+ban|ban\w*\s+(?:the\s+)?export|'
                    r'restring\w*\s+(?:las\s+)?export|control\w*\s+(?:de\s+)?exportaci|export controls?|embargo|'
                    r'deja de (?:vender|exportar)|stops? (?:selling|exporting)'),
@@ -155,7 +159,9 @@ _STOP = set('''que qué pasa pasaría pasaria si con sin para por los las del un
 esta esto estos estas ese esa eso entre sobre todo toda todos todas más mas menos muy hay ser son era fue han
 the and for with what would happen if from this that these those into over about more less very will can could
 prohibe prohíbe exportar importar exports imports export import ban bans deja dejar escenario scenario empresas
-companies mercado market precio precios china eeuu estados unidos taiwan taiwán corea japón japon europa'''.split())
+companies mercado market precio precios china eeuu estados unidos taiwan taiwán corea japón japon europa
+bolsa sale salir salida cerca valuación valuacion valoración valoracion ronda oferta pública publica cotizar ipo
+public goes going listing around near billion valuation funding round raises levanta capital recauda'''.split())
 
 
 # "<A> bloquea/invade/ataca/sanciona a <B>": el país GOLPEADO es B (revisión 2026-10-13: "China blockades
@@ -309,6 +315,14 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
                        f"locales ganan protección.")
             note_en = (f"Producers outside {det['actor_en']} sell less (or pricier) into that market; local ones "
                        f"gain protection.")
+    elif event == 'capital':
+        # IPO / ronda: nadie deja de suministrar; cambia cuánto GASTA la empresa → sus proveedores (capital_cases)
+        note_es = ('Evento de financiación (salida a bolsa / ronda): no corta el suministro, cambia cuánto gasta la '
+                   'empresa. Caso favorable: entra capital y aumenta los pedidos a sus proveedores. Caso desfavorable: '
+                   'el mercado duda de su financiación y recorta pedidos.')
+        note_en = ('Financing event (IPO / funding round): it does not cut supply, it changes how much the company '
+                   'spends. Bull case: fresh capital, more orders to its suppliers. Bear case: the market doubts its '
+                   'funding and orders are cut.')
     elif event == 'boost':
         benefit = producers
         note_es = 'Impulso de demanda o apoyo: los productores y sus proveedores se benefician.'
@@ -371,6 +385,15 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
             if not sup or sup in hit or sup in benefit:
                 continue
             put(sup, sign * _w(l) * 0.3, 'supplier', [sup, root])
+
+    cases = None
+    if event == 'capital':
+        # quien se financia es la empresa NOMBRADA (por su nombre), no las que la mencionan en su ficha
+        named = [p for p in producers if re.search(r'\b' + re.escape(_plain((by_id[p].get('label') or p).split(' (')[0]))
+                                                   + r'\b', _plain(scenario or ''))]
+        cases = capital_cases(snap, (named or producers)[:2])
+        for x in cases['bear']['impacts']:            # la lista principal = lo que está EN RIESGO (caso desfavorable)
+            put(x['id'], round(x['impact_pct'] / 100.0, 4), 'supplier', x['path_ids'])
 
     def edge_rel(a, b):
         for l in snap['out'].get(a, []):
@@ -457,6 +480,97 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
                      {'round': 2, 'events': [t2_es if es else t2_en]},
                      {'round': 3, 'events': [t3_es if es else t3_en]}],
         'engine': meta_kernel or {'method': 'scenario_bfs@1 (legacy, kernel.params 1.0.0)'},
+        'cases': cases,
+    }
+
+
+# Magnitud del cambio de GASTO de la empresa que se financia (0-1, «qué parte de sus pedidos cambia»). SUPUESTOS del
+# escenario, rotulados como tales en cada respuesta; un release de kernel.params puede fijarlos en
+# scenario_event_magnitude.capital_bull / capital_bear.
+CAPITAL_BULL = 0.3
+CAPITAL_BEAR = 0.5
+
+
+def capital_cases(snap, seeds):
+    """IPO / ronda de `seeds` → {'bull': {...}, 'bear': {...}, 'assumptions'}: cada caso con sus impactos sobre los
+    PROVEEDORES (aguas arriba: más pedidos / menos pedidos) en % del kernel único (dirección 'up', PROP-17) o, si el
+    release no la habilita, un salto por el peso del vínculo. Nunca lanza."""
+    by_id = snap['by_id']
+    seeds = [x for x in seeds if x in by_id]
+    mags = {}
+    try:
+        from matrix import engine as _E
+        mags = _E._P('scenario_event_magnitude', None) or {}
+    except Exception:  # noqa: BLE001
+        pass
+    bull = float(mags.get('capital_bull', CAPITAL_BULL))
+    bear = float(mags.get('capital_bear', CAPITAL_BEAR))
+    out_f, in_f = _flow_adj(snap)
+
+    def lbl(i):
+        return (by_id.get(i) or {}).get('label') or i
+
+    def one(mag, sign):
+        rows, method, n_hit = [], None, None
+        try:
+            from core.hotviews import hot
+            from core.hotviews.views import impact as IV
+            from matrix import engine as E
+            import numpy as np
+            gv = hot.graph()
+            core = gv.core if gv is not None else None
+            sd = [x for x in seeds if core is not None and x in core.idx]
+            if kernel_mode() and E.direction_up_enabled() and sd:
+                x0 = np.zeros(len(core.ids))
+                for sid in sd:
+                    x0[core.idx[sid]] = mag
+                sc = IV.scenario(core, x0, factors='active', direction='up', top=60)
+                n_hit = sc.get('reach_1')
+                hop = {v['id']: v['hop'] for v in sc['victims']}
+                pct = {v['id']: v['pct'] for v in sc['victims']}
+                for v in sc['victims']:
+                    if v['pct'] < 1.0 or v['id'] in sd:
+                        continue
+                    path = _path_back(v['id'], hop, pct, sd, out_f, in_f, 'up')
+                    if path[-1] not in sd:        # p. ej. un inversor: el vínculo directo con la semilla (sea cual sea)
+                        direct = [l.get('target') for l in snap['out'].get(v['id'], []) if l.get('target') in sd]
+                        path = [v['id'], direct[0]] if direct else path
+                    rows.append({'id': v['id'], 'pct': v['pct'], 'hop': v['hop'], 'path_ids': path})
+                method = 'propagate@1 direction=up (kernel.params ' + str(_semver()) + ')'
+        except Exception:  # noqa: BLE001
+            rows, method = [], None
+        if method is None:                        # 1.0.0 / sin vista: un salto, proveedor × peso del vínculo
+            best = {}
+            for sd in seeds:
+                for l in in_f.get(sd, []):
+                    sup = l.get('source')
+                    p = round(min(1.0, mag * _w(l)) * 100, 2)
+                    if sup and sup not in seeds and p > best.get(sup, (0.0, None))[0]:
+                        best[sup] = (p, sd)
+            rows = [{'id': k, 'pct': p, 'hop': 1, 'path_ids': [k, sd]} for k, (p, sd) in best.items() if p >= 1.0]
+            method = 'one hop upstream × link weight (legacy)'
+        rows.sort(key=lambda r: (-r['pct'], r['id']))
+        imp = []
+        for r in rows[:15]:
+            imp.append({'id': r['id'], 'label': lbl(r['id']), 'impact_pct': round(sign * r['pct'], 2),
+                        'hop': r['hop'], 'path_ids': r['path_ids'],
+                        'path': ' → '.join(lbl(i) for i in r['path_ids']),
+                        'listed': bool((by_id.get(r['id']) or {}).get('mkt'))})
+        return {'magnitude': mag, 'impacts': imp, 'n_affected': n_hit if n_hit is not None else len(rows),
+                'method': method}
+
+    return {
+        'bull': {**one(bull, +1.0), 'label_es': 'Caso favorable: entra capital y aumentan los pedidos',
+                 'label_en': 'Bull case: fresh capital, more orders'},
+        'bear': {**one(bear, -1.0), 'label_es': 'Caso desfavorable: dudas de financiación y recorte de pedidos',
+                 'label_en': 'Bear case: funding doubts, orders cut'},
+        'assumptions': {'bull_spend_change': bull, 'bear_spend_change': -bear,
+                        'note_es': (f'Supuesto: en el caso favorable la empresa sube sus pedidos un {round(bull * 100)} %; '
+                                    f'en el desfavorable los recorta un {round(bear * 100)} %. El % de cada proveedor '
+                                    'sale del motor de Khipus según cuánto de sus ventas depende de ella.'),
+                        'note_en': (f'Assumption: bull case, the company raises its orders by {round(bull * 100)}%; '
+                                    f'bear case, it cuts them by {round(bear * 100)}%. Each supplier\'s % comes from '
+                                    'the Khipus engine, by how much of its sales depend on it.')},
     }
 
 
