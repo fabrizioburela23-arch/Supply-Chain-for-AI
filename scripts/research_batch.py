@@ -399,8 +399,9 @@ def main(argv=None):
             spend.bump('rechazadas')
             return row, 'bad', usd
 
-    with ThreadPoolExecutor(max_workers=max(1, args.workers)) as ex:
-        futs = [ex.submit(job, i, r) for i, r in enumerate(rows)]
+    ex = ThreadPoolExecutor(max_workers=max(1, args.workers))
+    futs = [ex.submit(job, i, r) for i, r in enumerate(rows)]
+    try:
         for f in as_completed(futs):
             try:
                 row, st, usd = f.result()
@@ -410,6 +411,12 @@ def main(argv=None):
             if st != 'skip':
                 mark = '✓' if st == 'ok' else '✗'
                 print(f"  {mark} {row['nombre']} · {usd:.3f} USD · total ≈ {spend.d['usd']:.2f} USD")
+    except KeyboardInterrupt:
+        # Ctrl+C: se cancela la cola; las que ya estaban en curso terminan y se guardan (≤ 1-3 min)
+        print(f'\n⏹ deteniendo: se cancela la cola; terminan las {max(1, args.workers)} en curso y se guardan…')
+        ex.shutdown(wait=True, cancel_futures=True)
+    else:
+        ex.shutdown(wait=True)
     print(f"listo: {spend.d['fichas_ok']} fichas válidas, {spend.d['rechazadas']} rechazadas, ≈ {spend.d['usd']:.2f} USD "
           f"→ {os.path.relpath(out_path, ROOT)} (mándaselo a Claude para empaquetarlo en el panel 📥)")
 

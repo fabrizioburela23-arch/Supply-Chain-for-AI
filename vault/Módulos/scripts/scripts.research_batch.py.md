@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Otros"
 ruta: "scripts/research_batch.py"
 lenguaje: "python"
-lineas: 418
+lineas: 425
 aliases: ["scripts/research_batch.py"]
 tags: ["capa/otros", "tipo/modulo"]
 ---
 
 # scripts/research_batch.py
 
-> Módulo · capa [[Capa Otros]] · 418 líneas · `scripts/research_batch.py`
+> Módulo · capa [[Capa Otros]] · 425 líneas · `scripts/research_batch.py`
 
 ## Para qué sirve
 
