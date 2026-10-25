@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L519"
+ruta: "docs/ESTADO.md#L523"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (c) — INFRAESTRUCTURA OPERATIVA, PASOS 7, 9, 10 y 13 (ancla, gobernanza, puertas SHACL en sombra, un kernel en el cliente) — sw v260
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 519 (34 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 523 (34 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

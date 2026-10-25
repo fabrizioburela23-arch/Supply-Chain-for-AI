@@ -50,7 +50,7 @@ PRICES = {'claude-opus-5-5': (4.0, 20.0, 5.0, 0.20), 'claude-sonnet-5-5': (2.0, 
 WEB_SEARCH_USD = 0.01
 
 LOTES = ['2026-10-15/bundle_lote2_completas.json.gz', '2026-10-21-r/bundle_lote5_r.json.gz',
-         '2026-10-22/bundle_lote6_s.json.gz']
+         '2026-10-22/bundle_lote6_s.json.gz', '2026-10-25-api/bundle_lote7_api.json.gz']
 LOTES_JSONL = ['2026-10-21/fichas_P2_nivelB.jsonl.gz']
 
 
@@ -325,7 +325,8 @@ def research_one(client, args, system, row, n, spend):
             san, _logs, _s = CI.sanitize_batch([rec])
             _valid, invalid = CI.validate_batch(san)
             if not invalid:
-                return san[0], [], usd
+                best = _more_links(call, messages, msg, san[0], row, CI)
+                return best, [], usd
             errs = [f"{e.get('path')}: {e.get('msg') or e.get('type')}" for e in invalid[0]['errors']][:25]
         if fix == 1:
             break
@@ -336,6 +337,40 @@ def research_one(client, args, system, row, n, spend):
         msg = call()
         rec = _json(_text(msg))
     return rec, errs, usd
+
+
+MIN_LINKS = 3
+
+
+def _more_links(call, messages, msg, rec, row, CI):
+    """Una ficha válida con menos de MIN_LINKS vínculos vuelve UNA vez a la IA pidiendo vínculos (lo que más vale para
+    Khipus: el 42 % de las primeras 260 fichas llegó sin ninguno). Se queda con la versión que tenga más vínculos y
+    siga validando. La pista de id se completa con la de la lista si la IA la omitió (si no, retomar la repetía)."""
+    hint = row.get('khipus_id') or row.get('khipus_id_hint')
+    if hint and not rec.get('khipus_id_hint'):
+        rec['khipus_id_hint'] = hint
+    n = len(rec.get('relations') or [])
+    if n >= MIN_LINKS:
+        return rec
+    messages.append({'role': 'assistant', 'content': msg.content})
+    messages.append({'role': 'user', 'content': (
+        f'La ficha trae solo {n} vínculo(s). Los VÍNCULOS son la PRIORIDAD 1 de Khipus. Busca de 3 a 10 relaciones '
+        'VERIFICABLES (proveedores, clientes, fábricas/fundiciones, nube, licencias, PPAs, dueño/filiales, inversores), '
+        'cada una con evidencia (source_url + quote) y, si la contraparte está en ENTIDADES KHIPUS, con su khipus_id '
+        'exacto. Si de verdad no existen fuentes, deja las que haya. Devuelve SOLO el JSON completo de la ficha.')})
+    try:
+        nm = call()
+    except Exception:  # noqa: BLE001 — si falla el segundo intento, vale la ficha que ya validó
+        return rec
+    rec2 = _json(_text(nm))
+    if rec2 is not None:
+        san, _l, _s = CI.sanitize_batch([rec2])
+        _v, inv = CI.validate_batch(san)
+        if not inv and len(san[0].get('relations') or []) > n:
+            if hint and not san[0].get('khipus_id_hint'):
+                san[0]['khipus_id_hint'] = hint
+            return san[0]
+    return rec
 
 
 def main(argv=None):

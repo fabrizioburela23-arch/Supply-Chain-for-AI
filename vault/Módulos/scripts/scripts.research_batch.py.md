@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Otros"
 ruta: "scripts/research_batch.py"
 lenguaje: "python"
-lineas: 425
+lineas: 460
 aliases: ["scripts/research_batch.py"]
 tags: ["capa/otros", "tipo/modulo"]
 ---
 
 # scripts/research_batch.py
 
-> Módulo · capa [[Capa Otros]] · 425 líneas · `scripts/research_batch.py`
+> Módulo · capa [[Capa Otros]] · 460 líneas · `scripts/research_batch.py`
 
 ## Para qué sirve
 
@@ -28,9 +28,9 @@ investiga empresas con la API de Claude (búsqueda web) y escribe fichas khipus.
 - `enrich_prompt(row, n)` — La empresa YA existe en Khipus: el objetivo son los VÍNCULOS (y lo que le falte a la ficha), no repetirla. _(línea 227)_
 - clase `Spend` _(línea 245)_
 - `research_one(client, args, system, row, n, spend)` _(línea 288)_
-- `main(argv=…)` _(línea 341)_
+- `main(argv=…)` _(línea 376)_
 
-**Internas** (empiezan con `_`): `_records`, `_solid`, `_rules`, `_text`, `_json`
+**Internas** (empiezan con `_`): `_records`, `_solid`, `_rules`, `_text`, `_json`, `_more_links`
 
 ## Depende de
 
@@ -47,3 +47,7 @@ _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 ## Pruebas que lo cubren
 
 - [[tests.test_research_batch.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]

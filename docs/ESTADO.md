@@ -91,6 +91,10 @@ tocado (suite completa solo antes de publicar), mensajes cortos.
    `khipus_entrega_S.zip` (498/498 válidas; plan local 497 crear · 1 completar ITC Holdings). Producción ≈1.970 empresas
    (969 + lotes 2-4) → ≈3.050 con los lotes 5 y 6. ⚠ Railway NO desplegó desde 2026-10-21 ~04:50 UTC aunque el CI quedó
    verde (80d8592): Fabrizio debe mirar Deployments / Redeploy. docs/expansion/LOTE_2026-10-22_PLAN.md.
+1j. 🤖 **LOTE 7 (API) LISTO (2026-10-25)**: `scripts/research_batch.py` (créditos de API de Fabrizio; Sonnet 5.5 + búsqueda web;
+   `--enrich` engrosa empresas existentes con pocos vínculos, fusionando por khipus_id_hint). 260 fichas válidas →
+   `data/import/lotes/2026-10-25-api/bundle_lote7_api.json.gz` (≈84 USD). 109 sin vínculos → el script ahora exige ≥ 3
+   (una vuelta extra). docs/expansion/LOTE_2026-10-25-api_PLAN.md. Railway seguía sin desplegar (pedir capturas).
 2. **👍/👎 en respuestas del chat** para calibrar (decisión chat.answer → decision_outcomes).
 3. Fabrizio (manual): aplicar lote 2 (🩺 → 📥 Importar, copia + `railway` + PIN); mandar PROMPT_LOTE3 al otro agente;
    borrar TSLA/ATEYY de prueba de «Mi cartera»; TAVILY_KEY en Railway; consultar lo legal (dinero de terceros: SMV).

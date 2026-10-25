@@ -102,3 +102,20 @@ def test_lista_de_engrosar_prioriza_las_que_cotizan(monkeypatch, tmp_path):
     assert len(rows) > 500
     first_unlisted = next(i for i, r in enumerate(rows) if not r['cotiza'])
     assert all(r['cotiza'] for r in rows[:first_unlisted]) and all(int(r['vinculos']) <= 2 for r in rows)
+
+
+def test_ficha_sin_vinculos_vuelve_una_vez_pidiendo_vinculos(tmp_path):
+    good = _good()
+    assert len(good['relations']) >= 3
+    pobre = dict(good, relations=[])
+    pobre.pop('khipus_id_hint', None)
+    cli = FakeClient([('end_turn', json.dumps(pobre)), ('end_turn', json.dumps(good))])
+    rec, errs, usd = R.research_one(cli, _args(), 'SYS', {'nombre': 'X', 'khipus_id_hint': 'Transpower'}, 0,
+                                    R.Spend('claude-sonnet-5-5', str(tmp_path / 'c.json')))
+    assert errs == [] and len(rec['relations']) == len(good['relations']) and len(cli.calls) == 2
+    assert 'PRIORIDAD 1' in cli.calls[1]['messages'][-1]['content']
+    # si la segunda versión no mejora, queda la primera (válida) con la pista completada
+    cli = FakeClient([('end_turn', json.dumps(pobre)), ('end_turn', 'no hay más')])
+    rec, errs, _ = R.research_one(cli, _args(), 'SYS', {'nombre': 'X', 'khipus_id_hint': 'Transpower'}, 0,
+                                  R.Spend('claude-sonnet-5-5', str(tmp_path / 'c2.json')))
+    assert errs == [] and rec['relations'] == [] and rec['khipus_id_hint'] == 'Transpower'

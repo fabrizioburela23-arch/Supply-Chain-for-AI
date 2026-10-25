@@ -1,0 +1,13 @@
+{
+ "schema": "khipus.lote-origin/1",
+ "batch": "lote-2026-10-25-api-lote7",
+ "received": "2026-10-25",
+ "package": "fichas_api.jsonl (scripts/research_batch.py, Claude Sonnet 5.5 + búsqueda web)",
+ "package_file": "fichas_api.jsonl",
+ "package_file_sha256": "ada08949048166c1a8b443f288b4c3d0b4a2c4e4546ea3be463a2c990401f20d",
+ "package_records": 260,
+ "kept_records": 260,
+ "declared_links": 415,
+ "note_es": "Lote 7 (API): 260 fichas investigadas con la API de Claude (≈84 USD). 109 sin vínculos y 88 con 1-2: conviene engrosarlas después (research_batch --enrich). Sin listas de sanciones consultadas.",
+ "note_en": "Batch 7 (API): 260 records researched with the Claude API. Many have few links: enrich later."
+}

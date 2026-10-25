@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-11"
-ruta: "docs/ESTADO.md#L759"
+ruta: "docs/ESTADO.md#L763"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO (sin cambios en la app; sw.js sin tocar)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 759 (38 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 763 (38 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

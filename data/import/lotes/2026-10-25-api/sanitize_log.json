@@ -1,0 +1,14 @@
+{
+ "schema": "khipus.sanitize-log/1",
+ "batch": "lote-2026-10-25-api-lote7",
+ "source_file": "fichas_api.jsonl",
+ "records_in": 260,
+ "summary": {
+  "by_rule": {},
+  "records_changed": 0,
+  "fields_repaired": 0,
+  "fields_dropped": 0,
+  "rejected": []
+ },
+ "records": {}
+}

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-27"
-ruta: "docs/ESTADO.md#L2141"
+ruta: "docs/ESTADO.md#L2145"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-27 — La app en el TELÉFONO (sw v136)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2141 (23 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2145 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
