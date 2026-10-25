@@ -64,6 +64,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - [[research.router.py]] — lo importa
 - [[research.runner.py]] — lo importa
 - [[scripts.bench_scale.py]] — lo importa
+- [[scripts.research_batch.py]] — lo importa
 - herramienta MCP `calculate_correlation` → [[API herramientas MCP]]
 - herramienta MCP `find_anomalies` → [[API herramientas MCP]]
 - herramienta MCP `get_committee_memo` → [[API herramientas MCP]]

@@ -119,3 +119,26 @@ def test_ficha_sin_vinculos_vuelve_una_vez_pidiendo_vinculos(tmp_path):
     rec, errs, _ = R.research_one(cli, _args(), 'SYS', {'nombre': 'X', 'khipus_id_hint': 'Transpower'}, 0,
                                   R.Spend('claude-sonnet-5-5', str(tmp_path / 'c2.json')))
     assert errs == [] and rec['relations'] == [] and rec['khipus_id_hint'] == 'Transpower'
+
+
+def test_faltantes_son_empresas_citadas_que_khipus_no_tiene(monkeypatch, tmp_path):
+    monkeypatch.setattr(R, 'OUT_DIR', str(tmp_path))
+    R.make_missing_list()
+    import csv
+    rows = list(csv.DictReader(open(tmp_path / 'faltantes.csv', encoding='utf-8')))
+    assert rows and all('La nombran' in r['por_que'] for r in rows)
+    names = ' | '.join(r['nombre'] for r in rows)
+    assert 'Navy' not in names and 'Government' not in names and 'Department of' not in names
+    known = R.known_entities()
+    assert not any(R.norm(r['nombre']) in known for r in rows)
+
+
+def test_engrosar_trae_sector_para_filtrar(monkeypatch, tmp_path):
+    monkeypatch.setattr(R, 'OUT_DIR', str(tmp_path))
+    monkeypatch.setattr(R, 'ENR_CSV', str(tmp_path / 'e.csv'))
+    R.make_enrich_list()
+    import csv
+    rows = list(csv.DictReader(open(tmp_path / 'e.csv', encoding='utf-8')))
+    chips_robots = [r for r in rows if r['sector'] in ('robotica', 'diseno', 'equipos', 'fabricacion')]
+    assert len(chips_robots) > 300 and sum(1 for r in rows if not r['sector']) < len(rows) * 0.1
+    assert 'A QUIÉN LE VENDE' in R.enrich_prompt(rows[0], 0) and 'DE QUIÉN COMPRA' in R.enrich_prompt(rows[0], 0)

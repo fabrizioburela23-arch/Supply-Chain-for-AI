@@ -13,6 +13,10 @@ se le devuelven los errores a la IA una vez para que la corrija. Se puede cortar
     # 1') o ENGROSAR las que ya están en Khipus pero casi sin vínculos (las que cotizan primero)
     python scripts/research_batch.py --make-enrich-list
     python scripts/research_batch.py --enrich --budget-usd 150 --workers 4
+    python scripts/research_batch.py --enrich --sector robotica,diseno,equipos,fabricacion     (solo esos sectores)
+    # 1'') o crear las empresas que OTRAS fichas citan y Khipus no tiene (conecta sus vínculos pendientes)
+    python scripts/research_batch.py --make-missing-list
+    python scripts/research_batch.py --list data/import/lotes/api/faltantes.csv --budget-usd 150
     # 2) el resto, con tope de gasto
     python scripts/research_batch.py --budget-usd 150 --workers 4      (modelo: Sonnet 5.5; --model claude-opus-5-5 = más fino y el doble de caro)
 
@@ -152,12 +156,15 @@ def make_enrich_list():
         if (l.get('type') or 'supply') in flow:
             for k in (l.get('source'), l.get('target')):
                 deg[k] = deg.get(k, 0) + 1
+    cats = json.load(open(os.path.join(ROOT, 'data', 'categories.json'), encoding='utf-8')).get('categories') or {}
+    cat_sector = {k: v.get('sector') or '' for k, v in cats.items()}
     rows = {}
     for n in g.get('nodes') or []:
         d = deg.get(n['id'], 0)
         if d <= 2:
             rows[n['id']] = {'khipus_id': n['id'], 'nombre': n.get('label') or n['id'], 'pais': n.get('country') or '',
-                             'cotiza': n.get('mkt') or '', 'vinculos': d, 'origen': 'catalogo'}
+                             'cotiza': n.get('mkt') or '', 'vinculos': d, 'origen': 'catalogo',
+                             'sector': n.get('sector') or '', 'cat': n.get('cat') or ''}
     for r in _records():
         hid = r.get('khipus_id_hint')
         if not hid or hid in rows:
@@ -171,7 +178,10 @@ def make_enrich_list():
         rows[hid] = {'khipus_id': hid, 'nombre': (nm.get('value') if isinstance(nm, dict) else nm) or hid,
                      'pais': ((idn.get('hq_country') or {}).get('value') if isinstance(idn.get('hq_country'), dict) else '') or '',
                      'cotiza': (lst[0].get('yahoo_symbol') or lst[0].get('ticker') or '') if lst else '',
-                     'vinculos': d, 'origen': 'lote'}
+                     'vinculos': d, 'origen': 'lote',
+                     'sector': (r.get('classification') or {}).get('sector') or cat_sector.get(
+                         (r.get('classification') or {}).get('cat') or '', ''),
+                     'cat': (r.get('classification') or {}).get('cat') or ''}
     out = sorted(rows.values(), key=lambda x: (not x['cotiza'], x['vinculos'], x['nombre']))
     os.makedirs(OUT_DIR, exist_ok=True)
     with open(ENR_CSV, 'w', encoding='utf-8', newline='') as fh:
@@ -180,6 +190,57 @@ def make_enrich_list():
         w.writerows(out)
     print(f"{len(out)} empresas para engrosar ({sum(1 for x in out if x['cotiza'])} cotizan; "
           f"{sum(1 for x in out if x['vinculos'] == 0)} sin ningún vínculo sólido) → {os.path.relpath(ENR_CSV, ROOT)}")
+
+
+_NOT_COMPANY = re.compile(r'\b(government|gobierno|ministry|ministerio|ministere|department of|departamento de|army|navy|'
+                          r'air force|armed forces|fuerza|ej[eé]rcito|armada|state council|commission|comisi[oó]n|'
+                          r'republic|rep[uú]blica|united states|kingdom of|people.s liberation|parliament|congress|'
+                          r'municipal|city of|province|provincia|state of|agency|agencia|university|universidad)\b', re.I)
+
+
+def make_missing_list(min_refs=2):
+    """Empresas que las fichas NOMBRAN como proveedor/cliente/dueño pero que Khipus no tiene: cada una deja vínculos
+    PENDIENTES (no cuentan) hasta que exista. Investigarlas (modo normal) conecta esos vínculos solos: el importador
+    reintenta los pendientes de lotes anteriores contra las empresas nuevas. Sin gobiernos ni fuerzas armadas."""
+    from core import entities as CE
+    known = known_entities()
+    cnt, ex = {}, {}
+    for r in _records():
+        for rel in r.get('relations') or []:
+            cp = rel.get('counterparty') or {}
+            nm = cp.get('name')
+            if cp.get('khipus_id') or not nm or _NOT_COMPANY.search(nm):
+                continue
+            k = norm(nm)
+            if not k or k in known:
+                continue
+            cnt[k] = cnt.get(k, 0) + 1
+            e = ex.setdefault(k, {'nombre': nm, 'pais_iso2': cp.get('country') or '', 'citada_por': set()})
+            e['citada_por'].add(r.get('khipus_id_hint') or r.get('record_id'))
+    rows = []
+    for k, n in sorted(cnt.items(), key=lambda kv: -kv[1]):
+        if n < min_refs:
+            break
+        e = ex[k]
+        try:
+            hit = CE.resolve(e['nombre'], umbral=getattr(CE, 'UMBRAL_ESCRITURA', 85))
+        except Exception:  # noqa: BLE001
+            hit = None
+        if hit and (hit.get('id') if isinstance(hit, dict) else hit):
+            continue                      # ya está en el catálogo con otro nombre
+        rows.append({'khipus_id_hint': hint_of(e['nombre']), 'nombre': e['nombre'], 'nombre_legal': '',
+                     'pais_iso2': e['pais_iso2'], 'estado': '', 'ticker': '', 'bolsa_mic': '', 'simbolo_yahoo': '',
+                     'identificador': '', 'sector': '', 'categoria': '', 'prioridad': 'P1' if n >= 4 else 'P2',
+                     'por_que': f"La nombran {n} fichas de Khipus como contraparte ({', '.join(sorted(map(str, e['citada_por']))[:4])}); "
+                                'sin ella esos vínculos quedan pendientes.', 'fuente_url': ''})
+    path = os.path.join(OUT_DIR, 'faltantes.csv')
+    os.makedirs(OUT_DIR, exist_ok=True)
+    with open(path, 'w', encoding='utf-8', newline='') as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    print(f"{len(rows)} empresas que otras fichas citan y Khipus no tiene ({sum(cnt[norm(r['nombre'])] for r in rows)} "
+          f"vínculos pendientes que se conectarían) → {os.path.relpath(path, ROOT)}")
 
 
 def _rules():
@@ -231,8 +292,10 @@ def enrich_prompt(row, n):
     return (f"ENGROSAR una empresa que YA EXISTE en Khipus: {row['nombre']} (id Khipus \"{kid}\""
             + (f", país {row['pais']}" if row.get('pais') else '') + (f", cotiza {row['cotiza']}" if row.get('cotiza') else '')
             + f"). Hoy tiene solo {row.get('vinculos') or 0} vínculo(s) de flujo en el grafo.\n"
-            "OBJETIVO: de 6 a 15 vínculos VERIFICABLES nuevos (proveedores, clientes, fábricas, nube, licencias, PPAs, "
-            "dueños/filiales), priorizando contrapartes que estén en ENTIDADES KHIPUS con su khipus_id EXACTO; cada uno con "
+            "OBJETIVO: de 6 a 15 vínculos VERIFICABLES nuevos y de LOS DOS LADOS: al menos 2 de DE QUIÉN COMPRA "
+            "(componentes, chips, materiales, equipos, nube, energía, fábricas que le producen) y al menos 2 de A QUIÉN LE "
+            "VENDE (clientes, distribuidores, integradores), más dueño/filiales si los hay. Prioriza contrapartes que estén "
+            "en ENTIDADES KHIPUS con su khipus_id EXACTO (son las que conectan el grafo); cada uno con "
             "evidencia (source_url + quote), dependency en los de flujo y confidence honesta. Después completa lo que más "
             "falte de la ficha (market_position, facilities, products, financials, risks, timeline). Mejor 6 vínculos "
             "ciertos que 15 dudosos.\n"
@@ -379,6 +442,10 @@ def main(argv=None):
     ap.add_argument('--enrich', action='store_true',
                     help='ENGROSAR empresas que ya están en Khipus pero casi sin vínculos (engrosar.csv)')
     ap.add_argument('--make-enrich-list', action='store_true', help='armar engrosar.csv y salir')
+    ap.add_argument('--make-missing-list', action='store_true',
+                    help='armar faltantes.csv (empresas que otras fichas citan y Khipus no tiene) y salir; '
+                         'después: --list data/import/lotes/api/faltantes.csv')
+    ap.add_argument('--sector', default='', help='solo estos sectores, separados por coma (p. ej. robotica,diseno,equipos)')
     ap.add_argument('--list', default=None, help='CSV de empresas (por defecto pendientes.csv o engrosar.csv)')
     ap.add_argument('--limit', type=int, default=0, help='máximo de empresas en esta corrida (0 = todas)')
     ap.add_argument('--budget-usd', type=float, default=20.0, help='tope de gasto ACUMULADO (costo_api.json)')
@@ -392,6 +459,8 @@ def main(argv=None):
         return make_list()
     if args.make_enrich_list:
         return make_enrich_list()
+    if args.make_missing_list:
+        return make_missing_list()
     out_path, bad_path = (ENR_OUT, ENR_BAD) if args.enrich else (OUT, BAD)
     args.list = args.list or (ENR_CSV if args.enrich else LIST_CSV)
     if not os.path.exists(args.list):
@@ -410,6 +479,9 @@ def main(argv=None):
                 except ValueError:
                     pass
     rows = [r for r in csv.DictReader(open(args.list, encoding='utf-8')) if r.get(key) not in done]
+    if args.sector:
+        want = {x.strip().lower() for x in args.sector.split(',') if x.strip()}
+        rows = [r for r in rows if (r.get('sector') or '').lower() in want]
     if args.limit:
         rows = rows[:args.limit]
     spend = Spend(args.model, COST)
