@@ -263,7 +263,10 @@ def test_corrida_diaria_guarda_cierres_fx_y_fotos(db, small_catalog, monkeypatch
         {'id': nodes[1]['id'], 'ticker': nodes[1]['mkt'], 'nrs': 55, 'flow_degree': 1}]})
     calls = []
     d = _bdays(22)
-    run_day = datetime.combine(d[-1] + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc) + timedelta(hours=23)
+    nxt = d[-1] + timedelta(days=1)
+    while nxt.weekday() >= 5:                 # el reloj diario no corre en fin de semana: la prueba fallaba domingos y lunes
+        nxt += timedelta(days=1)
+    run_day = datetime.combine(nxt, datetime.min.time(), tzinfo=timezone.utc) + timedelta(hours=23)
     monkeypatch.setattr(prices_store, '_targets', lambda s, symbols=None: ([nodes[0]['mkt'], nodes[1]['mkt']], ['JPY']))
     res = prices_store.run_daily(now=run_day, getter=_net(d, calls), sleep=lambda s: None, broker=False)
     assert res['failed'] == 0 and res['ok'] == 3 and res['snapshot']['metrics'] >= 2
