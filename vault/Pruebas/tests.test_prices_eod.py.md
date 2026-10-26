@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_prices_eod.py"
 lenguaje: "python"
-lineas: 422
+lineas: 425
 aliases: ["tests/test_prices_eod.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_prices_eod.py
 
-> Prueba · capa [[Capa Pruebas]] · 422 líneas · `tests/test_prices_eod.py`
+> Prueba · capa [[Capa Pruebas]] · 425 líneas · `tests/test_prices_eod.py`
 
 ## Qué prueba
 

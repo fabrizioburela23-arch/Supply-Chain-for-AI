@@ -528,7 +528,7 @@
   {"id": "tests/test_portfolio_ai.py", "label": "tests/test_portfolio_ai.py", "layer": "pruebas", "lines": 315, "note": "Pruebas/tests.test_portfolio_ai.py", "path": "tests/test_portfolio_ai.py", "type": "test"},
   {"id": "tests/test_portfolio_persist.py", "label": "tests/test_portfolio_persist.py", "layer": "pruebas", "lines": 101, "note": "Pruebas/tests.test_portfolio_persist.py", "path": "tests/test_portfolio_persist.py", "type": "test"},
   {"id": "tests/test_portfolio_reports.py", "label": "tests/test_portfolio_reports.py", "layer": "pruebas", "lines": 151, "note": "Pruebas/tests.test_portfolio_reports.py", "path": "tests/test_portfolio_reports.py", "type": "test"},
-  {"id": "tests/test_prices_eod.py", "label": "tests/test_prices_eod.py", "layer": "pruebas", "lines": 422, "note": "Pruebas/tests.test_prices_eod.py", "path": "tests/test_prices_eod.py", "type": "test"},
+  {"id": "tests/test_prices_eod.py", "label": "tests/test_prices_eod.py", "layer": "pruebas", "lines": 425, "note": "Pruebas/tests.test_prices_eod.py", "path": "tests/test_prices_eod.py", "type": "test"},
   {"id": "tests/test_provenance.py", "label": "tests/test_provenance.py", "layer": "pruebas", "lines": 395, "note": "Pruebas/tests.test_provenance.py", "path": "tests/test_provenance.py", "type": "test"},
   {"id": "tests/test_providers.py", "label": "tests/test_providers.py", "layer": "pruebas", "lines": 232, "note": "Pruebas/tests.test_providers.py", "path": "tests/test_providers.py", "type": "test"},
   {"id": "tests/test_quotes_live.py", "label": "tests/test_quotes_live.py", "layer": "pruebas", "lines": 322, "note": "Pruebas/tests.test_quotes_live.py", "path": "tests/test_quotes_live.py", "type": "test"},
