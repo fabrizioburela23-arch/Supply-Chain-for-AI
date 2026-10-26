@@ -54,6 +54,7 @@ normalización de la ficha khipus.company/1 a la convención interna (E2.2).
 
 - [[core.entities.py]] — lo importa
 - [[ontology.company_import.py]] — lo importa
+- [[scripts.links_to_ficha.py]] — lo importa
 
 _Además lo importan 4 pruebas (lista abajo)._
 

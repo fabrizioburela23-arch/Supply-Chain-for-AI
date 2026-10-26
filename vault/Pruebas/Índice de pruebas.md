@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-264 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+265 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -148,6 +148,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_ledger_privacy.py]] | 7 | 9 |
 | [[tests.test_ledger_review_fixes.py]] | 8 | 15 |
 | [[tests.test_link_review.py]] | 4 | 5 |
+| [[tests.test_links_to_ficha.py]] | 2 | 2 |
 | [[tests.test_live_caps.py]] | 5 | 4 |
 | [[tests.test_live_facts_entities.py]] | 1 | 1 |
 | [[tests.test_live_fundamentals.py]] | 3 | 2 |

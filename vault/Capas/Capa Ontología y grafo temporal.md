@@ -67,10 +67,10 @@ tags: ["capa/ontologia", "tipo/capa"]
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |
 | la usa | [[Capa Comité]] | 6 |
+| la usa | [[Capa Otros]] | 4 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 4 |
 | usa a | [[Capa Investigación]] | 4 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |
-| la usa | [[Capa Otros]] | 3 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa Voz]] | 1 |
 | usa a | [[Capa MCP y API]] | 1 |

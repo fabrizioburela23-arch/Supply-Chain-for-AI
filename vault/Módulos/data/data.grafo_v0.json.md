@@ -48,6 +48,7 @@ _Nada interno._
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.build_instrument_review.py]] — lo nombra por su ruta
 - [[scripts.ingest_multicapa.py]] — lo nombra por su ruta
+- [[scripts.links_to_ficha.py]] — lo nombra por su ruta
 - [[scripts.migrate_v0_to_ontology.py]] — lo nombra por su ruta
 - [[scripts.research_batch.py]] — lo nombra por su ruta
 

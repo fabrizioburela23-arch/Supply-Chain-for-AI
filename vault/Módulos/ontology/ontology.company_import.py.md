@@ -76,9 +76,10 @@ importador de fichas khipus.company/1 (docs/expansion/EXPANSION_5K.md, bloque E2
 - [[core.import_normalize.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 - [[scripts.import_companies.py]] — lo importa
+- [[scripts.links_to_ficha.py]] — lo importa
 - [[scripts.research_batch.py]] — lo importa
 
-_Además lo importan 15 pruebas (lista abajo)._
+_Además lo importan 16 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -94,6 +95,7 @@ _Además lo importan 15 pruebas (lista abajo)._
 - [[tests.test_import_roundtrip.py]]
 - [[tests.test_import_sanitize_schema.py]]
 - [[tests.test_import_shapes.py]]
+- [[tests.test_links_to_ficha.py]]
 - [[tests.test_live_universe_db.py]]
 - [[tests.test_lotek_fixer.py]]
 - [[tests.test_lotel_fixer.py]]
