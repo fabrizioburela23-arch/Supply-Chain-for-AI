@@ -20,7 +20,7 @@ Generado desde nodes/\*.js vía nodes/merge_graph.js (misma implementación que 
 
 | Clave | Tipo | Tamaño / valor |
 |---|---|---|
-| `exported_at` | fecha | `2026-10-27T23:42:02.929Z` |
+| `exported_at` | fecha | `2026-10-27T23:57:01.642Z` |
 | `counts` | objeto | 8 |
 | `nodes` | lista | 937 |
 | `links` | lista | 2.510 |

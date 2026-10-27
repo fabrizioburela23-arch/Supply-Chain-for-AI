@@ -41,14 +41,14 @@ var META_FILL = {
  },
  "Tenstorrent": {
   "founded": 2016,
-  "employees": 800,
+  "employees": 1285,
   "revenue_2025": "N/D privada (~$100M+ en contratos de licencias)",
   "geo_risk": "Origen en Toronto con HQ en Santa Clara; fabrica con Samsung Foundry y GlobalFoundries (menos dependencia de TSMC) y su capital viene de Samsung, Hyundai y Bezos, atándola a Corea/Japón.",
   "desc": "Chips de IA y IP RISC-V liderada por Jim Keller; licencia núcleos y vende aceleradores (Wormhole/Blackhole) como alternativa abierta a NVIDIA. Importa por su modelo de licenciamiento que siembra silicio de IA en terceros (LG, Hyundai, Japón/Rapidus)."
  },
  "dMatrix": {
   "founded": 2019,
-  "employees": 300,
+  "employees": 318,
   "revenue_2025": "pre-revenue (Corsair en rampa inicial)",
   "geo_risk": "Sede en Santa Clara, fabricación en TSMC (Taiwán) y capital de Temasek (Singapur) y Microsoft M12; depende de que los hyperscalers adopten inferencia fuera de NVIDIA.",
   "desc": "Desarrolla aceleradores de inferencia de IA con cómputo digital en memoria y chiplets (plataforma Corsair), enfocados en LLMs con mejor coste/vatio que las GPU. Importa como apuesta especializada en el segmento de inferencia, el de mayor crecimiento."
@@ -69,7 +69,7 @@ var META_FILL = {
  },
  "AyarLabs": {
   "founded": 2015,
-  "employees": 300,
+  "employees": 210,
   "revenue_2025": "pre-revenue (muestras y programas piloto)",
   "geo_risk": "Sede en San José, California; fabrica su fotónica con GlobalFoundries en EEUU (ventaja de resiliencia) y su cap table incluye a NVIDIA, AMD e Intel, lo que la ata al ecosistema americano.",
   "desc": "Chiplets de E/S óptica (TeraPHY) y fuentes de luz (SuperNova) que sacan datos del chip con luz en vez de cobre. Importa porque la interconexión óptica co-empaquetada es el cuello de botella clave para escalar clusters de IA, y NVIDIA/AMD/Intel son inversores."
@@ -83,7 +83,7 @@ var META_FILL = {
  },
  "SpiNNcloud": {
   "founded": 2021,
-  "employees": 40,
+  "employees": 50,
   "revenue_2025": "N/D privada (primeros sistemas entregados)",
   "geo_risk": "Spin-off de TU Dresden en Alemania, dentro del clúster 'Silicon Saxony'; depende de subvenciones europeas/alemanas y de clientes institucionales como Sandia Labs (EEUU).",
   "desc": "Comercializa SpiNNaker2, supercomputación neuromórfica basada en la arquitectura de Steve Furber con miles de núcleos Arm de bajo consumo para IA event-driven. Importa como la apuesta europea más avanzada en cómputo neuromórfico a escala."
@@ -208,7 +208,7 @@ var META_FILL = {
  },
  "PathAI": {
   "founded": 2016,
-  "employees": 500,
+  "employees": 617,
   "revenue_2025": "N/D privada (vendió su negocio de laboratorio a Quest Diagnostics en 2024)",
   "geo_risk": "Privada con sede en Boston; tras vender sus laboratorios a Quest depende de acuerdos con farmacéuticas y grandes laboratorios de EEUU, con riesgo regulatorio FDA más que geopolítico.",
   "desc": "IA para patología digital: algoritmos que analizan biopsias para diagnóstico y ensayos clínicos farmacéuticos, ahora enfocada en software (AISight) tras vender su laboratorio a Quest. Es un nodo clave de la patología computacional."
@@ -257,7 +257,7 @@ var META_FILL = {
  },
  "Umbra": {
   "founded": 2015,
-  "employees": 150,
+  "employees": 229,
   "revenue_2025": "N/D privada (decenas de $M, contratos NRO/DoD)",
   "geo_risk": "Sede en Santa Bárbara, California; fuerte dependencia de contratos de inteligencia/defensa de EEUU (NRO) y de licencias regulatorias NOAA para vender imágenes SAR de alta resolución.",
   "desc": "Fabrica y opera satélites SAR (radar de apertura sintética) con la resolución comercial más alta autorizada (~16 cm), vendiendo imágenes bajo modelo abierto. Importa porque el SAR ve de noche y a través de nubes: clave para vigilancia militar persistente."
@@ -348,7 +348,7 @@ var META_FILL = {
  },
  "RelativitySpace": {
   "founded": 2015,
-  "employees": 1100,
+  "employees": 1900,
   "revenue_2025": "pre-revenue",
   "geo_risk": "Sede en Long Beach (California); depende de capital privado (Eric Schmidt tomó el control como CEO/inversor principal en 2025) y de que Terran R vuele antes de quemar caja; riesgo de ejecución más que geopolítico.",
   "desc": "Startup de lanzadores que apuesta por impresión 3D masiva de cohetes; retiró el pequeño Terran 1 tras un solo vuelo (2023) para concentrarse en el cohete mediano reutilizable Terran R. Candidata a tercera opción de lanzamiento pesado-medio en EEUU."
@@ -376,28 +376,28 @@ var META_FILL = {
  },
  "PhysicalIntelligence": {
   "founded": 2024,
-  "employees": 100,
+  "employees": 191,
   "revenue_2025": "pre-revenue",
   "geo_risk": "Startup de San Francisco financiada por Jeff Bezos, OpenAI, Thrive y Lux entre otros; su riesgo es de capital y talento más que geopolítico, aunque el hardware robótico donde corre su software depende de cadenas de suministro asiáticas.",
   "desc": "Laboratorio fundado por exinvestigadores de Google DeepMind y Stanford (Hausman, Levine, Finn) que construye modelos fundacionales para robots (familia π0), hardware-agnósticos. Es una de las apuestas centrales de la tesis 'IA física': el software cerebral para cualquier robot."
  },
  "Runway": {
   "founded": 2018,
-  "employees": 250,
+  "employees": 336,
   "revenue_2025": "~$100M+ ARR (est., privada)",
   "geo_risk": "Sede en Nueva York; depende de cómputo de nube (GPUs NVIDIA) y enfrenta riesgo competitivo (Sora de OpenAI, Veo de Google) y legal por derechos de autor de datos de entrenamiento, más que riesgo geográfico.",
   "desc": "Pionera en generación de video por IA (modelos Gen-3/Gen-4) usada en cine, publicidad y creadores. Importa como demandante intensiva de GPUs y como referente de la capa de aplicaciones creativas sobre la infraestructura de IA."
  },
  "Perplexity": {
   "founded": 2022,
-  "employees": 800,
+  "employees": 1400,
   "revenue_2025": "~$150M ARR (est., privada)",
   "geo_risk": "Sede en San Francisco; depende de modelos y cómputo de terceros (NVIDIA es inversor) y desafía frontalmente a Google en búsqueda, con riesgo legal de editores por uso de contenido.",
   "desc": "Motor de búsqueda/respuestas con IA que compite con Google combinando LLMs y web en tiempo real; valorada en ~$14-18B en rondas de 2025. Importa como el retador más visible en la capa de búsqueda con IA y gran consumidor de inferencia."
  },
  "Glean": {
   "founded": 2019,
-  "employees": 1000,
+  "employees": 1791,
   "revenue_2025": "~$100-150M ARR (est., privada)",
   "geo_risk": "Sede en Palo Alto, fundada por exingenieros de Google; riesgo principal competitivo (Microsoft Copilot, OpenAI enterprise) más que geopolítico, con clientela concentrada en grandes empresas de EEUU.",
   "desc": "Plataforma de búsqueda y agentes de IA empresarial que indexa todas las apps internas de una compañía (RAG corporativo). Importa como caso de uso insignia de la IA generativa en la empresa; valorada en ~$7B en 2025."
@@ -474,7 +474,7 @@ var META_FILL = {
  },
  "Databricks": {
   "founded": 2013,
-  "employees": 8000,
+  "employees": 10000,
   "revenue_2025": "~$4B ARR (privada)",
   "geo_risk": "Sede en San Francisco; corre sobre los tres hyperscalers (AWS, Azure, GCP), de cuya capacidad de GPU depende, con riesgo regulatorio bajo pero exposición al ciclo de gasto en IA empresarial.",
   "desc": "Plataforma de datos e IA ('lakehouse') creada por los autores de Apache Spark; una de las startups privadas más valiosas del mundo (valoración >$100B en 2025). Es la capa donde miles de empresas preparan datos y entrenan/despliegan modelos, gran consumidora indirecta de GPUs."
@@ -495,7 +495,7 @@ var META_FILL = {
  },
  "CharacterAI": {
   "founded": 2021,
-  "employees": 200,
+  "employees": 316,
   "revenue_2025": "~$30-50M (privada)",
   "geo_risk": "Sede en Menlo Park, California; en 2024 Google licenció su tecnología y recontrató a sus fundadores (Noam Shazeer), dejando a la empresa con riesgo de dependencia estratégica de Google y escrutinio regulatorio por seguridad de menores.",
   "desc": "Startup de chatbots de compañía/entretenimiento fundada por coautores del paper de Transformers; llegó a ser una de las apps de IA de consumo con más uso. Importa como caso de demanda de inferencia masiva de consumo y como talento absorbido de vuelta por Google."
@@ -523,7 +523,7 @@ var META_FILL = {
  },
  "Nuro": {
   "founded": 2016,
-  "employees": 900,
+  "employees": 1000,
   "revenue_2025": "pre-revenue (ingresos mínimos, privada)",
   "geo_risk": "Sede en Mountain View, California; opera solo en EEUU y depende de capital de riesgo (valorada ~$6B en 2025) y de regulación estatal de vehículos autónomos.",
   "desc": "Startup de vehículos autónomos fundada por exingenieros de Google/Waymo; empezó con robots de reparto y pivotó a licenciar su 'Nuro Driver' (stack de conducción autónoma con IA) a automotrices y flotas. Relevante como proveedor independiente de autonomía nivel 4 y consumidor de chips NVIDIA."
@@ -572,7 +572,7 @@ var META_FILL = {
  },
  "LambdaLabs": {
   "founded": 2012,
-  "employees": 500,
+  "employees": 762,
   "revenue_2025": "~$500M-700M (est.)",
   "geo_risk": "Sede en San José, California; dependencia extrema del suministro de GPUs NVIDIA y de financiación apalancada en esos chips, sensible a controles de exportación de EEUU.",
   "desc": "Neocloud de GPUs (nube especializada en entrenamiento e inferencia de IA) y vendedor de estaciones/servidores con GPUs NVIDIA. Importa como uno de los principales challengers de los hyperscalers en cómputo de IA, junto a CoreWeave."
@@ -586,14 +586,14 @@ var META_FILL = {
  },
  "StokSpace": {
   "founded": 2019,
-  "employees": 350,
+  "employees": 433,
   "revenue_2025": "pre-revenue (contratos gubernamentales iniciales)",
   "geo_risk": "Sede en Kent, Washington; depende de contratos de la Space Force (seleccionada para NSSL Lane 1) y del capital riesgo espacial de EEUU.",
   "desc": "Desarrolla Nova, un cohete 100% reutilizable (ambas etapas) con segunda etapa de escudo térmico regenerativo, fundada por ex-Blue Origin. Importa porque la reutilización total bajaría radicalmente el costo de acceso a órbita."
  },
  "Agility": {
   "founded": 2015,
-  "employees": 350,
+  "employees": 417,
   "revenue_2025": "N/D privada (ingresos iniciales por pilotos con GXO/Schaeffler)",
   "geo_risk": "Sede en Oregón con fábrica propia (RoboFab, ~10.000 unidades/año de capacidad); fabricación en EEUU la protege de aranceles pero compite contra humanoides chinos (Unitree) mucho más baratos.",
   "desc": "Creadora de Digit, el humanoide bípedo más avanzado en despliegue logístico real (almacenes de GXO, pruebas con Amazon). Importa como referente occidental de robótica física comercializada, no solo demos."
@@ -635,7 +635,7 @@ var META_FILL = {
  },
  "StabilityAI": {
   "founded": 2019,
-  "employees": 200,
+  "employees": 182,
   "revenue_2025": "~$60M (est., privada)",
   "geo_risk": "Sede real en Londres (Reino Unido) pese a operar en EEUU; su riesgo principal es financiero y de dependencia de cómputo alquilado (AWS/CoreWeave, GPUs NVIDIA), no geopolítico.",
   "desc": "Laboratorio de IA generativa creador de Stable Diffusion (imagen open-source) y modelos de audio/video. Importa como pionero del ecosistema abierto de modelos de difusión, aunque quedó debilitado tras crisis de gestión y salida de Emad Mostaque en 2024."
@@ -949,14 +949,14 @@ var META_FILL = {
  },
  "ICEYE": {
   "founded": 2014,
-  "employees": 700,
+  "employees": 970,
   "revenue_2025": "~$150-200M (privada)",
   "geo_risk": "Sede en Espoo, Finlandia (frontera con Rusia); muy expuesta a demanda de defensa europea/OTAN y a Ucrania, su mayor caso de uso visible.",
   "desc": "Opera la mayor constelación comercial de satélites SAR (radar de apertura sintética), que ve a través de nubes y de noche. Clave para inteligencia de defensa, seguros y monitoreo de la cadena de suministro global."
  },
  "Anduril": {
   "founded": 2017,
-  "employees": 5500,
+  "employees": 8600,
   "revenue_2025": "~$1.5-2B (privada)",
   "geo_risk": "Sede en Costa Mesa, California; ingresos concentrados en contratos del Pentágono y aliados (AUKUS), con megafábrica Arsenal-1 en Ohio para escalar producción.",
   "desc": "Startup de defensa que integra IA (plataforma Lattice) con hardware autónomo: drones, interceptores, submarinos y el programa IVAS del ejército. Es el símbolo del nuevo complejo defensa-tecnología estadounidense."
@@ -970,7 +970,7 @@ var META_FILL = {
  },
  "ElevenLabs": {
   "founded": 2022,
-  "employees": 400,
+  "employees": 921,
   "revenue_2025": "~$150-200M ARR (privada)",
   "geo_risk": "Fundada por polacos con sedes en Nueva York y Londres; riesgo más regulatorio (deepfakes de voz, UE AI Act) que geográfico, y depende de nubes/GPU de terceros.",
   "desc": "Líder en síntesis y clonación de voz con IA y agentes conversacionales de voz. Valorada en ~$6.6B (enero 2025); es la capa de voz de facto para productos de IA (incluida la voz Khipu de esta app)."
@@ -1075,7 +1075,7 @@ var META_FILL = {
  },
  "Wayve": {
   "founded": 2017,
-  "employees": 500,
+  "employees": 1000,
   "revenue_2025": "pre-revenue (licencias iniciales a OEMs)",
   "geo_risk": "Sede en Londres (Reino Unido); financiada por SoftBank, NVIDIA y Microsoft, y dependiente de GPUs de NVIDIA y de acuerdos con OEMs globales (Nissan) para escalar.",
   "desc": "Startup británica de conducción autónoma end-to-end basada en IA aprendida (sin mapas HD), con la mayor ronda de IA europea (~$1.05B en 2024). Su enfoque 'embodied AI' compite con Tesla FSD y se licencia a fabricantes."
@@ -1159,7 +1159,7 @@ var META_FILL = {
  },
  "HuggingFace": {
   "founded": 2016,
-  "employees": 500,
+  "employees": 769,
   "revenue_2025": "~$130M (ARR est., privada)",
   "geo_risk": "Sede en EEUU con raíces francesas; riesgo geopolítico bajo pero depende de nubes estadounidenses (AWS/Google) y del ecosistema open-source global.",
   "desc": "Plataforma central del ecosistema de IA open-source: hub de modelos, datasets y librerías (Transformers). Es la 'capa de distribución' de los modelos abiertos que corren sobre GPUs de toda la cadena."
@@ -1236,7 +1236,7 @@ var META_FILL = {
  },
  "Together_AI": {
   "founded": 2022,
-  "employees": 300,
+  "employees": 431,
   "revenue_2025": "~$100M+ (ARR est., privada)",
   "geo_risk": "Sede en San Francisco; su riesgo es de suministro más que geográfico — depende del acceso a GPUs Nvidia y a datacenters con energía disponible en Norteamérica.",
   "desc": "Nube de IA (AI cloud) para entrenamiento e inferencia de modelos abiertos, valorada ~$3.3B tras su Serie B de 2025. Parte de la capa 'neocloud' que revende cómputo GPU a desarrolladores."
@@ -1292,7 +1292,7 @@ var META_FILL = {
  },
  "TerraPower": {
   "founded": 2006,
-  "employees": 800,
+  "employees": 1000,
   "revenue_2025": "pre-revenue",
   "geo_risk": "Sede en Bellevue (Washington) con primera planta en Kemmerer (Wyoming); su diseño Natrium requiere HALEU, cuya cadena de suministro occidental aún es incipiente tras cortar el suministro ruso.",
   "desc": "Empresa nuclear fundada por Bill Gates que construye el reactor rápido refrigerado por sodio Natrium con almacenamiento térmico en sales. Primera construcción SMR avanzada iniciada en EEUU (2024), pieza clave de la energía firme para la demanda eléctrica de la IA."

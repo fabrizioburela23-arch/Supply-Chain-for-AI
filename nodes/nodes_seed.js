@@ -858,7 +858,7 @@ const NODE_META = {
   },
   "PsiQuantum": {
     "founded": 2016,
-    "employees": 350,
+    "employees": 650,
     "revenue_2025": "pre-rev",
     "mktcap_b": 7.0,
     "risk": "high",
@@ -936,7 +936,7 @@ const NODE_META = {
   },
   "QuantumMachines": {
     "founded": 2018,
-    "employees": 200,
+    "employees": 302,
     "revenue_2025": "~$25M",
     "mktcap_b": null,
     "risk": "medium",
@@ -1025,7 +1025,7 @@ const NODE_META = {
   },
   "Trumpf": {
     "founded": 1923,
-    "employees": 18500,
+    "employees": 16960,
     "revenue_2025": "~€5.6B",
     "mktcap_b": null,
     "risk": "low",
@@ -1439,7 +1439,7 @@ const NODE_META = {
   },
   "Rapidus": {
     "founded": 2022,
-    "employees": 800,
+    "employees": 1900,
     "revenue_2025": "~$0",
     "mktcap_b": null,
     "risk": "high",
@@ -1552,7 +1552,7 @@ const NODE_META = {
   },
   "HiSilicon": {
     "founded": 2004,
-    "employees": 6000,
+    "employees": 4400,
     "revenue_2025": "~$3B est",
     "mktcap_b": null,
     "risk": "critical",
@@ -1968,7 +1968,7 @@ const NODE_META = {
   },
   "SubCom": {
     "founded": 1955,
-    "employees": 2000,
+    "employees": 1600,
     "revenue_2025": "~$1.2B",
     "mktcap_b": null,
     "risk": "medium",
@@ -1994,7 +1994,7 @@ const NODE_META = {
   },
   "ASN": {
     "founded": 1998,
-    "employees": 2200,
+    "employees": 2500,
     "revenue_2025": "~€900M",
     "mktcap_b": null,
     "risk": "medium",
@@ -2241,7 +2241,7 @@ const NODE_META = {
   },
   "OpenAI": {
     "founded": 2015,
-    "employees": 3500,
+    "employees": 4500,
     "revenue_2025": "~$4B",
     "mktcap_b": 300.0,
     "risk": "medium",
@@ -2306,7 +2306,7 @@ const NODE_META = {
   },
   "DeepSeek": {
     "founded": 2023,
-    "employees": 200,
+    "employees": 422,
     "revenue_2025": "~$50M est",
     "mktcap_b": null,
     "risk": "critical",
@@ -2345,7 +2345,7 @@ const NODE_META = {
   },
   "Figure": {
     "founded": 2022,
-    "employees": 700,
+    "employees": 655,
     "revenue_2025": "~$50M",
     "mktcap_b": 3.0,
     "risk": "high",
@@ -2397,7 +2397,7 @@ const NODE_META = {
   },
   "Apptronik": {
     "founded": 2016,
-    "employees": 200,
+    "employees": 391,
     "revenue_2025": "~$20M",
     "mktcap_b": null,
     "risk": "high",
@@ -2450,8 +2450,8 @@ const NODE_META = {
   /* ===== v7 · M8 + soporte: meta de los nuevos nodos ===== */
   "Huawei":        {"founded":1987,"employees":207000,"revenue_2025":"~$99B est","mktcap_b":null,"risk":"critical","geo_risk":"SANCIONADA: entidad lista EE.UU. desde 2019; sin acceso a chips americanos o EDA","key_clients":["China Telecom","China Mobile","Brasil Gov"]},
   "MediaTek":      {"founded":1997,"employees":20000,"revenue_2025":"~NT$550B","mktcap_b":55.0,"risk":"medium","geo_risk":"Taiwán — geopolítica latente; ~40% ventas China","key_clients":["Xiaomi","OPPO","Samsung Mid-range"]},
-  "Groq":          {"founded":2016,"employees":500,"revenue_2025":"pre-rev","mktcap_b":2.8,"risk":"low","geo_risk":"EE.UU. — bajo","key_clients":["GroqCloud users","DoE piloto","Enterprise waitlist"]},
-  "SambaNova":     {"founded":2017,"employees":500,"revenue_2025":"~$200M","mktcap_b":5.0,"risk":"low","geo_risk":"EE.UU. — bajo","key_clients":["US DoE","Samsung","Financial services"]},
+  "Groq":          {"founded":2016,"employees":287,"revenue_2025":"pre-rev","mktcap_b":2.8,"risk":"low","geo_risk":"EE.UU. — bajo","key_clients":["GroqCloud users","DoE piloto","Enterprise waitlist"]},
+  "SambaNova":     {"founded":2017,"employees":405,"revenue_2025":"~$200M","mktcap_b":5.0,"risk":"low","geo_risk":"EE.UU. — bajo","key_clients":["US DoE","Samsung","Financial services"]},
   "WesternDigital":{"founded":1970,"employees":12000,"revenue_2025":"~$13B","mktcap_b":22.0,"risk":"low","geo_risk":"EE.UU. — bajo","key_clients":["Amazon","Google","Microsoft"]},
   "Naver":         {"founded":1999,"employees":14000,"revenue_2025":"~KRW9.7T","mktcap_b":18.0,"risk":"medium","geo_risk":"Corea del Sur — riesgo NK latente","key_clients":["Korean enterprise","Webtoon","LINE Japan"]},
   "SoftBank":      {"founded":1981,"employees":65000,"revenue_2025":"~¥7.0T","mktcap_b":135.0,"risk":"low","geo_risk":"Japón — bajo; exposición indirecta a China vía cartera","key_clients":["ARM","OpenAI / Stargate","Vision Fund portfolio"]},

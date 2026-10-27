@@ -874,7 +874,7 @@ var META_EXPAND5 = {
  },
  "WestinghouseElectric": {
   "founded": 1999,
-  "employees": 13000,
+  "employees": 11000,
   "revenue_2025": "~$5B (est.) · valuación referencia $7.9B (adquisición 2023)",
   "geo_risk": "Dependencia de aprobaciones NRC/DOE y de financiamiento gubernamental; reemplaza suministro nuclear ruso en Europa del Este.",
   "desc": "Propiedad de Brookfield y Cameco desde 2023, Westinghouse relanzó su reactor AP1000 como pieza central de la estrategia nuclear de EEUU, incluyendo un acuerdo de $80.000 millones con el gobierno (oct 2025) y un contrato para 4 AP1000 en el campus \"HyperGrid AI\" de Fermi America en Amarillo, Texas (hasta 11 GW)."
@@ -937,7 +937,7 @@ var META_EXPAND5 = {
  },
  "ZapEnergy": {
   "founded": 2017,
-  "employees": 150,
+  "employees": 151,
   "revenue_2025": "N/D (Serie D $130M oct 2024, ~$330M total levantado)",
   "geo_risk": "Bajo geopolíticamente (EEUU), pero alto riesgo de ejecución técnica y regulatoria por el pivote a fisión.",
   "desc": "Startup de fusión por Z-pinch respaldada por Chevron Technology Ventures, Lowercarbon Capital y Breakthrough Energy Ventures (Bill Gates), que en abril de 2026 anunció un pivote parcial hacia un SMR de fisión basado en el diseño 4S de Toshiba, citando explícitamente la escasez de energía para datacenters de IA como motivo estratégico."
@@ -1063,7 +1063,7 @@ var META_EXPAND5 = {
  },
  "tokamak-energy": {
   "founded": 2009,
-  "employees": 350,
+  "employees": 406,
   "revenue_2025": "no cotiza; financiación no revelada públicamente",
   "geo_risk": "Colaboración gubernamental UK-EEUU (LEAPS) refleja la competencia occidental en fusión frente a los programas estatales chinos.",
   "desc": "Pionero británico en tokamaks esféricos, con spin-off comercial (TE Magnetics) que vende su tecnología de imanes HTS fuera del sector de fusión, diversificando ingresos mientras persigue energía comercial."
@@ -1104,7 +1104,7 @@ var META_EXPAND5 = {
  },
  "brewer-science": {
   "founded": 1981,
-  "employees": 700,
+  "employees": 483,
   "revenue_2025": "no cotiza (estimado cientos de millones USD)",
   "geo_risk": "Cubre un hueco relevante: casi todos los proveedores de materiales de litografía del grafo son japoneses; Brewer Science es de las pocas alternativas estadounidenses, relevante para la política de \"onshoring\" de materiales críticos de EEUU.",
   "desc": "Proveedor estadounidense de nicho en materiales de litografía que licencia su tecnología central a fabricantes japoneses como Nissan Chemical, ilustrando la interdependencia tecnológica bidireccional EEUU-Japón en la cadena de suministro de semiconductores."
@@ -1151,7 +1151,7 @@ var META_EXPAND5 = {
  },
  "unisoc": {
   "founded": 2001,
-  "employees": 5000,
+  "employees": 4210,
   "revenue_2025": "valoración ~$9.1B (ronda 2024)",
   "geo_risk": "Matriz Tsinghua Unigroup reestructurada por quiebra estatal; enfoque en nodos maduros reduce exposición a controles de exportación avanzados.",
   "desc": "UNISOC sobrevive enfocándose en nodos de proceso maduros no alcanzados por los controles de exportación más estrictos, dándole resiliencia pese a la presión de sanciones sobre firmas chinas de chips. Es mayoritariamente propiedad de un reestructurado Tsinghua Unigroup y prepara una posible salida a bolsa."
@@ -1268,21 +1268,21 @@ var META_EXPAND5 = {
  },
  "vantage-dc": {
   "founded": 2010,
-  "employees": 1200,
+  "employees": 2614,
   "revenue_2025": "~$1.500M estimado",
   "geo_risk": "Riesgo de restricciones de suministro eléctrico y permisos locales en EE.UU./Europa/APAC ante demanda explosiva de IA.",
   "desc": "Vantage es uno de los mayores desarrolladores privados de datacenters hyperscale del mundo, respaldado por DigitalBridge y Silver Lake con más de $9.000M de capital. Construye campus multi-gigavatio para los principales hyperscalers, incluyendo el proyecto Frontier de $25.000M en Texas."
  },
  "stack-infra": {
   "founded": 2017,
-  "employees": 800,
+  "employees": 1270,
   "revenue_2025": "~$1.000M estimado",
   "geo_risk": "Exposición a mercados APAC (incluyendo posibles restricciones regulatorias en Asia) y dependencia de financiamiento de deuda privada.",
   "desc": "STACK Infrastructure, controlada por Blue Owl Capital tras adquirir IPI Partners por ~$1.000M, opera datacenters hyperscale en tres continentes. Su portafolio asiático está en proceso de venta por más de $30.000M, reflejando la demanda récord de capacidad para IA."
  },
  "crusoe-energy": {
   "founded": 2018,
-  "employees": 1200,
+  "employees": 1820,
   "revenue_2025": "~$1.400M estimado (ARR)",
   "geo_risk": "Dependencia de contratos energéticos de gas natural en EE.UU. y de suministro de GPUs Nvidia sujeto a cuellos de botella de la cadena de suministro.",
   "desc": "Crusoe nació como startup de captura de gas de venteo para minería de Bitcoin y pivotó a construir \"fábricas de IA\" integrando generación de energía propia con datacenters de GPU. Es socio de infraestructura clave del proyecto Stargate de OpenAI en Abilene, Texas, y levanta capital a una valuación de ~$30.000M en 2026."
@@ -1296,21 +1296,21 @@ var META_EXPAND5 = {
  },
  "fluidstack": {
   "founded": 2017,
-  "employees": 250,
+  "employees": 341,
   "revenue_2025": "~$700M-1.000M estimado (ARR)",
   "geo_risk": "Exposición a permisos de construcción y suministro eléctrico en Francia/Europa para el proyecto de 1GW; dependencia de disponibilidad de GPUs Nvidia.",
   "desc": "FluidStack pasó de ser un bróker de GPU a convertirse en un neocloud de gigavatios, firmando un acuerdo histórico de $50.000M con Anthropic para infraestructura dedicada y liderando un supercomputador de IA de 1GW en Francia. Google y Anthropic anclan su ronda de $750M a valuación de $7.000-18.000M en 2026."
  },
  "nscale": {
   "founded": 2024,
-  "employees": 300,
+  "employees": 553,
   "revenue_2025": "~$400-600M estimado (ARR)",
   "geo_risk": "Dependencia de disponibilidad energética en el Reino Unido/Noruega y de suministro de GPUs Nvidia asignadas bajo cuota.",
   "desc": "Nscale es el neocloud europeo de más rápido crecimiento, construyendo datacenters de GPU en el Reino Unido y los países nórdicos para ofrecer \"IA soberana\" a clientes europeos. Levantó la mayor Serie C europea de la historia ($2.000M) con participación de Nvidia, alcanzando $14.600M de valuación en 2026."
  },
  "tensorwave": {
   "founded": 2023,
-  "employees": 150,
+  "employees": 137,
   "revenue_2025": "~$150-250M estimado (ARR)",
   "geo_risk": "Bajo geopolíticamente, pero riesgo de concentración en la hoja de ruta de un solo fabricante de chips (AMD).",
   "desc": "TensorWave es el mayor neocloud construido exclusivamente sobre GPUs AMD Instinct, posicionado como alternativa directa a los neoclouds basados en Nvidia. AMD y Magnetar Capital lideraron su Serie B de $350M en 2026, validando la tesis de una cadena de suministro de cómputo de IA no dependiente de Nvidia."
@@ -1324,21 +1324,21 @@ var META_EXPAND5 = {
  },
  "yotta-data-services": {
   "founded": 2016,
-  "employees": 600,
+  "employees": 1409,
   "revenue_2025": "~$150-250M estimado",
   "geo_risk": "Dependencia de asignación de GPUs Nvidia bajo cuotas de exportación de EE.UU. hacia India y de infraestructura eléctrica local.",
   "desc": "Yotta, respaldada por el grupo Hiranandani, opera el mayor campus de datacenters de la India y lanzó Shakti Cloud, la primera nube de IA soberana a gran escala del país basada en GPUs Nvidia. Es pieza central de la estrategia de India para reducir su dependencia de cómputo de IA extranjero."
  },
  "zayo-group": {
   "founded": 2007,
-  "employees": 2200,
+  "employees": 3995,
   "revenue_2025": "~$1.800M estimado",
   "geo_risk": "Exposición a permisos de derecho de vía en EE.UU./Europa y a refinanciamiento de deuda LBO en entorno de tasas altas.",
   "desc": "Zayo es uno de los mayores operadores de fibra óptica de largo recorrido de Norteamérica, adquirido en 2020 por EQT y Digital Colony (ahora DigitalBridge) por $14.300M. Su red es infraestructura crítica para interconectar datacenters de IA geográficamente dispersos."
  },
  "cologix": {
   "founded": 2010,
-  "employees": 500,
+  "employees": 480,
   "revenue_2025": "~$400-500M estimado",
   "geo_risk": "Bajo, concentrado en EE.UU./Canadá; riesgo de disponibilidad eléctrica en mercados clave como Ashburn (Virginia).",
   "desc": "Cologix opera una red de datacenters de interconexión \"edge\" en mercados secundarios de Norteamérica y ha pivotado hacia campus de gran escala \"AI-ready\", incluyendo un plan de hasta $7.000M en Ashburn, Virginia, el mayor hub de datacenters del mundo."
@@ -1352,14 +1352,14 @@ var META_EXPAND5 = {
  },
  "princeton-digital-group": {
   "founded": 2017,
-  "employees": 400,
+  "employees": 523,
   "revenue_2025": "~$300-400M estimado",
   "geo_risk": "Alta fragmentación regulatoria entre mercados asiáticos (China, India, Corea) y riesgo de controles de exportación de chips que afectan disponibilidad de GPUs en la región.",
   "desc": "Princeton Digital Group, respaldado por Warburg Pincus, construye datacenters hyperscale en mercados de rápido crecimiento en Asia como China, India, Indonesia y Corea del Sur. Planea levantar hasta $5.000M en deuda para financiar su expansión de capacidad orientada a IA."
  },
  "edgeconnex": {
   "founded": 2009,
-  "employees": 600,
+  "employees": 426,
   "revenue_2025": "~$600-800M estimado",
   "geo_risk": "Bajo-medio, diversificado globalmente; riesgo de disponibilidad eléctrica en mercados de expansión (Suecia, EE.UU.).",
   "desc": "EdgeConneX pasó de construir datacenters \"edge\" cerca de usuarios finales a convertirse en plataforma ancla de la nueva estrategia de infraestructura de IA de EQT, que movilizó miles de millones (incluyendo $2.400M de CPP Investments) para construir \"fábricas de IA\" a gran escala, como su proyecto conjunto con Lambda en Chicago."
@@ -1380,7 +1380,7 @@ var META_EXPAND5 = {
  },
  "sanctuary-ai": {
   "founded": 2018,
-  "employees": 120,
+  "employees": 138,
   "revenue_2025": "Financiamiento acumulado ~$180M; ronda 2025 de solo $10M en notas convertibles",
   "geo_risk": "Bajo riesgo geopolítico directo (Canadá/EEUU), pero alto riesgo de insolvencia o adquisición forzada dado el deterioro de caja.",
   "desc": "Sanctuary AI fue de las primeras en mostrar manos robóticas humanoides de alta destreza, pero entró en 2025-2026 en una fase crítica de escasez de capital, con despidos y cambio de CEO. Su futuro depende de encontrar un comprador estratégico o cerrar una ronda mayor."
@@ -1408,14 +1408,14 @@ var META_EXPAND5 = {
  },
  "dexterity": {
   "founded": 2017,
-  "employees": 300,
+  "employees": 189,
   "revenue_2025": "Financiamiento acumulado ~$290-300M; valuación $1.65B (mar-2025)",
   "geo_risk": "Bajo riesgo geopolítico directo; expansión a Japón la expone a dinámicas de escasez de mano de obra logística local, su principal tesis de mercado.",
   "desc": "Dexterity fabrica el DexR, un robot dual móvil capaz de cargar y descargar camiones y contenedores a alta velocidad, un problema no resuelto por la robótica industrial tradicional. Su ronda de $95M en 2025 y la joint venture con Sumitomo para desplegar 1,500 robots en Japón la posicionan como líder en automatización de la última milla logística."
  },
  "righthand-robotics": {
   "founded": 2015,
-  "employees": 80,
+  "employees": 97,
   "revenue_2025": "Financiamiento acumulado ~$66M+ (Serie C 2022); cifras 2025-2026 no públicas",
   "geo_risk": "Bajo riesgo geopolítico directo; dependiente de la salud del sector e-commerce/fulfillment en EEUU.",
   "desc": "RightHand Robotics, originada en laboratorios de robótica de Harvard, Yale y MIT, desarrolló uno de los primeros sistemas comerciales de \"each-picking\" para almacenes. Rockwell Automation es inversionista estratégico, pero la falta de rondas recientes genera dudas sobre su capacidad de competir con rivales más financiados."
@@ -1429,7 +1429,7 @@ var META_EXPAND5 = {
  },
  "locus-robotics": {
   "founded": 2014,
-  "employees": 400,
+  "employees": 501,
   "revenue_2025": "ARR ~$165-180M; financiamiento acumulado ~$432.8M (Serie F 2022, valuación ~$2B)",
   "geo_risk": "Bajo riesgo geopolítico directo; dependiente de la salud del sector logístico/e-commerce global.",
   "desc": "Locus Robotics es uno de los mayores operadores de robots móviles autónomos para picking en almacenes bajo un modelo Robotics-as-a-Service, con DHL como su cliente insignia. Ha mantenido crecimiento de ARR de doble dígito sin necesitar una ronda de financiamiento nueva desde 2022, aunque rumores de IPO persisten sin concretarse."
@@ -1443,7 +1443,7 @@ var META_EXPAND5 = {
  },
  "ambi-robotics": {
   "founded": 2019,
-  "employees": 120,
+  "employees": 47,
   "revenue_2025": "Financiamiento acumulado ~$65-67M; demanda comercial fuerte, ingresos no públicos",
   "geo_risk": "Bajo riesgo geopolítico directo; dependiente de la salud del sector logístico/paquetería en EEUU.",
   "desc": "Ambi Robotics, fundada por investigadores de UC Berkeley, desarrolló un modelo fundacional propio (PRIME-1) para picking y clasificación de paquetes, con Pitney Bowes y UPS como clientes de referencia. Pese a tener su AmbiStack agotado para todo 2025, no ha anunciado una ronda de financiamiento desde 2022."
@@ -1492,14 +1492,14 @@ var META_EXPAND5 = {
  },
  "skydio": {
   "founded": 2014,
-  "employees": 900,
+  "employees": 947,
   "revenue_2025": "Ingresos >$100M (declarado por CEO); financiamiento acumulado ~$842M+; valuación $4.4B",
   "geo_risk": "Beneficiaria directa del ban de la FCC sobre drones chinos (dic-2025, litigio de DJI en curso), pero con exposición residual a componentes críticos (imanes de tierras raras, baterías) controlados por China.",
   "desc": "Skydio pivotó de drones de consumo a defensa y seguridad pública, capitalizando el vacío dejado por la prohibición estadounidense a DJI. Su inversión de $3.5B en manufactura doméstica (\"SkyForge\") busca reducir la dependencia de componentes críticos chinos, aunque esa dependencia persiste en imanes y baterías."
  },
  "waabi": {
   "founded": 2021,
-  "employees": 250,
+  "employees": 351,
   "revenue_2025": "Ronda 2026 ~$1B; financiamiento acumulado ~$1.28B; valuación ~$3B",
   "geo_risk": "Bajo riesgo geopolítico directo (Canadá/EEUU); dependiente de regulación de vehículos autónomos en múltiples jurisdicciones norteamericanas.",
   "desc": "Waabi, fundada por la ex-jefa de IA de Uber ATG Raquel Urtasun, apuesta por un enfoque de simulación generativa para acelerar el desarrollo de camiones autónomos sin depender de flotas masivas de prueba física. Su ronda de 2026, con Volvo y Uber como socios estratégicos, la posiciona como un competidor serio frente a Aurora Innovation y Kodiak en transporte de carga autónomo."
@@ -1520,14 +1520,14 @@ var META_EXPAND5 = {
  },
  "neura-robotics": {
   "founded": 2019,
-  "employees": 400,
+  "employees": 824,
   "revenue_2025": "Serie C hasta $1.4B (jun-2026); valuación $7B; backlog/pipeline >$1B",
   "geo_risk": "Bajo riesgo geopolítico directo (Alemania/UE); comparte exposición a la cadena de suministro global de imanes de tierras raras y semiconductores avanzados.",
   "desc": "Neura Robotics es la apuesta europea más financiada en robótica humanoide, con su \"robot cognitivo\" 4NE-1 y partnerships industriales profundos con Bosch, Schaeffler y Kawasaki. Su Serie C de hasta $1.4B, liderada por el emisor de stablecoins Tether y con participación de Nvidia, Qualcomm y Amazon, es la mayor ronda jamás registrada en el sector, aunque analistas cuestionan si su valuación de $7B está respaldada por ingresos reales."
  },
  "vast-space": {
   "founded": 2021,
-  "employees": 1000,
+  "employees": 950,
   "revenue_2025": "Financiamiento acumulado >$300M (capital propio del fundador)",
   "geo_risk": "Depende casi exclusivamente de SpaceX como único proveedor de lanzamiento y transporte tripulado.",
   "desc": "Vast fue fundada por Jed McCaleb (cofundador de Ripple/Stellar) para operar la primera estación espacial comercial con gravedad artificial. Haven-1 competirá con Axiom Space y Voyager/Starlab por los contratos de reemplazo de la ISS de NASA (Commercial LEO Destinations)."
@@ -1548,7 +1548,7 @@ var META_EXPAND5 = {
  },
  "d-orbit": {
   "founded": 2011,
-  "employees": 300,
+  "employees": 429,
   "revenue_2025": "~€40-50M estimados; +€100M levantados en financiamiento acumulado",
   "geo_risk": "Dependencia de lanzadores estadounidenses (SpaceX Transporter) y exposición a políticas de exportación dual italiana/UE.",
   "desc": "D-Orbit es líder europeo en logística orbital \"última milla\", con su plataforma ION. También explora manufactura en microgravedad y misiones de defensa para el Ministerio de Defensa italiano y la ESA."
@@ -1562,7 +1562,7 @@ var META_EXPAND5 = {
  },
  "loft-orbital": {
   "founded": 2017,
-  "employees": 220,
+  "employees": 330,
   "revenue_2025": "Financiamiento acumulado >$180M (Series B liderada por Tikehau Capital, 2023)",
   "geo_risk": "Alta dependencia de contratos de defensa de EE.UU. (Space Force/NRO), expuesta a cambios presupuestarios del Pentágono.",
   "desc": "Loft Orbital democratiza el acceso al espacio ofreciendo sus satélites YAM como plataforma multi-misión donde los clientes alquilan capacidad en vez de construir satélites propios. Trabaja con Space Force, NRO y operadores comerciales para desplegar sensores rápidamente."
@@ -1576,14 +1576,14 @@ var META_EXPAND5 = {
  },
  "abl-space-systems": {
   "founded": 2017,
-  "employees": 200,
+  "employees": 52,
   "revenue_2025": "Financiamiento acumulado >$500M",
   "geo_risk": "Alta concentración en contratos clasificados de defensa de EE.UU.; bajo riesgo geopolítico externo.",
   "desc": "ABL Space Systems intentó competir como lanzador orbital de bajo costo con su cohete RS1, pero tras fallos de lanzamiento canceló el programa en 2024 y redirigió su ingeniería de propulsión hacia interceptores de misiles e hipersónicos para el Pentágono."
  },
  "sierra-nevada-corporation": {
   "founded": 1963,
-  "employees": 5000,
+  "employees": 4500,
   "revenue_2025": "~$2000-2500M estimados (grupo completo)",
   "geo_risk": "Fuerte concentración en contratos clasificados de EE.UU.; expuesta a recortes o cambios de prioridad del Departamento de Defensa.",
   "desc": "Sierra Nevada Corporation es una de las mayores empresas de defensa privadas de EE.UU., especializada en aeronaves de misión especial e ISR. En 2021 escindió su unidad comercial de espacio (estación orbital, Dream Chaser) como Sierra Space, reteniendo programas espaciales de seguridad nacional clasificados."
@@ -1611,7 +1611,7 @@ var META_EXPAND5 = {
  },
  "exolaunch": {
   "founded": 2011,
-  "employees": 150,
+  "employees": 100,
   "revenue_2025": "~$40-60M estimados",
   "geo_risk": "Integración reciente en Isar Aerospace podría limitar su neutralidad frente a otros proveedores de lanzamiento no alemanes.",
   "desc": "Exolaunch se convirtió en el bróker e integrador de rideshare líder mundial, coordinando el despliegue de cientos de smallsats en misiones compartidas de SpaceX. En 2024 fue adquirida por Isar Aerospace para asegurar capacidades de integración de misión propias."
@@ -1632,35 +1632,35 @@ var META_EXPAND5 = {
  },
  "impulse-space": {
   "founded": 2021,
-  "employees": 300,
+  "employees": 600,
   "revenue_2025": "Financiamiento acumulado >$600M (Serie C 2025, valoración ~$3000M)",
   "geo_risk": "Depende de lanzadores de terceros (principalmente SpaceX) para llegar a órbita; bajo riesgo geopolítico directo.",
   "desc": "Impulse Space, fundada por el histórico ingeniero de propulsión de SpaceX Tom Mueller, desarrolla remolcadores orbitales (Mira) y una etapa de alta energía (Helios) para transferir satélites a órbitas geoestacionarias o cislunares en una sola misión de rideshare."
  },
  "varda-space-industries": {
   "founded": 2020,
-  "employees": 150,
+  "employees": 275,
   "revenue_2025": "Financiamiento acumulado ~$450M (Serie C 2025)",
   "geo_risk": "Depende del bus satelital de Rocket Lab (Photon) y lanzamiento de SpaceX; cápsulas de reingreso requieren coordinación con la FAA y zonas de aterrizaje en EE.UU.",
   "desc": "Varda combina un bus satelital (Photon de Rocket Lab) con una cápsula de reingreso propia para fabricar en microgravedad cristales farmacéuticos de mayor pureza y devolverlos a la Tierra en semanas. Sus misiones W-1 a W-3 (2023-2025) demostraron el ciclo completo fabricación-reingreso-recuperación."
  },
  "orbit-fab": {
   "founded": 2018,
-  "employees": 80,
+  "employees": 60,
   "revenue_2025": "Financiamiento acumulado >$100M",
   "geo_risk": "Fuerte dependencia de contratos de la Fuerza Espacial de EE.UU.; bajo riesgo geopolítico directo pero alta dependencia presupuestaria militar.",
   "desc": "Orbit Fab busca crear la infraestructura básica de \"gasolineras espaciales\" para reabastecer satélites en órbita, extendiendo su vida útil. Su estándar de puerto RAFTI ha sido adoptado como referencia por la Fuerza Espacial de EE.UU. para futuras misiones de servicio."
  },
  "starfish-space": {
   "founded": 2019,
-  "employees": 50,
+  "employees": 87,
   "revenue_2025": "Financiamiento acumulado ~$45M",
   "geo_risk": "Bajo riesgo geopolítico directo; opera únicamente en EE.UU.",
   "desc": "Starfish Space, con ingenieros provenientes de Kepler Communications y Blue Origin, desarrolla el vehículo de servicio Otter para acoplarse de forma autónoma a satélites no cooperativos y extender su vida útil o desorbitarlos, apuntando a constelaciones comerciales más pequeñas que las que atiende Astroscale."
  },
  "space-forge": {
   "founded": 2021,
-  "employees": 90,
+  "employees": 93,
   "revenue_2025": "Financiamiento acumulado ~$30-40M",
   "geo_risk": "Dependencia de spaceports emergentes del Reino Unido (aún sin cohete nacional operativo) y de lanzadores extranjeros.",
   "desc": "Space Forge es la apuesta británica por la manufactura orbital de semiconductores, usando satélites reutilizables ForgeStar que aprovechan la microgravedad y el vacío espacial para crear materiales de mayor pureza que en la Tierra, reingresando para reutilizar la plataforma en misiones sucesivas."
@@ -1751,14 +1751,14 @@ var META_EXPAND5 = {
  },
  "alice-bob-quantum": {
   "founded": 2020,
-  "employees": 150,
+  "employees": 251,
   "revenue_2025": "Financiamiento acumulado ~$130M+",
   "geo_risk": "Fuerte respaldo del estado francés por soberanía cuántica europea, con riesgo de fuga de talento hacia EE.UU. si no escala financiamiento.",
   "desc": "Una de las startups cuánticas más prometedoras de Europa, con arquitectura de cat qubits que promete reducir drásticamente los qubits físicos necesarios para tolerancia a fallos. Colabora con agencias de defensa francesas en su procesador Boson."
  },
  "seeqc-quantum": {
   "founded": 2019,
-  "employees": 80,
+  "employees": 42,
   "revenue_2025": "Financiamiento acumulado ~$100M+",
   "geo_risk": "Cadena de suministro de chips superconductores dependiente de fundiciones especializadas; riesgo de controles de exportación de EE.UU.",
   "desc": "Empresa estadounidense (raíces en Hypres) especializada en electrónica de control digital criogénica para computación cuántica superconductora, componente clave para superar el cableado como cuello de botella al escalar sistemas."
@@ -1779,7 +1779,7 @@ var META_EXPAND5 = {
  },
  "world-labs": {
   "founded": 2024,
-  "employees": 40,
+  "employees": 55,
   "revenue_2025": "~$230M levantados en ronda semilla (2024) a valuación ~$1,000M",
   "geo_risk": "Alta dependencia de acceso a GPUs Nvidia de última generación y de cómputo en la nube.",
   "desc": "Fundada en 2024 por Fei-Fei Li junto a Justin Johnson, Christoph Lassner y Ben Mildenhall, con respaldo de a16z, NEA, Radical Ventures, AMD Ventures e Intel Capital. Su tesis: la próxima frontera de la IA es la \"inteligencia espacial\" 3D."
@@ -1793,7 +1793,7 @@ var META_EXPAND5 = {
  },
  "reflection-ai": {
   "founded": 2024,
-  "employees": 100,
+  "employees": 60,
   "revenue_2025": "Financiamiento acumulado >$2,000M; valuación estimada $5,000-8,000M",
   "geo_risk": "Alta dependencia de cómputo GPU (Nvidia) y talento de IA de EE.UU.; su estrategia de modelos abiertos la sitúa en debates geopolíticos EE.UU.-China.",
   "desc": "Fundada en 2024 por Misha Laskin e Ioannis Antonoglou, ambos ex-Google DeepMind con roles clave en AlphaGo y Gemini. Su misión: construir \"el DeepSeek de Estados Unidos\", modelos de frontera abiertos especializados en agentes de codificación."
@@ -1807,7 +1807,7 @@ var META_EXPAND5 = {
  },
  "naval-group": {
   "founded": 1631,
-  "employees": 18000,
+  "employees": 17000,
   "revenue_2025": "~$4,500M",
   "geo_risk": "Alta dependencia del gasto de defensa francés y sensibilidad a crisis diplomáticas en exportación (precedente AUKUS).",
   "desc": "Astillero de defensa estatal de Francia, pilar de la disuasión nuclear naval del país. Thales participa en su capital y en sistemas embarcados."
@@ -1821,7 +1821,7 @@ var META_EXPAND5 = {
  },
  "Cognition": {
   "founded": 2023,
-  "employees": 150,
+  "employees": 340,
   "revenue_2025": "valuación ~$10.2B (sep 2025) tras compra de Windsurf; luego ronda de $1B a $25-26B pre-money (mayo 2026)",
   "geo_risk": "Concentración en EE.UU. (SF); dependencia crítica de proveedores de modelos LLM externos y de GPU cloud, sin redundancia geográfica de datacenters propia.",
   "desc": "Cognition AI es la creadora de Devin, un \"ingeniero de software autónomo\" basado en agentes de IA que escribe, prueba y despliega código. En 2025 adquirió Windsurf (ex-Codeium) tras el colapso de su venta a OpenAI, consolidándose como líder en codificación agéntica empresarial."
@@ -1835,7 +1835,7 @@ var META_EXPAND5 = {
  },
  "Voiceflow": {
   "founded": 2019,
-  "employees": 90,
+  "employees": 88,
   "revenue_2025": "~$9.9M ARR reportado (2025), tras ronda de $15M",
   "geo_risk": "Startup canadiense (Toronto) de tamaño medio, dependiente de APIs de LLM de terceros para su núcleo de producto.",
   "desc": "Voiceflow es una plataforma colaborativa para diseñar y desplegar agentes conversacionales de IA (voz y chat) usada por equipos de producto y CX. Permite prototipar, probar y lanzar asistentes virtuales conectados a modelos de lenguaje de terceros."
@@ -1856,14 +1856,14 @@ var META_EXPAND5 = {
  },
  "Kavout": {
   "founded": 2015,
-  "employees": 20,
+  "employees": 16,
   "revenue_2025": "no divulgada (privada, fintech de nicho)",
   "geo_risk": "Startup pequeña con sede en Seattle/Asia, alta dependencia de proveedores de datos de mercado y cómputo cloud de terceros, vulnerable a consolidación del sector fintech-AI.",
   "desc": "Kavout es una plataforma de inteligencia de inversión basada en IA (Kai Score) que genera señales cuantitativas y de ranking de acciones combinando datos alternativos, fundamentales y de sentimiento de mercado para gestores de activos y traders minoristas."
  },
  "Addepar": {
   "founded": 2009,
-  "employees": 900,
+  "employees": 1575,
   "revenue_2025": "valuación estimada >$3.25B (última ronda conocida ~2021, con levantamientos adicionales posteriores)",
   "geo_risk": "Alta concentración en clientes de wealth management de EE.UU.; dependencia de infraestructura cloud de un único proveedor principal para datos financieros sensibles.",
   "desc": "Addepar es una plataforma de gestión de patrimonio e inversiones que agrega y analiza datos financieros complejos (multi-activo) para family offices, RIAs y bancos privados. Es ampliamente usada por gestores de grandes fortunas en EE.UU."
@@ -1898,7 +1898,7 @@ var META_EXPAND5 = {
  },
  "AlphaSense": {
   "founded": 2011,
-  "employees": 1800,
+  "employees": 3173,
   "revenue_2025": ">$600M ARR; valuación $7.5B tras ronda de $350M",
   "geo_risk": "Ver entrada AlphaSense (Finance AI); misma entidad corporativa, riesgo concentrado en clientes institucionales de EE.UU./Europa.",
   "desc": "(Ver descripción de AlphaSense (Finance AI): plataforma de búsqueda e inteligencia de mercado con IA generativa para profesionales financieros y corporativos.)"
@@ -2010,7 +2010,7 @@ var META_EXPAND5 = {
  },
  "ShieldAI": {
   "founded": 2015,
-  "employees": 750,
+  "employees": 1918,
   "revenue_2025": "Valoración de $12.700M tras contrato de la Fuerza Aérea de EE.UU. (CCA), ingresos no divulgados públicamente",
   "geo_risk": "Dependencia de contratos del DoD de EE.UU. y de Ucrania; riesgo de controles de exportación sobre software de autonomía.",
   "desc": "Shield AI desarrolla el sistema de autonomía Hivemind para aeronaves no tripuladas, usado en el dron V-BAT y en el programa de Cazas Colaborativos de Combate (CCA) de EE.UU."
@@ -2038,7 +2038,7 @@ var META_EXPAND5 = {
  },
  "Kneron": {
   "founded": 2015,
-  "employees": 200,
+  "employees": 126,
   "revenue_2025": "Valoración >$1.000M (unicornio desde ronda respaldada por Foxconn/Qualcomm)",
   "geo_risk": "Manufactura y ecosistema concentrados en Taiwán, expuestos a tensión en el estrecho de Taiwán.",
   "desc": "Kneron diseña procesadores de IA de borde (NPU) de bajo consumo para dispositivos, cámaras y automoción, con inversión estratégica de Foxconn y Qualcomm."
@@ -2059,7 +2059,7 @@ var META_EXPAND5 = {
  },
  "SiMa": {
   "founded": 2018,
-  "employees": 200,
+  "employees": 234,
   "revenue_2025": "Valoración >$1.000M (ronda 2024 a ~$800M, con crecimiento posterior)",
   "geo_risk": "Depende de financiamiento continuo frente a competencia de Nvidia Jetson y Qualcomm en IA de borde.",
   "desc": "SiMa.ai diseña SoCs de IA de borde de bajo consumo (MLSoC) para visión por computadora en automoción, robótica y aplicaciones de defensa."
@@ -2108,7 +2108,7 @@ var META_EXPAND5 = {
  },
  "Innatera": {
   "founded": 2018,
-  "employees": 60,
+  "employees": 70,
   "revenue_2025": "pre-ingresos; ronda Serie A de $21M (2024) más ampliaciones (~€5M adicionales), total levantado ~€35-40M",
   "geo_risk": "Startup europea de deep-tech dependiente de acceso a foundries asiáticas/americanas (GlobalFoundries) y de financiamiento de VC europeo, vulnerable a controles de exportación de IP de semiconductores.",
   "desc": "Fabricante holandés de procesadores neuromórficos de ultra bajo consumo (chip Pulsar) para sensado e IA en el borde (wearables, IoT industrial, audio). Combina un núcleo de red neuronal de impulsos (spiking) con un core de control convencional para inferencia con microwatts de consumo."
@@ -2136,7 +2136,7 @@ var META_EXPAND5 = {
  },
  "QuEra": {
   "founded": 2018,
-  "employees": 150,
+  "employees": 130,
   "revenue_2025": "ronda ampliada de $230M (2024-25); valuación reportada >$1B",
   "geo_risk": "Dependencia de contratos gubernamentales de EE.UU. (DARPA, DOE) y de la disponibilidad continua en la nube de AWS Braket para monetización comercial.",
   "desc": "Compañía líder en computación cuántica de átomos neutros, con hoja de ruta hacia sistemas tolerantes a fallos (Libra). Su tecnología se comercializa principalmente a través de Amazon Braket y colaboraciones de investigación con universidades y gobierno."
@@ -2178,21 +2178,21 @@ var META_EXPAND5 = {
  },
  "CommonwealthFusion": {
   "founded": 2018,
-  "employees": 1300,
+  "employees": 1117,
   "revenue_2025": "ronda Serie B2 de US$863M (agosto 2025) con Nvidia, Google y Bill Gates; financiamiento acumulado >US$3B",
   "geo_risk": "Riesgo tecnológico de primero-en-su-clase (reactor SPARC aún no ha alcanzado ganancia neta de energía), concentrado en un único sitio de demostración en Massachusetts.",
   "desc": "Desarrolladora líder de fusión nuclear por confinamiento magnético (tokamak con imanes superconductores de alta temperatura), spinout del MIT. Construye el reactor de demostración SPARC y planea la planta comercial ARC, con fuerte respaldo de gigantes tecnológicos de IA."
  },
  "Helion": {
   "founded": 2013,
-  "employees": 300,
+  "employees": 513,
   "revenue_2025": "Serie G de US$465M a valuación de US$15.5B; ronda previa Serie F de US$425M",
   "geo_risk": "Tecnología de fusión por confinamiento magnetoinercial aún no demostrada a escala comercial; dependiente de un único cliente ancla de PPA (Microsoft).",
   "desc": "Startup de fusión nuclear (respaldada por Sam Altman) que persigue generación directa de electricidad sin turbina de vapor. Firmó el primer acuerdo de compra de energía de fusión del mundo con Microsoft, con meta de entrega en 2028, y construye su planta Orion en Washington."
  },
  "TAETechnologies": {
   "founded": 1998,
-  "employees": 300,
+  "employees": 511,
   "revenue_2025": "ronda adicional de US$150M (2025); financiamiento acumulado histórico >US$1.2B; explorando salida a mercados públicos",
   "geo_risk": "Enfoque técnico de fusión aneutrónica (hidrógeno-boro) de muy alto riesgo científico, aún sin reactor de demostración comercial.",
   "desc": "Pionera en fusión nuclear con combustible avanzado hidrógeno-boro (aneutrónico), evitando materiales radiactivos. Google ha sido inversor recurrente desde 2015, reforzando su apuesta en 2025 junto a Commonwealth Fusion."
@@ -2206,7 +2206,7 @@ var META_EXPAND5 = {
  },
  "KairosPower": {
   "founded": 2016,
-  "employees": 400,
+  "employees": 522,
   "revenue_2025": "ronda Serie C de ~US$629M (2024-25); respaldo de fondos de riesgo y capital estratégico",
   "geo_risk": "Tecnología de reactor refrigerado por sal fundida (Fluoride salt-cooled High-temperature Reactor) aún en fase de demostración (Hermes) en Tennessee.",
   "desc": "Desarrolladora de reactores nucleares avanzados refrigerados por sal fundida, con planta de demostración Hermes en Oak Ridge, Tennessee. Protagonizó en 2025 el primer PPA de energía nuclear Gen IV de EE.UU. junto a Google y TVA."
@@ -2283,14 +2283,14 @@ var META_EXPAND5 = {
  },
  "SierraSpace": {
   "founded": 2021,
-  "employees": 1900,
+  "employees": 1524,
   "revenue_2025": "Valoración ~US$5.3B tras ronda Serie B 2024 (ingresos no públicos, privada)",
   "geo_risk": "Riesgo de retraso técnico en el primer vuelo orbital del Dream Chaser y dependencia de un único vehículo de lanzamiento certificado.",
   "desc": "Sierra Space desarrolla el vehículo espacial reutilizable Dream Chaser para reabastecer la ISS y la futura estación comercial Orbital Reef. Es una de las empresas mejor capitalizadas del \"New Space\" tras levantar más de US$1.7B en capital privado."
  },
  "AxiomSpace": {
   "founded": 2016,
-  "employees": 900,
+  "employees": 773,
   "revenue_2025": "Valoración ~US$2.5-3.4B (ronda de US$350M en 2026, privada)",
   "geo_risk": "Dependencia total de SpaceX para acceso tripulado a la ISS y riesgo de cronograma en el desarrollo de su propia estación espacial comercial.",
   "desc": "Axiom Space construye módulos de estación espacial comercial que se acoplarán a la ISS y opera misiones privadas tripuladas (Ax-1 a Ax-4) en colaboración con NASA. Busca convertirse en sucesora comercial de la ISS antes de su retiro."
