@@ -2254,9 +2254,9 @@ const NODE_META = {
   },
   "Anthropic": {
     "founded": 2021,
-    "employees": 1000,
-    "revenue_2025": "~$1.5B",
-    "mktcap_b": 60.0,
+    "employees": 5000,
+    "revenue_2025": "~$47B run-rate (2026)",
+    "mktcap_b": 965.0,
     "risk": "medium",
     "geo_risk": "EE.UU. — regulación emergente",
     "key_clients": [
