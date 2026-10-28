@@ -875,7 +875,7 @@ var META_EXPAND5 = {
  "WestinghouseElectric": {
   "founded": 1999,
   "employees": 11000,
-  "revenue_2025": "~$5B (est.) · valuación referencia $7.9B (adquisición 2023)",
+  "revenue_2025": "~USD 5B (ingresos 2025)",
   "geo_risk": "Dependencia de aprobaciones NRC/DOE y de financiamiento gubernamental; reemplaza suministro nuclear ruso en Europa del Este.",
   "desc": "Propiedad de Brookfield y Cameco desde 2023, Westinghouse relanzó su reactor AP1000 como pieza central de la estrategia nuclear de EEUU, incluyendo un acuerdo de $80.000 millones con el gobierno (oct 2025) y un contrato para 4 AP1000 en el campus \"HyperGrid AI\" de Fermi America en Amarillo, Texas (hasta 11 GW)."
  },
@@ -1152,7 +1152,7 @@ var META_EXPAND5 = {
  "unisoc": {
   "founded": 2001,
   "employees": 4210,
-  "revenue_2025": "valoración ~$9.1B (ronda 2024)",
+  "revenue_2025": "~USD 2B (ingresos 2024)",
   "geo_risk": "Matriz Tsinghua Unigroup reestructurada por quiebra estatal; enfoque en nodos maduros reduce exposición a controles de exportación avanzados.",
   "desc": "UNISOC sobrevive enfocándose en nodos de proceso maduros no alcanzados por los controles de exportación más estrictos, dándole resiliencia pese a la presión de sanciones sobre firmas chinas de chips. Es mayoritariamente propiedad de un reestructurado Tsinghua Unigroup y prepara una posible salida a bolsa."
  },
@@ -1325,7 +1325,7 @@ var META_EXPAND5 = {
  "yotta-data-services": {
   "founded": 2016,
   "employees": 1409,
-  "revenue_2025": "~$150-250M estimado",
+  "revenue_2025": "~USD 105M (ingresos FY2024-25)",
   "geo_risk": "Dependencia de asignación de GPUs Nvidia bajo cuotas de exportación de EE.UU. hacia India y de infraestructura eléctrica local.",
   "desc": "Yotta, respaldada por el grupo Hiranandani, opera el mayor campus de datacenters de la India y lanzó Shakti Cloud, la primera nube de IA soberana a gran escala del país basada en GPUs Nvidia. Es pieza central de la estrategia de India para reducir su dependencia de cómputo de IA extranjero."
  },
@@ -1388,7 +1388,7 @@ var META_EXPAND5 = {
  "skild-ai": {
   "founded": 2023,
   "employees": 350,
-  "revenue_2025": "Financiamiento acumulado >$2B; valuación ~$14-17B",
+  "revenue_2025": "~USD 100M (run-rate 2026-Q3)",
   "geo_risk": "Bajo riesgo geopolítico directo, pero depende de acceso continuo a GPUs Nvidia de alta gama para entrenamiento a gran escala.",
   "desc": "Fundada por investigadores de Carnegie Mellon (Deepak Pathak, Abhinav Gupta), Skild AI apuesta por un modelo de IA \"general purpose\" para robots físicos, análogo a los LLM. Su ronda de $1.4B en 2026 la convirtió en una de las startups de robótica mejor capitalizadas del mundo, y su adquisición del negocio robótico de Zebra marca un giro hacia integración vertical."
  },
@@ -1514,7 +1514,7 @@ var META_EXPAND5 = {
  "agibot-zhiyuan": {
   "founded": 2023,
   "employees": 1000,
-  "revenue_2025": "ARR estimado ~$10.8M; valuación estimada ~$6.4B",
+  "revenue_2025": "~USD 147M (ingresos 2025)",
   "geo_risk": "Alto — empresa china de humanoides con ambiciones de exportación global, expuesta a controles de exportación de tierras raras y semiconductores, y a posibles restricciones de acceso a mercados occidentales.",
   "desc": "AgiBot (Zhiyuan Robotics), fundada por el ex-ingeniero de Huawei HiSilicon Peng Zhihui, es uno de los casos de crecimiento más rápidos del sector de humanoides chino, alcanzando estatus de unicornio en apenas dos años con respaldo de Sequoia China, Baidu, JD.com y BYD. Opera la instalación \"AgiBot World\" para recolección continua de datos de entrenamiento a escala."
  },
@@ -1759,7 +1759,7 @@ var META_EXPAND5 = {
  "seeqc-quantum": {
   "founded": 2019,
   "employees": 42,
-  "revenue_2025": "Financiamiento acumulado ~$100M+",
+  "revenue_2025": "~USD 4M (ingresos 2025)",
   "geo_risk": "Cadena de suministro de chips superconductores dependiente de fundiciones especializadas; riesgo de controles de exportación de EE.UU.",
   "desc": "Empresa estadounidense (raíces en Hypres) especializada en electrónica de control digital criogénica para computación cuántica superconductora, componente clave para superar el cableado como cuello de botella al escalar sistemas."
  },
@@ -1808,7 +1808,7 @@ var META_EXPAND5 = {
  "naval-group": {
   "founded": 1631,
   "employees": 17000,
-  "revenue_2025": "~$4,500M",
+  "revenue_2025": "~USD 5.5B (ingresos 2025)",
   "geo_risk": "Alta dependencia del gasto de defensa francés y sensibilidad a crisis diplomáticas en exportación (precedente AUKUS).",
   "desc": "Astillero de defensa estatal de Francia, pilar de la disuasión nuclear naval del país. Thales participa en su capital y en sistemas embarcados."
  },
@@ -1822,7 +1822,7 @@ var META_EXPAND5 = {
  "Cognition": {
   "founded": 2023,
   "employees": 340,
-  "revenue_2025": "valuación ~$10.2B (sep 2025) tras compra de Windsurf; luego ronda de $1B a $25-26B pre-money (mayo 2026)",
+  "revenue_2025": "~USD 900M (run-rate 2026-09)",
   "geo_risk": "Concentración en EE.UU. (SF); dependencia crítica de proveedores de modelos LLM externos y de GPU cloud, sin redundancia geográfica de datacenters propia.",
   "desc": "Cognition AI es la creadora de Devin, un \"ingeniero de software autónomo\" basado en agentes de IA que escribe, prueba y despliega código. En 2025 adquirió Windsurf (ex-Codeium) tras el colapso de su venta a OpenAI, consolidándose como líder en codificación agéntica empresarial."
  },
@@ -1899,7 +1899,7 @@ var META_EXPAND5 = {
  "AlphaSense": {
   "founded": 2011,
   "employees": 3173,
-  "revenue_2025": ">$600M ARR; valuación $7.5B tras ronda de $350M",
+  "revenue_2025": "~USD 600M (run-rate 2026-Q1)",
   "geo_risk": "Ver entrada AlphaSense (Finance AI); misma entidad corporativa, riesgo concentrado en clientes institucionales de EE.UU./Europa.",
   "desc": "(Ver descripción de AlphaSense (Finance AI): plataforma de búsqueda e inteligencia de mercado con IA generativa para profesionales financieros y corporativos.)"
  },
@@ -1920,7 +1920,7 @@ var META_EXPAND5 = {
  "Suno": {
   "founded": 2022,
   "employees": 60,
-  "revenue_2025": "valuación estimada ~$2.45B (ronda Series C 2025)",
+  "revenue_2025": "~USD 300M (run-rate 2026-Q1)",
   "geo_risk": "Alto riesgo legal por demandas de las principales discográficas (Universal, Warner, Sony) por entrenamiento de modelos con material protegido por derechos de autor.",
   "desc": "Suno AI es una startup que desarrolla modelos generativos de IA para creación de música a partir de texto, permitiendo a usuarios generar canciones completas con letra, voz e instrumentación. Alcanzó acuerdos de licencia con discográficas tras litigios en 2025."
  },

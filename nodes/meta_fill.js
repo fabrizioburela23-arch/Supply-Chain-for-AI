@@ -391,21 +391,21 @@ var META_FILL = {
  "Perplexity": {
   "founded": 2022,
   "employees": 1400,
-  "revenue_2025": "~$150M ARR (est., privada)",
+  "revenue_2025": "~USD 450M (run-rate 2026-03)",
   "geo_risk": "Sede en San Francisco; depende de modelos y cómputo de terceros (NVIDIA es inversor) y desafía frontalmente a Google en búsqueda, con riesgo legal de editores por uso de contenido.",
   "desc": "Motor de búsqueda/respuestas con IA que compite con Google combinando LLMs y web en tiempo real; valorada en ~$14-18B en rondas de 2025. Importa como el retador más visible en la capa de búsqueda con IA y gran consumidor de inferencia."
  },
  "Glean": {
   "founded": 2019,
   "employees": 1791,
-  "revenue_2025": "~$100-150M ARR (est., privada)",
+  "revenue_2025": "~USD 300M (run-rate 2026-Q2)",
   "geo_risk": "Sede en Palo Alto, fundada por exingenieros de Google; riesgo principal competitivo (Microsoft Copilot, OpenAI enterprise) más que geopolítico, con clientela concentrada en grandes empresas de EEUU.",
   "desc": "Plataforma de búsqueda y agentes de IA empresarial que indexa todas las apps internas de una compañía (RAG corporativo). Importa como caso de uso insignia de la IA generativa en la empresa; valorada en ~$7B en 2025."
  },
  "Cohere": {
   "founded": 2019,
   "employees": 450,
-  "revenue_2025": "~$100M ARR (est., privada)",
+  "revenue_2025": "~USD 240M (run-rate 2025)",
   "geo_risk": "Sede realmente en Toronto (Canadá, no EEUU), con fuerte respaldo del gobierno canadiense y de NVIDIA/Oracle/Fujitsu; se posiciona como alternativa 'soberana' y desplegable on-premise frente a los labs estadounidenses.",
   "desc": "Laboratorio de LLMs enfocado en empresa y gobiernos (modelos Command, embeddings, plataforma North), cofundado por Aidan Gomez, coautor del paper 'Attention Is All You Need'. Importa como la gran apuesta de IA soberana de Canadá, valorada en ~$7B en 2025."
  },
@@ -475,7 +475,7 @@ var META_FILL = {
  "Databricks": {
   "founded": 2013,
   "employees": 10000,
-  "revenue_2025": "~$4B ARR (privada)",
+  "revenue_2025": "~USD 7B (run-rate 2026-Q2)",
   "geo_risk": "Sede en San Francisco; corre sobre los tres hyperscalers (AWS, Azure, GCP), de cuya capacidad de GPU depende, con riesgo regulatorio bajo pero exposición al ciclo de gasto en IA empresarial.",
   "desc": "Plataforma de datos e IA ('lakehouse') creada por los autores de Apache Spark; una de las startups privadas más valiosas del mundo (valoración >$100B en 2025). Es la capa donde miles de empresas preparan datos y entrenan/despliegan modelos, gran consumidora indirecta de GPUs."
  },
@@ -573,7 +573,7 @@ var META_FILL = {
  "LambdaLabs": {
   "founded": 2012,
   "employees": 762,
-  "revenue_2025": "~$500M-700M (est.)",
+  "revenue_2025": "~USD 760M (run-rate 2025)",
   "geo_risk": "Sede en San José, California; dependencia extrema del suministro de GPUs NVIDIA y de financiación apalancada en esos chips, sensible a controles de exportación de EEUU.",
   "desc": "Neocloud de GPUs (nube especializada en entrenamiento e inferencia de IA) y vendedor de estaciones/servidores con GPUs NVIDIA. Importa como uno de los principales challengers de los hyperscalers en cómputo de IA, junto a CoreWeave."
  },
@@ -922,7 +922,7 @@ var META_FILL = {
  "BlueOrigin": {
   "founded": 2000,
   "employees": 12000,
-  "revenue_2025": "N/D privada (financiada por Bezos)",
+  "revenue_2025": "~USD 800M (estimado 2025)",
   "geo_risk": "Sede en Kent, Washington (EE.UU.); riesgo bajo de cadena externa pero alta dependencia del capital de Jeff Bezos y de contratos NASA/Pentágono aún incipientes.",
   "desc": "Empresa espacial de Jeff Bezos: cohete pesado New Glenn (primer vuelo 2025), motores BE-4 que también propulsan el Vulcan de ULA, y módulo lunar para Artemis. Segunda alternativa creíble de EE.UU. frente a SpaceX."
  },
@@ -950,14 +950,14 @@ var META_FILL = {
  "ICEYE": {
   "founded": 2014,
   "employees": 970,
-  "revenue_2025": "~$150-200M (privada)",
+  "revenue_2025": "~USD 294M (ingresos 2025)",
   "geo_risk": "Sede en Espoo, Finlandia (frontera con Rusia); muy expuesta a demanda de defensa europea/OTAN y a Ucrania, su mayor caso de uso visible.",
   "desc": "Opera la mayor constelación comercial de satélites SAR (radar de apertura sintética), que ve a través de nubes y de noche. Clave para inteligencia de defensa, seguros y monitoreo de la cadena de suministro global."
  },
  "Anduril": {
   "founded": 2017,
   "employees": 8600,
-  "revenue_2025": "~$1.5-2B (privada)",
+  "revenue_2025": "~USD 2.2B (ingresos 2025)",
   "geo_risk": "Sede en Costa Mesa, California; ingresos concentrados en contratos del Pentágono y aliados (AUKUS), con megafábrica Arsenal-1 en Ohio para escalar producción.",
   "desc": "Startup de defensa que integra IA (plataforma Lattice) con hardware autónomo: drones, interceptores, submarinos y el programa IVAS del ejército. Es el símbolo del nuevo complejo defensa-tecnología estadounidense."
  },
@@ -971,14 +971,14 @@ var META_FILL = {
  "ElevenLabs": {
   "founded": 2022,
   "employees": 921,
-  "revenue_2025": "~$150-200M ARR (privada)",
+  "revenue_2025": "~USD 500M (run-rate 2026-Q1)",
   "geo_risk": "Fundada por polacos con sedes en Nueva York y Londres; riesgo más regulatorio (deepfakes de voz, UE AI Act) que geográfico, y depende de nubes/GPU de terceros.",
   "desc": "Líder en síntesis y clonación de voz con IA y agentes conversacionales de voz. Valorada en ~$6.6B (enero 2025); es la capa de voz de facto para productos de IA (incluida la voz Khipu de esta app)."
  },
  "ScaleAI": {
   "founded": 2016,
   "employees": 1400,
-  "revenue_2025": "~$1.5-2B (privada)",
+  "revenue_2025": "~USD 2B (estimado 2025)",
   "geo_risk": "Sede en San Francisco; tras la inversión de Meta (49%, $14.3B, jun 2025) perdió clientes como OpenAI y Google, y depende de mano de obra de etiquetado en Filipinas, Kenia y Venezuela.",
   "desc": "Proveedor dominante de datos etiquetados y RLHF para entrenar modelos frontera, más contratos de IA de defensa (Defense Llama, DoD). Su absorción parcial por Meta reconfiguró el mercado de datos para IA."
  },
@@ -1237,7 +1237,7 @@ var META_FILL = {
  "Together_AI": {
   "founded": 2022,
   "employees": 431,
-  "revenue_2025": "~$100M+ (ARR est., privada)",
+  "revenue_2025": "~USD 1B (run-rate 2026-Q1)",
   "geo_risk": "Sede en San Francisco; su riesgo es de suministro más que geográfico — depende del acceso a GPUs Nvidia y a datacenters con energía disponible en Norteamérica.",
   "desc": "Nube de IA (AI cloud) para entrenamiento e inferencia de modelos abiertos, valorada ~$3.3B tras su Serie B de 2025. Parte de la capa 'neocloud' que revende cómputo GPU a desarrolladores."
  },

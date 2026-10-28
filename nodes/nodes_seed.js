@@ -911,7 +911,7 @@ const NODE_META = {
   "Bluefors": {
     "founded": 2008,
     "employees": 700,
-    "revenue_2025": "~€130M",
+    "revenue_2025": "~USD 252M (ingresos 2025)",
     "mktcap_b": null,
     "risk": "low",
     "geo_risk": "Finlandia — sin restricciones",
@@ -1026,7 +1026,7 @@ const NODE_META = {
   "Trumpf": {
     "founded": 1923,
     "employees": 16960,
-    "revenue_2025": "~€5.6B",
+    "revenue_2025": "~USD 5B (ingresos FY2024/25)",
     "mktcap_b": null,
     "risk": "low",
     "geo_risk": "Familiar — sin cotización",
@@ -1618,7 +1618,7 @@ const NODE_META = {
   "YMTC": {
     "founded": 2016,
     "employees": 15000,
-    "revenue_2025": "~$5B est",
+    "revenue_2025": "~USD 8.9B (ingresos 2025)",
     "mktcap_b": null,
     "risk": "critical",
     "geo_risk": "China — sancionada por EE.UU.",
@@ -2242,7 +2242,7 @@ const NODE_META = {
   "OpenAI": {
     "founded": 2015,
     "employees": 4500,
-    "revenue_2025": "~$4B",
+    "revenue_2025": "~USD 50B (run-rate 2026-09)",
     "mktcap_b": 300.0,
     "risk": "medium",
     "geo_risk": "EE.UU. — regulación emergente IA",
@@ -2281,7 +2281,7 @@ const NODE_META = {
   "Mistral": {
     "founded": 2023,
     "employees": 200,
-    "revenue_2025": "~€100M",
+    "revenue_2025": "~USD 400M (run-rate 2026-Q1)",
     "mktcap_b": 6.2,
     "risk": "high",
     "geo_risk": "Francia — compite con OpenAI",
