@@ -7,7 +7,7 @@ tags: ["tipo/inicio"]
 
 Bienvenido. Esta bóveda es un **mapa vivo del código de Khipus Finance AI**: cada archivo, ruta de la API, variable de entorno y sesión de trabajo es una nota, y los enlaces entre notas son las conexiones reales del código. La genera `scripts/build_vault.py` sin IA, leyendo el repositorio.
 
-**254 archivos de código (151.327 líneas) · 266 rutas HTTP · 34 herramientas MCP · 158 variables de entorno · 113 sesiones de trabajo.**
+**254 archivos de código (151.331 líneas) · 266 rutas HTTP · 34 herramientas MCP · 158 variables de entorno · 113 sesiones de trabajo.**
 
 Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Reporte del grafo]].
 
@@ -30,7 +30,7 @@ Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Repo
 | [[Capa Ontología y grafo temporal]] | 37 | 19.097 | La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa. |
 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 24 | 10.533 | Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones. |
 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 27 | 14.968 | Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier. |
-| [[Capa Dinero (carteras, trading, corretaje)]] | 16 | 10.951 | Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana. |
+| [[Capa Dinero (carteras, trading, corretaje)]] | 16 | 10.955 | Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana. |
 | [[Capa MCP y API]] | 11 | 6.359 | El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas. |
 | [[Capa Voz]] | 4 | 5.090 | Khipu por voz: ElevenLabs (servidor y navegador) y el orbe. |
 | [[Capa Infraestructura]] | 48 | 27.525 | La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización. |

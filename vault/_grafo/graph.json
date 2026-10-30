@@ -104,7 +104,7 @@
   {"id": "core/sim_report.py", "label": "core/sim_report.py", "layer": "infra", "lines": 206, "note": "Módulos/core/core.sim_report.py", "path": "core/sim_report.py", "type": "module"},
   {"id": "core/space.py", "label": "core/space.py", "layer": "vivo", "lines": 640, "note": "Módulos/core/core.space.py", "path": "core/space.py", "type": "module"},
   {"id": "core/tour.py", "label": "core/tour.py", "layer": "infra", "lines": 39, "note": "Módulos/core/core.tour.py", "path": "core/tour.py", "type": "module"},
-  {"id": "core/trading_agent.py", "label": "core/trading_agent.py", "layer": "dinero", "lines": 1170, "note": "Módulos/core/core.trading_agent.py", "path": "core/trading_agent.py", "type": "module"},
+  {"id": "core/trading_agent.py", "label": "core/trading_agent.py", "layer": "dinero", "lines": 1174, "note": "Módulos/core/core.trading_agent.py", "path": "core/trading_agent.py", "type": "module"},
   {"id": "core/voice_agent.py", "label": "core/voice_agent.py", "layer": "voz", "lines": 1050, "note": "Módulos/core/core.voice_agent.py", "path": "core/voice_agent.py", "type": "module"},
   {"id": "core/voice_api.py", "label": "core/voice_api.py", "layer": "voz", "lines": 825, "note": "Módulos/core/core.voice_api.py", "path": "core/voice_api.py", "type": "module"},
   {"id": "core/websearch.py", "label": "core/websearch.py", "layer": "investigacion", "lines": 37, "note": "Módulos/core/core.websearch.py", "path": "core/websearch.py", "type": "module"},

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "core/trading_agent.py"
 lenguaje: "python"
-lineas: 1170
+lineas: 1174
 aliases: ["core/trading_agent.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # core/trading_agent.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.170 líneas · `core/trading_agent.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.174 líneas · `core/trading_agent.py`
 
 ## Para qué sirve
 
@@ -19,13 +19,13 @@ Agente de trading de la cuenta de la casa — /api/trade/agent/\* (G5-05, lote I
 ## API pública
 
 - `bind(host)` — server.py se pasa a sí mismo: la config y los ayudantes de la cuenta de la casa se leen de ahí en cada llamada. _(línea 30)_
-- `agent_start()` _(línea 961)_
-- `agent_stop()` _(línea 999)_
-- `agent_status()` _(línea 1011)_
-- `agent_config()` _(línea 1042)_
-- `agent_signals()` _(línea 1065)_
-- `agent_signal_take(sid)` — La persona aprueba la señal (su PIN = su confirmación): misma validación que /api/trade/order y EL camino único. 409 si venció, ya se usó o … _(línea 1079)_
-- `agent_signal_dismiss(sid)` — Descartar una señal: queda en el libro (trade.agent_signal, status noop) quién la descartó. _(línea 1150)_
+- `agent_start()` _(línea 965)_
+- `agent_stop()` _(línea 1003)_
+- `agent_status()` _(línea 1015)_
+- `agent_config()` _(línea 1046)_
+- `agent_signals()` _(línea 1069)_
+- `agent_signal_take(sid)` — La persona aprueba la señal (su PIN = su confirmación): misma validación que /api/trade/order y EL camino único. 409 si venció, ya se usó o … _(línea 1083)_
+- `agent_signal_dismiss(sid)` — Descartar una señal: queda en el libro (trade.agent_signal, status noop) quién la descartó. _(línea 1154)_
 
 **Internas** (empiezan con `_`): `_AgentOrderError`, `_agent_log`, `_agent_universe`, `_agent_parse`, `_agent_config_view`, `_auto_live_refused`, `_agent_exec_block`, `_agent_analyze`, `_agent_clean_analysis`, `_agent_get_positions`, `_agent_open_order_symbols`, `_agent_get_account`, `_alpaca_tradable`, `_agent_board_by_symbol`, `_agent_context`, `_agent_guard`, `_agent_tone`, `_signals_prune`, `_signal_add`, `_signals_view`, `_agent_principal`, `_agent_signal_ctx`, `_agent_record_signal`, `_agent_order`, `_agent_place`, `_agent_stop_losses`, `_agent_stop_signals`, `_agent_run_cycle`, `_agent_thread_fn`, `_agent_persist`, `_agent_restore`, `_signal_get`
 

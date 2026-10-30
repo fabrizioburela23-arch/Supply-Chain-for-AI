@@ -692,6 +692,7 @@ def _agent_run_cycle():
     universe, _skipped = _agent_universe(_AGENT['universe'])
     orders_this_cycle = 0
     _AGENT['last_start'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    _t0 = time.time()
     _agent_log({'level': 'info', 'msg': f'🔎 Revisando {len(universe or [])} acciones · Checking {len(universe or [])} stocks'})
     live = {}          # respaldo: la MISMA cascada de precios de la app (Finnhub → Yahoo), pedida una vez por ciclo
     no_price, seen = [], 0
@@ -729,6 +730,8 @@ def _agent_run_cycle():
             no_price.append(ticker)
             continue
         seen += 1
+        # progreso visible: antes el panel callaba hasta terminar el primer ticker (noticias + técnico + IA pueden tardar)
+        _agent_log({'level': 'info', 'msg': f'⏳ {ticker} ({seen}/{len(universe or [])}): analizando… · analyzing…'})
         sentiment = _agent_tone(ticker)          # tono de noticias (GDELT, caché 30 min)
         facts = _agent_context(ticker)           # técnico de cierres reales + convicción de los analistas
 
@@ -854,8 +857,9 @@ def _agent_run_cycle():
 
     if no_price:
         _agent_log({'level': 'warn', 'msg': f'⚠ Sin precio ahora (ni Finnhub ni Yahoo): {", ".join(no_price)} · No price now'})
-    _agent_log({'level': 'info', 'msg': f'✓ Revisión terminada: {seen} con precio, {orders_this_cycle} acción(es) · '
-                                        f'Check done: {seen} priced, {orders_this_cycle} action(s)'})
+    _agent_log({'level': 'info', 'msg': f'✓ Revisión terminada: {seen} con precio, {orders_this_cycle} acción(es) '
+                                        f'({time.time() - _t0:.0f} s) · Check done: {seen} priced, '
+                                        f'{orders_this_cycle} action(s) ({time.time() - _t0:.0f} s)'})
     _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
 
