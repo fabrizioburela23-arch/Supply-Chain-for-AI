@@ -1,7 +1,7 @@
 {
  "format": "graph-review/1",
  "snapshot": {
-  "exported_at": "2026-10-14T07:30:43.800Z",
+  "exported_at": "2026-10-28T00:11:20.213Z",
   "nodes": 937,
   "links": 2510
  },
@@ -21196,7 +21196,7 @@
    "links": 2510,
    "aliases": 93,
    "temporal_facts": 105,
-   "exported_at": "2026-10-14T07:30:43.800Z"
+   "exported_at": "2026-10-28T00:11:20.213Z"
   },
   "where": {
    "ui": "🩺 → Diagnóstico → tarjeta «Grafo: base vs catálogo» → «📄 Ver lista completa»",

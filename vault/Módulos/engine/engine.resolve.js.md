@@ -35,7 +35,7 @@ RESOLUTOR DE EMPRESAS + SUPERFICIE DE RESULTADOS (2026-07) Feedback real de Fabr
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`, `RESOLVE_STOPWORDS`, `VOICE_ALIASES`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_ID_ALIAS`
 
-Se carga en [[app.html]] en la posición **36 de 103** (línea 3122), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
+Se carga en [[app.html]] en la posición **36 de 104** (línea 3122), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
 
 ## Lo usan
 

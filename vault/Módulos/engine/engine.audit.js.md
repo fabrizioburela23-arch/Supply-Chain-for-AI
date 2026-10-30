@@ -26,7 +26,7 @@ tags: ["capa/interfaz", "tipo/modulo"]
 - [[engine.app_main.js]] — usa `BASE`, `LANG`
 - [[engine.explain.js]] — usa `explainChip`
 
-Se carga en [[app.html]] en la posición **84 de 103** (línea 3236), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
+Se carga en [[app.html]] en la posición **84 de 104** (línea 3236), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
 
 ## Lo usan
 

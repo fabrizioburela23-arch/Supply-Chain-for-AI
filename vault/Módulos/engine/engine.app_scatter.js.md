@@ -28,11 +28,11 @@ De nivel superior (globales del script): `khipuScatter`
 - [[engine.app_main.js]] — usa `LANG`
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
 
-Se carga en [[app.html]] en la posición **103 de 103** (línea 3563), después de [[engine.app_canvas.js]].
+Se carga en [[app.html]] en la posición **104 de 104** (línea 3564), después de [[engine.app_canvas.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 103)
+- [[app.html]] — lo carga con `<script>` (posición 104)
 - [[engine.app_coordinator.js]] — usa `_khipuScatter`
 
 ## Pruebas que lo cubren

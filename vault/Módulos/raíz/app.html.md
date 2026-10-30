@@ -3,14 +3,14 @@ tipo: "pagina"
 capa: "Interfaz (Khipus OS)"
 ruta: "app.html"
 lenguaje: "html"
-lineas: 3566
+lineas: 3567
 aliases: ["app.html"]
 tags: ["capa/interfaz", "tipo/pagina"]
 ---
 
 # app.html
 
-> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.566 líneas · `app.html`
+> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.567 líneas · `app.html`
 
 ## Para qué sirve
 
@@ -137,9 +137,10 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 98. [[sim.scenario_builder.js]] (línea 3252)
 99. [[engine.app_coordinator.js]] (línea 3254)
 100. [[engine.app_trade_panel.js]] (línea 3555)
-101. [[engine.app_preflight.js]] (línea 3558)
-102. [[engine.app_canvas.js]] (línea 3561)
-103. [[engine.app_scatter.js]] (línea 3563)
+101. [[engine.ticket.js]] (línea 3556)
+102. [[engine.app_preflight.js]] (línea 3559)
+103. [[engine.app_canvas.js]] (línea 3562)
+104. [[engine.app_scatter.js]] (línea 3564)
 
 ## Bloques `<script>` inline
 
@@ -166,6 +167,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.explain.js]] — usa `explainMetric`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
+- [[engine.ticket.js]] — usa `submitTradePanelOrder`
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[engine.voice.js]] — usa `BixbyVoice`
 
@@ -225,6 +227,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_one_portfolio_store.py]]
 - [[tests.test_sim_report.py]]
+- [[tests.test_ticket_mode.py]]
 - [[tests.test_voice_tour.py]]
 
 ## Mencionado en sesiones de trabajo

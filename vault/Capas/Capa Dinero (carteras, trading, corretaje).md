@@ -36,7 +36,7 @@ tags: ["capa/dinero", "tipo/capa"]
 |---|---|---|
 | usa a | [[Capa Infraestructura]] | 29 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 20 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
 | la usa | [[Capa Infraestructura]] | 12 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Comité]] | 8 |

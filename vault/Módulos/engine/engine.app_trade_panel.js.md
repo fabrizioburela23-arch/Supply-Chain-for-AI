@@ -27,7 +27,7 @@ Professional Trade Panel
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **100 de 103** (línea 3555), después de [[engine.app_coordinator.js]] y antes de [[engine.app_preflight.js]].
+Se carga en [[app.html]] en la posición **100 de 104** (línea 3555), después de [[engine.app_coordinator.js]] y antes de [[engine.ticket.js]].
 
 ## Lo usan
 
@@ -36,6 +36,7 @@ Se carga en [[app.html]] en la posición **100 de 103** (línea 3555), después 
 - [[engine.app_coordinator.js]] — usa `openTradeModal`
 - [[engine.app_main.js]] — usa `openTradeModal`
 - [[engine.resolve.js]] — usa `openTradeModal`
+- [[engine.ticket.js]] — usa `_tpRefreshPositions`
 - [[engine.voice.js]] — usa `__tradeAcctCache`, `openTradeModal`
 
 ## Endpoints que llama
@@ -52,6 +53,7 @@ Se carga en [[app.html]] en la posición **100 de 103** (línea 3555), después 
 ## Pruebas que lo cubren
 
 - [[tests.test_app_split.py]]
+- [[tests.test_ticket_mode.py]]
 
 ## Mencionado en sesiones de trabajo
 

@@ -26,7 +26,7 @@ ESTADO VISUAL de la simulación (solo animación; SIN matemática de contagio) P
 - [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`
 
-Se carga en [[app.html]] en la posición **71 de 103** (línea 3223), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
+Se carga en [[app.html]] en la posición **71 de 104** (línea 3223), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
 
 ## Lo usan
 

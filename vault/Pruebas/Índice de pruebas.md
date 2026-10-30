@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-265 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+266 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -261,6 +261,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_space_satellites.py]] | 5 | 5 |
 | [[tests.test_tensor.py]] | 8 | 8 |
 | [[tests.test_tensor_autolink.py]] | 2 | 6 |
+| [[tests.test_ticket_mode.py]] | 4 | 4 |
 | [[tests.test_trading_agent_ledger.py]] | 9 | 9 |
 | [[tests.test_vault.py]] | 19 | 1 |
 | [[tests.test_verified_valuations.py]] | 1 | 1 |

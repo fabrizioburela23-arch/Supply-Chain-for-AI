@@ -30,7 +30,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.nodes_seed.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`
 
-Se carga en [[app.html]] en la posición **3 de 103** (línea 1509), después de [[nodes.nodes_seed.js]] y antes de [[nodes.nodes_expand.js]].
+Se carga en [[app.html]] en la posición **3 de 104** (línea 1509), después de [[nodes.nodes_seed.js]] y antes de [[nodes.nodes_expand.js]].
 
 ## Lo usan
 

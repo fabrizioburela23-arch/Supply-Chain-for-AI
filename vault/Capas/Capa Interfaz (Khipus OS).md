@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 31
+archivos: 32
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,13 +9,13 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**31 archivos · 30.299 líneas.** Volver al [[00 Mapa de Khipus]].
+**32 archivos · 30.550 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[engine.cockpit.js]] — 5.053 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.app_main.js]] — 4.850 líneas · Global error reporter — shows uncaught JS errors on screen (no devtools needed)
-- [[app.html]] — 3.566 líneas
+- [[app.html]] — 3.567 líneas
 - [[engine.app_coordinator.js]] — 2.718 líneas · Khipu Core Coordinator
 - [[engine.oswindows.js]] — 1.646 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.genui.js]] — 1.435 líneas · RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja; NUNCA calcula cifras. DOM seguro, 17 tipos, acciones solo …
@@ -34,6 +34,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.app_scatter.js]] — 281 líneas · KHIPU FINANCE — Scatter 3D Semántico con Medidores Botón 📊: posiciona empresas en ejes semánticos + panel de medidores interactivo
 - [[engine.guide.js]] — 271 líneas · pestaña "❓ Guía": explica la app en lenguaje simple. Sin jerga técnica. Expone window.initGuiaTab (mismo patrón que initTKGTab). Actualizada …
 - [[engine.signals.js]] — 252 líneas · «1 TOQUE»: señales del agente de trading listas para aprobar (2026-10-20) El agente en modo MANUAL propone (servidor: core/trading_agent.py, GET …
+- [[engine.ticket.js]] — 250 líneas · MODO TICKET del panel de trading (2026-10-30, pedido de Fabrizio). Dos modos en el MISMO panel (se elige arriba del botón; queda guardado en …
 - [[engine.genui_shapes.js]] — 237 líneas · FORMAS, IMÁGENES y MINI-MAPA de las respuestas visuales (kblocks/1, docs/CHAT_UI_GENERATIVA.md §4.6 y §7.2).
 - [[engine.simreport.js]] — 230 líneas · INFORME DE ESCENARIO (2026-10-21, «que parezca un producto») Pinta la salida de POST /api/sim/agents (core/sim_agents + core/sim_report) como un …
 - [[engine.genui_progress.js]] — 198 líneas · RESPUESTAS VISUALES PROGRESIVAS (F3, docs/CHAT_UI_GENERATIVA.md §6): el motor del chat que pinta los bloques provisionales y hace ATERRIZAR la …
@@ -57,9 +58,9 @@ tags: ["capa/interfaz", "tipo/capa"]
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 20 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 18 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 14 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 14 |
 | usa a | [[Capa Ontología y grafo temporal]] | 14 |
 | la usa | [[Capa Ontología y grafo temporal]] | 13 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 13 |
 | usa a | [[Capa Infraestructura]] | 13 |
 | la usa | [[Capa Comité]] | 10 |
 | la usa | [[Capa Voz]] | 10 |

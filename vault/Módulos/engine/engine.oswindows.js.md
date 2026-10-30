@@ -32,7 +32,7 @@ VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **91 de 103** (línea 3245), después de [[engine.genui.js]] y antes de [[engine.khipu_chat.js]].
+Se carga en [[app.html]] en la posición **91 de 104** (línea 3245), después de [[engine.genui.js]] y antes de [[engine.khipu_chat.js]].
 
 ## Lo usan
 

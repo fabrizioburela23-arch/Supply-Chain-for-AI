@@ -17,10 +17,10 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 253 |
-| Líneas de código | 151.076 |
+| Archivos de código (Python, JS, HTML) | 254 |
+| Líneas de código | 151.327 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 265 |
+| Archivos de prueba | 266 |
 | Documentos | 32 |
 | Rutas HTTP | 266 |
 | Grupos de API | 61 |
@@ -30,12 +30,12 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Aristas `calls_endpoint` | 781 |
 | Aristas `defines_endpoint` | 300 |
 | Aristas `imports` | 2.377 |
-| Aristas `loads_script` | 95 |
+| Aristas `loads_script` | 96 |
 | Aristas `mentions_in_session` | 603 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.867 |
-| Aristas `uses_global` | 468 |
+| Aristas `tested_by` | 1.871 |
+| Aristas `uses_global` | 471 |
 
 ## Nodos "dios" (más conectados)
 
@@ -43,8 +43,8 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
-| [[app.html]] | 124 | 28 | 96 | [[Capa Interfaz (Khipus OS)]] |
-| [[engine.app_main.js]] | 113 | 66 | 47 | [[Capa Interfaz (Khipus OS)]] |
+| [[app.html]] | 125 | 28 | 97 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.app_main.js]] | 114 | 67 | 47 | [[Capa Interfaz (Khipus OS)]] |
 | [[server.py]] | 99 | 31 | 68 | [[Capa Infraestructura]] |
 | [[ontology.db.py]] | 58 | 48 | 10 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 52 | 14 | 38 | [[Capa Interfaz (Khipus OS)]] |
@@ -107,6 +107,7 @@ Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo"
 | `window.ASSISTANT_NAME` | [[engine.app_main.js]] | **no** | no |
 | `window.DESC_FILL` | [[nodes.meta_fill.js]] | sí | no |
 | `window.KhipuLiveCaps` | [[engine.app_main.js]] | **no** | no |
+| `window.KhipuTicket` | [[engine.ticket.js]] | **no** | no |
 | `window.KhipuVoiceAudio` | [[engine.voice.js]] | **no** | sí (solo pruebas) |
 | `window.META_CHINA` | [[nodes.nodes_china.js]] | sí | no |
 | `window.META_FILL` | [[nodes.meta_fill.js]] | sí | no |
@@ -123,7 +124,6 @@ Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo"
 | `window.loadFredMacro` | [[engine.app_coordinator.js]] | sí | no |
 | `window.loadInvestor13F` | [[engine.app_coordinator.js]] | sí | no |
 | `window.loadTradeFlows` | [[engine.app_coordinator.js]] | sí | no |
-| `window.openTradePanelFn` | [[engine.app_trade_panel.js]] | sí | no |
 | `window.settleGraph` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
 | `window.xrayImpact` | [[engine.xray.js]] | **no** | sí (solo pruebas) |
 

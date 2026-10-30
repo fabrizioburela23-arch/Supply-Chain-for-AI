@@ -26,7 +26,7 @@ MOTOR GLOBO UNIFICADO (Track A, Fase 1 del prompt 2026-08). Fusión de engine/ge
 - [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **43 de 103** (línea 3129), después de [[engine.geo_coords.js]] y antes de [[engine.canvas-data.js]].
+Se carga en [[app.html]] en la posición **43 de 104** (línea 3129), después de [[engine.geo_coords.js]] y antes de [[engine.canvas-data.js]].
 
 ## Lo usan
 

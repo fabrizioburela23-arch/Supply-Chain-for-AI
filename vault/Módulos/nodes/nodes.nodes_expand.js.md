@@ -30,7 +30,7 @@ De nivel superior (globales del script): `NODES_EXPAND`
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **4 de 103** (línea 1510), después de [[nodes.categories_extra.js]] y antes de [[nodes.nodes_expand2.js]].
+Se carga en [[app.html]] en la posición **4 de 104** (línea 1510), después de [[nodes.categories_extra.js]] y antes de [[nodes.nodes_expand2.js]].
 
 ## Lo usan
 

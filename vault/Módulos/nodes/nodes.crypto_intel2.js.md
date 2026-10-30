@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **87 de 103** (línea 3239), después de [[nodes.crypto_intel.js]] y antes de [[engine.crypto.js]].
+Se carga en [[app.html]] en la posición **87 de 104** (línea 3239), después de [[nodes.crypto_intel.js]] y antes de [[engine.crypto.js]].
 
 ## Lo usan
 

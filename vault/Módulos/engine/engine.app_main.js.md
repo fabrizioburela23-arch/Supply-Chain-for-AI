@@ -70,7 +70,7 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.importer.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **27 de 103** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **27 de 104** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 
@@ -133,6 +133,7 @@ Se carga en [[app.html]] en la posición **27 de 103** (línea 2686), después d
 - [[engine.sync.js]] — usa `BASE`
 - [[engine.temporal-graph.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `SERVER_MODE`, `catLabel`, `computeNRS` y 4 más
 - [[engine.termdata.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `fillLiveMeta`, `liveCapDot` y 1 más
+- [[engine.ticket.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `quoteIsLive`, `quotePx`, `savePos`
 - [[engine.timeline3d.js]] — usa `LANG`, `NODE_BY_ID`, `getLinkColorHex`
 - [[engine.toast.js]] — usa `LANG`
 - [[engine.trade.js]] — usa `LANG`
