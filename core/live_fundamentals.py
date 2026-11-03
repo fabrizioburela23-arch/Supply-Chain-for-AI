@@ -25,7 +25,10 @@ CATCHUP = 3                # mientras falten empresas NUNCA pedidas (p. ej. tras
                            # memoria) la tanda es 3× → todo el grafo en ~25 min en vez de ~1 h
 MAX_AGE_S = 24 * 3600      # refresco mínimo diario
 FIELDS = ('operating_margin', 'profit_margin', 'gross_margin', 'revenue_ttm_usd_b', 'revenue_growth_q',
-          'revenue_growth', 'employees', 'pe_trailing', 'pe_forward')
+          'revenue_growth', 'employees', 'pe_trailing', 'pe_forward',
+          # 2026-11-03 (chat «¿cuál está barata?»): valoración para el filtro screen_stocks — precio y objetivo del
+          # consenso en la MISMA moneda local (solo se usa su cociente), rango de 52 semanas y recomendación
+          'price', 'target_mean', 'week52_low', 'week52_high', 'recommendation')
 _STATE = {'data': {}, 'running': False, 'last_run': None, 'last_error': None, 'runs': 0}
 _LOCK = threading.Lock()
 

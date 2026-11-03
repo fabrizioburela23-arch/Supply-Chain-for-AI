@@ -9,7 +9,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.968 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.971 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -35,8 +35,8 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[core.providers.market.py]] — 159 líneas · Phase 1 · M3: adapters de datos de mercado.
 - [[core.news_feed.py]] — 151 líneas · NOTICIAS DE TU CARTERA, con fecha y sin repetir lo viejo.
 - [[engine.live.js]] — 138 líneas · MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de insights: cuando llegan precios nuevos, invalida el NRS y re-dibuja …
+- [[core.live_fundamentals.py]] — 124 líneas · FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
 - [[core.providers.coingecko.py]] — 123 líneas · adapter de cripto (CoinGecko API v3, tier gratuito).
-- [[core.live_fundamentals.py]] — 121 líneas · FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
 - [[core.live_facts.py]] — 93 líneas · DATOS EN VIVO para toda llamada de IA.
 - [[core.providers.news.py]] — 90 líneas · Phase 1 · M3: adapter de noticias.
 - [[core.providers.__init__.py]] — 15 líneas · capa de proveedores de datos financieros (patrón adapter).
@@ -50,8 +50,8 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | usa a | [[Capa Infraestructura]] | 23 |
 | la usa | [[Capa Infraestructura]] | 20 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 12 |
+| la usa | [[Capa Chat y agentes]] | 10 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
-| la usa | [[Capa Chat y agentes]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa MCP y API]] | 6 |

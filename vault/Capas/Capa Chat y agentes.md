@@ -9,11 +9,11 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 
 > El cerebro conversacional de Khipu, los agentes con su rol, el portero Jev y el lenguaje de comandos.
 
-**16 archivos · 11.530 líneas.** Volver al [[00 Mapa de Khipus]].
+**16 archivos · 11.634 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[core.khipu_chat.py]] — 3.850 líneas · EL cerebro conversacional de Khipu (texto).
+- [[core.khipu_chat.py]] — 3.954 líneas · EL cerebro conversacional de Khipu (texto).
 - [[engine.localcharts.js]] — 1.696 líneas · CANVAS: ROUTER DE INTENCIÓN + GRÁFICOS SIN IA (Etapa G 2026-07-11 · Etapa I 2026-07-12 · ROUTER 2026-10-02)
 - [[engine.khipu_chat.js]] — 1.450 líneas · EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Command Center (engine/command_center.js).
 - [[engine.app_canvas.js]] — 688 líneas · palette & helpers
@@ -40,9 +40,9 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | usa a | [[Capa Comité]] | 10 |
 | usa a | [[Capa Ontología y grafo temporal]] | 10 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 10 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 9 |
 | usa a | [[Capa Investigación]] | 9 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Infraestructura]] | 8 |
 | la usa | [[Capa Comité]] | 6 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |

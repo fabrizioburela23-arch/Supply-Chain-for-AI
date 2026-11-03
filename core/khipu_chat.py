@@ -824,6 +824,97 @@ def x_rank_companies(by='connections', sector=None, country=None, listed_only=Fa
             'source': snap.get('source_label') or mt.SNAPSHOT_SOURCE, 'as_of': snap['as_of']}
 
 
+@_extra('screen_stocks', 'by?:peg|value|growth|upside, sector?:string, country?:string, limit?:integer 1-20',
+        'Screener of LISTED companies on live valuation + expected growth (Yahoo consensus): forward P/E vs the sector, '
+        'EPS growth implied for the next year (trailing P/E / forward P/E), revenue growth, upside to the analysts\' '
+        'mean target and distance from the 52-week high. by=peg (default: cheapest per unit of growth), value (lowest '
+        'forward P/E vs its sector, with growth), growth (fastest expected growth at a sane price) or upside. Use it for '
+        '"which companies with growth potential are cheap", "undervalued", "barata", "infravalorada". It has NO 2027 '
+        'estimates: say the growth is the consensus one for the next year, never a 2027 projection.')
+def x_screen_stocks(by='peg', sector=None, country=None, limit=10):
+    from core import live_fundamentals as lf
+    snap = _snapshot()
+    mt = _mcp()
+    try:
+        limit = max(1, min(20, int(limit)))
+    except (TypeError, ValueError):
+        limit = 10
+    by = str(by or 'peg').lower()
+    by = by if by in ('peg', 'value', 'growth', 'upside') else 'peg'
+    fund = (lf.get_all() or {}).get('fund') or {}
+    sec_q = str(sector or '').strip().lower()
+    cty_q = str(country or '').strip().lower()
+
+    def num(v):
+        try:
+            v = float(v)
+            return v if v == v else None
+        except (TypeError, ValueError):
+            return None
+    rows, with_pe = [], 0
+    for nid, f in fund.items():
+        n = snap['nodes'].get(nid)
+        if not n:
+            continue
+        if sec_q:
+            s = snap['sectors'].get(n.get('sector')) or {}
+            if sec_q not in ' '.join(str(x).lower() for x in (n.get('sector'), s.get('label'), s.get('en'), n.get('cat'))):
+                continue
+        if cty_q and cty_q not in str(n.get('country') or '').lower() and cty_q not in str(n.get('loc') or '').lower():
+            continue
+        pf, pt = num(f.get('pe_forward')), num(f.get('pe_trailing'))
+        if pf is None or pf <= 0 or pf > 150:
+            continue
+        with_pe += 1
+        g = round((pt / pf - 1) * 100, 1) if pt and pt > 0 else None          # crecimiento de EPS implícito del consenso
+        if g is not None and g > 300:
+            g = None                                                             # base casi nula: no es una señal
+        px, tg, hi = num(f.get('price')), num(f.get('target_mean')), num(f.get('week52_high'))
+        rg = num(f.get('revenue_growth'))
+        rg = rg if rg is not None else num(f.get('revenue_growth_q'))
+        rows.append({'id': nid, 'label': n.get('label') or nid, 'symbol': f.get('symbol'), 'sector': n.get('sector'),
+                     'pe_forward': round(pf, 1), 'pe_trailing': round(pt, 1) if pt and pt > 0 else None,
+                     'eps_growth_next_year_pct': g,
+                     'revenue_growth_pct': round(rg, 1) if rg is not None else None,
+                     'upside_to_target_pct': round((tg / px - 1) * 100, 1) if px and tg and px > 0 else None,
+                     'from_52w_high_pct': round((px / hi - 1) * 100, 1) if px and hi and hi > 0 else None,
+                     'analyst_view': f.get('recommendation') if f.get('recommendation') not in (None, 'none') else None,
+                     'operating_margin_pct': round(num(f.get('operating_margin')), 1) if num(f.get('operating_margin')) is not None else None,
+                     'source': f.get('source') or 'yahoo', 'as_of': f.get('as_of')})
+    if with_pe < 20:
+        raise ToolFailure('live valuation data is still warming up (it fills in over ~25 min after a deploy) — try again later')
+    med = {}
+    for sct in {r['sector'] for r in rows}:
+        xs = sorted(r['pe_forward'] for r in rows if r['sector'] == sct)
+        if len(xs) >= 5:
+            med[sct] = xs[len(xs) // 2]
+    for r in rows:
+        m = med.get(r['sector'])
+        r['pe_vs_sector'] = round(r['pe_forward'] / m, 2) if m else None
+        g = r['eps_growth_next_year_pct']
+        r['peg'] = round(r['pe_forward'] / g, 2) if g and g > 5 else None
+    if by == 'peg':
+        pool = [r for r in rows if r['peg'] is not None]
+        pool.sort(key=lambda r: r['peg'])
+    elif by == 'value':
+        pool = [r for r in rows if r['pe_vs_sector'] is not None and (r['eps_growth_next_year_pct'] or 0) > 5]
+        pool.sort(key=lambda r: r['pe_vs_sector'])
+    elif by == 'growth':
+        pool = [r for r in rows if r['eps_growth_next_year_pct'] is not None and r['pe_forward'] <= 40]
+        pool.sort(key=lambda r: -r['eps_growth_next_year_pct'])
+    else:
+        pool = [r for r in rows if r['upside_to_target_pct'] is not None]
+        pool.sort(key=lambda r: -r['upside_to_target_pct'])
+    return {'by': by, 'filters': {'sector': sector, 'country': country}, 'universe_with_forward_pe': with_pe,
+            'matched': len(pool), 'items': pool[:limit],
+            'explain': ('pe_forward = price / expected EPS (consensus, next 12 months); eps_growth_next_year_pct = '
+                        'trailing P/E / forward P/E - 1 (growth the consensus expects vs the last 12 months); '
+                        'peg = pe_forward / eps_growth (lower = cheaper per unit of growth); pe_vs_sector = forward P/E '
+                        'over the sector median; upside_to_target_pct = mean analyst target vs price. These are '
+                        'consensus-based screens, NOT 2027 forecasts and NOT advice. Low P/E can mean a business in trouble.'),
+            'source': 'Yahoo Finance (live fundamentals, Khipus cache)', 'as_of': (lf.get_all() or {}).get('last_run')}
+
+
 @_extra('get_space_summary', '',
         'Space economy snapshot: next orbital launch, launches this week/month by provider, active platforms and '
         'Khipus-graph companies involved (Launch Library 2), plus tracked satellites per constellation '
@@ -1290,7 +1381,7 @@ también get_committee_memo). "@analista / pregúntale \
 al analista" → ask_agent. "¿puedo investigar ahora? / ¿por qué falló o quedó a medias la investigación?" → \
 get_research_health (proveedores en pausa, cola, presupuesto); en get_research, last_job.status 'partial' = síntesis \
 incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda mañana. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
-peores" → rank_companies o market_movers. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
+peores" → rank_companies o market_movers. "¿cuál está barata / infravalorada / con potencial de crecimiento?" → screen_stocks (by=peg por defecto; value si piden solo baratas, growth si piden crecimiento, upside si piden margen hasta el precio objetivo). NUNCA digas que no tienes datos de valoración: tienes P/E, crecimiento esperado por el consenso y precio objetivo en vivo. Aclara SIEMPRE que no hay estimaciones a 2027: el crecimiento es el que el consenso espera para el próximo año; que un P/E bajo puede ser una empresa en problemas; y que es información, no una recomendación. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
 get_history(id_or_ticker, range). "¿qué pasa si cae / falla X?" con una empresa CONCRETA → run_scenario(shocks=[{{"id":"X"}}]) \
 (las cifras de impacto salen de ese motor; si la pregunta es un escenario descrito en palabras, scenario_exposure). \
 ESCENARIOS (scenario_exposure / run_scenario): NUNCA digas que no tienes un modelo cuantitativo: el motor de Khipus \
@@ -1968,6 +2059,7 @@ def _src_name(src):
 # ── nombres internos FUERA de la prosa (lote K, problema 5: «(get_company, Yahoo, hoy 2026-10-14)») ─────────────
 # herramienta → cómo la nombra una persona (ES, EN); se prefiere la fuente REAL del hecho [F#] de esa herramienta
 _TOOL_HUMAN = {
+    'screen_stocks': ('fundamentales en vivo (Yahoo Finance)', 'live fundamentals (Yahoo Finance)'),
     'get_company': ('Grafo Khipus', 'Khipus graph'), 'search_companies': ('Grafo Khipus', 'Khipus graph'),
     'get_supply_chain': ('Grafo Khipus', 'Khipus graph'), 'rank_companies': ('Grafo Khipus', 'Khipus graph'),
     'plan_portfolio': ('comité de cartera de Khipus', 'Khipus portfolio committee'),
@@ -2297,6 +2389,18 @@ def _note_supply_chain(res, args, ctx):
             bits.append(('clientes clave: ' if es else 'key customers: ') + ', '.join(cus))
         return ' · '.join(bits)
     return build('es'), build('en'), 'Khipus graph', res.get('as_of')
+
+
+def _note_screen(res, args, ctx):
+    items = [x for x in res.get('items') or [] if isinstance(x, dict)][:3]
+    if not items:
+        return None
+
+    def build(lang):
+        es = lang == 'es'
+        names = ', '.join(f'{x.get("label")} (P/E {x.get("pe_forward")})' for x in items)
+        return ('Más baratas con crecimiento esperado (consenso): ' if es else 'Cheapest with expected growth (consensus): ') + names
+    return build('es'), build('en'), 'Yahoo Finance', res.get('as_of')
 
 
 def _note_rank(res, args, ctx):
@@ -2715,7 +2819,7 @@ def _note_market_rank(res, args, ctx):
     return build('es'), build('en'), 'Khipus graph (market position)', res.get('as_of')
 
 
-_NOTE_FN = {'get_company': _note_company, 'get_fundamentals': _note_fundamentals, 'rank_by_market': _note_market_rank, 'get_supply_chain': _note_supply_chain, 'rank_companies': _note_rank,
+_NOTE_FN = {'get_company': _note_company, 'get_fundamentals': _note_fundamentals, 'rank_by_market': _note_market_rank, 'get_supply_chain': _note_supply_chain, 'rank_companies': _note_rank, 'screen_stocks': _note_screen,
             'get_news': _note_news, 'get_world_events': _note_world, 'web_search': _note_web,
             'scenario_exposure': _note_scenario, 'market_movers': _note_movers, 'get_risk_report': _note_risk_report,
             'get_option_greeks': _note_greeks, 'get_committee_memo': _note_memo, 'get_conclusions_board': _note_board,
