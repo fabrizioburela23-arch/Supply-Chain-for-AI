@@ -1,0 +1,13 @@
+{
+ "schema": "khipus.lote-origin/1",
+ "batch": "lnk-2026-11-04-lote2",
+ "received": "2026-11-04",
+ "package": "bundle_lote9_links.json.gz (engrosar conexiones, lote 2: agentes con búsqueda web, cita textual + URL; subido por Fabrizio)",
+ "package_file": "bundle_lote9_links.json.gz",
+ "package_file_sha256": "4f88ffd2bb2f5ba83cfd69ab14c1452541c6bb4ee6b069dd2cf481d27a24ee63",
+ "package_records": 10,
+ "kept_records": 10,
+ "declared_links": 72,
+ "note_es": "Engrosar conexiones, lote 2: 10 empresas existentes (fichas de solo vínculos, fusionan sin pisar lo curado). Primer % de ingresos verificado con cita (Booz Allen → Veterans Affairs 10 %).",
+ "note_en": "Link enrichment, batch 2: 10 existing companies (links-only records). First revenue share verified with a quote."
+}
