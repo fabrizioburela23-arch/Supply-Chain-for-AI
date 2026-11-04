@@ -67,11 +67,16 @@ def _gen_meta(v):
        'scenario': {'type': 'string', 'maxLength': 300, 'description': 'Plain-words what-if (used when shocks is empty).'},
        'factors': {'type': 'string', 'enum': ['active', 'none'], 'default': 'active',
                    'description': 'Include the active systemic factors (fragility) or not.'},
+       'direction': {'type': 'string', 'enum': ['down', 'up'], 'default': 'down',
+                     'description': "'down' (default) = SUPPLY shock: the shocked company stops supplying → its CUSTOMERS "
+                                    "suffer. 'up' = DEMAND shock: the shocked companies are CUSTOMERS that cut orders/spend "
+                                    "→ their SUPPLIERS lose revenue (e.g. hyperscalers cut capex → what happens to Nvidia). "
+                                    "Use 'up' whenever the question is how a supplier is hit by its customers pulling back."},
        'top': {'type': 'integer', 'minimum': 1, 'maximum': 100, 'default': 25},
        'positions': {'type': 'array', 'maxItems': 60, 'items': {'type': 'object', 'properties': {
            'symbol': {'type': 'string', 'minLength': 1, 'maxLength': 40},
            'usd': {'type': 'number', 'minimum': 0}}, 'required': ['symbol', 'usd']}}})
-def t_run_scenario(ctx, shocks=None, scenario=None, factors='active', top=25, positions=None):
+def t_run_scenario(ctx, shocks=None, scenario=None, factors='active', top=25, positions=None, direction='down'):
     import numpy as np
 
     from core.context_engine import canon
@@ -119,9 +124,19 @@ def t_run_scenario(ctx, shocks=None, scenario=None, factors='active', top=25, po
     if not used:
         raise ToolError('no company of the scenario exists in the graph — name at least one (search_companies)',
                         code='not_found', data={'unknown_ids': unknown[:20]})
-    sc = impact.scenario(core, x0, factors=factors, top=int(top))
+    direction = 'up' if str(direction or '').lower() == 'up' else 'down'
+    try:
+        sc = impact.scenario(core, x0, factors=factors, top=int(top), direction=direction)
+    except ValueError as e:        # 'up' solo si el release vigente lo habilita (kernel.params.direction_up)
+        raise ToolError('demand-shock direction is not enabled in the active kernel release', code='unsupported',
+                        data={'detail': str(e)[:160]})
     impacts = sc.pop('impacts', {}) or {}
-    out = {'shocks': used, 'unknown_ids': unknown, 'seeded_by': seeded_by, 'scenario': about, 'factors': factors,
+    out = {'direction': direction,
+           'direction_meaning': ('DEMAND shock: the shocked companies cut orders → their SUPPLIERS lose revenue (victims '
+                                 'are upstream)' if direction == 'up' else
+                                 'SUPPLY shock: the shocked companies stop supplying → their CUSTOMERS suffer (victims are '
+                                 'downstream)'),
+           'shocks': used, 'unknown_ids': unknown, 'seeded_by': seeded_by, 'scenario': about, 'factors': factors,
            'affected': sc['affected'], 'reach_1pct': sc['reach_1'], 'reach_10pct': sc['reach_10'],
            'sum_impact_companies': sc['sum_impact'], 'by_hop': sc['by_hop'],
            'victims': [{'id': x['id'], 'label': x['label'], 'impact_pct': x['pct'], 'hop': x['hop']}
