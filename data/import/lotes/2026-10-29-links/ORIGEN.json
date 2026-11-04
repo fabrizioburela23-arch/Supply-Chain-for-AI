@@ -1,0 +1,13 @@
+{
+ "schema": "khipus.lote-origin/1",
+ "batch": "lnk-2026-10-29-lote1",
+ "received": "2026-10-29",
+ "package": "fichas_links.jsonl (scripts/links_to_ficha.py; agentes con búsqueda web, cita textual + URL)",
+ "package_file": "fichas_links.jsonl.gz (reconstruido desde el bundle: las fichas son bundle.records)",
+ "package_file_sha256": null,
+ "package_records": 10,
+ "kept_records": 10,
+ "declared_links": 70,
+ "note_es": "Engrosar conexiones, lote 1: 10 empresas existentes (fichas de solo vínculos, fusionan sin pisar lo curado). Casi todo clientes; proveedores con nombre casi no se publican.",
+ "note_en": "Link enrichment, batch 1: 10 existing companies (links-only records that merge without overwriting curated data)."
+}
