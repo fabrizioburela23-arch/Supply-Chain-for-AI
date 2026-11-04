@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_links_to_ficha.py"
 lenguaje: "python"
-lineas: 50
+lineas: 74
 aliases: ["tests/test_links_to_ficha.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_links_to_ficha.py
 
-> Prueba · capa [[Capa Pruebas]] · 50 líneas · `tests/test_links_to_ficha.py`
+> Prueba · capa [[Capa Pruebas]] · 74 líneas · `tests/test_links_to_ficha.py`
 
 ## Qué prueba
 
 scripts/links_to_ficha.py (2026-10-26, piloto de engrosar vínculos con agentes): vínculos investigados → ficha mínima por empresa existente que entra por el importador (fusiona sin pisar lo curado).
 
-**2** funciones `test_…`.
+**4** funciones `test_…`.
 
 ## Cubre
 

@@ -61,7 +61,7 @@ Define **10 herramientas MCP** → [[API herramientas MCP]]
 
 - [[mcp_server.tools.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -72,3 +72,4 @@ _Además lo importan 5 pruebas (lista abajo)._
 - [[tests.test_mcp.py]]
 - [[tests.test_run_scenario_direction.py]]
 - [[tests.test_scenario_capital.py]]
+- [[tests.test_scenario_demand.py]]

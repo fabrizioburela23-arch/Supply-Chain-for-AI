@@ -19,5 +19,15 @@ PASOS
 6. Antes de commitear: regenerar la bóveda (`python scripts/build_vault.py`) y `pytest tests/ -q`.
    Sube CACHE de sw.js si tocas JS. Rama de trabajo, no main.
 
+% DE INGRESOS (prioridad ALTA, 2026-11-04): los pesos del grafo son importancia 1-6, no cuotas de venta, así que el motor
+subestima a los clientes concentrados (Nvidia: 3-4 clientes dan ~40-50 % de sus ingresos y el grafo les da ~3 % cada uno).
+Para cada vínculo de FLUJO (supply/fab/cloud/license/ppa/deploy) busca en fuente PRIMARIA (10-K / 20-F / informe anual /
+comunicado: «un cliente representó el X % de los ingresos», clientes >10 %) y añade al JSON del vínculo:
+  "share_of_supplier_revenue_pct": X      (% de las ventas del PROVEEDOR que van a ese cliente)
+  "share_of_customer_purchases_pct": Y    (% de las compras del CLIENTE que vienen de ese proveedor, si se publica)
+La CITA TEXTUAL de esa página debe contener ese número (scripts/links_to_ficha.py descarta el % si la cita no lo trae; el
+vínculo entra igual, sin el %). Si el 10-K solo dice «cliente A, cliente B» sin nombres, NO adivines quién es: omite el %.
+Empieza por las empresas con pocos clientes y mucha concentración (proveedores de hiperescaladores, de Apple, de Tesla…).
+
 REGLAS: nunca inventes un vínculo; sin cita textual abierta de la página no entra; vínculos con contraparte
 desconocida se dejan como están (el importador los marca pendientes). Responde en español simple y corto.

@@ -140,6 +140,16 @@ def _in_actor(node, actor):
 
 # ── tipo de evento ──────────────────────────────────────────────────────────
 EVENTS = [
+    # DEMANDA (2026-11-04): un cliente compra MENOS (recorta capex/pedidos, resultados que decepcionan, la demanda cae).
+    # Nadie deja de suministrar: el golpe va AGUAS ARRIBA (a sus proveedores) → un caso de recorte (demand_case).
+    ('demand', r'recort\w*\s+(?:el\s+|sus\s+|los\s+|la\s+)?(?:capex|gasto|inversi[oó]n|pedidos|compras|presupuesto)|'
+               r'cancel\w*\s+(?:sus\s+|los\s+)?(?:pedidos|compras|contratos)|reduc\w+\s+(?:el\s+|sus\s+)?(?:capex|gasto|pedidos)|'
+               r'(?:cuts?|slash\w*|trim\w*|reduc\w*|pull\w*\s+back|scal\w+\s+back)\s+(?:on\s+|their\s+|its\s+)?(?:\w+\s+){0,2}'
+               r'(?:capex|spending|orders|spend)|capex\s+cuts?|demand\s+(?:drops?|falls?|collapses?|slump\w*|weak\w*)|'
+               r'demanda\s+(?:cae|baja|se\s+desploma|se\s+desacelera|d[eé]bil)|ca[ií]da\s+de\s+(?:la\s+)?demanda|menos\s+demanda|'
+               r'reporta\w*\s+(?:resultados\s+)?(?:d[eé]bil\w*|mal\w*|pobres|decepcion\w*)|resultados\s+(?:d[eé]bil\w*|decepcion\w*|por debajo)|'
+               r'decepcion\w+|earnings\s+(?:miss|disappoint\w*|weak)|miss(?:es|ed)?\s+(?:on\s+)?(?:earnings|estimates|revenue)|'
+               r'weak\s+(?:earnings|results|guidance|report)|guidance\s+(?:cut|lower\w*|weak)|baja\s+(?:su\s+)?guidance|profit\s+warning'),
     # financiación (IPO, ronda, emisión): NO corta el suministro, mueve el GASTO de la empresa → dos casos (capital_cases)
     ('capital', r'\bipo\b|sal(?:e|ir|ida|dr[ií]a)\s+a\s+bolsa|oferta p[uú]blica|empieza a cotizar|'
                 r'goes? public|going public|public listing|listing on|ronda de (?:financiaci|inversi)|funding round|'
@@ -161,7 +171,10 @@ the and for with what would happen if from this that these those into over about
 prohibe prohíbe exportar importar exports imports export import ban bans deja dejar escenario scenario empresas
 companies mercado market precio precios china eeuu estados unidos taiwan taiwán corea japón japon europa
 bolsa sale salir salida cerca valuación valuacion valoración valoracion ronda oferta pública publica cotizar ipo
-public goes going listing around near billion valuation funding round raises levanta capital recauda'''.split())
+public goes going listing around near billion valuation funding round raises levanta capital recauda
+recorta recortan recortar recorte capex gasto gastos cancela cancelan pedidos compras reporta reportan reporto resultados débil debil
+débiles debiles decepciona decepcionan decepcionante demanda hiperescaladores hyperscalers hiperescalador cut cuts spending orders
+earnings miss weak guidance results report reports trimestre quarter'''.split())
 
 
 # "<A> bloquea/invade/ataca/sanciona a <B>": el país GOLPEADO es B (revisión 2026-10-13: "China blockades
@@ -272,6 +285,8 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
         producers += [p for p in th['producers'] if p in by_id]
     producers += [i for i in named_ids if i in by_id]
     actor, event = det['actor'], det['event']
+    if event == 'demand' and re.search(r'hiperescal|hyperscal|big\s*tech', scenario or '', re.I):
+        producers += [i for i in HYPERSCALERS if i in by_id]       # «los hiperescaladores recortan»: los grandes compradores de nube
     target = det.get('target')
 
     def top_local(country, k=6):
@@ -323,6 +338,13 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
         note_en = ('Financing event (IPO / funding round): it does not cut supply, it changes how much the company '
                    'spends. Bull case: fresh capital, more orders to its suppliers. Bear case: the market doubts its '
                    'funding and orders are cut.')
+    elif event == 'demand':
+        note_es = ('Evento de DEMANDA: nadie deja de suministrar; la empresa nombrada compra MENOS (recorta capex / pedidos o '
+                   'sus resultados decepcionan). El golpe va aguas arriba, a SUS PROVEEDORES, que pierden ingresos. El motor '
+                   'no estima el precio de la propia empresa nombrada.')
+        note_en = ('DEMAND event: nobody stops supplying; the named company buys LESS (cuts capex / orders or its results '
+                   'disappoint). The hit flows upstream to ITS SUPPLIERS, who lose revenue. The engine does not estimate the '
+                   'named company\'s own share price.')
     elif event == 'boost':
         benefit = producers
         note_es = 'Impulso de demanda o apoyo: los productores y sus proveedores se benefician.'
@@ -387,6 +409,14 @@ def analyze(scenario, snap, named_ids=(), lang='es'):
             put(sup, sign * _w(l) * 0.3, 'supplier', [sup, root])
 
     cases = None
+    if event == 'demand':
+        named = [p for p in producers if re.search(r'\b' + re.escape(_plain((by_id[p].get('label') or p).split(' (')[0]))
+                                                   + r'\b', _plain(scenario or ''))]
+        if re.search(r'hiperescal|hyperscal|big\s*tech', scenario or '', re.I):    # «los hiperescaladores recortan»
+            named += [i for i in HYPERSCALERS if i in by_id and i not in named]
+        cases = capital_cases(snap, (named or producers)[:6], demand=True)
+        for x in cases['bear']['impacts']:
+            put(x['id'], round(x['impact_pct'] / 100.0, 4), 'supplier', x['path_ids'])
     if event == 'capital':
         # quien se financia es la empresa NOMBRADA (por su nombre), no las que la mencionan en su ficha
         named = [p for p in producers if re.search(r'\b' + re.escape(_plain((by_id[p].get('label') or p).split(' (')[0]))
@@ -491,7 +521,11 @@ CAPITAL_BULL = 0.3
 CAPITAL_BEAR = 0.5
 
 
-def capital_cases(snap, seeds):
+HYPERSCALERS = ('Microsoft', 'Amazon', 'Alphabet', 'Meta', 'Oracle')
+DEMAND_CUT = 0.3          # supuesto: el cliente recorta el 30 % de sus pedidos (kernel.params: scenario_event_magnitude.demand_cut)
+
+
+def capital_cases(snap, seeds, demand=False):
     """IPO / ronda de `seeds` → {'bull': {...}, 'bear': {...}, 'assumptions'}: cada caso con sus impactos sobre los
     PROVEEDORES (aguas arriba: más pedidos / menos pedidos) en % del kernel único (dirección 'up', PROP-17) o, si el
     release no la habilita, un salto por el peso del vínculo. Nunca lanza."""
@@ -505,6 +539,8 @@ def capital_cases(snap, seeds):
         pass
     bull = float(mags.get('capital_bull', CAPITAL_BULL))
     bear = float(mags.get('capital_bear', CAPITAL_BEAR))
+    if demand:
+        bear = float(mags.get('demand_cut', DEMAND_CUT))
     out_f, in_f = _flow_adj(snap)
 
     def lbl(i):
@@ -559,6 +595,18 @@ def capital_cases(snap, seeds):
         return {'magnitude': mag, 'impacts': imp, 'n_affected': n_hit if n_hit is not None else len(rows),
                 'method': method}
 
+    if demand:      # un solo caso: el recorte de pedidos de la(s) empresa(s) nombrada(s) → sus proveedores
+        return {'bear': {**one(bear, -1.0), 'label_es': 'Recorte de pedidos: los proveedores pierden ingresos',
+                         'label_en': 'Order cut: suppliers lose revenue'},
+                'assumptions': {'bear_spend_change': -bear,
+                                'note_es': (f'Supuesto: la(s) empresa(s) nombrada(s) recortan sus pedidos un {round(bear * 100)} %. '
+                                            'El % de cada proveedor sale del motor de Khipus según cuánto de sus ventas '
+                                            'depende de ellas (los pesos del grafo son importancia 1-6, no % de ingresos: '
+                                            'subestiman a los clientes más concentrados). No es un pronóstico de precio.'),
+                                'note_en': (f'Assumption: the named company(ies) cut their orders by {round(bear * 100)}%. Each '
+                                            'supplier\'s % comes from the Khipus engine, by how much of its sales depend on '
+                                            'them (graph weights are importance 1-6, not revenue shares: they understate the '
+                                            'most concentrated customers). Not a price forecast.')}}
     return {
         'bull': {**one(bull, +1.0), 'label_es': 'Caso favorable: entra capital y aumentan los pedidos',
                  'label_en': 'Bull case: fresh capital, more orders'},

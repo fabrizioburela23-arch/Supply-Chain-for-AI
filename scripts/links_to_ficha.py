@@ -79,7 +79,34 @@ def _clean_link(l, min_conf):
         except (TypeError, ValueError):
             crit = 2                       # sin dato: «uno de varios» (la media prudente); queda rotulado en la nota
         rel['dependency'] = {'criticality': max(1, min(6, crit))}
+        # % de INGRESOS (2026-11-04): los pesos del grafo son importancia 1-6, no cuotas de venta → el motor subestima a los
+        # clientes concentrados. Se acepta SOLO si la cita textual de ESA página trae el número (si no, el vínculo entra sin él).
+        for key, field in (('share_of_supplier_revenue_pct', 'share_of_supplier_revenue'),
+                           ('share_of_customer_purchases_pct', 'share_of_customer_purchases')):
+            pct = _share_in_quote(l.get(key), quote)
+            if pct is not None:
+                rel['dependency'][field] = {'value': pct, 'source_url': url, 'source_kind': kind, 'as_of': as_of,
+                                            'confidence': rel['confidence'], 'quote': quote[:500]}
+            elif l.get(key) not in (None, ''):
+                rel['_share_dropped'] = True
     return rel, None
+
+
+def _share_in_quote(value, quote):
+    """→ el % (0-100) si es un número válido Y aparece en la cita textual; si no, None."""
+    try:
+        v = float(str(value).replace('%', '').replace(',', '.'))
+    except (TypeError, ValueError):
+        return None
+    if not (0 < v <= 100):
+        return None
+    for m in re.findall(r'(\d+(?:[.,]\d+)?)', str(quote or '')):
+        try:
+            if abs(float(m.replace(',', '.')) - v) < 0.051:
+                return round(v, 2)
+        except ValueError:
+            continue
+    return None
 
 
 def build(files, min_conf=0.4, today=None):
@@ -96,6 +123,8 @@ def build(files, min_conf=0.4, today=None):
                 continue
             rel, why = _clean_link(l, min_conf)
             cid = l.get('company_id')
+            if rel is not None and rel.pop('_share_dropped', None):
+                dropped['% sin cita'] = dropped.get('% sin cita', 0) + 1
             if rel is None:
                 dropped[why] = dropped.get(why, 0) + 1
                 continue

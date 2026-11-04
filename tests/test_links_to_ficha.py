@@ -48,3 +48,27 @@ def test_la_ficha_valida_y_fusiona_con_la_empresa_existente(tmp_path):
     plan = CI.plan(san, [], batch='t', what_changes=False)
     it = plan['items'][0]
     assert it['action'] == 'merge' and it['id'] == 'symbotic' and not it['conflicts']
+
+
+def test_porcentaje_de_ingresos_solo_si_la_cita_trae_el_numero(tmp_path):
+    """2026-11-04: los pesos del grafo son importancia 1-6, no cuotas de venta. El % de ingresos del cliente entra SOLO si la
+    cita textual de esa página contiene el número; si no, el vínculo entra sin él (y queda contado)."""
+    ok = dict(GOOD, share_of_supplier_revenue_pct=85)
+    liar = dict(GOOD, counterparty_name='Otra Corp', counterparty_khipus_id=None, share_of_supplier_revenue_pct=40)
+    notflow = dict(GOOD, counterparty_name='Inversor X', counterparty_khipus_id=None, rel_type='invest', this_role='investee',
+                   share_of_supplier_revenue_pct=85)
+    fichas, res = _run(tmp_path, [ok, liar, notflow])
+    rels = {r['counterparty']['name']: r for r in fichas[0]['relations']}
+    sh = rels['Walmart']['dependency']['share_of_supplier_revenue']
+    assert sh['value'] == 85 and sh['quote'] == GOOD['quote'] and sh['source_url'] == GOOD['source_url']
+    assert 'share_of_supplier_revenue' not in rels['Otra Corp']['dependency']          # 40 no está en la cita
+    assert 'dependency' not in rels['Inversor X']                                       # no es vínculo de flujo
+    assert res['dropped'].get('% sin cita') == 1 and all('_share_dropped' not in r for r in rels.values())
+
+
+def test_la_ficha_con_porcentaje_pasa_el_validador_del_importador(tmp_path):
+    from ontology import company_import as CI
+    fichas, _res = _run(tmp_path, [dict(GOOD, share_of_supplier_revenue_pct=85)])
+    san, _logs, _s = CI.sanitize_batch(fichas)
+    valid, invalid = CI.validate_batch(san)
+    assert len(valid) == 1 and not invalid

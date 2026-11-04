@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Otros"
 ruta: "scripts/links_to_ficha.py"
 lenguaje: "python"
-lineas: 171
+lineas: 200
 aliases: ["scripts/links_to_ficha.py"]
 tags: ["capa/otros", "tipo/modulo"]
 ---
 
 # scripts/links_to_ficha.py
 
-> Módulo · capa [[Capa Otros]] · 171 líneas · `scripts/links_to_ficha.py`
+> Módulo · capa [[Capa Otros]] · 200 líneas · `scripts/links_to_ficha.py`
 
 ## Para qué sirve
 
@@ -18,10 +18,10 @@ vínculos investigados (JSON de los agentes) → fichas khipus.company/1 «de so
 
 ## API pública
 
-- `build(files, min_conf=…, today=…)` — → (fichas, resumen). Una ficha por empresa con ≥ 1 vínculo bueno; mismo vínculo repetido se deja una vez. _(línea 85)_
-- `main(argv=…)` _(línea 150)_
+- `build(files, min_conf=…, today=…)` — → (fichas, resumen). Una ficha por empresa con ≥ 1 vínculo bueno; mismo vínculo repetido se deja una vez. _(línea 112)_
+- `main(argv=…)` _(línea 179)_
 
-**Internas** (empiezan con `_`): `_clean_link`
+**Internas** (empiezan con `_`): `_clean_link`, `_share_in_quote`
 
 ## Depende de
 

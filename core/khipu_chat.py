@@ -651,7 +651,7 @@ def x_scenario_exposure(scenario, positions=None):
                             'suppliers_hit_ge_1pct': cases[k]['n_affected'],
                             'impacts': [{'company': x['label'], 'id': x['id'], 'impact_pct': x['impact_pct'],
                                          'path': x['path'], 'listed': x['listed']} for x in cases[k]['impacts'][:10]]}
-                        for k in ('bull', 'bear')}
+                        for k in ('bull', 'bear') if k in cases}
         out['cases']['assumptions'] = cases['assumptions']['note_en']
     pf = _scenario_portfolio(a, positions)
     if pf:
@@ -678,6 +678,8 @@ def _scenario_portfolio(a, positions):
     tables = {}
     if a.get('cases'):
         for k in ('bull', 'bear'):
+            if k not in a['cases']:
+                continue
             tables[k] = {x['id']: x['impact_pct'] for x in a['cases'][k]['impacts']}
     elif kernel:
         tables['scenario'] = {x['id']: round(x['sev'] * 100, 2) for x in a.get('impacts') or []}
@@ -1388,7 +1390,10 @@ ESCENARIOS (scenario_exposure / run_scenario): NUNCA digas que no tienes un mode
 ES ese modelo. Si el resultado trae impact_pct, cita esos % por empresa (con «estimación estructural del motor de \
 Khipus, no un pronóstico de precio») y ordena por ellos; si solo trae severity, di alto/medio/bajo. Si trae `cases` \
 (IPO, ronda: evento de financiación), arma DOS secciones —caso favorable y caso desfavorable— con sus % y el supuesto \
-(`cases.assumptions`); una empresa no va como «afectada» y «beneficiada» a la vez fuera de esos dos casos. Si trae \
+(`cases.assumptions`); una empresa no va como «afectada» y «beneficiada» a la vez fuera de esos dos casos. Si `cases` solo \
+trae `bear` (recorte de pedidos: un cliente compra menos o sus resultados decepcionan), preséntalo como UN caso con su supuesto: \
+los afectados son sus PROVEEDORES; di que el motor NO estima el precio de la propia empresa (para eso, volatilidad y VaR) y \
+que los pesos del grafo son importancia 1-6, no % de ingresos; NUNCA inventes un caso favorable. Si trae \
 `portfolio`, abre con «En tu cartera»: est_usd y est_pct de cada caso, tal cual (no recalcules). Cifras de mercado \
 (precio, capitalización, márgenes) SOLO de get_company o del bloque DATOS EN VIVO; una cifra que no está en ningún \
 resultado (cuotas de mercado, backlogs, montos de inversión) no se escribe, o se dice «sin dato verificado». \

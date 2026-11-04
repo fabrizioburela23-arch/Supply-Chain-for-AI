@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "core/khipu_chat.py"
 lenguaje: "python"
-lineas: 3954
+lineas: 3959
 aliases: ["core/khipu_chat.py"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # core/khipu_chat.py
 
-> Módulo · capa [[Capa Chat y agentes]] · 3.954 líneas · `core/khipu_chat.py`
+> Módulo · capa [[Capa Chat y agentes]] · 3.959 líneas · `core/khipu_chat.py`
 
 ## Para qué sirve
 
@@ -33,38 +33,38 @@ EL cerebro conversacional de Khipu (texto).
 - `x_get_news(company, limit=…)` _(línea 529)_
 - `x_ask_agent(seat, question, company, lang=…)` _(línea 579)_
 - `x_scenario_exposure(scenario, positions=…)` _(línea 619)_
-- `x_plan_portfolio(positions=…, risk=…, lang=…)` _(línea 714)_
-- `x_market_movers(direction=…, limit=…, sector=…)` _(línea 735)_
-- `x_rank_companies(by=…, sector=…, country=…, listed_only=…, limit=…)` _(línea 774)_
-- `x_screen_stocks(by=…, sector=…, country=…, limit=…)` _(línea 834)_
-- `x_get_space_summary()` _(línea 922)_
-- `x_web_search(query)` _(línea 957)_
-- `tool_names()` _(línea 971)_
-- `execute_tool(name, args, app=…, lang=…)` — → (ok, result_dict). Nunca lanza. `lang` = idioma de la petición: se pasa a las herramientas que redactan en un idioma (ask_agent), por … _(línea 1008)_
-- `resolve_node(x)` — id/ticker/nombre → id canónico del grafo, o None. _(línea 1075)_
-- `validate_actions(raw)` _(línea 1092)_
-- `validate_request(body)` _(línea 1185)_
-- `build_system(lang, mode=…, agents_enabled=…)` — mode: 'simple' | 'pro' | None (llamadas internas: sin regla de modo). agents_enabled: ids de mascotas activas (None = todas). Ambos vienen … _(línea 1358)_
-- `is_ready_marker(ans)` — True si el modelo rápido solo avisó que juntó los datos (ruta de análisis, L4-07) en vez de redactar. _(línea 1520)_
-- `build_prompt(message, history, lang, context, scratch, rounds_left, force_final, feedback=…, live=…)` — Orden (2026-10-04): contexto → historial → resultados → PREGUNTA ACTUAL al FINAL → formato. Los modelos pesan el final del prompt: antes la … _(línea 1624)_
-- clase `StepParseError` _(línea 1710)_
-- `parse_step(text)` — → ('final', {'answer','actions'}) | ('tools', [{'tool','args'}]). Lanza StepParseError. _(línea 1751)_
-- `truncated(text)` — ¿La respuesta quedó cortada? (negritas sin cerrar, paréntesis abiertos o termina a mitad de palabra sin puntuación). _(línea 1798)_
-- `leaked(text)` — ¿El texto trae restos del protocolo o del "pensamiento en voz alta" del modelo? _(línea 1813)_
-- `synthesize(message, history, lang, context, scratch, timeout, tier=…)` — El AGENTE redacta la respuesta final en prosa a partir de lo consultado (cuando el paso con protocolo JSON falló o se acabó el tiempo de … _(línea 1835)_
-- `company_summary(c, lang)` _(línea 1897)_
-- `fallback_answer(message, lang, reason, results, deadline, app=…, req_id=…)` — Respuesta SIN IA con datos reales. → (answer, actions, extra_results). _(línea 1960)_
-- `strip_tool_names(text, facts=…, lang=…)` — Quita de la respuesta todo nombre interno de herramienta y pone en su lugar la fuente humana: la del hecho [F#] que esa herramienta aportó … _(línea 2144)_
-- `chat_entities(message, calls, context=…, limit=…)` — [{id, label}] — empresas DETECTADAS en la pregunta (primero, en orden) y las que consultaron las herramientas. Ids canónicos del grafo … _(línea 2858)_
-- `chat_cards(calls, entities)` — {company?, committee?} de la empresa PRINCIPAL (la 1.ª detectada) con los resultados ya obtenidos. _(línea 2940)_
-- `agents_used(calls, message, context=…, entities=…)` — [{agent, tools, ok, note_es, note_en, source, as_of}] en el orden de las mascotas. La nota se arma SOLO con valores de los resultados (sin … _(línea 2956)_
-- `enrich_answer(message, calls, context=…, req_id=…)` — Campos que Khipus OS SUMA a la respuesta (nunca reemplaza ninguno). _(línea 3033)_
-- `client_deadline(v)` — `deadline_s` del cuerpo → segundos acotados [15, 120] o None (sin plazo propio = el de siempre). _(línea 3090)_
-- `run_chat(message, history=…, lang=…, context=…, app=…, budget_s=…, max_steps=…, req_id=…, deadline_s=…)` — PORTERO (Jev, core/decide.py): decide en paralelo qué necesita la pregunta. En SOMBRA solo se compara con lo que el chat hizo; con … _(línea 3101)_
-- `ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=…)` — Ficha `chat.answer` (async, §2.5): hechos [F#] con fuente y as_of, fuentes con su as_of, agentes, herramientas (nombre, ok, ms y la HUELLA … _(línea 3399)_
-- `chat_endpoint()` _(línea 3908)_
-- `chat_progress_endpoint(req_id)` — Qué agentes están trabajando en la pregunta `req_id` → {req_id, done, elapsed_ms, phase, seq, agents:[{agent, tool, state: … _(línea 3931)_
-- `tools_endpoint()` _(línea 3949)_
+- `x_plan_portfolio(positions=…, risk=…, lang=…)` _(línea 716)_
+- `x_market_movers(direction=…, limit=…, sector=…)` _(línea 737)_
+- `x_rank_companies(by=…, sector=…, country=…, listed_only=…, limit=…)` _(línea 776)_
+- `x_screen_stocks(by=…, sector=…, country=…, limit=…)` _(línea 836)_
+- `x_get_space_summary()` _(línea 924)_
+- `x_web_search(query)` _(línea 959)_
+- `tool_names()` _(línea 973)_
+- `execute_tool(name, args, app=…, lang=…)` — → (ok, result_dict). Nunca lanza. `lang` = idioma de la petición: se pasa a las herramientas que redactan en un idioma (ask_agent), por … _(línea 1010)_
+- `resolve_node(x)` — id/ticker/nombre → id canónico del grafo, o None. _(línea 1077)_
+- `validate_actions(raw)` _(línea 1094)_
+- `validate_request(body)` _(línea 1187)_
+- `build_system(lang, mode=…, agents_enabled=…)` — mode: 'simple' | 'pro' | None (llamadas internas: sin regla de modo). agents_enabled: ids de mascotas activas (None = todas). Ambos vienen … _(línea 1360)_
+- `is_ready_marker(ans)` — True si el modelo rápido solo avisó que juntó los datos (ruta de análisis, L4-07) en vez de redactar. _(línea 1525)_
+- `build_prompt(message, history, lang, context, scratch, rounds_left, force_final, feedback=…, live=…)` — Orden (2026-10-04): contexto → historial → resultados → PREGUNTA ACTUAL al FINAL → formato. Los modelos pesan el final del prompt: antes la … _(línea 1629)_
+- clase `StepParseError` _(línea 1715)_
+- `parse_step(text)` — → ('final', {'answer','actions'}) | ('tools', [{'tool','args'}]). Lanza StepParseError. _(línea 1756)_
+- `truncated(text)` — ¿La respuesta quedó cortada? (negritas sin cerrar, paréntesis abiertos o termina a mitad de palabra sin puntuación). _(línea 1803)_
+- `leaked(text)` — ¿El texto trae restos del protocolo o del "pensamiento en voz alta" del modelo? _(línea 1818)_
+- `synthesize(message, history, lang, context, scratch, timeout, tier=…)` — El AGENTE redacta la respuesta final en prosa a partir de lo consultado (cuando el paso con protocolo JSON falló o se acabó el tiempo de … _(línea 1840)_
+- `company_summary(c, lang)` _(línea 1902)_
+- `fallback_answer(message, lang, reason, results, deadline, app=…, req_id=…)` — Respuesta SIN IA con datos reales. → (answer, actions, extra_results). _(línea 1965)_
+- `strip_tool_names(text, facts=…, lang=…)` — Quita de la respuesta todo nombre interno de herramienta y pone en su lugar la fuente humana: la del hecho [F#] que esa herramienta aportó … _(línea 2149)_
+- `chat_entities(message, calls, context=…, limit=…)` — [{id, label}] — empresas DETECTADAS en la pregunta (primero, en orden) y las que consultaron las herramientas. Ids canónicos del grafo … _(línea 2863)_
+- `chat_cards(calls, entities)` — {company?, committee?} de la empresa PRINCIPAL (la 1.ª detectada) con los resultados ya obtenidos. _(línea 2945)_
+- `agents_used(calls, message, context=…, entities=…)` — [{agent, tools, ok, note_es, note_en, source, as_of}] en el orden de las mascotas. La nota se arma SOLO con valores de los resultados (sin … _(línea 2961)_
+- `enrich_answer(message, calls, context=…, req_id=…)` — Campos que Khipus OS SUMA a la respuesta (nunca reemplaza ninguno). _(línea 3038)_
+- `client_deadline(v)` — `deadline_s` del cuerpo → segundos acotados [15, 120] o None (sin plazo propio = el de siempre). _(línea 3095)_
+- `run_chat(message, history=…, lang=…, context=…, app=…, budget_s=…, max_steps=…, req_id=…, deadline_s=…)` — PORTERO (Jev, core/decide.py): decide en paralelo qué necesita la pregunta. En SOMBRA solo se compara con lo que el chat hizo; con … _(línea 3106)_
+- `ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=…)` — Ficha `chat.answer` (async, §2.5): hechos [F#] con fuente y as_of, fuentes con su as_of, agentes, herramientas (nombre, ok, ms y la HUELLA … _(línea 3404)_
+- `chat_endpoint()` _(línea 3913)_
+- `chat_progress_endpoint(req_id)` — Qué agentes están trabajando en la pregunta `req_id` → {req_id, done, elapsed_ms, phase, seq, agents:[{agent, tool, state: … _(línea 3936)_
+- `tools_endpoint()` _(línea 3954)_
 
 **Internas** (empiezan con `_`): `_ai_interactive`, `_submit_ai`, `_prog_purge_locked`, `_owner_tag`, `_prog_bump`, `_ui_key`, `_ui_sig`, `_progress_from_future`, `_since`, `_now_iso`, `_extra`, `_mcp`, `_principal`, `_pf_name`, `_server_args`, `_ref_block`, `_schema_sig`, `_clip`, `_snapshot`, `_node_label`, `_research_session`, `_scenario_portfolio`, `_web_available`, `_board_memo_flags`, `_guess_lang`, `_agents_rule`, `_balance_edges`, `_compact_for_chat`, `_fmt_result`, `_cache_key`, `_facts_book`, `_trim_scratch`, `_fact_prefix`, `_args_summary`, `_json_objects`, `_prose_answer`, `_num`, `_entities_in`, `_friendly_source`, `_collect_sources`, `_src_name`, `_human_source`, `_tool_name_rx`, `_dedupe_parens`, `_fmt_num`, `_pct`, `_usd_b`, `_price`, `_quote`, `_decision_labels`, `_risk_sources`, `_iso_time`, `_session_live`, `_chg_label`, `_price_time`, `_note_company`, `_note_structure`, `_note_supply_chain`, `_note_screen`, `_note_rank` y 41 más
 
