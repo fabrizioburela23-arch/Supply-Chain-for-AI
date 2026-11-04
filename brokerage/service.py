@@ -901,9 +901,27 @@ def _summaries(rec, spec, ev, blocked, requires_approval):
 TIFS = ('day', 'gtc', 'ioc', 'fok')
 
 
+# Bases de cripto que Alpaca lista (par BASE/USD|USDT|USDC). Alpaca devuelve las POSICIONES cripto sin barra («ETHUSD») pero
+# solo acepta ÓRDENES con barra («ETH/USD», tif gtc/ioc): una venta de ETHUSD salía con tif 'day' y Alpaca la rechazaba
+# con «invalid crypto time_in_force» (2026-10-30). Lista corta y explícita a propósito: una acción nunca se confunde.
+_CRYPTO_BASES = frozenset({'BTC', 'ETH', 'SOL', 'DOGE', 'LTC', 'BCH', 'AVAX', 'LINK', 'UNI', 'AAVE', 'DOT', 'SHIB',
+                           'XRP', 'MATIC', 'ADA', 'ATOM', 'ETC', 'XTZ', 'BAT', 'CRV', 'GRT', 'MKR', 'SUSHI', 'YFI',
+                           'PEPE', 'TRUMP', 'HYPE'})
+
+
+def _norm_symbol(sym):
+    s = str(sym or '').upper().strip()
+    if '/' in s:
+        return s
+    for q in ('USDT', 'USDC', 'USD'):
+        if s.endswith(q) and s[:-len(q)] in _CRYPTO_BASES:
+            return f'{s[:-len(q)]}/{q}'
+    return s
+
+
 def _spec(symbol, side, notional, qty, order_type, limit_price, time_in_force=None):
     """Valida la forma de la orden. Devuelve (spec, None) o (None, (es, en[, code]))."""
-    sym = str(symbol or '').upper().strip()
+    sym = _norm_symbol(symbol)
     side = str(side or '').lower().strip()
     order_type = str(order_type or 'market').lower().strip()
     if not sym:
