@@ -1,0 +1,13 @@
+{
+ "schema": "khipus.lote-origin/1",
+ "batch": "cp-2026-11-04",
+ "received": "2026-11-04",
+ "package": "fichas mínimas de las CONTRAPARTES de vínculos pendientes de los lotes 8-9 (agentes con búsqueda web; existencia comprobada contra producción)",
+ "package_file": "fichas_contrapartes.jsonl.gz",
+ "package_file_sha256": "6cce6035e0ce614a2520733c4923268d27b73d4abc2dd7d9cf10c61053208c4f",
+ "package_records": 50,
+ "kept_records": 42,
+ "declared_links": 0,
+ "note_es": "42 empresas nuevas (de 74 contrapartes con nombre de empresa: 24 ya existían en producción, 8 se descartaron por ambiguas o sin datos firmes). Al aplicarlo, los vínculos pendientes de los lotes 8-9 que las nombran se activan solos. Trae 5 categorías nuevas que se aprueban al aplicar: Farmacéutica, Comercio minorista, Distribución mayorista, Logística 3PL, Plataforma de internet. Las agencias de gobierno NO se crearon.",
+ "note_en": "42 new companies (counterparties of pending links in batches 8-9). Applying it activates those pending links. Brings 5 new categories approved on apply. Government agencies were not created."
+}
