@@ -609,6 +609,75 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None, 
     raise RuntimeError('claude: sin texto de ningún modelo')
 
 
+WEB_TOOLS = {'search': {'type': 'web_search_20260209', 'name': 'web_search'},
+             'fetch': {'type': 'web_fetch_20260209', 'name': 'web_fetch'}}
+
+
+def claude_web_available():
+    """¿Hay Claude para buscar/leer la web (herramientas de servidor de Anthropic, la MISMA ANTHROPIC_KEY)?"""
+    return bool(CLAUDE) and provider_available('claude')
+
+
+def claude_web(query=None, url=None, max_uses=3, timeout_s=60, max_tokens=2500):
+    """Búsqueda (`query`) o lectura de UNA página (`url`) con web_search / web_fetch del SERVIDOR de Anthropic.
+    La página la abre Anthropic, no nuestro servidor (sin SSRF). Pasa por el MISMO control de gasto, cupo y corta-circuito
+    que el resto de Claude. → {'text', 'citations': [{url, title, cited_text}], 'model'}; lanza si no hay Claude."""
+    if not (query or url):
+        raise ValueError('query o url')
+    mode = 'fetch' if url else 'search'
+    if url:
+        prompt = (f'Open this page with web_fetch and return its main content faithfully: {url}\n'
+                  'Start with the page title and date if shown. Keep every figure EXACTLY as written (no rounding, no '
+                  'conversion). Plain text, at most ~900 words; skip menus, ads and cookie banners. If the page cannot '
+                  'be opened, say so in one line.')
+    else:
+        prompt = (f'Search the web for: {query}\n'
+                  'Answer with at most 6 short factual bullets, newest first, each citing its source. Copy figures '
+                  'EXACTLY as the source writes them and give the date of each fact. If nothing reliable is found, say so.')
+    tools = [dict(WEB_TOOLS[mode], max_uses=max(1, min(5, int(max_uses))))]
+
+    def _call():
+        import anthropic
+        _usage().check('claude', max_tokens)
+        with _ai_slot(max_tokens):
+            client = anthropic.Anthropic(api_key=CLAUDE, max_retries=0, timeout=max(10.0, float(timeout_s)))
+            messages = [{'role': 'user', 'content': prompt}]
+            msg = None
+            for _ in range(4):                       # el servidor puede pausar una búsqueda larga: se retoma
+                t0 = time.monotonic()
+                msg = client.messages.create(model=AI_MODEL_FAST, max_tokens=max_tokens, tools=tools,
+                                             messages=messages, extra_body={'output_config': {'effort': 'low'}})
+                try:
+                    u = getattr(msg, 'usage', None)
+                    _usage().record('claude', getattr(msg, 'model', AI_MODEL_FAST),
+                                    int(getattr(u, 'input_tokens', 0) or 0), int(getattr(u, 'output_tokens', 0) or 0),
+                                    ms=(time.monotonic() - t0) * 1000, estimated=u is None)
+                except Exception:  # noqa: BLE001
+                    pass
+                if getattr(msg, 'stop_reason', None) != 'pause_turn':
+                    break
+                messages.append({'role': 'assistant', 'content': msg.content})
+            return msg
+    msg = _guarded('claude', max_tokens, _call)
+    if getattr(msg, 'stop_reason', None) == 'refusal':
+        raise RuntimeError('claude declined the web request')
+    texts, cites, seen = [], [], set()
+    for b in getattr(msg, 'content', None) or []:
+        if getattr(b, 'type', None) != 'text':
+            continue
+        texts.append(b.text or '')
+        for c in getattr(b, 'citations', None) or []:
+            u = getattr(c, 'url', None)
+            if not u:
+                continue
+            key = (u, getattr(c, 'cited_text', '') or '')
+            if key in seen:
+                continue
+            seen.add(key)
+            cites.append({'url': u, 'title': getattr(c, 'title', None), 'cited_text': (getattr(c, 'cited_text', '') or '')[:600]})
+    return {'text': ''.join(texts).strip(), 'citations': cites[:12], 'model': getattr(msg, 'model', AI_MODEL_FAST)}
+
+
 def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
     def _call():
         _usage().check('gemini', max_tokens)

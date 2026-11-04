@@ -73,6 +73,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_voice_agent_split.py]]
 - [[tests.test_voice_os_server.py]]
 - [[tests.test_voice_tour.py]]
+- [[tests.test_web_read.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

@@ -944,6 +944,14 @@ def x_get_space_summary():
     return out
 
 
+def _tavily_on():
+    try:
+        from core.config import TAVILY_KEY
+        return bool(TAVILY_KEY)
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _web_available():
     try:
         from core.websearch import _web_search_available
@@ -967,7 +975,42 @@ def x_web_search(query):
     return {'query': q, 'results': [{'title': r.get('title'), 'url': r.get('url'),
                                      'snippet': _clip(r.get('content'), 600),
                                      'published': r.get('published_date')} for r in res],
-            'source': 'Tavily web search', 'as_of': _now_iso()}
+            'source': 'Tavily web search' if _tavily_on() else 'web search (Anthropic)', 'as_of': _now_iso()}
+
+
+def _web_read_available():
+    try:
+        from core.ai import claude_web_available
+        return claude_web_available()
+    except Exception:  # noqa: BLE001
+        return False
+
+
+_URL_RX = re.compile(r'^https?://[^\s/]+\.[^\s]+$', re.I)
+_PRIVATE_HOST_RX = re.compile(r'^(?:localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|0\.|\[|'
+                              r'.*\.(?:internal|local|localdomain)$)', re.I)
+
+
+@_extra('read_url', 'url:string',
+        'Open and READ one web page (news article, press release, 10-K, report, blog) and return its main text with the '
+        'figures exactly as written. Use it whenever the user pastes a link or asks to read / summarize a page, or to open '
+        'a promising result of web_search. Cite the URL.', available=_web_read_available)
+def x_read_url(url):
+    u = _clip(str(url or '').strip(), 600)
+    if not _URL_RX.match(u or ''):
+        raise ToolFailure('a full http(s) URL is required')
+    host = re.sub(r'^https?://', '', u, flags=re.I).split('/')[0].split('@')[-1].split(':')[0]
+    if _PRIVATE_HOST_RX.match(host):
+        raise ToolFailure('that address is not a public web page')
+    from core.ai import claude_web
+    try:
+        out = claude_web(url=u, max_uses=1, max_tokens=3000)
+    except Exception as e:  # noqa: BLE001
+        raise ToolFailure(f'the page could not be read ({type(e).__name__})')
+    if not (out.get('text') or '').strip():
+        raise ToolFailure('the page returned no readable text')
+    return {'url': u, 'content': _clip(out['text'], 6000), 'citations': (out.get('citations') or [])[:6],
+            'source': 'web page read via Anthropic web_fetch', 'as_of': _now_iso()}
 
 
 def tool_names():
@@ -1383,7 +1426,7 @@ también get_committee_memo). "@analista / pregúntale \
 al analista" → ask_agent. "¿puedo investigar ahora? / ¿por qué falló o quedó a medias la investigación?" → \
 get_research_health (proveedores en pausa, cola, presupuesto); en get_research, last_job.status 'partial' = síntesis \
 incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda mañana. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
-peores" → rank_companies o market_movers. "¿cuál está barata / infravalorada / con potencial de crecimiento?" → screen_stocks (by=peg por defecto; value si piden solo baratas, growth si piden crecimiento, upside si piden margen hasta el precio objetivo). NUNCA digas que no tienes datos de valoración: tienes P/E, crecimiento esperado por el consenso y precio objetivo en vivo. Aclara SIEMPRE que no hay estimaciones a 2027: el crecimiento es el que el consenso espera para el próximo año; que un P/E bajo puede ser una empresa en problemas; y que es información, no una recomendación. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
+peores" → rank_companies o market_movers. UN ENLACE pegado o "lee / abre / resume esta página, noticia o 10-K" → read_url(url). Algo ACTUAL que no está en Khipus (la noticia de hoy, macro, regulación, una empresa fuera del grafo, un dato que ninguna herramienta trae) → web_search y, si hace falta el detalle, read_url del mejor resultado; cita SIEMPRE la URL y la fecha. Nunca digas «no tengo acceso a internet» si web_search o read_url están en tu lista. "¿cuál está barata / infravalorada / con potencial de crecimiento?" → screen_stocks (by=peg por defecto; value si piden solo baratas, growth si piden crecimiento, upside si piden margen hasta el precio objetivo). NUNCA digas que no tienes datos de valoración: tienes P/E, crecimiento esperado por el consenso y precio objetivo en vivo. Aclara SIEMPRE que no hay estimaciones a 2027: el crecimiento es el que el consenso espera para el próximo año; que un P/E bajo puede ser una empresa en problemas; y que es información, no una recomendación. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
 get_history(id_or_ticker, range). "¿cuánto le afecta a el PROVEEDOR X si sus CLIENTES recortan / cancelan / gastan menos?" (p. ej. los hiperescaladores recortan capex → Nvidia) → run_scenario con shocks=los CLIENTES que recortan y direction="up" (por defecto "down" es el caso contrario: el que cae deja de suministrar). Di siempre que es un efecto ESTRUCTURAL de ingresos, no un precio. "¿qué pasa si cae / falla X?" con una empresa CONCRETA → run_scenario(shocks=[{{"id":"X"}}]) \
 (las cifras de impacto salen de ese motor; si la pregunta es un escenario descrito en palabras, scenario_exposure). \
 ESCENARIOS (scenario_exposure / run_scenario): NUNCA digas que no tienes un modelo cuantitativo: el motor de Khipus \
@@ -2044,6 +2087,8 @@ def _collect_sources(tool_name, res, into, lang='es'):
         if isinstance(it, dict) and it.get('url'):
             add(it.get('outlet') or it.get('title') or it['url'], it['url'], as_of=res_as_of,
                 published=it.get('date') or it.get('published'))
+    if tool_name == 'read_url' and isinstance(res.get('url'), str):
+        add(res['url'], res['url'], as_of=res_as_of)
     lm = res.get('live_market')
     if isinstance(lm, dict) and lm.get('available') and lm.get('source'):
         add(f'{lm["source"]} (live)', as_of=_price_time(lm, res_as_of))
@@ -2065,6 +2110,7 @@ def _src_name(src):
 # herramienta → cómo la nombra una persona (ES, EN); se prefiere la fuente REAL del hecho [F#] de esa herramienta
 _TOOL_HUMAN = {
     'screen_stocks': ('fundamentales en vivo (Yahoo Finance)', 'live fundamentals (Yahoo Finance)'),
+    'read_url': ('página web', 'web page'),
     'get_company': ('Grafo Khipus', 'Khipus graph'), 'search_companies': ('Grafo Khipus', 'Khipus graph'),
     'get_supply_chain': ('Grafo Khipus', 'Khipus graph'), 'rank_companies': ('Grafo Khipus', 'Khipus graph'),
     'plan_portfolio': ('comité de cartera de Khipus', 'Khipus portfolio committee'),

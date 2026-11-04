@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ai.py"
 lenguaje: "python"
-lineas: 1196
+lineas: 1265
 aliases: ["core/ai.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ai.py
 
-> Módulo · capa [[Capa Infraestructura]] · 1.196 líneas · `core/ai.py`
+> Módulo · capa [[Capa Infraestructura]] · 1.265 líneas · `core/ai.py`
 
 ## Para qué sirve
 
@@ -30,10 +30,12 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - `claude_attempts(model, tier=…, max_tokens=…)` — [(kwargs_extra, max_tokens), …] para UN modelo Claude, en orden: el primero es el preferido; los siguientes son más SEGUROS (se usan si la … _(línea 411)_
 - `claude_ping_kwargs(model)` — kwargs de pensamiento para un ping de 1 token (🩺) que el modelo ACEPTA: Haiku 4.5 y viejos → disabled; Sonnet 5.5 → between_tools; Opus … _(línea 451)_
 - `claude_system(system)` — `system` para messages.create: texto plano si es corto; un bloque con cache_control si es largo. _(línea 467)_
-- `gemini_state()` — Para el 🩺 / salud: orden actual de modelos y cuáles están saturados ahora. _(línea 693)_
-- `provider_order(tier=…)` — Orden de la cascada para el nivel ('fast'|'deep'). Profundo: AI_ORDER_DEEP > claude,gemini,nvidia (la AI_ORDER vieja se IGNORA a propósito: … _(línea 915)_
-- `ai_route_state()` — Para 🩺 / salud / MCP: el orden EFECTIVO por nivel, de dónde sale y qué modelo usa cada uno. _(línea 924)_
-- `strip_reasoning(text)` — Quita el "razonamiento oculto" que algunos modelos (NVIDIA/DeepSeek, Qwen…) escriben en &lt;think>…&lt;/think>. Si el bloque quedó sin cerrar (se … _(línea 1154)_
+- `claude_web_available()` — ¿Hay Claude para buscar/leer la web (herramientas de servidor de Anthropic, la MISMA ANTHROPIC_KEY)? _(línea 616)_
+- `claude_web(query=…, url=…, max_uses=…, timeout_s=…, max_tokens=…)` — Búsqueda (`query`) o lectura de UNA página (`url`) con web_search / web_fetch del SERVIDOR de Anthropic. La página la abre Anthropic, no … _(línea 621)_
+- `gemini_state()` — Para el 🩺 / salud: orden actual de modelos y cuáles están saturados ahora. _(línea 762)_
+- `provider_order(tier=…)` — Orden de la cascada para el nivel ('fast'|'deep'). Profundo: AI_ORDER_DEEP > claude,gemini,nvidia (la AI_ORDER vieja se IGNORA a propósito: … _(línea 984)_
+- `ai_route_state()` — Para 🩺 / salud / MCP: el orden EFECTIVO por nivel, de dónde sale y qué modelo usa cada uno. _(línea 993)_
+- `strip_reasoning(text)` — Quita el "razonamiento oculto" que algunos modelos (NVIDIA/DeepSeek, Qwen…) escriben en &lt;think>…&lt;/think>. Si el bloque quedó sin cerrar (se … _(línea 1223)_
 
 **Internas** (empiezan con `_`): `_env_num`, `_is_background`, `_ai_slot`, `_small`, `_mono`, `_sleep`, `_transient_wait_s`, `_retry_transient`, `_definitive_kind`, `_open_circuit`, `_close_circuit`, `_note_error`, `_guarded`, `_redact`, `_usage`, `_claude_version`, `_status_of`, `_param_rejected`, `_complete_claude`, `_complete_claude_inner`, `_complete_gemini`, `_NetDown`, `_gemini_post`, `_gemini_major`, `_GeminiHTTP`, `_gemini_models`, `_gemini_mark`, `_complete_gemini_inner`, `_gemini_dead`, `_gemini_mark_dead`, `_gemini_once`, `_complete_nvidia`, `_complete_nvidia_inner`, `_ai_configured`, `_parse_order`, `_legacy_order`, `_order_source`, `_nullctx`, `_ai_complete`, `_aicalls`, `_ai_complete_raw`, `_complete_single`, `_cascade`, `_ai_json`, `_extract_json`
 
@@ -53,6 +55,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_report.py]] — lo importa
 - [[core.sim_agents.py]] — lo importa
+- [[core.websearch.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
@@ -67,7 +70,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[server.py]] — lo importa
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 
-_Además lo importan 33 pruebas (lista abajo)._
+_Además lo importan 34 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -122,6 +125,7 @@ _Además lo importan 33 pruebas (lista abajo)._
 - [[tests.test_research.py]]
 - [[tests.test_scenario_kernel.py]]
 - [[tests.test_sim_agents.py]]
+- [[tests.test_web_read.py]]
 
 ## Mencionado en sesiones de trabajo
 

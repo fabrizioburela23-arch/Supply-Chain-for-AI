@@ -19,6 +19,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[tests.test_investigador.py]]
 - [[tests.test_security.py]]
+- [[tests.test_web_read.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

@@ -13,13 +13,32 @@ from core.config import HTTP_TIMEOUT, TAVILY_KEY
 
 
 def _web_search_available():
-    return bool(TAVILY_KEY)
+    if TAVILY_KEY:
+        return True
+    try:                       # 2026-11-04: sin Tavily, la búsqueda web de Claude (misma ANTHROPIC_KEY)
+        from core.ai import claude_web_available
+        return claude_web_available()
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _claude_search(query, max_results=5):
+    """Respaldo sin Tavily: web_search de Anthropic. Cada resultado es un TRAMO CITADO (cited_text) con su URL, no un
+    resumen sin fuente. Nunca lanza."""
+    try:
+        from core.ai import claude_web
+        out = claude_web(query=query, max_uses=3)
+    except Exception:  # noqa: BLE001
+        return []
+    res = [{'title': c.get('title') or c['url'], 'url': c['url'], 'content': c.get('cited_text') or '',
+            'score': None, 'published_date': None} for c in out.get('citations') or []]
+    return res[:max_results]
 
 
 def web_search(query, max_results=5, search_depth='advanced', include_domains=None):
     """-> list[{title,url,content,score,published_date}] o [] si falla/sin key."""
     if not TAVILY_KEY:
-        return []
+        return _claude_search(query, max_results)
     try:
         r = requests.post('https://api.tavily.com/search', json={
             'api_key': TAVILY_KEY, 'query': query, 'search_depth': search_depth,

@@ -9,7 +9,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 > El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud.
 
-**21 archivos · 5.395 líneas.** Volver al [[00 Mapa de Khipus]].
+**21 archivos · 5.414 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -31,7 +31,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 - [[research.auto_events.py]] — 129 líneas · eventos AUTOMÁTICOS del mercado real (Phase 2).
 - [[research.agents.registry.py]] — 77 líneas · los 8 agentes de Phase 2.
 - [[research.errors.py]] — 75 líneas · traduce errores técnicos de la IA a lenguaje simple.
-- [[core.websearch.py]] — 37 líneas · búsqueda web real para investigación autónoma.
+- [[core.websearch.py]] — 56 líneas · búsqueda web real para investigación autónoma.
 - [[research.__init__.py]] — 25 líneas · PHASE 2 · AGENT RESEARCH SWARM.
 - [[research.agents.__init__.py]] — 11 líneas · interfaz común + registro de agentes especializados.
 
@@ -39,7 +39,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 27 |
+| usa a | [[Capa Infraestructura]] | 28 |
 | la usa | [[Capa Comité]] | 15 |
 | usa a | [[Capa Ontología y grafo temporal]] | 15 |
 | la usa | [[Capa Chat y agentes]] | 9 |
