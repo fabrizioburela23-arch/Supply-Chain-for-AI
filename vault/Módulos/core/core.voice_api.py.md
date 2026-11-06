@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "core/voice_api.py"
 lenguaje: "python"
-lineas: 825
+lineas: 823
 aliases: ["core/voice_api.py"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # core/voice_api.py
 
-> Módulo · capa [[Capa Voz]] · 825 líneas · `core/voice_api.py`
+> Módulo · capa [[Capa Voz]] · 823 líneas · `core/voice_api.py`
 
 ## Para qué sirve
 
@@ -23,11 +23,11 @@ Voz de Khipu — rutas /api/voice/\* (G5-05, lote I4: salieron de server.py SIN 
 - `voice_voices()` — Voces disponibles: las de la cuenta + las mejor valoradas EN ESPAÑOL de la biblioteca compartida de ElevenLabs (para arreglar la 'voz … _(línea 74)_
 - `voice_adopt()` — Adopta una voz de la biblioteca compartida a la cuenta (paso previo a asignarla al agente). Mismo candado que agent-tune + PIN de operador. … _(línea 178)_
 - `voice_agent_tune()` — Ajuste FINO del agente (modelo TTS / idioma / voice_id). Requiere ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que adopt) + PIN de operador. … _(línea 215)_
-- `voice_sync_agent()` — Sincroniza el agente de ElevenLabs con el cerebro definido aquí (PATCH del agente). PIN de operador: antes cualquiera podía dispararlo en … _(línea 648)_
-- `start_autosync()` — Auto-sync al arrancar (BIXBY_AUTOSYNC=0 para desactivar). En background para no retrasar el boot; idempotente aunque los 2 workers de … _(línea 678)_
-- `bixby_system_prompt()` — Returns Khipu's system prompt for ElevenLabs agent configuration. _(línea 693)_
-- `voice_session()` — URL firmada (un solo uso, la clave NUNCA sale del server) + qué overrides permite el agente, para que el navegador no mande uno prohibido … _(línea 713)_
-- `voice_tour_audio(lang, step)` — Audio MP3 de la frase `step` del recorrido guiado, con la voz del agente de Khipu. 404 sin voz configurada o paso inexistente (el navegador … _(línea 767)_
+- `voice_sync_agent()` — Sincroniza el agente de ElevenLabs con el cerebro definido aquí (PATCH del agente). PIN de operador: antes cualquiera podía dispararlo en … _(línea 646)_
+- `start_autosync()` — Auto-sync al arrancar (BIXBY_AUTOSYNC=0 para desactivar). En background para no retrasar el boot; idempotente aunque los 2 workers de … _(línea 676)_
+- `bixby_system_prompt()` — Returns Khipu's system prompt for ElevenLabs agent configuration. _(línea 691)_
+- `voice_session()` — URL firmada (un solo uso, la clave NUNCA sale del server) + qué overrides permite el agente, para que el navegador no mande uno prohibido … _(línea 711)_
+- `voice_tour_audio(lang, step)` — Audio MP3 de la frase `step` del recorrido guiado, con la voz del agente de Khipu. 404 sin voz configurada o paso inexistente (el navegador … _(línea 765)_
 
 **Internas** (empiezan con `_`): `_voice_override_off`, `_ledger_503`, `_voice_decision`, `_voice_outcome`, `_agent_before`, `_bixby_client_tools`, `_sync_bixby_agent`, `_voice_autosync_log`
 

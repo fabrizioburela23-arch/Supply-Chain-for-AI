@@ -23,6 +23,16 @@ buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`).
   parte de la respuesta, pensados por tipo de dato; también para B2B. Siguiente: más constructores (run_scenario up,
   market_movers…), revisar el examen semanal, 👍/👎 en respuestas para sumar preguntas al examen.
 
+**2026-11-06 (b) — Khipus = VISUAL + SÍNTESIS; rumbo B2B:**
+- El gráfico ya NO es herramienta: «✦ Gráfico a pedido» salió del menú de Khipus OS (la ventana `canvas` sigue para
+  respuestas que la abren). Los gráficos nacen dentro de cada respuesta (core/genui, constructor por tipo de dato).
+- Texto del chat = síntesis: 1 frase en negrita + ≤ 3 viñetas, ~80 palabras (regla RESPUESTA en build_system y
+  SYNTH_SYSTEM). El examen (`scripts/eval_chat.py`) marca «muy larga» sobre 170 palabras.
+- B2B (Fabrizio, 2026-11-06): misma interfaz sobre ONTOLOGÍAS DE EMPRESAS (su «ontology maker», proyecto aparte). Dónde
+  enchufa: el contrato kblocks/1 + core/genui es GENÉRICO (bloques por tipo de dato, cifras con procedencia del
+  resultado citado); una ontología cliente = sus herramientas de lectura (objetos/vínculos/métricas) + constructores
+  BUILDERS para ellas. Regla al construir: nada de finanzas «cableado» en layout/genui.js; lo específico va en builders.
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

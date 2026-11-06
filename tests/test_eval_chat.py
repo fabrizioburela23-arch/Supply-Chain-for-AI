@@ -37,6 +37,8 @@ def test_grade_aprueba_y_reprueba():
     r = ev.grade(case, {**good, 'answer': good['answer'] + ' 61,77 USD (⚠ cifra no verificada)'}, 5)
     assert any('no verificada' in f for f in r['fallas'])
     assert not ev.grade(case, {'error': 'HTTP 500'}, 1)['ok']
+    r = ev.grade(case, {**good, 'answer': 'palabra ' * 300}, 5)
+    assert any('muy larga' in f for f in r['fallas'])
 
 
 def test_get_company_trae_cifras_derivadas():

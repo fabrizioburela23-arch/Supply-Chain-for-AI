@@ -9,11 +9,11 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**33 archivos · 30.655 líneas.** Volver al [[00 Mapa de Khipus]].
+**33 archivos · 30.656 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[engine.cockpit.js]] — 5.053 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
+- [[engine.cockpit.js]] — 5.054 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.app_main.js]] — 4.850 líneas · Global error reporter — shows uncaught JS errors on screen (no devtools needed)
 - [[app.html]] — 3.568 líneas
 - [[engine.app_coordinator.js]] — 2.718 líneas · Khipu Core Coordinator

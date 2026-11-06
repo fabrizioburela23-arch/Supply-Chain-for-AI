@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Otros"
 ruta: "scripts/eval_chat.py"
 lenguaje: "python"
-lineas: 121
+lineas: 126
 aliases: ["scripts/eval_chat.py"]
 tags: ["capa/otros", "tipo/modulo"]
 ---
 
 # scripts/eval_chat.py
 
-> Módulo · capa [[Capa Otros]] · 121 líneas · `scripts/eval_chat.py`
+> Módulo · capa [[Capa Otros]] · 126 líneas · `scripts/eval_chat.py`
 
 ## Para qué sirve
 
@@ -18,10 +18,10 @@ Examen de oro del chat Khipu (stdlib, sin dependencias).
 
 ## API pública
 
-- `grade(case, out, elapsed_s, max_s=…)` — Califica UNA respuesta → {ok, checks:{...}, fallas:[...]} (función pura: la prueban los tests). _(línea 32)_
-- `ask(url, q, lang=…, timeout=…)` _(línea 60)_
-- `report_md(results, url)` _(línea 79)_
-- `main()` _(línea 90)_
+- `grade(case, out, elapsed_s, max_s=…)` — Califica UNA respuesta → {ok, checks:{...}, fallas:[...]} (función pura: la prueban los tests). _(línea 34)_
+- `ask(url, q, lang=…, timeout=…)` _(línea 65)_
+- `report_md(results, url)` _(línea 84)_
+- `main()` _(línea 95)_
 
 ## Depende de
 

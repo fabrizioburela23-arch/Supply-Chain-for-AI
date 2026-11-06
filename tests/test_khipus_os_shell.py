@@ -226,8 +226,9 @@ console.log(JSON.stringify(r));
     assert 'agents' in ids                       # vino de la cola previa a la carga
     for s in out['screens']:
         assert s['es'] and s['en'] and s['icon'], s
-    for must in ('graph', 'market', 'terminal', 'geo', 'space', 'simulation', 'crypto', 'portfolios', 'insights', 'screener', 'canvas', 'guia'):
+    for must in ('graph', 'market', 'terminal', 'geo', 'space', 'simulation', 'crypto', 'portfolios', 'insights', 'screener', 'guia'):
         assert must in ids, must
+    assert 'canvas' not in ids        # 2026-11-06: el gráfico ya no es herramienta; nace dentro de cada respuesta
 
 
 def test_carteras_es_ventana_y_ya_no_cierra_el_os():

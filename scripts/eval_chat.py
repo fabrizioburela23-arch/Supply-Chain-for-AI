@@ -5,6 +5,7 @@ Manda cada pregunta de data/eval/preguntas_oro.json al chat (POST /api/khipu/cha
   · herramientas: usó al menos una de cada grupo esperado
   · respondió: texto de verdad (> 120 caracteres) y no un "no puedo / no tengo datos"
   · cifras: sin "(⚠ cifra no verificada)" del guardián
+  · síntesis: ≤ 170 palabras (la app dibuja las cifras; el texto no las repite)
   · tiempo: dentro de --max-s
 Escribe docs/eval/ULTIMO.md (tabla simple) + docs/eval/ultimo.json. Es la forma de "entrenar" sin fine-tuning:
 cada falla dice qué receta/herramienta arreglar; se vuelve a correr y la nota debe subir.
@@ -27,6 +28,7 @@ DEFAULT_URL = os.environ.get('KHIPU_URL', 'https://supply-chain-for-ai-productio
 REFUSALS = ('no tengo acceso', 'no puedo responder', 'no dispongo', 'no tengo datos', 'no tengo información',
             'no pude obtener', 'no está disponible en este momento', 'intenta de nuevo', 'reintenta')
 UNVERIFIED = 'cifra no verificada'
+MAX_WORDS = 170
 
 
 def grade(case, out, elapsed_s, max_s=60.0):
@@ -43,6 +45,9 @@ def grade(case, out, elapsed_s, max_s=60.0):
         fallas.append('error: ' + str(out.get('error'))[:80])
     elif len(ans) < 120:
         fallas.append('respuesta corta')
+    words = len(ans.split())
+    if words > MAX_WORDS:
+        fallas.append(f'muy larga ({words} palabras)')        # síntesis visual: el texto no repite los gráficos
     hit = next((r for r in REFUSALS if r in low), None)
     if hit:
         fallas.append(f'se rindió ("{hit}")')

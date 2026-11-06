@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-12"
-ruta: "docs/ESTADO.md#L2960"
+ruta: "docs/ESTADO.md#L2970"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa H — Feedback 7 (2026-07-12): explicabilidad + regla bilingüe + cripto
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2960 (36 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2970 (36 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

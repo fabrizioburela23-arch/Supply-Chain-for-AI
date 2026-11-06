@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-06"
-ruta: "docs/ESTADO.md#L1050"
+ruta: "docs/ESTADO.md#L1060"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-06 (ee) — MAPA POR CAPITALIZACIÓN EN VIVO + HOME CON CADA CARTERA (sw v240)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1050 (11 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1060 (11 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

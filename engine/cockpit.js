@@ -814,7 +814,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       { g: 'discover', id: 'swarm', ic: '🧠', es: 'Investigación con evidencia', en: 'Evidence-based research', k: 'investigar investigacion research analistas evidencia claims conclusiones', run: function () { if (sel && W.KhipuResearch) W.KhipuResearch.open(sel); else stage('pick', { for: 'swarm' }); }, ok: function () { return !!(W.KhipuResearch && W.KhipuResearch.open); } },
       { g: 'discover', id: 'research', ic: '💡', es: 'Tesis rápida de una empresa', en: 'Quick thesis on a company', k: 'tesis thesis rapida quick sector competidores', run: function () { stage('pick', { for: 'research' }); } },
       { g: 'discover', id: 'sim', ic: '◉', es: 'Simular una caída', en: 'Simulate a failure', k: 'simular shock caida colapso', run: function () { if (sel) stage('sim', { id: sel, kind: 'collapse' }); else stage('pick', { for: 'sim' }); } },
-      { g: 'discover', id: 'canvas', ic: '✦', es: 'Gráfico a pedido', en: 'Chart on demand', k: 'grafico canvas lienzo chart dibujar', run: function () { stage('canvas'); } },
+      // ✦ «Gráfico a pedido» YA NO es una herramienta del menú (2026-11-06, Fabrizio): los gráficos nacen dentro de
+      // cada respuesta (core/genui). La ventana 'canvas' sigue existiendo para las respuestas que la abren.
       { g: 'help', id: 'agents', ic: '◍', es: 'Tus agentes', en: 'Your agents', k: 'agentes agents mascotas analista radar cadena tecnico comite', run: function () { stage('agents'); }, ok: function () { return !!_custom.agents; } },
       { g: 'help', id: 'brief', ic: '☀️', es: 'Brief de hoy', en: 'Today’s brief', k: 'brief matinal resumen hoy today morning', run: function () { W._briefOpen(); _raise('brief-ov', 7600); }, ok: function () { return typeof W._briefOpen === 'function'; } },
       { g: 'help', id: 'guia', ic: '❓', es: 'Guía', en: 'Guide', k: 'guia ayuda help guide como usar', run: function () { stage('guia'); } },

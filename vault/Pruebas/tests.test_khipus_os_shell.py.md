@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_khipus_os_shell.py"
 lenguaje: "python"
-lineas: 267
+lineas: 268
 aliases: ["tests/test_khipus_os_shell.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_khipus_os_shell.py
 
-> Prueba · capa [[Capa Pruebas]] · 267 líneas · `tests/test_khipus_os_shell.py`
+> Prueba · capa [[Capa Pruebas]] · 268 líneas · `tests/test_khipus_os_shell.py`
 
 ## Qué prueba
 
