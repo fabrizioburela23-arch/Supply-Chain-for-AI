@@ -64,7 +64,7 @@
   {"id": "core/impls.py", "label": "core/impls.py", "layer": "infra", "lines": 349, "note": "Módulos/core/core.impls.py", "path": "core/impls.py", "type": "module"},
   {"id": "core/import_normalize.py", "label": "core/import_normalize.py", "layer": "infra", "lines": 822, "note": "Módulos/core/core.import_normalize.py", "path": "core/import_normalize.py", "type": "module"},
   {"id": "core/instruments.py", "label": "core/instruments.py", "layer": "infra", "lines": 615, "note": "Módulos/core/core.instruments.py", "path": "core/instruments.py", "type": "module"},
-  {"id": "core/khipu_chat.py", "label": "core/khipu_chat.py", "layer": "chat", "lines": 4012, "note": "Módulos/core/core.khipu_chat.py", "path": "core/khipu_chat.py", "type": "module"},
+  {"id": "core/khipu_chat.py", "label": "core/khipu_chat.py", "layer": "chat", "lines": 4013, "note": "Módulos/core/core.khipu_chat.py", "path": "core/khipu_chat.py", "type": "module"},
   {"id": "core/ledger.py", "label": "core/ledger.py", "layer": "infra", "lines": 729, "note": "Módulos/core/core.ledger.py", "path": "core/ledger.py", "type": "module"},
   {"id": "core/ledger_api.py", "label": "core/ledger_api.py", "layer": "infra", "lines": 359, "note": "Módulos/core/core.ledger_api.py", "path": "core/ledger_api.py", "type": "module"},
   {"id": "core/ledger_ddl.py", "label": "core/ledger_ddl.py", "layer": "infra", "lines": 374, "note": "Módulos/core/core.ledger_ddl.py", "path": "core/ledger_ddl.py", "type": "module"},
