@@ -33,8 +33,9 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 - [[mcp_server.ops.py]] — lo importa
 - herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_genui_sim_report.py]]
 - [[tests.test_price_sim.py]]

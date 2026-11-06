@@ -12,6 +12,17 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 **Para ahorrar tokens: lee SOLO esta sección.** Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero;
 buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`).
 
+**2026-11-06 — IA «entrenada» sin fine-tuning + gráficos/informes nativos:**
+- `python3 scripts/eval_chat.py` = EXAMEN DE ORO (20 preguntas de inversionista en `data/eval/preguntas_oro.json`) contra
+  producción → `docs/eval/ULTIMO.md`. Primera corrida 17/20; arreglado: cifras derivadas en `get_company.live_market.derived`
+  (la IA copia, no resta) y read_url que falla → web_search. Correrlo tras cada cambio de recetas: la nota debe subir.
+- GenUI: constructores `simulate_price` (cifras + abanico + niveles + tabla + reacciones a reportes) y `screen_stocks`
+  (tabla); intención `sim` en core/genui/layout.py. Fixtures + doradas en tests/fixtures/genui/tools.
+- `engine/report.js`: botón «📄 Informe PDF» en toda respuesta con contenido → página A4 de papel con lo MISMO que se vio
+  (sin IA ni cifras nuevas) → imprimir/guardar PDF. Visión de Fabrizio: Khipus OS = agente general donde los gráficos son
+  parte de la respuesta, pensados por tipo de dato; también para B2B. Siguiente: más constructores (run_scenario up,
+  market_movers…), revisar el examen semanal, 👍/👎 en respuestas para sumar preguntas al examen.
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

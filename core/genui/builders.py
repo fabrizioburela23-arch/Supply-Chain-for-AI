@@ -954,6 +954,189 @@ def b_rank_by_market(res, b):
                     'items': items}, subtitle=sub, menu=MENU_DATA, meta={'kind': 'market_rank'})]
 
 
+# ── simulate_price → cifras + abanico + niveles + tabla por plazo + reacciones a reportes ───────────────────────────
+_LEVEL_LABEL = {'-10%': ('−10 %', '−10%'), '52w_low': ('Mínimo 52 sem.', '52-week low'), '-20%': ('−20 %', '−20%'),
+                '-30%': ('−30 %', '−30%')}
+
+
+def _bday_after(d0, n):
+    """Fecha del n-ésimo día hábil después de d0 (YYYY-MM-DD) — solo el EJE X del abanico, no es una cifra."""
+    import datetime as _dt
+    try:
+        d = _dt.date.fromisoformat(str(d0)[:10])
+    except ValueError:
+        return None
+    k = 0
+    while k < n:
+        d += _dt.timedelta(days=1)
+        if d.weekday() < 5:
+            k += 1
+    return d.isoformat()
+
+
+def b_simulate_price(res, b):
+    as_of = norm_dt(res.get('as_of'))
+    tech = res.get('technical') if isinstance(res.get('technical'), dict) else {}
+    hz = [h for h in res.get('horizons') or [] if isinstance(h, dict)]
+    if not as_of or not hz:
+        return []
+    sym = clip(res.get('symbol') or '', 20)
+    cur = str(res.get('currency') or 'USD').upper()
+    money = 'USD' if cur == 'USD' else 'CCY'
+    ccy = None if cur == 'USD' else cur
+    ent = entity(res.get('id'), b.label_of(res.get('id'), sym), sym)
+    h1 = hz[0]
+    h3 = next((h for h in hz if h.get('trading_days') == 63), hz[min(1, len(hz) - 1)])
+    low52 = (h3.get('prob_touch') or {}).get('52w_low') or {}
+    src = 'khipus_sim'
+    spec = (
+        (('Cierre', 'Close'), tech.get('last_close'), money, None),
+        (('Desde el máximo', 'From the peak'), tech.get('drawdown_from_peak_pct'), 'pct', 'drawdown'),
+        (('Prob. de que hoy sea el piso (1 mes)', 'Chance today is the low (1 month)'),
+         h1.get('prob_today_is_the_low_pct'), 'pct', None),
+        (('Prob. de tocar el mínimo de 52 sem. (3 meses)', 'Chance of touching the 52-week low (3 months)'),
+         low52.get('pct'), 'pct', None),
+        (('Mediana a 3 meses', 'Median in 3 months'), h3.get('p50'), money, None),
+        (('Volatilidad anual hoy', 'Annual volatility now'), (res.get('volatility') or {}).get('now_ann_pct'), 'pct',
+         'vol_ann'),
+    )
+    tiles = [{'label': i18n(*lab), 'value': figure(v, unit, src, as_of, b, currency=ccy, explain=ex,
+                                                   missing=('sin dato suficiente', 'not enough data'))}
+             for lab, v, unit, ex in spec]
+    out = [_block('metric.tiles', b, 'simulate_price', i18n(f'¿{sym} ya tocó fondo?', f'Has {sym} bottomed?'),
+                  {'items': tiles}, entity_=ent, menu=MENU_BASIC, meta={'kind': 'sim_tiles'},
+                  subtitle=i18n('miles de trayectorias con su historia real; no es un pronóstico',
+                                'thousands of paths from its real history; not a forecast'))]
+    # abanico (mediana y bandas 5–95 %) desde el último cierre
+    fan = [f for f in res.get('fan') or [] if isinstance(f, dict) and num(f.get('day'))]
+    d0 = tech.get('last_date')
+    if len(fan) >= 3 and d0 and num(tech.get('last_close')) is not None:
+        def ser(key, es, en):
+            pts = [[str(d0)[:10], num(tech['last_close'])]]
+            pts += [[_bday_after(d0, int(f['day'])), num(f.get(key))] for f in fan]
+            pts = [p for p in pts if p[0] and p[1] is not None]
+            vs = {'label': i18n(es, en), 'unit': money, 'src': src, 'as_of': as_of}
+            if ccy:
+                vs['currency'] = ccy
+            if b.fact:
+                vs['fact'] = b.fact
+            return {'name': i18n(es, en), 'values': vs, 'points': pts}
+        series = [ser('p50', 'Mediana', 'Median'), ser('p95', 'Optimista (95 %)', 'Upside (95%)'),
+                  ser('p5', 'Pesimista (5 %)', 'Downside (5%)')]
+        ann = []
+        ev = res.get('earnings_event') if isinstance(res.get('earnings_event'), dict) else None
+        if ev and ev.get('date'):
+            ann.append({'x': str(ev['date'])[:10], 'label': i18n('Reporte de resultados', 'Earnings report')})
+        data = {'variant': 'full', 'series': series}
+        if ann:
+            data['annotations'] = ann
+        out.append(_block('chart.line', b, 'simulate_price', i18n('Abanico de los próximos 3 meses',
+                                                                  'Fan of the next 3 months'), data,
+                          subtitle=i18n('el 90 % de las trayectorias queda entre las líneas exteriores',
+                                        '90% of the paths end up between the outer lines'),
+                          entity_=ent, menu=MENU_DATA, meta={'kind': 'sim_fan', 'role': 'primary'}))
+    # probabilidad de tocar cada nivel, por plazo (barras: 3 meses)
+    bars = []
+    lv = [(k, v) for k, v in (h3.get('prob_touch') or {}).items() if isinstance(v, dict) and num(v.get('pct')) is not None]
+    lv.sort(key=lambda kv: -(num(kv[1].get('price')) or 0))           # del nivel más cercano al más lejano
+    for k, v in lv:
+        es, en = _LEVEL_LABEL.get(k, (k, k))
+        pr = num(v.get('price'))
+        pe = f'{pr:,.2f}'.replace(',', ' ').replace('.', ',').replace(' ', '.') if pr else ''
+        bars.append({'label': i18n(f'{es} ({pe})' if pr else es, f'{en} ({pr:,.2f})' if pr else en), 'v': num(v['pct'])})
+    if bars:
+        vs = {'label': i18n('Probabilidad de tocarlo', 'Chance of touching it'), 'unit': 'pct', 'src': src,
+              'as_of': as_of}
+        if b.fact:
+            vs['fact'] = b.fact
+        out.append(_block('chart.bar', b, 'simulate_price', i18n('¿Hasta dónde puede caer en 3 meses?',
+                                                                 'How far can it fall in 3 months?'),
+                          {'orientation': 'h', 'values': vs, 'sort': 'none', 'items': bars[:6]}, menu=MENU_DATA,
+                          meta={'role': 'secondary', 'kind': 'sim_levels'}))
+    # tabla por plazo
+    vm = {'unit': money, 'src': src, 'as_of': as_of}
+    if ccy:
+        vm['currency'] = ccy
+    vp = {'unit': 'pct', 'src': src, 'as_of': as_of}
+    cols = [{'key': 'plazo', 'label': i18n('Plazo', 'Horizon'), 'kind': 'text'}]
+    for k, es, en, vv in (('p5', 'Perc. 5', 'Pct. 5', vm), ('p50', 'Mediana', 'Median', vm),
+                          ('p95', 'Perc. 95', 'Pct. 95', vm), ('prob_up_pct', 'Termina arriba', 'Ends higher', vp),
+                          ('prob_today_is_the_low_pct', 'Hoy es el piso', 'Today is the low', vp),
+                          ('lowest_close_p50', 'Mínimo típico', 'Typical low', vm)):
+        cols.append({'key': k.replace('_pct', '')[:24], 'label': i18n(es, en), 'kind': 'number', 'values': dict(vv),
+                     'align': 'end'})
+    rows = []
+    for h in hz[:4]:
+        r = {'plazo': i18n(clip(h.get('label_es') or '', 60), clip(h.get('label_en') or '', 60))}
+        for c in cols[1:]:
+            src_k = next(k for k in ('p5', 'p50', 'p95', 'prob_up_pct', 'prob_today_is_the_low_pct',
+                                     'lowest_close_p50') if k.replace('_pct', '')[:24] == c['key'])
+            r[c['key']] = num(h.get(src_k))
+        rows.append(r)
+    out.append(_block('table', b, 'simulate_price', i18n('Rango simulado por plazo', 'Simulated range by horizon'),
+                      {'columns': cols, 'rows': rows}, menu=MENU_DATA, meta={'role': 'secondary', 'kind': 'sim_table'}))
+    # reacciones reales a los últimos reportes
+    ev = res.get('earnings_event') if isinstance(res.get('earnings_event'), dict) else None
+    moves = [num(x) for x in (ev or {}).get('past_reactions_pct') or []]
+    moves = [m for m in moves if m is not None]
+    if len(moves) >= 3:
+        vs = {'label': i18n('Movimiento del día del reporte', 'Move on report day'), 'unit': 'pct', 'src': src,
+              'as_of': as_of}
+        if b.fact:
+            vs['fact'] = b.fact
+        items = [{'label': i18n(f'Reporte {i + 1}', f'Report {i + 1}'), 'v': m} for i, m in enumerate(moves[:12])]
+        out.append(_block('chart.bar', b, 'simulate_price', i18n('Cómo reaccionó a sus últimos reportes',
+                                                                 'How it reacted to its last reports'),
+                          {'orientation': 'v', 'values': vs, 'diverging': True, 'sort': 'none', 'items': items},
+                          menu=MENU_DATA, meta={'role': 'secondary', 'kind': 'sim_earn'}))
+    out[0]['_meta']['disclaimer'] = True          # «información, no consejo» al pie (layout.disclaimer_block)
+    return out
+
+
+# ── screen_stocks → tabla de valuación ─────────────────────────────────────────────────────────────────────────────
+def b_screen_stocks(res, b):
+    as_of = norm_dt(res.get('as_of'))
+    items = [r for r in res.get('items') or [] if isinstance(r, dict)]
+    if not as_of or not items:
+        return []
+    src = src_id(res.get('source'), 'yahoo')
+
+    def vs(unit):
+        v = {'unit': unit, 'src': src, 'as_of': as_of}
+        if b.fact:
+            v['fact'] = b.fact
+        return v
+    cols = [{'key': 'empresa', 'label': i18n('Empresa', 'Company'), 'kind': 'entity'},
+            {'key': 'pe_forward', 'label': i18n('P/E adelantado', 'Forward P/E'), 'kind': 'number', 'values': vs('x'),
+             'align': 'end'},
+            {'key': 'eps_growth', 'label': i18n('Crec. BPA esperado', 'Expected EPS growth'), 'kind': 'number',
+             'values': vs('pct'), 'align': 'end'},
+            {'key': 'peg', 'label': i18n('PEG', 'PEG'), 'kind': 'number', 'values': vs('ratio'), 'align': 'end'},
+            {'key': 'upside', 'label': i18n('Al objetivo', 'To target'), 'kind': 'number', 'values': vs('pct'),
+             'align': 'end'},
+            {'key': 'from_high', 'label': i18n('Desde máx. 52 sem.', 'From 52w high'), 'kind': 'number',
+             'values': vs('pct'), 'align': 'end'}]
+    rows = []
+    for r in items[:20]:
+        ent = entity(r.get('id'), r.get('label'), r.get('symbol'))
+        if not ent:
+            continue
+        rows.append({'empresa': ent, 'pe_forward': num(r.get('pe_forward')),
+                     'eps_growth': num(r.get('eps_growth_next_year_pct')), 'peg': num(r.get('peg')),
+                     'upside': num(r.get('upside_to_target_pct')), 'from_high': num(r.get('from_52w_high_pct'))})
+    if not rows:
+        return []
+    by = str(res.get('by') or 'peg')
+    t_es = {'peg': 'Más baratas por unidad de crecimiento', 'value': 'Las más baratas (P/E adelantado)',
+            'growth': 'Más crecimiento esperado', 'upside': 'Más margen hasta el precio objetivo'}.get(by, 'Filtro de acciones')
+    t_en = {'peg': 'Cheapest per unit of growth', 'value': 'Cheapest (forward P/E)', 'growth': 'Most expected growth',
+            'upside': 'Most room to the analyst target'}.get(by, 'Stock screen')
+    return [_block('table', b, 'screen_stocks', i18n(t_es, t_en), {'columns': cols, 'rows': rows},
+                   subtitle=i18n('consenso de analistas en vivo; no es una recomendación',
+                                 'live analyst consensus; not a recommendation'),
+                   menu=MENU_DATA, meta={'kind': 'screen'})]
+
+
 BUILDERS = {
     'get_company': b_get_company,
     'get_supply_chain': b_get_supply_chain,
@@ -969,4 +1152,6 @@ BUILDERS = {
     'run_scenario': b_run_scenario,
     'get_fundamentals': b_get_fundamentals,
     'rank_by_market': b_rank_by_market,
+    'simulate_price': b_simulate_price,
+    'screen_stocks': b_screen_stocks,
 }

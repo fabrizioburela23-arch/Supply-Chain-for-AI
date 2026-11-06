@@ -1258,8 +1258,10 @@
       host.appendChild(ow);
       acts = acts.filter(function (a) { return a !== inlineChart; });
     }
-    if (acts.length) {
+    var rb = W.KhipuReport && W.KhipuReport.button(el, d, gui, question);   // 📄 Informe PDF (engine/report.js)
+    if (acts.length || rb) {
       var box = W.document.createElement('div'); box.className = 'kc-acts';
+      if (rb) box.appendChild(rb);
       acts.forEach(function (a) {
         var b = W.document.createElement('button'); b.className = 'kc-act'; b.type = 'button';
         b.textContent = actionLabel(a);

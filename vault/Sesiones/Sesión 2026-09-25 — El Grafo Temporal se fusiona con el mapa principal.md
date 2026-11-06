@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-25"
-ruta: "docs/ESTADO.md#L2168"
+ruta: "docs/ESTADO.md#L2179"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-25 — El Grafo Temporal se fusiona con el mapa principal
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2168 (31 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2179 (31 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

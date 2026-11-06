@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/ops.py"
 lenguaje: "python"
-lineas: 1186
+lineas: 1189
 aliases: ["mcp_server/ops.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/ops.py
 
-> Módulo · capa [[Capa MCP y API]] · 1.186 líneas · `mcp_server/ops.py`
+> Módulo · capa [[Capa MCP y API]] · 1.189 líneas · `mcp_server/ops.py`
 
 ## Para qué sirve
 
@@ -24,15 +24,15 @@ las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión
 - `t_find_similar_entities(ctx, id, k=…, space=…)` _(línea 363)_
 - `t_get_history(ctx, id_or_ticker, range=…, frequency=…, max_points=…)` _(línea 439)_
 - `t_simulate_price(ctx, id_or_ticker)` _(línea 469)_
-- `correlation(a, b, method=…)` — (r, n) de dos listas alineadas; Spearman = Pearson de los rangos. _(línea 520)_
-- `corr_matrix(series, method=…, min_obs=…)` — series {símbolo: {fecha: precio}} → (símbolos, matriz r, matriz n, matriz error estándar) con retornos diarios simples sobre las fechas … _(línea 535)_
-- `t_calculate_correlation(ctx, symbols, window=…, method=…)` _(línea 574)_
-- `ewma_zscores(x, lam=…, seed_n=…, demean=…)` — [(i, z_i)] de cada observación contra la desviación EWMA EX-ANTE (estimada solo con lo anterior; RiskMetrics). demean=True: también una … _(línea 616)_
-- `t_find_anomalies(ctx, symbols, window=…, lookback_days=…, z_threshold=…)` _(línea 650)_
-- `t_project_portfolio(ctx, positions, horizon_days=…, covariance=…, drift=…)` _(línea 763)_
-- `t_get_fundamentals(ctx, id_or_ticker, period=…, years=…)` _(línea 989)_
-- `mkt_match(query, market)` — Puntaje 0-1: fracción de las raíces de la pregunta que aparecen (prefijo ≥ 3) en el texto del mercado, con sinónimos es/en. 1 token en … _(línea 1083)_
-- `t_rank_by_market(ctx, market, metric=…, region=…, limit=…)` _(línea 1133)_
+- `correlation(a, b, method=…)` — (r, n) de dos listas alineadas; Spearman = Pearson de los rangos. _(línea 523)_
+- `corr_matrix(series, method=…, min_obs=…)` — series {símbolo: {fecha: precio}} → (símbolos, matriz r, matriz n, matriz error estándar) con retornos diarios simples sobre las fechas … _(línea 538)_
+- `t_calculate_correlation(ctx, symbols, window=…, method=…)` _(línea 577)_
+- `ewma_zscores(x, lam=…, seed_n=…, demean=…)` — [(i, z_i)] de cada observación contra la desviación EWMA EX-ANTE (estimada solo con lo anterior; RiskMetrics). demean=True: también una … _(línea 619)_
+- `t_find_anomalies(ctx, symbols, window=…, lookback_days=…, z_threshold=…)` _(línea 653)_
+- `t_project_portfolio(ctx, positions, horizon_days=…, covariance=…, drift=…)` _(línea 766)_
+- `t_get_fundamentals(ctx, id_or_ticker, period=…, years=…)` _(línea 992)_
+- `mkt_match(query, market)` — Puntaje 0-1: fracción de las raíces de la pregunta que aparecen (prefijo ≥ 3) en el texto del mercado, con sinónimos es/en. 1 token en … _(línea 1086)_
+- `t_rank_by_market(ctx, market, metric=…, region=…, limit=…)` _(línea 1136)_
 
 **Internas** (empiezan con `_`): `_graph`, `_kernel`, `_gen_meta`, `_least_hit_rivals`, `_prices`, `_pct_map`, `_symbol_of`, `_series`, `_downsample`, `_ranks`, `_risk_pol`, `_usd_series`, `_pct`, `_growth`, `_fund_row`, `_annual_rows`, `_quarterly_yahoo`, `_annual_financials`, `_mkt_tokens`, `_stem`, `_region_key`
 

@@ -479,7 +479,10 @@ def t_simulate_price(ctx, id_or_ticker):
     except Exception:  # noqa: BLE001
         earn = ([], None, None)
     try:
-        out = price_sim.simulate(sym, prices, earnings=earn)
+        out = price_sim.simulate(sym, prices, earnings=earn, fan_days=63)
+        if out.get('fan'):   # abanico para el gráfico del chat (core/genui): 1 de cada 3 días + el último
+            f = out['fan']
+            out['fan'] = f[::3] + ([f[-1]] if (len(f) - 1) % 3 else [])
     except ValueError as e:
         raise ToolError(str(e), code='no_data')
     val = None

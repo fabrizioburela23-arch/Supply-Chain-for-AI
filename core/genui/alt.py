@@ -113,6 +113,19 @@ def alt_of(block):
                      + ('. En contra: ' if es else '. Against: ') + '; '.join(x.get('text', '') for x in d.get('cons') or []))
             else:
                 s = _lab(d.get('text'), lang) or '; '.join(x.get('text', '') for x in d.get('items') or [])
+        elif t == 'table':
+            cols = d.get('columns') or []
+            heads = ', '.join(_lab(c.get('label'), lang) for c in cols[:6])
+            rows = d.get('rows') or []
+            first = []
+            for r in rows[:3]:
+                c0 = r.get(cols[0]['key']) if cols else None
+                if isinstance(c0, dict):
+                    first.append(c0.get('label') or _lab(c0, lang))
+                elif c0 is not None:
+                    first.append(str(c0))
+            s = (f"{'Tabla de' if es else 'Table of'} {len(rows)} {'filas' if es else 'rows'} ({heads})"
+                 + (': ' + ', '.join(x for x in first if x) if first else ''))
         elif t == 'comparison':
             ents = [e.get('label') for e in d.get('entities') or []]
             s = ' vs '.join(ents)

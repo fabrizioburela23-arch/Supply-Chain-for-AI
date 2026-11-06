@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 32
+archivos: 33
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,13 +9,13 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**32 archivos · 30.550 líneas.** Volver al [[00 Mapa de Khipus]].
+**33 archivos · 30.655 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[engine.cockpit.js]] — 5.053 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.app_main.js]] — 4.850 líneas · Global error reporter — shows uncaught JS errors on screen (no devtools needed)
-- [[app.html]] — 3.567 líneas
+- [[app.html]] — 3.568 líneas
 - [[engine.app_coordinator.js]] — 2.718 líneas · Khipu Core Coordinator
 - [[engine.oswindows.js]] — 1.646 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.genui.js]] — 1.435 líneas · RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja; NUNCA calcula cifras. DOM seguro, 17 tipos, acciones solo …
@@ -43,6 +43,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.mascot.js]] — 136 líneas · MASCOTAS BURBUJA de Khipus OS (2026-10-06)
 - [[engine.layers.js]] — 132 líneas · SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "todo o nada": enciendes/apagas información como capas. Cada capa = un …
 - [[engine.nav4.js]] — 118 líneas · NAVEGACIÓN DE 4 PESTAÑAS (simplificación pedida por Fabrizio) Las 10 pestañas se agrupan bajo 4 primarias: 🗺️ Mapa → map · geo · space · tkg · …
+- [[engine.report.js]] — 104 líneas · 📄 INFORME de cualquier respuesta del chat (2026-11-06, pedido de Fabrizio: «que Khipus pueda hacer informes como ese de forma nativa»).
 - [[engine.agents_registry.js]] — 79 líneas · EL registro de agentes de Khipus (limpieza 2026-10-11)
 - [[engine.tour_script.js]] — 48 líneas · EL guion del recorrido de un minuto (voz para Khipus OS, 2026-10-11)
 
@@ -51,7 +52,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Datos del catálogo]] | 53 |
-| la usa | [[Capa Chat y agentes]] | 28 |
+| la usa | [[Capa Chat y agentes]] | 29 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 25 |
 | usa a | [[Capa Chat y agentes]] | 25 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 23 |

@@ -25,11 +25,11 @@ MODO TICKET del panel de trading (2026-10-30, pedido de Fabrizio). Dos modos en 
 - [[engine.app_main.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `quoteIsLive`, `quotePx`, `savePos`
 - [[engine.app_trade_panel.js]] — usa `_tpRefreshPositions`
 
-Se carga en [[app.html]] en la posición **101 de 104** (línea 3556), después de [[engine.app_trade_panel.js]] y antes de [[engine.app_preflight.js]].
+Se carga en [[app.html]] en la posición **102 de 105** (línea 3557), después de [[engine.app_trade_panel.js]] y antes de [[engine.app_preflight.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 101)
+- [[app.html]] — lo carga con `<script>` (posición 102)
 - [[app.html]] — usa `submitTradePanelOrder`
 
 ## Pruebas que lo cubren

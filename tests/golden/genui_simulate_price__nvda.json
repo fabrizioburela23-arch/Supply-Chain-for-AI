@@ -1,0 +1,1626 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Close: 302.23 USD; From the peak: −30.4 %; Chance today is the low (1 month): 10.1 %; Chance of touching the 52-week low (3 months): 0.2 %; Median in 3 months: 297.77 USD; Annual volatility now: 37.9 %",
+    "es": "Cierre: 302,23 USD; Desde el máximo: −30,4 %; Prob. de que hoy sea el piso (1 mes): 10,1 %; Prob. de tocar el mínimo de 52 sem. (3 meses): 0,2 %; Mediana a 3 meses: 297,77 USD; Volatilidad anual hoy: 37,9 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Close",
+       "es": "Cierre"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "USD",
+       "v": 302.23
+      }
+     },
+     {
+      "label": {
+       "en": "From the peak",
+       "es": "Desde el máximo"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "explain": "drawdown",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": -30.4
+      }
+     },
+     {
+      "label": {
+       "en": "Chance today is the low (1 month)",
+       "es": "Prob. de que hoy sea el piso (1 mes)"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": 10.1
+      }
+     },
+     {
+      "label": {
+       "en": "Chance of touching the 52-week low (3 months)",
+       "es": "Prob. de tocar el mínimo de 52 sem. (3 meses)"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": 0.2
+      }
+     },
+     {
+      "label": {
+       "en": "Median in 3 months",
+       "es": "Mediana a 3 meses"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "USD",
+       "v": 297.77
+      }
+     },
+     {
+      "label": {
+       "en": "Annual volatility now",
+       "es": "Volatilidad anual hoy"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "explain": "vol_ann",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": 37.9
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "nvidia",
+    "label": "NVDA",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "thousands of paths from its real history; not a forecast",
+    "es": "miles de trayectorias con su historia real; no es un pronóstico"
+   },
+   "title": {
+    "en": "Has NVDA bottomed?",
+    "es": "¿NVDA ya tocó fondo?"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "alt": {
+    "en": "Median: from 302.23 USD (2026-05-19) to 297.77 USD (2026-08-14); Upside (95%): from 302.23 USD (2026-05-19) to 430.7 USD (2026-08-14); Downside (5%): from 302.23 USD (2026-05-19) to 205.86 USD (2026-08-14)",
+    "es": "Mediana: de 302,23 USD (2026-05-19) a 297,77 USD (2026-08-14); Optimista (95 %): de 302,23 USD (2026-05-19) a 430,7 USD (2026-08-14); Pesimista (5 %): de 302,23 USD (2026-05-19) a 205,86 USD (2026-08-14)"
+   },
+   "data": {
+    "annotations": [
+     {
+      "label": {
+       "en": "Earnings report",
+       "es": "Reporte de resultados"
+      },
+      "x": "2026-05-31"
+     }
+    ],
+    "series": [
+     {
+      "name": {
+       "en": "Median",
+       "es": "Mediana"
+      },
+      "points": [
+       [
+        "2026-05-19",
+        302.23
+       ],
+       [
+        "2026-05-20",
+        301.97
+       ],
+       [
+        "2026-05-25",
+        302.0
+       ],
+       [
+        "2026-05-28",
+        301.8
+       ],
+       [
+        "2026-06-02",
+        301.07
+       ],
+       [
+        "2026-06-05",
+        300.12
+       ],
+       [
+        "2026-06-10",
+        299.34
+       ],
+       [
+        "2026-06-15",
+        299.21
+       ],
+       [
+        "2026-06-18",
+        298.5
+       ],
+       [
+        "2026-06-23",
+        298.04
+       ],
+       [
+        "2026-06-26",
+        298.61
+       ],
+       [
+        "2026-07-01",
+        297.76
+       ],
+       [
+        "2026-07-06",
+        298.32
+       ],
+       [
+        "2026-07-09",
+        298.31
+       ],
+       [
+        "2026-07-14",
+        297.37
+       ],
+       [
+        "2026-07-17",
+        297.98
+       ],
+       [
+        "2026-07-22",
+        297.57
+       ],
+       [
+        "2026-07-27",
+        297.6
+       ],
+       [
+        "2026-07-30",
+        297.78
+       ],
+       [
+        "2026-08-04",
+        297.14
+       ],
+       [
+        "2026-08-07",
+        297.18
+       ],
+       [
+        "2026-08-12",
+        297.24
+       ],
+       [
+        "2026-08-14",
+        297.77
+       ]
+      ],
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "label": {
+        "en": "Median",
+        "es": "Mediana"
+       },
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "name": {
+       "en": "Upside (95%)",
+       "es": "Optimista (95 %)"
+      },
+      "points": [
+       [
+        "2026-05-19",
+        302.23
+       ],
+       [
+        "2026-05-20",
+        314.05
+       ],
+       [
+        "2026-05-25",
+        326.04
+       ],
+       [
+        "2026-05-28",
+        334.16
+       ],
+       [
+        "2026-06-02",
+        347.33
+       ],
+       [
+        "2026-06-05",
+        353.06
+       ],
+       [
+        "2026-06-10",
+        359.41
+       ],
+       [
+        "2026-06-15",
+        364.55
+       ],
+       [
+        "2026-06-18",
+        368.26
+       ],
+       [
+        "2026-06-23",
+        374.37
+       ],
+       [
+        "2026-06-26",
+        379.25
+       ],
+       [
+        "2026-07-01",
+        382.96
+       ],
+       [
+        "2026-07-06",
+        390.34
+       ],
+       [
+        "2026-07-09",
+        393.49
+       ],
+       [
+        "2026-07-14",
+        396.8
+       ],
+       [
+        "2026-07-17",
+        397.74
+       ],
+       [
+        "2026-07-22",
+        403.17
+       ],
+       [
+        "2026-07-27",
+        405.41
+       ],
+       [
+        "2026-07-30",
+        412.2
+       ],
+       [
+        "2026-08-04",
+        417.82
+       ],
+       [
+        "2026-08-07",
+        421.85
+       ],
+       [
+        "2026-08-12",
+        429.09
+       ],
+       [
+        "2026-08-14",
+        430.7
+       ]
+      ],
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "label": {
+        "en": "Upside (95%)",
+        "es": "Optimista (95 %)"
+       },
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "name": {
+       "en": "Downside (5%)",
+       "es": "Pesimista (5 %)"
+      },
+      "points": [
+       [
+        "2026-05-19",
+        302.23
+       ],
+       [
+        "2026-05-20",
+        290.05
+       ],
+       [
+        "2026-05-25",
+        277.79
+       ],
+       [
+        "2026-05-28",
+        270.56
+       ],
+       [
+        "2026-06-02",
+        260.88
+       ],
+       [
+        "2026-06-05",
+        254.81
+       ],
+       [
+        "2026-06-10",
+        250.4
+       ],
+       [
+        "2026-06-15",
+        245.52
+       ],
+       [
+        "2026-06-18",
+        242.01
+       ],
+       [
+        "2026-06-23",
+        238.28
+       ],
+       [
+        "2026-06-26",
+        236.34
+       ],
+       [
+        "2026-07-01",
+        231.58
+       ],
+       [
+        "2026-07-06",
+        227.94
+       ],
+       [
+        "2026-07-09",
+        226.2
+       ],
+       [
+        "2026-07-14",
+        222.68
+       ],
+       [
+        "2026-07-17",
+        222.7
+       ],
+       [
+        "2026-07-22",
+        219.76
+       ],
+       [
+        "2026-07-27",
+        214.78
+       ],
+       [
+        "2026-07-30",
+        212.76
+       ],
+       [
+        "2026-08-04",
+        212.0
+       ],
+       [
+        "2026-08-07",
+        208.41
+       ],
+       [
+        "2026-08-12",
+        208.76
+       ],
+       [
+        "2026-08-14",
+        205.86
+       ]
+      ],
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "label": {
+        "en": "Downside (5%)",
+        "es": "Pesimista (5 %)"
+       },
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     }
+    ],
+    "variant": "full"
+   },
+   "entity": {
+    "id": "nvidia",
+    "label": "NVDA",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "90% of the paths end up between the outer lines",
+    "es": "el 90 % de las trayectorias queda entre las líneas exteriores"
+   },
+   "title": {
+    "en": "Fan of the next 3 months",
+    "es": "Abanico de los próximos 3 meses"
+   },
+   "type": "chart.line"
+  },
+  {
+   "alt": {
+    "en": "−10% (272.00) 60.1 %; −20% (241.78) 30.3 %; −30% (211.56) 10.4 %; 52-week low (136.89) 0.2 %",
+    "es": "−10 % (272,00) 60,1 %; −20 % (241,78) 30,3 %; −30 % (211,56) 10,4 %; Mínimo 52 sem. (136,89) 0,2 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "−10% (272.00)",
+       "es": "−10 % (272,00)"
+      },
+      "v": 60.1
+     },
+     {
+      "label": {
+       "en": "−20% (241.78)",
+       "es": "−20 % (241,78)"
+      },
+      "v": 30.3
+     },
+     {
+      "label": {
+       "en": "−30% (211.56)",
+       "es": "−30 % (211,56)"
+      },
+      "v": 10.4
+     },
+     {
+      "label": {
+       "en": "52-week low (136.89)",
+       "es": "Mínimo 52 sem. (136,89)"
+      },
+      "v": 0.2
+     }
+    ],
+    "orientation": "h",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-11-06T03:00:00Z",
+     "fact": "F1",
+     "label": {
+      "en": "Chance of touching it",
+      "es": "Probabilidad de tocarlo"
+     },
+     "src": "khipus_sim",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "How far can it fall in 3 months?",
+    "es": "¿Hasta dónde puede caer en 3 meses?"
+   },
+   "type": "chart.bar"
+  },
+  {
+   "alt": {
+    "en": "Table of 3 rows (Horizon, Pct. 5, Median, Pct. 95, Ends higher, Today is the low): 1 month, 3 months, 6 months",
+    "es": "Tabla de 3 filas (Plazo, Perc. 5, Mediana, Perc. 95, Termina arriba, Hoy es el piso): 1 mes, 3 meses, 6 meses"
+   },
+   "data": {
+    "columns": [
+     {
+      "key": "plazo",
+      "kind": "text",
+      "label": {
+       "en": "Horizon",
+       "es": "Plazo"
+      }
+     },
+     {
+      "align": "end",
+      "key": "p5",
+      "kind": "number",
+      "label": {
+       "en": "Pct. 5",
+       "es": "Perc. 5"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "align": "end",
+      "key": "p50",
+      "kind": "number",
+      "label": {
+       "en": "Median",
+       "es": "Mediana"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "align": "end",
+      "key": "p95",
+      "kind": "number",
+      "label": {
+       "en": "Pct. 95",
+       "es": "Perc. 95"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "align": "end",
+      "key": "prob_up",
+      "kind": "number",
+      "label": {
+       "en": "Ends higher",
+       "es": "Termina arriba"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "prob_today_is_the_low",
+      "kind": "number",
+      "label": {
+       "en": "Today is the low",
+       "es": "Hoy es el piso"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "lowest_close_p50",
+      "kind": "number",
+      "label": {
+       "en": "Typical low",
+       "es": "Mínimo típico"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     }
+    ],
+    "rows": [
+     {
+      "lowest_close_p50": 280.38,
+      "p5": 243.65,
+      "p50": 299.06,
+      "p95": 369.28,
+      "plazo": {
+       "en": "1 month",
+       "es": "1 mes"
+      },
+      "prob_today_is_the_low": 10.1,
+      "prob_up": 46.9
+     },
+     {
+      "lowest_close_p50": 262.42,
+      "p5": 205.86,
+      "p50": 297.77,
+      "p95": 430.7,
+      "plazo": {
+       "en": "3 months",
+       "es": "3 meses"
+      },
+      "prob_today_is_the_low": 5.7,
+      "prob_up": 46.9
+     },
+     {
+      "lowest_close_p50": 242.55,
+      "p5": 171.01,
+      "p50": 290.38,
+      "p95": 482.45,
+      "plazo": {
+       "en": "6 months",
+       "es": "6 meses"
+      },
+      "prob_today_is_the_low": 3.8,
+      "prob_up": 45.1
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Simulated range by horizon",
+    "es": "Rango simulado por plazo"
+   },
+   "type": "table"
+  },
+  {
+   "alt": {
+    "en": "Report 1 −3.7 %; Report 2 −2.1 %; Report 3 −5.1 %",
+    "es": "Reporte 1 −3,7 %; Reporte 2 −2,1 %; Reporte 3 −5,1 %"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "label": {
+       "en": "Report 1",
+       "es": "Reporte 1"
+      },
+      "v": -3.7
+     },
+     {
+      "label": {
+       "en": "Report 2",
+       "es": "Reporte 2"
+      },
+      "v": -2.1
+     },
+     {
+      "label": {
+       "en": "Report 3",
+       "es": "Reporte 3"
+      },
+      "v": -5.1
+     }
+    ],
+    "orientation": "v",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-11-06T03:00:00Z",
+     "fact": "F1",
+     "label": {
+      "en": "Move on report day",
+      "es": "Movimiento del día del reporte"
+     },
+     "src": "khipus_sim",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "How it reacted to its last reports",
+    "es": "Cómo reaccionó a sus últimos reportes"
+   },
+   "type": "chart.bar"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Close: 302.23 USD; From the peak: −30.4 %; Chance today is the low (1 month): 10.1 %; Chance of touching the 52-week low (3 months): 0.2 %; Median in 3 months: 297.77 USD; Annual volatility now: 37.9 %",
+    "es": "Cierre: 302,23 USD; Desde el máximo: −30,4 %; Prob. de que hoy sea el piso (1 mes): 10,1 %; Prob. de tocar el mínimo de 52 sem. (3 meses): 0,2 %; Mediana a 3 meses: 297,77 USD; Volatilidad anual hoy: 37,9 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "Close",
+       "es": "Cierre"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "USD",
+       "v": 302.23
+      }
+     },
+     {
+      "label": {
+       "en": "From the peak",
+       "es": "Desde el máximo"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "explain": "drawdown",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": -30.4
+      }
+     },
+     {
+      "label": {
+       "en": "Chance today is the low (1 month)",
+       "es": "Prob. de que hoy sea el piso (1 mes)"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": 10.1
+      }
+     },
+     {
+      "label": {
+       "en": "Chance of touching the 52-week low (3 months)",
+       "es": "Prob. de tocar el mínimo de 52 sem. (3 meses)"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": 0.2
+      }
+     },
+     {
+      "label": {
+       "en": "Median in 3 months",
+       "es": "Mediana a 3 meses"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "USD",
+       "v": 297.77
+      }
+     },
+     {
+      "label": {
+       "en": "Annual volatility now",
+       "es": "Volatilidad anual hoy"
+      },
+      "value": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "explain": "vol_ann",
+       "fact": "F1",
+       "src": "khipus_sim",
+       "unit": "pct",
+       "v": 37.9
+      }
+     }
+    ]
+   },
+   "entity": {
+    "id": "nvidia",
+    "label": "NVDA",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "where_from",
+    "ask"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "thousands of paths from its real history; not a forecast",
+    "es": "miles de trayectorias con su historia real; no es un pronóstico"
+   },
+   "title": {
+    "en": "Has NVDA bottomed?",
+    "es": "¿NVDA ya tocó fondo?"
+   },
+   "type": "metric.tiles"
+  },
+  {
+   "alt": {
+    "en": "Median: from 302.23 USD (2026-05-19) to 297.77 USD (2026-08-14); Upside (95%): from 302.23 USD (2026-05-19) to 430.7 USD (2026-08-14); Downside (5%): from 302.23 USD (2026-05-19) to 205.86 USD (2026-08-14)",
+    "es": "Mediana: de 302,23 USD (2026-05-19) a 297,77 USD (2026-08-14); Optimista (95 %): de 302,23 USD (2026-05-19) a 430,7 USD (2026-08-14); Pesimista (5 %): de 302,23 USD (2026-05-19) a 205,86 USD (2026-08-14)"
+   },
+   "data": {
+    "annotations": [
+     {
+      "label": {
+       "en": "Earnings report",
+       "es": "Reporte de resultados"
+      },
+      "x": "2026-05-31"
+     }
+    ],
+    "series": [
+     {
+      "name": {
+       "en": "Median",
+       "es": "Mediana"
+      },
+      "points": [
+       [
+        "2026-05-19",
+        302.23
+       ],
+       [
+        "2026-05-20",
+        301.97
+       ],
+       [
+        "2026-05-25",
+        302.0
+       ],
+       [
+        "2026-05-28",
+        301.8
+       ],
+       [
+        "2026-06-02",
+        301.07
+       ],
+       [
+        "2026-06-05",
+        300.12
+       ],
+       [
+        "2026-06-10",
+        299.34
+       ],
+       [
+        "2026-06-15",
+        299.21
+       ],
+       [
+        "2026-06-18",
+        298.5
+       ],
+       [
+        "2026-06-23",
+        298.04
+       ],
+       [
+        "2026-06-26",
+        298.61
+       ],
+       [
+        "2026-07-01",
+        297.76
+       ],
+       [
+        "2026-07-06",
+        298.32
+       ],
+       [
+        "2026-07-09",
+        298.31
+       ],
+       [
+        "2026-07-14",
+        297.37
+       ],
+       [
+        "2026-07-17",
+        297.98
+       ],
+       [
+        "2026-07-22",
+        297.57
+       ],
+       [
+        "2026-07-27",
+        297.6
+       ],
+       [
+        "2026-07-30",
+        297.78
+       ],
+       [
+        "2026-08-04",
+        297.14
+       ],
+       [
+        "2026-08-07",
+        297.18
+       ],
+       [
+        "2026-08-12",
+        297.24
+       ],
+       [
+        "2026-08-14",
+        297.77
+       ]
+      ],
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "label": {
+        "en": "Median",
+        "es": "Mediana"
+       },
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "name": {
+       "en": "Upside (95%)",
+       "es": "Optimista (95 %)"
+      },
+      "points": [
+       [
+        "2026-05-19",
+        302.23
+       ],
+       [
+        "2026-05-20",
+        314.05
+       ],
+       [
+        "2026-05-25",
+        326.04
+       ],
+       [
+        "2026-05-28",
+        334.16
+       ],
+       [
+        "2026-06-02",
+        347.33
+       ],
+       [
+        "2026-06-05",
+        353.06
+       ],
+       [
+        "2026-06-10",
+        359.41
+       ],
+       [
+        "2026-06-15",
+        364.55
+       ],
+       [
+        "2026-06-18",
+        368.26
+       ],
+       [
+        "2026-06-23",
+        374.37
+       ],
+       [
+        "2026-06-26",
+        379.25
+       ],
+       [
+        "2026-07-01",
+        382.96
+       ],
+       [
+        "2026-07-06",
+        390.34
+       ],
+       [
+        "2026-07-09",
+        393.49
+       ],
+       [
+        "2026-07-14",
+        396.8
+       ],
+       [
+        "2026-07-17",
+        397.74
+       ],
+       [
+        "2026-07-22",
+        403.17
+       ],
+       [
+        "2026-07-27",
+        405.41
+       ],
+       [
+        "2026-07-30",
+        412.2
+       ],
+       [
+        "2026-08-04",
+        417.82
+       ],
+       [
+        "2026-08-07",
+        421.85
+       ],
+       [
+        "2026-08-12",
+        429.09
+       ],
+       [
+        "2026-08-14",
+        430.7
+       ]
+      ],
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "label": {
+        "en": "Upside (95%)",
+        "es": "Optimista (95 %)"
+       },
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "name": {
+       "en": "Downside (5%)",
+       "es": "Pesimista (5 %)"
+      },
+      "points": [
+       [
+        "2026-05-19",
+        302.23
+       ],
+       [
+        "2026-05-20",
+        290.05
+       ],
+       [
+        "2026-05-25",
+        277.79
+       ],
+       [
+        "2026-05-28",
+        270.56
+       ],
+       [
+        "2026-06-02",
+        260.88
+       ],
+       [
+        "2026-06-05",
+        254.81
+       ],
+       [
+        "2026-06-10",
+        250.4
+       ],
+       [
+        "2026-06-15",
+        245.52
+       ],
+       [
+        "2026-06-18",
+        242.01
+       ],
+       [
+        "2026-06-23",
+        238.28
+       ],
+       [
+        "2026-06-26",
+        236.34
+       ],
+       [
+        "2026-07-01",
+        231.58
+       ],
+       [
+        "2026-07-06",
+        227.94
+       ],
+       [
+        "2026-07-09",
+        226.2
+       ],
+       [
+        "2026-07-14",
+        222.68
+       ],
+       [
+        "2026-07-17",
+        222.7
+       ],
+       [
+        "2026-07-22",
+        219.76
+       ],
+       [
+        "2026-07-27",
+        214.78
+       ],
+       [
+        "2026-07-30",
+        212.76
+       ],
+       [
+        "2026-08-04",
+        212.0
+       ],
+       [
+        "2026-08-07",
+        208.41
+       ],
+       [
+        "2026-08-12",
+        208.76
+       ],
+       [
+        "2026-08-14",
+        205.86
+       ]
+      ],
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "label": {
+        "en": "Downside (5%)",
+        "es": "Pesimista (5 %)"
+       },
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     }
+    ],
+    "variant": "full"
+   },
+   "entity": {
+    "id": "nvidia",
+    "label": "NVDA",
+    "symbol": "NVDA"
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "90% of the paths end up between the outer lines",
+    "es": "el 90 % de las trayectorias queda entre las líneas exteriores"
+   },
+   "title": {
+    "en": "Fan of the next 3 months",
+    "es": "Abanico de los próximos 3 meses"
+   },
+   "type": "chart.line"
+  },
+  {
+   "alt": {
+    "en": "−10% (272.00) 60.1 %; −20% (241.78) 30.3 %; −30% (211.56) 10.4 %; 52-week low (136.89) 0.2 %",
+    "es": "−10 % (272,00) 60,1 %; −20 % (241,78) 30,3 %; −30 % (211,56) 10,4 %; Mínimo 52 sem. (136,89) 0,2 %"
+   },
+   "data": {
+    "items": [
+     {
+      "label": {
+       "en": "−10% (272.00)",
+       "es": "−10 % (272,00)"
+      },
+      "v": 60.1
+     },
+     {
+      "label": {
+       "en": "−20% (241.78)",
+       "es": "−20 % (241,78)"
+      },
+      "v": 30.3
+     },
+     {
+      "label": {
+       "en": "−30% (211.56)",
+       "es": "−30 % (211,56)"
+      },
+      "v": 10.4
+     },
+     {
+      "label": {
+       "en": "52-week low (136.89)",
+       "es": "Mínimo 52 sem. (136,89)"
+      },
+      "v": 0.2
+     }
+    ],
+    "orientation": "h",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-11-06T03:00:00Z",
+     "fact": "F1",
+     "label": {
+      "en": "Chance of touching it",
+      "es": "Probabilidad de tocarlo"
+     },
+     "src": "khipus_sim",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "How far can it fall in 3 months?",
+    "es": "¿Hasta dónde puede caer en 3 meses?"
+   },
+   "type": "chart.bar"
+  },
+  {
+   "alt": {
+    "en": "Table of 3 rows (Horizon, Pct. 5, Median, Pct. 95, Ends higher, Today is the low): 1 month, 3 months, 6 months",
+    "es": "Tabla de 3 filas (Plazo, Perc. 5, Mediana, Perc. 95, Termina arriba, Hoy es el piso): 1 mes, 3 meses, 6 meses"
+   },
+   "data": {
+    "columns": [
+     {
+      "key": "plazo",
+      "kind": "text",
+      "label": {
+       "en": "Horizon",
+       "es": "Plazo"
+      }
+     },
+     {
+      "align": "end",
+      "key": "p5",
+      "kind": "number",
+      "label": {
+       "en": "Pct. 5",
+       "es": "Perc. 5"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "align": "end",
+      "key": "p50",
+      "kind": "number",
+      "label": {
+       "en": "Median",
+       "es": "Mediana"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "align": "end",
+      "key": "p95",
+      "kind": "number",
+      "label": {
+       "en": "Pct. 95",
+       "es": "Perc. 95"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     },
+     {
+      "align": "end",
+      "key": "prob_up",
+      "kind": "number",
+      "label": {
+       "en": "Ends higher",
+       "es": "Termina arriba"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "prob_today_is_the_low",
+      "kind": "number",
+      "label": {
+       "en": "Today is the low",
+       "es": "Hoy es el piso"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "lowest_close_p50",
+      "kind": "number",
+      "label": {
+       "en": "Typical low",
+       "es": "Mínimo típico"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "src": "khipus_sim",
+       "unit": "USD"
+      }
+     }
+    ],
+    "rows": [
+     {
+      "lowest_close_p50": 280.38,
+      "p5": 243.65,
+      "p50": 299.06,
+      "p95": 369.28,
+      "plazo": {
+       "en": "1 month",
+       "es": "1 mes"
+      },
+      "prob_today_is_the_low": 10.1,
+      "prob_up": 46.9
+     },
+     {
+      "lowest_close_p50": 262.42,
+      "p5": 205.86,
+      "p50": 297.77,
+      "p95": 430.7,
+      "plazo": {
+       "en": "3 months",
+       "es": "3 meses"
+      },
+      "prob_today_is_the_low": 5.7,
+      "prob_up": 46.9
+     },
+     {
+      "lowest_close_p50": 242.55,
+      "p5": 171.01,
+      "p50": 290.38,
+      "p95": 482.45,
+      "plazo": {
+       "en": "6 months",
+       "es": "6 meses"
+      },
+      "prob_today_is_the_low": 3.8,
+      "prob_up": 45.1
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "Simulated range by horizon",
+    "es": "Rango simulado por plazo"
+   },
+   "type": "table"
+  },
+  {
+   "alt": {
+    "en": "Report 1 −3.7 %; Report 2 −2.1 %; Report 3 −5.1 %",
+    "es": "Reporte 1 −3,7 %; Reporte 2 −2,1 %; Reporte 3 −5,1 %"
+   },
+   "data": {
+    "diverging": true,
+    "items": [
+     {
+      "label": {
+       "en": "Report 1",
+       "es": "Reporte 1"
+      },
+      "v": -3.7
+     },
+     {
+      "label": {
+       "en": "Report 2",
+       "es": "Reporte 2"
+      },
+      "v": -2.1
+     },
+     {
+      "label": {
+       "en": "Report 3",
+       "es": "Reporte 3"
+      },
+      "v": -5.1
+     }
+    ],
+    "orientation": "v",
+    "sort": "none",
+    "values": {
+     "as_of": "2026-11-06T03:00:00Z",
+     "fact": "F1",
+     "label": {
+      "en": "Move on report day",
+      "es": "Movimiento del día del reporte"
+     },
+     "src": "khipus_sim",
+     "unit": "pct"
+    }
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "simulate_price"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "title": {
+    "en": "How it reacted to its last reports",
+    "es": "Cómo reaccionó a sus últimos reportes"
+   },
+   "type": "chart.bar"
+  }
+ ]
+}

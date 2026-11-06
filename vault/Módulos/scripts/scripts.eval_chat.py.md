@@ -42,3 +42,7 @@ _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 ## Pruebas que lo cubren
 
 - [[tests.test_eval_chat.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]

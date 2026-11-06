@@ -1,0 +1,300 @@
+{
+ "en": [
+  {
+   "alt": {
+    "en": "Table of 2 rows (Company, Forward P/E, Expected EPS growth, PEG, To target, From 52w high): Nvidia, AMD",
+    "es": "Tabla de 2 filas (Empresa, P/E adelantado, Crec. BPA esperado, PEG, Al objetivo, Desde máx. 52 sem.): Nvidia, AMD"
+   },
+   "data": {
+    "columns": [
+     {
+      "key": "empresa",
+      "kind": "entity",
+      "label": {
+       "en": "Company",
+       "es": "Empresa"
+      }
+     },
+     {
+      "align": "end",
+      "key": "pe_forward",
+      "kind": "number",
+      "label": {
+       "en": "Forward P/E",
+       "es": "P/E adelantado"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "x"
+      }
+     },
+     {
+      "align": "end",
+      "key": "eps_growth",
+      "kind": "number",
+      "label": {
+       "en": "Expected EPS growth",
+       "es": "Crec. BPA esperado"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "peg",
+      "kind": "number",
+      "label": {
+       "en": "PEG",
+       "es": "PEG"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "ratio"
+      }
+     },
+     {
+      "align": "end",
+      "key": "upside",
+      "kind": "number",
+      "label": {
+       "en": "To target",
+       "es": "Al objetivo"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "from_high",
+      "kind": "number",
+      "label": {
+       "en": "From 52w high",
+       "es": "Desde máx. 52 sem."
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct"
+      }
+     }
+    ],
+    "rows": [
+     {
+      "empresa": {
+       "id": "nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "eps_growth": 40.2,
+      "from_high": -25.4,
+      "pe_forward": 24.1,
+      "peg": 0.6,
+      "upside": 30.5
+     },
+     {
+      "empresa": {
+       "id": "amd",
+       "label": "AMD",
+       "symbol": "AMD"
+      },
+      "eps_growth": 35.0,
+      "from_high": -12.0,
+      "pe_forward": 30.0,
+      "peg": 0.86,
+      "upside": null
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "screen_stocks"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "live analyst consensus; not a recommendation",
+    "es": "consenso de analistas en vivo; no es una recomendación"
+   },
+   "title": {
+    "en": "Cheapest per unit of growth",
+    "es": "Más baratas por unidad de crecimiento"
+   },
+   "type": "table"
+  }
+ ],
+ "es": [
+  {
+   "alt": {
+    "en": "Table of 2 rows (Company, Forward P/E, Expected EPS growth, PEG, To target, From 52w high): Nvidia, AMD",
+    "es": "Tabla de 2 filas (Empresa, P/E adelantado, Crec. BPA esperado, PEG, Al objetivo, Desde máx. 52 sem.): Nvidia, AMD"
+   },
+   "data": {
+    "columns": [
+     {
+      "key": "empresa",
+      "kind": "entity",
+      "label": {
+       "en": "Company",
+       "es": "Empresa"
+      }
+     },
+     {
+      "align": "end",
+      "key": "pe_forward",
+      "kind": "number",
+      "label": {
+       "en": "Forward P/E",
+       "es": "P/E adelantado"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "x"
+      }
+     },
+     {
+      "align": "end",
+      "key": "eps_growth",
+      "kind": "number",
+      "label": {
+       "en": "Expected EPS growth",
+       "es": "Crec. BPA esperado"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "peg",
+      "kind": "number",
+      "label": {
+       "en": "PEG",
+       "es": "PEG"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "ratio"
+      }
+     },
+     {
+      "align": "end",
+      "key": "upside",
+      "kind": "number",
+      "label": {
+       "en": "To target",
+       "es": "Al objetivo"
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct"
+      }
+     },
+     {
+      "align": "end",
+      "key": "from_high",
+      "kind": "number",
+      "label": {
+       "en": "From 52w high",
+       "es": "Desde máx. 52 sem."
+      },
+      "values": {
+       "as_of": "2026-11-06T03:00:00Z",
+       "fact": "F1",
+       "src": "yahoo",
+       "unit": "pct"
+      }
+     }
+    ],
+    "rows": [
+     {
+      "empresa": {
+       "id": "nvidia",
+       "label": "Nvidia",
+       "symbol": "NVDA"
+      },
+      "eps_growth": 40.2,
+      "from_high": -25.4,
+      "pe_forward": 24.1,
+      "peg": 0.6,
+      "upside": 30.5
+     },
+     {
+      "empresa": {
+       "id": "amd",
+       "label": "AMD",
+       "symbol": "AMD"
+      },
+      "eps_growth": 35.0,
+      "from_high": -12.0,
+      "pe_forward": 30.0,
+      "peg": 0.86,
+      "upside": null
+     }
+    ]
+   },
+   "id": "x",
+   "menu": [
+    "table",
+    "where_from",
+    "ask",
+    "csv"
+   ],
+   "pinnable": true,
+   "prov": {
+    "args": "args",
+    "call": 0,
+    "fact": "F1",
+    "kind": "tool",
+    "name": "screen_stocks"
+   },
+   "sources": [
+    "F1"
+   ],
+   "state": "ready",
+   "subtitle": {
+    "en": "live analyst consensus; not a recommendation",
+    "es": "consenso de analistas en vivo; no es una recomendación"
+   },
+   "title": {
+    "en": "Cheapest per unit of growth",
+    "es": "Más baratas por unidad de crecimiento"
+   },
+   "type": "table"
+  }
+ ]
+}

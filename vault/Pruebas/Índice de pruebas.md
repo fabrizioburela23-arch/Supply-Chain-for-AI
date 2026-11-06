@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-273 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+274 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -92,6 +92,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_genui_review_fixes.py]] | 10 | 5 |
 | [[tests.test_genui_rivals.py]] | 3 | 6 |
 | [[tests.test_genui_schema.py]] | 16 | 2 |
+| [[tests.test_genui_sim_report.py]] | 4 | 6 |
 | [[tests.test_genui_validate.py]] | 9 | 2 |
 | [[tests.test_governance.py]] | 20 | 18 |
 | [[tests.test_governance_activation.py]] | 4 | 12 |

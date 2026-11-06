@@ -3,14 +3,14 @@ tipo: "pagina"
 capa: "Interfaz (Khipus OS)"
 ruta: "app.html"
 lenguaje: "html"
-lineas: 3567
+lineas: 3568
 aliases: ["app.html"]
 tags: ["capa/interfaz", "tipo/pagina"]
 ---
 
 # app.html
 
-> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.567 líneas · `app.html`
+> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.568 líneas · `app.html`
 
 ## Para qué sirve
 
@@ -129,18 +129,19 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 90. [[engine.genui.js]] (línea 3244)
 91. [[engine.oswindows.js]] (línea 3245)
 92. [[engine.khipu_chat.js]] (línea 3246)
-93. [[engine.desktop.js]] (línea 3247)
-94. [[engine.simreport.js]] (línea 3248)
-95. [[engine.cockpit.js]] (línea 3249)
-96. [[engine.live.js]] (línea 3250)
-97. [[engine.command_center.js]] (línea 3251)
-98. [[sim.scenario_builder.js]] (línea 3252)
-99. [[engine.app_coordinator.js]] (línea 3254)
-100. [[engine.app_trade_panel.js]] (línea 3555)
-101. [[engine.ticket.js]] (línea 3556)
-102. [[engine.app_preflight.js]] (línea 3559)
-103. [[engine.app_canvas.js]] (línea 3562)
-104. [[engine.app_scatter.js]] (línea 3564)
+93. [[engine.report.js]] (línea 3247)
+94. [[engine.desktop.js]] (línea 3248)
+95. [[engine.simreport.js]] (línea 3249)
+96. [[engine.cockpit.js]] (línea 3250)
+97. [[engine.live.js]] (línea 3251)
+98. [[engine.command_center.js]] (línea 3252)
+99. [[sim.scenario_builder.js]] (línea 3253)
+100. [[engine.app_coordinator.js]] (línea 3255)
+101. [[engine.app_trade_panel.js]] (línea 3556)
+102. [[engine.ticket.js]] (línea 3557)
+103. [[engine.app_preflight.js]] (línea 3560)
+104. [[engine.app_canvas.js]] (línea 3563)
+105. [[engine.app_scatter.js]] (línea 3565)
 
 ## Bloques `<script>` inline
 
@@ -219,6 +220,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[tests.test_docs_facts.py]]
 - [[tests.test_genui_client_static.py]]
 - [[tests.test_genui_f3_client_static.py]]
+- [[tests.test_genui_sim_report.py]]
 - [[tests.test_import_panel_browser.py]]
 - [[tests.test_import_panel_static.py]]
 - [[tests.test_khipus_os_fixes_shell.py]]

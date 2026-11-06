@@ -1,0 +1,40 @@
+{
+ "tool": "screen_stocks",
+ "args": {
+  "by": "peg"
+ },
+ "sample": true,
+ "result": {
+  "by": "peg",
+  "filters": {
+   "sector": null,
+   "country": null
+  },
+  "universe_with_forward_pe": 120,
+  "matched": 2,
+  "items": [
+   {
+    "id": "nvidia",
+    "label": "Nvidia",
+    "symbol": "NVDA",
+    "pe_forward": 24.1,
+    "eps_growth_next_year_pct": 40.2,
+    "peg": 0.6,
+    "upside_to_target_pct": 30.5,
+    "from_52w_high_pct": -25.4
+   },
+   {
+    "id": "amd",
+    "label": "AMD",
+    "symbol": "AMD",
+    "pe_forward": 30.0,
+    "eps_growth_next_year_pct": 35.0,
+    "peg": 0.86,
+    "upside_to_target_pct": null,
+    "from_52w_high_pct": -12.0
+   }
+  ],
+  "source": "Yahoo Finance (live fundamentals, Khipus cache)",
+  "as_of": "2026-11-06T03:00:00Z"
+ }
+}

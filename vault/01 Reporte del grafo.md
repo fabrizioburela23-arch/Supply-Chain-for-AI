@@ -17,10 +17,10 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 256 |
-| Líneas de código | 152.108 |
+| Archivos de código (Python, JS, HTML) | 257 |
+| Líneas de código | 152.218 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 273 |
+| Archivos de prueba | 274 |
 | Documentos | 32 |
 | Rutas HTTP | 266 |
 | Grupos de API | 61 |
@@ -29,13 +29,13 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 782 |
 | Aristas `defines_endpoint` | 301 |
-| Aristas `imports` | 2.405 |
-| Aristas `loads_script` | 96 |
-| Aristas `mentions_in_session` | 603 |
+| Aristas `imports` | 2.407 |
+| Aristas `loads_script` | 97 |
+| Aristas `mentions_in_session` | 605 |
 | Aristas `reads_env` | 227 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.890 |
-| Aristas `uses_global` | 471 |
+| Aristas `tested_by` | 1.896 |
+| Aristas `uses_global` | 474 |
 
 ## Nodos "dios" (más conectados)
 
@@ -43,8 +43,8 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
-| [[app.html]] | 125 | 28 | 97 | [[Capa Interfaz (Khipus OS)]] |
-| [[engine.app_main.js]] | 114 | 67 | 47 | [[Capa Interfaz (Khipus OS)]] |
+| [[app.html]] | 126 | 28 | 98 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.app_main.js]] | 115 | 68 | 47 | [[Capa Interfaz (Khipus OS)]] |
 | [[server.py]] | 99 | 31 | 68 | [[Capa Infraestructura]] |
 | [[ontology.db.py]] | 58 | 48 | 10 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 52 | 14 | 38 | [[Capa Interfaz (Khipus OS)]] |
@@ -61,8 +61,8 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[core.identity.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
 | [[ontology.models.py]] | 32 | 28 | 4 | [[Capa Ontología y grafo temporal]] |
 | [[core.world.py]] | 31 | 21 | 10 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
-| [[engine.toast.js]] | 30 | 27 | 3 | [[Capa Interfaz (Khipus OS)]] |
-| [[engine.voice.js]] | 30 | 4 | 26 | [[Capa Voz]] |
+| [[engine.toast.js]] | 31 | 28 | 3 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.khipu_chat.js]] | 30 | 7 | 23 | [[Capa Chat y agentes]] |
 
 ## Módulos sin pruebas (22)
 

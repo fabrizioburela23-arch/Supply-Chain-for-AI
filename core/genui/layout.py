@@ -20,6 +20,10 @@ BIG = ('chart.line', 'chart.candles', 'impact.cascade', 'graph.mini', 'compariso
 NON_VISUAL = ('text', 'actions', 'sources')
 
 _INTENTS = (
+    # 2026-11-06: «¿ya tocó fondo? / ¿seguirá cayendo? / simula el precio» → el abanico de simulate_price
+    ('sim', re.compile(r'toc[oó] fondo|tocar fondo|\bel piso\b|punto m[aá]s bajo|seguir[aá]? (cayendo|bajando)|'
+                       r'hasta d[oó]nde (puede )?(caer|bajar|subir)|simula|bottom(ed)?\b|keep falling|'
+                       r'how (low|far) can', re.I)),
     ('impact', re.compile(r'qu[eé] pasa(r[ií]a)? si|what (would happen|happens) if|what if|\bsi (cae|cayera|falla|fallara|'
                           r'se cae|deja de)|\bif .{0,40}\b(fails?|falls?|collapses?|goes down|stops)|choque|shock|'
                           r'impacto|impact|bloque[oa]|blockade|cascad|contagi', re.I)),
@@ -46,6 +50,7 @@ _INTENTS = (
 
 # tipo de bloque principal por intención (en orden de preferencia)
 _MAIN = {
+    'sim': ('sim_fan', 'sim_tiles'),
     'impact': ('cascade',),
     'compare': ('comparison', 'line'),
     'price': ('line',),
@@ -58,8 +63,8 @@ _MAIN = {
     'market': ('market_rank',),
 }
 # prioridad por defecto (sin intención clara)
-_DEFAULT = ('cascade', 'line', 'graph.mini', 'risk_tiles', 'pros_cons', 'ranking', 'chart.bar', 'timeline', 'company',
-            'fund_bar', 'market_rank')
+_DEFAULT = ('cascade', 'sim_fan', 'line', 'graph.mini', 'risk_tiles', 'pros_cons', 'ranking', 'chart.bar', 'timeline', 'company',
+            'fund_bar', 'market_rank', 'screen', 'sim_tiles')
 
 
 def intent_of(message):
@@ -106,6 +111,10 @@ def select(cands, intent, primary, mode='simple'):
         ent = (main.get('_meta') or {}).get('entity')
         mains = [b for b in cands if _key(b) == 'company' and (b.get('_meta') or {}).get('entity') == ent]
         mains.sort(key=lambda b: 0 if (b.get('_meta') or {}).get('kind') == 'tiles' else 1)
+    if _key(main) in ('sim_fan', 'sim_tiles'):   # simulación → cifras arriba + abanico (de la MISMA empresa)
+        ent = (main.get('_meta') or {}).get('entity')
+        mains = [b for b in cands if _key(b) in ('sim_fan', 'sim_tiles') and (b.get('_meta') or {}).get('entity') == ent]
+        mains.sort(key=lambda b: 0 if _key(b) == 'sim_tiles' else 1)
     if _key(main) == 'fund_bar':                 # resultados → ingresos por período + cifras del último período
         ent = (main.get('_meta') or {}).get('entity')
         mains = [b for b in cands if (b.get('_meta') or {}).get('group') == 'fundamentals'

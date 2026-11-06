@@ -8,11 +8,11 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (96 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (107 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
-\*\*Para ahorrar tokens: lee SOLO esta sección.\*\* Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero; buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`). Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo tocado (suite completa solo antes de publicar), mensajes cortos.
+\*\*Para ahorrar tokens: lee SOLO esta sección.\*\* Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero; buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`). \*\*2026-11-06 — IA «entrenada» sin fine-tuning + gráficos/informes nativos:\*\* - `python3 scripts/eval_chat.py` = EXAMEN DE ORO (20 preguntas de inversionista en `data/eval/preguntas_oro.json`) contra
 
 ## Archivos que menciona
 
@@ -23,9 +23,11 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[core.sim_report.py]]
 - [[core.trading_agent.py]]
 - [[engine.brief.js]]
+- [[engine.report.js]]
 - [[engine.signals.js]]
 - [[engine.simreport.js]]
 - [[ontology.link_review.py]]
+- [[scripts.eval_chat.py]]
 - [[scripts.research_batch.py]]
 - [[tests.test_agent_signals_one_tap.py]]
 - [[tests.test_brief_portfolio_card.py]]

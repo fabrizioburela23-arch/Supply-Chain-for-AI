@@ -44,11 +44,11 @@ De nivel superior (globales del script): `_DS_SRC`, `_TERM_ICON`, `_TERM_SEED`, 
 - [[engine.graph3d.js]] — lo nombra por su ruta
 - [[engine.hypergraph.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **99 de 104** (línea 3254), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
+Se carga en [[app.html]] en la posición **100 de 105** (línea 3255), después de [[sim.scenario_builder.js]] y antes de [[engine.app_trade_panel.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 99)
+- [[app.html]] — lo carga con `<script>` (posición 100)
 - [[app.html]] — usa `_dossierAddCompare`, `_dossierAutocomplete`, `_dossierLoad`, `_dossierToWarRoom`, `_go3D`, `_termCat`, `_termClearAll`, `_termFilter` y 2 más
 - [[engine.app_main.js]] — usa `_dossierRedrawIfNeeded`, `_dossierRelabel`, `_termRefreshPrices`, `initGdelt`, `initSimTab`, `initSpaceTab`, `initTerminalTab`, `renderNrsTop10`
 - [[engine.app_preflight.js]] — usa `initSimTab`
