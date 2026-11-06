@@ -9,7 +9,7 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**49 archivos · 27.817 líneas.** Volver al [[00 Mapa de Khipus]].
+**49 archivos · 27.823 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
@@ -45,9 +45,9 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.pin.py]] — 260 líneas · verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[core.ops_check.py]] — 257 líneas · O1 (misión de reparación 2026-10-04): chequeo del sistema EN el servidor, guardado y consultable.
 - [[core.celestrak.py]] — 255 líneas · satélites reales (CelesTrak) para el Space Monitor y el texto de Khipu.
+- [[core.price_sim.py]] — 229 líneas · «¿ya tocó fondo? ¿hasta dónde puede caer?»: simulación Monte Carlo del PRECIO de una acción.
 - [[core.identity.py]] — 227 líneas · QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del plan).
 - [[scripts.build_governance.py]] — 226 líneas · mantiene governance/manifest.json (docs/INFRA_OPERATIVA.md §5.1-§5.3; paso 9).
-- [[core.price_sim.py]] — 223 líneas · «¿ya tocó fondo? ¿hasta dónde puede caer?»: simulación Monte Carlo del PRECIO de una acción.
 - [[core.sim_report.py]] — 206 líneas · INFORME de la simulación de escenarios (2026-10-21, «que parezca un producto»).
 - [[core.governance_preview.py]] — 191 líneas · "¿qué cambia para mí?" de una versión de artefacto ANTES de activarla (paso 12; pieza mínima del flujo de gobernanza §5.3 de docs/INFRA_OPERATIVA.md).
 - [[core.http.py]] — 189 líneas · llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology y matrix).

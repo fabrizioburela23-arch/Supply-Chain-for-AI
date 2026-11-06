@@ -82,7 +82,7 @@
   {"id": "core/portfolio_ai.py", "label": "core/portfolio_ai.py", "layer": "dinero", "lines": 1293, "note": "Módulos/core/core.portfolio_ai.py", "path": "core/portfolio_ai.py", "type": "module"},
   {"id": "core/portfolio_report.py", "label": "core/portfolio_report.py", "layer": "dinero", "lines": 246, "note": "Módulos/core/core.portfolio_report.py", "path": "core/portfolio_report.py", "type": "module"},
   {"id": "core/portfolio_reports_api.py", "label": "core/portfolio_reports_api.py", "layer": "dinero", "lines": 468, "note": "Módulos/core/core.portfolio_reports_api.py", "path": "core/portfolio_reports_api.py", "type": "module"},
-  {"id": "core/price_sim.py", "label": "core/price_sim.py", "layer": "infra", "lines": 223, "note": "Módulos/core/core.price_sim.py", "path": "core/price_sim.py", "type": "module"},
+  {"id": "core/price_sim.py", "label": "core/price_sim.py", "layer": "infra", "lines": 229, "note": "Módulos/core/core.price_sim.py", "path": "core/price_sim.py", "type": "module"},
   {"id": "core/prices_api.py", "label": "core/prices_api.py", "layer": "infra", "lines": 125, "note": "Módulos/core/core.prices_api.py", "path": "core/prices_api.py", "type": "module"},
   {"id": "core/prices_store.py", "label": "core/prices_store.py", "layer": "infra", "lines": 945, "note": "Módulos/core/core.prices_store.py", "path": "core/prices_store.py", "type": "module"},
   {"id": "core/providers/__init__.py", "label": "core/providers/__init__.py", "layer": "vivo", "lines": 15, "note": "Módulos/core/providers/core.providers.__init__.py", "path": "core/providers/__init__.py", "type": "module"},

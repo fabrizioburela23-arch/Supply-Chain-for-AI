@@ -98,7 +98,7 @@ def _reaction_moves(dates, closes, past):
     return out
 
 
-def simulate(symbol, prices, *, earnings=None, today=None, n_paths=N_PATHS, seed=7, levels=None):
+def simulate(symbol, prices, *, earnings=None, today=None, n_paths=N_PATHS, seed=7, levels=None, fan_days=0):
     """`prices` {fecha: cierre ajustado}; `earnings` = (pasadas, próxima, fuente) de earnings_calendar.
     → dict con todo lo de arriba. Lanza ValueError si la historia es corta."""
     items = sorted((d, float(p)) for d, p in (prices or {}).items() if p and float(p) > 0)
@@ -206,7 +206,13 @@ def simulate(symbol, prices, *, earnings=None, today=None, n_paths=N_PATHS, seed
                 by_earn[k] = {'label_es': es, 'label_en': en, 'share_of_paths_pct': round(float(m.mean() * 100), 1),
                               'horizon': '3m', 'p50': b['p50'], 'prob_today_is_the_low_pct': b['prob_today_is_the_low_pct'],
                               'prob_touch': b['prob_touch'], 'lowest_close_p50': b['lowest_close_p50']}
-    return {'symbol': symbol, 'as_of_close': dates[-1], 'technical': tech, 'horizons': horizons,
+    fan = None
+    if fan_days:     # abanico día a día (percentiles por día de negociación) para dibujar el gráfico
+        q = np.percentile(paths[:, :min(int(fan_days), H)], [5, 25, 50, 75, 95], axis=0)
+        fan = [{'day': i + 1, 'p5': round(float(q[0, i]), 2), 'p25': round(float(q[1, i]), 2),
+                'p50': round(float(q[2, i]), 2), 'p75': round(float(q[3, i]), 2), 'p95': round(float(q[4, i]), 2)}
+               for i in range(q.shape[1])]
+    return {'symbol': symbol, 'as_of_close': dates[-1], 'technical': tech, 'horizons': horizons, 'fan': fan,
             'earnings_event': earn, 'by_earnings_outcome': by_earn, 'big_drop_episodes': episodes,
             'volatility': {'now_ann_pct': round(sig_now * np.sqrt(252) * 100, 1),
                            'one_year_ann_pct': round(sig_long * np.sqrt(252) * 100, 1)},
