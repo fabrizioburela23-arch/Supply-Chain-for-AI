@@ -78,6 +78,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
+- herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
 _Además lo importan 10 pruebas (lista abajo)._
 

@@ -44,6 +44,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[core.options.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
+- [[core.price_sim.py]] — lo importa
 - [[core.prices_api.py]] — lo importa
 - [[core.providers.coingecko.py]] — lo importa
 - [[core.providers.market.py]] — lo importa

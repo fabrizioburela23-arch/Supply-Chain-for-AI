@@ -79,6 +79,7 @@ _Nada interno._
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
+- herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
 _Además lo importan 69 pruebas (lista abajo)._
 

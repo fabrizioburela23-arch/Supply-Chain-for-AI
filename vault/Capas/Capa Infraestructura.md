@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 48
+archivos: 49
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**48 archivos · 27.594 líneas.** Volver al [[00 Mapa de Khipus]].
+**49 archivos · 27.817 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
@@ -47,6 +47,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.celestrak.py]] — 255 líneas · satélites reales (CelesTrak) para el Space Monitor y el texto de Khipu.
 - [[core.identity.py]] — 227 líneas · QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del plan).
 - [[scripts.build_governance.py]] — 226 líneas · mantiene governance/manifest.json (docs/INFRA_OPERATIVA.md §5.1-§5.3; paso 9).
+- [[core.price_sim.py]] — 223 líneas · «¿ya tocó fondo? ¿hasta dónde puede caer?»: simulación Monte Carlo del PRECIO de una acción.
 - [[core.sim_report.py]] — 206 líneas · INFORME de la simulación de escenarios (2026-10-21, «que parezca un producto»).
 - [[core.governance_preview.py]] — 191 líneas · "¿qué cambia para mí?" de una versión de artefacto ANTES de activarla (paso 12; pieza mínima del flujo de gobernanza §5.3 de docs/INFRA_OPERATIVA.md).
 - [[core.http.py]] — 189 líneas · llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology y matrix).
@@ -74,7 +75,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 | la usa | [[Capa Chat y agentes]] | 31 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 29 |
 | la usa | [[Capa Investigación]] | 28 |
-| la usa | [[Capa MCP y API]] | 23 |
+| la usa | [[Capa MCP y API]] | 24 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 23 |
 | la usa | [[Capa Comité]] | 22 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 20 |

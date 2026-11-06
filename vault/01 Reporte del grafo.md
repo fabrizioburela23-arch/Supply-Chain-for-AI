@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 254 |
-| Líneas de código | 151.687 |
+| Archivos de código (Python, JS, HTML) | 255 |
+| Líneas de código | 151.960 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 271 |
+| Archivos de prueba | 272 |
 | Documentos | 32 |
 | Rutas HTTP | 266 |
 | Grupos de API | 61 |
-| Herramientas MCP | 34 |
+| Herramientas MCP | 35 |
 | Variables de entorno | 158 |
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 781 |
-| Aristas `defines_endpoint` | 300 |
-| Aristas `imports` | 2.391 |
+| Aristas `defines_endpoint` | 301 |
+| Aristas `imports` | 2.403 |
 | Aristas `loads_script` | 96 |
 | Aristas `mentions_in_session` | 603 |
 | Aristas `reads_env` | 226 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.883 |
+| Aristas `tested_by` | 1.887 |
 | Aristas `uses_global` | 471 |
 
 ## Nodos "dios" (más conectados)
@@ -52,7 +52,7 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[core.governance.py]] | 41 | 36 | 5 | [[Capa Infraestructura]] |
 | [[core.__init__.py]] | 40 | 40 | 0 | [[Capa Infraestructura]] |
 | [[core.decisions.py]] | 38 | 31 | 7 | [[Capa Infraestructura]] |
-| [[core.http.py]] | 37 | 35 | 2 | [[Capa Infraestructura]] |
+| [[core.http.py]] | 38 | 36 | 2 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |
 | [[ontology.api.py]] | 36 | 11 | 25 | [[Capa Ontología y grafo temporal]] |
 | [[core.khipu_chat.py]] | 35 | 6 | 29 | [[Capa Chat y agentes]] |

@@ -50,6 +50,7 @@ estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del m
 - [[research.context.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `get_fundamentals` → [[API herramientas MCP]]
+- herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
 _Además lo importan 4 pruebas (lista abajo)._
 

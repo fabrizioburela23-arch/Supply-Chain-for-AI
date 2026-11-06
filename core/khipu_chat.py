@@ -385,7 +385,8 @@ class ToolFailure(Exception):
 # de ganancias» ya no vale) y rank_by_market (posición de mercado investigada, E2.9: «¿cuál es la más grande en X?»).
 MCP_READ_TOOLS = ('search_companies', 'get_company', 'get_supply_chain', 'get_research', 'get_research_health', 'get_claim_evidence',
                   'get_committee_memo', 'get_conclusions_board', 'get_track_record', 'get_risk_report',
-                  'get_world_events', 'get_history', 'run_scenario', 'get_fundamentals', 'rank_by_market')
+                  'get_world_events', 'get_history', 'run_scenario', 'get_fundamentals', 'rank_by_market',
+                  'simulate_price')
 
 _EXTRA = {}     # nombre → {'sig', 'desc', 'fn', 'available'}
 
@@ -1426,7 +1427,7 @@ también get_committee_memo). "@analista / pregúntale \
 al analista" → ask_agent. "¿puedo investigar ahora? / ¿por qué falló o quedó a medias la investigación?" → \
 get_research_health (proveedores en pausa, cola, presupuesto); en get_research, last_job.status 'partial' = síntesis \
 incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda mañana. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
-peores" → rank_companies o market_movers. UN ENLACE pegado o "lee / abre / resume esta página, noticia o 10-K" → read_url(url). Algo ACTUAL que no está en Khipus (la noticia de hoy, macro, regulación, una empresa fuera del grafo, un dato que ninguna herramienta trae) → web_search y, si hace falta el detalle, read_url del mejor resultado; cita SIEMPRE la URL y la fecha. Nunca digas «no tengo acceso a internet» si web_search o read_url están en tu lista. "¿cuál está barata / infravalorada / con potencial de crecimiento?" → screen_stocks (by=peg por defecto; value si piden solo baratas, growth si piden crecimiento, upside si piden margen hasta el precio objetivo). NUNCA digas que no tienes datos de valoración: tienes P/E, crecimiento esperado por el consenso y precio objetivo en vivo. Aclara SIEMPRE que no hay estimaciones a 2027: el crecimiento es el que el consenso espera para el próximo año; que un P/E bajo puede ser una empresa en problemas; y que es información, no una recomendación. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
+peores" → rank_companies o market_movers. "¿va a seguir cayendo X? / ¿ya tocó fondo / es el piso? / ¿hasta dónde puede bajar o subir? / simula el precio" → simulate_price(X) (y get_company para el contexto). Responde con SUS números: prob_today_is_the_low_pct (la respuesta directa a «¿es el piso?»), prob_touch (−10 %, mínimo de 52 semanas, −20 %), lowest_close_p50 y su día, percentiles por horizonte, el reparto buen/mal reporte si hay resultados, el técnico, los episodios de caídas grandes y la valoración en vivo. Di que es una distribución de probabilidades con datos reales, no un pronóstico ni una recomendación. UN ENLACE pegado o "lee / abre / resume esta página, noticia o 10-K" → read_url(url). Algo ACTUAL que no está en Khipus (la noticia de hoy, macro, regulación, una empresa fuera del grafo, un dato que ninguna herramienta trae) → web_search y, si hace falta el detalle, read_url del mejor resultado; cita SIEMPRE la URL y la fecha. Nunca digas «no tengo acceso a internet» si web_search o read_url están en tu lista. "¿cuál está barata / infravalorada / con potencial de crecimiento?" → screen_stocks (by=peg por defecto; value si piden solo baratas, growth si piden crecimiento, upside si piden margen hasta el precio objetivo). NUNCA digas que no tienes datos de valoración: tienes P/E, crecimiento esperado por el consenso y precio objetivo en vivo. Aclara SIEMPRE que no hay estimaciones a 2027: el crecimiento es el que el consenso espera para el próximo año; que un P/E bajo puede ser una empresa en problemas; y que es información, no una recomendación. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
 get_history(id_or_ticker, range). "¿cuánto le afecta a el PROVEEDOR X si sus CLIENTES recortan / cancelan / gastan menos?" (p. ej. los hiperescaladores recortan capex → Nvidia) → run_scenario con shocks=los CLIENTES que recortan y direction="up" (por defecto "down" es el caso contrario: el que cae deja de suministrar). Di siempre que es un efecto ESTRUCTURAL de ingresos, no un precio. "¿qué pasa si cae / falla X?" con una empresa CONCRETA → run_scenario(shocks=[{{"id":"X"}}]) \
 (las cifras de impacto salen de ese motor; si la pregunta es un escenario descrito en palabras, scenario_exposure). \
 ESCENARIOS (scenario_exposure / run_scenario): NUNCA digas que no tienes un modelo cuantitativo: el motor de Khipus \
@@ -2111,6 +2112,7 @@ def _src_name(src):
 _TOOL_HUMAN = {
     'screen_stocks': ('fundamentales en vivo (Yahoo Finance)', 'live fundamentals (Yahoo Finance)'),
     'read_url': ('página web', 'web page'),
+    'simulate_price': ('simulación de precio de Khipus', 'Khipus price simulation'),
     'get_company': ('Grafo Khipus', 'Khipus graph'), 'search_companies': ('Grafo Khipus', 'Khipus graph'),
     'get_supply_chain': ('Grafo Khipus', 'Khipus graph'), 'rank_companies': ('Grafo Khipus', 'Khipus graph'),
     'plan_portfolio': ('comité de cartera de Khipus', 'Khipus portfolio committee'),

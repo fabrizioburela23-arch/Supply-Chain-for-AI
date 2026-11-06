@@ -455,6 +455,54 @@ def t_get_history(ctx, id_or_ticker, range='1y', frequency='weekly', max_points=
             'known_at': _now_iso(), 'method': 'adjusted close (splits/dividends); last close of each period'}
 
 
+@tool('simulate_price', 'Monte Carlo of the share price: is it the bottom?', 'read',
+      'Monte Carlo simulation of ONE listed company\'s share price (filtered historical simulation on its real daily '
+      'closes, current volatility reverting to the 1-year level, zero drift, plus an earnings-day jump sized from its '
+      'real past reactions when results fall in the horizon). Answers "will it keep falling / is this the bottom / how '
+      'low can it go": per horizon (1, 3, 6 months) price percentiles, probability it ends higher, probability that '
+      'TODAY\'s close is the lowest close of the period, probability of touching -10% / the 52-week low / -20% / -30%, '
+      'the expected lowest close and when; the same split by good/bad earnings; technicals (RSI, 50/200-day averages, '
+      'drawdown); what happened after past one-day drops >= 7%; and the live valuation (forward P/E, analyst target). '
+      'A probability distribution from real data, not a forecast and not advice.',
+      {'id_or_ticker': {'type': 'string', 'minLength': 1, 'maxLength': 120}},
+      required=['id_or_ticker'], open_world=True)
+def t_simulate_price(ctx, id_or_ticker):
+    from core import price_sim
+    sym, eid = _symbol_of(id_or_ticker)
+    if not sym:
+        raise ToolError('no listed ticker for this entity (private companies have no share price)', code='no_data')
+    prices, cur, meta = _series(sym, '2y')
+    if not prices:
+        raise ToolError(f'no price history available for {sym} right now', code='unavailable')
+    try:
+        earn = price_sim.earnings_calendar(sym)
+    except Exception:  # noqa: BLE001
+        earn = ([], None, None)
+    try:
+        out = price_sim.simulate(sym, prices, earnings=earn)
+    except ValueError as e:
+        raise ToolError(str(e), code='no_data')
+    val = None
+    try:
+        from core.company_data import get_live_profile
+        lp = get_live_profile(sym) or {}
+        if lp.get('available'):
+            px = lp.get('price')
+            val = {k: lp.get(k) for k in ('price', 'pe_trailing', 'pe_forward', 'target_mean', 'recommendation',
+                                          'revenue_growth_q', 'operating_margin', 'week52_low', 'week52_high', 'currency')}
+            if px and lp.get('target_mean'):
+                val['upside_to_target_pct'] = round((lp['target_mean'] / px - 1) * 100, 1)
+            if lp.get('pe_trailing') and lp.get('pe_forward'):
+                val['eps_growth_implied_pct'] = round((lp['pe_trailing'] / lp['pe_forward'] - 1) * 100, 1)
+            val.update(source=lp.get('source'), as_of=lp.get('as_of'))
+    except Exception:  # noqa: BLE001
+        val = None
+    out.update(id=eid, currency=cur, live_valuation=val, history_source=meta.get('source') or 'yahoo_live',
+               source='Khipus price simulation (core/price_sim) on ' + (meta.get('source') or 'Yahoo') + ' daily closes',
+               as_of=_now_iso(), uncertainty='probability distribution from past behaviour; not a forecast, not advice')
+    return out
+
+
 def _ranks(x):
     order = sorted(range(len(x)), key=lambda i: x[i])
     r = [0.0] * len(x)

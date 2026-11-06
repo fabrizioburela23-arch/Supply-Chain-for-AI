@@ -59,6 +59,7 @@ REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
 - herramienta MCP `get_history` → [[API herramientas MCP]]
 - herramienta MCP `get_risk_report` → [[API herramientas MCP]]
 - herramienta MCP `project_portfolio` → [[API herramientas MCP]]
+- herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
 _Además lo importan 6 pruebas (lista abajo)._
 
