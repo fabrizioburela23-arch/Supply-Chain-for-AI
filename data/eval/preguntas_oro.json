@@ -1,0 +1,212 @@
+{
+ "_doc": "Examen de oro del chat Khipu: preguntas reales de inversionista. 'tools' = la respuesta debe usar AL MENOS UNA de cada grupo (lista de listas). Correr con: python3 scripts/eval_chat.py",
+ "casos": [
+  {
+   "id": "precio",
+   "q": "¿A cuánto está NVDA hoy y cuánto cayó desde su máximo?",
+   "tools": [
+    [
+     "get_company",
+     "get_fundamentals",
+     "get_history"
+    ]
+   ]
+  },
+  {
+   "id": "fondo",
+   "q": "¿Nvidia ya tocó fondo o puede seguir cayendo? Quiero una simulación con probabilidades.",
+   "tools": [
+    [
+     "simulate_price"
+    ]
+   ]
+  },
+  {
+   "id": "fondo_amd",
+   "q": "AMD cayó fuerte hoy, ¿qué probabilidad hay de que siga bajando el próximo mes?",
+   "tools": [
+    [
+     "simulate_price"
+    ]
+   ]
+  },
+  {
+   "id": "valuacion",
+   "q": "¿NVDA está cara o barata? Dame P/E adelantado, crecimiento y precio objetivo de analistas.",
+   "tools": [
+    [
+     "get_fundamentals",
+     "get_company"
+    ]
+   ]
+  },
+  {
+   "id": "escenario_taiwan",
+   "q": "Si China bloquea Taiwán, ¿qué empresas de mi universo pierden más?",
+   "tools": [
+    [
+     "run_scenario",
+     "scenario_exposure"
+    ]
+   ]
+  },
+  {
+   "id": "escenario_up",
+   "q": "Si TSMC duplica su capacidad de CoWoS, ¿quién se beneficia?",
+   "tools": [
+    [
+     "run_scenario",
+     "scenario_exposure"
+    ]
+   ]
+  },
+  {
+   "id": "demanda",
+   "q": "¿Qué pasa con Nvidia si los hyperscalers recortan 30 % su gasto en centros de datos?",
+   "tools": [
+    [
+     "run_scenario"
+    ]
+   ]
+  },
+  {
+   "id": "proveedores",
+   "q": "¿Quiénes son los proveedores críticos de Nvidia y cuál es el cuello de botella?",
+   "tools": [
+    [
+     "get_supply_chain",
+     "get_company"
+    ]
+   ]
+  },
+  {
+   "id": "clientes",
+   "q": "¿Quiénes son los mayores clientes de TSMC?",
+   "tools": [
+    [
+     "get_supply_chain",
+     "get_company"
+    ]
+   ]
+  },
+  {
+   "id": "screen",
+   "q": "Dame 5 empresas de semiconductores con P/E menor a 25 y crecimiento alto.",
+   "tools": [
+    [
+     "screen_stocks",
+     "rank_companies",
+     "rank_by_market"
+    ]
+   ]
+  },
+  {
+   "id": "movers",
+   "q": "¿Qué acciones de la cadena de IA se movieron más hoy?",
+   "tools": [
+    [
+     "market_movers",
+     "rank_by_market"
+    ]
+   ]
+  },
+  {
+   "id": "noticias",
+   "q": "¿Qué noticias recientes afectan a Micron?",
+   "tools": [
+    [
+     "get_news",
+     "web_search",
+     "get_research"
+    ]
+   ]
+  },
+  {
+   "id": "mundo",
+   "q": "¿Hay algún evento geopolítico hoy que afecte a los chips?",
+   "tools": [
+    [
+     "get_world_events",
+     "get_news",
+     "web_search"
+    ]
+   ]
+  },
+  {
+   "id": "privada",
+   "q": "¿Cuántos empleados tiene Anthropic y cuál fue su última valuación?",
+   "tools": [
+    [
+     "get_company",
+     "search_companies",
+     "web_search"
+    ]
+   ]
+  },
+  {
+   "id": "comparar",
+   "q": "Compara AMD contra Nvidia: crecimiento, márgenes y valuación.",
+   "tools": [
+    [
+     "get_fundamentals",
+     "get_company"
+    ]
+   ]
+  },
+  {
+   "id": "historia",
+   "q": "¿Cómo le fue a Nvidia en los últimos 6 meses? ¿Cuál fue su peor caída?",
+   "tools": [
+    [
+     "get_history",
+     "simulate_price"
+    ]
+   ]
+  },
+  {
+   "id": "research",
+   "q": "¿Qué conclusiones tiene la investigación de Khipu sobre Broadcom?",
+   "tools": [
+    [
+     "get_research",
+     "get_conclusions_board",
+     "get_company"
+    ]
+   ]
+  },
+  {
+   "id": "riesgo_cartera",
+   "q": "Si tengo 50 % NVDA, 30 % TSM y 20 % AVGO, ¿cuál es mi riesgo?",
+   "tools": [
+    [
+     "get_risk_report",
+     "plan_portfolio",
+     "scenario_exposure",
+     "simulate_price"
+    ]
+   ]
+  },
+  {
+   "id": "web",
+   "q": "Lee https://nvidianews.nvidia.com y dime cuál es el último anuncio.",
+   "tools": [
+    [
+     "read_url",
+     "web_search"
+    ]
+   ]
+  },
+  {
+   "id": "resultados",
+   "q": "¿Cuándo reporta Nvidia y cómo reaccionó la acción en sus últimos reportes?",
+   "tools": [
+    [
+     "simulate_price",
+     "get_news",
+     "web_search",
+     "get_history"
+    ]
+   ]
+  }
+ ]
+}

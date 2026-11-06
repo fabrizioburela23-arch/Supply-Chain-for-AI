@@ -52,4 +52,5 @@ tags: ["capa/chat-agentes", "tipo/capa"]
 | la usa | [[Capa Voz]] | 2 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 1 |
 | la usa | [[Capa MCP y API]] | 1 |
+| la usa | [[Capa Otros]] | 1 |
 | usa a | [[Capa Voz]] | 1 |

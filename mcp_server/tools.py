@@ -525,6 +525,27 @@ def _nrs(nid, node):
         return {'value': None, 'method': 'unavailable', 'error': type(e).__name__, 'explain': expl}
 
 
+def _with_derived(prof):
+    """Cifras DERIVADAS ya calculadas (distancia al máximo/mínimo de 52 semanas, potencial al objetivo de analistas):
+    el guardián de cifras marca lo que la IA calcula por su cuenta, así que se le dan hechas para que solo las copie
+    (examen de oro 2026-11-06: «¿cuánto cayó desde su máximo?» salía con «⚠ cifra no verificada»)."""
+    p = dict(prof)
+    px, hi, lo, tg = (p.get(k) for k in ('price', 'week52_high', 'week52_low', 'target_mean'))
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0  # noqa: E731
+    d = {}
+    if num(px) and num(hi):
+        d['from_52w_high_pct'] = round((px / hi - 1) * 100, 1)
+        d['below_52w_high_amount'] = round(hi - px, 2)
+    if num(px) and num(lo):
+        d['above_52w_low_pct'] = round((px / lo - 1) * 100, 1)
+    if num(px) and num(tg):
+        d['upside_to_target_pct'] = round((tg / px - 1) * 100, 1)
+    if d:
+        d['note'] = 'precomputed from price/week52/target in this same profile (local currency) — copy, do not recompute'
+        p['derived'] = d
+    return p
+
+
 def _live_profile(symbol):
     from core.company_data import get_live_profile
     return get_live_profile(symbol)
@@ -694,7 +715,7 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
     if include_live and sym and _listed(n):
         try:
             prof = _bounded(_live_profile, 12, sym)
-            out['live_market'] = prof if prof.get('available') else {
+            out['live_market'] = _with_derived(prof) if prof.get('available') else {
                 'available': False, 'symbol': sym, 'reason': prof.get('reason_en') or prof.get('reason')}
         except ToolError as te:
             out['live_market'] = {'available': False, 'symbol': sym, 'reason': te.message}

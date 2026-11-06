@@ -12,6 +12,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## La leen
 
+- [[scripts.eval_chat.py]]
 - [[scripts.fetch_ledger_anchor.py]]
 - [[scripts.smoke_mcp.py]]
 - `.github/workflows/smoke-mcp.yml` (despliegue)

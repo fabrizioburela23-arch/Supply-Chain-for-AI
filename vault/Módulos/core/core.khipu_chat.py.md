@@ -108,13 +108,13 @@ EL cerebro conversacional de Khipu (texto).
 - [[research.committee_api.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 40 pruebas (lista abajo)._
+_Además lo importan 41 pruebas (lista abajo)._
 
 ## Endpoints que define
 
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
-| `POST` | `/api/khipu/chat` | `chat_endpoint` | [[core.ai_usage.py]], [[engine.khipu_chat.js]], 7 pruebas |
+| `POST` | `/api/khipu/chat` | `chat_endpoint` | [[core.ai_usage.py]], [[engine.khipu_chat.js]], [[scripts.eval_chat.py]], 7 pruebas |
 | `GET` | `/api/khipu/chat/progress/<req_id>` | `chat_progress_endpoint` | [[engine.khipu_chat.js]], 3 pruebas |
 | `GET` | `/api/khipu/tools` | `tools_endpoint` | 1 prueba |
 
@@ -132,6 +132,7 @@ Grupos: [[API khipu]]
 - [[tests.test_context_engine.py]]
 - [[tests.test_decide.py]]
 - [[tests.test_docs_facts.py]]
+- [[tests.test_eval_chat.py]]
 - [[tests.test_genui_contract.py]]
 - [[tests.test_genui_f3_browser.py]]
 - [[tests.test_genui_f3_client_static.py]]

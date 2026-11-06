@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-272 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+273 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -71,6 +71,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_decide.py]] | 8 | 3 |
 | [[tests.test_docs_facts.py]] | 4 | 5 |
 | [[tests.test_entities.py]] | 13 | 4 |
+| [[tests.test_eval_chat.py]] | 3 | 3 |
 | [[tests.test_gates_conformance.py]] | 5 | 2 |
 | [[tests.test_gates_ir_fresh.py]] | 7 | 6 |
 | [[tests.test_gates_orders_parity.py]] | 4 | 3 |

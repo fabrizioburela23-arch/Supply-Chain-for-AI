@@ -7,7 +7,7 @@ tags: ["tipo/inicio"]
 
 Bienvenido. Esta bóveda es un **mapa vivo del código de Khipus Finance AI**: cada archivo, ruta de la API, variable de entorno y sesión de trabajo es una nota, y los enlaces entre notas son las conexiones reales del código. La genera `scripts/build_vault.py` sin IA, leyendo el repositorio.
 
-**255 archivos de código (151.966 líneas) · 266 rutas HTTP · 35 herramientas MCP · 158 variables de entorno · 113 sesiones de trabajo.**
+**256 archivos de código (152.108 líneas) · 266 rutas HTTP · 35 herramientas MCP · 158 variables de entorno · 113 sesiones de trabajo.**
 
 Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Reporte del grafo]].
 
@@ -31,13 +31,13 @@ Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Repo
 | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 24 | 10.581 | Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones. |
 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 27 | 14.971 | Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier. |
 | [[Capa Dinero (carteras, trading, corretaje)]] | 16 | 10.973 | Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana. |
-| [[Capa MCP y API]] | 11 | 6.422 | El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas. |
+| [[Capa MCP y API]] | 11 | 6.443 | El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas. |
 | [[Capa Voz]] | 4 | 5.090 | Khipu por voz: ElevenLabs (servidor y navegador) y el orbe. |
 | [[Capa Infraestructura]] | 49 | 27.823 | La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización. |
 | [[Capa Datos del catálogo]] | 38 | 68.734 | El catálogo curado de empresas y vínculos (nodes/\*.js), el snapshot data/grafo_v0.json y sus generadores. |
-| [[Capa Pruebas]] | 272 | 71.434 | Las pruebas automáticas (pytest) que vigilan cada parte. |
+| [[Capa Pruebas]] | 273 | 71.483 | Las pruebas automáticas (pytest) que vigilan cada parte. |
 | [[Capa Documentación]] | 32 | 14.818 | Documentos del proyecto (CLAUDE.md, docs/\*.md) y las sesiones de trabajo de docs/ESTADO.md. |
-| [[Capa Otros]] | 2 | 732 | Archivos que la tabla de capas todavía no clasifica (se reportan para asignarles capa). |
+| [[Capa Otros]] | 3 | 853 | Archivos que la tabla de capas todavía no clasifica (se reportan para asignarles capa). |
 
 ## Índices
 

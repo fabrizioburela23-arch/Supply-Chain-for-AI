@@ -9,13 +9,13 @@ tags: ["capa/mcp-api", "tipo/capa"]
 
 > El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas.
 
-**11 archivos · 6.422 líneas.** Volver al [[00 Mapa de Khipus]].
+**11 archivos · 6.443 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 
 ## Archivos
 
-- [[mcp_server.tools.py]] — 1.917 líneas · catálogo de herramientas MCP de Khipus.
+- [[mcp_server.tools.py]] — 1.938 líneas · catálogo de herramientas MCP de Khipus.
 - [[mcp_server.ops.py]] — 1.186 líneas · las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión #15).
 - [[mcp_server.oauth.py]] — 781 líneas · OAuth 2.1 mínimo (y correcto) para conectores remotos.
 - [[mcp_server.api.py]] — 702 líneas · blueprint mcp_bp (transporte + administración).

@@ -91,7 +91,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV KHIPU_ADMIN_SECRET]] | 2 | sí |
 | [[ENV KHIPU_MCP_TOKEN]] | 2 | sí |
 | [[ENV KHIPU_SCHEDULER]] | 2 | sí |
-| [[ENV KHIPU_URL]] | 3 | sí |
+| [[ENV KHIPU_URL]] | 4 | sí |
 | [[ENV KH_GUARD_TRACE]] | 1 | sí |
 | [[ENV LIVE_DEADLINE_S]] | 1 | sí |
 | [[ENV LOG_JSON]] | 1 | sí |

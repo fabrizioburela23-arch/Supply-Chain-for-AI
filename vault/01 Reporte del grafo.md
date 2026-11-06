@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 255 |
-| Líneas de código | 151.966 |
+| Archivos de código (Python, JS, HTML) | 256 |
+| Líneas de código | 152.108 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 272 |
+| Archivos de prueba | 273 |
 | Documentos | 32 |
 | Rutas HTTP | 266 |
 | Grupos de API | 61 |
 | Herramientas MCP | 35 |
 | Variables de entorno | 158 |
 | Sesiones de trabajo | 113 |
-| Aristas `calls_endpoint` | 781 |
+| Aristas `calls_endpoint` | 782 |
 | Aristas `defines_endpoint` | 301 |
-| Aristas `imports` | 2.403 |
+| Aristas `imports` | 2.405 |
 | Aristas `loads_script` | 96 |
 | Aristas `mentions_in_session` | 603 |
-| Aristas `reads_env` | 226 |
+| Aristas `reads_env` | 227 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.887 |
+| Aristas `tested_by` | 1.890 |
 | Aristas `uses_global` | 471 |
 
 ## Nodos "dios" (más conectados)
@@ -53,9 +53,9 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[core.__init__.py]] | 40 | 40 | 0 | [[Capa Infraestructura]] |
 | [[core.decisions.py]] | 38 | 31 | 7 | [[Capa Infraestructura]] |
 | [[core.http.py]] | 38 | 36 | 2 | [[Capa Infraestructura]] |
+| [[core.khipu_chat.py]] | 36 | 7 | 29 | [[Capa Chat y agentes]] |
 | [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |
 | [[ontology.api.py]] | 36 | 11 | 25 | [[Capa Ontología y grafo temporal]] |
-| [[core.khipu_chat.py]] | 35 | 6 | 29 | [[Capa Chat y agentes]] |
 | [[engine.app_coordinator.js]] | 35 | 16 | 19 | [[Capa Interfaz (Khipus OS)]] |
 | [[engine.resolve.js]] | 33 | 21 | 12 | [[Capa Chat y agentes]] |
 | [[core.identity.py]] | 32 | 30 | 2 | [[Capa Infraestructura]] |
@@ -180,8 +180,8 @@ Regla de CLAUDE.md: todo archivo JS nuevo va también al array SHELL de `sw.js`.
 
 _Ninguno._
 
-## Archivos en la capa "Otros" (2)
+## Archivos en la capa "Otros" (3)
 
 Faltan en la tabla de capas (`REGLAS_CAPA` en `scripts/build_vault.py`).
 
-[[scripts.links_to_ficha.py]], [[scripts.research_batch.py]]
+[[scripts.eval_chat.py]], [[scripts.links_to_ficha.py]], [[scripts.research_batch.py]]
