@@ -87,3 +87,34 @@ def test_herramienta_en_el_chat_y_el_mcp():
     assert 'simulate_price' in K.MCP_READ_TOOLS and 'simulate_price' in REGISTRY
     src = open(K.__file__, encoding='utf-8').read()
     assert '¿ya tocó fondo' in src and 'prob_today_is_the_low_pct' in src
+
+
+def test_fechas_de_reportes_de_la_sec():
+    """Respaldo de Finnhub: 8-K con ítem 2.02 → fecha y hora (amc/bmo) del reporte (2026-11-07)."""
+    import datetime as dt
+    from core import sec
+
+    class R:
+        def __init__(self, j):
+            self.ok, self._j = True, j
+
+        def json(self):
+            return self._j
+    today = dt.date.today()
+    d1, d2, d3 = (today - dt.timedelta(days=n) for n in (300, 200, 100))
+    sub = {'filings': {'recent': {
+        'form': ['8-K', '8-K', '10-Q', '8-K', '8-K'],
+        'items': ['2.02,9.01', '5.02', '', '2.02', '2.02,7.01'],
+        'filingDate': [d3.isoformat(), d3.isoformat(), d2.isoformat(), d2.isoformat(), d1.isoformat()],
+        'acceptanceDateTime': [f'{d3}T16:21:00.000Z', f'{d3}T10:00:00.000Z', '', f'{d2}T08:05:00.000Z', f'{d1}T12:00:00.000Z']}}}
+
+    def get(url, headers=None, timeout=None):
+        if url.endswith('company_tickers.json'):
+            return R({'0': {'ticker': 'ZZTEST', 'cik_str': 123}})
+        return R(sub)
+    sec._TICKERS.update(map=None, ts=0.0)
+    sec._CACHE.clear()
+    out = sec.earnings_dates('ZZTEST', getter=get)
+    assert out == [(d1, ''), (d2, 'bmo'), (d3, 'amc')]          # el 8-K 5.02 y el 10-Q no cuentan
+    sec._TICKERS.update(map=None, ts=0.0)
+    sec._CACHE.clear()

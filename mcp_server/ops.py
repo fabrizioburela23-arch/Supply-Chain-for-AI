@@ -478,6 +478,15 @@ def t_simulate_price(ctx, id_or_ticker):
         earn = price_sim.earnings_calendar(sym)
     except Exception:  # noqa: BLE001
         earn = ([], None, None)
+    if len(earn[0] or []) < 3:      # Finnhub sin historial → fechas REALES de la SEC (8-K, ítem 2.02)
+        try:
+            from core import sec
+            past = [x for x in sec.earnings_dates(sym) if x[0] < date.today()]
+            if len(past) >= 3:
+                src = (earn[2] + ' + ' if earn[2] else '') + 'SEC 8-K item 2.02 (past report dates)'
+                earn = (past, earn[1], src)
+        except Exception:  # noqa: BLE001
+            pass
     try:
         out = price_sim.simulate(sym, prices, earnings=earn, fan_days=63)
         if out.get('fan'):   # abanico para el gráfico del chat (core/genui): 1 de cada 3 días + el último

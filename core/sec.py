@@ -141,3 +141,43 @@ def filing_sections(url, length=1600, getter=None):
                                        "Management's Discussion and Analysis"], length)}
         return {k: v for k, v in out.items() if v}
     return _cached(('doc', url), 24 * 3600, load) or {}
+
+
+def earnings_dates(ticker, getter=None, years=2):
+    """Fechas REALES de los reportes trimestrales: 8-K con el ítem 2.02 («Results of Operations») de los últimos
+    `years` años → [(date, 'amc'|'bmo'|'')] ordenadas. La hora sale de acceptanceDateTime (hora del Este de EE.UU.):
+    ≥ 16:00 → después del cierre (amc); < 9:30 → antes de la apertura (bmo). Respaldo de price_sim cuando Finnhub
+    no trae el historial (2026-11-07: NVDA quedaba sin «cómo reaccionó a sus reportes»). [] si no es emisor SEC."""
+    import datetime as _dt
+    get = getter or requests.get
+
+    def load():
+        cik = resolve_cik(ticker, getter=get)
+        if not cik:
+            return []
+        try:
+            r = get(f'https://data.sec.gov/submissions/CIK{cik}.json', headers=_H, timeout=15)
+            if not r.ok:
+                return []
+            rec = (r.json().get('filings') or {}).get('recent') or {}
+        except Exception:  # noqa: BLE001
+            return []
+        since = _dt.date.today() - _dt.timedelta(days=int(366 * years))
+        out = []
+        for i, form in enumerate(rec.get('form') or []):
+            try:
+                if form != '8-K' or '2.02' not in str((rec.get('items') or [])[i] or ''):
+                    continue
+                d = _dt.date.fromisoformat(str(rec['filingDate'][i])[:10])
+                acc = str((rec.get('acceptanceDateTime') or [''] * (i + 1))[i] or '')
+            except (IndexError, KeyError, ValueError):
+                continue
+            if d < since:
+                continue
+            hour = ''
+            if len(acc) >= 16 and acc[:10] == d.isoformat():
+                hh, mm = int(acc[11:13]), int(acc[14:16])
+                hour = 'amc' if hh >= 16 else 'bmo' if (hh, mm) < (9, 30) else ''
+            out.append((d, hour))
+        return sorted(set(out))
+    return _cached(('earn8k', (ticker or '').upper()), 12 * 3600, load) or []

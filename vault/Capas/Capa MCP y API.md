@@ -9,14 +9,14 @@ tags: ["capa/mcp-api", "tipo/capa"]
 
 > El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas.
 
-**11 archivos · 6.446 líneas.** Volver al [[00 Mapa de Khipus]].
+**11 archivos · 6.455 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 
 ## Archivos
 
 - [[mcp_server.tools.py]] — 1.938 líneas · catálogo de herramientas MCP de Khipus.
-- [[mcp_server.ops.py]] — 1.189 líneas · las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión #15).
+- [[mcp_server.ops.py]] — 1.198 líneas · las operaciones MCP que faltaban (ARQUITECTURA_V2 §15; BRECHAS L4-09, decisión #15).
 - [[mcp_server.oauth.py]] — 781 líneas · OAuth 2.1 mínimo (y correcto) para conectores remotos.
 - [[mcp_server.api.py]] — 702 líneas · blueprint mcp_bp (transporte + administración).
 - [[mcp_server.auth.py]] — 534 líneas · tokens kmcp_…, alcances, límites por token y auditoría.
@@ -39,9 +39,9 @@ Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 | la usa | [[Capa Chat y agentes]] | 4 |
 | la usa | [[Capa Infraestructura]] | 4 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 4 |
+| usa a | [[Capa Investigación]] | 4 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
-| usa a | [[Capa Investigación]] | 3 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 2 |
 | la usa | [[Capa Ontología y grafo temporal]] | 1 |
 | usa a | [[Capa Datos del catálogo]] | 1 |

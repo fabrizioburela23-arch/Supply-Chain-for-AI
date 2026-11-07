@@ -44,7 +44,7 @@ tags: ["capa/mcp-api", "tipo/api"]
 | `run_research` | research | **no** | `t_run_research` | [[core.__init__.py]], [[core.ai.py]], [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.vocabulary.py]], [[research.runner.py]] |
 | `run_scenario` | read | sí | `t_run_scenario` | [[core.__init__.py]], [[core.context_engine.py]], [[core.live_caps.py]], [[core.scenario_engine.py]], [[core.scenario_pnl.py]], [[core.semantic.py]] |
 | `search_companies` | read | sí | `t_search_companies` | [[core.__init__.py]], [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.vocabulary.py]] |
-| `simulate_price` | read | sí | `t_simulate_price` | [[core.__init__.py]], [[core.company_data.py]], [[core.entities.py]], [[core.price_sim.py]], [[core.risk_report.py]] |
+| `simulate_price` | read | sí | `t_simulate_price` | [[core.__init__.py]], [[core.company_data.py]], [[core.entities.py]], [[core.price_sim.py]], [[core.risk_report.py]], [[core.sec.py]] |
 | `submit_order` | trade | **no** | `t_submit_order` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 
 El chat de Khipu ([[core.khipu_chat.py]]) reutiliza estas mismas herramientas, solo las de lectura.

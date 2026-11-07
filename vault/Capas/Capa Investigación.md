@@ -9,7 +9,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 > El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud.
 
-**21 archivos · 5.414 líneas.** Volver al [[00 Mapa de Khipus]].
+**21 archivos · 5.454 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -22,7 +22,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 - [[research.analytics.py]] — 273 líneas · ANÁLISIS CUANTITATIVO determinista para los agentes.
 - [[research.falsifiers.py]] — 202 líneas · falsadores ESTRUCTURADOS y verificables (C8, misión de reparación 2026-10-04).
 - [[research.health.py]] — 202 líneas · "¿puedo investigar ahora?" en UNA foto (R6, misión de reparación).
-- [[core.sec.py]] — 143 líneas · SEC EDGAR como EVIDENCIA PRIMARIA (Phase 2).
+- [[core.sec.py]] — 183 líneas · SEC EDGAR como EVIDENCIA PRIMARIA (Phase 2).
 - [[research.contradictions.py]] — 143 líneas · detección INICIAL de tensiones entre claims.
 - [[research.agents.base.py]] — 142 líneas · la interfaz Agent.
 - [[research.router.py]] — 141 líneas · evento → relevancia → agentes (Phase 2 event-driven).
@@ -45,10 +45,10 @@ tags: ["capa/investigacion", "tipo/capa"]
 | la usa | [[Capa Chat y agentes]] | 9 |
 | la usa | [[Capa Infraestructura]] | 7 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 6 |
+| la usa | [[Capa MCP y API]] | 4 |
 | la usa | [[Capa Ontología y grafo temporal]] | 4 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 4 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 3 |
-| la usa | [[Capa MCP y API]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 1 |
