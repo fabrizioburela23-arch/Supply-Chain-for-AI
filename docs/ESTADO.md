@@ -33,6 +33,13 @@ buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`).
   resultado citado); una ontología cliente = sus herramientas de lectura (objetos/vínculos/métricas) + constructores
   BUILDERS para ellas. Regla al construir: nada de finanzas «cableado» en layout/genui.js; lo específico va en builders.
 
+**2026-11-07 — ROUTER DE MODELOS = JEV** (`core/model_router.py`): cada pregunta va a un carril — ⚡ local (sin IA),
+🟢 pequeño (Haiku 5.5: TODOS los pasos), 🟡 mediano (AI_MODEL_FAST), 🔴 frontera (pasos con el rápido + respuesta final
+con Opus 5.5). Decide Jev (local_fact→local, needs_tools→pequeño, needs_deep_reasoning con confianza ≥0,8→frontera);
+si Jev no llega en la espera de policy.decide (1,5 s, artefacto con PIN), REGLAS instantáneas. El pie de cada respuesta
+muestra el carril. En producción Jev casi nunca llegaba a tiempo (router 'default'): subir la espera es decisión de
+Fabrizio (release de policy.decide con PIN). AI_ROUTER=off lo apaga.
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

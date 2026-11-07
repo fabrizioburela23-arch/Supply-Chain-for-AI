@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 511
+lineas: 512
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 511 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 512 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -34,6 +34,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[core.ledger.py]]
 - [[core.ledger_guard.py]]
 - [[core.live_facts.py]]
+- [[core.model_router.py]]
 - [[core.numbers.py]]
 - [[core.options.py]]
 - [[core.pin.py]]

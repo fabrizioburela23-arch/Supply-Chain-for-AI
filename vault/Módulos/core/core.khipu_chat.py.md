@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "core/khipu_chat.py"
 lenguaje: "python"
-lineas: 4013
+lineas: 4033
 aliases: ["core/khipu_chat.py"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # core/khipu_chat.py
 
-> Módulo · capa [[Capa Chat y agentes]] · 4.013 líneas · `core/khipu_chat.py`
+> Módulo · capa [[Capa Chat y agentes]] · 4.033 líneas · `core/khipu_chat.py`
 
 ## Para qué sirve
 
@@ -60,12 +60,12 @@ EL cerebro conversacional de Khipu (texto).
 - `chat_cards(calls, entities)` — {company?, committee?} de la empresa PRINCIPAL (la 1.ª detectada) con los resultados ya obtenidos. _(línea 2999)_
 - `agents_used(calls, message, context=…, entities=…)` — [{agent, tools, ok, note_es, note_en, source, as_of}] en el orden de las mascotas. La nota se arma SOLO con valores de los resultados (sin … _(línea 3015)_
 - `enrich_answer(message, calls, context=…, req_id=…)` — Campos que Khipus OS SUMA a la respuesta (nunca reemplaza ninguno). _(línea 3092)_
-- `client_deadline(v)` — `deadline_s` del cuerpo → segundos acotados [15, 120] o None (sin plazo propio = el de siempre). _(línea 3149)_
-- `run_chat(message, history=…, lang=…, context=…, app=…, budget_s=…, max_steps=…, req_id=…, deadline_s=…)` — PORTERO (Jev, core/decide.py): decide en paralelo qué necesita la pregunta. En SOMBRA solo se compara con lo que el chat hizo; con … _(línea 3160)_
-- `ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=…)` — Ficha `chat.answer` (async, §2.5): hechos [F#] con fuente y as_of, fuentes con su as_of, agentes, herramientas (nombre, ok, ms y la HUELLA … _(línea 3458)_
-- `chat_endpoint()` _(línea 3967)_
-- `chat_progress_endpoint(req_id)` — Qué agentes están trabajando en la pregunta `req_id` → {req_id, done, elapsed_ms, phase, seq, agents:[{agent, tool, state: … _(línea 3990)_
-- `tools_endpoint()` _(línea 4008)_
+- `client_deadline(v)` — `deadline_s` del cuerpo → segundos acotados [15, 120] o None (sin plazo propio = el de siempre). _(línea 3150)_
+- `run_chat(message, history=…, lang=…, context=…, app=…, budget_s=…, max_steps=…, req_id=…, deadline_s=…)` — PORTERO (Jev, core/decide.py): decide en paralelo qué necesita la pregunta. En SOMBRA solo se compara con lo que el chat hizo; con … _(línea 3161)_
+- `ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=…)` — Ficha `chat.answer` (async, §2.5): hechos [F#] con fuente y as_of, fuentes con su as_of, agentes, herramientas (nombre, ok, ms y la HUELLA … _(línea 3459)_
+- `chat_endpoint()` _(línea 3987)_
+- `chat_progress_endpoint(req_id)` — Qué agentes están trabajando en la pregunta `req_id` → {req_id, done, elapsed_ms, phase, seq, agents:[{agent, tool, state: … _(línea 4010)_
+- `tools_endpoint()` _(línea 4028)_
 
 **Internas** (empiezan con `_`): `_ai_interactive`, `_submit_ai`, `_prog_purge_locked`, `_owner_tag`, `_prog_bump`, `_ui_key`, `_ui_sig`, `_progress_from_future`, `_since`, `_now_iso`, `_extra`, `_mcp`, `_principal`, `_pf_name`, `_server_args`, `_ref_block`, `_schema_sig`, `_clip`, `_snapshot`, `_node_label`, `_research_session`, `_scenario_portfolio`, `_tavily_on`, `_web_available`, `_web_read_available`, `_board_memo_flags`, `_guess_lang`, `_agents_rule`, `_balance_edges`, `_compact_for_chat`, `_fmt_result`, `_cache_key`, `_facts_book`, `_trim_scratch`, `_fact_prefix`, `_args_summary`, `_json_objects`, `_prose_answer`, `_num`, `_entities_in`, `_friendly_source`, `_collect_sources`, `_src_name`, `_human_source`, `_tool_name_rx`, `_dedupe_parens`, `_fmt_num`, `_pct`, `_usd_b`, `_price`, `_quote`, `_decision_labels`, `_risk_sources`, `_iso_time`, `_session_live`, `_chg_label`, `_price_time`, `_note_company`, `_note_structure`, `_note_supply_chain` y 43 más
 
@@ -86,6 +86,7 @@ EL cerebro conversacional de Khipu (texto).
 - [[core.live_caps.py]] — importa `get_caps`
 - [[core.live_facts.py]] — importa `live_facts_block`
 - [[core.live_fundamentals.py]] — importa `live_fundamentals`
+- [[core.model_router.py]] — importa `model_router`
 - [[core.portfolio_advisor.py]] — importa `portfolio_advisor`
 - [[core.scenario_engine.py]] — importa `scenario_engine`
 - [[core.semantic.py]] — importa `semantic`
@@ -108,7 +109,7 @@ EL cerebro conversacional de Khipu (texto).
 - [[research.committee_api.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 41 pruebas (lista abajo)._
+_Además lo importan 42 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -152,6 +153,7 @@ Grupos: [[API khipu]]
 - [[tests.test_lotej_review_fixes.py]]
 - [[tests.test_lotek_fixer.py]]
 - [[tests.test_mcp_contract.py]]
+- [[tests.test_model_router.py]]
 - [[tests.test_one_portfolio_store.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_overnight_ai_routing.py]]

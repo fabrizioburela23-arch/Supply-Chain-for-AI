@@ -103,6 +103,7 @@ def test_consulta_corta_limita_rondas(monkeypatch, jev_on):
 
 def test_sin_jev_todo_igual(monkeypatch):
     monkeypatch.delenv('TYPESAFE_API_KEY', raising=False)
+    monkeypatch.setenv('AI_ROUTER', 'off')   # router de modelos apagado = el camino de siempre (core/model_router)
     ai = CountingAI([{'final': {'answer': 'Hola.', 'actions': []}}])
     monkeypatch.setattr(core_ai, '_ai_complete', ai)
     monkeypatch.setattr(core_ai, '_ai_configured', lambda: True)

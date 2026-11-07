@@ -3102,19 +3102,20 @@ def enrich_answer(message, calls, context=None, req_id=None):
     return out
 
 
-def _call_ai(system, prompt, timeout, tier='fast'):
+def _call_ai(system, prompt, timeout, tier='fast', model=None):
     # want_json: cada paso es un objeto JSON (parse_step) → con Gemini, JSON estricto y sin pensamiento.
     # timeout_s: el proveedor corta a la vez que el chat (antes el hilo seguía 90 s ocupando cupo).
     # live_facts=False: el bloque "DATOS EN VIVO" se calcula UNA vez por pregunta en _run_chat.
     # tier='deep' SOLO para la respuesta final de una pregunta de análisis (Jev: needs_deep_reasoning).
     tier = 'deep' if tier == 'deep' else 'fast'
     cap = DEEP_FINAL_TIMEOUT_S if tier == 'deep' else 30.0
-    fut = _submit_ai(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, tier, want_json=True,
+    # model: el carril del ROUTER (core/model_router): pequeño en los pasos, frontera en la respuesta final
+    fut = _submit_ai(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, tier, want_json=True, model=model,
                      timeout_s=max(5.0, min(float(timeout), cap)), live_facts=False)
     return fut.result(timeout=max(1.0, timeout))
 
 
-def _deep_final(system, message, history, lang, context, scratch, live, t0, budget, req_id, cap=None):
+def _deep_final(system, message, history, lang, context, scratch, live, t0, budget, req_id, cap=None, model=None):
     """Pregunta de ANÁLISIS (Jev: needs_deep_reasoning): la respuesta final la escribe el modelo PROFUNDO con
     todo lo ya consultado (los pasos de elegir herramientas siguen en el modelo rápido). → {called, answer,
     actions, model}; answer None si no hubo tiempo o el profundo no entregó una respuesta limpia (queda la del
@@ -3127,7 +3128,7 @@ def _deep_final(system, message, history, lang, context, scratch, live, t0, budg
     prompt = build_prompt(message, history, lang, context, scratch, 0, True, None, live=live)
     out['called'] = True
     try:
-        text, model = _call_ai(system, prompt, left, tier='deep')
+        text, model = _call_ai(system, prompt, left, tier='deep', model=model)
         kind, payload = parse_step(text)
     except Exception as e:  # noqa: BLE001 — sin respuesta profunda: queda la del modelo rápido
         log.info('khipu_chat: respuesta profunda no disponible (%s)', _clip(e, 120))
@@ -3809,6 +3810,24 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         router = _router(plan, max_steps=steps_max)
         if deep_final:
             router['final_tier'] = 'deep'
+    # ROUTER DE MODELOS (core/model_router, 2026-11-07): Jev elige el carril pequeño / mediano / frontera; si Jev no
+    # llegó a tiempo, reglas instantáneas. Pequeño = todos los pasos con Haiku; frontera = respuesta final con Opus.
+    lane = None
+    try:
+        from core import model_router as _mr
+        if _mr.enabled():
+            lane = _mr.choose(plan, message, context)
+    except Exception as e:  # noqa: BLE001 — sin router: todo como antes
+        log.info('khipu_chat: router de modelos (%s)', _clip(e, 120))
+        lane = None
+    if lane:
+        if lane['lane'] == 'frontier':
+            deep_final = True
+            router['final_tier'] = 'deep'
+        router.update(lane=lane['lane'], lane_by=lane['by'], lane_model=lane['model'],
+                      lane_es=lane['label_es'], lane_en=lane['label_en'])
+    step_model = (lane or {}).get('step_model')
+    final_model = (lane or {}).get('final_model')
     while True:
         remaining = deadline - time.monotonic()
         if remaining < MIN_STEP_S:
@@ -3822,7 +3841,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         progress_phase(req_id, 'thinking')
         try:
             ai_calls += 1
-            text, model = _call_ai(system, prompt, remaining)
+            text, model = _call_ai(system, prompt, remaining, model=step_model)
         except _FutTimeout:
             reason = 'budget'
             ai_slow = True          # la IA no alcanzó a responder: no tiene sentido pedirle otra redacción
@@ -3856,7 +3875,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
             if deep_final:
                 # análisis: el modelo rápido ya juntó los datos y tiene SU respuesta (queda de respaldo); la
                 # respuesta final la escribe el modelo profundo con todo lo consultado. Nunca peor que antes.
-                deep = _deep_final(system, message, history, lang, context, scratch, live, t0, budget, req_id, client_end)
+                deep = _deep_final(system, message, history, lang, context, scratch, live, t0, budget, req_id, client_end,
+                                   model=final_model)
                 if deep['called']:
                     ai_calls += 1
                 if deep['answer']:

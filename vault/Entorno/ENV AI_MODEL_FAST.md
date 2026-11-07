@@ -28,4 +28,5 @@ Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
 
 ## Mencionada en sesiones
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-07-12 — Etapas I+J — Feedback 8 + Expediente Cripto (sw v76)]]

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L313"
+ruta: "docs/ESTADO.md#L320"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (k) — FASE 2+ LOTE I: rutas con decisión, CSP estricta, riesgo robusto, escenario → dinero, archivos partidos — sw v266
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 313 (25 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 320 (25 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

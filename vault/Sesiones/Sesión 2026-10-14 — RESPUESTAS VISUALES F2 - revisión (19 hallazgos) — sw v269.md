@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-14"
-ruta: "docs/ESTADO.md#L257"
+ruta: "docs/ESTADO.md#L264"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-14 — RESPUESTAS VISUALES F2: revisión (19 hallazgos) — sw v269
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 257 (16 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 264 (16 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

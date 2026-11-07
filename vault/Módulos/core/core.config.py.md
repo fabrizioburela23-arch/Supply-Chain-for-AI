@@ -31,6 +31,7 @@ _Nada interno._
 - [[core.company_data.py]] — lo importa
 - [[core.http.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
+- [[core.model_router.py]] — lo importa
 - [[core.news_feed.py]] — lo importa
 - [[core.price_sim.py]] — lo importa
 - [[core.providers.market.py]] — lo importa

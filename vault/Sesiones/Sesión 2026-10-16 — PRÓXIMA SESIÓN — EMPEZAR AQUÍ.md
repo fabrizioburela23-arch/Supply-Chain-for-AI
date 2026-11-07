@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (117 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (124 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,6 +18,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 - [[app.html]]
 - [[core.khipu_chat.py]]
+- [[core.model_router.py]]
 - [[core.portfolio_advisor.py]]
 - [[core.quotes.py]]
 - [[core.sim_report.py]]
@@ -36,6 +37,6 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 ## Variables que menciona
 
-[[ENV TAVILY_KEY]]
+[[ENV AI_MODEL_FAST]], [[ENV AI_ROUTER]], [[ENV TAVILY_KEY]]
 
 ← más antigua: [[Sesión 2026-10-15 — b — REVISIÓN DE UN SOLO LUGAR - NADA SE PIERDE ENTRE DISPOSITIVOS]]

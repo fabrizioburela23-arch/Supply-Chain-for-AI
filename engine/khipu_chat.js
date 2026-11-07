@@ -1210,8 +1210,8 @@
       foot += '<div class="kc-meta">' + esc(L('Respondido con datos locales, sin IA', 'Answered from local data, no AI') + jev) +
         (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(1) + ' s' : '') + '</div>';
     } else if (!d.degraded && d.ai && (d.model || d.elapsed_ms)) {
-      var mdl = String(d.model || '').replace(/^gemini:/, 'Gemini ').replace(/^claude-/, 'Claude ').replace(/^nvidia:/, 'NVIDIA ');
-      foot += '<div class="kc-meta">' + esc(mdl) + (d.steps ? ' · ' + d.steps + ' ' + esc(d.steps === 1 ? L('consulta', 'query') : L('consultas', 'queries')) : '') +
+      var rt0 = d.router && d.router.lane_es ? d.router : null, mdl = String(d.model || '').replace(/^gemini:/, 'Gemini ').replace(/^claude-/, 'Claude ').replace(/^nvidia:/, 'NVIDIA ');
+      foot += '<div class="kc-meta">' + esc(mdl + (rt0 ? ' · ' + L(rt0.lane_es, rt0.lane_en) : '')) + (d.steps ? ' · ' + d.steps + ' ' + esc(d.steps === 1 ? L('consulta', 'query') : L('consultas', 'queries')) : '') +
         (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(0) + ' s' : '') + esc(jev) + '</div>';
     }
     if (foot) h += '<div class="kc-foot">' + foot + '</div>';

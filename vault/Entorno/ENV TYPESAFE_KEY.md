@@ -19,6 +19,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_context_engine.py]]
 - [[tests.test_decide.py]]
 - [[tests.test_jev_status_label.py]]
+- [[tests.test_model_router.py]]
 - [[tests.test_overnight_ai_routing.py]]
 
 ## ¿Está documentada en CLAUDE.md?

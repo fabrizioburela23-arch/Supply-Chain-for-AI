@@ -52,6 +52,7 @@ _Además lo importan 10 pruebas (lista abajo)._
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_live_facts_entities.py]]
+- [[tests.test_model_router.py]]
 - [[tests.test_numbers_guard.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_overnight_fixes_review.py]]

@@ -6,7 +6,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 
 # Índice de variables de entorno
 
-158 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
+161 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
 
 | Variable | La leen | En CLAUDE.md |
 |---|---|---|
@@ -21,12 +21,15 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV AI_MAX_CONCURRENCY]] | 1 | sí |
 | [[ENV AI_MODEL_DEEP]] | 1 | sí |
 | [[ENV AI_MODEL_FAST]] | 1 | sí |
+| [[ENV AI_MODEL_FRONTIER]] | 1 | sí |
+| [[ENV AI_MODEL_SMALL]] | 1 | sí |
 | [[ENV AI_MONTHLY_LIMIT_USD]] | 1 | sí |
 | [[ENV AI_ORDER]] | 2 | sí |
 | [[ENV AI_ORDER_DEEP]] | 2 | sí |
 | [[ENV AI_ORDER_FAST]] | 2 | sí |
 | [[ENV AI_PER_USER_DAILY_USD]] | 1 | sí |
 | [[ENV AI_PRICES_JSON]] | 1 | sí |
+| [[ENV AI_ROUTER]] | 1 | sí |
 | [[ENV AI_TRANSIENT_BASE_S]] | 1 | sí |
 | [[ENV AI_TRANSIENT_CAP_S]] | 1 | sí |
 | [[ENV AI_TRANSIENT_RETRIES]] | 1 | sí |

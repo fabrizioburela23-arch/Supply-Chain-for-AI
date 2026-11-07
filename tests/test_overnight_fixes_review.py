@@ -218,7 +218,7 @@ def test_techo_nunca_pasa_el_plazo_del_cliente():
 def test_deep_final_respeta_el_plazo(monkeypatch):
     seen = []
 
-    def fake_call(system, prompt, timeout, tier='fast'):
+    def fake_call(system, prompt, timeout, tier='fast', model=None):
         seen.append(timeout)
         return json.dumps({'final': {'answer': 'Análisis profundo completo.', 'actions': []}}), 'fake:deep'
     monkeypatch.setattr(kc, '_call_ai', fake_call)

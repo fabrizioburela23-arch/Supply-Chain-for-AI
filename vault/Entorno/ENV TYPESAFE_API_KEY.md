@@ -21,6 +21,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_jev_router.py]]
 - [[tests.test_jev_status_label.py]]
 - [[tests.test_ledger_callsites_chat.py]]
+- [[tests.test_model_router.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_overnight_fixes_review.py]]
 

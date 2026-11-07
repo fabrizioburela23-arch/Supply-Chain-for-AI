@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight_ai_routing.py"
 lenguaje: "python"
-lineas: 575
+lineas: 576
 aliases: ["tests/test_overnight_ai_routing.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight_ai_routing.py
 
-> Prueba · capa [[Capa Pruebas]] · 575 líneas · `tests/test_overnight_ai_routing.py`
+> Prueba · capa [[Capa Pruebas]] · 576 líneas · `tests/test_overnight_ai_routing.py`
 
 ## Qué prueba
 
@@ -32,4 +32,4 @@ Overnight 2026-10-10 (Fabrizio pagó Claude, Gemini y TypeSafe): la IA da BUENAS
 
 ## Variables de entorno que fija o nombra
 
-[[ENV AI_MODEL_DEEP]], [[ENV AI_MODEL_FAST]], [[ENV AI_ORDER]], [[ENV AI_ORDER_DEEP]], [[ENV AI_ORDER_FAST]], [[ENV DECIDE_CONTROL]], [[ENV DECIDE_ENABLED]], [[ENV TYPESAFE_API_KEY]], [[ENV TYPESAFE_KEY]]
+[[ENV AI_MODEL_DEEP]], [[ENV AI_MODEL_FAST]], [[ENV AI_ORDER]], [[ENV AI_ORDER_DEEP]], [[ENV AI_ORDER_FAST]], [[ENV AI_ROUTER]], [[ENV DECIDE_CONTROL]], [[ENV DECIDE_ENABLED]], [[ENV TYPESAFE_API_KEY]], [[ENV TYPESAFE_KEY]]

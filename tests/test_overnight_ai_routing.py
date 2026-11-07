@@ -492,6 +492,7 @@ def test_otras_rutas_no_cambian(monkeypatch, jev):
 
 def test_sin_jev_todo_en_rapido(monkeypatch, offline):
     monkeypatch.delenv('TYPESAFE_API_KEY', raising=False)
+    monkeypatch.setenv('AI_ROUTER', 'off')   # router de modelos apagado = el camino de siempre (core/model_router)
     monkeypatch.delenv('TYPESAFE_KEY', raising=False)
     ai_ = ScriptAI(fast=[{'final': {'answer': 'Hola.', 'actions': []}}], deep=[])
     monkeypatch.setattr(ai, '_ai_complete', ai_)

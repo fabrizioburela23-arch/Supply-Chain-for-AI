@@ -103,7 +103,7 @@ Define **24 herramientas MCP** → [[API herramientas MCP]]
 - [[mcp_server.protocol.py]] — lo importa
 - [[scripts.bench_scale.py]] — lo importa
 
-_Además lo importan 30 pruebas (lista abajo)._
+_Además lo importan 31 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -133,6 +133,7 @@ _Además lo importan 30 pruebas (lista abajo)._
 - [[tests.test_lotek_fixer.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_mcp_contract.py]]
+- [[tests.test_model_router.py]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_overnight_ai_routing.py]]

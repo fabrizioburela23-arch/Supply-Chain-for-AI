@@ -48,7 +48,7 @@ JEV (TypeSafe AI, modelo "System One"): DECISIONES, no texto.
 - [[core.decide_api.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
 
-_Además lo importan 8 pruebas (lista abajo)._
+_Además lo importan 9 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -69,6 +69,7 @@ _Además lo importan 8 pruebas (lista abajo)._
 - [[tests.test_jev_router.py]]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_ledger_privacy.py]]
+- [[tests.test_model_router.py]]
 - [[tests.test_overnight_ai_routing.py]]
 - [[tests.test_overnight_fixes_review.py]]
 

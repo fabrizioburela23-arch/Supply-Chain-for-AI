@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 49
+archivos: 50
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**49 archivos · 27.823 líneas.** Volver al [[00 Mapa de Khipus]].
+**50 archivos · 27.912 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
@@ -57,6 +57,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.prices_api.py]] — 125 líneas · /api/prices/\* y /api/instruments/\* (BRECHAS bloque 2: la memoria de los números). Nunca /v1/\*.
 - [[core.scheduler.py]] — 116 líneas · tareas periódicas del SERVIDOR (misión de reparación 2026-10-04, R5).
 - [[scripts.fetch_ledger_anchor.py]] — 98 líneas · baja el ANCLA DIARIA pública del libro de decisiones y la guarda fuera de la base (docs/INFRA_OPERATIVA.md §2.8, paso 7, decisión D7). La corre el …
+- [[core.model_router.py]] — 89 líneas · ROUTER DE MODELOS del chat (2026-11-07, pedido de Fabrizio: «request → router → modelo pequeño / mediano / frontera, y que ese router sea Jev»).
 - [[core.config.py]] — 82 líneas · variables de entorno compartidas entre server y ontology.
 - [[core.logjson.py]] — 81 líneas · O2 (misión de reparación 2026-10-04): logs estructurados.
 - [[scripts.build_impl_goldens.py]] — 75 líneas · salidas DORADAS de las implementaciones retenidas (core/impls.py; INFRA §5.2, paso 24).
@@ -72,7 +73,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 | la usa | [[Capa Ontología y grafo temporal]] | 48 |
 | usa a | [[Capa Ontología y grafo temporal]] | 40 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 35 |
-| la usa | [[Capa Chat y agentes]] | 31 |
+| la usa | [[Capa Chat y agentes]] | 32 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 29 |
 | la usa | [[Capa Investigación]] | 28 |
 | la usa | [[Capa MCP y API]] | 24 |

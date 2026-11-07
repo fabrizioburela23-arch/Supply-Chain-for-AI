@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L1622"
+ruta: "docs/ESTADO.md#L1629"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-03 (e) — RESPUESTAS CORTADAS + HERRAMIENTA DE ESCENARIOS EN EL CHAT
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1622 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1629 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
