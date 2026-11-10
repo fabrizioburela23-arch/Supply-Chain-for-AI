@@ -34,6 +34,7 @@ Se carga en [[app.html]] en la posición **38 de 105** (línea 3124), después d
 
 - [[app.html]] — lo carga con `<script>` (posición 38)
 - [[engine.cockpit.js]] — usa `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
+- [[engine.portfolios.js]] — usa `_tradeAccountInfo`
 - [[engine.resolve.js]] — usa `_openBrokerStage`
 - [[engine.voice.js]] — usa `__tradeAcctCache`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
 

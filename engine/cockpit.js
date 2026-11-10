@@ -798,8 +798,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       { g: 'explore', id: 'simulation', ic: '🔮', es: 'Simulación', en: 'Simulation', k: 'simulacion escenarios scenarios what if guerra war room', run: function () { stage('simulation'); } },
       { g: 'explore', id: 'crypto', ic: '💠', es: 'Cripto', en: 'Crypto', k: 'cripto crypto bitcoin ethereum', run: function () { stage('crypto'); } },
       { g: 'explore', id: 'tkg', ic: '⏱', es: 'Grafo temporal', en: 'Temporal graph', k: 'grafo temporal historia tiempo timeline', run: function () { stage('tkg'); } },
-      { g: 'invest', id: 'portfolios', ic: '💼', es: 'Carteras de práctica', en: 'Practice portfolios', k: 'carteras portafolio simuladas practica portfolios paper', run: function () { stage('portfolios'); }, ok: function () { return !!W.KhipuPortfolios; } },
-      { g: 'invest', id: 'broker', ic: '💳', es: 'Mi cuenta (bróker)', en: 'My account (broker)', k: 'cuenta broker bróker invertir comprar vender alpaca account invest buy sell posiciones agente trading bot señales senales toque agent signals', run: function () { stage('broker'); } },
+      { g: 'invest', id: 'portfolios', ic: '💼', es: 'Carteras', en: 'Portfolios', k: 'carteras portafolio simuladas practica seguimiento portfolios paper papel real cuenta', run: function () { stage('portfolios'); }, ok: function () { return !!W.KhipuPortfolios; } },
+      { g: 'invest', id: 'broker', ic: '💳', es: 'Operar (bróker)', en: 'Trade (broker)', k: 'cuenta broker bróker invertir comprar vender alpaca account invest buy sell posiciones agente trading bot señales senales toque agent signals', run: function () { stage('broker'); } },
       { g: 'invest', id: 'committee', ic: '🏛', es: 'Comité de inversión', en: 'Investment committee', k: 'comite committee veredicto memo pizarra board', run: function () { W.KhipuCommittee.open(); }, ok: function () { return !!(W.KhipuCommittee && W.KhipuCommittee.open); } },
       { g: 'invest', id: 'risk', ic: '🛡', es: 'Riesgo de cartera', en: 'Portfolio risk', k: 'riesgo var risk cartera griegas vega', run: function () { W.KhipuRisk.open({ tab: 'var' }); }, ok: function () { return !!(W.KhipuRisk && W.KhipuRisk.open); } },
       { g: 'invest', id: 'clients', ic: '👥', es: 'Clientes', en: 'Clients', k: 'clientes clients aprobaciones approvals', run: function () { W.KhipuClients.open(); }, ok: function () { return !!(W.KhipuClients && W.KhipuClients.open); } },
@@ -1069,10 +1069,10 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var my = ++_bal.seq;
     var sim = _simBalance();
     if (!sim) _balPaint(null);
-    else if (sim.none) _balPaint({ label: '🧪 <span class="lt">' + esc(L('Práctica', 'Practice')) + '</span>', value: L('Crear cartera', 'Create a portfolio'), small: true, go: 'portfolios',
-      title: L('Aún no tienes carteras de práctica. Crea una con dinero simulado (no es dinero real).', 'You have no practice portfolios yet. Create one with simulated money (not real money).'),
-      plain: L('Práctica: crear cartera', 'Practice: create a portfolio') });
-    else _balPaint({ label: '🧪 <span class="lt">' + esc(L('Cuenta de práctica', 'Practice account')) + '</span>', value: _money(sim.total), go: 'portfolios',
+    else if (sim.none) _balPaint({ label: '📝 <span class="lt">' + esc(L('Carteras', 'Portfolios')) + '</span>', value: L('Crear cartera', 'Create a portfolio'), small: true, go: 'portfolios',
+      title: L('Aún no tienes carteras de seguimiento. Crea una para anotar lo que tienes (no envía órdenes).', 'You have no tracking portfolios yet. Create one to note what you hold (it sends no orders).'),
+      plain: L('Carteras: crear', 'Portfolios: create') });
+    else _balPaint({ label: '📝 <span class="lt">' + esc(L('Seguimiento', 'Tracking')) + '</span>', value: _money(sim.total), go: 'portfolios',
       title: L('Cartera simulada «' + sim.name + '» · ' + sim.n + ' posiciones · valor con precios en vivo (si falta un precio se usa el de compra). No es dinero real.',
                'Simulated portfolio “' + sim.name + '” · ' + sim.n + ' positions · valued at live prices (if a price is missing, the purchase price is used). Not real money.'),
       plain: L('Práctica: ', 'Practice: ') + _money(sim.total) });

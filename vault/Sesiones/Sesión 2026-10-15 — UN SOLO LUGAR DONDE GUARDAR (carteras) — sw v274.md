@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-15"
-ruta: "docs/ESTADO.md#L163"
+ruta: "docs/ESTADO.md#L170"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-15 — UN SOLO LUGAR DONDE GUARDAR (carteras) — sw v274
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 163 (21 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 170 (21 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

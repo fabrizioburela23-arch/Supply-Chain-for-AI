@@ -51,6 +51,13 @@ con SPY; empezar con dinero PROPIO, modo manual (1 toque + confirmación), monto
 `container.skills` + code execution): catálogo curado, instalación SOLO con PIN, fijada a un commit, nunca órdenes ni claves;
 solo con Claude. MCP sigue igual (es la puerta para IAs externas).
 
+**2026-11-10 b — CARTERAS UNIFICADAS (fase 1) + comité y privadas.** Plan completo: `docs/CARTERAS_Y_AGENTES.md` (Fabrizio
+DECIDIÓ: varias carteras de papel/reales sobre UNA cuenta de Alpaca, Khipus lleva la contabilidad por cartera). Fase 1 hecha
+(sw v294): «💼 Carteras» muestra arriba la cuenta del bróker (🧪/🔴) y abajo las de 📝 SEGUIMIENTO (antes «práctica»);
+«Mi cuenta (bróker)» → «Operar (bróker)». Siguen fases 2-4 (multi-cartera en Alpaca, agente por cartera, 🧩 Conectores:
+Composio + skills). Comité: una privada ya NO es AVOID «por no cotizar» — se evalúa como su salida a bolsa (HOLD salvo
+convicción ≤ TRIM_T) y el prompt prohíbe contar «no cotiza» como contra (research/committee.decide/_decide_core).
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

@@ -74,7 +74,7 @@ def test_c7_quorum_fundamental_obligatorio_y_tres_de_cuatro():
     d, es, en = decide(60, target_w=0.05, quorum=quorum_check({'news', 'technical'}))
     assert d == 'HOLD' and 'quórum' in es and 'quorum' in en
     assert decide(60, target_w=0.05, quorum=quorum_check({'fundamental', 'news', 'technical'}))[0] == 'BUY'
-    assert decide(60, investable=False, quorum=quorum_check(set()))[0] == 'AVOID'   # no cotiza manda
+    assert decide(60, investable=False, quorum=quorum_check(set()))[0] == 'HOLD'    # no cotiza manda (tesis de IPO)
 
 
 @needs_db

@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (135 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (142 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -23,11 +23,13 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[core.quotes.py]]
 - [[core.sim_report.py]]
 - [[core.trading_agent.py]]
+- [[Doc CARTERAS_Y_AGENTES]]
 - [[engine.brief.js]]
 - [[engine.report.js]]
 - [[engine.signals.js]]
 - [[engine.simreport.js]]
 - [[ontology.link_review.py]]
+- [[research.committee.py]]
 - [[scripts.eval_chat.py]]
 - [[scripts.research_batch.py]]
 - [[tests.test_agent_signals_one_tap.py]]

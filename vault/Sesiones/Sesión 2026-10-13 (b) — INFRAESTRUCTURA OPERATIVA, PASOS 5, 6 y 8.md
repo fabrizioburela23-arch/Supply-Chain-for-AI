@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L596"
+ruta: "docs/ESTADO.md#L603"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (b) — INFRAESTRUCTURA OPERATIVA, PASOS 5, 6 y 8 (identidad, libro de decisiones, un solo grafo) — sw v258
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 596 (14 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 603 (14 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

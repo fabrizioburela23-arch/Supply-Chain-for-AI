@@ -192,6 +192,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[engine.mcpconnect.js]] — usa `_tradeFetch`
 - [[engine.pfcommittee.js]] — usa `_tradeFetch`
 - [[engine.pfreports.js]] — usa `safeUrl`
+- [[engine.portfolios.js]] — usa `_tradePinStored`
 - [[engine.pricehist.js]] — usa `_tradeFetch`
 - [[engine.reconcile.js]] — usa `_tradeFetch`
 - [[engine.secondbrain.js]] — usa `safeUrl`

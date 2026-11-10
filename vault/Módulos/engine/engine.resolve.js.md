@@ -54,7 +54,7 @@ Se carga en [[app.html]] en la posición **36 de 105** (línea 3122), después d
 - [[engine.oswindows.js]] — usa `KhipuResolve`
 - [[engine.pfcommittee.js]] — usa `_surface`
 - [[engine.pickers.js]] — usa `KhipuResolve`
-- [[engine.portfolios.js]] — usa `KhipuResolve`
+- [[engine.portfolios.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.spacemonitor.js]] — usa `_surface`
 - [[engine.trade.js]] — usa `KhipuResolve`
 - [[engine.voice.js]] — usa `KhipuResolve`, `_surface`

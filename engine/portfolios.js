@@ -551,7 +551,8 @@
       wireAI();
       return;
     }
-    html += topBar(list, pf) + (_creating ? createForm() : '');
+    html += brokerCard() + '<div class="kpf-sec">📝 ' + T('Seguimiento (sin órdenes)', 'Tracking (no orders)') + '</div>' +
+      topBar(list, pf) + (_creating ? createForm() : '');
     if (pf) html += '<div class="kpf-actnote">★ ' + T('Cartera activa: es la misma que ves en Mercado, la Terminal, el reporte de riesgo y el chat. Cámbiala con el selector.',
       'Active portfolio: the same one you see in Market, the Terminal, the risk report and the chat. Switch it with the selector.') + '</div>';
 
@@ -561,15 +562,45 @@
       html += summary(pf) + addSection(pf) +
         '<div class="kpf-sec">' + T('Posiciones', 'Positions') + '</div>' +
         positionsTable(pf) +
-        '<div class="kpf-foot">🧪 ' +
-          T('Cartera 100% simulada con dinero virtual. No es una recomendación de inversión ni una orden real. Las privadas usan un valor estimado del grafo.',
-            '100% simulated portfolio with virtual money. Not investment advice or a real order. Private companies use an estimated value from the graph.') +
+        '<div class="kpf-foot">📝 ' +
+          T('Cartera de SEGUIMIENTO: anotas lo que tienes (o lo que quieres probar); no envía órdenes. Para operar con papel o dinero real usa la cuenta del bróker de arriba. Las privadas usan un valor estimado del grafo.',
+            'TRACKING portfolio: you note what you hold (or want to try); it sends no orders. To trade with paper or real money use the broker account above. Private companies use an estimated value from the graph.') +
         '</div>';
     }
     html += '</div></div>';
     _container.innerHTML = html;
     wireTabs();
     wire(pf);
+    fillBroker();
+  }
+
+  /* ══ UNA SOLA LISTA «CARTERAS» (fase 1 de docs/CARTERAS_Y_AGENTES.md, 2026-11-10) ══
+     Arriba, la cuenta de Alpaca con su insignia 🧪 PAPEL / 🔴 DINERO REAL (órdenes de verdad: se abre «Operar»);
+     debajo, las de 📝 SEGUIMIENTO (antes «práctica»: anotas lo que tienes, sin órdenes). Sin PIN no se lee la cuenta. */
+  function brokerCard() {
+    return '<div class="kpf-sec">💳 ' + T('Cuenta del bróker (Alpaca)', 'Broker account (Alpaca)') + '</div>' +
+      '<div class="kpf-broker" id="kpf-broker" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;' +
+      'border:1px solid var(--os-line,rgba(127,127,127,.25));border-radius:14px;margin-bottom:10px">' +
+      '<span class="kpf-bk-txt" style="flex:1;min-width:180px">🔒 ' + T('Pon tu PIN en «Operar» para ver tu cuenta.', 'Enter your PIN in “Trade” to see your account.') + '</span>' +
+      '<button type="button" class="kpf-btn kpf-bk-go">' + T('Operar y agente →', 'Trade & agent →') + '</button></div>';
+  }
+  function fillBroker() {
+    var box = _container && _container.querySelector('#kpf-broker'); if (!box) return;
+    var go = box.querySelector('.kpf-bk-go');
+    if (go) go.onclick = function () {
+      if (window.BixbyCockpit && window.BixbyCockpit.stage) window.BixbyCockpit.stage('broker');
+      else if (window._surface) window._surface('trade');
+    };
+    var hasPin = false; try { hasPin = !!(window._tradePinStored && window._tradePinStored()); } catch (e) {}
+    if (!hasPin || !window._tradeAccountInfo) return;
+    Promise.resolve(window._tradeAccountInfo(false, false)).then(function (a) {
+      if (!a || a.error || !isFinite(+a.equity) || typeof a.paper !== 'boolean') return;
+      var t = box.querySelector('.kpf-bk-txt'); if (!t) return;
+      var money = '$' + (+a.equity).toLocaleString(lang() === 'en' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 });
+      t.innerHTML = (a.paper ? '<b>🧪 ' + T('PAPEL (simulado)', 'PAPER (simulated)') + '</b>'
+                             : '<b style="color:' + DOWN + '">🔴 ' + T('DINERO REAL', 'REAL MONEY') + '</b>') +
+        ' · ' + esc(T('Valor', 'Value')) + ' <b>' + esc(money) + '</b>';
+    }).catch(function () {});
   }
 
   function wireTabs() {

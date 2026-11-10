@@ -305,7 +305,16 @@ def _decide_core(overall, investable, insufficient, has_position, current_w, tar
     if blocked:
         return 'AVOID', 'el mandato del cliente restringe este símbolo', "the client's mandate restricts this symbol"
     if not investable:
-        return 'AVOID', 'no cotiza en bolsa: no se puede invertir directamente', 'not listed: cannot be bought directly'
+        # 2026-11-10 (Fabrizio, Anthropic): «no cotiza» NO es un argumento en contra cuando la pregunta es su salida a
+        # bolsa. La convicción se lee como la tesis para el IPO; hoy no hay orden posible, así que nunca es accionable.
+        if overall <= TRIM_T:
+            return ('AVOID', f'aún no cotiza; convicción {overall:+.0f} ≤ {TRIM_T:.0f}: tesis negativa también para su salida a bolsa',
+                    f'not listed yet; conviction {overall:+.0f} ≤ {TRIM_T:.0f}: negative thesis for its IPO too')
+        if overall >= BUY_T:
+            return ('HOLD', f'aún no cotiza; convicción {overall:+.0f} ≥ {BUY_T:.0f}: tesis favorable para su salida a bolsa (vigilar el IPO; hoy no se puede comprar)',
+                    f'not listed yet; conviction {overall:+.0f} ≥ {BUY_T:.0f}: favorable thesis for its IPO (watch the IPO; it cannot be bought today)')
+        return ('HOLD', f'aún no cotiza; convicción {overall:+.0f}: tesis neutral para su salida a bolsa (se reevalúa al cotizar)',
+                f'not listed yet; conviction {overall:+.0f}: neutral thesis for its IPO (re-evaluated once listed)')
     if insufficient:
         return ('HOLD', 'evidencia insuficiente (menos de %d conclusiones activas)' % MIN_CLAIMS,
                 'insufficient evidence (fewer than %d active conclusions)' % MIN_CLAIMS)
@@ -853,6 +862,10 @@ def build_package(label, symbol, claims_by_id, conv, overall, rels, live, risk, 
         items.append({'title': 'M1', 'excerpt': txt})
         refs.append('M1')
     header = f'EMPRESA: {label} ({symbol or "no cotiza"}) · FECHA: {_now().date().isoformat()}'
+    if not symbol:   # 2026-11-10: una privada se evalúa como su SALIDA A BOLSA, no se castiga por no cotizar
+        header += ('\nNOTA: aún no cotiza. Evalúa la tesis como si fuera a salir a bolsa (IPO): negocio, crecimiento, '
+                   'márgenes, valuación verificada frente a comparables que cotizan y riesgos. NO cuentes «no cotiza» '
+                   'ni «hoy no se puede invertir» como argumento en contra: es la premisa de la pregunta.')
     return header + '\n' + '\n'.join(lines), items, refs, cref
 
 

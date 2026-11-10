@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/portfolios.js"
 lenguaje: "javascript"
-lineas: 1351
+lineas: 1382
 aliases: ["engine/portfolios.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/portfolios.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.351 líneas · `engine/portfolios.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.382 líneas · `engine/portfolios.js`
 
 ## Para qué sirve
 
@@ -22,12 +22,15 @@ tags: ["capa/dinero", "tipo/modulo"]
 
 ## Depende de
 
+- [[app.html]] — usa `_tradePinStored`
 - [[engine.app_main.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `fetchQuotes`
+- [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.mascot.js]] — usa `KhipuMascot`
-- [[engine.resolve.js]] — usa `KhipuResolve`
+- [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
 - [[engine.toast.js]] — usa `KhipuToast`
+- [[engine.trade.js]] — usa `_tradeAccountInfo`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 

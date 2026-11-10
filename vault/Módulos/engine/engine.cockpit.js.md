@@ -73,6 +73,7 @@ Se carga en [[app.html]] en la posición **96 de 105** (línea 3250), después d
 - [[engine.khipu_chat.js]] — usa `BixbyCockpit`
 - [[engine.localcharts.js]] — usa `BixbyCockpit`
 - [[engine.oswindows.js]] — usa `BixbyCockpit`
+- [[engine.portfolios.js]] — usa `BixbyCockpit`
 - [[engine.resolve.js]] — usa `BixbyCockpit`
 - [[engine.trade.js]] — usa `BixbyCockpit`
 - [[engine.voice.js]] — usa `BixbyCockpit`, `_computePortfolioSummary`, `_openDeepResearch`, `_runAgentSim`

@@ -209,7 +209,8 @@ def test_decision_por_umbrales():
     assert decide(40, target_w=None)[0] == 'HOLD'                    # sin volatilidad no se dimensiona
     assert decide(20, target_w=0.05)[0] == 'HOLD'
     assert decide(-25, target_w=0.05)[0] == 'AVOID'
-    assert decide(40, investable=False)[0] == 'AVOID'
+    assert decide(40, investable=False)[0] == 'HOLD'      # aún no cotiza: tesis para su IPO, nunca accionable
+    assert decide(-40, investable=False)[0] == 'AVOID' and 'salida a bolsa' in decide(0, investable=False)[1]
     assert decide(90, insufficient=True, target_w=0.05)[0] == 'HOLD'
     assert decide(40, blocked=True, target_w=0.05)[0] == 'AVOID'
     assert decide(40, has_position=True, current_w=0.02, target_w=0.05)[0] == 'ADD'

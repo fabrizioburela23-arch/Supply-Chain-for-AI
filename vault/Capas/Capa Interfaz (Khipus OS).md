@@ -56,7 +56,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 25 |
 | usa a | [[Capa Chat y agentes]] | 25 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 23 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 20 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 22 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 18 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 14 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 14 |

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L1681"
+ruta: "docs/ESTADO.md#L1688"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-03 (b) — REPORTES DE CARTERA, "PREGÚNTALE A TU CARTERA", NOTICIAS DE TU CARTERA
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1681 (19 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1688 (19 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
