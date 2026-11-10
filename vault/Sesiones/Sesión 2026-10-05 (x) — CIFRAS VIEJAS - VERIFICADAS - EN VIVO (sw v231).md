@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L1178"
+ruta: "docs/ESTADO.md#L1179"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (x) — CIFRAS VIEJAS → VERIFICADAS / EN VIVO (sw v231)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1178 (19 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1179 (19 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

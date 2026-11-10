@@ -64,7 +64,8 @@ simulate_price/señales del agente), sin tocar la tesis de largo plazo. (b) MODE
 1) banco de pruebas (backtest) de la simulación propia (core/price_sim: ¿la banda del 90 % contuvo el precio real?);
 2) TimesFM (Google, abierto) o Chronos (Amazon, abierto) corriendo FUERA del servidor web (trabajo diario aparte que guarda
 sus pronósticos en Postgres; si falla, la app sigue igual — la lección de MiroFish, que era un servicio externo en vivo);
-3) solo se muestra si le gana a la simulación propia en el backtest. Ninguno predice dirección con fiabilidad: el valor
+3) solo se muestra si le gana a la simulación propia en el backtest. ✅ HECHO 2026-11-10 (docs/eval/BACKTEST_TIMESFM.md):
+TimesFM 2.5 EMPATA en exactitud y tiene rangos PEORES calibrados (banda 80 % → 73,5 % vs Khipus 84,7 %) → no se integra. Ninguno predice dirección con fiabilidad: el valor
 está en rangos y volatilidad.
 
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo

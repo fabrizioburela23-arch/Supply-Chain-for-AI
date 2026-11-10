@@ -31,6 +31,7 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 ## Lo usan
 
 - [[mcp_server.ops.py]] — lo importa
+- [[scripts.backtest_forecast.py]] — lo importa
 - herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
 _Además lo importan 2 pruebas (lista abajo)._

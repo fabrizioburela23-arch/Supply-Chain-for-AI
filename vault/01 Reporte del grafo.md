@@ -17,8 +17,8 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 258 |
-| Líneas de código | 152.518 |
+| Archivos de código (Python, JS, HTML) | 259 |
+| Líneas de código | 152.630 |
 | Archivos de datos del catálogo | 30 |
 | Archivos de prueba | 277 |
 | Documentos | 33 |
@@ -29,7 +29,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 782 |
 | Aristas `defines_endpoint` | 301 |
-| Aristas `imports` | 2.423 |
+| Aristas `imports` | 2.424 |
 | Aristas `loads_script` | 97 |
 | Aristas `mentions_in_session` | 612 |
 | Aristas `reads_env` | 232 |
@@ -64,7 +64,7 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[engine.toast.js]] | 31 | 28 | 3 | [[Capa Interfaz (Khipus OS)]] |
 | [[research.committee.py]] | 31 | 10 | 21 | [[Capa Comité]] |
 
-## Módulos sin pruebas (22)
+## Módulos sin pruebas (23)
 
 Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
@@ -87,6 +87,7 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[core.providers.coingecko.py]] | 123 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[scripts.build_instrument_review.py]] | 119 | [[Capa Datos del catálogo]] |
 | [[engine.nav4.js]] | 118 | [[Capa Interfaz (Khipus OS)]] |
+| [[scripts.backtest_forecast.py]] | 112 | [[Capa Otros]] |
 | [[scripts.reconcile_v0_to_ontology.py]] | 104 | [[Capa Ontología y grafo temporal]] |
 | [[engine.canvas-data.js]] | 72 | [[Capa Chat y agentes]] |
 | [[scripts.build_private_valuations.py]] | 71 | [[Capa Datos del catálogo]] |
@@ -180,8 +181,8 @@ Regla de CLAUDE.md: todo archivo JS nuevo va también al array SHELL de `sw.js`.
 
 _Ninguno._
 
-## Archivos en la capa "Otros" (3)
+## Archivos en la capa "Otros" (4)
 
 Faltan en la tabla de capas (`REGLAS_CAPA` en `scripts/build_vault.py`).
 
-[[scripts.eval_chat.py]], [[scripts.links_to_ficha.py]], [[scripts.research_batch.py]]
+[[scripts.backtest_forecast.py]], [[scripts.eval_chat.py]], [[scripts.links_to_ficha.py]], [[scripts.research_batch.py]]

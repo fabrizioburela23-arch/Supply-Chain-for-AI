@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1544"
+ruta: "docs/ESTADO.md#L1545"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (c) — JEV (TYPESAFE) EN MODO SOMBRA: PORTERO DEL CHAT (sw v188)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1544 (19 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1545 (19 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
