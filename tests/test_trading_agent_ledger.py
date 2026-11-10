@@ -164,6 +164,7 @@ def test_agent_needs_a_human_unless_paper():
 
 
 def test_config_is_persisted_and_the_agent_stays_off_after_a_deploy(agent, alpaca, monkeypatch):
+    monkeypatch.setenv('AGENT_RESUME_PAPER', 'off')   # el camino «queda apagado» (con dinero real es siempre así)
     """BRECHAS #14 (por defecto): encendido + configuración en el libro; un despliegue (proceso nuevo) lo deja
     APAGADO con aviso bilingüe y la MISMA configuración."""
     monkeypatch.setattr(server._trading_agent, '_agent_thread_fn', lambda: None)

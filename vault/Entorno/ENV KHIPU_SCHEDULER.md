@@ -13,6 +13,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## La leen
 
 - [[core.scheduler.py]]
+- [[core.trading_agent.py]]
 - [[scripts.bench_scale.py]]
 
 ## Pruebas que la fijan o nombran

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_trading_agent_ledger.py"
 lenguaje: "python"
-lineas: 264
+lineas: 265
 aliases: ["tests/test_trading_agent_ledger.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_trading_agent_ledger.py
 
-> Prueba · capa [[Capa Pruebas]] · 264 líneas · `tests/test_trading_agent_ledger.py`
+> Prueba · capa [[Capa Pruebas]] · 265 líneas · `tests/test_trading_agent_ledger.py`
 
 ## Qué prueba
 
@@ -36,4 +36,4 @@ INFRA_OPERATIVA paso 16 (BRECHAS G5-10, MAP D #12, #14): el agente de trading de
 
 ## Variables de entorno que fija o nombra
 
-[[ENV ALPACA_BASE]], [[ENV ALPACA_KEY]], [[ENV ALPACA_SECRET]], [[ENV BROKERAGE_LIVE_ENABLED]], [[ENV BROKERAGE_TRADING_ENABLED]], [[ENV DATABASE_URL]], [[ENV RAILWAY_ENVIRONMENT]], [[ENV SECRET_KEY]], [[ENV TRADE_PIN]]
+[[ENV AGENT_RESUME_PAPER]], [[ENV ALPACA_BASE]], [[ENV ALPACA_KEY]], [[ENV ALPACA_SECRET]], [[ENV BROKERAGE_LIVE_ENABLED]], [[ENV BROKERAGE_TRADING_ENABLED]], [[ENV DATABASE_URL]], [[ENV RAILWAY_ENVIRONMENT]], [[ENV SECRET_KEY]], [[ENV TRADE_PIN]]

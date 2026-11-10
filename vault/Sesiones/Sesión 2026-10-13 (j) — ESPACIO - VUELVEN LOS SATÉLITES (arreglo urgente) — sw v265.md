@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L345"
+ruta: "docs/ESTADO.md#L356"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (j) — ESPACIO: VUELVEN LOS SATÉLITES (arreglo urgente) — sw v265
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 345 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 356 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

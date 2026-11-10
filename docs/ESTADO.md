@@ -40,6 +40,17 @@ si Jev no llega en la espera de policy.decide (1,5 s, artefacto con PIN), REGLAS
 muestra el carril. En producción Jev casi nunca llegaba a tiempo (router 'default'): subir la espera es decisión de
 Fabrizio (release de policy.decide con PIN). AI_ROUTER=off lo apaga.
 
+**2026-11-10 — PRIORIDAD: dinero real.** Hallazgo: la prueba en papel (1e) NUNCA corrió — cada despliegue apagaba el
+agente (0 órdenes de acciones del 21-oct al 10-nov; cuenta papel US$50.066 casi toda en efectivo; SPY −2,1 % en el período).
+Arreglo: `AGENT_RESUME_PAPER` (on) — en PAPEL se reanuda solo tras una actualización (se lee el libro 45 s después de
+arrancar); con dinero real sigue APAGADO con aviso. Antes de dinero real: 2 semanas de papel CORRIENDO de verdad + compararlo
+con SPY; empezar con dinero PROPIO, modo manual (1 toque + confirmación), montos chicos; dinero de terceros = abogado antes.
+**Pendiente (lista, pedido 2026-11-10):** (a) CODE MODE — programmatic tool calling de Claude (`code_execution_20260120` +
+`allowed_callers`) en el carril 🔴 frontera, con interruptor y medido con el examen de oro; requiere migrar el bucle del chat
+(hoy protocolo JSON propio) a tool use nativo. (b) SKILLS desde repos de GitHub — Skills API de Claude (`client.skills.*` +
+`container.skills` + code execution): catálogo curado, instalación SOLO con PIN, fijada a un commit, nunca órdenes ni claves;
+solo con Claude. MCP sigue igual (es la puerta para IAs externas).
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

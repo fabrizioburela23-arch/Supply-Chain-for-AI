@@ -11,6 +11,7 @@ antes. Las pruebas que reemplazan funciones DEL AGENTE (p. ej. _agent_analyze) p
 """
 import json
 import logging
+import os
 import re
 import threading
 import time
@@ -31,6 +32,25 @@ def bind(host):
     """server.py se pasa a sí mismo: la config y los ayudantes de la cuenta de la casa se leen de ahí en cada llamada."""
     global _S
     _S = host
+    # 2026-11-07: la restauración ya no espera al primer uso del panel — 45 s después de arrancar se lee el libro
+    # (en PAPEL el agente se reanuda solo; con dinero real queda apagado con aviso). Sin reloj en las pruebas.
+    if (os.getenv('KHIPU_SCHEDULER') or 'on').strip().lower() not in ('off', '0', 'false', 'no'):
+        t = threading.Timer(45.0, _agent_boot_restore)
+        t.daemon = True
+        t.start()
+
+
+def _agent_boot_restore():
+    try:
+        _agent_restore()
+    except Exception as e:  # noqa: BLE001
+        log.warning('agente: restauración al arrancar (%s)', type(e).__name__)
+
+
+def _resume_paper_enabled():
+    """AGENT_RESUME_PAPER (on): tras una actualización, el agente de PAPEL que estaba encendido se reanuda solo
+    (la prueba en papel de 2 semanas nunca corrió: cada despliegue lo apagaba). Con dinero real NUNCA se reanuda."""
+    return (os.getenv('AGENT_RESUME_PAPER') or 'on').strip().lower() not in ('off', '0', 'false', 'no')
 
 
 # ── AI Trading Agent ─────────────────────────────────────────────────────────
@@ -884,6 +904,16 @@ def _agent_thread_fn():
         _AGENT['status'] = 'stopped'
 
 
+def _launch_locked():
+    """Enciende el hilo del agente (con _AGENT_LOCK tomado)."""
+    _AGENT['running'] = True
+    _AGENT['daily_pnl_pct'] = 0.0
+    _AGENT.pop('notice', None)
+    t = threading.Thread(target=_agent_thread_fn, daemon=True, name='khipu-trading-agent')
+    _AGENT['thread'] = t
+    t.start()
+
+
 # BRECHAS #14 (sin respuesta → lo recomendado): tras un despliegue el agente queda APAGADO con un aviso visible y SIN
 # perder su configuración. Cada encendido/apagado/cambio es una decisión policy.change (subject.policy =
 # trade.agent_config) en el libro append-only; la última se restaura al primer uso del panel del agente.
@@ -950,7 +980,14 @@ def _agent_restore():
                 if changes.get('mode') == 'auto' and not _S._paper():
                     changes['mode'] = 'manual'
                 _AGENT.update(changes)
-        if out.get('running'):
+        if out.get('running') and _resume_paper_enabled() and _S.ALPACA_KEY and _S._paper():
+            with _AGENT_LOCK:
+                if not _AGENT['running']:
+                    _launch_locked()
+            _agent_log({'level': 'info', 'msg': '▶ Reanudado solo tras una actualización (cuenta de PAPEL) · '
+                                                'Resumed by itself after an update (PAPER account)'})
+            _agent_persist(True, 'resumed_after_restart', principal=_agent_principal())
+        elif out.get('running'):
             _AGENT['notice'] = {'es': _AGENT_NOTICE_ES, 'en': _AGENT_NOTICE_EN,
                                 'stopped_at': row[1].isoformat() if row[1] else None}
             _agent_log({'level': 'warn', 'msg': _AGENT_NOTICE_ES + ' · ' + _AGENT_NOTICE_EN})
@@ -983,12 +1020,7 @@ def agent_start():
         if prev_t is not None and prev_t.is_alive():
             return _S._bad('El agente aún se está deteniendo; reintenta en unos segundos',
                         'The agent is still stopping; retry in a few seconds', code='agent_stopping', status=409)
-        _AGENT['running'] = True
-        _AGENT['daily_pnl_pct'] = 0.0
-        _AGENT.pop('notice', None)
-        t = threading.Thread(target=_agent_thread_fn, daemon=True, name='khipu-trading-agent')
-        _AGENT['thread'] = t
-        t.start()
+        _launch_locked()
     _agent_persist(True, 'start')
     _S._trade_audit('agent_start', {'outcome': 'started', **{k: v for k, v in _agent_config_view().items()
                                                           if k != 'universe'},

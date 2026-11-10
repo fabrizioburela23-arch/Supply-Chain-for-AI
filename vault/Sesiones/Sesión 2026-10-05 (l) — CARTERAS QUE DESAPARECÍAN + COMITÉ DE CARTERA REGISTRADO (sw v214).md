@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L1309"
+ruta: "docs/ESTADO.md#L1320"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (l) — CARTERAS QUE "DESAPARECÍAN" + COMITÉ DE CARTERA REGISTRADO (sw v214)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1309 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1320 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

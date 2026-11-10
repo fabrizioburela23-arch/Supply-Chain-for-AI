@@ -331,6 +331,7 @@ nuevas en command_center: xray, compare, insights, livesim.
 ```
 SECRET_KEY, FINNHUB_KEY, ANTHROPIC_KEY, GEMINI_KEY, NVIDIA_KEY, AI_ORDER (solo nivel rápido; mejor borrarla), AI_ORDER_FAST, AI_ORDER_DEEP,
 AI_MODEL_FAST, AI_MODEL_DEEP (AI_MODEL ya no existe),
+AGENT_RESUME_PAPER (on)  ← tras una actualización el agente de trading de PAPEL se reanuda solo; con dinero real queda apagado
 AI_ROUTER (on), AI_MODEL_SMALL (claude-haiku-5-5), AI_MODEL_FRONTIER (claude-opus-5-5)  ← router de modelos del chat (core/model_router: Jev elige pequeño/mediano/frontera; sin Jev a tiempo → reglas)
 ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, ELEVENLABS_ALLOW_OVERRIDE,
 AV_KEY, FMP_KEY, MARKETSTACK_KEY, ALPACA_KEY/SECRET/BASE,
