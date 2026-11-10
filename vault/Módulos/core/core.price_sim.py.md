@@ -39,3 +39,7 @@ _Además lo importan 2 pruebas (lista abajo)._
 
 - [[tests.test_genui_sim_report.py]]
 - [[tests.test_price_sim.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]

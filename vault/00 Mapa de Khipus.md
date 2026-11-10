@@ -36,7 +36,7 @@ Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Repo
 | [[Capa Infraestructura]] | 50 | 27.912 | La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización. |
 | [[Capa Datos del catálogo]] | 38 | 68.734 | El catálogo curado de empresas y vínculos (nodes/\*.js), el snapshot data/grafo_v0.json y sus generadores. |
 | [[Capa Pruebas]] | 277 | 71.796 | Las pruebas automáticas (pytest) que vigilan cada parte. |
-| [[Capa Documentación]] | 33 | 14.923 | Documentos del proyecto (CLAUDE.md, docs/\*.md) y las sesiones de trabajo de docs/ESTADO.md. |
+| [[Capa Documentación]] | 33 | 14.932 | Documentos del proyecto (CLAUDE.md, docs/\*.md) y las sesiones de trabajo de docs/ESTADO.md. |
 | [[Capa Otros]] | 3 | 858 | Archivos que la tabla de capas todavía no clasifica (se reportan para asignarles capa). |
 
 ## Índices

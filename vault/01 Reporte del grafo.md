@@ -31,7 +31,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Aristas `defines_endpoint` | 301 |
 | Aristas `imports` | 2.423 |
 | Aristas `loads_script` | 97 |
-| Aristas `mentions_in_session` | 611 |
+| Aristas `mentions_in_session` | 612 |
 | Aristas `reads_env` | 232 |
 | Aristas `references_file` | 72 |
 | Aristas `tested_by` | 1.908 |

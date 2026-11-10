@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L1503"
+ruta: "docs/ESTADO.md#L1512"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (e) — INICIO DE LA CABINA REDISEÑADO + FEED SIN NOTICIAS VIEJAS (sw v190)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1503 (15 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1512 (15 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

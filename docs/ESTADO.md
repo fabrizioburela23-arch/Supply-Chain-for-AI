@@ -58,6 +58,15 @@ DECIDIÓ: varias carteras de papel/reales sobre UNA cuenta de Alpaca, Khipus lle
 Composio + skills). Comité: una privada ya NO es AVOID «por no cotizar» — se evalúa como su salida a bolsa (HOLD salvo
 convicción ≤ TRIM_T) y el prompt prohíbe contar «no cotiza» como contra (research/committee.decide/_decide_core).
 
+**Pendiente (2026-11-10 c):** (a) NOTICIAS DE PERSONA CLAVE / REPUTACIÓN — el agente de noticias debe detectar escándalos o
+eventos del CEO/fundador (solo de fuentes confiables, nunca rumores) como señal de CORTO plazo (claim SHORT_TERM + aviso en
+simulate_price/señales del agente), sin tocar la tesis de largo plazo. (b) MODELO DE PREDICCIÓN — no construir desde cero:
+1) banco de pruebas (backtest) de la simulación propia (core/price_sim: ¿la banda del 90 % contuvo el precio real?);
+2) TimesFM (Google, abierto) o Chronos (Amazon, abierto) corriendo FUERA del servidor web (trabajo diario aparte que guarda
+sus pronósticos en Postgres; si falla, la app sigue igual — la lección de MiroFish, que era un servicio externo en vivo);
+3) solo se muestra si le gana a la simulación propia en el backtest. Ninguno predice dirección con fiabilidad: el valor
+está en rangos y volatilidad.
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

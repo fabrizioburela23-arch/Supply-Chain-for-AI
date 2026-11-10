@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-10"
-ruta: "docs/ESTADO.md#L847"
+ruta: "docs/ESTADO.md#L856"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-10 — NOCHE: IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 847 (38 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 856 (38 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
