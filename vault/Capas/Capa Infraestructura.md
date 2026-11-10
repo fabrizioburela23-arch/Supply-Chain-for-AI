@@ -77,8 +77,8 @@ Variables de entorno: [[Índice de variables de entorno]].
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 29 |
 | la usa | [[Capa Investigación]] | 28 |
 | la usa | [[Capa MCP y API]] | 24 |
+| la usa | [[Capa Comité]] | 23 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 23 |
-| la usa | [[Capa Comité]] | 22 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 20 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 13 |

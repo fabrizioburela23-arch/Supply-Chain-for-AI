@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-276 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+277 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -59,6 +59,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_cleanup_nrs_parity.py]] | 3 | 6 |
 | [[tests.test_cleanup_server.py]] | 14 | 26 |
 | [[tests.test_client_hardening.py]] | 20 | 8 |
+| [[tests.test_committee_ipo.py]] | 3 | 3 |
 | [[tests.test_committee_os_narr.py]] | 19 | 16 |
 | [[tests.test_committee_os_pf_apply.py]] | 2 | 1 |
 | [[tests.test_committee_os_pf_tokens.py]] | 9 | 2 |

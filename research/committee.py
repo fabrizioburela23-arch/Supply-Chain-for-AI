@@ -693,6 +693,50 @@ def _default_live(entity_id, symbol):
              'error_en': 'not listed and no verified valuation'})
 
 
+_IPO_CACHE = {}     # nombre → (ts, resultado): las noticias de la salida a bolsa no cambian minuto a minuto
+
+
+def _default_ipo(entity_id, label):
+    """Noticias RECIENTES de la salida a bolsa de una empresa que aún no cotiza (2026-11-10, Fabrizio: «saldrá a bolsa a
+    2 billones pero el comité se basa en la última ronda; el agente de noticias debería investigar eso»). Busca en la
+    web (web_search de Anthropic por core/ai: mismo control de gasto) la valuación esperada, la fecha, los bancos y el
+    monto; respaldo sin IA: menciones de valuación «en conversaciones» de GDELT. Caché 6 h. Nunca lanza."""
+    import time as _t
+    name = str(label or entity_id or '').strip()[:80]
+    if not name:
+        return {'ok': False}
+    hit = _IPO_CACHE.get(name.lower())
+    if hit and _t.time() - hit[0] < 6 * 3600:
+        return hit[1]
+    out = {'ok': False}
+    try:
+        from core import ai as _ai
+        if _ai.claude_web_available():
+            r = _ai.claude_web(query=(f'{name} IPO: latest news on expected valuation, target date, size of the offering, '
+                                      'underwriters and exchange. Give exact figures with the date and source of each.'),
+                               max_uses=3, timeout_s=40, max_tokens=1200)
+            txt = (r or {}).get('text') or ''
+            if txt.strip():
+                out = {'ok': True, 'text': txt.strip()[:1800], 'source': 'web (Anthropic web_search)',
+                       'citations': [{'url': c.get('url'), 'title': c.get('title')}
+                                     for c in (r.get('citations') or [])[:5] if isinstance(c, dict)]}
+    except Exception as e:  # noqa: BLE001
+        log.info('comité: noticias de IPO por web (%s)', type(e).__name__)
+    if not out.get('ok'):
+        try:
+            from core.company_data import get_valuation_news
+            v = get_valuation_news(name) or {}
+            m = v.get('latest_talks') or v.get('latest_reported')
+            if m:
+                out = {'ok': True, 'source': 'GDELT (titulares)',
+                       'text': f"{m.get('kind')}: {m.get('headline')} ({m.get('source')}, {m.get('datetime')})",
+                       'citations': [{'url': m.get('url'), 'title': m.get('headline')}]}
+        except Exception as e:  # noqa: BLE001
+            log.info('comité: noticias de IPO por GDELT (%s)', type(e).__name__)
+    _IPO_CACHE[name.lower()] = (_t.time(), out)
+    return out
+
+
 def brokerage_service():
     """brokerage.service si está instalado y disponible; si no, None."""
     try:
@@ -834,6 +878,14 @@ def build_package(label, symbol, claims_by_id, conv, overall, rels, live, risk, 
         lines.append(txt)
         items.append({'title': 'D1', 'excerpt': txt})
         refs.append('D1')
+    ipo = live.get('ipo') if isinstance(live.get('ipo'), dict) else None
+    if ipo and ipo.get('text'):
+        srcs = ' · '.join(c.get('url') or '' for c in ipo.get('citations') or [] if c.get('url'))
+        txt = (f"D2 [SALIDA A BOLSA — noticias recientes ({ipo.get('source')}); lo REPORTADO para el IPO, distinto de la "
+               f"última ronda privada] <data>{ipo['text']}</data>" + (f" · fuentes: {srcs}" if srcs else ''))
+        lines.append(txt)
+        items.append({'title': 'D2', 'excerpt': txt})
+        refs.append('D2')
     if risk.get('ok'):
         txt = (f"R1 [riesgo medido de {symbol}, {risk.get('days')} días hasta {risk.get('as_of')}, {risk.get('source')}] "
                f"volatilidad anual {_fmt_pct(risk.get('vol_ann_pct'))} · máxima caída {_fmt_pct(risk.get('max_drawdown_pct'))}"
@@ -1146,6 +1198,10 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     # ── datos en vivo, riesgo y cliente (acotados en tiempo) ──
     progress_set(_pid, 'live', n_claims=len(rows))
     live = _bounded(deps.get('live_fn') or _default_live, 10, eid, symbol)
+    if not symbol:      # aún no cotiza: lo que dicen HOY las noticias de su salida a bolsa (valuación esperada, fecha…)
+        ipo = _bounded(deps.get('ipo_fn') or _default_ipo, 45, eid, label)
+        if isinstance(ipo, dict) and ipo.get('ok'):
+            live = dict(live, ipo=ipo)
     say(dl8.market_msg(live, symbol))
     progress_set(_pid, 'risk')
     risk = (_bounded(deps.get('risk_fn') or _default_risk, 15, symbol) if symbol

@@ -52,7 +52,7 @@ estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del m
 - herramienta MCP `get_fundamentals` → [[API herramientas MCP]]
 - herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -62,6 +62,7 @@ _Además lo importan 4 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_committee_ipo.py]]
 - [[tests.test_company_data.py]]
 - [[tests.test_genui_k_server.py]]
 - [[tests.test_risk_on_history.py]]

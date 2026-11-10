@@ -18,9 +18,9 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Qué | Cuántos |
 |---|---|
 | Archivos de código (Python, JS, HTML) | 258 |
-| Líneas de código | 152.462 |
+| Líneas de código | 152.518 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 276 |
+| Archivos de prueba | 277 |
 | Documentos | 33 |
 | Rutas HTTP | 266 |
 | Grupos de API | 61 |
@@ -29,12 +29,12 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 782 |
 | Aristas `defines_endpoint` | 301 |
-| Aristas `imports` | 2.419 |
+| Aristas `imports` | 2.423 |
 | Aristas `loads_script` | 97 |
 | Aristas `mentions_in_session` | 611 |
 | Aristas `reads_env` | 232 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.905 |
+| Aristas `tested_by` | 1.908 |
 | Aristas `uses_global` | 477 |
 
 ## Nodos "dios" (más conectados)
@@ -62,7 +62,7 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[ontology.models.py]] | 32 | 28 | 4 | [[Capa Ontología y grafo temporal]] |
 | [[core.world.py]] | 31 | 21 | 10 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
 | [[engine.toast.js]] | 31 | 28 | 3 | [[Capa Interfaz (Khipus OS)]] |
-| [[engine.khipu_chat.js]] | 30 | 7 | 23 | [[Capa Chat y agentes]] |
+| [[research.committee.py]] | 31 | 10 | 21 | [[Capa Comité]] |
 
 ## Módulos sin pruebas (22)
 
