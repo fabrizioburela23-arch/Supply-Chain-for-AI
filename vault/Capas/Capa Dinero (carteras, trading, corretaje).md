@@ -48,7 +48,7 @@ tags: ["capa/dinero", "tipo/capa"]
 | usa a | [[Capa Comité]] | 4 |
 | usa a | [[Capa Datos del catálogo]] | 3 |
 | usa a | [[Capa Investigación]] | 3 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 2 |
 | la usa | [[Capa Ontología y grafo temporal]] | 2 |
 | la usa | [[Capa Voz]] | 2 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 1 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 1 |

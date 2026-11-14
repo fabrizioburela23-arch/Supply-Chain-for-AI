@@ -17,3 +17,20 @@ def test_crypto_without_slash_becomes_pair_and_gtc(raw, pair):
 def test_stocks_and_unknown_symbols_are_untouched(raw):
     spec, err = S._spec(raw, 'buy', 100, None, 'market', None, 'day')
     assert err is None and spec['symbol'] == raw and spec['time_in_force'] == 'day'
+
+
+def test_historia_de_cripto_usa_el_simbolo_de_yahoo():
+    """Riesgo de la cartera con ETHUSD (2026-11-14): la historia se pide como ETH-USD."""
+    from core import risk_report as rr
+    assert rr.yahoo_symbol('ETHUSD') == 'ETH-USD' and rr.yahoo_symbol('BTC/USD') == 'BTC-USD'
+    assert rr.yahoo_symbol('NVDA') == 'NVDA' and rr.yahoo_symbol('AUSD') == 'AUSD'
+    seen = []
+
+    def getter(url, params=None, timeout=None):
+        seen.append(url)
+        return {'chart': {'result': [{'timestamp': [1700000000, 1700086400], 'meta': {'currency': 'USD'},
+                                      'indicators': {'quote': [{'close': [2000.0, 2010.0]}],
+                                                     'adjclose': [{'adjclose': [2000.0, 2010.0]}]}}]}}, None
+    rr._HIST_CACHE.clear()
+    h, cur = rr.fetch_history('ETHUSD', '1y', getter=getter)
+    assert seen and seen[0].endswith('/ETH-USD') and len(h) == 2 and cur == 'USD'

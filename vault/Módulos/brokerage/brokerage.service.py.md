@@ -85,6 +85,7 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 
 - [[brokerage.api.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
+- [[core.risk_report.py]] — lo importa
 - [[core.trading_agent.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
 - [[mcp_server.auth.py]] — lo importa

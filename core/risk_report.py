@@ -42,8 +42,24 @@ _HIST_TTL = 6 * 3600
 
 
 # ── datos ───────────────────────────────────────────────────────────────────
+def yahoo_symbol(symbol):
+    """Cripto del bróker (ETHUSD, ETH/USD) → símbolo de Yahoo (ETH-USD); lo demás igual. 2026-11-14: «riesgos de mi
+    cartera» fallaba entero con una sola posición en ETHUSD (Yahoo no conoce ETHUSD → «sin precios históricos»)."""
+    s = str(symbol or '').strip().upper()
+    flat = s.replace('/', '').replace('-', '')
+    if flat.endswith('USD') and len(flat) > 3:
+        try:
+            from brokerage.service import _CRYPTO_BASES as bases
+        except Exception:  # noqa: BLE001 — sin el paquete de corretaje: las más comunes
+            bases = frozenset({'BTC', 'ETH', 'SOL', 'DOGE', 'LTC', 'XRP', 'ADA', 'AVAX', 'LINK', 'DOT'})
+        if flat[:-3] in bases:
+            return f'{flat[:-3]}-USD'
+    return s
+
+
 def fetch_history(symbol, rng='1y', getter=None):
     """{fecha 'YYYY-MM-DD': precio ajustado} + moneda, o ({}, None)."""
+    symbol = yahoo_symbol(symbol)
     key = (symbol, rng)
     e = _HIST_CACHE.get(key)
     if e and time.time() - e[0] < _HIST_TTL:

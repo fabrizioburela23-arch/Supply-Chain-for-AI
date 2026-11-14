@@ -9,7 +9,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 > Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones.
 
-**24 archivos · 10.581 líneas.** Volver al [[00 Mapa de Khipus]].
+**24 archivos · 10.597 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -17,7 +17,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 - [[matrix.engine.py]] — 1.103 líneas · construcción, modulación y propagación de matrices.
 - [[engine.riskreport.js]] — 1.042 líneas · REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
 - [[matrix.tensor.py]] — 846 líneas · ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
-- [[core.risk_report.py]] — 753 líneas · REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
+- [[core.risk_report.py]] — 769 líneas · REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
 - [[core.scenario_engine.py]] — 710 líneas · ANÁLISIS ESTRUCTURAL de un escenario (sin IA).
 - [[core.sim_agents.py]] — 706 líneas · Motor de simulación POR AGENTES (interno).
 - [[engine.hotclient.js]] — 485 líneas · EL cliente de las vistas rápidas del servidor (window.KhipuHot) INFRA_OPERATIVA §4.6-§4.7 (paso 13, 2026-10-13): en el navegador NO queda ningún …
@@ -56,6 +56,6 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 | la usa | [[Capa Comité]] | 3 |
 | la usa | [[Capa Voz]] | 3 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 2 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | usa a | [[Capa MCP y API]] | 2 |
 | usa a | [[Capa Chat y agentes]] | 1 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 1 |
