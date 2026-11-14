@@ -68,6 +68,12 @@ sus pronósticos en Postgres; si falla, la app sigue igual — la lección de Mi
 TimesFM 2.5 EMPATA en exactitud y tiene rangos PEORES calibrados (banda 80 % → 73,5 % vs Khipus 84,7 %) → no se integra. Ninguno predice dirección con fiabilidad: el valor
 está en rangos y volatilidad.
 
+**2026-11-14 — CARTERAS fase 2 HECHA** (sw v295): varias carteras sobre la cuenta de Alpaca (`brokerage/sleeves.py`,
+tabla broker_sleeves). Cada orden puede llevar `sleeve_id` (/api/trade/order → house_order → preview_order): si la cartera
+no alcanza (efectivo libre / acciones propias) la orden NO nace (`sleeve_limit`). «Principal» = lo no asignado.
+Conciliación: si las carteras dicen tener más que Alpaca, la UI avisa. Riesgo: el reporte de cartera usa ETH-USD para
+cripto (core/risk_report.yahoo_symbol). Siguen: fase 3 (agente por cartera) y 4 (🧩 Conectores).
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

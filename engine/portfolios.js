@@ -600,7 +600,99 @@
       t.innerHTML = (a.paper ? '<b>🧪 ' + T('PAPEL (simulado)', 'PAPER (simulated)') + '</b>'
                              : '<b style="color:' + DOWN + '">🔴 ' + T('DINERO REAL', 'REAL MONEY') + '</b>') +
         ' · ' + esc(T('Valor', 'Value')) + ' <b>' + esc(money) + '</b>';
+      loadSleeves(box, a.paper);
     }).catch(function () {});
+  }
+
+  /* ══ CARTERAS DENTRO DE LA CUENTA (fase 2, brokerage/sleeves.py) ══
+     Cada cartera: nombre + objetivo + efectivo asignado; compra/vende SOLO con lo suyo (el servidor lo exige antes de
+     crear la orden). Toda orden: KhipuToast.confirmOrder → window._executeTradeOrder (PIN) → /api/trade/order. */
+  function usd(v) { return v == null || !isFinite(+v) ? '—' : '$' + (+v).toLocaleString(lang() === 'en' ? 'en-US' : 'es-AR', { maximumFractionDigits: 2 }); }
+  function loadSleeves(box, paper) {
+    if (!window._tradeFetch) return;
+    var host = box.querySelector('.kpf-sleeves');
+    if (!host) { host = document.createElement('div'); host.className = 'kpf-sleeves'; host.style.cssText = 'flex-basis:100%;display:flex;flex-direction:column;gap:8px'; box.appendChild(host); }
+    Promise.resolve(window._tradeFetch('/api/trade/sleeves', {}, false)).then(function (r) { return r && r.json ? r.json() : null; }).then(function (d) {
+      if (!d || d.error || !Array.isArray(d.items)) { host.innerHTML = '<div class="kpf-note">' + esc(T('Las carteras con dinero necesitan la base de datos y tu PIN.', 'Money portfolios need the database and your PIN.')) + '</div>'; return; }
+      var h = '';
+      if (d.main) h += '<div class="kpf-sl" style="opacity:.85">💼 <b>' + esc(T('Principal (sin asignar)', 'Main (unallocated)')) + '</b> · ' + esc(T('valor', 'value')) + ' ' + esc(usd(d.main.value_usd)) + ' · ' + esc(T('efectivo libre', 'free cash')) + ' ' + esc(usd(d.unallocated_cash_usd)) + '</div>';
+      d.items.forEach(function (s) {
+        var pl = +s.pnl_usd || 0;
+        h += '<div class="kpf-sl" data-id="' + esc(s.id) + '" style="border:1px solid var(--os-line,rgba(127,127,127,.25));border-radius:12px;padding:10px 12px">' +
+          '<div><b>' + (paper ? '🧪 ' : '🔴 ') + esc(s.name) + '</b>' + (s.objective ? ' <span style="color:' + MUTE + '">· ' + esc(s.objective) + '</span>' : '') + '</div>' +
+          '<div style="font-size:13px;margin:4px 0">' + esc(T('Valor', 'Value')) + ' <b>' + esc(usd(s.value_usd)) + '</b> · ' +
+          '<span style="color:' + (pl >= 0 ? UP : DOWN) + '">' + (pl >= 0 ? '+' : '') + esc(usd(pl)) + '</span> · ' +
+          esc(T('libre', 'free')) + ' ' + esc(usd(s.available_usd)) +
+          (s.positions.length ? ' · ' + s.positions.map(function (p) { return esc(p.symbol) + ' ' + esc(String(+(+p.qty).toFixed(4))); }).join(', ') : '') + '</div>' +
+          '<button type="button" class="kpf-btn kpf-sl-buy">' + esc(T('Comprar', 'Buy')) + '</button> ' +
+          '<button type="button" class="kpf-btn kpf-sl-sell">' + esc(T('Vender', 'Sell')) + '</button> ' +
+          '<button type="button" class="kpf-btn kpf-sl-arch">' + esc(T('Archivar', 'Archive')) + '</button></div>';
+      });
+      if (d.reconcile_issues && d.reconcile_issues.length) h += '<div class="kpf-note" style="color:' + DOWN + '">⚠ ' + esc(T('Las carteras no cuadran con Alpaca en: ', 'Portfolios do not match Alpaca for: ') + d.reconcile_issues.map(function (x) { return x.symbol; }).join(', ')) + '</div>';
+      h += '<button type="button" class="kpf-btn kpf-sl-new">＋ ' + esc(T('Nueva cartera (con su objetivo y su dinero)', 'New portfolio (with its goal and money)')) + '</button>';
+      host.innerHTML = h;
+      var again = function () { loadSleeves(box, paper); };
+      host.querySelector('.kpf-sl-new').onclick = function () { newSleeve(again); };
+      Array.prototype.forEach.call(host.querySelectorAll('.kpf-sl[data-id]'), function (el) {
+        var s = d.items.filter(function (x) { return x.id === el.getAttribute('data-id'); })[0];
+        el.querySelector('.kpf-sl-buy').onclick = function () { sleeveOrder(s, 'buy', paper, again); };
+        el.querySelector('.kpf-sl-sell').onclick = function () { sleeveOrder(s, 'sell', paper, again); };
+        el.querySelector('.kpf-sl-arch').onclick = function () { archiveSleeve(s, again); };
+      });
+    }).catch(function () {});
+  }
+  function _ask(title, label, value) {
+    var KT = window.KhipuToast;
+    return KT && KT.prompt ? KT.prompt({ title: title, label: label, value: value || '', okText: T('Seguir', 'Next'), cancelText: T('Cancelar', 'Cancel') }) : Promise.resolve(null);
+  }
+  function _post(url, body, method) {
+    return Promise.resolve(window._tradeFetch(url, { method: method || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }, true))
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); });
+  }
+  function _toast(ok, es, en, d) {
+    var KT = window.KhipuToast; if (!KT || !KT.show) return;
+    KT.show({ kind: ok ? 'success' : 'error', title: T(es, en), body: ok ? '' : ((lang() === 'en' ? d && d.error_en : d && d.error) || '') });
+  }
+  function newSleeve(done) {
+    var name, goal;
+    _ask(T('Nueva cartera', 'New portfolio'), T('Nombre (p. ej. «Crecimiento IA»)', 'Name (e.g. “AI growth”)')).then(function (n) {
+      if (!n) return null; name = n;
+      return _ask(T('Objetivo de «' + n + '»', 'Goal of “' + n + '”'), T('Para qué es (crecer, ingresos, especular…)', 'What it is for (growth, income, speculation…)'));
+    }).then(function (g) {
+      if (g == null) return null; goal = g;
+      return _ask(T('Dinero para «' + name + '»', 'Money for “' + name + '”'), T('Cuántos USD de tu efectivo le asignas', 'How many USD of your cash you assign to it'), '1000');
+    }).then(function (amt) {
+      if (amt == null) return;
+      return _post('/api/trade/sleeves', { name: name, objective: goal, alloc_usd: parseFloat(String(amt).replace(',', '.')) || 0 }).then(function (r) {
+        _toast(r.ok, 'Cartera creada', 'Portfolio created', r.d); if (r.ok) done();
+      });
+    }).catch(function () {});
+  }
+  function sleeveOrder(s, side, paper, done) {
+    var sym;
+    _ask((side === 'buy' ? T('Comprar en «', 'Buy in “') : T('Vender de «', 'Sell from “')) + s.name + T('»', '”'), T('Ticker (p. ej. NVDA)', 'Ticker (e.g. NVDA)'),
+      side === 'sell' && s.positions[0] ? s.positions[0].symbol : '').then(function (t) {
+      if (!t) return null; sym = String(t).trim().toUpperCase();
+      return _ask(T('Monto en USD', 'Amount in USD'), side === 'buy' ? T('Libre en esta cartera: ', 'Free in this portfolio: ') + usd(s.available_usd) : T('Cuántos USD vender', 'How many USD to sell'), '100');
+    }).then(function (amt) {
+      if (amt == null) return null;
+      var n = parseFloat(String(amt).replace(',', '.'));
+      if (!(n >= 1)) { _toast(false, 'Monto inválido', 'Invalid amount', {}); return null; }
+      var ord = { side: side, symbol: sym, label: sym + ' · ' + s.name, notional: n, mode: paper ? 'paper' : 'live' };
+      var KT = window.KhipuToast;
+      return (KT && KT.confirmOrder ? KT.confirmOrder(ord) : Promise.resolve(false)).then(function (yes) {
+        if (!yes || !window._executeTradeOrder) return null;
+        return window._executeTradeOrder({ symbol: sym, side: side, notional: n, label: ord.label, sleeve_id: s.id });
+      });
+    }).then(function (res) { if (res) setTimeout(done, 1500); }).catch(function () {});
+  }
+  function archiveSleeve(s, done) {
+    var KT = window.KhipuToast;
+    (KT && KT.confirm ? KT.confirm({ title: T('Archivar «' + s.name + '»', 'Archive “' + s.name + '”'), body: T('Su efectivo vuelve a la cuenta principal. Solo se puede si no tiene posiciones.', 'Its cash goes back to the main account. Only possible if it has no positions.') }) : Promise.resolve(false))
+      .then(function (yes) {
+        if (!yes) return;
+        return _post('/api/trade/sleeves/' + encodeURIComponent(s.id) + '/archive', {}).then(function (r) { _toast(r.ok, 'Cartera archivada', 'Portfolio archived', r.d); if (r.ok) done(); });
+      }).catch(function () {});
   }
 
   function wireTabs() {

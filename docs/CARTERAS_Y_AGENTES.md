@@ -52,6 +52,8 @@ historial vs SPY. Regla de oro intacta: dinero real NUNCA en automático; todo p
 
 1. **Una sola ventana «Carteras»** que lista las de seguimiento (las de práctica de hoy) y la cuenta del bróker con su
    insignia 📝/🧪/🔴; «Mi cuenta» y «Carteras de práctica» desaparecen como entradas separadas. Sin tocar el dinero.
-2. **Carteras de papel/reales múltiples** sobre la cuenta de Alpaca (contabilidad por cartera + conciliación).
+2. ✅ (2026-11-14) **Carteras de papel/reales múltiples** sobre la cuenta de Alpaca: `brokerage/sleeves.py` (tabla
+   broker_sleeves; contabilidad por órdenes `meta.sleeve_id`; control previo en `service.preview_order` → `sleeve_limit`;
+   API /api/trade/sleeves con PIN y policy.change 'broker.sleeve'; UI en «Carteras»: crear, comprar/vender, archivar).
 3. **Agente por cartera** (la configuración del agente actual pasa a vivir en cada cartera; varios agentes a la vez).
 4. **🧩 Conectores**: Composio (lectura primero, escritura con confirmación) + skills de GitHub.

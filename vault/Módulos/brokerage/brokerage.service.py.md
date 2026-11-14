@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "brokerage/service.py"
 lenguaje: "python"
-lineas: 2358
+lineas: 2369
 aliases: ["brokerage/service.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # brokerage/service.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 2.358 líneas · `brokerage/service.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 2.369 líneas · `brokerage/service.py`
 
 ## Para qué sirve
 
@@ -40,26 +40,26 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - `order_dict(row, client_name=…)` _(línea 966)_
 - `checks_report(checks, focus_id, ev=…, policy_mode=…)` — run_checks → el veredicto que RIGE, en la forma de DecisionCtx.gate (decision_violations). Los controles en sombra y los avisos quedan como … _(línea 1065)_
 - `order_gate(rec, spec, ev, order_id, source, channel=…, channel_proof=…, policy_changed=…, acc=…, ctx=…)` — Puerta G3 (order.ttl) en SOMBRA: hechos de run_checks + reglas nuevas → GateReport/1 adjunto a la decisión. Nunca bloquea ni lanza (paso … _(línea 1110)_
-- `preview_order(session, client_id, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, source=…, requested_by=…, proposal_id=…, rationale=…, client_order_id=…, time_in_force=…, channel=…, channel_proof=…, checks_mode=…, parent_decision_id=…, reuse_eval=…)` _(línea 1262)_
-- `send_trace_begin()` — Empieza a anotar (en ESTE hilo) los client_order_id que llegan a tocar Alpaca. Lo usan quienes envuelven house_order/house_close en su … _(línea 1424)_
-- `send_trace()` — Los client_order_id enviados a Alpaca desde send_trace_begin() en este hilo (lista vacía si ninguno). _(línea 1432)_
-- `record_unknown_after_send(coids, actor, error_name, source=…, client_id=…)` — Rastro DURABLE (sesión propia, append-only) de una orden que salió hacia Alpaca pero cuya transacción se revirtió: el reintento con el … _(línea 1437)_
-- `confirm_order(session, preview_id, approved_by, source=…, channel_proof=…)` _(línea 1712)_
-- `approve_preview(session, preview_id, approved_by)` — Aprobación HUMANA (la ruta exige PIN) de una propuesta de MCP/comité/agente. _(línea 1776)_
-- `reject_preview(session, preview_id, actor, reason=…)` _(línea 1797)_
-- `pending_approvals(session)` _(línea 1822)_
-- `list_orders(session, client_id=…, status=…, limit=…)` _(línea 1863)_
-- `get_order(session, order_id)` _(línea 1876)_
-- `cancel_order(session, order_id, actor)` — Cancela (antes o después de enviarla) y deja la decisión order.cancel (hija de order.submit si la hay). _(línea 1923)_
-- `sync_orders(session, client_id=…, actor=…)` — Actualiza desde Alpaca el estado de las órdenes abiertas, y reconcilia por client_order_id las que quedaron con estado desconocido (sin id … _(línea 1988)_
-- `poll_fills_job()` — Tarea del reloj (core/scheduler, system:broker_fills): si hay órdenes abiertas, las sincroniza con Alpaca → broker_fills + … _(línea 2035)_
-- `house_order(session, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, time_in_force=…, client_order_id=…, source=…, channel=…, requested_by=…, rationale=…, channel_proof=…, checks_mode=…, parent_decision_id=…)` — UNA orden de la cuenta de la casa = preview_order(HOUSE_ID) + confirm_order en la misma llamada (la persona ya confirmó en el diálogo de la … _(línea 2085)_
-- `house_close(session, symbol, client_order_id=…, channel=…, requested_by=…, source=…)` — Cerrar UNA posición completa (1-clic «CLOSE») = orden de mercado por TODA la cantidad que hay (venta si es larga, compra si es corta) por … _(línea 2193)_
-- `crypto_pair(sym)` — 'BTCUSD' (símbolo de posición de Alpaca) → 'BTC/USD' (símbolo de orden). _(línea 2225)_
-- `oauth_start(session, client_id, env=…, actor=…)` _(línea 2237)_
-- `oauth_callback(session, state, code, error=…)` — Valida el `state` (firmado, de un solo uso, < 15 min), canjea el código y guarda el token CIFRADO. Devuelve {ok, client_id, client_name, … _(línea 2264)_
-- `public_status()` — Lo único que se muestra SIN PIN. _(línea 2323)_
-- `status_info()` — Detalle de configuración (va detrás del PIN: revela la postura de seguridad). _(línea 2328)_
+- `preview_order(session, client_id, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, source=…, requested_by=…, proposal_id=…, rationale=…, client_order_id=…, time_in_force=…, channel=…, channel_proof=…, checks_mode=…, parent_decision_id=…, reuse_eval=…, sleeve_id=…)` _(línea 1262)_
+- `send_trace_begin()` — Empieza a anotar (en ESTE hilo) los client_order_id que llegan a tocar Alpaca. Lo usan quienes envuelven house_order/house_close en su … _(línea 1432)_
+- `send_trace()` — Los client_order_id enviados a Alpaca desde send_trace_begin() en este hilo (lista vacía si ninguno). _(línea 1440)_
+- `record_unknown_after_send(coids, actor, error_name, source=…, client_id=…)` — Rastro DURABLE (sesión propia, append-only) de una orden que salió hacia Alpaca pero cuya transacción se revirtió: el reintento con el … _(línea 1445)_
+- `confirm_order(session, preview_id, approved_by, source=…, channel_proof=…)` _(línea 1720)_
+- `approve_preview(session, preview_id, approved_by)` — Aprobación HUMANA (la ruta exige PIN) de una propuesta de MCP/comité/agente. _(línea 1784)_
+- `reject_preview(session, preview_id, actor, reason=…)` _(línea 1805)_
+- `pending_approvals(session)` _(línea 1830)_
+- `list_orders(session, client_id=…, status=…, limit=…)` _(línea 1871)_
+- `get_order(session, order_id)` _(línea 1884)_
+- `cancel_order(session, order_id, actor)` — Cancela (antes o después de enviarla) y deja la decisión order.cancel (hija de order.submit si la hay). _(línea 1931)_
+- `sync_orders(session, client_id=…, actor=…)` — Actualiza desde Alpaca el estado de las órdenes abiertas, y reconcilia por client_order_id las que quedaron con estado desconocido (sin id … _(línea 1996)_
+- `poll_fills_job()` — Tarea del reloj (core/scheduler, system:broker_fills): si hay órdenes abiertas, las sincroniza con Alpaca → broker_fills + … _(línea 2043)_
+- `house_order(session, symbol, side, notional=…, qty=…, order_type=…, limit_price=…, time_in_force=…, client_order_id=…, source=…, channel=…, requested_by=…, rationale=…, channel_proof=…, checks_mode=…, parent_decision_id=…, sleeve_id=…)` — UNA orden de la cuenta de la casa = preview_order(HOUSE_ID) + confirm_order en la misma llamada (la persona ya confirmó en el diálogo de la … _(línea 2093)_
+- `house_close(session, symbol, client_order_id=…, channel=…, requested_by=…, source=…)` — Cerrar UNA posición completa (1-clic «CLOSE») = orden de mercado por TODA la cantidad que hay (venta si es larga, compra si es corta) por … _(línea 2204)_
+- `crypto_pair(sym)` — 'BTCUSD' (símbolo de posición de Alpaca) → 'BTC/USD' (símbolo de orden). _(línea 2236)_
+- `oauth_start(session, client_id, env=…, actor=…)` _(línea 2248)_
+- `oauth_callback(session, state, code, error=…)` — Valida el `state` (firmado, de un solo uso, < 15 min), canjea el código y guarda el token CIFRADO. Devuelve {ok, client_id, client_name, … _(línea 2275)_
+- `public_status()` — Lo único que se muestra SIN PIN. _(línea 2334)_
+- `status_info()` — Detalle de configuración (va detrás del PIN: revela la postura de seguridad). _(línea 2339)_
 
 **Internas** (empiezan con `_`): `_now`, `_iso`, `_f`, `_aware`, `_err`, `_not_found`, `_Bad`, `_sha`, `_who`, `_connected`, `_expire_open`, `_account_changed`, `_lookup`, `_client_rec`, `_name_taken`, `_clean_limits`, `_clean_mandate`, `_policy_snapshot`, `_policy_change`, `_account_decision`, `_valid_cred`, `_enc_key_error`, `_read_account`, `_read_positions`, `_touch_hwm`, `_paper_mismatch`, `_daily_used`, `_recent_duplicate`, `_unresolved`, `_evaluate`, `_summaries`, `_norm_symbol`, `_spec`, `_principal`, `_meta`, `_set_meta`, `_uuid_or_none`, `_release_hash`, `_requires_approval`, `_rule_for`, `_account_view`, `_gate_limits`, `_decision_inputs`, `_replay_inputs`, `_close`, `_after`, `_status_outcome`, `_record_fill`, `_apply_alpaca`, `_mark_committee`, `_notify_closed`, `_definitive_reject`, `_committee_memo_ok`, `_send`, `_finish_send`, `_execute`, `_lock`, `_expired`, `_expire_row`, `_needs_human` y 11 más
 
@@ -69,6 +69,7 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 - [[brokerage.crypto.py]] — importa `crypto`
 - [[brokerage.models.py]] — importa `BrokerAudit`, `BrokerClient`, `BrokerFill`, `BrokerOAuthState`, `BrokerOrder`, `RISK_PROFILES`, `SOURCES`
 - [[brokerage.risk.py]] — importa `risk`
+- [[brokerage.sleeves.py]] — importa `sleeves`
 - [[core.__init__.py]] — importa `account`, `focus`, `gates`, `report`
 - [[core.config.py]] — importa `FINNHUB`
 - [[core.decision_sites.py]] — importa `clean`, `decision_sites`
@@ -84,6 +85,7 @@ lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
 ## Lo usan
 
 - [[brokerage.api.py]] — lo importa
+- [[brokerage.sleeves.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
 - [[core.trading_agent.py]] — lo importa
@@ -111,6 +113,7 @@ _Además lo importan 16 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_broker_sleeves.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_cierre_defectos.py]]
 - [[tests.test_crypto_symbol_normalize.py]]

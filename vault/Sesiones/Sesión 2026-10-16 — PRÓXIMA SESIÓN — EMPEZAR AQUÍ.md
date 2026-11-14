@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (152 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (158 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -17,11 +17,13 @@ tags: ["capa/documentacion", "tipo/sesion"]
 ## Archivos que menciona
 
 - [[app.html]]
+- [[brokerage.sleeves.py]]
 - [[core.khipu_chat.py]]
 - [[core.model_router.py]]
 - [[core.portfolio_advisor.py]]
 - [[core.price_sim.py]]
 - [[core.quotes.py]]
+- [[core.risk_report.py]]
 - [[core.sim_report.py]]
 - [[core.trading_agent.py]]
 - [[Doc CARTERAS_Y_AGENTES]]

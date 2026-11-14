@@ -612,3 +612,41 @@ def test_account_risk_view_uses_the_kernel():
     extra = account.order_extra(a, {'max_sector_weight': 0.4})
     assert extra['sector_weight_after'] == a['order']['sector_weight_after'] and extra['max_sector_weight'] == 0.4
     assert account.compute(pos, 0, graph=g)['available'] is False
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# 5. Carteras sobre la cuenta de la casa (brokerage/sleeves, fase 2, 2026-11-14) — con base de verdad
+# ════════════════════════════════════════════════════════════════════════════
+@needs_db
+def test_carteras_solo_gastan_lo_suyo(client, alpaca, db):
+    r = client.post('/api/trade/sleeves', data=json.dumps({'name': 'Crecimiento IA', 'objective': 'crecer',
+                                                            'alloc_usd': 1000}), headers=H())
+    assert r.status_code == 200, r.get_json()
+    sid = r.get_json()['sleeve']['id']
+    lst = client.get('/api/trade/sleeves', headers=H()).get_json()
+    assert [i['name'] for i in lst['items']] == ['Crecimiento IA'] and lst['unallocated_cash_usd'] == 9000
+    # no se puede asignar más de lo que queda sin asignar
+    r = client.post('/api/trade/sleeves', data=json.dumps({'name': 'Otra', 'alloc_usd': 9500}), headers=H())
+    assert r.status_code == 400 and r.get_json()['code'] == 'not_enough_cash'
+    # compra dentro de su efectivo → sale a Alpaca con la marca de la cartera
+    n0 = len(alpaca.posts())
+    r = _order(client, symbol='NVDA', side='buy', notional=500, sleeve_id=sid, client_order_id='kh-sleeve-0001')
+    assert r.status_code in (200, 202), r.get_json()
+    assert len(alpaca.posts()) == n0 + 1
+    # otra compra que no alcanza (500 reservados + 600 > 1.000) → la orden NO nace y nada sale a Alpaca
+    r = _order(client, symbol='AMD', side='buy', notional=600, sleeve_id=sid, client_order_id='kh-sleeve-0002')
+    assert r.status_code >= 400 and 'disponibles' in (r.get_json().get('error') or ''), r.get_json()
+    assert len(alpaca.posts()) == n0 + 1
+    # vender algo que la cartera no tiene → rechazada
+    r = _order(client, symbol='MU', side='sell', qty=1, sleeve_id=sid, client_order_id='kh-sleeve-0003')
+    assert r.status_code >= 400 and len(alpaca.posts()) == n0 + 1
+    # con una compra abierta no se archiva
+    r = client.post(f'/api/trade/sleeves/{sid}/archive', headers=H())
+    assert r.status_code == 409
+    # cada alta quedó en el libro como policy.change 'broker.sleeve'
+    from sqlalchemy import text
+    from ontology.db import session_scope
+    with session_scope() as s:
+        n = s.execute(text("SELECT count(*) FROM decisions WHERE kind = 'policy.change' "
+                           "AND subject->>'policy' = 'broker.sleeve'")).scalar()
+    assert n >= 1

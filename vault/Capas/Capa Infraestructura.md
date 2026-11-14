@@ -9,13 +9,13 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**50 archivos · 27.912 líneas.** Volver al [[00 Mapa de Khipus]].
+**50 archivos · 27.916 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 4.951 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[server.py]] — 4.955 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 - [[scripts.build_vault.py]] — 3.492 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 - [[core.replay.py]] — 1.473 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
 - [[core.ai.py]] — 1.265 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
@@ -73,8 +73,8 @@ Variables de entorno: [[Índice de variables de entorno]].
 | la usa | [[Capa Ontología y grafo temporal]] | 48 |
 | usa a | [[Capa Ontología y grafo temporal]] | 40 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 35 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 33 |
 | la usa | [[Capa Chat y agentes]] | 32 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 29 |
 | la usa | [[Capa Investigación]] | 28 |
 | la usa | [[Capa MCP y API]] | 24 |
 | la usa | [[Capa Comité]] | 23 |
@@ -82,7 +82,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 20 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 12 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 13 |
 | usa a | [[Capa Chat y agentes]] | 8 |
 | la usa | [[Capa Voz]] | 7 |
 | usa a | [[Capa Investigación]] | 7 |

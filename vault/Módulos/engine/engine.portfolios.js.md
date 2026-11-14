@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/portfolios.js"
 lenguaje: "javascript"
-lineas: 1382
+lineas: 1474
 aliases: ["engine/portfolios.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/portfolios.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.382 líneas · `engine/portfolios.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.474 líneas · `engine/portfolios.js`
 
 ## Para qué sirve
 
@@ -22,7 +22,7 @@ tags: ["capa/dinero", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `_tradePinStored`
+- [[app.html]] — usa `_tradeFetch`, `_tradePinStored`
 - [[engine.app_main.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `fetchQuotes`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
@@ -30,7 +30,7 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
 - [[engine.toast.js]] — usa `KhipuToast`
-- [[engine.trade.js]] — usa `_tradeAccountInfo`
+- [[engine.trade.js]] — usa `_executeTradeOrder`, `_tradeAccountInfo`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
@@ -49,8 +49,12 @@ Se carga en [[app.html]] en la posición **89 de 105** (línea 3241), después d
 ## Endpoints que llama
 
 - `GET /api/portfolio-ai/themes` → [[core.portfolio_ai.py]] ([[API portfolio-ai]])
+- `GET /api/trade/sleeves` → [[brokerage.sleeves.py]] ([[API trade]])
+- `PATCH /api/trade/sleeves/<sleeve_id>` → [[brokerage.sleeves.py]] ([[API trade]])
 - `POST /api/portfolio-ai/ask` → [[core.portfolio_ai.py]] ([[API portfolio-ai]])
 - `POST /api/portfolio-ai/propose` → [[core.portfolio_ai.py]] ([[API portfolio-ai]])
+- `POST /api/trade/sleeves/<sleeve_id>/archive` → [[brokerage.sleeves.py]] ([[API trade]])
+- `POST /api/trade/sleeves` → [[brokerage.sleeves.py]] ([[API trade]])
 
 ## Pruebas que lo cubren
 

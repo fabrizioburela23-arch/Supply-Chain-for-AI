@@ -39,7 +39,7 @@ _Nada interno._
 - [[brokerage.risk.py]] — lo importa
 - [[brokerage.service.py]] — lo importa
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -52,6 +52,7 @@ _Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_broker_sleeves.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_order_single_path.py]]

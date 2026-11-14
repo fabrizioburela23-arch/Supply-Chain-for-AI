@@ -237,7 +237,7 @@ for _mod, _bp_name in (('core.world', 'world_bp'), ('research.committee_api', 'c
                        ('brokerage.api', 'brokerage_bp'), ('mcp_server.api', 'mcp_bp'),
                        ('core.space', 'space_bp'), ('core.portfolio_ai', 'portfolio_ai_bp'),
                        ('core.khipu_chat', 'khipu_chat_bp'),
-                       ('core.portfolio_reports_api', 'portfolio_reports_bp'), ('core.decide_api', 'decide_bp'),
+                       ('core.portfolio_reports_api', 'portfolio_reports_bp'), ('core.decide_api', 'decide_bp'), ('brokerage.sleeves', 'sleeves_bp'),
                        ('core.ledger_api', 'ledger_bp'),    # INFRA_OPERATIVA paso 6: libro de decisiones /api/ledger/*
                        ('core.governance_api', 'governance_bp'),    # paso 9: registro de gobernanza /api/governance/*
                        ('core.prices_api', 'prices_bp')):   # BRECHAS bloque 2: historia de precios /api/prices/*
@@ -3050,10 +3050,14 @@ def trade_order():
         _trade_audit('trade_order', dict(summary, outcome='blocked_ledger_chain'))
         return _lb
     channel = _identity_channel()
+    sleeve_id = data.get('sleeve_id')
+    if sleeve_id is not None and not (isinstance(sleeve_id, str) and re.fullmatch(r'[A-Za-z0-9-]{8,40}', sleeve_id)):
+        return reject('cartera inválida', 'invalid portfolio', 'bad_request')
     res = _house_call('house_order', ticker, side, notional=notional if notional is not None else None,
                       qty=qty if notional is None else None, order_type=otype, limit_price=limit_price,
                       time_in_force=tif, client_order_id=coid, source='ui', channel=channel,
-                      requested_by=_trade_actor(), channel_proof=_trade_channel_proof(data, channel))
+                      requested_by=_trade_actor(), channel_proof=_trade_channel_proof(data, channel),
+                      **({'sleeve_id': sleeve_id} if sleeve_id else {}))
     payload, st = _house_http(res)
     o = payload.get('order') or {}
     outcome = {200: 'duplicate' if payload.get('duplicate') else 'submitted', 202: 'pending_approval'}.get(

@@ -49,6 +49,7 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 
 - [[brokerage.api.py]] — lo importa
 - [[brokerage.service.py]] — lo importa
+- [[brokerage.sleeves.py]] — lo importa
 - [[core.ai_calls.py]] — lo importa
 - [[core.decide.py]] — lo importa
 - [[core.decision_sites.py]] — lo importa

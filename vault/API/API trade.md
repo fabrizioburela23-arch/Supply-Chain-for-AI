@@ -1,13 +1,13 @@
 ---
 tipo: "api"
 capa: "Dinero (carteras, trading, corretaje)"
-rutas: 15
+rutas: 19
 tags: ["capa/dinero", "tipo/api"]
 ---
 
 # API trade
 
-> 15 rutas · definidas en [[core.trading_agent.py]], [[server.py]] · prefijo `/api/trade`
+> 19 rutas · definidas en [[brokerage.sleeves.py]], [[core.trading_agent.py]], [[server.py]] · prefijo `/api/trade`
 
 Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
@@ -27,4 +27,8 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET` | `/api/trade/history` | `trade_history` | [[server.py]] | [[engine.app_trade_panel.js]], [[engine.cockpit.js]], [[engine.toast.js]], 2 pruebas |
 | `POST` | `/api/trade/order` | `trade_order` | [[server.py]] | [[engine.app_trade_panel.js]], [[engine.crypto.js]], [[engine.trade.js]], 2 pruebas |
 | `GET` | `/api/trade/positions/detail` | `trade_positions_detail` | [[server.py]] | [[engine.app_trade_panel.js]], [[engine.cockpit.js]], [[engine.pfcommittee.js]], [[engine.voice.js]], 2 pruebas |
+| `GET` | `/api/trade/sleeves` | `sleeves_list` | [[brokerage.sleeves.py]] | [[engine.portfolios.js]], 1 prueba |
+| `POST` | `/api/trade/sleeves` | `sleeves_create` | [[brokerage.sleeves.py]] | [[engine.portfolios.js]], 1 prueba |
+| `PATCH` | `/api/trade/sleeves/<sleeve_id>` | `sleeves_update` | [[brokerage.sleeves.py]] | [[engine.portfolios.js]] |
+| `POST` | `/api/trade/sleeves/<sleeve_id>/archive` | `sleeves_archive` | [[brokerage.sleeves.py]] | [[engine.portfolios.js]], 1 prueba |
 | `GET` | `/api/trade/status` | `trade_status` | [[server.py]] | [[app.html]], 2 pruebas |

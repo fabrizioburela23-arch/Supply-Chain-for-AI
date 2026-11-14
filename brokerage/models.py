@@ -161,6 +161,24 @@ class BrokerFill(Base):
     )
 
 
+class BrokerSleeve(Base):
+    """CARTERA dentro de una cuenta de Alpaca (docs/CARTERAS_Y_AGENTES.md fase 2, decisión de Fabrizio 2026-11-10):
+    nombre + objetivo + efectivo ASIGNADO. Sus posiciones y su caja salen de SUS órdenes (broker_orders.meta.sleeve_id);
+    lo no asignado es la cartera «Principal». Cada alta/cambio/archivo es un policy.change 'broker.sleeve'."""
+    __tablename__ = 'broker_sleeves'
+
+    id = Column(String(40), primary_key=True, default=_uuid)
+    client_id = Column(String(40), nullable=False, index=True)
+    name = Column(String(80), nullable=False)
+    objective = Column(Text, nullable=True)
+    risk_profile = Column(String(16), nullable=False, default='moderado')
+    alloc_usd = Column(Float, nullable=False, default=0.0)                 # efectivo asignado (neto de retiros)
+    status = Column(String(10), nullable=False, default='active')          # active | archived
+    created_by = Column(String(120), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+
 class BrokerOAuthState(Base):
     __tablename__ = 'broker_oauth_states'
 

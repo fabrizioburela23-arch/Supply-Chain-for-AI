@@ -175,7 +175,9 @@
     // el server fuerza gtc para cripto; day para acciones
     body.time_in_force = (o.kind === 'crypto' || o.symbol.indexOf('/') >= 0) ? 'gtc' : 'day';
 
-    var key = body.symbol + '|' + side + '|' + (body.notional || '') + '|' + (body.qty || '');
+    // cartera sobre la cuenta de Alpaca (brokerage/sleeves, fase 2): el servidor exige que le alcance
+    if (o.sleeve_id) body.sleeve_id = String(o.sleeve_id);
+    var key = body.symbol + '|' + side + '|' + (body.notional || '') + '|' + (body.qty || '') + '|' + (body.sleeve_id || '');
     // AVISOS pop-up (engine/toast.js): enviando → enviada/rechazada → ejecutada.
     // Solo informan: no cambian qué se envía ni cuándo.
     var KT = window.KhipuToast;

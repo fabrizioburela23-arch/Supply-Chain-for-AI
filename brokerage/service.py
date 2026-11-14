@@ -1262,7 +1262,7 @@ def _record_fill(session, row, prev_qty, source='alpaca:orders'):
 def preview_order(session, client_id, symbol, side, notional=None, qty=None, order_type='market',
                   limit_price=None, source='ui', requested_by='', proposal_id=None, rationale=None,
                   client_order_id=None, time_in_force=None, channel=None, channel_proof=None, checks_mode=None,
-                  parent_decision_id=None, reuse_eval=False):
+                  parent_decision_id=None, reuse_eval=False, sleeve_id=None):
     if source not in SOURCES:
         return _err('bad_request', f'source inválido (usa: {", ".join(SOURCES)})',
                     f'invalid source (use: {", ".join(SOURCES)})')
@@ -1276,6 +1276,12 @@ def preview_order(session, client_id, symbol, side, notional=None, qty=None, ord
         ensure_house_client(session)               # el modo de la casa sigue a ALPACA_BASE
     pol = _risk.check_policy(checks_mode)
     ev = _evaluate(session, rec, spec, include_pending=source != 'ui', policy=pol)
+    if sleeve_id:   # CARTERA (brokerage/sleeves, fase 2): si no le alcanza, la orden no nace (ni fila ni decisión)
+        from brokerage import sleeves as _sleeves
+        s_ok, s_es, s_en = _sleeves.check_order(session, rec.id, sleeve_id, spec['symbol'], spec['side'],
+                                                notional=spec['notional'], qty=spec['qty'], price=ev.get('price'))
+        if not s_ok:
+            return _err('sleeve_limit', s_es, s_en)
     checks = ev['checks']
     blocked = _risk.is_blocked(checks)
     requires = _requires_approval(source, rec.mode)
@@ -1311,6 +1317,8 @@ def preview_order(session, client_id, symbol, side, notional=None, qty=None, ord
                          channel_proof=channel_proof, policy_mode=pol.get('mode'))
         _set_meta(row, channel=channel, checks_mode=pol.get('mode') or 'standard', release_hash=_release_hash(),
                   preview_decision_id=str(dctx.id), readback_sha=(channel_proof or {}).get('readback_sha'))
+        if sleeve_id:
+            _set_meta(row, sleeve_id=str(sleeve_id)[:40])
         audit(session, requested_by or source, 'order_previewed', rec.id, row.id,
               detail={'symbol': row.symbol, 'side': row.side, 'notional': row.notional, 'qty': row.qty,
                       'source': source, 'status': status, 'blocked': blocked, 'mode': rec.mode,
@@ -2084,11 +2092,14 @@ def _house_dup(session, prev, actor, channel_proof=None):
 
 def house_order(session, symbol, side, *, notional=None, qty=None, order_type='market', limit_price=None,
                 time_in_force=None, client_order_id=None, source='ui', channel=None, requested_by='',
-                rationale=None, channel_proof=None, checks_mode='house_today', parent_decision_id=None):
+                rationale=None, channel_proof=None, checks_mode='house_today', parent_decision_id=None, sleeve_id=None):
     """UNA orden de la cuenta de la casa = preview_order(HOUSE_ID) + confirm_order en la misma llamada (la persona ya
     confirmó en el diálogo de la app; el agente en papel no espera a nadie, con dinero real queda pendiente de
     aprobación). Mismo resultado que confirm_order (o el de preview si se bloqueó o espera aprobación).
     `session=None` → sin base (solo desarrollo, papel): mismos controles y mismo envío, sin libro (D4)."""
+    if session is None and sleeve_id:
+        return _err('db_unavailable', 'las órdenes de una cartera necesitan la base de datos',
+                    'portfolio orders need the database')
     if session is None:
         return _house_order_nodb(symbol, side, notional=notional, qty=qty, order_type=order_type,
                                  limit_price=limit_price, time_in_force=time_in_force,
@@ -2110,7 +2121,7 @@ def house_order(session, symbol, side, *, notional=None, qty=None, order_type='m
                        limit_price=limit_price, source=source, requested_by=actor, rationale=rationale,
                        client_order_id=client_order_id, time_in_force=time_in_force, channel=channel,
                        channel_proof=channel_proof, checks_mode=checks_mode, parent_decision_id=parent_decision_id,
-                       reuse_eval=True)
+                       reuse_eval=True, sleeve_id=sleeve_id)
     if not pv.get('ok') or pv.get('blocked') or pv.get('requires_human_approval'):
         return pv
     return confirm_order(session, pv['id'], actor, source=source, channel_proof=channel_proof)

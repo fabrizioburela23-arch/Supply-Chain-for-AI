@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/trade.js"
 lenguaje: "javascript"
-lineas: 274
+lineas: 276
 aliases: ["engine/trade.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/trade.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 274 líneas · `engine/trade.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 276 líneas · `engine/trade.js`
 
 ## Para qué sirve
 
@@ -34,7 +34,7 @@ Se carga en [[app.html]] en la posición **38 de 105** (línea 3124), después d
 
 - [[app.html]] — lo carga con `<script>` (posición 38)
 - [[engine.cockpit.js]] — usa `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
-- [[engine.portfolios.js]] — usa `_tradeAccountInfo`
+- [[engine.portfolios.js]] — usa `_executeTradeOrder`, `_tradeAccountInfo`
 - [[engine.resolve.js]] — usa `_openBrokerStage`
 - [[engine.voice.js]] — usa `__tradeAcctCache`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
 

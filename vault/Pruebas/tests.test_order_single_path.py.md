@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_order_single_path.py"
 lenguaje: "python"
-lineas: 614
+lineas: 652
 aliases: ["tests/test_order_single_path.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_order_single_path.py
 
-> Prueba · capa [[Capa Pruebas]] · 614 líneas · `tests/test_order_single_path.py`
+> Prueba · capa [[Capa Pruebas]] · 652 líneas · `tests/test_order_single_path.py`
 
 ## Qué prueba
 
 INFRA_OPERATIVA pasos 15-16 (BRECHAS G5-01, M-code-03, G5-08 servidor): UN SOLO CAMINO DE DINERO.
 
-**16** funciones `test_…`.
+**17** funciones `test_…`.
 
 ## Cubre
 
@@ -24,6 +24,7 @@ INFRA_OPERATIVA pasos 15-16 (BRECHAS G5-01, M-code-03, G5-08 servidor): UN SOLO 
 - [[brokerage.models.py]]
 - [[brokerage.risk.py]]
 - [[brokerage.service.py]]
+- [[brokerage.sleeves.py]]
 - [[core.__init__.py]]
 - [[core.decisions.py]]
 - [[core.http.py]]
@@ -37,7 +38,7 @@ INFRA_OPERATIVA pasos 15-16 (BRECHAS G5-01, M-code-03, G5-08 servidor): UN SOLO 
 
 ## Rutas HTTP que llama
 
-2 rutas, de los grupos: [[API trade]]
+4 rutas, de los grupos: [[API trade]]
 
 ## Variables de entorno que fija o nombra
 

@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/CARTERAS_Y_AGENTES.md"
 lenguaje: "markdown"
-lineas: 57
+lineas: 59
 aliases: ["docs/CARTERAS_Y_AGENTES.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/CARTERAS_Y_AGENTES.md
 
-> Documento · capa [[Capa Documentación]] · 57 líneas · `docs/CARTERAS_Y_AGENTES.md`
+> Documento · capa [[Capa Documentación]] · 59 líneas · `docs/CARTERAS_Y_AGENTES.md`
 
 ## De qué trata
 
@@ -19,6 +19,7 @@ Carteras + agentes programables + conectores (plan, 2026-11-10) — Pedido de Fa
 ## Menciona
 
 - [[brokerage.service.py]]
+- [[brokerage.sleeves.py]]
 - [[core.trading_agent.py]]
 - [[engine.pfstore.js]]
 

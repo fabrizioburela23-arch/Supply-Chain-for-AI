@@ -72,6 +72,7 @@ decisiones del COMITÉ, la INVESTIGACIÓN, las PROPUESTAS y las ALERTAS (docs/IN
 ## Lo usan
 
 - [[brokerage.service.py]] — lo importa
+- [[brokerage.sleeves.py]] — lo importa
 - [[core.ai_usage.py]] — lo importa
 - [[core.impls.py]] — lo importa
 - [[core.replay.py]] — lo importa

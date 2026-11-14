@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L1106"
+ruta: "docs/ESTADO.md#L1112"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (dd) — "RENDIMIENTO DE MI CARTERA" COMO GRÁFICO SIN IA (sw v238-v239)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1106 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1112 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
