@@ -8,48 +8,54 @@
    "tools": [
     "get_company"
    ],
-   "segundos": 3.6,
+   "segundos": 2.6,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**NVDA cotiza en 186,64 USD y está 23,3 % por debajo de su máximo de 52 semanas.**\n\n- Precio: 186,64 USD (Yahoo Finance, último cierre, 6 nov 2026); cerró +2,78 % frente al día anterior.\n- Máximo de 52 semanas: 243,37 USD; le faltan 56,73 USD para recuperarlo (la caída desde el máximo es del 23,3 %).\n- Mínimo de 52 semanas: 164,27 USD; está 13,6 % por encima de ese piso.\n\nEn resumen: la acción está en una zona media de su rango anual, lejos del máximo pero bastante por encima del mínimo.",
+   "respuesta": "**NVDA cotiza en 150.96 USD y está un 38.0 % por debajo de su máximo de 52 semanas.**\n\n- Precio: 150.96 USD (-2.89 % frente al cierre anterior), según Yahoo Finance, 18-nov-2026.\n- Máximo de 52 semanas: 243.37 USD. La caída desde ahí es de 92.41 USD por acción.\n- Está 1.5 % por encima de su mínimo de 52 semanas (148.8 USD).\n\nEs un dato de mercado, no una recomendación.",
    "pregunta": "¿A cuánto está NVDA hoy y cuánto cayó desde su máximo?"
   },
   {
    "id": "fondo",
-   "ok": true,
-   "fallas": [],
+   "ok": false,
+   "fallas": [
+    "sin «Mi recomendación»"
+   ],
    "tools": [
     "get_company",
     "simulate_price"
    ],
-   "segundos": 13.7,
+   "segundos": 13.3,
    "modelo": "claude-opus-5-5",
-   "respuesta": "**Es poco probable que hoy sea el piso: solo 7,1 % de probabilidad a 3 meses (simulación Khipus con precios de Yahoo, cierre del 6-nov-2026). Puede seguir cayendo.**\n\n- Probabilidad de tocar su mínimo de un año (164,79 USD) en 3 meses: 55,7 %.\n- Reporta resultados el 17-nov (Finnhub). Si decepcionan, ese riesgo sube a 72 %.\n- P/E futuro (precio frente a ganancia esperada): 11,73. Objetivo de analistas: +75,3 % (Yahoo, hoy).\n\nEs una distribución de probabilidades con datos reales, no un pronóstico ni una recomendación.\n\nEn resumen: el piso no está confirmado y el reporte del 17-nov será decisiv",
+   "respuesta": "**Probablemente no: hay solo 12,5 % de probabilidad de que hoy (150,96 USD, Yahoo, 18-nov-2026) sea el precio más bajo del próximo mes (simulación Khipus).**\n\n- Está apenas 1,5 % sobre su mínimo de 52 semanas (Yahoo, hoy).\n- Caer otro 10 % en 3 meses: 60,7 % de probabilidad (simulación Khipus).\n- Reporta resultados el 23-feb-2027 (Finnhub), fuera del plazo de 3 meses.\n- P/E esperado (precio frente a ganancias futuras) de 9,09 y objetivo de analistas 68 % arriba (Yahoo, hoy); puede reflejar dudas del mercado.\n\nEs una distribución de probabilidades con datos reales, no un pronóstico ni una recom",
    "pregunta": "¿Nvidia ya tocó fondo o puede seguir cayendo? Quiero una simulación con probabilidades."
   },
   {
    "id": "fondo_amd",
-   "ok": true,
-   "fallas": [],
+   "ok": false,
+   "fallas": [
+    "sin «Mi recomendación»"
+   ],
    "tools": [
     "get_company",
     "simulate_price",
     "get_news"
    ],
-   "segundos": 13.6,
+   "segundos": 14.2,
    "modelo": "claude-opus-5-5",
-   "respuesta": "**Ojo: hoy AMD no cayó. Subió 11,04 % hasta 449,04 USD (Yahoo, cierre 6-nov) tras reportar ingresos récord. Para el próximo mes, la simulación da 43,2 % de terminar más arriba.**\n\n- Probabilidad de que hoy sea el precio más bajo del mes: 10,5 % (simulación Khipus, 6-nov).\n- Probabilidad de tocar 404 USD (−10 %) durante el mes: 64,5 %.\n- Volatilidad (cuánto se mueve el precio): 107,3 % anual hoy, muy alta. El próximo reporte llega el 1-feb-2027 (Finnhub), fuera de este plazo.\n\nSon probabilidades calculadas con precios reales, no un pronóstico ni una recomendación.\n\nEn resumen: es algo más proba",
+   "respuesta": "**Ojo: hoy AMD no cayó, subió 5,31 % hasta 530,14 USD (Yahoo, hoy). Aun así, la simulación da solo 42,9 % de probabilidad de terminar el próximo mes más arriba.**\n\n- Probabilidad de que hoy sea el precio más bajo del mes: 10,4 % (simulación Khipus, hoy).\n- Probabilidad de tocar 477,13 USD (−10 %) dentro del mes: 64,0 %.\n- El reporte de resultados es el 1-feb-2027 (Finnhub), fuera de este plazo.\n\nEs una distribución de probabilidades con precios reales, no un pronóstico ni una recomendación.\n\nEn resumen: es más probable que AMD baje a que suba este mes, y la acción se mueve mucho.",
    "pregunta": "AMD cayó fuerte hoy, ¿qué probabilidad hay de que siga bajando el próximo mes?"
   },
   {
    "id": "valuacion",
-   "ok": true,
-   "fallas": [],
+   "ok": false,
+   "fallas": [
+    "sin «Mi recomendación»"
+   ],
    "tools": [
     "get_company"
    ],
-   "segundos": 2.9,
+   "segundos": 2.6,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**NVDA parece barata en P/E adelantado (11,7x), aunque sube fuerte en crecimiento y tiene precio objetivo 75% por encima.**\n\n- **P/E adelantado:** 11,73x (Yahoo, hoy). El P/E actual es 23,6x, así que el consenso espera que las ganancias suban bastante el próximo año.\n- **Crecimiento:** el ingreso reciente crece 105,9% (Yahoo, último trimestre). Esto es lo que espera el mercado, no una proyección a 2027.\n- **Precio objetivo:** 327,14 USD de media de analistas, 75,3% arriba del precio de 186,64 USD (Yahoo, hoy). Recomendación de analistas: compra fuerte.\n- **Riesgo:** un P/E bajo no siempre sign",
+   "respuesta": "**NVDA parece barata frente a su crecimiento esperado, aunque la cifra de crecimiento no está verificada.**\n\n- P/E adelantado: 9,09 (Yahoo, hoy). Muy bajo frente a su P/E de los últimos 12 meses (19,08). Un P/E bajo también puede reflejar dudas del mercado.\n- Precio objetivo medio de analistas: 253,67 USD (Yahoo, hoy), frente a 150,96 USD de precio actual: +68% de margen hasta el objetivo.\n- Crecimiento: el ingreso del último trimestre creció 105,9% (Yahoo). No tengo un dato verificado de crecimiento de utilidades esperado para el próximo año, así que no lo cito.\n- Está 38% por debajo de su má",
    "pregunta": "¿NVDA está cara o barata? Dame P/E adelantado, crecimiento y precio objetivo de analistas."
   },
   {
@@ -59,9 +65,9 @@
    "tools": [
     "scenario_exposure"
    ],
-   "segundos": 11.5,
+   "segundos": 11.9,
    "modelo": "claude-opus-5-5",
-   "respuesta": "**Pierden más las empresas taiwanesas como TSMC, Foxconn y MediaTek (−100 %). Fuera de Taiwán, la más golpeada es Nvidia (−98,9 %) (Grafo Khipus, hoy).**\n\n- Es una estimación estructural del motor de Khipus (efecto por la cadena de suministro), no un pronóstico de precio.\n- Nvidia depende de TSMC para fabricar todos sus chips Blackwell y Hopper.\n- Le siguen Ambiq (−81 %) y Apple (−70,6 %). El motor no identifica empresas beneficiadas.\n\nEn resumen: quien más depende de las fábricas taiwanesas, sobre todo de TSMC, es quien más pierde.",
+   "respuesta": "**Pierden más las taiwanesas (TSMC, Foxconn, MediaTek, ASE, Quanta, Nanya): −100 % estructural (golpe estimado a sus ingresos), según el Grafo Khipus de hoy.**\n\n- Fuera de Taiwán, Nvidia es la más golpeada (−98,9 %): TSMC fabrica todos sus chips.\n- Le siguen Ambiq (−81 %) y Apple (−70,6 %).\n- Es una estimación estructural del motor de Khipus, no un pronóstico de precio.\n\nEn resumen: las empresas que dependen de las fábricas de TSMC quedan casi tan golpeadas como la propia Taiwán.",
    "pregunta": "Si China bloquea Taiwán, ¿qué empresas de mi universo pierden más?"
   },
   {
@@ -72,9 +78,9 @@
     "get_company",
     "scenario_exposure"
    ],
-   "segundos": 6.5,
-   "modelo": "claude-sonnet-5-5",
-   "respuesta": "**Se benefician sobre todo quienes hacen y empaquetan los chips: TSMC, ASE y Amkor (+80 % cada una), y después Nvidia (+77,5 %).**\n\n- Clientes más beneficiados: Nvidia (+77,5 %), Ambiq (+64,8 %) y Apple (+58,8 %); AMD llega a +48,1 %.\n- Efecto en cadena: Oracle (+35,2 %) y Foxconn (+32,9 %) ganan vía Nvidia. EvergreenMarine, proveedora logística, +49,2 %.\n- Son estimaciones estructurales del motor de Khipus (efecto en ingresos, no un pronóstico de precio). Datos de la cadena de suministro, 2026-11-07. Es información, no una recomendación.\n\nEn resumen: duplicar CoWoS quita un cuello de botella,",
+   "segundos": 12.6,
+   "modelo": "claude-opus-5-5",
+   "respuesta": "**Ganan sobre todo TSMC, ASE y Amkor (+80 %) y Nvidia (+77,5 %), según el Grafo Khipus (hoy, 18-nov-2026).**\n\n- Son estimaciones estructurales del motor de Khipus (efecto en la cadena), no un pronóstico de precio.\n- Le siguen clientes con más chips disponibles: Ambiq +64,8 % y Apple +58,8 %.\n- El motor no marca perdedores directos. El catálogo indica CoWoS agotado hasta 2027.\n\nEn resumen: duplicar CoWoS (empaquetado avanzado de chips) beneficia primero a TSMC y a los ensambladores de chips, y luego a Nvidia.",
    "pregunta": "Si TSMC duplica su capacidad de CoWoS, ¿quién se beneficia?"
   },
   {
@@ -86,9 +92,9 @@
     "run_scenario",
     "get_news"
    ],
-   "segundos": 11.2,
+   "segundos": 14.9,
    "modelo": "claude-opus-5-5",
-   "respuesta": "**Según el motor de Khipus, Nvidia perdería cerca de 16,65 % de sus ingresos (Grafo Khipus, hoy) si los hiperescaladores (las grandes nubes) recortan 30 %.**\n\n- Supuesto: recortan Microsoft, Meta, Oracle, Amazon y Google; es efecto en ingresos, no pronóstico de precio.\n- Otros sufren más: Quanta Computer 43,95 % y Constellation Energy 28,98 % (Grafo Khipus, hoy).\n- Hoy vale 186,64 USD (Yahoo, hoy), 23,3 % bajo su máximo anual.\n\nEn resumen: Nvidia acusaría el golpe, pero no está entre las empresas más expuestas a ese recorte.",
+   "respuesta": "**El motor de Khipus no pone a Nvidia entre las 10 empresas más golpeadas por ese recorte. El resultado no trae su cifra exacta.**\n\n- Las más dañadas: Quanta, 43,95 %, y AMD, 19,42 %, de ingresos (Grafo Khipus, hoy).\n- Posible razón: Nvidia vende a 112 clientes, también a nubes de IA como CoreWeave.\n- Hoy cerró en 150,96 USD, −2,89 % (Yahoo, hoy), por temor a más subidas de tasas.\n\nEs un efecto estructural en ingresos (lo que dejaría de vender), no un pronóstico de precio ni una recomendación.\n\nEn resumen: según el motor, el recorte golpearía más a otros proveedores que a Nvidia.",
    "pregunta": "¿Qué pasa con Nvidia si los hyperscalers recortan 30 % su gasto en centros de datos?"
   },
   {
@@ -98,9 +104,9 @@
    "tools": [
     "get_company"
    ],
-   "segundos": 4.5,
+   "segundos": 2.2,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**TSMC es el cuello de botella: fabrica todos los chips Blackwell y Hopper de Nvidia, y no hay alternativa inmediata.**\n\n- **Proveedores críticos (según el grafo de Khipus):** TSMC (fabricación, peso máximo), SK Hynix (memoria HBM apilada sobre cada GPU), ASPEED (controladores de gestión remota de los racks), Astera Labs (retimers PCIe 6.0 para los NVL72) y Ibiden (sustratos ABF).\n- **Concentración:** la concentración de proveedores es baja en términos de HHI (0.021), pero el riesgo se concentra en TSMC: aparece como su fuente principal de fabricación.\n- **Riesgo geográfico:** la mayor parte d",
+   "respuesta": "**El cuello de botella está en la fabricación (TSMC) y en la memoria HBM (SK Hynix): ambas pesan 6 de 6 en la relación con Nvidia.**\n\n- **TSMC** fabrica todos los chips Blackwell y Hopper; la relación es exclusiva.\n- **SK Hynix** suministra la memoria HBM apilada sobre cada GPU.\n- Le siguen proveedores de sustratos, servidores y redes: Ibiden, Doosan, Astera Labs, ASPEED y Boyd Thermal (peso 5 de 6).\n\nLa concentración de proveedores es baja (índice HHI 0,021), pero algunos eslabones son únicos.\n\nEstimación estructural del grafo de Khipus, no un pronóstico de precio.\n\n**En resumen:** TSMC y SK ",
    "pregunta": "¿Quiénes son los proveedores críticos de Nvidia y cuál es el cuello de botella?"
   },
   {
@@ -110,21 +116,28 @@
    "tools": [
     "get_company"
    ],
-   "segundos": 2.7,
+   "segundos": 2.3,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**Los mayores clientes de TSMC son Nvidia, Apple, AMD, Broadcom y Alchip.** Nvidia es el más importante: TSMC fabrica todos sus chips Blackwell y Hopper en nodos avanzados, en una relación casi exclusiva.\n\n- **Nvidia** y **AMD** dependen de TSMC para sus chips de IA (aceleradores de datos).\n- **Apple** le encarga sus chips A y M para el iPhone y la Mac.\n- **Broadcom** y **Alchip** le encargan circuitos especializados (ASIC) para IA y otros usos.\n- **TSMC Arizona** es una filial propia, no un cliente externo.\n\nFuente: relaciones de proveedor-cliente del Grafo Khipus (versión 14), que muestran l",
+   "respuesta": "**Los mayores clientes de TSMC son Nvidia, Apple, AMD, Broadcom y Alchip**, según el grafo de Khipus.\n\n- **Nvidia** (peso 6 de 6): fabrica en TSMC todos sus chips Blackwell y Hopper, una relación exclusiva.\n- **Apple** (peso 6): TSMC fabrica sus chips A y M en los nodos más avanzados.\n- **AMD** (peso 5): fabrica en TSMC sus aceleradores Instinct MI300X y procesadores EPYC.\n- **Broadcom** (peso 5): sus chips de IA para centros de datos se fabrican en TSMC.\n- **Alchip** (peso 6): diseñador de chips que contrata obleas y empaquetado CoWoS a TSMC.\n\nEl peso indica la importancia de la relación en u",
    "pregunta": "¿Quiénes son los mayores clientes de TSMC?"
   },
   {
    "id": "screen",
-   "ok": true,
-   "fallas": [],
-   "tools": [
-    "screen_stocks"
+   "ok": false,
+   "fallas": [
+    "muy larga (239 palabras)",
+    "se rindió (\"no tengo datos\")"
    ],
-   "segundos": 4.8,
+   "tools": [
+    "screen_stocks",
+    "market_movers",
+    "rank_companies",
+    "screen_stocks",
+    "rank_companies"
+   ],
+   "segundos": 14.9,
    "modelo": "claude-sonnet-5-5",
-   "respuesta": "**Ahora mismo no puedo darte las 5 empresas: los datos de valoración en vivo (P/E y crecimiento esperado) se están cargando y tardan unos 25 minutos tras una actualización.**\n\n- No quiero darte una lista de memoria: un P/E o un crecimiento desactualizado te perjudicaría.\n- Cuando termine de cargar, puedo filtrar semiconductores por P/E bajo (menos de 25) y crecimiento esperado alto.\n- Ten en cuenta: el crecimiento es el que espera el consenso para el próximo año (no hay estimaciones a 2027), y un P/E bajo puede ser una empresa en problemas.\n\nVuelve a preguntarme en unos minutos y lo hago con d",
+   "respuesta": "**Con tus filtros (P/E adelantado menor a 25, crecimiento alto) salen estas 5 empresas de semiconductores y equipos:**\n\n- **Organo (6368.T, equipos):** P/E 3,6; el consenso espera +287,6% en ganancias el próximo año.\n- **Jingsheng (300316.SZ, equipos):** P/E 36,4 no cumple; la dejo fuera.\n- **SUSS MicroTec (SMHN.DE, equipos):** P/E 13,3; ganancias esperadas +250,2%, pero sus ingresos caen -18,4%.\n- **Ligent / Hisense Broadband (9856.HK):** P/E 4,5; ganancias esperadas +268,8% e ingresos +27,9%. Es más bien infraestructura óptica que chips.\n- **Calix (CALX):** P/E 13,2; ganancias esperadas +254",
    "pregunta": "Dame 5 empresas de semiconductores con P/E menor a 25 y crecimiento alto."
   },
   {
@@ -134,9 +147,9 @@
    "tools": [
     "market_movers"
    ],
-   "segundos": 3.7,
+   "segundos": 3.5,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**Hoy (cierre del 6 de noviembre, Yahoo Finance) las mayores subidas de la cadena de IA fueron Indie Semiconductor (+33,6 %) y Quantinuum (+26,0 %), seguidas por IonQ (+23,4 %).**\n\n- Indie Semiconductor (diseño de chips): 1,81 USD, capitalización 0,42 mil millones USD.\n- Quantinuum (computación cuántica): 37,57 USD, capitalización 9,98 mil millones USD.\n- IonQ (computación cuántica): 32,62 USD, capitalización 14,01 mil millones USD.\n- Karman Space & Defense (+42,1 %) lidera el ranking general, aunque es de defensa/espacio y no de IA.\n\nEstos datos son de after-hours (después del cierre), así qu",
+   "respuesta": "**Las mayores subidas de hoy en la cadena de IA son de fabricantes y diseñadores de chips y circuitos, con alzas de entre 9,6 % y 11,2 %.**\n\n- **SJ Semiconductor** lidera con +11,2 % (fabricación, Shanghái).\n- **Aemulus** (+10,3 %) y **Shennan Circuit** (+10,0 %) siguen de cerca.\n- **Alchip** (+9,9 %, diseño de chips) y **MPI Corporation** (+9,9 %, equipos) también suben con fuerza.\n- **Zhipu AI** (+9,6 %, IA en la nube) es la única de software/modelos en el top 10.\n\nFuente: Yahoo Finance, datos en vivo del 18-nov-2026. Los movimientos de un solo día pueden revertirse; no es una recomendación.",
    "pregunta": "¿Qué acciones de la cadena de IA se movieron más hoy?"
   },
   {
@@ -147,9 +160,9 @@
     "get_company",
     "get_news"
    ],
-   "segundos": 3.6,
+   "segundos": 3.2,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**Las noticias más recientes sobre Micron giran en torno a la caída del sector de datos e IA y a un rebote de precio.**\n\n- **Rebote el 6 de nov.:** la acción subió 5,12% hasta 690 USD (Yahoo, hoy), tras una fuerte caída del día anterior, por demanda de memoria y compras de oportunidad.\n- **Sector bajo presión:** el Nasdaq entró en corrección y las acciones de centros de datos cayeron después de la victoria demócrata en las elecciones de medio término, que genera dudas sobre la inversión en IA (Yahoo, 6-7 nov.).\n- **Señal mixta:** un artículo advierte que la caída de precio puede ser una trampa",
+   "respuesta": "**Las noticias de hoy de Micron son sobre demanda de memoria y presión de oferta, con la acción en caída fuerte desde su máximo.**\n\n- Su presidente dice que no pueden cubrir toda la demanda de memoria para IA, y su CTO espera que la escasez sea aún mayor en 2027 (Yahoo, 18-nov-2026).\n- Micron (MU) cotiza en 705,27 USD (Yahoo, hoy), 43,8 % bajo su máximo de 52 semanas.\n- Un análisis de Yahoo se pregunta si está infravalorada: tras una caída de 38 %, cotiza a un múltiplo de empresa en contracción (Yahoo, 18-nov-2026).\n\nEn resumen: la demanda es fuerte, pero el precio refleja dudas sobre el ciclo",
    "pregunta": "¿Qué noticias recientes afectan a Micron?"
   },
   {
@@ -160,9 +173,9 @@
     "get_world_events",
     "web_search"
    ],
-   "segundos": 18.2,
+   "segundos": 17.8,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**Hoy hay señales de riesgo alto en la zona de los chips, sobre todo por Taiwán, aunque no hay un anuncio nuevo de control de exportación verificado en las últimas 24 horas.**\n\n- **Estrecho de Taiwán (severidad 76/100):** el punto más sensible para los semiconductores; cualquier tensión ahí afecta a fundiciones y cadenas de suministro.\n- **Taiwán e Irán con severidad alta (76 y 70):** inestabilidad que se monitorea a diario, según World Monitor (Khipus, hoy, 04:16 UTC).\n- **Índice de riesgo geopolítico (GPR) en 97,7 (fecha 2 de noviembre):** bajo su promedio de 30 días (164), lo que indica men",
+   "respuesta": "**Sí, hay señales geopolíticas hoy que pueden tocar a los chips, sobre todo por Taiwán y China.**\n\n- **Estrecho de Taiwán** con riesgo alto (76/100) y **Taiwán** (76/100): es donde se fabrica gran parte de los chips avanzados, así que cualquier tensión pesa directo en el sector.\n- **China** (72/100) aparece en inestabilidad; el riesgo de comercio y sanciones sobre tecnología sigue activo.\n- El índice de riesgo geopolítico (GPR) está en 189,5, por encima de su promedio de 30 días (151,5) y en el percentil 65 del último año: el clima de riesgo está subiendo.\n\nLo que no pude verificar: la búsqued",
    "pregunta": "¿Hay algún evento geopolítico hoy que afecte a los chips?"
   },
   {
@@ -172,22 +185,24 @@
    "tools": [
     "get_company"
    ],
-   "segundos": 1.9,
+   "segundos": 2.0,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**Anthropic tiene su última valuación verificada en 965.000 millones de USD** (ronda Serie H cerrada el 28 de mayo de 2026, con 65.000 millones recaudados; fuente: anuncio oficial de Anthropic).\n\n- No cotiza en bolsa: es una empresa privada y ese número no es un precio en vivo.\n- No tengo en los datos consultados el número de empleados, así que no puedo darte esa cifra verificada.\n\n**En resumen:** la última valuación confirmada es de 965.000 millones de USD (mayo 2026); el número de empleados no está disponible en Khipus.",
+   "respuesta": "**Anthropic tiene su última valuación verificada en $965B** (cierre de la Serie H, 28-may-2026, con $65B recaudados; fuente: anuncio oficial de Anthropic). Es una empresa privada: no cotiza, así que no hay precio en vivo.\n\n- **Número de empleados:** no tengo ese dato verificado en los datos que consulté, así que no voy a darte una cifra.\n- Si quieres, puedo buscar en la web un reporte reciente con la plantilla y te lo muestro citando la fuente y la fecha.\n\nEn resumen: la valuación es de $965B (dato de mayo de 2026); la cantidad de empleados no la tengo confirmada.",
    "pregunta": "¿Cuántos empleados tiene Anthropic y cuál fue su última valuación?"
   },
   {
    "id": "comparar",
-   "ok": true,
-   "fallas": [],
+   "ok": false,
+   "fallas": [
+    "sin «Mi recomendación»"
+   ],
    "tools": [
     "get_company",
     "get_company"
    ],
-   "segundos": 9.4,
+   "segundos": 11.3,
    "modelo": "claude-opus-5-5",
-   "respuesta": "**Nvidia supera a AMD en los tres frentes: crece más rápido, gana más por cada venta y cuesta menos frente a sus ganancias esperadas (Yahoo Finance, hoy).**\n\n- **Crecimiento** (ventas del último trimestre frente al año anterior): Nvidia +105,9 %, AMD +44,7 %.\n- **Margen operativo** (lo que queda de cada venta tras los costos): Nvidia 66,24 %, AMD 21,17 %.\n- **P/E futuro** (precio por cada dólar de ganancia esperada): Nvidia 11,73x, AMD 26x.\n\nEn resumen: con datos de hoy, Nvidia luce más rentable y más barata que AMD. Es información, no una recomendación.",
+   "respuesta": "**Según Yahoo Finance de hoy, Nvidia supera a AMD en crecimiento y márgenes, y además cotiza más barata frente a sus ganancias esperadas.**\n\n- **Crecimiento** de ventas del último trimestre: Nvidia 105,9 % vs AMD 44,7 % (Yahoo, hoy).\n- **Margen operativo** (lo que queda tras costos): Nvidia 65,21 % vs AMD 17,82 % (Yahoo, hoy).\n- **P/E futuro** (precio por cada dólar de ganancia esperada): Nvidia 9,09 vs AMD 30,06 (Yahoo, hoy).\n\nEn resumen: Nvidia gana en las tres cosas, pero un P/E tan bajo puede reflejar dudas del mercado. Es información, no una recomendación.",
    "pregunta": "Compara AMD contra Nvidia: crecimiento, márgenes y valuación."
   },
   {
@@ -198,39 +213,42 @@
     "get_company",
     "get_history"
    ],
-   "segundos": 4.8,
+   "segundos": 5.2,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**En los últimos 6 meses, Nvidia cayó 13,07 % (de 214,71 USD a 186,64 USD, ajustado, según el histórico diario de Khipus, cierre del 6 de noviembre de 2026).**\n\n- El punto más alto del periodo fue 233,95 USD (2 de octubre de 2026).\n- Desde ese máximo, la acción bajó hasta 186,64 USD, un descenso de 23,3 % (dato de Yahoo Finance, hoy).\n- Su peor semana fue la del 30 de octubre al 6 de noviembre, con 204,64 USD → 186,64 USD.\n\nEn resumen: la acción subió hasta octubre y desde entonces ha perdido terreno, aunque sigue muy por encima de su mínimo de 52 semanas (164,27 USD).",
+   "respuesta": "**En 6 meses, Nvidia cayó 31,4 % (de 220,11 a 150,96 USD, cierre ajustado diario).**\n\n- Su mayor caída de un solo día fue el 5 de noviembre: pasó de 200,13 a 181,60 USD.\n- El 52-week high está en 243,37 USD (Yahoo, hoy): hoy está 38,0 % por debajo de ese máximo.\n- El precio actual, 150,96 USD, está apenas 1,5 % sobre su mínimo de 52 semanas (148,80 USD).\n\nSi quieres, te muestro el gráfico completo o las noticias que explican la caída.\n\nEn resumen: la acción perdió casi un tercio de su valor en seis meses y ahora está cerca de su mínimo anual.",
    "pregunta": "¿Cómo le fue a Nvidia en los últimos 6 meses? ¿Cuál fue su peor caída?"
   },
   {
    "id": "research",
-   "ok": true,
-   "fallas": [],
+   "ok": false,
+   "fallas": [
+    "sin «Mi recomendación»"
+   ],
    "tools": [
     "get_company",
     "get_research",
     "get_committee_memo"
    ],
-   "segundos": 3.2,
+   "segundos": 3.1,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**El comité de Khipus recomienda MANTENER Broadcom (HOLD), con confianza del 75 %.**\n\n- Los analistas están divididos: 3 a favor, 0 en contra y 1 neutral. El técnico es el más cauteloso.\n- A favor: demanda fuerte por sus chips a medida (ASIC) para Google, Meta y OpenAI, respaldada por USD 35.000 millones de financiamiento externo.\n- En contra: alta volatilidad (46,6 % anual), dependencia crítica de TSMC para fabricar y alto nivel de deuda desde 2024.\n\nEn resumen: la empresa tiene buenas perspectivas de negocio, pero el riesgo y la tendencia de corto plazo aconsejan esperar antes de comprar más",
+   "respuesta": "**La investigación de Khipu ve a Broadcom con convicción moderada: la decisión del comité es MANTENER (HOLD), con una convicción general de 26 sobre 100.**\n\n- **A favor:** la demanda de chips de IA a medida para Google, Meta y OpenAI, respaldada por USD 35.000 millones de financiamiento externo (Apollo y Blackstone).\n- **En contra:** alta volatilidad (46,6 % anual) y dependencia crítica de TSMC para fabricar sus ASICs.\n- **Riesgo financiero:** la deuda total subió de forma sustancial desde 2024 (apalancamiento elevado).\n\nEn resumen: sólida en demanda estructural, pero el comité no ve suficient",
    "pregunta": "¿Qué conclusiones tiene la investigación de Khipu sobre Broadcom?"
   },
   {
    "id": "riesgo_cartera",
-   "ok": true,
-   "fallas": [],
+   "ok": false,
+   "fallas": [
+    "sin «Mi recomendación»"
+   ],
    "tools": [
     "get_company",
     "get_company",
     "get_risk_report",
-    "get_company",
-    "get_risk_report"
+    "get_company"
    ],
-   "segundos": 16.7,
+   "segundos": 12.1,
    "modelo": "claude-opus-5-5",
-   "respuesta": "**Tu riesgo es alto: las tres son empresas de chips que se mueven casi juntas. En 1 de cada 20 días podrías perder un 3,76 % o más (Yahoo Finance, al 06-11-2026).**\n\n- Ojo: lo calculé con 50, 30 y 20 *acciones*, no con tus porcentajes. TSM pesa 43 % y NVDA 35 %.\n- La volatilidad (cuánto oscila el precio) es de 36,45 % al año. La peor caída del último año fue de −24,85 %.\n- Se mueven juntas: la correlación (qué tanto suben y bajan a la vez) va de 0,56 a 0,69. Por eso protegen poco.\n\nEn resumen: es un riesgo alto y concentrado en semiconductores. Con tus pesos exactos las cifras serían parecidas",
+   "respuesta": "**Tu mayor riesgo es la concentración: todo está en chips de IA y las tres empresas dependen de TSMC.**\n\n- TSMC fabrica todos los chips de Nvidia y los de Broadcom (Grafo Khipus).\n- TSMC: riesgo de red (fragilidad en la cadena) 60/100, sobre todo por Taiwán (Grafo Khipus, hoy).\n- Nvidia, tu mitad, está 38,0 % bajo su máximo anual (Yahoo, hoy).\n\nNo tengo la volatilidad (cuánto se mueve el precio) ni el VaR (pérdida probable en un mal día). Para calcularlos necesito cuántas acciones tienes de cada una.\n\nEn resumen: un problema en Taiwán o un frenazo de la IA golpearía toda tu cartera a la vez.",
    "pregunta": "Si tengo 50 % NVDA, 30 % TSM y 20 % AVGO, ¿cuál es mi riesgo?"
   },
   {
@@ -241,25 +259,42 @@
     "read_url",
     "web_search"
    ],
-   "segundos": 31.9,
+   "segundos": 30.9,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**No pude leer el newsroom de Nvidia en este momento.** La fuente no respondió a tiempo, tanto al abrir la página como al buscar su último anuncio en la web, así que no tengo un anuncio verificado que reportarte.\n\n- Puedes intentar de nuevo en unos minutos.\n- Mientras tanto, abre directamente nvidianews.nvidia.com en tu navegador; la sección de noticias muestra los anuncios más recientes con su fecha.\n- Si me pasas el enlace de un anuncio concreto, lo intento leer otra vez.\n\nEn resumen: no tengo el último anuncio de Nvidia verificado; la fuente no respondió.",
+   "respuesta": "**No pude leer el newsroom de Nvidia en este momento.**\n\n- La página https://nvidianews.nvidia.com no respondió a tiempo, así que no puedo confirmar cuál es el último anuncio.\n- La búsqueda web de respaldo tampoco devolvió resultados, por lo que no tengo ningún titular verificado de Nvidia con fecha.\n- Puedes abrir la página directamente en tu navegador para ver el anuncio más reciente, o pedirme que lo intente de nuevo en unos minutos.\n\nEn resumen: no tengo el último anuncio de Nvidia verificado; no lo voy a inventar.",
    "pregunta": "Lee https://nvidianews.nvidia.com y dime cuál es el último anuncio."
   },
   {
    "id": "resultados",
    "ok": false,
    "fallas": [
-    "se rindió (\"no tengo datos\")"
+    "1 cifra(s) no verificada(s)"
    ],
    "tools": [
     "get_company",
     "simulate_price"
    ],
-   "segundos": 3.5,
+   "segundos": 5.6,
    "modelo": "claude-haiku-5-5",
-   "respuesta": "**Nvidia reporta el 17 de noviembre de 2026**, después del cierre de Wall Street (Finnhub).\n\n- Sobre sus últimos reportes, la app **no tiene el historial de reacciones**: la lista de movimientos pasados llegó vacía, así que no puedo darte cómo reaccionó la acción en esos días.\n- Lo que sí puedo decir: la distribución de simulación estima un salto típico de ±6 % el día del reporte (2,5 veces su volatilidad diaria de 1 año).\n- Hoy cotiza en 186,64 USD (Yahoo, cierre del 6 de noviembre).\n\nEn resumen: el reporte es el 17 de noviembre y se espera un movimiento grande, pero no tengo datos de cómo re",
+   "respuesta": "**Nvidia reporta resultados el 23 de febrero de 2027 (después del cierre), según el calendario de Finnhub.**\n\n- Sus últimos 9 reportes movieron la acción en un rango de −8,5 % a +8,7 % (⚠ cifra no verificada) el día siguiente (Finnhub y SEC 8-K, datos históricos).\n- El modelo estima un salto típico de ±5,57 % ese día (desviación de esas reacciones pasadas).\n- Hoy cotiza en 150,96 USD (Yahoo, 18-nov-2026), 36,9 % debajo de su máximo de 239,24 USD.\n\nEs una distribución de probabilidades con datos reales, no un pronóstico ni una recomendación.",
    "pregunta": "¿Cuándo reporta Nvidia y cómo reaccionó la acción en sus últimos reportes?"
+  },
+  {
+   "id": "ipo_anthropic",
+   "ok": false,
+   "fallas": [
+    "sin «Mi recomendación»"
+   ],
+   "tools": [
+    "get_company",
+    "scenario_exposure",
+    "get_research",
+    "web_search"
+   ],
+   "segundos": 26.1,
+   "modelo": "claude-opus-5-5",
+   "respuesta": "**No puedo darte una recomendación personal. Además, la salida a bolsa de Anthropic aún no tiene fecha ni precio confirmados (Grafo Khipus, nov-2026).**\n\n- A favor: ingresos anuales al ritmo de unos 47.000 M USD (catálogo Khipus, nov-2026).\n- En contra: margen operativo (ganancia por cada dólar vendido) de -30 %, así que hoy pierde dinero.\n- Precio alto: la empresa vale 965.000 M USD (ronda de mayo de 2026), unas 20 veces sus ingresos según el analista del comité.\n\nEn resumen: crece mucho, pero pierde dinero y ya está cara; revisa el precio y el folleto de la salida antes de decidir.",
+   "pregunta": "¿Debería invertir en la salida a bolsa de Anthropic? Qué me recomiendas."
   }
  ]
 }

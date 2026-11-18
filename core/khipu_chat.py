@@ -30,6 +30,7 @@ Ahora: POST /api/khipu/chat → un bucle de agente con HERRAMIENTAS REALES.
 import json
 import math
 import logging
+import os
 import re
 import sys
 import threading
@@ -1365,9 +1366,8 @@ def validate_request(body):
 _MODE_RULES = {
     'simple': ('MODO SIMPLE (lo eligió el usuario: no es experto): lenguaje llano y frases cortas, sin jerga ni siglas '
                'sueltas. La primera vez que uses un término financiero (capitalización, margen, VaR, NRS, convicción, '
-               'volatilidad…) defínelo en 2-4 palabras entre paréntesis. Si es un análisis (no un saludo ni un dato '
-               'suelto), termina con UNA conclusión clara, en una sola línea que empiece con «En resumen:» («In '
-               'short:» si respondes en inglés).'),
+               'volatilidad…) defínelo en 2-4 palabras entre paréntesis. Si es sobre invertir, termina con la línea '
+               '«👉 Mi recomendación: …» (ver RECOMENDACIÓN CLARA); si no, con UNA conclusión en una sola línea.'),
     'pro': ('MODO PRO (lo eligió el usuario: inversionista experto): denso y cuantitativo, sin definir términos básicos. '
             'Da las cifras clave con fuente y fecha, rangos cuando los datos los traigan (mín.–máx. de 52 semanas, '
             'escenarios, por horizonte), el horizonte de cada idea (corto / mediano / largo plazo) y los riesgos '
@@ -1427,7 +1427,7 @@ también get_committee_memo). "@analista / pregúntale \
 al analista" → ask_agent. "¿puedo investigar ahora? / ¿por qué falló o quedó a medias la investigación?" → \
 get_research_health (proveedores en pausa, cola, presupuesto); en get_research, last_job.status 'partial' = síntesis \
 incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda mañana. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
-peores" → rank_companies o market_movers. "¿va a seguir cayendo X? / ¿ya tocó fondo / es el piso? / ¿hasta dónde puede bajar o subir? / simula el precio" → simulate_price(X) (y get_company para el contexto). La app dibuja sola el abanico, los niveles y la tabla: en el texto da solo la respuesta directa con prob_today_is_the_low_pct («¿es el piso?») y, en viñetas, lo decisivo (la probabilidad de tocar el mínimo de 52 semanas, el reporte de resultados si cae dentro del plazo y lo que dice la valoración). Di que es una distribución de probabilidades con datos reales, no un pronóstico ni una recomendación. "¿cuándo reporta X? / ¿cómo reaccionó a sus reportes?" → simulate_price(X): trae la fecha del próximo reporte (earnings_event, Finnhub) y el movimiento real de los últimos (past_reactions_pct); no hace falta buscar en la web. UN ENLACE pegado o "lee / abre / resume esta página, noticia o 10-K" → read_url(url); si read_url FALLA (el sitio no responde o bloquea), NO te rindas ni pidas reintentar: haz web_search con el sitio y el tema (p. ej. «Nvidia newsroom último anuncio») y responde con lo que encuentres, citando URL y fecha. "¿cuánto cayó desde su máximo / cuánto le falta al objetivo?" → copia live_market.derived de get_company (from_52w_high_pct, below_52w_high_amount, above_52w_low_pct, upside_to_target_pct): NUNCA restes ni dividas tú. Algo ACTUAL que no está en Khipus (la noticia de hoy, macro, regulación, una empresa fuera del grafo, un dato que ninguna herramienta trae) → web_search y, si hace falta el detalle, read_url del mejor resultado; cita SIEMPRE la URL y la fecha. Nunca digas «no tengo acceso a internet» si web_search o read_url están en tu lista. "¿cuál está barata / infravalorada / con potencial de crecimiento?" → screen_stocks (by=peg por defecto; value si piden solo baratas, growth si piden crecimiento, upside si piden margen hasta el precio objetivo). NUNCA digas que no tienes datos de valoración: tienes P/E, crecimiento esperado por el consenso y precio objetivo en vivo. Aclara SIEMPRE que no hay estimaciones a 2027: el crecimiento es el que el consenso espera para el próximo año; que un P/E bajo puede ser una empresa en problemas; y que es información, no una recomendación. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
+peores" → rank_companies o market_movers. "¿va a seguir cayendo X? / ¿ya tocó fondo / es el piso? / ¿hasta dónde puede bajar o subir? / simula el precio" → simulate_price(X) (y get_company para el contexto). La app dibuja sola el abanico, los niveles y la tabla: en el texto da solo la respuesta directa con prob_today_is_the_low_pct («¿es el piso?») y, en viñetas, lo decisivo (la probabilidad de tocar el mínimo de 52 semanas, el reporte de resultados si cae dentro del plazo y lo que dice la valoración). Di que es una distribución de probabilidades con datos reales, no un pronóstico (y cierra igual con tu recomendación). "¿cuándo reporta X? / ¿cómo reaccionó a sus reportes?" → simulate_price(X): trae la fecha del próximo reporte (earnings_event, Finnhub) y el movimiento real de los últimos (past_reactions_pct); no hace falta buscar en la web. UN ENLACE pegado o "lee / abre / resume esta página, noticia o 10-K" → read_url(url); si read_url FALLA (el sitio no responde o bloquea), NO te rindas ni pidas reintentar: haz web_search con el sitio y el tema (p. ej. «Nvidia newsroom último anuncio») y responde con lo que encuentres, citando URL y fecha. "¿cuánto cayó desde su máximo / cuánto le falta al objetivo?" → copia live_market.derived de get_company (from_52w_high_pct, below_52w_high_amount, above_52w_low_pct, upside_to_target_pct): NUNCA restes ni dividas tú. Algo ACTUAL que no está en Khipus (la noticia de hoy, macro, regulación, una empresa fuera del grafo, un dato que ninguna herramienta trae) → web_search y, si hace falta el detalle, read_url del mejor resultado; cita SIEMPRE la URL y la fecha. Nunca digas «no tengo acceso a internet» si web_search o read_url están en tu lista. "¿cuál está barata / infravalorada / con potencial de crecimiento?" → screen_stocks (by=peg por defecto; value si piden solo baratas, growth si piden crecimiento, upside si piden margen hasta el precio objetivo). NUNCA digas que no tienes datos de valoración: tienes P/E, crecimiento esperado por el consenso y precio objetivo en vivo. Aclara SIEMPRE que no hay estimaciones a 2027: el crecimiento es el que el consenso espera para el próximo año; que un P/E bajo puede ser una empresa en problemas; y que es información, no una recomendación. "¿cómo le fue a X en 6 meses / un año?", "evolución del precio" → \
 get_history(id_or_ticker, range). "¿cuánto le afecta a el PROVEEDOR X si sus CLIENTES recortan / cancelan / gastan menos?" (p. ej. los hiperescaladores recortan capex → Nvidia) → run_scenario con shocks=los CLIENTES que recortan y direction="up" (por defecto "down" es el caso contrario: el que cae deja de suministrar). Di siempre que es un efecto ESTRUCTURAL de ingresos, no un precio. "¿qué pasa si cae / falla X?" con una empresa CONCRETA → run_scenario(shocks=[{{"id":"X"}}]) \
 (las cifras de impacto salen de ese motor; si la pregunta es un escenario descrito en palabras, scenario_exposure). \
 ESCENARIOS (scenario_exposure / run_scenario): NUNCA digas que no tienes un modelo cuantitativo: el motor de Khipus \
@@ -1475,6 +1475,9 @@ si piden operar, explica que la orden se prepara y confirma en el bróker de la 
 Acciones de pantalla solo si ayudan (máx. 2) y sin anunciarlas. PROHIBIDO escribir nombres internos de herramientas \
 (get_company, get_history, run_scenario, get_fundamentals…) o el protocolo en la respuesta: la fuente se nombra como la \
 ve una persona —Yahoo Finance, Finnhub, Grafo Khipus, World Monitor, comité, estados financieros— con su fecha.{extra}
+
+RECUERDA: «información, no consejo» en los datos de las herramientas NO te impide recomendar — el dueño de la app pide \
+que toda pregunta de inversión cierre con «👉 Mi recomendación: …» y su aviso. Nunca digas «no puedo darte una recomendación».
 
 HERRAMIENTAS:
 {tools}
@@ -3213,9 +3216,68 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
     out.setdefault('agents_used', [])
     out.setdefault('cards', {})
     out['answer'] = strip_tool_names(out.get('answer') or '', out.get('facts'), lang)
+    try:
+        out['answer'] = _ensure_recommendation(message, out, lang)
+    except Exception as e:  # noqa: BLE001
+        log.info('khipu_chat: _ensure_recommendation (%s)', _clip(e, 120))
     ui = _genui_attach(out, message, lang, context)
     ledger_answer(dec_id, principal, message, lang, out, ai_ids, ui=ui)
     return out
+
+
+_INVEST_RX = re.compile(
+    r'invert|inversi|compr|vend|\bentr[oa]\b|entrar|conviene|recomiend|vale la pena|toc[oó] fondo|seguir cayendo|cartera|'
+    r'mi dinero|salida a bolsa|\bipo\b|barat|deber[ií]a|should i|\bbuy|\bsell|invest|worth it|portfolio|bottom', re.I)
+_INVEST_TOOLS = {'simulate_price', 'get_risk_report', 'plan_portfolio', 'screen_stocks', 'get_committee_memo',
+                 'get_research', 'get_conclusions_board', 'get_fundamentals'}
+_NOREC_RX = re.compile(r'[^.\n]*(no puedo darte una recomendaci[oó]n|ni una recomendaci[oó]n|no es una recomendaci[oó]n|'
+                       r"can't give you a recommendation|nor a recommendation|not a recommendation)[^.\n]*\.?", re.I)
+RECO_ACTIONS = ('Comprar poco a poco', 'Comprar', 'Esperar', 'No entrar', 'Mantener', 'Vender una parte', 'Vender')
+RECO_ACTIONS_EN = ('Buy gradually', 'Buy', 'Wait', 'Stay out', 'Hold', 'Sell part', 'Sell')
+
+
+def _ensure_recommendation(message, out, lang):
+    """2026-11-18 (Fabrizio: «la gente quiere que Khipu le diga qué recomienda hacer»): una pregunta de INVERSIÓN termina
+    SIEMPRE con «👉 Mi recomendación: <acción>». Si la IA no la escribió, el modelo PEQUEÑO la deduce de la respuesta ya
+    escrita (sin cifras nuevas) y se agrega con su aviso; las frases «no es una recomendación» se quitan. Nunca rompe la
+    respuesta: ante cualquier fallo queda igual."""
+    ans = out.get('answer') or ''
+    en = lang == 'en'
+    if (os.getenv('KHIPU_RECO_NET') or 'on').strip().lower() in ('off', '0', 'false', 'no'):
+        return ans
+    if not ans or out.get('degraded') or out.get('answer_source') not in ('ai', 'agent'):
+        return ans
+    used = {t.get('name') for t in out.get('tools_used') or [] if isinstance(t, dict)}
+    if not (_INVEST_RX.search(message or '') or used & _INVEST_TOOLS):
+        return ans
+    low = ans.lower()
+    if 'mi recomendación' in low or 'my recommendation' in low:
+        return _NOREC_RX.sub('', ans).strip()
+    acts = RECO_ACTIONS_EN if en else RECO_ACTIONS
+    system = (('You are Khipu. Read an investor question and the answer already written with data. Write ONLY one line: '
+               '"👉 **My recommendation: ACTION** — reason in 15 words or fewer", ACTION one of: ' + ' | '.join(acts) +
+               '. No numbers. If the data is mixed or missing, choose Wait and say what to wait for. Nothing else.')
+              if en else
+              ('Eres Khipu. Lees la pregunta de un inversionista y la respuesta ya escrita con datos. Escribe SOLO una línea: '
+               '«👉 **Mi recomendación: ACCIÓN** — porqué en 15 palabras o menos», ACCIÓN una de: ' + ' | '.join(acts) +
+               '. Sin cifras. Si los datos están divididos o faltan, elige Esperar y di qué esperar. Nada más.'))
+    try:
+        from core import model_router as _mr
+        small = _mr.models()['small']
+        text, _m = _ai._ai_complete(system, f'PREGUNTA: {message}\n\nRESPUESTA:\n{ans}', 120, 'fast', model=small,
+                                    timeout_s=8, live_facts=False)
+        line = next((ln.strip() for ln in str(text or '').splitlines() if 'recomendaci' in ln.lower() or
+                     'recommendation' in ln.lower()), '')
+    except Exception as e:  # noqa: BLE001
+        log.info('khipu_chat: recomendación no agregada (%s)', _clip(e, 120))
+        return ans
+    if not line or not any(a.lower() in line.lower() for a in acts):
+        return ans
+    if not line.startswith('👉'):
+        line = '👉 ' + line
+    ans = _NOREC_RX.sub('', ans).strip()
+    note = '_Information, not personalized advice._' if en else '_Información, no asesoría personalizada._'
+    return f'{ans}\n\n{line}\n\n{note}'
 
 
 def _genui_attach(out, message, lang, context):

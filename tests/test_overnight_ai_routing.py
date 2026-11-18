@@ -482,6 +482,7 @@ def test_analisis_la_redaccion_en_prosa_tambien_es_profunda(monkeypatch, jev):
 
 
 def test_otras_rutas_no_cambian(monkeypatch, jev):
+    monkeypatch.setenv('KHIPU_RECO_NET', 'off')   # sin la red de la recomendación: se cuentan solo las rondas
     jev['ans'] = _jev('needs_tools')
     ai_ = ScriptAI(fast=[{'tool': 'search_companies', 'args': {'query': 'TSMC'}},
                          {'final': {'answer': 'Corta.', 'actions': []}}], deep=[])

@@ -355,7 +355,7 @@ def test_modo_y_agentes_cambian_el_prompt(fake_ai):
     base = kc.build_system('es')
     assert 'MODO SIMPLE' not in base and 'MODO PRO' not in base and 'DESACTIVADOS' not in base
     simple = kc.build_system('es', 'simple', list(kc.AGENT_IDS))
-    assert 'MODO SIMPLE' in simple and 'En resumen:' in simple and 'DESACTIVADOS' not in simple
+    assert 'MODO SIMPLE' in simple and 'Mi recomendación' in simple and 'DESACTIVADOS' not in simple
     pro = kc.build_system('en', 'pro', ['khipu', 'analista', 'comite'])
     assert 'MODO PRO' in pro and 'inversionista EXPERTO' in pro and 'nunca inventes' in pro
     off = pro.split('DESACTIVADOS')[1].split('\n')[0]

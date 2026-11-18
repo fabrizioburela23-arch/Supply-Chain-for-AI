@@ -90,6 +90,7 @@ def test_dato_puntual_se_responde_sin_ia(monkeypatch, jev_on):
 
 
 def test_consulta_corta_limita_rondas(monkeypatch, jev_on):
+    monkeypatch.setenv('KHIPU_RECO_NET', 'off')   # sin la red de la recomendación: se cuentan solo las rondas
     jev_on['ans'] = _jev('needs_tools')
     ai = CountingAI([{'tool': 'search_companies', 'args': {'query': 'TSMC'}},
                      {'tool': 'search_companies', 'args': {'query': 'ASML'}},

@@ -18,23 +18,23 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Qué | Cuántos |
 |---|---|
 | Archivos de código (Python, JS, HTML) | 260 |
-| Líneas de código | 153.165 |
+| Líneas de código | 153.227 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 278 |
+| Archivos de prueba | 279 |
 | Documentos | 33 |
 | Rutas HTTP | 270 |
 | Grupos de API | 61 |
 | Herramientas MCP | 35 |
-| Variables de entorno | 162 |
+| Variables de entorno | 163 |
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 789 |
 | Aristas `defines_endpoint` | 305 |
-| Aristas `imports` | 2.437 |
+| Aristas `imports` | 2.439 |
 | Aristas `loads_script` | 97 |
 | Aristas `mentions_in_session` | 614 |
-| Aristas `reads_env` | 232 |
+| Aristas `reads_env` | 233 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.913 |
+| Aristas `tested_by` | 1.915 |
 | Aristas `uses_global` | 477 |
 
 ## Nodos "dios" (más conectados)

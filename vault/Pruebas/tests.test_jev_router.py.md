@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_jev_router.py"
 lenguaje: "python"
-lineas: 162
+lineas: 163
 aliases: ["tests/test_jev_router.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_jev_router.py
 
-> Prueba · capa [[Capa Pruebas]] · 162 líneas · `tests/test_jev_router.py`
+> Prueba · capa [[Capa Pruebas]] · 163 líneas · `tests/test_jev_router.py`
 
 ## Qué prueba
 
@@ -31,7 +31,7 @@ Jev AL MANDO del chat (core/decide.chat_plan + core/khipu_chat): elige el camino
 
 ## Variables de entorno que fija o nombra
 
-[[ENV AI_ROUTER]], [[ENV DECIDE_CONTROL]], [[ENV TYPESAFE_API_KEY]]
+[[ENV AI_ROUTER]], [[ENV DECIDE_CONTROL]], [[ENV KHIPU_RECO_NET]], [[ENV TYPESAFE_API_KEY]]
 
 ## Mencionado en sesiones de trabajo
 
