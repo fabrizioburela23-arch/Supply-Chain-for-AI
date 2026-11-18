@@ -19,7 +19,8 @@
     [
      "simulate_price"
     ]
-   ]
+   ],
+   "recomienda": true
   },
   {
    "id": "fondo_amd",
@@ -28,7 +29,8 @@
     [
      "simulate_price"
     ]
-   ]
+   ],
+   "recomienda": true
   },
   {
    "id": "valuacion",
@@ -38,7 +40,8 @@
      "get_fundamentals",
      "get_company"
     ]
-   ]
+   ],
+   "recomienda": true
   },
   {
    "id": "escenario_taiwan",
@@ -151,7 +154,8 @@
      "get_fundamentals",
      "get_company"
     ]
-   ]
+   ],
+   "recomienda": true
   },
   {
    "id": "historia",
@@ -172,7 +176,8 @@
      "get_conclusions_board",
      "get_company"
     ]
-   ]
+   ],
+   "recomienda": true
   },
   {
    "id": "riesgo_cartera",
@@ -184,7 +189,8 @@
      "scenario_exposure",
      "simulate_price"
     ]
-   ]
+   ],
+   "recomienda": true
   },
   {
    "id": "web",
@@ -207,6 +213,19 @@
      "get_history"
     ]
    ]
+  },
+  {
+   "id": "ipo_anthropic",
+   "q": "¿Debería invertir en la salida a bolsa de Anthropic? Qué me recomiendas.",
+   "tools": [
+    [
+     "get_company",
+     "search_companies",
+     "web_search",
+     "get_research"
+    ]
+   ],
+   "recomienda": true
   }
  ]
 }

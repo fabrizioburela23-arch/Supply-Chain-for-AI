@@ -951,8 +951,28 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     _popEl = el; _popFor = btn;
     return el;
   }
-  function _openMore(btn) {
+  // MENÚ SIMPLE (2026-11-18, Fabrizio: «esto no es para expertos… estúpidamente sencillo»): en modo Simple el menú
+  // muestra solo lo esencial; «🧰 Todas las herramientas» despliega el resto (y en modo Pro se ve todo).
+  var SIMPLE_SCREENS = ['portfolios', 'insights', 'brief', 'graph', 'agents', 'guia'];
+  function _openMore(btn, full) {
     var en = ckLang() === 'en', by = {};
+    if (!full && _mode() !== 'pro') {
+      var pick = screens().filter(function (s) { return SIMPLE_SCREENS.indexOf(s.id) >= 0; })
+        .sort(function (a, b) { return SIMPLE_SCREENS.indexOf(a.id) - SIMPLE_SCREENS.indexOf(b.id); });
+      var sh = '<div class="grp">' + pick.map(function (s) {
+        return '<button type="button" class="kos-mi" role="menuitem" data-s="' + esc(s.id) + '"><span class="ic">' + esc(s.ic) + '</span><span class="tx">' + esc(en ? s.en : s.es) + '</span></button>';
+      }).join('') + '<div class="kos-sep"></div><button type="button" class="kos-mi" role="menuitem" data-all="1"><span class="ic">🧰</span><span class="tx">' +
+        esc(L('Todas las herramientas', 'All tools')) + '</span></button></div>';
+      var se = _popOpen(btn, 'kos-more', sh, 'center');
+      if (!se) return;
+      se.addEventListener('click', function (e) {
+        if (e.target.closest && e.target.closest('[data-all]')) { _popClose(); _openMore(btn, true); return; }
+        var b = e.target.closest && e.target.closest('[data-s]'); if (!b) return;
+        _popClose(); _runScreen(b.getAttribute('data-s'));
+      });
+      var f0 = se.querySelector('.kos-mi'); if (f0) try { f0.focus({ preventScroll: true }); } catch (x) {}
+      return;
+    }
     screens().forEach(function (s) { (by[s.g] = by[s.g] || []).push(s); });
     var html = GROUPS.filter(function (g) { return by[g[0]]; }).map(function (g) {
       return '<div class="grp"><div class="kos-ph">' + esc(en ? g[2] : g[1]) + '</div>' + by[g[0]].map(function (s) {
@@ -1873,14 +1893,15 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
   function _renderCenterHome(body) {
     var en = ckLang() === 'en';
     var old = body.querySelector('#kos-empty'); if (old) old.parentNode.removeChild(old);
-    var sugg = en ? ['How is Nvidia doing and what is its biggest risk?', 'Which companies depend on TSMC?', 'What happened today in the chip chain?',
-                     'Compare Nvidia and AMD', 'What do my agents think about ASML?', 'Simulate that China bans HBM exports']
-                  : ['¿Cómo está Nvidia y cuál es su mayor riesgo?', '¿Qué empresas dependen de TSMC?', '¿Qué pasó hoy en la cadena de chips?',
-                     'Compara Nvidia y AMD', '¿Qué opinan mis agentes de ASML?', 'Simula que China prohíbe exportar HBM'];
+    // preguntas de GENTE COMÚN (2026-11-18): qué hacer con su dinero, no jerga de analista
+    var sugg = en ? ['Where should I invest $500 today?', 'Has Nvidia bottomed? Should I buy?', 'How is my money doing and what should I do?',
+                     'Is the Anthropic IPO worth it?', 'Which stocks are cheap today?', 'What happened today that affects me?']
+                  : ['¿En qué me conviene invertir US$ 500 hoy?', '¿Nvidia ya tocó fondo? ¿Entro?', '¿Cómo va mi dinero y qué hago?',
+                     '¿Vale la pena la salida a bolsa de Anthropic?', '¿Qué acciones están baratas hoy?', '¿Qué pasó hoy que me afecte?'];
     var e = document.createElement('div'); e.id = 'kos-empty';
     e.innerHTML = '<div class="kos-hero">' + _mascot('khipu', 84) + '</div>' +
       '<h2 class="kos-empty-h">Khipus <span class="sub">Finance Intelligence</span></h2>' +
-      '<p class="kos-empty-p">' + esc(L('Pregúntale lo que quieras, como a un analista.', 'Ask anything, the way you would ask an analyst.')) + '</p>' +
+      '<p class="kos-empty-p">' + esc(L('Pregúntale qué hacer con tu dinero: te responde claro y te dice qué recomienda.', 'Ask what to do with your money: it answers clearly and tells you what it recommends.')) + '</p>' +
       '<div class="kos-sugg">' + sugg.map(function (q) { return '<button type="button" class="kos-chip" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + '</div>' +
       '<p class="kos-tourlink"><button type="button" class="kos-tour" data-q="demo">▶ ' + esc(L('Ver el recorrido de un minuto', 'Watch the one-minute tour')) + '</button></p>' +
       '<div id="bcp-home-hyper" class="bcp-live"></div>' +

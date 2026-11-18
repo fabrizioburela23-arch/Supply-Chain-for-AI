@@ -948,9 +948,9 @@
     REG[type] = spec; return true;
   }
   function catalog() { return TYPES.filter(function (k) { return !!REG[k]; }); }
-  function enabled() { try { return W.localStorage.getItem(FLAG) === '1'; } catch (e) { return false; } }
+  function enabled() { try { return W.localStorage.getItem(FLAG) !== '0'; } catch (e) { return true; } }
   function setEnabled(on) {
-    try { if (on) W.localStorage.setItem(FLAG, '1'); else W.localStorage.removeItem(FLAG); } catch (e) {}
+    try { W.localStorage.setItem(FLAG, on ? '1' : '0'); } catch (e) {}
     var en = enabled(); if (en) loadExtras();
     return en;
   }

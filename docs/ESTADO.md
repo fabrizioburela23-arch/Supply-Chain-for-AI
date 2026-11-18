@@ -74,6 +74,16 @@ no alcanza (efectivo libre / acciones propias) la orden NO nace (`sleeve_limit`)
 Conciliación: si las carteras dicen tener más que Alpaca, la UI avisa. Riesgo: el reporte de cartera usa ETH-USD para
 cripto (core/risk_report.yahoo_symbol). Siguen: fase 3 (agente por cartera) y 4 (🧩 Conectores).
 
+**🧭 REGLA DE PRODUCTO (2026-11-18, Fabrizio — leer antes de construir nada):** el público es GENTE COMÚN, no expertos.
+Distribución prevista: como herramienta DENTRO de otras apps (Meru, Takenos, Confío) → tiene que ser «estúpidamente
+sencillo». Simple por fuera, cada vez más capaz por dentro (datos, conexiones, agentes): el detalle es para la IA, la
+persona recibe la conclusión digerida y puede explorar si quiere. Hecho hoy (sw v296): (1) el chat TERMINA con
+«👉 Mi recomendación: Comprar poco a poco | Comprar | Esperar | No entrar | Mantener | Vender una parte | Vender» + porqué
+(build_system/SYNTH_SYSTEM; el examen de oro lo exige en 7 casos, incl. la IPO de Anthropic); (2) respuestas con
+gráficos ENCENDIDAS por defecto (kh_genui '0' = apagadas); (3) menú simple: 6 opciones + «🧰 Todas las herramientas»
+(modo Pro ve todo); (4) preguntas de inicio de gente común. Pendiente en este orden: agentes programables por cartera,
+conexiones entre todas las empresas (lotes), versión «widget» para apps de terceros.
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

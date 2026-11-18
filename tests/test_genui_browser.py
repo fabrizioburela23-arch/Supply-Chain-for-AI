@@ -88,7 +88,7 @@ def _open(browser, lang='es', theme='dark', width=1440, height=1300, reduced=Tru
     boot = ("window.LANG=%s;try{localStorage.setItem('eco_lang',%s);%slocalStorage.setItem('khipu_actor','Fabrizio B');}catch(e){}"
             "window.NODES=%s;window.NODE_BY_ID={};window.NODES.forEach(function(n){window.NODE_BY_ID[n.id]=n;});window.LINKS=[];"
             "window.NODE_META={};window.SECTORS9={};window.CAT_TO_SECTOR={};window.MKT={pos:{},quotes:{}};window.computeNRS=function(){return 40;};%s"
-            % (json.dumps(lang), json.dumps(lang), "localStorage.setItem('kh_genui','1');" if flag else "localStorage.removeItem('kh_genui');",
+            % (json.dumps(lang), json.dumps(lang), "localStorage.setItem('kh_genui','1');" if flag else "localStorage.setItem('kh_genui','0');",
                json.dumps(nodes), extra))
     html = ('<!doctype html><html lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             '<title>genui</title><script src="/boot.js"></script></head><body class="%s" style="margin:0">%s</body></html>'

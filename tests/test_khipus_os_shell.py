@@ -134,7 +134,7 @@ def test_saldo_de_la_barra_nunca_pide_pin_y_lleva_insignia():
 def test_textos_nuevos_bilingues():
     s = _r('engine/cockpit.js')
     for es, en in [('Busca una empresa o abre una pantalla…', 'Search a company or open a screen…'),
-                   ('Pregúntale lo que quieras, como a un analista.', 'Ask anything, the way you would ask an analyst.'),
+                   ('Pregúntale qué hacer con tu dinero: te responde claro y te dice qué recomienda.', 'Ask what to do with your money: it answers clearly and tells you what it recommends.'),
                    ('Vista clásica', 'Classic view'), ('Nueva conversación', 'New conversation'),
                    ('Cuenta de práctica', 'Practice account')]:
         assert es in s and en in s, es

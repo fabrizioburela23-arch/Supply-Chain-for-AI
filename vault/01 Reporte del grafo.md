@@ -18,7 +18,7 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Qué | Cuántos |
 |---|---|
 | Archivos de código (Python, JS, HTML) | 260 |
-| Líneas de código | 153.133 |
+| Líneas de código | 153.165 |
 | Archivos de datos del catálogo | 30 |
 | Archivos de prueba | 278 |
 | Documentos | 33 |

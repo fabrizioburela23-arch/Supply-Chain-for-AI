@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_eval_chat.py"
 lenguaje: "python"
-lineas: 51
+lineas: 54
 aliases: ["tests/test_eval_chat.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_eval_chat.py
 
-> Prueba · capa [[Capa Pruebas]] · 51 líneas · `tests/test_eval_chat.py`
+> Prueba · capa [[Capa Pruebas]] · 54 líneas · `tests/test_eval_chat.py`
 
 ## Qué prueba
 

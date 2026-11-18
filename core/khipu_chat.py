@@ -1462,8 +1462,15 @@ DURO: 100 palabras en total, también al comparar o en escenarios (la tabla y lo
 sin introducciones, sin repetir la pregunta, sin párrafos de relleno. Solo las 2-3 cifras que deciden la respuesta, \
 cada una con su fuente y fecha en la misma frase, p. ej. «233,95 USD (Yahoo, hoy)». Nunca inventes \
 cifras ni datos: si no están, dilo. Usa el historial y lo que hay EN PANTALLA para resolver "ella / su / este". \
-Markdown ligero. Sin recomendaciones personalizadas de comprar/vender (sí riesgos, pros, contras, escenarios) salvo \
-el plan de plan_portfolio, que es información y no consejo; \
+Markdown ligero. \
+RECOMENDACIÓN CLARA (pedido de Fabrizio 2026-11-18: «la gente quiere que Khipu le diga qué recomienda hacer»): si la \
+pregunta es sobre invertir (una empresa, comprar o vender, «¿entro?», una salida a bolsa, su cartera), la respuesta \
+TERMINA SIEMPRE con la línea «👉 **Mi recomendación: <ACCIÓN>** — <el porqué en 15 palabras o menos>», donde ACCIÓN es \
+UNA de: Comprar poco a poco · Comprar · Esperar · No entrar · Mantener · Vender una parte · Vender. Elígela con los \
+datos consultados (convicción del comité, simulación, valuación, riesgos, noticias); si están divididos o faltan, \
+«Esperar» y di QUÉ esperar (una fecha o una señal concreta). Una empresa que aún no cotiza: «Esperar a su salida a \
+bolsa» (+ la condición para entrar) o «No entrar». Debajo, en cursiva: «_Información, no asesoría personalizada._» \
+Nunca prepares ni envíes órdenes; \
 si piden operar, explica que la orden se prepara y confirma en el bróker de la app y ofrece la acción "broker". \
 Acciones de pantalla solo si ayudan (máx. 2) y sin anunciarlas. PROHIBIDO escribir nombres internos de herramientas \
 (get_company, get_history, run_scenario, get_fundamentals…) o el protocolo en la respuesta: la fuente se nombra como la \
@@ -1884,7 +1891,9 @@ SYNTH_SYSTEM = (
     '(nombra empresas, cifras y relaciones que aparecen en los datos), y una línea de fuentes al final. '
     'Si un dato no está, dilo. SÍNTESIS: respuesta directa en una frase en negrita + máx. 3 viñetas cortas, '
     '40-100 palabras como TOPE (la app dibuja aparte cifras y gráficos: no las enumeres). PROHIBIDO: JSON, código, '
-    'llaves, pensar en voz alta, mencionar herramientas o el protocolo. No des órdenes de compra/venta.')
+    'llaves, pensar en voz alta, mencionar herramientas o el protocolo. Si la pregunta es sobre invertir, termina con '
+    '«👉 **Mi recomendación: <Comprar poco a poco | Comprar | Esperar | No entrar | Mantener | Vender una parte | '
+    'Vender>** — <porqué corto>» y debajo «_Información, no asesoría personalizada._». Nunca prepares órdenes.')
 
 
 def synthesize(message, history, lang, context, scratch, timeout, tier='fast'):

@@ -48,6 +48,8 @@ def grade(case, out, elapsed_s, max_s=60.0):
     words = len(ans.split())
     if words > MAX_WORDS:
         fallas.append(f'muy larga ({words} palabras)')        # síntesis visual: el texto no repite los gráficos
+    if case.get('recomienda') and 'mi recomendación' not in low and 'my recommendation' not in low:
+        fallas.append('sin «Mi recomendación»')        # 2026-11-18: la gente quiere saber qué hacer
     hit = next((r for r in REFUSALS if r in low), None)
     if hit:
         fallas.append(f'se rindió ("{hit}")')

@@ -37,6 +37,9 @@ def test_grade_aprueba_y_reprueba():
     r = ev.grade(case, {**good, 'answer': good['answer'] + ' 61,77 USD (⚠ cifra no verificada)'}, 5)
     assert any('no verificada' in f for f in r['fallas'])
     assert not ev.grade(case, {'error': 'HTTP 500'}, 1)['ok']
+    rc = {'id': 'y', 'tools': [], 'recomienda': True}
+    assert not ev.grade(rc, good, 5)['ok']
+    assert ev.grade(rc, {**good, 'answer': good['answer'] + ' 👉 **Mi recomendación: Esperar** — x'}, 5)['ok']
     r = ev.grade(case, {**good, 'answer': 'palabra ' * 300}, 5)
     assert any('muy larga' in f for f in r['fallas'])
 
