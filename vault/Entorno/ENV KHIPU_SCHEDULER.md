@@ -46,3 +46,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## ¿Está documentada en CLAUDE.md?
 
 Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
+
+## Mencionada en sesiones
+
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]

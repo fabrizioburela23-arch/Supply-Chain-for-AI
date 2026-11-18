@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (168 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (173 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -38,10 +38,11 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[tests.test_agent_signals_one_tap.py]]
 - [[tests.test_brief_portfolio_card.py]]
 - [[tests.test_ia_concreta_plan.py]]
+- [[tests.test_phase3.py]]
 - [[tests.test_sim_report.py]]
 
 ## Variables que menciona
 
-[[ENV AGENT_RESUME_PAPER]], [[ENV AI_MODEL_FAST]], [[ENV AI_ROUTER]], [[ENV TAVILY_KEY]]
+[[ENV AGENT_RESUME_PAPER]], [[ENV AI_MODEL_FAST]], [[ENV AI_ROUTER]], [[ENV DATABASE_URL]], [[ENV KHIPU_SCHEDULER]], [[ENV TAVILY_KEY]]
 
 ← más antigua: [[Sesión 2026-10-15 — b — REVISIÓN DE UN SOLO LUGAR - NADA SE PIERDE ENTRE DISPOSITIVOS]]

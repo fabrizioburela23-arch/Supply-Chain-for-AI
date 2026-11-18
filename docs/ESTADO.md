@@ -84,6 +84,11 @@ gráficos ENCENDIDAS por defecto (kh_genui '0' = apagadas); (3) menú simple: 6 
 (modo Pro ve todo); (4) preguntas de inicio de gente común. Pendiente en este orden: agentes programables por cartera,
 conexiones entre todas las empresas (lotes), versión «widget» para apps de terceros.
 
+**⚠ LECCIÓN 2026-11-18: Railway SOLO despliega con la CI verde.** Del 10 al 18-nov NADA llegó a producción por UNA
+prueba con base (tests/test_phase3.py esperaba AVOID para una privada). Correr la suite CON base antes de publicar
+(Postgres local: ver docs; `DATABASE_URL=… KHIPU_SCHEDULER=off pytest tests/ -q`) y mirar la CI tras cada push
+(mcp github actions_list). Tras el arreglo: examen de oro 19/21 en producción con «👉 Mi recomendación».
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

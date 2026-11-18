@@ -122,6 +122,7 @@ Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
 
 ## Mencionada en sesiones
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-09-22 al 24 — PHASE 1 Live Investment Graph COMPLETA + velocidad + 3D temporal]]
 - [[Sesión 2026-09-21 — Limpieza estructural - Track A Fase 2 + Track B completos]]
 - [[Sesión 2026-07-07 — Etapa 3 — Motor de matrices + hiperaristas - NÚCLEO COMPLETO]]

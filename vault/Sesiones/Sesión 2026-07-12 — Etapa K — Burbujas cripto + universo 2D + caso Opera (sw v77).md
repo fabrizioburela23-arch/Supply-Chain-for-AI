@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-12"
-ruta: "docs/ESTADO.md#L3116"
+ruta: "docs/ESTADO.md#L3121"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa K — Burbujas cripto + universo 2D + caso Opera (2026-07-12, sw v77)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 3116 (35 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 3121 (35 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

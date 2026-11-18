@@ -43,3 +43,7 @@ PHASE 3 · aprendizaje (resultados + calibración) y comité de inversión con a
 ## Variables de entorno que fija o nombra
 
 [[ENV ALPACA_BASE]], [[ENV ALPACA_KEY]], [[ENV ALPACA_SECRET]], [[ENV BROKERAGE_AUTO_APPROVE_PAPER]], [[ENV BROKERAGE_LIVE_ENABLED]], [[ENV BROKERAGE_TRADING_ENABLED]], [[ENV DATABASE_URL]], [[ENV TRADE_PIN]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]

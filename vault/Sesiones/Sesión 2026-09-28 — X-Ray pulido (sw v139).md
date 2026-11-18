@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-28"
-ruta: "docs/ESTADO.md#L2149"
+ruta: "docs/ESTADO.md#L2154"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-28 — X-Ray pulido (sw v139)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2149 (25 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2154 (25 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
