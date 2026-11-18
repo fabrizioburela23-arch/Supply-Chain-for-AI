@@ -478,11 +478,12 @@ def test_comite_guardian_de_cifras_repara_y_sin_ia_cae_a_determinista(db):
         # sin conclusiones: no se consulta a la IA; HOLD por evidencia insuficiente
         m4 = run_committee(s, 'Qualcomm', 'pytest', provider=FakeProvider([]), deps=DEPS)
         assert m4['decision'] == 'HOLD' and 'Investigación IA' in m4['memo']['ai_error']
-        # no cotiza → AVOID
+        # no cotiza → tesis para su salida a bolsa (2026-11-10): con convicción positiva HOLD («vigilar el IPO»), nunca
+        # accionable (no hay orden posible) y nunca AVOID solo por no cotizar
         _mk_claim(s, 'IBMQuantum', 'fundamental', 'positive', 'LONG_TERM', 0.8, created=datetime.now(UTC))
         _mk_claim(s, 'IBMQuantum', 'news', 'positive', 'LONG_TERM', 0.8, created=datetime.now(UTC))
         m5 = run_committee(s, 'IBMQuantum', 'pytest', provider=Off(), deps=DEPS)
-        assert m5['decision'] == 'AVOID' and m5['symbol'] is None
+        assert m5['decision'] == 'HOLD' and m5['symbol'] is None
 
 
 @needs_db
