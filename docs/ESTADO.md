@@ -89,6 +89,11 @@ prueba con base (tests/test_phase3.py esperaba AVOID para una privada). Correr l
 (Postgres local: ver docs; `DATABASE_URL=… KHIPU_SCHEDULER=off pytest tests/ -q`) y mirar la CI tras cada push
 (mcp github actions_list). Tras el arreglo: examen de oro 19/21 en producción con «👉 Mi recomendación».
 
+**2026-11-19 — AGENTES PROGRAMABLES POR CARTERA (fase 3, sw v297):** «🤖 Programar agente» en cada cartera de
+💼 Carteras → texto en palabras → /api/trade/sleeves/agent/parse (la IA PROPONE, no guarda) → confirmación en una frase →
+PATCH /api/trade/sleeves/<id>/agent (PIN, libro). Corren con el agente de Operar encendido (core/trading_agent hilo →
+core/sleeve_agents.run_due). Señales de un agente de cartera llevan sleeve_id y al tomarlas la orden va a esa cartera.
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

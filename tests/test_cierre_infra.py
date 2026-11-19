@@ -45,6 +45,7 @@ CON_DECISION = {
     'POST /api/trade/sleeves': 'policy.change (broker.sleeve) — carteras sobre la cuenta de Alpaca, fase 2',
     'PATCH /api/trade/sleeves/<sleeve_id>': 'policy.change (broker.sleeve)',
     'POST /api/trade/sleeves/<sleeve_id>/archive': 'policy.change (broker.sleeve)',
+    'PATCH /api/trade/sleeves/<sleeve_id>/agent': 'policy.change (broker.sleeve_agent) — agente de la cartera, fase 3',
     'POST /api/committee/board/refresh': 'committee.run (uno por empresa refrescada)',
     'POST /api/committee/memo/<memo_id>/approve': 'approval.grant',
     'POST /api/committee/memo/<memo_id>/reject': 'approval.deny',
@@ -117,6 +118,7 @@ CON_DECISION = {
 # brecha (CAMBIA algo y todavía no deja decisión: pendiente, ver docs/CIERRE_INFRA.md)
 SIN_DECISION = {
     'POST /api/quotes/live': 'lectura',
+    'POST /api/trade/sleeves/agent/parse': 'ia',   # la IA solo PROPONE la configuración; guardar = el PATCH con PIN
     'POST /api/ontology/import/plan': 'lectura',   # plan PURO (lote K, E2.3): no escribe nada
     'POST /api/news/portfolio': 'lectura',
     'POST /api/portfolio/risk_report': 'lectura',

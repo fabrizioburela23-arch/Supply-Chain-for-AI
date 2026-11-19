@@ -650,3 +650,31 @@ def test_carteras_solo_gastan_lo_suyo(client, alpaca, db):
         n = s.execute(text("SELECT count(*) FROM decisions WHERE kind = 'policy.change' "
                            "AND subject->>'policy' = 'broker.sleeve'")).scalar()
     assert n >= 1
+
+
+@needs_db
+def test_agente_de_cartera_se_guarda_con_pin_y_queda_en_el_libro(client, alpaca, db, monkeypatch):
+    r = client.post('/api/trade/sleeves', data=json.dumps({'name': 'Chips en caída', 'alloc_usd': 500}), headers=H())
+    assert r.status_code == 200, r.get_json()
+    sid = r.get_json()['sleeve']['id']
+    from core import sleeve_agents as sa
+    monkeypatch.setattr(sa, 'parse_text', lambda text, lang='es': (
+        sa.clean_config({'enabled': True, 'universe': ['NVDA', 'AMD'], 'buy_on_dip_pct': 15, 'rules': text})[0],
+        'Compra chips en caídas', []))
+    p = client.post('/api/trade/sleeves/agent/parse', data=json.dumps({'text': 'compra chips cuando caigan 15 %'}),
+                    headers=H()).get_json()
+    assert p['ok'] and p['agent']['universe'] == ['NVDA', 'AMD']
+    # sin PIN no se guarda
+    assert client.patch(f'/api/trade/sleeves/{sid}/agent', data=json.dumps({'agent': p['agent']}),
+                        headers={'Content-Type': 'application/json'}).status_code in (401, 403)
+    r = client.patch(f'/api/trade/sleeves/{sid}/agent', data=json.dumps({'agent': p['agent']}), headers=H())
+    assert r.status_code == 200 and 'Vigila NVDA, AMD' in r.get_json()['agent']['summary_es']
+    lst = client.get('/api/trade/sleeves', headers=H()).get_json()
+    it = next(i for i in lst['items'] if i['id'] == sid)
+    assert it['agent']['enabled'] and it['agent']['buy_on_dip_pct'] == 15
+    from sqlalchemy import text
+    from ontology.db import session_scope
+    with session_scope() as s:
+        n = s.execute(text("SELECT count(*) FROM decisions WHERE kind = 'policy.change' "
+                           "AND subject->>'policy' = 'broker.sleeve_agent'")).scalar()
+    assert n == 1

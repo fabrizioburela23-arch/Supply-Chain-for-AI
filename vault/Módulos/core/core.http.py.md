@@ -52,6 +52,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[core.providers.news.py]] — lo importa
 - [[core.quotes.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
+- [[core.sleeve_agents.py]] — lo importa
 - [[core.space.py]] — lo importa
 - [[core.trading_agent.py]] — lo importa
 - [[core.voice_api.py]] — lo importa

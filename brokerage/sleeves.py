@@ -121,7 +121,15 @@ def _view(session, sl, prices):
         if mv is not None:
             value += mv
         pos.append({'symbol': sym, 'qty': q, 'cost_usd': lg['cost'].get(sym), 'price': px, 'market_value': mv})
-    return {'id': sl.id, 'name': sl.name, 'objective': sl.objective, 'risk_profile': sl.risk_profile,
+    agent = None
+    try:
+        from core import sleeve_agents as _sa
+        if getattr(sl, 'agent', None):
+            cfg = _sa.clean_config(sl.agent)[0]
+            agent = dict(cfg, summary_es=_sa.describe(cfg, 'es'), summary_en=_sa.describe(cfg, 'en'))
+    except Exception:  # noqa: BLE001
+        agent = None
+    return {'id': sl.id, 'name': sl.name, 'objective': sl.objective, 'risk_profile': sl.risk_profile, 'agent': agent,
             'alloc_usd': round(float(sl.alloc_usd or 0), 2), 'cash_usd': lg['cash'], 'reserved_usd': lg['reserved'],
             'available_usd': lg['available'], 'positions': pos, 'value_usd': round(value, 2),
             'pnl_usd': round(value - float(sl.alloc_usd or 0), 2), 'status': sl.status}
@@ -344,6 +352,58 @@ def sleeves_update(sleeve_id):
         if 'alloc_usd' in data:
             cash = (svc.account_snapshot(s, svc.HOUSE_ID).get('account') or {}).get('cash')
         res = update(s, svc.HOUSE_ID, sleeve_id, data, actor=_actor(), account_cash=cash)
+    return _http(res)
+
+
+def set_agent(session, client_id, sleeve_id, raw, actor='ui'):
+    """Guarda (o apaga) el agente de una cartera — policy.change 'broker.sleeve_agent' en el libro."""
+    from core import sleeve_agents as _sa
+    from core.http import _safe_ticker
+    sl = _get(session, client_id, sleeve_id)
+    if sl is None or sl.status != 'active':
+        return {'ok': False, 'code': 'not_found', 'error': 'cartera no encontrada', 'error_en': 'portfolio not found'}
+    cfg, notes = _sa.clean_config(raw, safe_ticker=_safe_ticker)
+    if cfg['enabled'] and not cfg['universe']:
+        return {'ok': False, 'code': 'bad_request', 'error': 'el agente necesita al menos una acción que vigilar',
+                'error_en': 'the agent needs at least one stock to watch'}
+    before = dict(sl.agent) if isinstance(sl.agent, dict) else None
+    sl.agent = cfg
+    session.flush()
+    from brokerage import service as svc
+    from core import decision_sites
+    decision_sites.policy_change(session, 'broker.sleeve_agent', before, cfg,
+                                 subject={'client_id': client_id, 'sleeve_id': sl.id}, p=svc._principal(actor))
+    return {'ok': True, 'agent': dict(cfg, summary_es=_sa.describe(cfg, 'es'), summary_en=_sa.describe(cfg, 'en')),
+            'notes': notes}
+
+
+@sleeves_bp.route('/api/trade/sleeves/agent/parse', methods=['POST'])
+@rate_limit(10, 60)
+@_trade_auth
+def sleeves_agent_parse():
+    """Texto en palabras → configuración PROPUESTA (no guarda nada: guardar es el PATCH de abajo)."""
+    from core import sleeve_agents as _sa
+    data = request.get_json(silent=True) or {}
+    cfg, summary, notes = _sa.parse_text(data.get('text'), data.get('lang') or 'es')
+    if not cfg:
+        return jsonify({'ok': False, 'code': 'not_understood', 'error': '; '.join(notes) or 'no se entendió',
+                        'error_en': 'could not understand it'}), 400
+    return jsonify({'ok': True, 'agent': cfg, 'summary': summary or _sa.describe(cfg, 'es'),
+                    'describe_es': _sa.describe(cfg, 'es'), 'describe_en': _sa.describe(cfg, 'en'), 'notes': notes})
+
+
+@sleeves_bp.route('/api/trade/sleeves/<sleeve_id>/agent', methods=['PATCH'])
+@rate_limit(10, 60)
+@_trade_auth
+def sleeves_agent_set(sleeve_id):
+    if not _db():
+        return _no_db()
+    data = request.get_json(silent=True) or {}
+    from brokerage import service as svc
+    from ontology.db import session_scope
+    with session_scope() as s:
+        res = set_agent(s, svc.HOUSE_ID, sleeve_id, data.get('agent') if isinstance(data.get('agent'), dict) else data,
+                        actor=_actor())
     return _http(res)
 
 

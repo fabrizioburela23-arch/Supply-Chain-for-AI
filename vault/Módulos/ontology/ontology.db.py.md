@@ -66,6 +66,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[core.prices_store.py]] — lo importa
 - [[core.replay.py]] — lo importa
 - [[core.retention.py]] — lo importa
+- [[core.sleeve_agents.py]] — lo importa
 - [[core.trading_agent.py]] — lo importa
 - [[core.voice_api.py]] — lo importa
 - [[matrix.api.py]] — lo importa
@@ -109,7 +110,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 101 pruebas (lista abajo)._
+_Además lo importan 102 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -225,6 +226,7 @@ _Además lo importan 101 pruebas (lista abajo)._
 - [[tests.test_scenario_pnl.py]]
 - [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_security.py]]
+- [[tests.test_sleeve_agents.py]]
 - [[tests.test_tensor_autolink.py]]
 - [[tests.test_trading_agent_ledger.py]]
 - [[tests.test_voice_agent_split.py]]

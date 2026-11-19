@@ -17,24 +17,24 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 260 |
-| Líneas de código | 153.227 |
+| Archivos de código (Python, JS, HTML) | 261 |
+| Líneas de código | 153.600 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 279 |
+| Archivos de prueba | 280 |
 | Documentos | 33 |
-| Rutas HTTP | 270 |
+| Rutas HTTP | 272 |
 | Grupos de API | 61 |
 | Herramientas MCP | 35 |
 | Variables de entorno | 163 |
 | Sesiones de trabajo | 113 |
-| Aristas `calls_endpoint` | 789 |
-| Aristas `defines_endpoint` | 305 |
-| Aristas `imports` | 2.439 |
+| Aristas `calls_endpoint` | 793 |
+| Aristas `defines_endpoint` | 307 |
+| Aristas `imports` | 2.455 |
 | Aristas `loads_script` | 97 |
-| Aristas `mentions_in_session` | 617 |
+| Aristas `mentions_in_session` | 618 |
 | Aristas `reads_env` | 233 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.915 |
+| Aristas `tested_by` | 1.921 |
 | Aristas `uses_global` | 477 |
 
 ## Nodos "dios" (más conectados)
@@ -46,12 +46,12 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[app.html]] | 127 | 29 | 98 | [[Capa Interfaz (Khipus OS)]] |
 | [[engine.app_main.js]] | 115 | 68 | 47 | [[Capa Interfaz (Khipus OS)]] |
 | [[server.py]] | 100 | 31 | 69 | [[Capa Infraestructura]] |
-| [[ontology.db.py]] | 59 | 49 | 10 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.db.py]] | 60 | 50 | 10 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 53 | 15 | 38 | [[Capa Interfaz (Khipus OS)]] |
 | [[nodes.nodes_seed.js]] | 44 | 43 | 1 | [[Capa Datos del catálogo]] |
 | [[core.governance.py]] | 41 | 36 | 5 | [[Capa Infraestructura]] |
 | [[core.__init__.py]] | 40 | 40 | 0 | [[Capa Infraestructura]] |
-| [[core.http.py]] | 39 | 37 | 2 | [[Capa Infraestructura]] |
+| [[core.http.py]] | 40 | 38 | 2 | [[Capa Infraestructura]] |
 | [[core.decisions.py]] | 38 | 31 | 7 | [[Capa Infraestructura]] |
 | [[core.khipu_chat.py]] | 37 | 7 | 30 | [[Capa Chat y agentes]] |
 | [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |

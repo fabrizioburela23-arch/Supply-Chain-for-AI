@@ -50,6 +50,7 @@ cotización cruda compartida (server rutas + agentes de alertas).
 - [[core.portfolio_report.py]] — lo importa
 - [[core.providers.market.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
+- [[core.sleeve_agents.py]] — lo importa
 - [[core.trading_agent.py]] — lo importa
 - [[mcp_server.ops.py]] — lo importa
 - [[ontology.agents.py]] — lo importa

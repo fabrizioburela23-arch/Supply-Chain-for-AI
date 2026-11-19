@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "brokerage/models.py"
 lenguaje: "python"
-lineas: 252
+lineas: 254
 aliases: ["brokerage/models.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # brokerage/models.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 252 líneas · `brokerage/models.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 254 líneas · `brokerage/models.py`
 
 ## Para qué sirve
 
@@ -23,7 +23,7 @@ tablas del corretaje multi-cliente.
 - clase `BrokerAudit` — APPEND-ONLY. El código de brokerage/ solo hace INSERT aquí. _(línea 128)_
 - clase `BrokerFill` — APPEND-ONLY (kh_append_only, core/ledger_ddl.APPEND_ONLY_TABLES). Avance de ejecución observado. _(línea 141)_
 - clase `BrokerSleeve` — CARTERA dentro de una cuenta de Alpaca (docs/CARTERAS_Y_AGENTES.md fase 2, decisión de Fabrizio 2026-11-10): nombre + objetivo + efectivo … _(línea 164)_
-- clase `BrokerOAuthState` _(línea 182)_
+- clase `BrokerOAuthState` _(línea 183)_
 
 **Internas** (empiezan con `_`): `_uuid`, `_safe_ddl`, `_after_create`
 
@@ -36,6 +36,7 @@ tablas del corretaje multi-cliente.
 
 - [[brokerage.service.py]] — lo importa
 - [[brokerage.sleeves.py]] — lo importa
+- [[core.sleeve_agents.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 
 _Además lo importan 19 pruebas (lista abajo)._

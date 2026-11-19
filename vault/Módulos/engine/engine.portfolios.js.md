@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/portfolios.js"
 lenguaje: "javascript"
-lineas: 1474
+lineas: 1507
 aliases: ["engine/portfolios.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/portfolios.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.474 líneas · `engine/portfolios.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.507 líneas · `engine/portfolios.js`
 
 ## Para qué sirve
 
@@ -50,10 +50,12 @@ Se carga en [[app.html]] en la posición **89 de 105** (línea 3241), después d
 
 - `GET /api/portfolio-ai/themes` → [[core.portfolio_ai.py]] ([[API portfolio-ai]])
 - `GET /api/trade/sleeves` → [[brokerage.sleeves.py]] ([[API trade]])
+- `PATCH /api/trade/sleeves/<sleeve_id>/agent` → [[brokerage.sleeves.py]] ([[API trade]])
 - `PATCH /api/trade/sleeves/<sleeve_id>` → [[brokerage.sleeves.py]] ([[API trade]])
 - `POST /api/portfolio-ai/ask` → [[core.portfolio_ai.py]] ([[API portfolio-ai]])
 - `POST /api/portfolio-ai/propose` → [[core.portfolio_ai.py]] ([[API portfolio-ai]])
 - `POST /api/trade/sleeves/<sleeve_id>/archive` → [[brokerage.sleeves.py]] ([[API trade]])
+- `POST /api/trade/sleeves/agent/parse` → [[brokerage.sleeves.py]] ([[API trade]])
 - `POST /api/trade/sleeves` → [[brokerage.sleeves.py]] ([[API trade]])
 
 ## Pruebas que lo cubren

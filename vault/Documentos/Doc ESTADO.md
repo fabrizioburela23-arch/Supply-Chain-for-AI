@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/ESTADO.md"
 lenguaje: "markdown"
-lineas: 3630
+lineas: 3635
 aliases: ["docs/ESTADO.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/ESTADO.md
 
-> Documento · capa [[Capa Documentación]] · 3.630 líneas · `docs/ESTADO.md`
+> Documento · capa [[Capa Documentación]] · 3.635 líneas · `docs/ESTADO.md`
 
 ## De qué trata
 

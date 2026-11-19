@@ -56,7 +56,7 @@ tags: ["capa/ontologia", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Infraestructura]] | 48 |
-| la usa | [[Capa Infraestructura]] | 40 |
+| la usa | [[Capa Infraestructura]] | 41 |
 | usa a | [[Capa Datos del catálogo]] | 34 |
 | la usa | [[Capa Investigación]] | 15 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |

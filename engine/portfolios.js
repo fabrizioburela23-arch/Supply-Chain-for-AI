@@ -624,6 +624,8 @@
           '<span style="color:' + (pl >= 0 ? UP : DOWN) + '">' + (pl >= 0 ? '+' : '') + esc(usd(pl)) + '</span> · ' +
           esc(T('libre', 'free')) + ' ' + esc(usd(s.available_usd)) +
           (s.positions.length ? ' · ' + s.positions.map(function (p) { return esc(p.symbol) + ' ' + esc(String(+(+p.qty).toFixed(4))); }).join(', ') : '') + '</div>' +
+          (s.agent && s.agent.enabled ? '<div style="font-size:12.5px;margin:2px 0 6px;color:' + MUTE + '">🤖 ' + esc(lang() === 'en' ? s.agent.summary_en : s.agent.summary_es) + '</div>' : '') +
+          '<button type="button" class="kpf-btn kpf-sl-agent">🤖 ' + esc(s.agent && s.agent.enabled ? T('Agente: cambiar', 'Agent: change') : T('Programar agente', 'Program agent')) + '</button> ' +
           '<button type="button" class="kpf-btn kpf-sl-buy">' + esc(T('Comprar', 'Buy')) + '</button> ' +
           '<button type="button" class="kpf-btn kpf-sl-sell">' + esc(T('Vender', 'Sell')) + '</button> ' +
           '<button type="button" class="kpf-btn kpf-sl-arch">' + esc(T('Archivar', 'Archive')) + '</button></div>';
@@ -638,6 +640,7 @@
         el.querySelector('.kpf-sl-buy').onclick = function () { sleeveOrder(s, 'buy', paper, again); };
         el.querySelector('.kpf-sl-sell').onclick = function () { sleeveOrder(s, 'sell', paper, again); };
         el.querySelector('.kpf-sl-arch').onclick = function () { archiveSleeve(s, again); };
+        el.querySelector('.kpf-sl-agent').onclick = function () { programAgent(s, paper, again); };
       });
     }).catch(function () {});
   }
@@ -686,9 +689,39 @@
       });
     }).then(function (res) { if (res) setTimeout(done, 1500); }).catch(function () {});
   }
+  // 🤖 AGENTE DE LA CARTERA (fase 3, core/sleeve_agents.py): se programa EN PALABRAS; la IA lo traduce a una
+  // configuración acotada, se muestra en una frase y se guarda con PIN. Corre con el agente encendido (Operar → Agente).
+  function programAgent(s, paper, done) {
+    var KT = window.KhipuToast; if (!KT) return;
+    var on = s.agent && s.agent.enabled;
+    _ask(T('Agente de «' + s.name + '»', 'Agent of “' + s.name + '”'),
+      T('Dile en palabras qué hacer (p. ej. «compra Nvidia, AMD y TSMC cuando caigan 15 % y vende si una pierde 8 %»)' + (on ? ' — o escribe «apagar»' : ''),
+        'Tell it in words what to do (e.g. “buy Nvidia, AMD and TSMC when they drop 15% and sell if one loses 8%”)' + (on ? ' — or type “off”' : ''))).then(function (txt) {
+      if (!txt) return null;
+      if (on && /^\s*(apagar|apaga|off|stop)\s*$/i.test(txt)) {
+        return _post('/api/trade/sleeves/' + encodeURIComponent(s.id) + '/agent', { agent: Object.assign({}, s.agent, { enabled: false }) }, 'PATCH')
+          .then(function (r) { _toast(r.ok, 'Agente apagado', 'Agent turned off', r.d); if (r.ok) done(); });
+      }
+      return _post('/api/trade/sleeves/agent/parse', { text: txt, lang: lang() }).then(function (r) {
+        if (!r.ok) { _toast(false, 'No entendí el pedido', 'Could not understand it', r.d); return null; }
+        var a = r.d.agent, desc = lang() === 'en' ? r.d.describe_en : r.d.describe_es;
+        var real = !paper && a.mode === 'auto';
+        var body = desc + (real ? T(' · Con dinero real el agente PROPONE y tú confirmas cada orden.', ' · With real money the agent PROPOSES and you confirm each order.') : '') +
+          ((r.d.notes || []).length ? ' · ' + r.d.notes.join('; ') : '');
+        return KT.confirm({ title: T('¿Activo este agente en «' + s.name + '»?', 'Turn on this agent in “' + s.name + '”?'), note: body,
+          confirmLabel: T('Activar', 'Turn on'), cancelLabel: T('Cancelar', 'Cancel') }).then(function (yes) {
+          if (!yes) return null;
+          return _post('/api/trade/sleeves/' + encodeURIComponent(s.id) + '/agent', { agent: Object.assign({}, a, { enabled: true }) }, 'PATCH').then(function (w) {
+            _toast(w.ok, 'Agente activado: trabaja cuando el agente de Operar está encendido', 'Agent on: it works while the Trade agent is running', w.d);
+            if (w.ok) done();
+          });
+        });
+      });
+    }).catch(function () {});
+  }
   function archiveSleeve(s, done) {
     var KT = window.KhipuToast;
-    (KT && KT.confirm ? KT.confirm({ title: T('Archivar «' + s.name + '»', 'Archive “' + s.name + '”'), body: T('Su efectivo vuelve a la cuenta principal. Solo se puede si no tiene posiciones.', 'Its cash goes back to the main account. Only possible if it has no positions.') }) : Promise.resolve(false))
+    (KT && KT.confirm ? KT.confirm({ title: T('Archivar «' + s.name + '»', 'Archive “' + s.name + '”'), note: T('Su efectivo vuelve a la cuenta principal. Solo se puede si no tiene posiciones.', 'Its cash goes back to the main account. Only possible if it has no positions.') }) : Promise.resolve(false))
       .then(function (yes) {
         if (!yes) return;
         return _post('/api/trade/sleeves/' + encodeURIComponent(s.id) + '/archive', {}).then(function (r) { _toast(r.ok, 'Cartera archivada', 'Portfolio archived', r.d); if (r.ok) done(); });

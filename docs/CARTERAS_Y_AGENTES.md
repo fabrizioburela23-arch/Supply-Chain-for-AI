@@ -55,5 +55,9 @@ historial vs SPY. Regla de oro intacta: dinero real NUNCA en automático; todo p
 2. ✅ (2026-11-14) **Carteras de papel/reales múltiples** sobre la cuenta de Alpaca: `brokerage/sleeves.py` (tabla
    broker_sleeves; contabilidad por órdenes `meta.sleeve_id`; control previo en `service.preview_order` → `sleeve_limit`;
    API /api/trade/sleeves con PIN y policy.change 'broker.sleeve'; UI en «Carteras»: crear, comprar/vender, archivar).
-3. **Agente por cartera** (la configuración del agente actual pasa a vivir en cada cartera; varios agentes a la vez).
+3. ✅ (2026-11-19) **Agente por cartera** (`core/sleeve_agents.py`): se programa EN PALABRAS («compra chips cuando caigan
+   15 % y vende si una pierde 8 %») → la IA propone una configuración ACOTADA (universo, tope por acción, stop, confianza,
+   intervalo, «comprar solo en caídas», manual/auto) → se ve en una frase → se guarda con PIN (policy.change
+   'broker.sleeve_agent'). Corre dentro del hilo del agente de Operar (el reloj no llama a la IA): stop-loss de SUS
+   posiciones, compra ≤ su efectivo y su tope, vende solo lo suyo; AUTO solo en papel (real = propone y la persona toca).
 4. **🧩 Conectores**: Composio (lectura primero, escritura con confirmación) + skills de GitHub.

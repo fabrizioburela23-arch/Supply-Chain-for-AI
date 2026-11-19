@@ -443,14 +443,15 @@ def _signals_prune(now=None):
 
 
 def _signal_add(ticker, side, *, notional=None, qty=None, price=0.0, confidence=0, reason='', kind='entry',
-                decision_id=None, facts=None):
+                decision_id=None, facts=None, sleeve_id=None, sleeve_name=None):
     """Propone una señal (una pendiente por símbolo y lado: la nueva reemplaza a la vieja). → la señal."""
     now = time.time()
     with _SIGNALS_LOCK:
         _signals_prune(now)
         sig = _AGENT.setdefault('signals', {})
         for v in sig.values():
-            if v['status'] == 'pending' and v['ticker'] == ticker and v['side'] == side:
+            if (v['status'] == 'pending' and v['ticker'] == ticker and v['side'] == side
+                    and v.get('sleeve_id') == sleeve_id):
                 v['status'] = 'replaced'
         sid = uuid.uuid4().hex[:16]
         tech = (facts or {}).get('tech') or {}
@@ -464,6 +465,7 @@ def _signal_add(ticker, side, *, notional=None, qty=None, price=0.0, confidence=
             'stop_loss_pct': _AGENT['stop_loss_pct'], 'confidence': int(confidence or 0), 'reason': str(reason)[:200],
             'rsi14': tech.get('rsi14'), 'trend': tech.get('trend'), 'conviction': (facts or {}).get('conviction'),
             'decision_id': decision_id, 'status': 'pending', 'paper': bool(_S._paper()),
+            'sleeve_id': sleeve_id, 'sleeve_name': sleeve_name,      # agente de una CARTERA (core/sleeve_agents)
         }
         return sig[sid]
 
@@ -523,7 +525,7 @@ def _agent_record_signal(ctx, status):
         return None
 
 
-def _agent_order(order, action, detail, signal=None, checks_mode='house_today'):
+def _agent_order(order, action, detail, signal=None, checks_mode='house_today', sleeve_id=None):
     """La orden del agente por EL camino único (brokerage.service.house_order, source='agent'): mismos controles,
     client_order_id, broker_audit y decisiones (trade.agent_signal → order.preview → order.confirm → order.submit).
     En papel no espera a nadie (el agente en AUTO lo encendió Fabrizio con su PIN); con dinero real quedaría
@@ -537,6 +539,8 @@ def _agent_order(order, action, detail, signal=None, checks_mode='house_today'):
               time_in_force=order.get('time_in_force'), client_order_id=coid, source='agent', channel='agent',
               requested_by='agente-trading', checks_mode=checks_mode,
               rationale=(signal.output.get('reason') if signal is not None and signal.output else None))
+    if sleeve_id:
+        kw['sleeve_id'] = sleeve_id
     _bsvc.send_trace_begin()
     try:
         with identity.use(_agent_principal()):
@@ -580,11 +584,12 @@ def _agent_order(order, action, detail, signal=None, checks_mode='house_today'):
     return payload
 
 
-def _agent_place(ticker: str, side: str, notional: float, signal=None) -> dict:
+def _agent_place(ticker: str, side: str, notional: float, signal=None, sleeve_id=None) -> dict:
     """Orden market por monto (USD). Lanza _AgentOrderError si no se envió."""
     return _agent_order({'symbol': ticker, 'side': side, 'notional': round(float(notional), 2),
                          'time_in_force': 'gtc' if '/' in ticker else 'day'},     # cripto: Alpaca exige gtc/ioc
-                        'agent_order', {'symbol': ticker, 'side': side, 'notional': round(notional, 2)}, signal)
+                        'agent_order', {'symbol': ticker, 'side': side, 'notional': round(notional, 2)}, signal,
+                        sleeve_id=sleeve_id)
 
 
 def _agent_stop_losses(positions, block):
@@ -893,6 +898,11 @@ def _agent_thread_fn():
                 _agent_run_cycle()
             except Exception as e:  # noqa: BLE001
                 _agent_log({'msg': f'Cycle error: {_S._diag_redact(e)}', 'level': 'error'})
+            try:     # fase 3: los agentes de las CARTERAS corren en el mismo hilo (cada uno con su intervalo)
+                from core import sleeve_agents as _sa
+                _sa.run_due()
+            except Exception as e:  # noqa: BLE001
+                _agent_log({'msg': f'Agentes de cartera: {type(e).__name__}', 'level': 'error'})
             lo, hi, _t = _AGENT_BOUNDS['interval_min']
             interval = int(min(hi, max(lo, _AGENT['interval_min']))) * 60
             for _ in range(interval):
@@ -1165,6 +1175,8 @@ def agent_signal_take(sid):
                   else 'house_today')
     else:
         kw.update(notional=sg['notional'])
+    if sg.get('sleeve_id'):            # señal del agente de una CARTERA: la orden va a esa cartera (sus controles)
+        kw['sleeve_id'] = sg['sleeve_id']
     res = _S._house_call('house_order', sg['ticker'], sg['side'], **kw)
     payload, st = _S._house_http(res)
     with _SIGNALS_LOCK:

@@ -9,24 +9,24 @@ tags: ["capa/dinero", "tipo/capa"]
 
 > Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana.
 
-**17 archivos · 11.519 líneas.** Volver al [[00 Mapa de Khipus]].
+**17 archivos · 11.626 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[brokerage.service.py]] — 2.369 líneas · lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
-- [[engine.portfolios.js]] — 1.474 líneas · 🧪 CARTERAS SIMULADAS (paper trading local)
+- [[engine.portfolios.js]] — 1.507 líneas · 🧪 CARTERAS SIMULADAS (paper trading local)
 - [[core.portfolio_ai.py]] — 1.293 líneas · ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
-- [[core.trading_agent.py]] — 1.206 líneas · Agente de trading de la cuenta de la casa — /api/trade/agent/\* (G5-05, lote I4: salió de server.py SIN cambiar comportamiento).
+- [[core.trading_agent.py]] — 1.218 líneas · Agente de trading de la cuenta de la casa — /api/trade/agent/\* (G5-05, lote I4: salió de server.py SIN cambiar comportamiento).
 - [[engine.clients.js]] — 1.060 líneas · 👥 CLIENTES E INVERSIÓN (corretaje multi-cliente vía Alpaca).
 - [[brokerage.risk.py]] — 651 líneas · controles de riesgo PRE-orden por cliente.
 - [[engine.app_trade_panel.js]] — 609 líneas · Professional Trade Panel
 - [[core.portfolio_reports_api.py]] — 468 líneas · /api/portfolio-report/\* y /api/news/portfolio.
 - [[brokerage.api.py]] — 436 líneas · blueprint /api/brokerage/\* (corretaje multi-cliente).
+- [[brokerage.sleeves.py]] — 420 líneas · VARIAS CARTERAS sobre UNA cuenta de Alpaca (docs/CARTERAS_Y_AGENTES.md, fase 2).
 - [[engine.pfreports.js]] — 414 líneas · 📄 REPORTES · 📰 NOTICIAS · 💬 PREGÚNTALE A TU CARTERA (secciones de Comité → 💼 Mi cartera; las monta engine/pfcommittee.js)
-- [[brokerage.sleeves.py]] — 360 líneas · VARIAS CARTERAS sobre UNA cuenta de Alpaca (docs/CARTERAS_Y_AGENTES.md, fase 2).
 - [[engine.trade.js]] — 276 líneas · TRADING COMPARTIDO del navegador (lote I4, G5-07: salió TAL CUAL de engine/voice.js). Lo usan la voz (engine/voice.js: place_order / …
 - [[brokerage.alpaca.py]] — 256 líneas · cliente HTTP mínimo de Alpaca (Trading API v2 + OAuth).
-- [[brokerage.models.py]] — 252 líneas · tablas del corretaje multi-cliente.
+- [[brokerage.models.py]] — 254 líneas · tablas del corretaje multi-cliente.
 - [[core.portfolio_report.py]] — 246 líneas · REPORTE DE CARTERA (a pedido, diario, semanal o mensual).
 - [[brokerage.crypto.py]] — 135 líneas · cifrado de credenciales de clientes (Fernet).
 - [[brokerage.__init__.py]] — 14 líneas · corretaje MULTI-CLIENTE vía Alpaca (Phase 3, 2026-09-30).
@@ -35,10 +35,10 @@ tags: ["capa/dinero", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 33 |
+| usa a | [[Capa Infraestructura]] | 35 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 22 |
+| la usa | [[Capa Infraestructura]] | 17 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
-| la usa | [[Capa Infraestructura]] | 13 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Comité]] | 8 |
 | usa a | [[Capa Ontología y grafo temporal]] | 8 |

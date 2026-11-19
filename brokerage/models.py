@@ -174,6 +174,7 @@ class BrokerSleeve(Base):
     risk_profile = Column(String(16), nullable=False, default='moderado')
     alloc_usd = Column(Float, nullable=False, default=0.0)                 # efectivo asignado (neto de retiros)
     status = Column(String(10), nullable=False, default='active')          # active | archived
+    agent = Column(JSONB, nullable=True)        # agente de la cartera (core/sleeve_agents.clean_config), fase 3
     created_by = Column(String(120), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
@@ -199,6 +200,7 @@ class BrokerOAuthState(Base):
 _LATE_COLUMNS = (
     ('broker_orders', 'error_en', 'TEXT'),
     ('broker_orders', 'account_fp', 'VARCHAR(64)'),
+    ('broker_sleeves', 'agent', 'JSONB'),          # fase 3 (2026-11-19): agente programable de cada cartera
 )
 _AUDIT_FN = """
 CREATE OR REPLACE FUNCTION broker_audit_append_only() RETURNS trigger AS $$

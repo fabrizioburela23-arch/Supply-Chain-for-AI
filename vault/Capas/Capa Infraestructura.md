@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 50
+archivos: 51
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**50 archivos · 27.916 líneas.** Volver al [[00 Mapa de Khipus]].
+**51 archivos · 28.182 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
@@ -41,6 +41,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[sw.js]] — 296 líneas · Khipu Finance — Service Worker Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / CACHE va en la línea 6 (regla de despliegue #1: …
 - [[engine.aispend.js]] — 286 líneas · 💰 GASTO DE IA (🩺 Sistema → pestaña "Gasto IA")
 - [[core.governance_lint.py]] — 270 líneas · EL lint de los artefactos de gobernanza (docs/INFRA_OPERATIVA.md §5.2; pasos 9 y 25).
+- [[core.sleeve_agents.py]] — 266 líneas · UN AGENTE POR CARTERA (docs/CARTERAS_Y_AGENTES.md fase 3, 2026-11-19).
 - [[scripts.build_shapes.py]] — 265 líneas · compila las formas SHACL a IR (docs/INFRA_OPERATIVA.md §3.3; paso 10).
 - [[core.pin.py]] — 260 líneas · verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[core.ops_check.py]] — 257 líneas · O1 (misión de reparación 2026-10-04): chequeo del sistema EN el servidor, guardado y consultable.
@@ -71,18 +72,18 @@ Variables de entorno: [[Índice de variables de entorno]].
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | la usa | [[Capa Ontología y grafo temporal]] | 48 |
-| usa a | [[Capa Ontología y grafo temporal]] | 40 |
+| usa a | [[Capa Ontología y grafo temporal]] | 41 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 35 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 33 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 35 |
 | la usa | [[Capa Chat y agentes]] | 32 |
 | la usa | [[Capa Investigación]] | 28 |
 | la usa | [[Capa MCP y API]] | 24 |
 | la usa | [[Capa Comité]] | 23 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 23 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 20 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 21 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 17 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 13 |
 | usa a | [[Capa Chat y agentes]] | 8 |
 | la usa | [[Capa Voz]] | 7 |
 | usa a | [[Capa Investigación]] | 7 |
