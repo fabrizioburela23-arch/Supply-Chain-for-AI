@@ -94,6 +94,14 @@ prueba con base (tests/test_phase3.py esperaba AVOID para una privada). Correr l
 PATCH /api/trade/sleeves/<id>/agent (PIN, libro). Corren con el agente de Operar encendido (core/trading_agent hilo →
 core/sleeve_agents.run_due). Señales de un agente de cartera llevan sleeve_id y al tomarlas la orden va a esa cartera.
 
+**2026-11-20 — INTERFAZ ADAPTATIVA (F5 de docs/CHAT_UI_GENERATIVA.md) ENCENDIDA:** la IA puede devolver `layout`
+([{block, from:'F#'}]) en su paso final y ELIGE qué bloques y en qué orden (simple ≤2, pro ≤4); el servidor solo acepta
+bloques del catálogo con [F#] de esta respuesta que ya pasaron procedencia y esquema (core/genui.clean_plan/plan_pick);
+si nada casa → orden automático. Sobre `layout:'plan'|'auto'`. Pruebas: tests/test_genui_plan.py.
+RDF/OWL/SHACL/SPARQL (pregunta de Fabrizio): el grafo vive en Postgres (objetos/vínculos/eventos bitemporales); SHACL SÍ
+(governance/shapes/*.ttl compilados a validadores Python; pySHACL solo en CI); sin OWL ni SPARQL (decisión de
+ARQUITECTURA_V2: una sola base). Lo útil a futuro: EXPORTAR/IMPORTAR RDF (Turtle/JSON-LD) para las ontologías B2B.
+
 Fabrizio pidió GASTAR POCOS TOKENS: nada de workflows/multi-agente, cambios chicos directos, pruebas solo de lo
 tocado (suite completa solo antes de publicar), mensajes cortos.
 

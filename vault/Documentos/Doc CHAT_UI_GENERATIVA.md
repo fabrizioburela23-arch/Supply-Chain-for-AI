@@ -67,6 +67,7 @@ Chat con interfaz generativa: especificación v1 (kblocks/1) — - \*\*Fecha:\*\
 - [[tests.test_genui_contract.py]]
 - [[tests.test_genui_guardian.py]]
 - [[tests.test_genui_ledger.py]]
+- [[tests.test_genui_plan.py]]
 - [[tests.test_genui_render_node.py]]
 - [[tests.test_genui_rivals.py]]
 - [[tests.test_genui_schema.py]]
@@ -80,3 +81,7 @@ Chat con interfaz generativa: especificación v1 (kblocks/1) — - \*\*Fecha:\*\
 - [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_vault.py]]
 - [[tests.test_world.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]

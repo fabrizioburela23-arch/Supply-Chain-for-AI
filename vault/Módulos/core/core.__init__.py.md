@@ -81,7 +81,7 @@ _Nada interno._
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 - herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
-_Además lo importan 70 pruebas (lista abajo)._
+_Además lo importan 71 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -104,6 +104,7 @@ _Además lo importan 70 pruebas (lista abajo)._
 - [[tests.test_genui_guardian.py]]
 - [[tests.test_genui_k_server.py]]
 - [[tests.test_genui_ledger.py]]
+- [[tests.test_genui_plan.py]]
 - [[tests.test_genui_review_fixes.py]]
 - [[tests.test_genui_rivals.py]]
 - [[tests.test_genui_sim_report.py]]

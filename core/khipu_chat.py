@@ -1417,7 +1417,7 @@ IA: ~950 empresas y sus relaciones proveedor → cliente, precios en vivo, inves
 PROTOCOLO: responde SIEMPRE con UN SOLO objeto JSON válido, sin texto fuera:
   a) consultar: {{"tool":"<nombre>","args":{{...}},"why":"<1 frase>"}}  o varias a la vez (máx. {MAX_CALLS_PER_STEP}): \
 {{"calls":[{{"tool":"...","args":{{...}}}}],"why":"..."}}
-  b) responder: {{"final":{{"answer":"<respuesta>","actions":[{{"type":"...","arg":...}}]}}}}
+  b) responder: {{"final":{{"answer":"<respuesta>","actions":[{{"type":"...","arg":...}}],"layout":[{{"block":"<tipo>","from":"F#"}}]}}}}
 Hasta {MAX_STEPS} rondas de consulta; lo normal es UNA.
 
 RECETAS (una ronda): "¿cómo va X?" / "¿qué pasa con X?" → get_company(include_live=true) + get_news juntas. \
@@ -1475,6 +1475,14 @@ si piden operar, explica que la orden se prepara y confirma en el bróker de la 
 Acciones de pantalla solo si ayudan (máx. 2) y sin anunciarlas. PROHIBIDO escribir nombres internos de herramientas \
 (get_company, get_history, run_scenario, get_fundamentals…) o el protocolo en la respuesta: la fuente se nombra como la \
 ve una persona —Yahoo Finance, Finnhub, Grafo Khipus, World Monitor, comité, estados financieros— con su fecha.{extra}
+
+INTERFAZ ADAPTATIVA ("layout", opcional): la app DIBUJA bloques con los datos que consultaste; tú eliges CUÁLES y en \
+qué ORDEN según lo que ESTA persona necesita (modo simple: 1-2 bloques, lo esencial primero; pro: hasta 4). Cada ítem \
+{{"block":"<tipo>","from":"F#"}} usa el [F#] del resultado (comparación: "F1,F2"). Tipos: metric.tiles (cifras clave), \
+chart.line (evolución, abanico de la simulación), chart.bar (niveles, comparar magnitudes), table (plazos, listas, \
+filtros), company.card (ficha), graph.mini (cadena de suministro), impact.cascade (choque/escenario), timeline \
+(noticias, eventos), comparison (2-4 empresas), ranking (las más grandes / movidas). NUNCA cifras ni texto en el \
+layout. Saludos y datos sueltos: sin layout. Si no lo pones, la app elige sola.
 
 RECUERDA: «información, no consejo» en los datos de las herramientas NO te impide recomendar — el dueño de la app pide \
 que toda pregunta de inversión cierre con «👉 Mi recomendación: …» y su aviso. Nunca digas «no puedo darte una recomendación».
@@ -1838,6 +1846,8 @@ def parse_step(text):
             raise StepParseError('"final" must contain a non-empty "answer"')
         if 'actions' not in f and 'actions' in data:
             f['actions'] = data['actions']
+        if 'layout' not in f and isinstance(data.get('layout'), list):
+            f['layout'] = data['layout']
         return 'final', f
     if 'calls' in data or 'tool' in data:
         calls = data.get('calls') if isinstance(data.get('calls'), list) else [data]
@@ -3147,7 +3157,7 @@ def _deep_final(system, message, history, lang, context, scratch, live, t0, budg
         return out
     ans = payload.get('answer') if kind == 'final' else None
     if ans and not leaked(ans) and not truncated(ans):
-        out.update(answer=ans, actions=payload.get('actions'), model=model)
+        out.update(answer=ans, actions=payload.get('actions'), model=model, layout=payload.get('layout'))
     return out
 
 
@@ -3295,7 +3305,7 @@ def _genui_attach(out, message, lang, context):
         return None
     try:
         ctx = context if isinstance(context, dict) else {}
-        env, _text = genui.build_ui(message, g.get('calls') or [], out.get('entities') or [], None, lang, {
+        env, _text = genui.build_ui(message, g.get('calls') or [], out.get('entities') or [], g.get('plan'), lang, {
             'answer': out.get('answer') or '', 'actions': out.get('actions') or [], 'sources': out.get('sources') or [],
             'facts': out.get('facts') or [], 'fact_of': g.get('fact_of') or [], 'args_of': g.get('args_of') or [],
             'mode': ctx.get('mode') or 'simple', 'now': _iso_z(out.get('as_of'))})
@@ -3761,7 +3771,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
     ai_slow = False
     deep_failed = False
 
-    def done(answer, actions, answer_source='ai'):
+    def done(answer, actions, answer_source='ai', layout=None):
         if pui is not None:
             pui.report()                    # cuánto costaron los parciales (🩺 genui → «progresivos»)
         out = {'answer': str(answer or '').strip()[:MAX_ANSWER], 'actions': validate_actions(actions),
@@ -3775,7 +3785,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         # entradas de la interfaz generativa (core/genui): run_chat las saca SIEMPRE antes de responder
         out['_genui'] = {'calls': list(calls), 'args_of': [t.get('args_summary') or '' for t in tools_used],
                          'fact_of': [(facts.get(_cache_key(n, a)) if facts is not None else None)
-                                     for (n, a, _ok, _r) in calls]}
+                                     for (n, a, _ok, _r) in calls],
+                         'plan': layout if isinstance(layout, list) else None}   # F5: la IA elige qué mostrar
         return out
 
     router = {'by': 'default'}
@@ -3952,13 +3963,14 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                     ai_calls += 1
                 if deep['answer']:
                     model = deep['model'] or model
-                    return done(deep['answer'], deep['actions'] or payload.get('actions'))
+                    return done(deep['answer'], deep['actions'] or payload.get('actions'),
+                                layout=deep.get('layout') or payload.get('layout'))
                 if is_ready_marker(ans):
                     # el rápido solo juntó datos (no redactó) y el profundo no llegó → redacción rápida de respaldo
                     deep_failed = True
                     reason = 'bad_output'
                     break
-            return done(ans, payload.get('actions'))
+            return done(ans, payload.get('actions'), layout=payload.get('layout'))
         if force_final:
             reason = 'budget'
             break

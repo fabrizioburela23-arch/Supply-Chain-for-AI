@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import threading
+import re
 import time
 from collections import Counter, deque
 
@@ -286,7 +287,11 @@ def build_core(inputs):
             if why == 'no_provenance':
                 unprov += 1
             dropped.append({'index': i, 'type': blk['type'], 'reason': 'invalid' if why == 'no_provenance' else why})
-    mains, secs, over = _layout.select(good, inputs.get('intent'), primary, mode_)
+    picked = plan_pick(good, inputs.get('plan'), mode_)
+    if picked:      # F5 (2026-11-20): la IA eligió QUÉ bloques y en QUÉ orden; las cifras siguen saliendo del servidor
+        mains, secs, over = picked[:1], picked[1:], []
+    else:
+        mains, secs, over = _layout.select(good, inputs.get('intent'), primary, mode_)
     for blk in over:
         dropped.append({'index': cands.index(blk), 'type': blk['type'], 'reason': 'over_budget'})
     texts = _layout.text_blocks(inputs.get('answer') or '', lang, ents)
@@ -318,7 +323,8 @@ def build_core(inputs):
             break
         dropped.append({'index': k, 'type': blocks[k]['type'], 'reason': 'over_budget'})
         blocks.pop(k)
-    env = {'v': VERSION, 'lang': lang, 'state': 'final', 'layout': 'auto', 'as_of': inputs.get('now') or now_iso(),
+    env = {'v': VERSION, 'lang': lang, 'state': 'final', 'layout': 'plan' if picked else 'auto',
+           'as_of': inputs.get('now') or now_iso(),
            'impl': IMPL, 'blocks': blocks}
     sp = _alt.spoken_of(blocks)
     if sp:
@@ -408,6 +414,48 @@ def inputs_for(message, calls, entities, lang, ctx):
             'meta': ctx.get('meta') if isinstance(ctx.get('meta'), dict) else gather_meta(calls), 'calls': clean_calls}
 
 
+PLAN_BLOCKS = frozenset(('metric.tiles', 'chart.line', 'chart.bar', 'chart.candles', 'ranking', 'table', 'company.card',
+                         'graph.mini', 'impact.cascade', 'timeline', 'geo.mini', 'comparison'))
+_FACT_RX = re.compile(r'^F[0-9]{1,3}$')
+
+
+def clean_plan(plan):
+    """Plan de la IA (docs/CHAT_UI_GENERATIVA.md §5.3) → [{'block', 'facts'}] saneado (máx. 6), o None.
+    Solo bloques del catálogo con `from` = [F#] que la IA vio; nada de cifras ni texto libre en la interfaz."""
+    if not isinstance(plan, list):
+        return None
+    out = []
+    for it in plan[:12]:
+        if not isinstance(it, dict) or it.get('block') not in PLAN_BLOCKS:
+            continue
+        facts = [f.strip() for f in str(it.get('from') or '').split(',') if _FACT_RX.match(f.strip())][:4]
+        if facts:
+            out.append({'block': it['block'], 'facts': facts})
+        if len(out) >= 6:
+            break
+    return out or None
+
+
+def plan_pick(good, plan, mode='simple'):
+    """Bloques VÁLIDOS (ya pasaron procedencia y esquema) en el orden que pidió la IA. [] = usar el orden automático.
+    Simple: hasta 2 visuales; Pro: hasta 4. Un ítem que no casa con ningún bloque se ignora (no se repara con IA)."""
+    if not plan:
+        return []
+    cap = 4 if mode == 'pro' else 2
+    picked = []
+    for it in plan:
+        want = set(it['facts'])
+        for b in good:
+            if any(b is p for p in picked) or b['type'] != it['block']:
+                continue
+            if want & set(b.get('sources') or []):
+                picked.append(b)
+                break
+        if len(picked) >= cap:
+            break
+    return picked
+
+
 def build_ui(message, calls, entities, plan=None, lang='es', ctx=None):
     """→ (sobre | None, texto). `plan` (el layout de la IA) llega en F5: hoy siempre el orden automático, y el texto
     es `ctx['answer']` tal cual. Nunca lanza: ante cualquier error, (None, texto) y la respuesta sigue igual."""
@@ -416,6 +464,7 @@ def build_ui(message, calls, entities, plan=None, lang='es', ctx=None):
     t0 = time.perf_counter()
     try:
         inputs = inputs_for(message, calls, entities, lang, ctx)
+        inputs['plan'] = clean_plan(plan)
         env, info = build_core(inputs)
         ms = (time.perf_counter() - t0) * 1000
         size = _size(env) if env else 0
