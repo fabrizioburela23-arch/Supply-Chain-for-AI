@@ -536,9 +536,7 @@
     if (recent.length) ctx.recent_entities = recent.slice();
     try {
       var pos = (W.MKT && W.MKT.pos) || {}, NB = W.NODE_BY_ID || {}, out = [];
-      // usd por posición (docs/CHAT_UI_GENERATIVA.md §5.2, paso 12): la MISMA valoración que KhipuHot.pnlLine
-      // (acciones × precio que muestra la app, en USD; engine/hotclient.js myPositions). Sin precio → sin usd
-      // (el servidor dice entonces «sin posiciones valoradas», nunca inventa el monto).
+      // usd por posición (CHAT_UI_GENERATIVA §5.2): la MISMA valoración que KhipuHot.pnlLine; sin precio → sin usd
       var usdBy = {};
       try {
         var mp = (W.KhipuHot && typeof W.KhipuHot.myPositions === 'function') ? W.KhipuHot.myPositions() : null;
@@ -580,6 +578,7 @@
       var P = W.KhipuAgentPrefs;
       if (P && P.mode && P.enabled) { ctx.mode = P.mode() === 'pro' ? 'pro' : 'simple'; ctx.agents_enabled = P.enabled().slice(0, 6); }
     } catch (e) {}
+    try { var U = W.KhipuUiPrefs, up = U && U.ctx(); if (up) ctx.ui_prefs = up; } catch (e) {}   // lo que esta persona usa (engine/uiprefs.js)
     return ctx;
   }
 

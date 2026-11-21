@@ -108,7 +108,7 @@ activar kernel 2.0.0 / shapes / gates / guard con PIN, Railway). Empezar por ah�
   `service.py` (apply_event con source_id/confidence, as_of_graph, diff_graph),
   `actions.py` (catálogo de 17 Acciones auditadas, Pydantic — incluye
   Activar/DesactivarFactor, RetractarVinculo, FusionarEntidad), `agents.py`
-  (7 agentes + brief matinal + evaluador de alertas), `api.py` (blueprint).
+  (8 agentes + brief matinal + evaluador de alertas; el 8.º es el Lector de hechos, ontology/news_facts.py), `api.py` (blueprint).
 - `engine/`: módulos del navegador. **Khipus OS** (`docs/KHIPUS_OS.md`) es LA interfaz: Cabina (cockpit.js) +
   Escritorio de ventanas (desktop.js, `BixbyCockpit.stage` → `KhipuDesk.open`) + ventanas nativas (oswindows.js) +
   mascotas (mascot.js). El navegador NO propaga: lee `/api/hot/*` con `engine/hotclient.js`. Detalle de cada módulo
@@ -365,6 +365,8 @@ HOTVIEWS (on), HOT_WAIT_S (2), HOTVIEWS_COALESCE_S (1), HOTVIEWS_LISTEN (on)  �
 PRICES_EOD (on), PRICES_REQ_INTERVAL_S (0.6)  ← historia de precios (core/prices_store: carga diaria tras las 22:00 UTC; el relleno de 5 años SOLO con PIN)
 GOV_RELEASE (vacío = el vigente de la base), <ARTEFACTO>=<semver> p. ej. KERNEL_PARAMS  ← SOLO eligen un release aprobado (D2)
 KHIPU_GATES (on; 'off' = emergencia: apaga las puertas SHACL en sombra)
+ONTOLOGY_AUTO (on), ONTOLOGY_AUTO_MIN (20)  ← latido del SERVIDOR para el ciclo de agentes de la ontología (ontology/curation_loop.py; antes solo corría con la app abierta)
+ONTOLOGY_NEWS_FACTS (on), ONTOLOGY_NEWS_DAILY (60)  ← Lector de hechos: noticias → vínculos/notas con fuente; el curador filtra y el ciclo aplica lo seguro (ontology/news_facts.py)
 GENUI (off; shadow = arma, mide y guarda en el libro SIN enviar; on = envía `ui` solo a quien manda context.genui=1)  ← chat con interfaz generativa (core/genui, docs/CHAT_UI_GENERATIVA.md)
 ── G5-14 (lote I4, 2026-10-13): TODA variable que el código lee está aquí (la bóveda: 0 sin documentar) ──
 CLAUDE_KEY / ALPHA_VANTAGE_KEY / GOOGLE_API_KEY / NVIDIA_API_KEY / TYPESAFE_KEY  ← nombres ALTERNATIVOS de ANTHROPIC_KEY / AV_KEY / GEMINI_KEY / NVIDIA_KEY / TYPESAFE_API_KEY

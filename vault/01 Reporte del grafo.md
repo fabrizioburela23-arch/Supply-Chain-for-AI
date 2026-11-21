@@ -17,25 +17,25 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 261 |
-| Líneas de código | 153.612 |
+| Archivos de código (Python, JS, HTML) | 264 |
+| Líneas de código | 154.167 |
 | Archivos de datos del catálogo | 30 |
-| Archivos de prueba | 281 |
+| Archivos de prueba | 283 |
 | Documentos | 33 |
 | Rutas HTTP | 272 |
 | Grupos de API | 61 |
 | Herramientas MCP | 35 |
-| Variables de entorno | 163 |
+| Variables de entorno | 167 |
 | Sesiones de trabajo | 113 |
 | Aristas `calls_endpoint` | 793 |
 | Aristas `defines_endpoint` | 307 |
-| Aristas `imports` | 2.457 |
-| Aristas `loads_script` | 97 |
-| Aristas `mentions_in_session` | 620 |
-| Aristas `reads_env` | 233 |
+| Aristas `imports` | 2.479 |
+| Aristas `loads_script` | 98 |
+| Aristas `mentions_in_session` | 630 |
+| Aristas `reads_env` | 238 |
 | Aristas `references_file` | 72 |
-| Aristas `tested_by` | 1.923 |
-| Aristas `uses_global` | 477 |
+| Aristas `tested_by` | 1.938 |
+| Aristas `uses_global` | 479 |
 
 ## Nodos "dios" (más conectados)
 
@@ -43,10 +43,10 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
-| [[app.html]] | 127 | 29 | 98 | [[Capa Interfaz (Khipus OS)]] |
+| [[app.html]] | 128 | 29 | 99 | [[Capa Interfaz (Khipus OS)]] |
 | [[engine.app_main.js]] | 115 | 68 | 47 | [[Capa Interfaz (Khipus OS)]] |
-| [[server.py]] | 100 | 31 | 69 | [[Capa Infraestructura]] |
-| [[ontology.db.py]] | 60 | 50 | 10 | [[Capa Ontología y grafo temporal]] |
+| [[server.py]] | 101 | 31 | 70 | [[Capa Infraestructura]] |
+| [[ontology.db.py]] | 61 | 51 | 10 | [[Capa Ontología y grafo temporal]] |
 | [[engine.cockpit.js]] | 53 | 15 | 38 | [[Capa Interfaz (Khipus OS)]] |
 | [[nodes.nodes_seed.js]] | 44 | 43 | 1 | [[Capa Datos del catálogo]] |
 | [[core.governance.py]] | 41 | 36 | 5 | [[Capa Infraestructura]] |
@@ -54,15 +54,15 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 | [[core.http.py]] | 40 | 38 | 2 | [[Capa Infraestructura]] |
 | [[core.decisions.py]] | 38 | 31 | 7 | [[Capa Infraestructura]] |
 | [[core.khipu_chat.py]] | 37 | 7 | 30 | [[Capa Chat y agentes]] |
+| [[ontology.api.py]] | 37 | 12 | 25 | [[Capa Ontología y grafo temporal]] |
 | [[mcp_server.tools.py]] | 36 | 7 | 29 | [[Capa MCP y API]] |
-| [[ontology.api.py]] | 36 | 11 | 25 | [[Capa Ontología y grafo temporal]] |
 | [[engine.app_coordinator.js]] | 35 | 16 | 19 | [[Capa Interfaz (Khipus OS)]] |
 | [[core.identity.py]] | 33 | 31 | 2 | [[Capa Infraestructura]] |
 | [[engine.resolve.js]] | 33 | 21 | 12 | [[Capa Chat y agentes]] |
-| [[ontology.models.py]] | 32 | 28 | 4 | [[Capa Ontología y grafo temporal]] |
+| [[ontology.models.py]] | 33 | 29 | 4 | [[Capa Ontología y grafo temporal]] |
 | [[core.world.py]] | 31 | 21 | 10 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
+| [[engine.khipu_chat.js]] | 31 | 7 | 24 | [[Capa Chat y agentes]] |
 | [[engine.toast.js]] | 31 | 28 | 3 | [[Capa Interfaz (Khipus OS)]] |
-| [[research.committee.py]] | 31 | 10 | 21 | [[Capa Comité]] |
 
 ## Módulos sin pruebas (23)
 

@@ -24,11 +24,11 @@ INFORME DE ESCENARIO (2026-10-21, «que parezca un producto») Pinta la salida d
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **95 de 105** (línea 3249), después de [[engine.desktop.js]] y antes de [[engine.cockpit.js]].
+Se carga en [[app.html]] en la posición **96 de 106** (línea 3250), después de [[engine.desktop.js]] y antes de [[engine.cockpit.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 95)
+- [[app.html]] — lo carga con `<script>` (posición 96)
 - [[engine.app_coordinator.js]] — usa `KhipuSimReport`
 - [[engine.cockpit.js]] — usa `KhipuSimReport`
 

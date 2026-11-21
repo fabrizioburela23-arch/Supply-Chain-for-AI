@@ -3409,7 +3409,7 @@ const AGENT_META = {
   centinela_nrs:{icon:'🛰',label:'Centinela NRS',en:'NRS Sentinel'}, lector_gdelt:{icon:'📰',label:'Lector GDELT',en:'GDELT Reader'},
   guardian_cartera:{icon:'💼',label:'Guardián de Cartera',en:'Portfolio Guardian'}, cartografo:{icon:'🗺',label:'Cartógrafo',en:'Cartographer'},
   radar_empresas:{icon:'📡',label:'Radar de Empresas',en:'Company Radar'}, tejedor_hiperaristas:{icon:'🕸',label:'Tejedor de Hiperaristas',en:'Hyperedge Weaver'},
-  investigador_autonomo:{icon:'🌐',label:'Investigador Autónomo',en:'Autonomous Researcher'},
+  investigador_autonomo:{icon:'🌐',label:'Investigador Autónomo',en:'Autonomous Researcher'}, lector_hechos:{icon:'🗞',label:'Lector de Hechos',en:'Fact Reader'},
 };
 const PROPOSAL_FIELD_LABELS = {
   nivel:'Nivel NRS', razon:'Razón', stance:'Postura', confidence:'Confianza', rationale:'Razonamiento',

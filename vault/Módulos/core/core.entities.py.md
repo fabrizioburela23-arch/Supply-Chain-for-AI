@@ -55,6 +55,7 @@ Phase 1 · M2: identidad de entidad en el servidor.
 - [[ontology.agents.py]] — lo importa
 - [[ontology.api.py]] — lo importa
 - [[ontology.company_import.py]] — lo importa
+- [[ontology.news_facts.py]] — lo importa
 - [[research.api.py]] — lo importa
 - [[research.auto_events.py]] — lo importa
 - [[research.committee.py]] — lo importa

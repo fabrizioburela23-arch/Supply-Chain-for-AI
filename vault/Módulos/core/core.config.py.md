@@ -38,6 +38,7 @@ _Nada interno._
 - [[core.quotes.py]] — lo importa
 - [[core.websearch.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
+- [[ontology.news_facts.py]] — lo importa
 - [[research.auto_events.py]] — lo importa
 - [[research.context.py]] — lo importa
 - [[server.py]] — lo importa

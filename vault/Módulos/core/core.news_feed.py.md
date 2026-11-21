@@ -31,6 +31,7 @@ NOTICIAS DE TU CARTERA, con fecha y sin repetir lo viejo.
 
 - [[core.portfolio_report.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
+- [[ontology.news_facts.py]] — lo importa
 
 _Además lo importan 1 pruebas (lista abajo)._
 
@@ -40,4 +41,5 @@ _Además lo importan 1 pruebas (lista abajo)._
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-10-03 (b) — REPORTES DE CARTERA, PREGÚNTALE A TU CARTERA, NOTICIAS DE TU]]

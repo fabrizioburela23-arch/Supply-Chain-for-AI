@@ -710,7 +710,11 @@ class InvestigadorAutonomo:
                                f'{len(usadas)} fuentes citadas — requiere tu aprobación.'}
 
 
-AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo(), RadarEmpresas(), TejedorHiperaristas(), InvestigadorAutonomo()]
+# 2026-11-21: el Lector de HECHOS (ontology/news_facts.py) convierte noticias en vínculos/notas con fuente y su
+# curador decide qué entra; el ciclo automático de abajo aplica lo seguro (≥ policy.auto_apply) y el resto espera.
+from ontology.news_facts import LectorHechos  # noqa: E402
+AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo(), RadarEmpresas(), TejedorHiperaristas(), InvestigadorAutonomo(),
+          LectorHechos()]
 AGENTS_BY_NAME = {a.name: a for a in AGENTS}
 
 # ── Ciclo automático (elección de Fabrizio 2026-07-10): las propuestas SEGURAS
@@ -873,6 +877,8 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
             sp.commit()
             summary[agent.name] = {'ok': True, 'signals': len(signals), 'proposals': created,
                                     'ms': int((_time.time() - t0) * 1000)}
+            if getattr(agent, 'last', None):         # el Lector de hechos dice qué leyó y qué descartó el curador
+                summary[agent.name]['report'] = agent.last
             if blocked:
                 summary[agent.name]['blocked_by_gates'] = blocked
         except Exception as e:  # noqa: BLE001

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-06"
-ruta: "docs/ESTADO.md#L979"
+ruta: "docs/ESTADO.md#L996"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-06 (iii) — HABILIDADES PROPIAS DE CADA AGENTE (sw v247)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 979 (33 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 996 (33 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

@@ -55,6 +55,7 @@ esquema SQLAlchemy de la ontología.
 - [[ontology.ingest_news.py]] — lo importa
 - [[ontology.ledger_models.py]] — lo importa
 - [[ontology.link_review.py]] — lo importa
+- [[ontology.news_facts.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 - [[ontology.service.py]] — lo importa
@@ -67,7 +68,7 @@ esquema SQLAlchemy de la ontología.
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
 
-_Además lo importan 76 pruebas (lista abajo)._
+_Además lo importan 77 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -112,6 +113,7 @@ _Además lo importan 76 pruebas (lista abajo)._
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
+- [[tests.test_news_facts.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ontology_actions.py]]
 - [[tests.test_ontology_agents.py]]

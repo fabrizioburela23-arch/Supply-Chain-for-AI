@@ -70,7 +70,7 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.importer.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **27 de 105** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **27 de 106** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 

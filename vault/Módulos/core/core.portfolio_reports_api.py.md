@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "core/portfolio_reports_api.py"
 lenguaje: "python"
-lineas: 468
+lineas: 469
 aliases: ["core/portfolio_reports_api.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # core/portfolio_reports_api.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 468 líneas · `core/portfolio_reports_api.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 469 líneas · `core/portfolio_reports_api.py`
 
 ## Para qué sirve
 
@@ -25,10 +25,10 @@ tags: ["capa/dinero", "tipo/modulo"]
 - `list_watches()` _(línea 222)_
 - `news_portfolio()` _(línea 240)_
 - `ask()` — "Pregúntale a tu cartera": el cerebro de Khipu con tu cartera + tu reporte como contexto. _(línea 257)_
-- `user_state()` — GET → {key: {value, updated_at}} · PUT {key, value, updated_at?} (último que escribe gana). _(línea 315)_
-- `current_positions(owner, source_key)` — Posiciones ACTUALES de una cartera sincronizada (para los reportes programados): pf:&lt;id> → kh_portfolios · market → eco_pos. None si no hay … _(línea 354)_
-- `due(w, now)` _(línea 393)_
-- `run_due(now=…, build=…)` — Genera los reportes vencidos (lo llama el hilo; también los tests). _(línea 404)_
+- `user_state()` — GET → {key: {value, updated_at}} · PUT {key, value, updated_at?} (último que escribe gana). _(línea 316)_
+- `current_positions(owner, source_key)` — Posiciones ACTUALES de una cartera sincronizada (para los reportes programados): pf:&lt;id> → kh_portfolios · market → eco_pos. None si no hay … _(línea 355)_
+- `due(w, now)` _(línea 394)_
+- `run_due(now=…, build=…)` — Genera los reportes vencidos (lo llama el hilo; también los tests). _(línea 405)_
 
 **Internas** (empiezan con `_`): `_owner`, `_db`, `_need_owner`, `_no_db`, `_clean_positions`, `_f`, `_title`, `_store`, `_report_notes`, `_ensure_scheduler`, `_boot_scheduler`
 
@@ -48,7 +48,7 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[research.committee_api.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -70,6 +70,7 @@ Grupos: [[API news]], [[API portfolio-report]], [[API user-state]]
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_portfolio_persist.py]]
 - [[tests.test_portfolio_reports.py]]
+- [[tests.test_ui_prefs.py]]
 
 ## Mencionado en sesiones de trabajo
 

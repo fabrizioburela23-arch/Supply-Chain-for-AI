@@ -31,6 +31,7 @@ ROUTER DE MODELOS del chat (2026-11-07, pedido de Fabrizio: «request → router
 ## Lo usan
 
 - [[core.khipu_chat.py]] — lo importa
+- [[ontology.news_facts.py]] — lo importa
 
 _Además lo importan 1 pruebas (lista abajo)._
 

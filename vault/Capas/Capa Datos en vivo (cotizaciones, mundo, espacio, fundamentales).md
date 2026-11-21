@@ -55,9 +55,9 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa MCP y API]] | 6 |
+| la usa | [[Capa Ontología y grafo temporal]] | 5 |
 | usa a | [[Capa Chat y agentes]] | 5 |
 | la usa | [[Capa Comité]] | 4 |
-| la usa | [[Capa Ontología y grafo temporal]] | 4 |
 | la usa | [[Capa Investigación]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
 | la usa | [[Capa Datos del catálogo]] | 2 |

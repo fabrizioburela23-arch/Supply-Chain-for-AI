@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Ontología y grafo temporal"
-archivos: 37
+archivos: 39
 tags: ["capa/ontologia", "tipo/capa"]
 ---
 
@@ -9,14 +9,14 @@ tags: ["capa/ontologia", "tipo/capa"]
 
 > La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa.
 
-**37 archivos · 19.097 líneas.** Volver al [[00 Mapa de Khipus]].
+**39 archivos · 19.515 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[ontology.company_import.py]] — 2.699 líneas · importador de fichas khipus.company/1 (docs/expansion/EXPANSION_5K.md, bloque E2).
 - [[ontology.api.py]] — 2.007 líneas · API REST de la ontología: /api/ontology/\*
 - [[engine.temporal-graph.js]] — 1.466 líneas · Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline …
-- [[ontology.agents.py]] — 1.039 líneas · Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta sin aprobación humana (salvo lo que el usuario marque como …
+- [[ontology.agents.py]] — 1.045 líneas · Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta sin aprobación humana (salvo lo que el usuario marque como …
 - [[ontology.actions.py]] — 906 líneas · Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usuario deja de solo mirar: registra tesis, anotaciones, correcciones y …
 - [[ontology.reconcile.py]] — 843 líneas · G3 (misión de reparación 2026-10-04): RECONCILIACIÓN append-only entre el catálogo (data/grafo_v0.json, la verdad del MAPA/MCP) y Postgres (la verdad …
 - [[scripts.build_graph_review.py]] — 799 líneas · LISTAS DE REVISIÓN DEL GRAFO para Fabrizio (BRECHAS_V2 bloque 5; decisiones #6 #7 #8 #10).
@@ -28,6 +28,7 @@ tags: ["capa/ontologia", "tipo/capa"]
 - [[engine.maptime.js]] — 525 líneas · EL TIEMPO DENTRO DEL MAPA PRINCIPAL (2026-09-25) Fabrizio: "el grafo temporal y el normal deberían ser uno; el temporal no da mucho por sí solo". …
 - [[scripts.migrate_v0_to_ontology.py]] — 503 líneas · Fase 1: migra data/grafo_v0.json (el snapshot congelado en Fase 0) a la ontología (Postgres, tabla events + vistas materializadas objects/links).
 - [[ontology.bitemporal.py]] — 356 líneas · G(t, κ): el grafo vigente en la fecha t TAL COMO SE CONOCÍA en κ (INFRA_OPERATIVA §5.5).
+- [[ontology.news_facts.py]] — 340 líneas · LA ONTOLOGÍA SE ACTUALIZA SOLA desde las noticias (2026-11-21, pedido de Fabrizio: «que el agente de noticias vaya dotando de nuevos hechos y otro …
 - [[ontology.timeline.py]] — 334 líneas · Phase 1 · M5: la línea de tiempo de una entidad.
 - [[ontology.vocabulary.py]] — 315 líneas · REGISTRO ÚNICO del vocabulario del grafo.
 - [[scripts.import_companies.py]] — 311 líneas · terminal del importador de fichas khipus.company/1 (EXPANSION_5K E2.4).
@@ -46,6 +47,7 @@ tags: ["capa/ontologia", "tipo/capa"]
 - [[ontology.link_review.py]] — 112 líneas · COLA DE REVISIÓN de vínculos PROPUESTOS (2026-10-21, tras importar los lotes 2-4).
 - [[scripts.reconcile_v0_to_ontology.py]] — 104 líneas · G3: reconciliar el catálogo (data/grafo_v0.json) con la ontología en Postgres SIN borrar nada.
 - [[ontology.import_models.py]] — 94 líneas · tablas del importador de fichas khipus.company/1 (E2.3), APPEND-ONLY.
+- [[ontology.curation_loop.py]] — 72 líneas · el LATIDO del servidor para que la ontología se mantenga sola (2026-11-21).
 - [[ontology.governance_models.py]] — 62 líneas · REGISTRO DE GOBERNANZA (docs/INFRA_OPERATIVA.md §5.1; paso 9 del plan).
 - [[scripts.link_origins.js]] — 56 líneas · ¿de qué arreglo del catálogo viene cada vínculo? (BRECHAS_V2 L3-11 / PROP-14, bloque 5: revisión de la escala de pesos.)
 - [[ontology.sqltypes.py]] — 33 líneas · tipos SQL compartidos por los modelos del libro y de gobernanza (módulo HOJA: no importa ningún modelo; lo importan ontology/ledger_models.py y …
@@ -55,8 +57,8 @@ tags: ["capa/ontologia", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 48 |
-| la usa | [[Capa Infraestructura]] | 41 |
+| usa a | [[Capa Infraestructura]] | 52 |
+| la usa | [[Capa Infraestructura]] | 42 |
 | usa a | [[Capa Datos del catálogo]] | 34 |
 | la usa | [[Capa Investigación]] | 15 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
@@ -67,10 +69,10 @@ tags: ["capa/ontologia", "tipo/capa"]
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
 | la usa | [[Capa Comité]] | 6 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 5 |
 | la usa | [[Capa Otros]] | 4 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 4 |
 | usa a | [[Capa Investigación]] | 4 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa Voz]] | 1 |
 | usa a | [[Capa MCP y API]] | 1 |

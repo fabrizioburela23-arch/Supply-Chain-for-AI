@@ -37,7 +37,7 @@ tareas periódicas del SERVIDOR (misión de reparación 2026-10-04, R5).
 - [[research.health.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -45,10 +45,12 @@ _Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_news_facts.py]]
 - [[tests.test_ops_identity.py]]
 - [[tests.test_repair_committee.py]]
 - [[tests.test_repair_research.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-10-04 (h) — MISIÓN DE REPARACIÓN P0 INVESTIGACIÓN (R1-R6, sw v201)]]

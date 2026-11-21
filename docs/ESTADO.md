@@ -12,6 +12,23 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 **Para ahorrar tokens: lee SOLO esta sección.** Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero;
 buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`).
 
+**2026-11-21 — LA ONTOLOGÍA SE MANTIENE SOLA + LA INTERFAZ APRENDE DE CADA PERSONA:**
+- 🗞 Lector de hechos (`ontology/news_facts.py`, agente `lector_hechos`, 8.º de ontology/agents.AGENTS): ≤3 empresas por
+  vuelta (las más conectadas no leídas en 20 h), titulares reales (Finnhub+GDELT vía core/news_feed) → modelo PEQUEÑO →
+  hechos de vocabulario cerrado (supplier/customer/partner/investor → vínculo; ipo/deal/guidance/key_person/regulatory/
+  disruption/litigation → nota con fuente). 🧹 Curador (`curate`): descarta contraparte o cifra que no están en la noticia,
+  índice falso, contraparte sin resolver (umbral de ESCRITURA 85 → nota «posible relación» para una persona), duplicados
+  (vínculo vigente o propuesto en 30 días) y persona clave sin prensa seria. Confianza CALCULADA: base + fuente
+  (source_kinds) + corroboración; ≥0,55 lo aplica el ciclo solo, el resto a 🩺 → Propuestas.
+- Un vínculo de noticia entra `proposed` (lo confirma una persona). Confirmarlos solos = ampliar SAFE_AUTO →
+  decisión de Fabrizio con PIN (policy.auto_apply MAJOR). NO lo hice.
+- Latido del servidor (`ontology/curation_loop.py`): el MISMO ciclo (`ontology.api._try_start_cycle`) cada
+  ONTOLOGY_AUTO_MIN (20) min aunque nadie abra la app. No es core/scheduler (ese nunca llama a la IA).
+- `engine/uiprefs.js`: cuenta por TIPO de bloque cuántas veces se muestra y cuántas se toca (kh_ui_prefs, sincronizado)
+  → `context.ui_prefs {more, less}` → servidor (`core/genui.clean_prefs`) lo usa en el prompt (layout) y en
+  `prefer()` (orden estable de bloques). Solo presentación. Siguiente: mostrar «lo que aprendí de ti» + borrar en ❓/ajustes.
+- Pruebas: tests/test_news_facts.py (incluye ciclo con base), tests/test_ui_prefs.py.
+
 **2026-11-06 — IA «entrenada» sin fine-tuning + gráficos/informes nativos:**
 - `python3 scripts/eval_chat.py` = EXAMEN DE ORO (20 preguntas de inversionista en `data/eval/preguntas_oro.json`) contra
   producción → `docs/eval/ULTIMO.md`. Primera corrida 17/20; arreglado: cifras derivadas en `get_company.live_market.derived`

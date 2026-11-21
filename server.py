@@ -214,6 +214,10 @@ try:
         from ontology.db import ontology_available, init_schema
         if ontology_available():
             init_schema()
+            # 2026-11-21: la ontología se mantiene SOLA — latido del servidor para el ciclo de agentes (lector de
+            # hechos → curador → aplicar lo seguro), aunque nadie tenga la app abierta. ONTOLOGY_AUTO=off lo apaga.
+            from ontology import curation_loop as _curation_loop
+            _curation_loop.start()
     except Exception as _e2:  # noqa: BLE001
         log.warning('init_schema (ontología) no corrió (la app sigue): %s', _e2)
 except Exception as _e:  # noqa: BLE001

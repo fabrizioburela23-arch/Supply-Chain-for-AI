@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-28"
-ruta: "docs/ESTADO.md#L2025"
+ruta: "docs/ESTADO.md#L2042"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-28 (d) — Valuación de PRIVADAS en vivo (sw v152)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2025 (22 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2042 (22 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

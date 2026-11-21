@@ -287,6 +287,7 @@ def build_core(inputs):
             if why == 'no_provenance':
                 unprov += 1
             dropped.append({'index': i, 'type': blk['type'], 'reason': 'invalid' if why == 'no_provenance' else why})
+    good = prefer(good, inputs.get('prefs'))      # 2026-11-21: la interfaz aprende de cada persona
     picked = plan_pick(good, inputs.get('plan'), mode_)
     if picked:      # F5 (2026-11-20): la IA eligió QUÉ bloques y en QUÉ orden; las cifras siguen saliendo del servidor
         mains, secs, over = picked[:1], picked[1:], []
@@ -406,7 +407,7 @@ def inputs_for(message, calls, entities, lang, ctx):
             args_of[i] = ''
     args_of = [str(a)[:200] if isinstance(a, str) else '' for a in args_of[:len(clean_calls)]]
     return {'v': 1, 'impl': IMPL, 'lang': 'en' if lang == 'en' else 'es', 'mode': ctx.get('mode') or 'simple',
-            'intent': _layout.intent_of(message), 'now': ctx.get('now') or now_iso(),
+            'intent': _layout.intent_of(message), 'now': ctx.get('now') or now_iso(), 'prefs': clean_prefs(ctx.get('prefs')),
             'entities': [{'id': e.get('id'), 'label': e.get('label')} for e in entities or [] if isinstance(e, dict)],
             'answer': ctx.get('answer') or '', 'actions': ctx.get('actions') or [],
             'sources': _clean_sources(ctx.get('sources')), 'facts': ctx.get('facts') or [],
@@ -434,6 +435,36 @@ def clean_plan(plan):
         if len(out) >= 6:
             break
     return out or None
+
+
+def clean_prefs(raw):
+    """Lo que esta persona usa / no usa (engine/uiprefs.js, 2026-11-21) → {'more': [...], 'less': [...]} solo con tipos de
+    bloque conocidos (máx. 4 cada uno, sin repetir entre listas), o None. Solo PRESENTACIÓN."""
+    if not isinstance(raw, dict):
+        return None
+    out = {}
+    for k in ('more', 'less'):
+        v = raw.get(k)
+        out[k] = []
+        if isinstance(v, list):
+            for t in v[:8]:
+                if isinstance(t, str) and t in PLAN_BLOCKS and t not in out[k] and t not in out.get('more', []):
+                    out[k].append(t)
+        out[k] = out[k][:4]
+    return out if (out['more'] or out['less']) else None
+
+
+def prefer(good, prefs):
+    """Orden ESTABLE de los bloques válidos según lo aprendido: lo que la persona usa primero, lo que nunca mira al
+    final. No quita ni añade bloques (las cifras siguen siendo las mismas)."""
+    if not prefs:
+        return good
+    more, less = prefs.get('more') or [], prefs.get('less') or []
+
+    def rank(b):
+        t = b.get('type')
+        return (more.index(t) if t in more else len(more)) + (100 if t in less else 0)
+    return sorted(good, key=rank)
 
 
 def plan_pick(good, plan, mode='simple'):

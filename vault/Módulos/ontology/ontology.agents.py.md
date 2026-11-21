@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/agents.py"
 lenguaje: "python"
-lineas: 1039
+lineas: 1045
 aliases: ["ontology/agents.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/agents.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.039 líneas · `ontology/agents.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 1.045 líneas · `ontology/agents.py`
 
 ## Para qué sirve
 
@@ -26,11 +26,11 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - clase `RadarEmpresas` _(línea 287)_
 - clase `TejedorHiperaristas` — Teje HIPERARISTAS: cuando detecta en noticias un golpe SISTÉMICO que toca a VARIAS empresas del grafo a la vez (sanción, escasez de un … _(línea 357)_
 - clase `InvestigadorAutonomo` — Dos caminos: manual (endpoint /agents/investigar, SIEMPRE disponible) o reactivo (Annotations recientes de otros agentes — gateado por … _(línea 505)_
-- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 776)_
-- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 831)_
-- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 889)_
-- `evaluate_alert(session, rule, values=…)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). `values` = el lote de AlertIndex (core/hotviews/views/alerts.values): NRS … _(línea 960)_
-- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 1010)_
+- `auto_cycle(session, actor=…)` — run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó. _(línea 780)_
+- `run_agents(session, only=…, max_proposals_per_agent=…)` — Corre observe()+propose() de cada agente habilitado, inserta las propuestas nuevas en `proposed_actions`. Devuelve un resumen por agente. _(línea 835)_
+- `brief_matinal(session, hours=…)` — Resumen de lo que pasó en la ontología en las últimas `hours` horas: eventos nuevos, acciones humanas, propuestas de agentes. No requiere … _(línea 895)_
+- `evaluate_alert(session, rule, values=…)` — Evalúa UNA regla y devuelve (fired: bool, current_value, detail). `values` = el lote de AlertIndex (core/hotviews/views/alerts.values): NRS … _(línea 966)_
+- `check_alerts(session, owner=…)` — Evalúa todas las alertas activas (o las de `owner`), marca last_fired_at en las que dispararon, y devuelve la lista de las que dispararon … _(línea 1016)_
 
 **Internas** (empiezan con `_`): `_utcnow`, `_recently_proposed`, `_ai_explain`, `_compute_server_nrs`, `_hot_nrs`, `_slug`, `_gate_prop`, `_get_live_price`
 
@@ -48,6 +48,7 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - [[core.world.py]] — importa `client_nrs`
 - [[ontology.actions.py]] — importa `ACTION_CATALOG`, `execute_action`
 - [[ontology.models.py]] — importa `Alert`, `Event`, `LinkRecord`, `ObjectRecord`, `ProposedAction`
+- [[ontology.news_facts.py]] — importa `LectorHechos`
 - [[ontology.vocabulary.py]] — importa `vocabulary`
 
 ## Lo usan
@@ -56,7 +57,7 @@ Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta 
 - [[ontology.api.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 
-_Además lo importan 14 pruebas (lista abajo)._
+_Además lo importan 15 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -70,6 +71,7 @@ _Además lo importan 14 pruebas (lista abajo)._
 - [[tests.test_investigador.py]]
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
+- [[tests.test_news_facts.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]
 - [[tests.test_repair_graph.py]]
@@ -77,6 +79,7 @@ _Además lo importan 14 pruebas (lista abajo)._
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]
 - [[Sesión 2026-10-05 (aa) — FUNDAMENTALES EN VIVO DE TODO EL GRAFO (sw v234)]]
 - [[Sesión 2026-10-05 (y) — NRS ACOTADO + BÚSQUEDA DEL MAPA (sw v232)]]
 - [[Sesión 2026-07-05 — Etapa 1 — Limpieza masiva - COMPLETA (4 batches publicados)]]

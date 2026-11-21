@@ -9,7 +9,7 @@ tags: ["capa/dinero", "tipo/capa"]
 
 > Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana.
 
-**17 archivos · 11.626 líneas.** Volver al [[00 Mapa de Khipus]].
+**17 archivos · 11.627 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -20,7 +20,7 @@ tags: ["capa/dinero", "tipo/capa"]
 - [[engine.clients.js]] — 1.060 líneas · 👥 CLIENTES E INVERSIÓN (corretaje multi-cliente vía Alpaca).
 - [[brokerage.risk.py]] — 651 líneas · controles de riesgo PRE-orden por cliente.
 - [[engine.app_trade_panel.js]] — 609 líneas · Professional Trade Panel
-- [[core.portfolio_reports_api.py]] — 468 líneas · /api/portfolio-report/\* y /api/news/portfolio.
+- [[core.portfolio_reports_api.py]] — 469 líneas · /api/portfolio-report/\* y /api/news/portfolio.
 - [[brokerage.api.py]] — 436 líneas · blueprint /api/brokerage/\* (corretaje multi-cliente).
 - [[brokerage.sleeves.py]] — 420 líneas · VARIAS CARTERAS sobre UNA cuenta de Alpaca (docs/CARTERAS_Y_AGENTES.md, fase 2).
 - [[engine.pfreports.js]] — 414 líneas · 📄 REPORTES · 📰 NOTICIAS · 💬 PREGÚNTALE A TU CARTERA (secciones de Comité → 💼 Mi cartera; las monta engine/pfcommittee.js)

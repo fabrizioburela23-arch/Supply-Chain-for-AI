@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-28"
-ruta: "docs/ESTADO.md#L1979"
+ruta: "docs/ESTADO.md#L1996"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-28 (e) — PHASE 2: AGENT RESEARCH SWARM (sw v153)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1979 (46 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1996 (46 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

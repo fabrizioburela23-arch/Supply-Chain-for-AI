@@ -95,6 +95,7 @@ API REST de la ontología: /api/ontology/\*
 
 ## Lo usan
 
+- [[ontology.curation_loop.py]] — lo importa
 - [[server.py]] — lo importa
 
 _Además lo importan 9 pruebas (lista abajo)._
@@ -182,3 +183,7 @@ Grupos: [[API ontology]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_ontology_review.py]]
 - [[tests.test_repair_review2.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-16 — PRÓXIMA SESIÓN — EMPEZAR AQUÍ]]

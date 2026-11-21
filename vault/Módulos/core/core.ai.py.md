@@ -60,6 +60,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
+- [[ontology.news_facts.py]] — lo importa
 - [[research.api.py]] — lo importa
 - [[research.ask_agent.py]] — lo importa
 - [[research.auto_events.py]] — lo importa

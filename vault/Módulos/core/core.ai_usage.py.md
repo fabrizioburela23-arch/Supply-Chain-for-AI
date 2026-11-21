@@ -56,6 +56,7 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 - [[core.portfolio_advisor.py]] — lo importa
 - [[core.portfolio_report.py]] — lo importa
 - [[core.portfolio_reports_api.py]] — lo importa
+- [[ontology.news_facts.py]] — lo importa
 - [[research.ask_agent.py]] — lo importa
 - [[research.committee.py]] — lo importa
 - [[research.committee_api.py]] — lo importa

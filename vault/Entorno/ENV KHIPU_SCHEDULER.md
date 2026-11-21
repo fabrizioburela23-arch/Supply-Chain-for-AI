@@ -14,6 +14,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[core.scheduler.py]]
 - [[core.trading_agent.py]]
+- [[ontology.curation_loop.py]]
 - [[scripts.bench_scale.py]]
 
 ## Pruebas que la fijan o nombran
@@ -40,6 +41,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_live_universe_db.py]]
 - [[tests.test_lotek_fixer.py]]
 - [[tests.test_lotel_fixer.py]]
+- [[tests.test_news_facts.py]]
 - [[tests.test_scale_budget.py]]
 - [[tests.test_scale_hot_bench.py]]
 

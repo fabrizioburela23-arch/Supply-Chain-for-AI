@@ -4,7 +4,7 @@
    Pedido implícito (2026-10-03): lo que armas en la PC (carteras simuladas, tu
    perfil de inversionista, tus posiciones de Mercado) también en el teléfono, y
    que los reportes automáticos usen tu cartera de HOY.
-   · Claves: kh_portfolios, kh_pf_active, kh_investor_profile, eco_pos, kh_agent_prefs
+   · Claves: kh_portfolios, kh_pf_active, kh_investor_profile, eco_pos, kh_agent_prefs, kh_ui_prefs (qué bloques usas)
      (eco_pos desde 2026-10-15 es solo la COPIA de la cartera activa que escribe engine/pfstore.js; nunca se lee
      como fuente. Lo que llega del servidor pasa ANTES por KhipuPfStore.fromServer: si ese eco_pos no es la copia
      de ninguna cartera —una pestaña con el código viejo, o un dueño que aún no migró al vincular— sus posiciones
@@ -18,7 +18,7 @@
    ============================================================================ */
 (function () {
   'use strict';
-  var KEYS = ['kh_portfolios', 'kh_pf_active', 'kh_investor_profile', 'eco_pos', 'kh_agent_prefs'];
+  var KEYS = ['kh_portfolios', 'kh_pf_active', 'kh_investor_profile', 'eco_pos', 'kh_agent_prefs', 'kh_ui_prefs'];
   var META = 'kh_sync_meta';
   var applying = false, timers = {}, available = true;
 

@@ -81,7 +81,7 @@ _Nada interno._
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 - herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
-_Además lo importan 71 pruebas (lista abajo)._
+_Además lo importan 72 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -156,3 +156,4 @@ _Además lo importan 71 pruebas (lista abajo)._
 - [[tests.test_scenario_pnl.py]]
 - [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_tensor.py]]
+- [[tests.test_ui_prefs.py]]

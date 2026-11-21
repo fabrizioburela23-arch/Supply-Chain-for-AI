@@ -77,6 +77,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[ontology.api.py]] — lo importa
 - [[ontology.checkpoints.py]] — lo importa
 - [[ontology.company_import.py]] — lo importa
+- [[ontology.curation_loop.py]] — lo importa
 - [[ontology.import_models.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 - [[research.api.py]] — lo importa
@@ -110,7 +111,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 102 pruebas (lista abajo)._
+_Además lo importan 103 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -181,6 +182,7 @@ _Además lo importan 102 pruebas (lista abajo)._
 - [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
+- [[tests.test_news_facts.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ontology_actions.py]]

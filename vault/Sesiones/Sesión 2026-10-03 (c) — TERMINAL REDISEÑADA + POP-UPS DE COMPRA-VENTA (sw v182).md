@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L1717"
+ruta: "docs/ESTADO.md#L1734"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-03 (c) — TERMINAL REDISEÑADA + POP-UPS DE COMPRA/VENTA (sw v182)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1717 (15 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1734 (15 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

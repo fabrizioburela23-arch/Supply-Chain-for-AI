@@ -1335,6 +1335,14 @@ def validate_request(body):
                 names.append(nm)
         if names:
             ctx['other_portfolios'] = names
+    # 2026-11-21: la interfaz APRENDE de cada persona (engine/uiprefs.js): qué tipos de bloque usa / no mira
+    try:
+        from core.genui import clean_prefs as _clean_prefs
+        up = _clean_prefs(ctx_raw.get('ui_prefs'))
+    except Exception:  # noqa: BLE001
+        up = None
+    if up:
+        ctx['ui_prefs'] = up
     # Khipus OS: preferencias de PRESENTACIÓN del usuario (kh_agent_prefs). Solo cambian el prompt
     # (tono y qué herramientas priorizar); nunca decisiones del comité ni órdenes.
     mode = str(ctx_raw.get('mode') or body.get('mode') or '').strip().lower()
@@ -1739,6 +1747,13 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
                    'activa. Cuando uses sus posiciones, di SIEMPRE de dónde salen: «tu cartera “<nombre>”» o «tu cuenta del '
                    'bróker» (la cuenta real, aparte). Si pregunta por otra cartera, dile que la elija como activa en Carteras '
                    '(o ábrela); no inventes sus posiciones.')
+    up = context.get('ui_prefs')
+    if up:
+        ctx.append('LO QUE ESTA PERSONA USA (aprendido de sus clics; solo cambia la PRESENTACIÓN, nunca cifras ni '
+                   'recomendaciones): ' + (('suele tocar ' + ', '.join(up['more'])) if up.get('more') else '') +
+                   ('; ' if up.get('more') and up.get('less') else '') +
+                   (('casi nunca mira ' + ', '.join(up['less'])) if up.get('less') else '') +
+                   ' → en "layout" pon primero lo que usa y evita lo que no mira, si los datos lo permiten.')
     if context.get('user_claim'):
         ctx.append('EL USUARIO CUENTA UNA NOTICIA QUE NADIE VERIFICÓ TODAVÍA. Haz esto: (1) búscala — get_news de las '
                    'empresas mencionadas' + (' y web_search con la frase clave' if _web_available() else '') + '; '
@@ -3308,7 +3323,7 @@ def _genui_attach(out, message, lang, context):
         env, _text = genui.build_ui(message, g.get('calls') or [], out.get('entities') or [], g.get('plan'), lang, {
             'answer': out.get('answer') or '', 'actions': out.get('actions') or [], 'sources': out.get('sources') or [],
             'facts': out.get('facts') or [], 'fact_of': g.get('fact_of') or [], 'args_of': g.get('args_of') or [],
-            'mode': ctx.get('mode') or 'simple', 'now': _iso_z(out.get('as_of'))})
+            'mode': ctx.get('mode') or 'simple', 'now': _iso_z(out.get('as_of')), 'prefs': ctx.get('ui_prefs')})
     except Exception as e:  # noqa: BLE001
         log.warning('khipu_chat genui: %s', type(e).__name__)
         return None
