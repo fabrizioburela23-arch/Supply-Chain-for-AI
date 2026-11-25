@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-27"
-ruta: "docs/ESTADO.md#L2209"
+ruta: "docs/ESTADO.md#L2223"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-27 (c) — Feed global "📡 Lo último en el grafo" (sw v138)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2209 (23 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2223 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

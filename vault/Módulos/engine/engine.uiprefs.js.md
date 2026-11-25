@@ -24,7 +24,7 @@ LA INTERFAZ APRENDE DE CADA PERSONA (2026-11-21, pedido de Fabrizio: «que la in
 
 - [[engine.genui.js]] — usa `KhipuGenUI`
 
-Se carga en [[app.html]] en la posición **94 de 106** (línea 3248), después de [[engine.report.js]] y antes de [[engine.desktop.js]].
+Se carga en [[app.html]] en la posición **94 de 107** (línea 3248), después de [[engine.report.js]] y antes de [[engine.a2ui.js]].
 
 ## Lo usan
 

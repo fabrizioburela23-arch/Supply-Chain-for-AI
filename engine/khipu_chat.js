@@ -578,7 +578,7 @@
       var P = W.KhipuAgentPrefs;
       if (P && P.mode && P.enabled) { ctx.mode = P.mode() === 'pro' ? 'pro' : 'simple'; ctx.agents_enabled = P.enabled().slice(0, 6); }
     } catch (e) {}
-    try { var U = W.KhipuUiPrefs, up = U && U.ctx(); if (up) ctx.ui_prefs = up; } catch (e) {}   // lo que esta persona usa (engine/uiprefs.js)
+    try { var U = W.KhipuUiPrefs, up = U && U.ctx(); if (up) ctx.ui_prefs = up; if (W.KhipuA2UI && W.KhipuA2UI.on()) ctx.ui_format = 'a2ui'; } catch (e) {}   // uiprefs.js, a2ui.js
     return ctx;
   }
 
@@ -1331,7 +1331,7 @@
     var onAction = _actMap(opts);
     try {
       body.classList.add('kc-genui');
-      var r = G.renderAnswer(body, d.ui, { answer: d.answer || '', onAction: onAction, reqId: el._kcReq || '', reuse: opts.reuse || null });
+      var r = G.renderAnswer(body, d.ui, { answer: d.answer || '', a2ui: d.a2ui, onAction: onAction, reqId: el._kcReq || '', reuse: opts.reuse || null });
       if (r) return r;
     } catch (e) { try { console.warn('[KhipuChat] genui:', e); } catch (x) {} }
     body.classList.remove('kc-genui');

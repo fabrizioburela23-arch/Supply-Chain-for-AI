@@ -23,6 +23,7 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 ## Depende de
 
 - [[app.html]] — usa `safeUrl`
+- [[engine.a2ui.js]] — usa `KhipuA2UI`
 - [[engine.app_coordinator.js]] — usa `nexusCore`
 - [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_liveSelectedNode`, `_selectedNode`, `activeTab`, `jumpTo`, `switchTab`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
@@ -45,7 +46,7 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 
-Se carga en [[app.html]] en la posición **92 de 106** (línea 3246), después de [[engine.oswindows.js]] y antes de [[engine.report.js]].
+Se carga en [[app.html]] en la posición **92 de 107** (línea 3246), después de [[engine.oswindows.js]] y antes de [[engine.report.js]].
 
 ## Lo usan
 
@@ -65,6 +66,7 @@ Se carga en [[app.html]] en la posición **92 de 106** (línea 3246), después d
 
 ## Pruebas que lo cubren
 
+- [[tests.test_a2ui.py]]
 - [[tests.test_agents_registry.py]]
 - [[tests.test_chat_commands.py]]
 - [[tests.test_chat_portfolio_agent.py]]

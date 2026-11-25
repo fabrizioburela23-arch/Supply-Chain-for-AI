@@ -12,6 +12,20 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 **Para ahorrar tokens: lee SOLO esta sección.** Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero;
 buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`).
 
+**2026-11-25 — A2UI v1.0 (estándar abierto de Google para interfaces de agentes):**
+- `core/genui/a2ui.py`: traduce el sobre kblocks/1 a mensajes A2UI v1.0 (createSurface + modelo de datos). Dos
+  catálogos: `urn:khipus:a2ui:catalog:1.0` (básico + `KhipusBlock` enlazado a /blocks/<id> → precios en vivo con
+  updateDataModel) y el BÁSICO de Google (solo Text/Row/Column/Card/Button: cifras clave y tablas en componentes,
+  gráficos como su alt verificado) para apps socias con el renderizador de serie (web/Android/iOS).
+- Chat: `context.ui_format = 'a2ui' | 'a2ui:basic'` o `a2uiRendererCapabilities.supportedCatalogIds` → la respuesta
+  trae `a2ui` (además de `ui`). Catálogo: GET /api/khipu/a2ui/catalog.json. Botones = eventos `khipus.<tipo>`;
+  fuentes = openUrl. Nunca botones de órdenes.
+- `engine/a2ui.js`: LECTOR A2UI de Khipus OS (superficies, JSON Pointer, plantillas, @path/@call, formatString/
+  Number/Currency/Date, TextField/CheckBox/Slider/ChoicePicker/Tabs con enlace bidireccional, mensaje `action`
+  estándar). Beta con bandera `kh_a2ui` (o `?a2ui=1` en la dirección); por defecto el chat sigue con genui.js.
+- Siguiente: precios en vivo empujados por updateDataModel; formularios A2UI para «programar agente»; aceptar A2UI de
+  agentes externos (A2A/Composio); empaquetar «Khipus dentro de Meru/Takenos» con el renderizador de Google.
+
 **2026-11-21 — LA ONTOLOGÍA SE MANTIENE SOLA + LA INTERFAZ APRENDE DE CADA PERSONA:**
 - 🗞 Lector de hechos (`ontology/news_facts.py`, agente `lector_hechos`, 8.º de ontology/agents.AGENTS): ≤3 empresas por
   vuelta (las más conectadas no leídas en 20 h), titulares reales (Finnhub+GDELT vía core/news_feed) → modelo PEQUEÑO →

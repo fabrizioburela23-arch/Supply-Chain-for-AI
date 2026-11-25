@@ -70,12 +70,13 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.importer.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **27 de 106** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **27 de 107** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 27)
 - [[app.html]] — usa `BASE`, `LANG`, `_injectGraphContext`, `_showUpdatePill`, `closeSistema`, `lanzarInvestigacion`, `loadCorporateEvents`, `openDiagnostics` y 5 más
+- [[engine.a2ui.js]] — usa `LANG`
 - [[engine.aispend.js]] — usa `BASE`, `LANG`
 - [[engine.app_canvas.js]] — usa `LANG`, `MKT`, `_selectedNode`, `computeNRS`
 - [[engine.app_coordinator.js]] — usa `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_appVersion`, `_liveLoading`, `activeTab`, `applyLang` y 16 más

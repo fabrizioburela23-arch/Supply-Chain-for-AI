@@ -40,6 +40,8 @@ activar kernel 2.0.0 / shapes / gates / guard con PIN, Railway). Empezar por ah�
 - UN camino de órdenes: solo `brokerage/alpaca.py` habla con /v2/orders|positions; todo pasa por `brokerage.service`.
 - Historia de precios (`core/prices_store.py`), riesgo (`core/risk_models.py`), escenario → dinero (`core/scenario_pnl.py`).
 - Chat con interfaz generativa (`core/genui/`, `engine/genui*.js`, GENUI off|shadow|on + bandera `kh_genui`).
+- A2UI v1.0 (Google): `core/genui/a2ui.py` traduce kblocks/1 (catálogo Khipus o básico; `context.ui_format='a2ui'`) y
+  `engine/a2ui.js` pinta A2UI en Khipus OS (beta, bandera `kh_a2ui`). Las cifras siguen saliendo SOLO de core/genui.
 - Escala a 5.000 (lote J), importador de empresas + países ISO-2 + categorías (lote K), 386 empresas + panel 📥 Importar +
   mapa con empresas de la base + precios del universo (lote L). Plan y pendientes: `docs/expansion/EXPANSION_5K.md`.
 - UNA cartera: `engine/pfstore.js` (`MKT.pos` = vista de la cartera activa; `eco_pos` solo copia).

@@ -81,11 +81,12 @@ _Nada interno._
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 - herramienta MCP `simulate_price` → [[API herramientas MCP]]
 
-_Además lo importan 72 pruebas (lista abajo)._
+_Además lo importan 73 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.gates_cases.py]]
+- [[tests.test_a2ui.py]]
 - [[tests.test_bitemporal.py]]
 - [[tests.test_bitemporal_review.py]]
 - [[tests.test_catalog_api.py]]

@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 34
+archivos: 35
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,13 +9,13 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**34 archivos · 30.795 líneas.** Volver al [[00 Mapa de Khipus]].
+**35 archivos · 31.082 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[engine.cockpit.js]] — 5.075 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.app_main.js]] — 4.850 líneas · Global error reporter — shows uncaught JS errors on screen (no devtools needed)
-- [[app.html]] — 3.569 líneas
+- [[app.html]] — 3.570 líneas
 - [[engine.app_coordinator.js]] — 2.718 líneas · Khipu Core Coordinator
 - [[engine.oswindows.js]] — 1.646 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.genui.js]] — 1.435 líneas · RESPUESTAS VISUALES del chat (kblocks/1): docs/CHAT_UI_GENERATIVA.md §7. Dibuja; NUNCA calcula cifras. DOM seguro, 17 tipos, acciones solo …
@@ -31,6 +31,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.explain.js]] — 419 líneas · EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversionista preguntó "¿qué es el NRS y cómo se calcula?" y la app no se lo …
 - [[engine.pfstore.js]] — 387 líneas · UN SOLO LUGAR DONDE SE GUARDAN TUS POSICIONES
 - [[engine.audit.js]] — 297 líneas · 🩺 Sistema → 📋 Registro → ⚖ Auditoría (INFRA_OPERATIVA paso 24, §5.6). Lista las decisiones recientes del LIBRO (filtros: tipo, quién, fecha) y por …
+- [[engine.a2ui.js]] — 286 líneas · LECTOR A2UI v1.0 de Khipus OS (2026-11-25, pedido de Fabrizio: «interfaz interactiva lo más avanzada posible, con futuro, rápida, útil y adaptable»).
 - [[engine.app_scatter.js]] — 281 líneas · KHIPU FINANCE — Scatter 3D Semántico con Medidores Botón 📊: posiciona empresas en ejes semánticos + panel de medidores interactivo
 - [[engine.guide.js]] — 271 líneas · pestaña "❓ Guía": explica la app en lenguaje simple. Sin jerga técnica. Expone window.initGuiaTab (mismo patrón que initTKGTab). Actualizada …
 - [[engine.signals.js]] — 252 líneas · «1 TOQUE»: señales del agente de trading listas para aprobar (2026-10-20) El agente en modo MANUAL propone (servidor: core/trading_agent.py, GET …
@@ -53,7 +54,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Datos del catálogo]] | 53 |
-| la usa | [[Capa Chat y agentes]] | 30 |
+| la usa | [[Capa Chat y agentes]] | 31 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 25 |
 | usa a | [[Capa Chat y agentes]] | 25 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 23 |

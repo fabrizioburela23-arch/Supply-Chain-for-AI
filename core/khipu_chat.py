@@ -1335,6 +1335,14 @@ def validate_request(body):
                 names.append(nm)
         if names:
             ctx['other_portfolios'] = names
+    # 2026-11-25: ¿quiere la respuesta visual en A2UI v1.0? ('khipus' = con KhipusBlock; 'basic' = catálogo estándar)
+    try:
+        from core.genui.a2ui import wants as _a2ui_wants
+        fmt = _a2ui_wants(ctx_raw)
+    except Exception:  # noqa: BLE001
+        fmt = None
+    if fmt:
+        ctx['a2ui'] = fmt
     # 2026-11-21: la interfaz APRENDE de cada persona (engine/uiprefs.js): qué tipos de bloque usa / no mira
     try:
         from core.genui import clean_prefs as _clean_prefs
@@ -3332,6 +3340,14 @@ def _genui_attach(out, message, lang, context):
     if m == 'on' and genui.wants(ctx):
         out['ui'] = genui.public(env)
         genui.note_sent()
+    if m == 'on' and ctx.get('a2ui'):
+        # 2026-11-25: la MISMA respuesta en A2UI v1.0 (estándar abierto de Google) para apps socias y Khipus OS
+        try:
+            from core.genui import a2ui as _a2ui
+            out['a2ui'] = _a2ui.to_a2ui(genui.public(env), lang, ctx['a2ui'],
+                                        surface_id=f"khipus_{(out.get('as_of') or '')[:19]}")
+        except Exception as e:  # noqa: BLE001
+            log.warning('khipu_chat a2ui: %s', type(e).__name__)
     return env, m
 
 
@@ -4101,6 +4117,14 @@ def chat_endpoint():
                         'error_en': 'Khipu had a problem processing that; please retry.',
                         'code': 'internal', 'detail': type(e).__name__, 'req_id': req.get('req_id')}), 500
     return jsonify(out)
+
+
+@khipu_chat_bp.route('/a2ui/catalog.json', methods=['GET'])
+@rate_limit(120, 300)
+def a2ui_catalog_endpoint():
+    """El catálogo A2UI v1.0 de Khipus (básico + KhipusBlock): lo leen las apps socias para saber qué pintamos."""
+    from core.genui.a2ui import KHIPUS_CATALOG
+    return jsonify(KHIPUS_CATALOG)
 
 
 @khipu_chat_bp.route('/chat/progress/<req_id>', methods=['GET'])

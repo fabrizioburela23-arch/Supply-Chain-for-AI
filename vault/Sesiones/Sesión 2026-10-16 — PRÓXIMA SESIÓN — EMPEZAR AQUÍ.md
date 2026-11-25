@@ -8,11 +8,11 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # ▶ PRÓXIMA SESIÓN — EMPEZAR AQUÍ (2026-10-16)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 10 (203 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 10 (217 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
-\*\*Para ahorrar tokens: lee SOLO esta sección.\*\* Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero; buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`). \*\*2026-11-21 — LA ONTOLOGÍA SE MANTIENE SOLA + LA INTERFAZ APRENDE DE CADA PERSONA:\*\* - 🗞 Lector de hechos (`ontology/news_facts.py`, agente `lector_hechos`, 8.º de ontology/agents.AGENTS): ≤3 empresas por
+\*\*Para ahorrar tokens: lee SOLO esta sección.\*\* Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero; buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`). \*\*2026-11-25 — A2UI v1.0 (estándar abierto de Google para interfaces de agentes):\*\* - `core/genui/a2ui.py`: traduce el sobre kblocks/1 a mensajes A2UI v1.0 (createSurface + modelo de datos). Dos
 
 ## Archivos que menciona
 
@@ -31,7 +31,9 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[core.trading_agent.py]]
 - [[Doc CARTERAS_Y_AGENTES]]
 - [[Doc CHAT_UI_GENERATIVA]]
+- [[engine.a2ui.js]]
 - [[engine.brief.js]]
+- [[engine.genui.js]]
 - [[engine.report.js]]
 - [[engine.signals.js]]
 - [[engine.simreport.js]]
