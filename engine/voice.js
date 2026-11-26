@@ -1542,9 +1542,9 @@ const BixbyVoice = {
   // ── 4) open_screen: cualquier pantalla de Herramientas, como ventana ──
   _toolOpenScreen(params) {
     const ALLOWED = ['graph', 'market', 'terminal', 'geo', 'space', 'simulation', 'crypto', 'tkg', 'portfolios', 'broker', 'committee',
-      'risk', 'clients', 'scalp', 'insights', 'screener', 'canvas', 'agents', 'brief', 'guia', 'sistema', 'mcp', 'universe'];
+      'risk', 'clients', 'scalp', 'insights', 'screener', 'canvas', 'agents', 'brief', 'guia', 'sistema', 'apps', 'mcp', 'universe'];
     const ALIAS = { map: 'graph', mapa: 'graph', analysis: 'insights', opportunities: 'insights', portfolio: 'portfolios',
-      account: 'broker', guide: 'guia', system: 'sistema', temporal: 'tkg', chart: 'canvas' };
+      account: 'broker', conectores: 'apps', connectors: 'apps', guide: 'guia', system: 'sistema', temporal: 'tkg', chart: 'canvas' };
     const raw = String((params && (params.screen || params.tab)) || '').toLowerCase().trim();
     const id = ALIAS[raw] || raw;
     const ck = this._ck();

@@ -92,9 +92,13 @@
   function rich(node, text) {
     String(text).split('\n').forEach(function (line, i) {
       if (i) node.appendChild(el('br'));
-      line.split(/(\*\*[^*]+\*\*)/).forEach(function (part) {
-        if (/^\*\*[^*]+\*\*$/.test(part)) { var b = el('b'); b.textContent = part.slice(2, -2); node.appendChild(b); }
-        else if (part) node.appendChild(W.document.createTextNode(part));
+      line = line.replace(/^\s*[-*•]\s+/, '• ');
+      line.split(/(\*\*[^*]+\*\*|(?:^|\s)_[^_]+_(?=\s|$|[.,;:])|(?:^|\s)\*[^*\s][^*]*\*(?=\s|$|[.,;:]))/).forEach(function (part) {
+        if (!part) return;
+        if (/^\*\*[^*]+\*\*$/.test(part)) { var b = el('b'); b.textContent = part.slice(2, -2); node.appendChild(b); return; }
+        var m = /^(\s?)([_*])(.+)\2$/.exec(part);
+        if (m) { if (m[1]) node.appendChild(W.document.createTextNode(m[1])); var i = el('i'); i.textContent = m[3]; node.appendChild(i); return; }
+        node.appendChild(W.document.createTextNode(part));
       });
     });
   }

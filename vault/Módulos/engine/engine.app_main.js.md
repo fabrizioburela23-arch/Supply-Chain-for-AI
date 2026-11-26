@@ -70,7 +70,7 @@ De nivel superior (globales del script): `BASE`, `GEO_REGIONS`, `GEO_REGION_OF`,
 - [[engine.importer.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **27 de 107** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **27 de 108** (línea 2686), después de [[engine.pfstore.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 
@@ -92,6 +92,7 @@ Se carga en [[app.html]] en la posición **27 de 107** (línea 2686), después d
 - [[engine.command_center.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `switchTab`
 - [[engine.committee.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
 - [[engine.compare.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`, `computeNRS`, `computeNRSBreakdown`, `sectorName`
+- [[engine.connectors.js]] — usa `BASE`, `LANG`
 - [[engine.crypto.js]] — usa `LANG`, `t`
 - [[engine.desktop.js]] — usa `LANG`
 - [[engine.explain.js]] — usa `LANG`

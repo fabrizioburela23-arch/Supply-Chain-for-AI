@@ -60,4 +60,5 @@ historial vs SPY. Regla de oro intacta: dinero real NUNCA en automático; todo p
    intervalo, «comprar solo en caídas», manual/auto) → se ve en una frase → se guarda con PIN (policy.change
    'broker.sleeve_agent'). Corre dentro del hilo del agente de Operar (el reloj no llama a la IA): stop-loss de SUS
    posiciones, compra ≤ su efectivo y su tope, vende solo lo suyo; AUTO solo en papel (real = propone y la persona toca).
-4. **🧩 Conectores**: Composio (lectura primero, escritura con confirmación) + skills de GitHub.
+4. ✅ parcial (2026-11-26) **🧩 Conectores**: Composio hecho (core/connectors.py; leer directo, escribir con clic + PIN).
+   Falta: skills de GitHub.

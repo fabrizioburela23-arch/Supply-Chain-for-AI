@@ -3,14 +3,14 @@ tipo: "pagina"
 capa: "Interfaz (Khipus OS)"
 ruta: "app.html"
 lenguaje: "html"
-lineas: 3570
+lineas: 3571
 aliases: ["app.html"]
 tags: ["capa/interfaz", "tipo/pagina"]
 ---
 
 # app.html
 
-> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.570 líneas · `app.html`
+> Página · capa [[Capa Interfaz (Khipus OS)]] · 3.571 líneas · `app.html`
 
 ## Para qué sirve
 
@@ -132,18 +132,19 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 93. [[engine.report.js]] (línea 3247)
 94. [[engine.uiprefs.js]] (línea 3248)
 95. [[engine.a2ui.js]] (línea 3249)
-96. [[engine.desktop.js]] (línea 3250)
-97. [[engine.simreport.js]] (línea 3251)
-98. [[engine.cockpit.js]] (línea 3252)
-99. [[engine.live.js]] (línea 3253)
-100. [[engine.command_center.js]] (línea 3254)
-101. [[sim.scenario_builder.js]] (línea 3255)
-102. [[engine.app_coordinator.js]] (línea 3257)
-103. [[engine.app_trade_panel.js]] (línea 3558)
-104. [[engine.ticket.js]] (línea 3559)
-105. [[engine.app_preflight.js]] (línea 3562)
-106. [[engine.app_canvas.js]] (línea 3565)
-107. [[engine.app_scatter.js]] (línea 3567)
+96. [[engine.connectors.js]] (línea 3250)
+97. [[engine.desktop.js]] (línea 3251)
+98. [[engine.simreport.js]] (línea 3252)
+99. [[engine.cockpit.js]] (línea 3253)
+100. [[engine.live.js]] (línea 3254)
+101. [[engine.command_center.js]] (línea 3255)
+102. [[sim.scenario_builder.js]] (línea 3256)
+103. [[engine.app_coordinator.js]] (línea 3258)
+104. [[engine.app_trade_panel.js]] (línea 3559)
+105. [[engine.ticket.js]] (línea 3560)
+106. [[engine.app_preflight.js]] (línea 3563)
+107. [[engine.app_canvas.js]] (línea 3566)
+108. [[engine.app_scatter.js]] (línea 3568)
 
 ## Bloques `<script>` inline
 
@@ -184,6 +185,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[engine.clients.js]] — usa `_tradeFetch`, `_tradePinStored`
 - [[engine.cockpit.js]] — usa `_tradeErrText`, `_tradeFetch`, `_tradePinSave`, `_tradePinStored`, `_tradeStatusInfo`, `registerBixbyOrb`, `setBixbyThinking`
 - [[engine.committee.js]] — usa `_tradeFetch`, `_tradePinStored`, `safeUrl`
+- [[engine.connectors.js]] — usa `_tradeFetch`
 - [[engine.crypto.js]] — usa `_tradeErrText`, `_tradeFetch`, `_tradeOrderAmbiguous`, `_tradeOrderId`, `_tradeOrderIsDup`, `_tradeOrderSettle`, `_tradePinStored`
 - [[engine.genui.js]] — usa `safeUrl`
 - [[engine.governance.js]] — usa `_tradeFetch`
@@ -220,6 +222,7 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 - [[tests.test_catalog_fix_categories.py]]
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_client_hardening.py]]
+- [[tests.test_connectors.py]]
 - [[tests.test_csp_estricta.py]]
 - [[tests.test_docs_facts.py]]
 - [[tests.test_genui_client_static.py]]

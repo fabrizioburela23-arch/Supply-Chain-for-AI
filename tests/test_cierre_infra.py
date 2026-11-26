@@ -108,6 +108,7 @@ CON_DECISION = {
     'POST /oauth/authorize': 'policy.change (mcp.oauth: consentimiento tras el PIN; nunca el código)',
     'POST /oauth/token': 'policy.change (mcp.oauth: canje sync; rotación del refresh async)',
     'POST /oauth/revoke': 'policy.change (mcp.oauth)',
+    'POST /api/connectors/confirm': 'policy.change (connectors.execute: app + acción + nombres de campos; PIN)',
 }
 
 # ── 2. Rutas sin decisión, con su motivo ─────────────────────────────────────────────────────────────────────────
@@ -117,6 +118,8 @@ CON_DECISION = {
 # resultado (actualiza resultados de decisiones existentes) · v1 (API pública monetizada: intocable) ·
 # brecha (CAMBIA algo y todavía no deja decisión: pendiente, ver docs/CIERRE_INFRA.md)
 SIN_DECISION = {
+    'POST /api/connectors/link': 'sesion',      # pide el enlace OFICIAL de inicio de sesión de la app (OAuth en Composio)
+    'POST /api/connectors/discard': 'personal',  # descarta una acción pendiente propia (memoria, nada se ejecutó)
     'POST /api/quotes/live': 'lectura',
     'POST /api/trade/sleeves/agent/parse': 'ia',   # la IA solo PROPONE la configuración; guardar = el PATCH con PIN
     'POST /api/ontology/import/plan': 'lectura',   # plan PURO (lote K, E2.3): no escribe nada

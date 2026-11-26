@@ -27,11 +27,11 @@ palette & helpers
 - [[engine.localcharts.js]] — usa `KhipuLocalCharts`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **106 de 107** (línea 3565), después de [[engine.app_preflight.js]] y antes de [[engine.app_scatter.js]].
+Se carga en [[app.html]] en la posición **107 de 108** (línea 3566), después de [[engine.app_preflight.js]] y antes de [[engine.app_scatter.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 106)
+- [[app.html]] — lo carga con `<script>` (posición 107)
 - [[app.html]] — usa `canvasGenerate`
 - [[engine.app_main.js]] — usa `initCanvasTab`
 - [[engine.cockpit.js]] — usa `_cvRenderCard`

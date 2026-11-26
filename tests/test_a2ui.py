@@ -32,7 +32,7 @@ def _goldens():
 
 def _env(blocks, extra=()):
     blocks = [dict(b, id=b.get('id') if b.get('id') != 'x' else f'b{i + 1}') for i, b in enumerate(blocks)]
-    blocks = [{'id': 't1', 'type': 'text', 'state': 'ready', 'data': {'md': '**Nvidia sube.** Resumen.', 'lang': 'es'}}] \
+    blocks = [{'id': 't1', 'type': 'text', 'state': 'ready', 'data': {'md': '**Nvidia sube.** Resumen.\n- punto _info aquí_.', 'lang': 'es'}}] \
         + blocks + list(extra)
     return {'v': 'kblocks/1', 'lang': 'es', 'state': 'final', 'layout': 'auto', 'as_of': '2026-11-25T10:00:00Z',
             'blocks': blocks}
@@ -198,6 +198,7 @@ const { chromium } = require('playwright'); const fs = require('fs');
     assert r.returncode == 0, r.stderr[-800:]
     res = json.loads(r.stdout.strip().splitlines()[-1])
     assert 'BLOCK:chart.line' in res['khipus'] and 'Nvidia sube.' in res['khipus']
+    assert '• punto info aquí.' in res['khipus'] and '_' not in res['khipus'].split('BLOCK')[0]   # viñeta y cursiva sin símbolos
     assert res['got'][0]['action']['name'] == 'khipus.open_dossier'
     assert res['got'][0]['action']['context'] == {'kind': 'open_dossier', 'entity': 'Nvidia'}
     assert 'Hola Ana' in res['before'] and 'uno' in res['before'] and 'dos' in res['before']

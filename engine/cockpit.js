@@ -820,6 +820,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       { g: 'help', id: 'brief', ic: '☀️', es: 'Brief de hoy', en: 'Today’s brief', k: 'brief matinal resumen hoy today morning', run: function () { W._briefOpen(); _raise('brief-ov', 7600); }, ok: function () { return typeof W._briefOpen === 'function'; } },
       { g: 'help', id: 'guia', ic: '❓', es: 'Guía', en: 'Guide', k: 'guia ayuda help guide como usar', run: function () { stage('guia'); } },
       { g: 'help', id: 'sistema', ic: '🩺', es: 'Sistema', en: 'System', k: 'sistema diagnostico salud health gasto ia registro', run: function () { _openSistemaOS(); }, ok: function () { return typeof W.openSistema === 'function'; } },
+      { g: 'help', id: 'apps', ic: '🧩', es: 'Conectores (tus apps)', en: 'Connectors (your apps)', k: 'conectores apps gmail correo calendar agenda sheets hojas slack notion drive composio connectors', run: function () { W.KhipuConnectors.open(); }, ok: function () { return !!(W.KhipuConnectors && W.KhipuConnectors.open); } },
       { g: 'help', id: 'mcp', ic: '🤖', es: 'Conectar IAs', en: 'Connect AIs', k: 'mcp conectar ias claude chatgpt connect', run: function () { W.KhipuMCP.open('connect'); }, ok: function () { return !!(W.KhipuMCP && W.KhipuMCP.open); } },
       { g: 'help', id: 'universe', ic: '🪐', es: 'Universo 3D', en: '3D universe', k: 'universo 3d universe', run: function () { W._go3D(); }, ok: function () { return typeof W._go3D === 'function'; } },
     ];

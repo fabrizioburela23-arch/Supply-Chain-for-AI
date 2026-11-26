@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 51
+archivos: 53
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**51 archivos · 28.186 líneas.** Volver al [[00 Mapa de Khipus]].
+**53 archivos · 28.525 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
@@ -46,6 +46,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.pin.py]] — 260 líneas · verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[core.ops_check.py]] — 257 líneas · O1 (misión de reparación 2026-10-04): chequeo del sistema EN el servidor, guardado y consultable.
 - [[core.celestrak.py]] — 255 líneas · satélites reales (CelesTrak) para el Space Monitor y el texto de Khipu.
+- [[core.connectors.py]] — 231 líneas · 🧩 CONECTORES: Khipus usa tus apps (Gmail, Sheets, Slack, Notion, Calendar…) por UNA sola puerta, Composio (2026-11-26, pedido de Fabrizio: «algo que …
 - [[core.price_sim.py]] — 229 líneas · «¿ya tocó fondo? ¿hasta dónde puede caer?»: simulación Monte Carlo del PRECIO de una acción.
 - [[core.identity.py]] — 227 líneas · QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del plan).
 - [[scripts.build_governance.py]] — 226 líneas · mantiene governance/manifest.json (docs/INFRA_OPERATIVA.md §5.1-§5.3; paso 9).
@@ -57,6 +58,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[engine.sync.js]] — 139 líneas · SINCRONIZACIÓN ENTRE DISPOSITIVOS (carteras, perfil, posiciones)
 - [[core.prices_api.py]] — 125 líneas · /api/prices/\* y /api/instruments/\* (BRECHAS bloque 2: la memoria de los números). Nunca /v1/\*.
 - [[core.scheduler.py]] — 116 líneas · tareas periódicas del SERVIDOR (misión de reparación 2026-10-04, R5).
+- [[core.connectors_api.py]] — 108 líneas · /api/connectors/\* : la ventana 🧩 Conectores (engine/connectors.js) habla con esto.
 - [[scripts.fetch_ledger_anchor.py]] — 98 líneas · baja el ANCLA DIARIA pública del libro de decisiones y la guarda fuera de la base (docs/INFRA_OPERATIVA.md §2.8, paso 7, decisión D7). La corre el …
 - [[core.model_router.py]] — 89 líneas · ROUTER DE MODELOS del chat (2026-11-07, pedido de Fabrizio: «request → router → modelo pequeño / mediano / frontera, y que ese router sea Jev»).
 - [[core.config.py]] — 82 líneas · variables de entorno compartidas entre server y ontology.
@@ -72,10 +74,10 @@ Variables de entorno: [[Índice de variables de entorno]].
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | la usa | [[Capa Ontología y grafo temporal]] | 52 |
-| usa a | [[Capa Ontología y grafo temporal]] | 42 |
+| usa a | [[Capa Ontología y grafo temporal]] | 43 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 35 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 35 |
-| la usa | [[Capa Chat y agentes]] | 32 |
+| la usa | [[Capa Chat y agentes]] | 33 |
 | la usa | [[Capa Investigación]] | 28 |
 | la usa | [[Capa MCP y API]] | 24 |
 | la usa | [[Capa Comité]] | 23 |
@@ -83,7 +85,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 21 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 17 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
 | usa a | [[Capa Chat y agentes]] | 8 |
 | la usa | [[Capa Voz]] | 7 |
 | usa a | [[Capa Investigación]] | 7 |

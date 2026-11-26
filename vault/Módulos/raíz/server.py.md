@@ -114,6 +114,7 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[core.celestrak.py]] — importa `celestrak`
 - [[core.company_data.py]] — importa `get_annual_financials`, `get_live_profile`, `get_valuation_news`, `to_dossier`, `to_findossier`
 - [[core.config.py]] — importa `AI_MODEL_DEEP`, `AI_MODEL_FAST`, `AI_ORDER`, `CLAUDE`, `FINNHUB`, `GEMINI_KEY`, `GEMINI_MODEL`, `HTTP_TIMEOUT` …
+- [[core.connectors_api.py]] — importa `(dinámico: core.connectors_api)`
 - [[core.decide_api.py]] — importa `(dinámico: core.decide_api)`
 - [[core.decision_sites.py]] — importa `decision_sites`
 - [[core.decisions.py]] — importa `LedgerUnavailable`

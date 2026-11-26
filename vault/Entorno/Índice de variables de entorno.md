@@ -6,7 +6,7 @@ tags: ["capa/infraestructura", "tipo/indice"]
 
 # Índice de variables de entorno
 
-167 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
+171 variables. Solo nombres: los valores viven en Railway y nunca entran a la bóveda.
 
 | Variable | La leen | En CLAUDE.md |
 |---|---|---|
@@ -55,6 +55,10 @@ tags: ["capa/infraestructura", "tipo/indice"]
 | [[ENV COINGECKO_KEY]] | 3 | sí |
 | [[ENV COMMITTEE_MAX_CONCURRENT]] | 1 | sí |
 | [[ENV COMMITTEE_MAX_SEATS]] | 1 | sí |
+| [[ENV COMPOSIO_API_KEY]] | 1 | sí |
+| [[ENV COMPOSIO_BASE]] | 1 | sí |
+| [[ENV COMPOSIO_ENABLED]] | 1 | sí |
+| [[ENV COMPOSIO_KEY]] | 1 | sí |
 | [[ENV CSP_ENABLED]] | 1 | sí |
 | [[ENV CSP_REPORT_ONLY]] | 1 | sí |
 | [[ENV DATABASE_URL]] | 8 | sí |

@@ -240,7 +240,7 @@ import importlib as _importlib
 for _mod, _bp_name in (('core.world', 'world_bp'), ('research.committee_api', 'committee_bp'),
                        ('brokerage.api', 'brokerage_bp'), ('mcp_server.api', 'mcp_bp'),
                        ('core.space', 'space_bp'), ('core.portfolio_ai', 'portfolio_ai_bp'),
-                       ('core.khipu_chat', 'khipu_chat_bp'),
+                       ('core.khipu_chat', 'khipu_chat_bp'), ('core.connectors_api', 'connectors_bp'),
                        ('core.portfolio_reports_api', 'portfolio_reports_bp'), ('core.decide_api', 'decide_bp'), ('brokerage.sleeves', 'sleeves_bp'),
                        ('core.ledger_api', 'ledger_bp'),    # INFRA_OPERATIVA paso 6: libro de decisiones /api/ledger/*
                        ('core.governance_api', 'governance_bp'),    # paso 9: registro de gobernanza /api/governance/*

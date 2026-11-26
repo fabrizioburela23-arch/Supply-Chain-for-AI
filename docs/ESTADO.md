@@ -12,6 +12,16 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 **Para ahorrar tokens: lee SOLO esta sección.** Todo lo de abajo es HISTORIAL (3.400+ líneas): no leerlo entero;
 buscar con grep el tema que toque (p. ej. `grep -n "LOTE L" docs/ESTADO.md`).
 
+**2026-11-26 — 🧩 CONECTORES (Composio): Khipus usa las apps de cada persona por UNA puerta:**
+- `core/connectors.py` (REST v3.1: /tools, /tools/execute/{slug}, /auth_configs, /connected_accounts(/link)); persona =
+  huella de X-Khipu-Owner («kh_…»); auth gestionada por Composio (Khipus nunca ve contraseñas).
+- Chat: `apps_search` (acciones + si escriben) y `apps_run`: LEER = directo y marcado como contenido externo; ESCRIBIR
+  (send/create/delete/… o desconocido) = PENDIENTE, nunca desde el chat → `engine/connectors.js` muestra el diálogo con
+  el contenido exacto → «Confirmar» = PIN → POST /api/connectors/confirm (policy.change 'connectors.execute' con app,
+  acción y NOMBRES de campos, nunca el contenido; sin libro → 503). Ventana «🧩 Conectores (tus apps)» en Herramientas.
+- Falta (Fabrizio): crear cuenta en composio.dev → API key → Railway `COMPOSIO_API_KEY`. Siguiente: skills de GitHub.
+- A2UI: el texto ahora pinta viñetas y _cursiva_ sin símbolos.
+
 **2026-11-25 — A2UI v1.0 (estándar abierto de Google para interfaces de agentes):**
 - `core/genui/a2ui.py`: traduce el sobre kblocks/1 a mensajes A2UI v1.0 (createSurface + modelo de datos). Dos
   catálogos: `urn:khipus:a2ui:catalog:1.0` (básico + `KhipusBlock` enlazado a /blocks/<id> → precios en vivo con

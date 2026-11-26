@@ -46,7 +46,7 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 
-Se carga en [[app.html]] en la posición **92 de 107** (línea 3246), después de [[engine.oswindows.js]] y antes de [[engine.report.js]].
+Se carga en [[app.html]] en la posición **92 de 108** (línea 3246), después de [[engine.oswindows.js]] y antes de [[engine.report.js]].
 
 ## Lo usan
 

@@ -40,6 +40,8 @@ activar kernel 2.0.0 / shapes / gates / guard con PIN, Railway). Empezar por ah�
 - UN camino de órdenes: solo `brokerage/alpaca.py` habla con /v2/orders|positions; todo pasa por `brokerage.service`.
 - Historia de precios (`core/prices_store.py`), riesgo (`core/risk_models.py`), escenario → dinero (`core/scenario_pnl.py`).
 - Chat con interfaz generativa (`core/genui/`, `engine/genui*.js`, GENUI off|shadow|on + bandera `kh_genui`).
+- 🧩 Conectores (Composio): `core/connectors.py` + `/api/connectors/*` + herramientas del chat `apps_search`/`apps_run` +
+  `engine/connectors.js`. LEER directo; ESCRIBIR queda PENDIENTE (15 min) hasta clic + PIN con decisión en el libro.
 - A2UI v1.0 (Google): `core/genui/a2ui.py` traduce kblocks/1 (catálogo Khipus o básico; `context.ui_format='a2ui'`) y
   `engine/a2ui.js` pinta A2UI en Khipus OS (beta, bandera `kh_a2ui`). Las cifras siguen saliendo SOLO de core/genui.
 - Escala a 5.000 (lote J), importador de empresas + países ISO-2 + categorías (lote K), 386 empresas + panel 📥 Importar +
@@ -369,6 +371,7 @@ GOV_RELEASE (vacío = el vigente de la base), <ARTEFACTO>=<semver> p. ej. KERNEL
 KHIPU_GATES (on; 'off' = emergencia: apaga las puertas SHACL en sombra)
 ONTOLOGY_AUTO (on), ONTOLOGY_AUTO_MIN (20)  ← latido del SERVIDOR para el ciclo de agentes de la ontología (ontology/curation_loop.py; antes solo corría con la app abierta)
 ONTOLOGY_NEWS_FACTS (on), ONTOLOGY_NEWS_DAILY (60)  ← Lector de hechos: noticias → vínculos/notas con fuente; el curador filtra y el ciclo aplica lo seguro (ontology/news_facts.py)
+COMPOSIO_API_KEY (alias COMPOSIO_KEY; sin ella los 🧩 Conectores quedan apagados), COMPOSIO_ENABLED (on), COMPOSIO_BASE (https://backend.composio.dev/api/v3.1)  ← 🧩 Conectores: las apps de cada persona por Composio (core/connectors.py; escribir SIEMPRE con clic + PIN)
 GENUI (off; shadow = arma, mide y guarda en el libro SIN enviar; on = envía `ui` solo a quien manda context.genui=1)  ← chat con interfaz generativa (core/genui, docs/CHAT_UI_GENERATIVA.md)
 ── G5-14 (lote I4, 2026-10-13): TODA variable que el código lee está aquí (la bóveda: 0 sin documentar) ──
 CLAUDE_KEY / ALPHA_VANTAGE_KEY / GOOGLE_API_KEY / NVIDIA_API_KEY / TYPESAFE_KEY  ← nombres ALTERNATIVOS de ANTHROPIC_KEY / AV_KEY / GEMINI_KEY / NVIDIA_KEY / TYPESAFE_API_KEY

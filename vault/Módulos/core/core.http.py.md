@@ -36,6 +36,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[brokerage.sleeves.py]] — lo importa
 - [[core.agents_api.py]] — lo importa
 - [[core.ai.py]] — lo importa
+- [[core.connectors_api.py]] — lo importa
 - [[core.decide_api.py]] — lo importa
 - [[core.governance_api.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa

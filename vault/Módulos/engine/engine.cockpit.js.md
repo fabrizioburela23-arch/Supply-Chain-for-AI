@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 5075
+lineas: 5076
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.075 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.076 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -30,6 +30,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.canvas-data.js]] — usa `canvasEnrichData`
 - [[engine.clients.js]] — usa `KhipuClients`
 - [[engine.committee.js]] — usa `KhipuCommittee`
+- [[engine.connectors.js]] — usa `KhipuConnectors`
 - [[engine.crypto.js]] — usa `KhipuCrypto`
 - [[engine.desktop.js]] — usa `KhipuDesk`
 - [[engine.explain.js]] — usa `explainMetric`
@@ -58,11 +59,11 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **98 de 107** (línea 3252), después de [[engine.simreport.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **99 de 108** (línea 3253), después de [[engine.simreport.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 98)
+- [[app.html]] — lo carga con `<script>` (posición 99)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.app_main.js]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
@@ -105,6 +106,7 @@ Se carga en [[app.html]] en la posición **98 de 107** (línea 3252), después d
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_cleanup_modules_theme_i18n.py]]
 - [[tests.test_committee_os_ui.py]]
+- [[tests.test_connectors.py]]
 - [[tests.test_genui_browser.py]]
 - [[tests.test_genui_client_static.py]]
 - [[tests.test_import_panel_browser.py]]

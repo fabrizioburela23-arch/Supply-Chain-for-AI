@@ -301,6 +301,7 @@ VOICE_SCREENS = {
     'brief': ('Brief de hoy', 'Today’s brief'),
     'guia': ('Guía', 'Guide'),
     'sistema': ('Sistema', 'System'),
+    'apps': ('Conectores (tus apps)', 'Connectors (your apps)'),
     'mcp': ('Conectar IAs', 'Connect AIs'),
     'universe': ('Universo 3D', '3D universe'),
 }
@@ -326,6 +327,7 @@ _VOICE_SCREEN_HINTS = {
     'brief': 'the daily intelligence summary',
     'guia': 'help and how to use the app',
     'sistema': 'system health, AI spend and the activity log',
+    'apps': "connect the user's own apps (Gmail, Calendar, Sheets, Slack, Notion…) through Composio and confirm pending actions",
     'mcp': 'connect external AIs (Claude, ChatGPT…) to Khipus',
     'universe': '3D universe view of the network',
 }

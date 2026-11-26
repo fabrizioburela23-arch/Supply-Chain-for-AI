@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/a2ui.js"
 lenguaje: "javascript"
-lineas: 286
+lineas: 290
 aliases: ["engine/a2ui.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/a2ui.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 286 líneas · `engine/a2ui.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 290 líneas · `engine/a2ui.js`
 
 ## Para qué sirve
 
@@ -25,7 +25,7 @@ LECTOR A2UI v1.0 de Khipus OS (2026-11-25, pedido de Fabrizio: «interfaz intera
 - [[engine.app_main.js]] — usa `LANG`
 - [[engine.genui.js]] — usa `KhipuGenUI`
 
-Se carga en [[app.html]] en la posición **95 de 107** (línea 3249), después de [[engine.uiprefs.js]] y antes de [[engine.desktop.js]].
+Se carga en [[app.html]] en la posición **95 de 108** (línea 3249), después de [[engine.uiprefs.js]] y antes de [[engine.connectors.js]].
 
 ## Lo usan
 
